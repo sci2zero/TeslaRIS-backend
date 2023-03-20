@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="reporting-statistics-visualization" />
+        <module name="core" />
+        <module name="assessment" />
+        <module name="application" />
+        <module name="digital-library" />
+        <module name="interoperability" />
+        <module name="portal" />
+        <module name="digital-resources" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="application" options="-parameters" />
+      <module name="assessment" options="-parameters" />
+      <module name="core" options="-parameters" />
+      <module name="digital-library" options="-parameters" />
+      <module name="digital-resources" options="-parameters" />
+      <module name="interoperability" options="-parameters" />
+      <module name="parent" options="" />
+      <module name="portal" options="-parameters" />
+      <module name="reporting-statistics-visualization" options="-parameters" />
+    </option>
+  </component>
+</project>
