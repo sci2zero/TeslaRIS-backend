@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="teslaris" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="application" target="11" />
+      <module name="assessment" target="11" />
+      <module name="core" target="11" />
+      <module name="digital-library" target="11" />
+      <module name="digital-resources" target="11" />
+      <module name="interoperability" target="11" />
+      <module name="parent" target="11" />
+      <module name="portal" target="11" />
+      <module name="reporting-statistics-visualization" target="11" />
+      <module name="research-information-system" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="application" options="-parameters" />
+      <module name="assessment" options="-parameters" />
+      <module name="core" options="-parameters" />
+      <module name="digital-library" options="-parameters" />
+      <module name="digital-resources" options="-parameters" />
+      <module name="interoperability" options="-parameters" />
+      <module name="portal" options="-parameters" />
+      <module name="reporting-statistics-visualization" options="-parameters" />
+      <module name="research-information-system" options="-parameters" />
+      <module name="teslaris" options="-parameters" />
+    </option>
+  </component>
+</project>
