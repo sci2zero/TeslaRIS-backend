@@ -1,4 +1,4 @@
-package rs.teslaris.teslaris.core.controller;
+package rs.teslaris.core.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/dummy")
 public class DummyController {
 
-  @GetMapping
-  public String returnDummyData() {
-    return "TEST";
-  }
+    @GetMapping
+    public String returnDummyData() {
+        return "TEST";
+    }
 }

@@ -1,4 +1,4 @@
-package rs.teslaris.teslaris;
+package rs.teslaris;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -8,8 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @EnableAutoConfiguration
 public class TeslarisStarter {
 
-  public static void main(String[] args) {
-    SpringApplication.run(TeslarisStarter.class, args);
-  }
+    public static void main(String[] args) {
+        SpringApplication.run(TeslarisStarter.class, args);
+    }
 
 }
