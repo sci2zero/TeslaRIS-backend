@@ -1,0 +1,126 @@
+@startuml
+
+'TODO: Da li uri kod ovih objekata predstavlja ID?
+'TODO: Za sta suzi locale
+'TODO: Sta da radim sa reocrd DTO
+'TODO: Author Position i Title razlike?
+'TODO: Da li treba JMBG u autora
+'TODO: Sta je PAVNT
+'TODO: Da li treba za autora is active
+'TODO: Fizicko ili logicko brisanje
+'TODO: Da li da autora identifikujemo preko ID foregin key ili preko emaila ili kako vec
+'TODO: Da li se Author ima id Usera ili User ima id Authora 
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum Language {
+  SR_LATIN
+  SR_CYRILLIC
+  ENG
+}
+
+enum TranslationType {
+  MACHINE
+  HUMAN
+  ORIGINAL
+}
+
+class MultiLingualContent {
+  Language language
+  String content
+  TranslationType translationType
+}
+
+class GeoLocation {
+  Double longitude
+  Double latitude
+  int precisionInMeters
+}
+
+package user {
+  class Authority {
+
+  }
+
+
+  class User {
+    -String email
+    -String password
+    -String note
+    -Language preferedLanguage
+    -boolean isActive
+    -Authority authority
+    -Author author
+  }
+
+  class UserActivation {
+    -String code
+    -LocalDateTime timestamp
+  }
+  UserActivation -> User
+}
+
+
+
+
+package author {
+  class Author {
+    -AuthorName authorName
+    -List<MultiLingualContent> otherNames
+    +String name()
+    -TitleInstitution titleInstitution
+    -List<MultiLingualContent> biography
+    -List<MultiLingualContent> keyword
+    -String contantEmail
+    -String phoneNumber
+    -String altPhoneNumber
+    -String apvnt
+    -Set<ResearchArea> researchAreas 
+
+  }
+  ' TODO: What is other format names
+
+
+  class PersonalInfo {
+    -LocalDate localBirth
+    -String placeOfBrith
+    -String state
+    -String address
+    -Stirng city
+    -Sex sex
+  }
+
+' TODO: Da li ce nekada biti potrebna instorija kada je dobio koje zvanje, da li je potrebna samo zadnja institucija ili?
+  class TitleInstitution {
+    -int year
+    -String title
+    -Institution institution
+  }
+
+}
+
+
+' TODO: Sta je someName
+package institution {
+  class Institution {
+    -Set<MultiLingualContent> name
+    -String acronym
+    -Set<MultiLingualContent> keyword
+    -Set<ResearchArea> researchAreas
+    GeoLocation location
+  }
+
+  class ResearchArea {
+    -Set<MultiLingualContent> term
+    -Set<MultiLingualContent> description
+  }
+  ResearchArea "1" --> "0..1" ResearchArea
+
+
+}
+
+
+@enduml
