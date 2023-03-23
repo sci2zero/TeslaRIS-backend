@@ -41,8 +41,14 @@ class GeoLocation {
 }
 
 package user {
+  
+  class Permission {
+    -String name
+  }
+  
   class Authority {
-
+    -String name
+    -Set<Permission> permissions 
   }
 
 
@@ -69,11 +75,11 @@ package user {
 package author {
   class Author {
     -AuthorName authorName
-    -List<MultiLingualContent> otherNames
+    -Set<MultiLingualContent> otherNames
     +String name()
     -TitleInstitution titleInstitution
-    -List<MultiLingualContent> biography
-    -List<MultiLingualContent> keyword
+    -Set<MultiLingualContent> biography
+    -Set<MultiLingualContent> keyword
     -String contantEmail
     -String phoneNumber
     -String altPhoneNumber
