@@ -28,6 +28,20 @@ enum TranslationType {
   ORIGINAL
 }
 
+' TODO: Ekvivalent RecordDTO klasi, cilj je da se zajednicki metapodaci za razlicite entitete modeluju kako bi bili lako dostupni
+class CommonMetadata {
+  ' TODO: controlNumber? HTML/string representation?
+  -String controlNumber
+	-String scopusID
+	-String ORCID
+	-Locale locale
+	-String stringRepresentation
+	-String HTMLRepresentation
+	-String harvardRepresentation
+	-String MARC21
+	-String dublinCore
+}
+
 class MultiLingualContent {
   Language language
   String content
@@ -128,5 +142,27 @@ package institution {
 
 }
 
+' TODO: za svaki tip publikacije dodati zasebnu klasu ili modelovati sve u jednoj velikoj tabeli
+package publication {
+
+  class AuthorPublication {
+    -Author author
+    -Set<MultiLingualContent> contributionDescription
+    -boolean mainAuthor
+  }
+
+  ' TODO: Sta je alphabet???
+  class Publication {
+    -Institution institution
+    -Set<AuthorPublication> authors
+    -Set<string> uris
+    -LocalDate publicationDate
+    -String filename
+    -CommonMetadata metadata
+  }
+
+  Publication "1" --> "1..*" AuthorPublication
+
+}
 
 @enduml
