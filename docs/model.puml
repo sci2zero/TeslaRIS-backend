@@ -145,7 +145,18 @@ package institution {
 ' TODO: za svaki tip publikacije dodati zasebnu klasu ili modelovati sve u jednoj velikoj tabeli
 package publication {
 
-  class AuthorPublication {
+  class PublisherName {
+    -String name
+    -String place
+    -String state
+    -Language language
+  }
+
+  class Publisher {
+    -Set<PublisherName> name
+  }
+
+  class AuthorContribution {
     -Author author
     -Set<MultiLingualContent> contributionDescription
     -boolean mainAuthor
@@ -154,14 +165,175 @@ package publication {
   ' TODO: Sta je alphabet???
   class Publication {
     -Institution institution
-    -Set<AuthorPublication> authors
+    -Set<AuthorContribution> authors
     -Set<string> uris
     -LocalDate publicationDate
     -String filename
     -CommonMetadata metadata
   }
 
-  Publication "1" --> "1..*" AuthorPublication
+  class ProceedingsPublication extends Publication {
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> subtitle
+    -String startPage;
+	  -String endPage;
+    -Integer numberOfPages
+    -Set<MultiLingualContent> note
+    -Set<MultiLingualContent> keywords
+    -Set<MultiLingualContent> abstracT
+  }
+
+  class Proceedings {
+    -Conference conference
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> subtitle
+    -String isbn
+    -Integer numberOfPages
+    -String dimension
+    -String editionTitle
+    -Integer editionNumber
+    -Set<Author> editors
+    -Set<String> languages
+    -Set<MultiLingualContent> nameAbbreviation
+    -Set<MultiLingualContent> note
+    -Set<MultiLingualContent> keywords
+    -Set<MultiLingualContent> abstracT
+    -String uri
+    -String doi
+  }
+
+  class Conference {
+    -Set<MultiLingualContent> name
+    -String place
+	  -Integer year
+    -String period
+    -String number
+    -String state
+    -String fee
+    -Set<MultiLingualContent> description
+    -Set<MultiLingualContent> keywords
+    -String uri
+  }
+
+  ProceedingsPublication "1..*" --> "1" Proceedings
+  Proceedings "1..*" --> "1" Conference
+
+  ' Sta su paperType, start i end page?
+  class JournalPublication extends Publication {
+    -Set<MultiLingualContent> title
+    -String startPage;
+	  -String endPage;
+    -String volume
+	  -String number
+    -Set<MultiLingualContent> note
+    -Set<MultiLingualContent> keywords
+    -Set<MultiLingualContent> abstracT
+    -String doi
+  }
+
+  class Journal {
+    -Set<MultiLingualContent> title
+    -String issn
+    -Set<Author> editors
+    -Set<String> languages
+    -Set<MultiLingualContent> nameAbbreviation
+    -Set<MultiLingualContent> note
+    -Set<MultiLingualContent> keywords
+    -String uri
+    -String doi
+  }
+
+  JournalPublication "1..*" --> "1" Journal
+
+  ' TODO: Da li je poglavlje u monografiji dovoljno da se modeluje kao monografija pa da se u author contibution navede ko je sta radio
+  class MonographPublication extends Publication {
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> subtitle
+    -String startPage;
+	  -String endPage
+    -Set<MultiLingualContent> note
+    -Set<MultiLingualContent> keywords
+    -Set<MultiLingualContent> abstracT
+    -String doi
+  }
+
+  class Monograph {
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> subtitle
+    -String volumeCode
+    -String volumeTitle
+    -String isbn
+    -Integer numberOfPages
+    -String dimension
+    -Integer count
+    -String editionTitle
+    -Integer editionNumber
+    -String editionISSN
+    -String alphabet
+    -Set<Author> editors
+    -Set<String> languages
+    -Set<String> originalLanguages
+    -Set<MultiLingualContent> note
+    -Set<MultiLingualContent> keywords
+    -Set<MultiLingualContent> abstracT
+    -String doi
+    -ResearchArea researchArea
+  }
+
+  MonographPublication "1..*" --> "1" Monograph
+
+  class Patent extends Publication {
+    -Set<MultiLingualContent> title
+    -String number;
+    -Set<MultiLingualContent> keywords
+    -Set<MultiLingualContent> abstracT
+    -String doi
+  }
+
+  class Other extends Publication {
+    -OtherPublicationCategory category
+  }
+
+  class Thesis extends Publication {
+    -ThesisCategory category
+  }
+
+  class Product extends Publication {
+    -ProductCategory category
+    -Set<MultiLingualContent> name
+    -String internalNumber
+    -Set<MultiLingualContent> keywords
+    -Set<MultiLingualContent> description
+    -String uri;
+	  -String doi;
+  }
+
+  enum ThesisCategory {
+    MR
+    PHD
+    MASTER
+    BACHELOR
+  }
+
+  enum ProductCategory {
+    DATASET
+    SOFTWARE
+    TECHNICAL_SOLUTION
+  }
+
+  enum OtherPublicationCategory {
+    INFORMATIVE_ATTACHMENT
+    ENCYCLOPEDIC_CONTRIBUTION
+    LEXICOGRAPHIC_CONTRIBUTION
+    SCIENTIFIC_CRITIC
+    POLEMICS
+  }
+
+  Publication "1" --> "1..*" AuthorContribution
+  Monograph "0..*" --> "1" Publisher
+  Proceedings "0..*" --> "1" Publisher
+  Patent "0..*" --> "1" Publisher
+  Product "0..*" --> "1" Publisher
 
 }
 
