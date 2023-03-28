@@ -32,17 +32,26 @@ public class DbInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
-        var adminRead = new Privilege("ADMIN_READ");
-        var adminWrite = new Privilege("ADMIN_WRITE");
-        var adminDelete = new Privilege("ADMIN_DELETE");
-        privilegeRepository.saveAll(Arrays.asList(adminRead, adminWrite, adminDelete));
+        var allowAccountTakeover = new Privilege("ALLOW_ACCOUNT_TAKEOVER");
+        var takeRoleOfUser = new Privilege("TAKE_ROLE");
+        privilegeRepository.saveAll(
+            Arrays.asList(allowAccountTakeover, takeRoleOfUser));
 
         var adminAuthority = new Authority("ADMIN",
-            new HashSet<>(List.of(new Privilege[] {adminRead, adminWrite, adminDelete})));
+            new HashSet<>(
+                List.of(new Privilege[] {takeRoleOfUser})));
+        var authorAuthority =
+            new Authority("AUTHOR", new HashSet<>(List.of(new Privilege[] {allowAccountTakeover})));
         authorityRepository.save(adminAuthority);
+        authorityRepository.save(authorAuthority);
 
         var adminUser =
-            new User("admin@admin.com", passwordEncoder.encode("admin"), false, adminAuthority);
+            new User("admin@admin.com", passwordEncoder.encode("admin"), false, false,
+                adminAuthority);
+        var authorUser =
+            new User("author@author.com", passwordEncoder.encode("author"), false, false,
+                authorAuthority);
         userRepository.save(adminUser);
+        userRepository.save(authorUser);
     }
 }

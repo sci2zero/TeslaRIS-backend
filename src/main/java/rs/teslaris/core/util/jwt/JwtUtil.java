@@ -3,6 +3,13 @@ package rs.teslaris.core.util.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Date;
+import java.util.function.Function;
+import javax.xml.bind.DatatypeConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -10,31 +17,18 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.User;
 
-import javax.xml.bind.DatatypeConverter;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Date;
-import java.util.function.Function;
-
 @Slf4j
 @Component
 public class JwtUtil {
 
+    public static final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS512;
+    private final SecureRandom secureRandom = new SecureRandom();
     @Value("${jwt.token.validity}")
     public Long tokenValidity;
-
     @Value("${jwt.signing.key}")
     public String signingKey;
-
     @Value("${spring.application.name}")
     public String appName;
-
-
-    private final SecureRandom secureRandom = new SecureRandom();
-
-    public static final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS512;
 
     public String extractUsernameFromToken(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -56,9 +50,9 @@ public class JwtUtil {
 
     private Claims getAllClaimsFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(signingKey)
-                .parseClaimsJws(token)
-                .getBody();
+            .setSigningKey(signingKey)
+            .parseClaimsJws(token)
+            .getBody();
     }
 
     private Boolean isTokenExpired(String token) {
@@ -70,18 +64,34 @@ public class JwtUtil {
         String jwtSecurityHash = this.generateJWTSecurityFingerprintHash(fingerprint);
         var user = (User) authentication.getPrincipal();
 
+        return Jwts.builder()
+            .setHeaderParam("typ", "JWT")
+            .setIssuer(appName)
+            .setSubject(authentication.getName())
+            .claim("jwt-security-fingerprint", jwtSecurityHash)
+            .claim("role", user.getAuthority().getName())
+            .claim("userId", user.getId())
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis() + tokenValidity))
+            .signWith(signatureAlgorithm, signingKey)
+            .compact();
+    }
+
+    public String generateToken(UserDetails userDetails, String fingerprint) {
+        String jwtSecurityHash = this.generateJWTSecurityFingerprintHash(fingerprint);
+        var user = (User) userDetails;
 
         return Jwts.builder()
-                .setHeaderParam("typ", "JWT")
-                .setIssuer(appName)
-                .setSubject(authentication.getName())
-                .claim("jwt-security-fingerprint", jwtSecurityHash)
-                .claim("role", user.getAuthority().getName())
-                .claim("userId", user.getId())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + tokenValidity))
-                .signWith(signatureAlgorithm, signingKey)
-                .compact();
+            .setHeaderParam("typ", "JWT")
+            .setIssuer(appName)
+            .setSubject(user.getEmail())
+            .claim("jwt-security-fingerprint", jwtSecurityHash)
+            .claim("role", user.getAuthority().getName())
+            .claim("userId", user.getId())
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis() + tokenValidity))
+            .signWith(signatureAlgorithm, signingKey)
+            .compact();
     }
 
     public String generateJWTSecurityFingerprint() {
@@ -95,7 +105,8 @@ public class JwtUtil {
         // Generisanje hash-a za fingerprint koji stavljamo u token (sprecavamo XSS da procita fingerprint i sam postavi ocekivani cookie)
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] userFingerprintDigest = digest.digest(jwtSecurity.getBytes(StandardCharsets.UTF_8));
+            byte[] userFingerprintDigest =
+                digest.digest(jwtSecurity.getBytes(StandardCharsets.UTF_8));
             return DatatypeConverter.printHexBinary(userFingerprintDigest);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -103,13 +114,12 @@ public class JwtUtil {
         }
     }
 
-
     public boolean checkAlgHeaderParam(String token) {
         var algorithm = Jwts.parser()
-                .setSigningKey(signingKey)
-                .parseClaimsJws(token)
-                .getHeader()
-                .getAlgorithm();
+            .setSigningKey(signingKey)
+            .parseClaimsJws(token)
+            .getHeader()
+            .getAlgorithm();
         return algorithm.equals(signatureAlgorithm.getValue());
     }
 
@@ -118,7 +128,8 @@ public class JwtUtil {
         String jwtSecurityHash = this.generateJWTSecurityFingerprintHash(cookieValue);
         String jwtSecurity = this.extractJWTSecurity(token);
 
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token)) && jwtSecurity.equals(jwtSecurityHash);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token)) &&
+            jwtSecurity.equals(jwtSecurityHash);
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
