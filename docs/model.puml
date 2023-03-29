@@ -16,17 +16,12 @@ enum Sex {
   FEMALE
 }
 
-enum Language {
+class Language {
   SR_LATIN
   SR_CYRILLIC
   ENG
 }
 
-enum TranslationType {
-  MACHINE
-  HUMAN
-  ORIGINAL
-}
 
 ' TODO: Ekvivalent RecordDTO klasi, cilj je da se zajednicki metapodaci za razlicite entitete modeluju kako bi bili lako dostupni
 class CommonMetadata {
@@ -45,7 +40,7 @@ class CommonMetadata {
 class MultiLingualContent {
   Language language
   String content
-  TranslationType translationType
+  int priority
 }
 
 class GeoLocation {
@@ -53,6 +48,13 @@ class GeoLocation {
   Double latitude
   int precisionInMeters
 }
+
+  class AuthorName {
+    -Stirng firstname
+    -Stirng otherName
+    -Stirng lastame
+  }
+
 
 package user {
   
@@ -70,10 +72,12 @@ package user {
     -String email
     -String password
     -String note
+    -Stirng firstname
+    -Stirng lastname
     -Language preferedLanguage
     -boolean isActive
     -Authority authority
-    -Author author
+    -Person person
   }
 
   class UserActivation {
@@ -86,18 +90,22 @@ package user {
 
 
 
-package author {
-  class Author {
+package person {
+
+  class Person {
     -AuthorName authorName
     -Set<MultiLingualContent> otherNames
     +String name()
-    -TitleInstitution titleInstitution
+    -Set<TitleOrganisationalUnit> titleOrganisationalUnit
     -Set<MultiLingualContent> biography
     -Set<MultiLingualContent> keyword
-    -String contantEmail
+    -String contactEmail
     -String phoneNumber
-    -String altPhoneNumber
     -String apvnt
+    -String mnid
+    -String ORCID
+    -String scopusAuthorId
+    -int oldId
     -Set<ResearchArea> researchAreas 
 
   }
@@ -114,24 +122,30 @@ package author {
   }
 
 ' TODO: Da li ce nekada biti potrebna instorija kada je dobio koje zvanje, da li je potrebna samo zadnja institucija ili?
-  class TitleInstitution {
+  class TitleOrganisationalUnit {
     -int year
-    -String title
-    -Institution institution
+    -Set<MultiLingualContent> thesisTitle
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> shortTitle
+    -Set<MultiLingualContent> organisationalUnitName
+    ' -OrganisationalUnit organisationalUnit
+    ' -Thesis thesis
   }
+
 
 }
 
 
 ' TODO: Sta je someName
 package institution {
-  class Institution {
+  class OrganisationalUnit {
     -Set<MultiLingualContent> name
     -String acronym
     -Set<MultiLingualContent> keyword
     -Set<ResearchArea> researchAreas
     GeoLocation location
   }
+  OrganisationalUnit "1" --> "0..1" OrganisationalUnit
 
   class ResearchArea {
     -Set<MultiLingualContent> term
@@ -143,7 +157,7 @@ package institution {
 }
 
 ' TODO: za svaki tip publikacije dodati zasebnu klasu ili modelovati sve u jednoj velikoj tabeli
-package publication {
+package document {
 
   class PublisherName {
     -String name
@@ -157,22 +171,31 @@ package publication {
   }
 
   class AuthorContribution {
-    -Author author
+    -Person person
     -Set<MultiLingualContent> contributionDescription
     -boolean mainAuthor
   }
 
+  class DocumentFile {
+    string filename
+    string serverFilename
+    string description
+    string mainType
+  }
+
   ' TODO: Sta je alphabet???
-  class Publication {
-    -Institution institution
+  class Document {
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> subTitle
+    -Set<MultiLingualContent> description
     -Set<AuthorContribution> authors
     -Set<string> uris
-    -LocalDate publicationDate
-    -String filename
+    -LocalDate documentDate
+    -Set<String> filename  ' TODO: Dodati novu klasu za filename sa metapodatcima
     -CommonMetadata metadata
   }
 
-  class ProceedingsPublication extends Publication {
+  class ProceedingsPublication extends Document {
     -Set<MultiLingualContent> title
     -Set<MultiLingualContent> subtitle
     -String startPage;
@@ -192,7 +215,7 @@ package publication {
     -String dimension
     -String editionTitle
     -Integer editionNumber
-    -Set<Author> editors
+    -Set<Person> editors
     -Set<String> languages
     -Set<MultiLingualContent> nameAbbreviation
     -Set<MultiLingualContent> note
@@ -219,7 +242,7 @@ package publication {
   Proceedings "1..*" --> "1" Conference
 
   ' Sta su paperType, start i end page?
-  class JournalPublication extends Publication {
+  class JournalPublication extends Document {
     -Set<MultiLingualContent> title
     -String startPage;
 	  -String endPage;
@@ -234,7 +257,7 @@ package publication {
   class Journal {
     -Set<MultiLingualContent> title
     -String issn
-    -Set<Author> editors
+    -Set<Person> editors
     -Set<String> languages
     -Set<MultiLingualContent> nameAbbreviation
     -Set<MultiLingualContent> note
@@ -246,7 +269,7 @@ package publication {
   JournalPublication "1..*" --> "1" Journal
 
   ' TODO: Da li je poglavlje u monografiji dovoljno da se modeluje kao monografija pa da se u author contibution navede ko je sta radio
-  class MonographPublication extends Publication {
+  class MonographPublication extends Document {
     -Set<MultiLingualContent> title
     -Set<MultiLingualContent> subtitle
     -String startPage;
@@ -270,7 +293,7 @@ package publication {
     -Integer editionNumber
     -String editionISSN
     -String alphabet
-    -Set<Author> editors
+    -Set<Person> editors
     -Set<String> languages
     -Set<String> originalLanguages
     -Set<MultiLingualContent> note
@@ -282,7 +305,7 @@ package publication {
 
   MonographPublication "1..*" --> "1" Monograph
 
-  class Patent extends Publication {
+  class Patent extends Document {
     -Set<MultiLingualContent> title
     -String number;
     -Set<MultiLingualContent> keywords
@@ -290,17 +313,17 @@ package publication {
     -String doi
   }
 
-  class Other extends Publication {
+  class Other extends Document {
     -OtherPublicationCategory category
   }
 
-  class Thesis extends Publication {
+  class Thesis extends Document {
+    -OrganisationalUnit organisationalUnit
     -ThesisCategory category
   }
 
-  class Product extends Publication {
+  class Product extends Document {
     -ProductCategory category
-    -Set<MultiLingualContent> name
     -String internalNumber
     -Set<MultiLingualContent> keywords
     -Set<MultiLingualContent> description
@@ -329,7 +352,7 @@ package publication {
     POLEMICS
   }
 
-  Publication "1" --> "1..*" AuthorContribution
+  Document "1" --> "1..*" AuthorContribution
   Monograph "0..*" --> "1" Publisher
   Proceedings "0..*" --> "1" Publisher
   Patent "0..*" --> "1" Publisher
@@ -338,3 +361,4 @@ package publication {
 }
 
 @enduml
+
