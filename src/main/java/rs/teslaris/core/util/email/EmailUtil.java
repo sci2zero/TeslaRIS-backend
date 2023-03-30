@@ -13,7 +13,7 @@ public class EmailUtil {
 
     private final JavaMailSender mailSender;
 
-    @Value("${email.address}")
+    @Value("${mail.sender.address}")
     private String emailAddress;
 
     @Async
