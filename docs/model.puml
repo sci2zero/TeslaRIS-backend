@@ -16,26 +16,18 @@ enum Sex {
   FEMALE
 }
 
+enum ApproveStatus {
+  REQUESTED
+  APPROVED
+  DECLINED
+}
+
 class Language {
-  SR_LATIN
-  SR_CYRILLIC
-  ENG
+  -String value
 }
 
 
 ' TODO: Ekvivalent RecordDTO klasi, cilj je da se zajednicki metapodaci za razlicite entitete modeluju kako bi bili lako dostupni
-class CommonMetadata {
-  ' TODO: controlNumber? HTML/string representation?
-  -String controlNumber
-	-String scopusID
-	-String ORCID
-	-Locale locale
-	-String stringRepresentation
-	-String HTMLRepresentation
-	-String harvardRepresentation
-	-String MARC21
-	-String dublinCore
-}
 
 class MultiLingualContent {
   Language language
@@ -53,6 +45,7 @@ class GeoLocation {
     -Stirng firstname
     -Stirng otherName
     -Stirng lastame
+    -LocalDateTime validFrom ' TODO: edit
   }
 
 
@@ -78,6 +71,7 @@ package user {
     -boolean isActive
     -Authority authority
     -Person person
+    -OrganisationalUnit organisationalUnit
   }
 
   class UserActivation {
@@ -94,7 +88,7 @@ package person {
 
   class Person {
     -AuthorName authorName
-    -Set<MultiLingualContent> otherNames
+    -Set<AuthorName> otherNames
     +String name()
     -Set<TitleOrganisationalUnit> titleOrganisationalUnit
     -Set<MultiLingualContent> biography
@@ -121,6 +115,15 @@ package person {
     -Sex sex
   }
 
+  class PersonOrganisationalUnit {
+    -LocalDate from
+    -LocalDate to
+    -String position
+    -String title
+    -ApproveStatus approveStatus
+  }
+
+
 ' TODO: Da li ce nekada biti potrebna instorija kada je dobio koje zvanje, da li je potrebna samo zadnja institucija ili?
   class TitleOrganisationalUnit {
     -int year
@@ -143,16 +146,28 @@ package institution {
     -String acronym
     -Set<MultiLingualContent> keyword
     -Set<ResearchArea> researchAreas
-    GeoLocation location
+    -GeoLocation location
   }
   OrganisationalUnit "1" --> "0..1" OrganisationalUnit
 
+  class OrganisationalUnitLink {
+    OrganisationalUnitLink baseOrganisationalUnit
+    RelationType relationType
+    OrganisationalUnit organisationalUnit
+    LocalDateTime fromDate
+    LocalDateTime toDate
+  }
+
   class ResearchArea {
-    -Set<MultiLingualContent> term
+    -Set<MultiLingualContent> name
     -Set<MultiLingualContent> description
   }
-  ResearchArea "1" --> "0..1" ResearchArea
+  ResearchArea "1" --> "*" ResearchArea
 
+  enum RelationType {
+    BELONGS_TO
+    MEMBER_OF
+  }
 
 }
 
@@ -188,29 +203,28 @@ package document {
     -Set<MultiLingualContent> title
     -Set<MultiLingualContent> subTitle
     -Set<MultiLingualContent> description
+    -Set<MultiLingualContent> note
     -Set<AuthorContribution> authors
     -Set<string> uris
     -LocalDate documentDate
     -Set<String> filename  ' TODO: Dodati novu klasu za filename sa metapodatcima
-    -CommonMetadata metadata
+    -Set<MultiLingualContent> keywords
+    -ApproveStatus approveStatus
+    -String note
+    -String doi
+    -String scopusId
   }
 
   class ProceedingsPublication extends Document {
-    -Set<MultiLingualContent> title
-    -Set<MultiLingualContent> subtitle
     -String startPage;
 	  -String endPage;
     -Integer numberOfPages
-    -Set<MultiLingualContent> note
-    -Set<MultiLingualContent> keywords
-    -Set<MultiLingualContent> abstracT
   }
 
   class Proceedings {
     -Conference conference
-    -Set<MultiLingualContent> title
-    -Set<MultiLingualContent> subtitle
-    -String isbn
+    -String eIsbn
+    -String printIsbn
     -Integer numberOfPages
     -String dimension
     -String editionTitle
@@ -218,24 +232,22 @@ package document {
     -Set<Person> editors
     -Set<String> languages
     -Set<MultiLingualContent> nameAbbreviation
-    -Set<MultiLingualContent> note
-    -Set<MultiLingualContent> keywords
-    -Set<MultiLingualContent> abstracT
-    -String uri
-    -String doi
+    -Journal journal
   }
 
   class Conference {
     -Set<MultiLingualContent> name
-    -String place
-	  -Integer year
-    -String period
+    -Event event
     -String number
-    -String state
     -String fee
-    -Set<MultiLingualContent> description
-    -Set<MultiLingualContent> keywords
-    -String uri
+  }
+
+  class Event {
+    -String title
+    -LocalDate from
+    -LocalDate to
+    -String state
+    -String place
   }
 
   ProceedingsPublication "1..*" --> "1" Proceedings
@@ -243,48 +255,36 @@ package document {
 
   ' Sta su paperType, start i end page?
   class JournalPublication extends Document {
-    -Set<MultiLingualContent> title
     -String startPage;
 	  -String endPage;
+    -Stirng articleNumber
     -String volume
-	  -String number
-    -Set<MultiLingualContent> note
-    -Set<MultiLingualContent> keywords
-    -Set<MultiLingualContent> abstracT
-    -String doi
+	  -String issue
   }
 
   class Journal {
-    -Set<MultiLingualContent> title
-    -String issn
-    -Set<Person> editors
+    -String eIssn
+    -String printIssn
+    -Set<JournalEditors> journalEditors
     -Set<String> languages
     -Set<MultiLingualContent> nameAbbreviation
-    -Set<MultiLingualContent> note
-    -Set<MultiLingualContent> keywords
-    -String uri
-    -String doi
+  }
+
+  class JournalEditors {
+    -Person person
+    -LocalDate from
+    -LocalDate to
   }
 
   JournalPublication "1..*" --> "1" Journal
 
   ' TODO: Da li je poglavlje u monografiji dovoljno da se modeluje kao monografija pa da se u author contibution navede ko je sta radio
   class MonographPublication extends Document {
-    -Set<MultiLingualContent> title
-    -Set<MultiLingualContent> subtitle
     -String startPage;
 	  -String endPage
-    -Set<MultiLingualContent> note
-    -Set<MultiLingualContent> keywords
-    -Set<MultiLingualContent> abstracT
-    -String doi
   }
 
-  class Monograph {
-    -Set<MultiLingualContent> title
-    -Set<MultiLingualContent> subtitle
-    -String volumeCode
-    -String volumeTitle
+  class Monograph extends Document {
     -String isbn
     -Integer numberOfPages
     -String dimension
@@ -294,27 +294,29 @@ package document {
     -String editionISSN
     -String alphabet
     -Set<Person> editors
-    -Set<String> languages
-    -Set<String> originalLanguages
-    -Set<MultiLingualContent> note
-    -Set<MultiLingualContent> keywords
-    -Set<MultiLingualContent> abstracT
-    -String doi
+    -Set<Language> originalLanguages
     -ResearchArea researchArea
   }
 
   MonographPublication "1..*" --> "1" Monograph
 
   class Patent extends Document {
-    -Set<MultiLingualContent> title
     -String number;
-    -Set<MultiLingualContent> keywords
-    -Set<MultiLingualContent> abstracT
-    -String doi
   }
 
-  class Other extends Document {
-    -OtherPublicationCategory category
+  class InformativeAttachment extends Document {
+  }
+
+  class EncyclopedicContribution extends Document {
+  }
+
+  class LexicographicContribution extends Document {
+  }
+
+  class ScientificCritic extends Document {
+  }
+
+  class Polemics extends Document {
   }
 
   class Thesis extends Document {
@@ -325,10 +327,11 @@ package document {
   class Product extends Document {
     -ProductCategory category
     -String internalNumber
-    -Set<MultiLingualContent> keywords
-    -Set<MultiLingualContent> description
-    -String uri;
-	  -String doi;
+  }
+
+  class Software extends Document {
+    -ProductCategory category
+    -String internalNumber
   }
 
   enum ThesisCategory {
