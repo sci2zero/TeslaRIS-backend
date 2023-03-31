@@ -1,5 +1,7 @@
 package rs.teslaris.core.service.impl;
 
+import com.google.common.hash.Hashing;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -58,8 +60,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public AuthenticationResponseDTO refreshToken(String refreshTokenValue, String fingerprint) {
+        var hashedRefreshToken = Hashing.sha256()
+            .hashString(refreshTokenValue, StandardCharsets.UTF_8)
+            .toString();
 
-        var refreshToken = refreshTokenRepository.getRefreshToken(refreshTokenValue).orElseThrow(
+        var refreshToken = refreshTokenRepository.getRefreshToken(hashedRefreshToken).orElseThrow(
             () -> new NonExistingRefreshTokenException("Non existing refresh token provided."));
 
         var newRefreshToken = createAndSaveRefreshTokenForUser(refreshToken.getUser());
@@ -101,7 +106,10 @@ public class UserServiceImpl implements UserService {
 
     private String createAndSaveRefreshTokenForUser(User user) {
         var refreshTokenValue = UUID.randomUUID().toString();
-        refreshTokenRepository.save(new RefreshToken(refreshTokenValue, user));
+        var hashedRefreshToken = Hashing.sha256()
+            .hashString(refreshTokenValue, StandardCharsets.UTF_8)
+            .toString();
+        refreshTokenRepository.save(new RefreshToken(hashedRefreshToken, user));
 
         return refreshTokenValue;
     }
