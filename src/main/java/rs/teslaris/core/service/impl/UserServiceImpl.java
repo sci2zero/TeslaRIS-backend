@@ -1,6 +1,9 @@
 package rs.teslaris.core.service.impl;
 
+import java.util.Date;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -8,9 +11,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.AuthenticationRequestDTO;
+import rs.teslaris.core.dto.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.TakeRoleOfUserRequestDTO;
+import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
+import rs.teslaris.core.model.RefreshToken;
 import rs.teslaris.core.model.User;
+import rs.teslaris.core.repository.RefreshTokenRepository;
 import rs.teslaris.core.repository.UserRepository;
 import rs.teslaris.core.service.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -23,6 +30,9 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    private final RefreshTokenRepository refreshTokenRepository;
+
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByEmail(username).orElseThrow(
@@ -30,21 +40,39 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String authenticateUser(AuthenticationManager authenticationManager,
-                                   AuthenticationRequestDTO authenticationRequest,
-                                   String fingerprint) {
+    public AuthenticationResponseDTO authenticateUser(AuthenticationManager authenticationManager,
+                                                      AuthenticationRequestDTO authenticationRequest,
+                                                      String fingerprint) {
         var authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(authenticationRequest.getEmail(),
                 authenticationRequest.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        return tokenUtil.generateToken(authentication, fingerprint);
+        var refreshTokenValue =
+            createAndSaveRefreshTokenForUser((User) authentication.getPrincipal());
+
+        return new AuthenticationResponseDTO(tokenUtil.generateToken(authentication, fingerprint),
+            refreshTokenValue);
     }
 
     @Override
-    public String takeRoleOfUser(TakeRoleOfUserRequestDTO takeRoleOfUserRequest,
-                                 String fingerprint) {
+    public AuthenticationResponseDTO refreshToken(String refreshTokenValue, String fingerprint) {
+
+        var refreshToken = refreshTokenRepository.getRefreshToken(refreshTokenValue).orElseThrow(
+            () -> new NonExistingRefreshTokenException("Non existing refresh token provided."));
+
+        var newRefreshToken = createAndSaveRefreshTokenForUser(refreshToken.getUser());
+        refreshTokenRepository.delete(refreshToken);
+
+        return new AuthenticationResponseDTO(
+            tokenUtil.generateToken(refreshToken.getUser(), fingerprint),
+            newRefreshToken);
+    }
+
+    @Override
+    public AuthenticationResponseDTO takeRoleOfUser(TakeRoleOfUserRequestDTO takeRoleOfUserRequest,
+                                                    String fingerprint) {
         var user = (User) loadUserByUsername(takeRoleOfUserRequest.getUserEmail());
 
         if (!user.getCanTakeRole()) {
@@ -55,7 +83,10 @@ public class UserServiceImpl implements UserService {
         user.setCanTakeRole(false);
         userRepository.save(user);
 
-        return tokenUtil.generateToken(user, fingerprint);
+        var refreshTokenValue = createAndSaveRefreshTokenForUser(user);
+
+        return new AuthenticationResponseDTO(tokenUtil.generateToken(user, fingerprint),
+            refreshTokenValue);
     }
 
     @Override
@@ -66,5 +97,24 @@ public class UserServiceImpl implements UserService {
         user.setCanTakeRole(true);
 
         userRepository.save(user);
+    }
+
+    private String createAndSaveRefreshTokenForUser(User user) {
+        var refreshTokenValue = UUID.randomUUID().toString();
+        refreshTokenRepository.save(new RefreshToken(refreshTokenValue, user));
+
+        return refreshTokenValue;
+    }
+
+    @Scheduled(cron = "0 */5 * ? * *")
+    public void cleanupLongLivedRefreshTokens() {
+        var refreshTokens = refreshTokenRepository.findAll();
+
+        var now = new Date();
+        var twentyMinutesAgo = new Date(now.getTime() - (20 * 60 * 1000));
+
+        refreshTokens.stream()
+            .filter(token -> token.getCreateDate().before(twentyMinutesAgo))
+            .forEach(refreshTokenRepository::delete);
     }
 }

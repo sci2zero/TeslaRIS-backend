@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.RefreshTokenRequestDTO;
 import rs.teslaris.core.dto.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.service.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -36,11 +37,23 @@ public class UserController {
         @RequestBody AuthenticationRequestDTO authenticationRequest) {
         var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
 
-        var token =
+        var authenticationResponse =
             userService.authenticateUser(authenticationManager, authenticationRequest, fingerprint);
 
         var headers = getJwtSecurityCookieHeader(fingerprint);
-        return new ResponseEntity<>(new AuthenticationResponseDTO(token), headers, HttpStatus.OK);
+        return new ResponseEntity<>(authenticationResponse, headers, HttpStatus.OK);
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthenticationResponseDTO> refreshToken(
+        @RequestBody RefreshTokenRequestDTO refreshTokenRequest) {
+        var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
+
+        var authenticationResponse =
+            userService.refreshToken(refreshTokenRequest.getRefreshTokenValue(), fingerprint);
+
+        var headers = getJwtSecurityCookieHeader(fingerprint);
+        return new ResponseEntity<>(authenticationResponse, headers, HttpStatus.OK);
     }
 
     @PostMapping("/take-role")
@@ -50,10 +63,10 @@ public class UserController {
 
         var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
 
-        var token = userService.takeRoleOfUser(takeRoleRequest, fingerprint);
+        var authenticationResponse = userService.takeRoleOfUser(takeRoleRequest, fingerprint);
 
         var headers = getJwtSecurityCookieHeader(fingerprint);
-        return new ResponseEntity<>(new AuthenticationResponseDTO(token), headers, HttpStatus.OK);
+        return new ResponseEntity<>(authenticationResponse, headers, HttpStatus.OK);
     }
 
     @PatchMapping("/allow-role-taking")
