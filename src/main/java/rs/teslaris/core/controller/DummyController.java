@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ public class DummyController {
     private final EmailUtil emailUtil;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN_READ')")
     public String returnDummyData() {
         return "TEST";
     }
