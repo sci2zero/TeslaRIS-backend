@@ -1,7 +1,7 @@
 version: "3.7"
 services:
     teslaris:
-        container_name: "teslaris-api"
+        container_name: teslaris-api
         build:
             context: .
             dockerfile: .docker/Dockerfile
