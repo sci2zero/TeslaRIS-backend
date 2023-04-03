@@ -32,6 +32,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "locked", nullable = false)
     private Boolean locked;
 
+    @Column(name = "can_take_role", nullable = false)
+    private Boolean canTakeRole;
+
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinColumn(name = "authority_id")
     private Authority authority;
