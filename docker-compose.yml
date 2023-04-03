@@ -7,6 +7,8 @@ services:
             dockerfile: .docker/Dockerfile
         depends_on:
             - db
+            - elasticsearch
+            - kibana
         environment:
             - API_PORT=8081
             - DB_USERNAME=postgres
@@ -19,21 +21,39 @@ services:
             - teslaris-network
     db:
         image: postgres:14.1-alpine
-        restart: always
+        container_name: teslaris-postgres-db
         environment:
             - POSTGRES_USER=postgres
             - POSTGRES_PASSWORD=postgres
-            - POSTGRES_DB=TeslaRISDB
-            - APP_DB_USER=docker
-            - APP_DB_PASS=docker
             - APP_DB_NAME=TeslaRISDB
         ports:
             - "5432:5432"
         volumes:
             - db:/var/lib/postgresql/data
-            - ./db:/docker-entrypoint-initdb.d/
+            - ./scripts:/docker-entrypoint-initdb.d/
         networks:
             - teslaris-network
+        restart: always
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.4.3
+        container_name: teslaris-elasticsearch
+        environment:
+            - discovery.type=single-node
+            - ES_JAVA_OPTS=-Xms1g -Xmx1g
+            - xpack.security.enabled=false
+        ports:
+            - "9200:9200"
+        networks:
+            - teslaris-network
+        restart: always
+    kibana:
+        image: docker.elastic.co/kibana/kibana:8.4.3
+        container_name: teslaris-kibana
+        ports:
+            - "5601:5601"
+        networks:
+            - teslaris-network
+        restart: always
 
 networks:
     teslaris-network:
@@ -41,3 +61,4 @@ networks:
 
 volumes:
     db:
+    scripts:
