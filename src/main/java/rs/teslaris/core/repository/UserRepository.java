@@ -9,6 +9,5 @@ import rs.teslaris.core.model.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-    @Query("select u from User u where u.email = :email")
     Optional<User> findByEmail(String email);
 }

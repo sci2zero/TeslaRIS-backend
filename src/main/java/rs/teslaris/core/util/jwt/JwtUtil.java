@@ -85,14 +85,16 @@ public class JwtUtil {
     }
 
     public String generateJWTSecurityFingerprint() {
-        // Generisanje random string-a koji ce predstavljati fingerprint za korisnika
+        // Random string generation, which acts as a fingerprint for user
         byte[] randomFgp = new byte[50];
         this.secureRandom.nextBytes(randomFgp);
         return DatatypeConverter.printHexBinary(randomFgp);
     }
 
     private String generateJWTSecurityFingerprintHash(String jwtSecurity) {
-        // Generisanje hash-a za fingerprint koji stavljamo u token (sprecavamo XSS da procita fingerprint i sam postavi ocekivani cookie)
+        // Generating a hash for the fingerprint that we put into a token
+        // (to prevent XSS attacker from reading the fingerprint and setting
+        // the expected cookie on its own)
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] userFingerprintDigest = digest.digest(jwtSecurity.getBytes(StandardCharsets.UTF_8));
