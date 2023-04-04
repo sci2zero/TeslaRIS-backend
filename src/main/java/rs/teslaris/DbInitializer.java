@@ -34,12 +34,13 @@ public class DbInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         var allowAccountTakeover = new Privilege("ALLOW_ACCOUNT_TAKEOVER");
         var takeRoleOfUser = new Privilege("TAKE_ROLE");
+        var deactivateUser = new Privilege("DEACTIVATE_USER");
         privilegeRepository.saveAll(
-            Arrays.asList(allowAccountTakeover, takeRoleOfUser));
+            Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser));
 
         var adminAuthority = new Authority("ADMIN",
             new HashSet<>(
-                List.of(new Privilege[] {takeRoleOfUser})));
+                List.of(new Privilege[] {takeRoleOfUser, deactivateUser})));
         var authorAuthority =
             new Authority("AUTHOR", new HashSet<>(List.of(new Privilege[] {allowAccountTakeover})));
         authorityRepository.save(adminAuthority);

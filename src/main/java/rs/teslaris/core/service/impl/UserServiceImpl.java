@@ -4,6 +4,7 @@ import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
+import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +17,7 @@ import rs.teslaris.core.dto.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
+import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.model.RefreshToken;
 import rs.teslaris.core.model.User;
@@ -102,6 +104,20 @@ public class UserServiceImpl implements UserService {
         user.setCanTakeRole(true);
 
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void deactivateUser(Integer userId) {
+        var userToDeactivate = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User with given ID does not exist."));
+
+        if (userToDeactivate.getAuthority().getName().equals("ADMIN")) {
+            return;
+        }
+
+        userToDeactivate.setLocked(!userToDeactivate.getLocked());
+        userRepository.save(userToDeactivate);
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {

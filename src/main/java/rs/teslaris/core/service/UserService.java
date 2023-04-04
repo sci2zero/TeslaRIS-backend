@@ -20,4 +20,6 @@ public interface UserService extends UserDetailsService {
                                              String fingerprint);
 
     void allowTakingRoleOfAccount(String bearerToken);
+
+    void deactivateUser(Integer userId);
 }
