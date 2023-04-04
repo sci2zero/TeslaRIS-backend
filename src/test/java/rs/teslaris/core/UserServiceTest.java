@@ -29,22 +29,21 @@ import rs.teslaris.core.repository.LanguageRepository;
 import rs.teslaris.core.repository.UserAccountActivationRepository;
 import rs.teslaris.core.repository.UserRepository;
 import rs.teslaris.core.service.impl.UserServiceImpl;
+import rs.teslaris.core.util.email.EmailUtil;
 
 @SpringBootTest
 public class UserServiceTest {
 
     @Mock
+    EmailUtil emailUtil;
+    @Mock
     private UserRepository userRepository;
-
     @Mock
     private LanguageRepository languageRepository;
-
     @Mock
     private AuthorityRepository authorityRepository;
-
     @Mock
     private UserAccountActivationRepository userAccountActivationRepository;
-
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -54,7 +53,8 @@ public class UserServiceTest {
         // given
         Integer userId = 1;
         User user =
-            new User("email@email.com", "passwd", "", "Ime", "Prezime", false, true, null,
+            new User("email@email.com", "passwd", "",
+                "Ime", "Prezime", false, true, null,
                 new Authority("AUTHOR", null), null, null);
         user.setId(1);
 
@@ -73,7 +73,8 @@ public class UserServiceTest {
         // given
         Integer userId = 1;
         User user =
-            new User("email@email.com", "passwd", "", "Ime", "Prezime", false, true, null,
+            new User("email@email.com", "passwd", "",
+                "Ime", "Prezime", false, true, null,
                 new Authority("ADMIN", null), null, null);
         user.setId(1);
 
@@ -120,7 +121,8 @@ public class UserServiceTest {
         authority.setName("USER");
         when(authorityRepository.findById(2)).thenReturn(Optional.of(authority));
 
-        User newUser = new User("johndoe@example.com", "password123", "", "John", "Doe", true,
+        User newUser = new User("johndoe@example.com", "password123", "",
+            "John", "Doe", true,
             false, language, authority, null, null);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
@@ -194,7 +196,8 @@ public class UserServiceTest {
         // given
         String activationTokenValue = "valid_token";
         UserAccountActivation accountActivation = new UserAccountActivation(activationTokenValue,
-            new User("johndoe@example.com", "password123", "", "John", "Doe", true,
+            new User("johndoe@example.com", "password123", "",
+                "John", "Doe", true,
                 true, new Language(), new Authority(), null, null));
         when(
             userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
