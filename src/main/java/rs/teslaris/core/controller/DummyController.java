@@ -13,12 +13,16 @@ import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.security.access.prepost.PreAuthorize;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.indexmodel.DummyIndex;
 import rs.teslaris.core.indexrepository.DummyIndexRepository;
+import rs.teslaris.core.util.email.EmailUtil;
+
 
 @RestController
 @RequestMapping("/api/dummy")
@@ -29,7 +33,11 @@ public class DummyController {
 
     private final DummyIndexRepository repo;
 
+    private final EmailUtil emailUtil;
+    
+
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN_READ')")
     public String returnDummyData() {
         return "TEST";
     }
@@ -73,5 +81,10 @@ public class DummyController {
         return BoolQuery.of(b -> b
             .should(s -> s.match(m -> m.field("test_text").query(text)))
         )._toQuery();
+    }
+    
+    @PostMapping
+    public void testEmail() {
+        emailUtil.sendSimpleEmail("email@email.com", "SUBJECT", "TEXT");
     }
 }
