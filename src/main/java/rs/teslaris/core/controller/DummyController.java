@@ -28,8 +28,6 @@ import rs.teslaris.core.indexrepository.DummyIndexRepository;
 @RequiredArgsConstructor
 public class DummyController {
 
-    private final ElasticsearchClient elasticsearchClient;
-
     private final ElasticsearchOperations template;
 
     private final DummyIndexRepository repo;
@@ -51,38 +49,9 @@ public class DummyController {
         var indexingUnit = new DummyIndex();
         indexingUnit.setTestText("TEST TEST TEST");
 
-        elasticsearchClient.index(i -> i
-            .index("dummy")
-            .id(indexingUnit.getId())
-            .document(indexingUnit)
-        );
-
-//        repo.save(indexingUnit);
+        repo.save(indexingUnit);
 
         return indexingUnit;
-    }
-
-    @GetMapping("/search/client")
-    public Page<DummyIndex> testRetrievalNewer(Pageable pageable, String text) throws IOException {
-        var query = buildQuery(text);
-
-        var response = elasticsearchClient.search(s -> s
-                .index("dummy")
-                .query(q -> q.bool(b -> b.must(query))
-                )
-                .from((int) pageable.getOffset())
-                .size(pageable.getPageSize()),
-            DummyIndex.class
-        );
-
-        var content = new ArrayList<DummyIndex>();
-        for (var hit : response.hits().hits()) {
-            content.add(hit.source());
-        }
-
-        var totalElements = response.hits().total().value();
-
-        return new PageImpl<>(content, pageable, totalElements);
     }
 
     @GetMapping("/search")
