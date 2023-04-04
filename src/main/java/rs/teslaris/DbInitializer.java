@@ -11,9 +11,13 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.Authority;
+import rs.teslaris.core.model.Language;
+import rs.teslaris.core.model.Person;
 import rs.teslaris.core.model.Privilege;
 import rs.teslaris.core.model.User;
 import rs.teslaris.core.repository.AuthorityRepository;
+import rs.teslaris.core.repository.LanguageRepository;
+import rs.teslaris.core.repository.PersonRepository;
 import rs.teslaris.core.repository.PrivilegeRepository;
 import rs.teslaris.core.repository.UserRepository;
 
@@ -26,6 +30,10 @@ public class DbInitializer implements ApplicationRunner {
     private final PrivilegeRepository privilegeRepository;
 
     private final UserRepository userRepository;
+
+    private final LanguageRepository languageRepository;
+
+    private final PersonRepository personRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -46,12 +54,20 @@ public class DbInitializer implements ApplicationRunner {
         authorityRepository.save(adminAuthority);
         authorityRepository.save(authorAuthority);
 
+        var serbianLanguage = new Language("Serbian");
+        languageRepository.save(serbianLanguage);
+
+        var person1 = new Person("dummy");
+        personRepository.save(person1);
+
         var adminUser =
-            new User("admin@admin.com", passwordEncoder.encode("admin"), false, false,
-                adminAuthority);
+            new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
+                "Markovic", false, false, serbianLanguage,
+                adminAuthority, null, null);
         var authorUser =
-            new User("author@author.com", passwordEncoder.encode("author"), false, false,
-                authorAuthority);
+            new User("author@author.com", passwordEncoder.encode("author"), "note note note",
+                "Janko", "Jankovic", false, false, serbianLanguage,
+                authorAuthority, person1, null);
         userRepository.save(adminUser);
         userRepository.save(authorUser);
     }

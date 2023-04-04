@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,6 +30,15 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "note", nullable = false)
+    private String note;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstname;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
     @Column(name = "locked", nullable = false)
     private Boolean locked;
 
@@ -36,8 +46,20 @@ public class User extends BaseEntity implements UserDetails {
     private Boolean canTakeRole;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "language_id")
+    private Language preferredLanguage;
+
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinColumn(name = "authority_id")
     private Authority authority;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "person_id")
+    private Person person;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "organisational_unit_id")
+    private OrganisationalUnit organisationalUnit;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

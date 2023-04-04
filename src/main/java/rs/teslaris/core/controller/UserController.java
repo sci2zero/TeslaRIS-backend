@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.RefreshTokenRequestDTO;
+import rs.teslaris.core.dto.RegistrationRequestDTO;
 import rs.teslaris.core.dto.TakeRoleOfUserRequestDTO;
+import rs.teslaris.core.dto.UserResponseDTO;
 import rs.teslaris.core.service.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -60,8 +63,23 @@ public class UserController {
     @PatchMapping("/activation-status/{id}")
     @PreAuthorize("hasAuthority('DEACTIVATE_USER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deactivateUser(@PathVariable("id") Integer userId) {
+    public void deactivateOrActivateUserAccount(@PathVariable("id") Integer userId) {
         userService.deactivateUser(userId);
+    }
+
+    @PostMapping("/activate-account")
+    public void activateUserAccount(@RequestBody ActivateAccountRequestDTO activateRequest) {
+        userService.activateUserAccount(activateRequest.getActivationToken());
+    }
+
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponseDTO registerUser(@RequestBody RegistrationRequestDTO registrationRequest) {
+        var newUser = userService.registerUser(registrationRequest);
+
+        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
+            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
+            newUser.getPreferredLanguage().getValue());
     }
 
     @PostMapping("/take-role")
