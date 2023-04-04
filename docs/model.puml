@@ -308,7 +308,7 @@ package document {
     -Set<MultiLingualContent> note
     -Set<PersonDocumentContribution> contributors
     -Set<String> uris
-    -LocalDate documentDate
+    -String documentDate
     -Set<DocumentFile> fileItems
     -Set<DocumentFile> proof
     -Set<MultiLingualContent> keywords
@@ -326,8 +326,8 @@ package document {
   }
 
   class Proceedings extends Document {
-    -String eIsbn
-    -String printIsbn
+    -String eISBN
+    -String printISBN
     -Integer numberOfPages
     -String editionTitle
     -Integer editionNumber
@@ -377,8 +377,8 @@ package document {
   }
 
   class Journal {
-    -String eIssn
-    -String printIssn
+    -String eISSN
+    -String printISSN
     -Set<PersonJournalContribution> contributors
     -Set<LanguageTag> languages
     -Set<MultiLingualContent> nameAbbreviation
@@ -409,8 +409,8 @@ package document {
   }
 
   class Monograph extends Document {
-    -String printIsbn
-    -String eIsbn
+    -String printISBN
+    -String eISBN
     -Integer numberOfPages
     -String editionTitle
     -Integer editionNumber
