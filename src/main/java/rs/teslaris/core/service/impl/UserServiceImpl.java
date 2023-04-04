@@ -31,6 +31,7 @@ import rs.teslaris.core.repository.RefreshTokenRepository;
 import rs.teslaris.core.repository.UserAccountActivationRepository;
 import rs.teslaris.core.repository.UserRepository;
 import rs.teslaris.core.service.UserService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @Service
@@ -48,6 +49,8 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     private final UserAccountActivationRepository userAccountActivationRepository;
+
+    private final EmailUtil emailUtil;
 
 
     @Override
@@ -172,6 +175,10 @@ public class UserServiceImpl implements UserService {
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
+
+        // Email message should be localised
+        emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
+            "Your activation code is: " + activationToken.getActivationToken());
 
         return savedUser;
     }
