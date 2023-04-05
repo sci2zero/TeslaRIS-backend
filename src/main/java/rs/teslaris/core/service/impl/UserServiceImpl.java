@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.AuthenticationResponseDTO;
@@ -22,14 +23,17 @@ import rs.teslaris.core.exception.CantRegisterAdminException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
+import rs.teslaris.core.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.model.RefreshToken;
 import rs.teslaris.core.model.User;
 import rs.teslaris.core.model.UserAccountActivation;
 import rs.teslaris.core.repository.AuthorityRepository;
-import rs.teslaris.core.repository.LanguageRepository;
 import rs.teslaris.core.repository.RefreshTokenRepository;
 import rs.teslaris.core.repository.UserAccountActivationRepository;
 import rs.teslaris.core.repository.UserRepository;
+import rs.teslaris.core.service.LanguageService;
+import rs.teslaris.core.service.OrganisationalUnitService;
+import rs.teslaris.core.service.PersonService;
 import rs.teslaris.core.service.UserService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -40,8 +44,6 @@ public class UserServiceImpl implements UserService {
 
     private final JwtUtil tokenUtil;
 
-    private final LanguageRepository languageRepository;
-
     private final UserRepository userRepository;
 
     private final AuthorityRepository authorityRepository;
@@ -50,7 +52,15 @@ public class UserServiceImpl implements UserService {
 
     private final UserAccountActivationRepository userAccountActivationRepository;
 
+    private final LanguageService languageService;
+
+    private final PersonService personService;
+
+    private final OrganisationalUnitService organisationalUnitService;
+
     private final EmailUtil emailUtil;
+
+    private final PasswordEncoder passwordEncoder;
 
 
     @Override
@@ -153,9 +163,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User registerUser(RegistrationRequestDTO registrationRequest) {
-        var preferredLanguage = languageRepository.findById(
-                registrationRequest.getPreferredLanguageId())
-            .orElseThrow(() -> new NotFoundException("Language with given ID does not exist."));
+        var preferredLanguage =
+            languageService.findLanguageById(registrationRequest.getPreferredLanguageId());
 
         var authority = authorityRepository.findById(registrationRequest.getAuthorityId())
             .orElseThrow(() -> new NotFoundException("Authority with given ID does not exist."));
@@ -164,19 +173,22 @@ public class UserServiceImpl implements UserService {
             throw new CantRegisterAdminException("Can't register new admin.");
         }
 
-        // WE NEED TO ADD PERSON AND ORGANISATIONAL UNIT TO BE FETCHED AND BIND
+        var person = personService.findPersonById(registrationRequest.getPersonId());
+
+        var organisationalUnit = organisationalUnitService.findOrganisationalUnitById(
+            registrationRequest.getOrganisationalUnitId());
 
         var newUser =
             new User(registrationRequest.getEmail(), registrationRequest.getPassword(), "",
                 registrationRequest.getFirstname(), registrationRequest.getLastName(), true,
-                false, preferredLanguage, authority, null, null);
+                false, preferredLanguage, authority, person, organisationalUnit);
 
         var savedUser = userRepository.save(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        // Email message should be localised
+        // Email message should be localised and customized
         emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
             "Your activation code is: " + activationToken.getActivationToken());
 
@@ -184,8 +196,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUser(UserUpdateRequestDTO userUpdateRequest) {
+    @Transactional
+    public void updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userId) {
+        var userToUpdate = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User with given ID does not exist."));
 
+        var preferredLanguage =
+            languageService.findLanguageById(userUpdateRequest.getPreferredLanguageId());
+
+        var person = personService.findPersonById(userUpdateRequest.getPersonId());
+
+        var organisationalUnit = organisationalUnitService.findOrganisationalUnitById(
+            userUpdateRequest.getOrganisationalUnitId());
+
+        userToUpdate.setEmail(userUpdateRequest.getEmail());
+        userToUpdate.setFirstname(userUpdateRequest.getFirstname());
+        userToUpdate.setLastName(userUpdateRequest.getLastName());
+        userToUpdate.setCanTakeRole(userUpdateRequest.getCanTakeRole());
+        userToUpdate.setPreferredLanguage(preferredLanguage);
+        userToUpdate.setPerson(person);
+        userToUpdate.setOrganisationalUnit(organisationalUnit);
+
+        if (!userUpdateRequest.getOldPassword().equals("") &&
+            passwordEncoder.matches(userUpdateRequest.getOldPassword(),
+                userToUpdate.getPassword())) {
+            userToUpdate.setPassword(passwordEncoder.encode(userUpdateRequest.getNewPassword()));
+        } else if (!userUpdateRequest.getOldPassword().equals("")) {
+            throw new WrongPasswordProvidedException("Wrong old password provided.");
+        }
+
+        userRepository.save(userToUpdate);
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {

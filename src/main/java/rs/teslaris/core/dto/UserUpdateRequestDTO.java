@@ -24,4 +24,8 @@ public class UserUpdateRequestDTO {
     private Boolean canTakeRole;
 
     private Integer preferredLanguageId;
+
+    private Integer personId;
+
+    private Integer organisationalUnitId;
 }

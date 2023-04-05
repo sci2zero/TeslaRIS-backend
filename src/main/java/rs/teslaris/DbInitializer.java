@@ -12,11 +12,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.Authority;
 import rs.teslaris.core.model.Language;
+import rs.teslaris.core.model.OrganisationalUnit;
 import rs.teslaris.core.model.Person;
 import rs.teslaris.core.model.Privilege;
 import rs.teslaris.core.model.User;
 import rs.teslaris.core.repository.AuthorityRepository;
 import rs.teslaris.core.repository.LanguageRepository;
+import rs.teslaris.core.repository.OrganisationalUnitRepository;
 import rs.teslaris.core.repository.PersonRepository;
 import rs.teslaris.core.repository.PrivilegeRepository;
 import rs.teslaris.core.repository.UserRepository;
@@ -35,6 +37,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final PersonRepository personRepository;
 
+    private final OrganisationalUnitRepository organisationalUnitRepository;
+
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -43,14 +47,16 @@ public class DbInitializer implements ApplicationRunner {
         var allowAccountTakeover = new Privilege("ALLOW_ACCOUNT_TAKEOVER");
         var takeRoleOfUser = new Privilege("TAKE_ROLE");
         var deactivateUser = new Privilege("DEACTIVATE_USER");
+        var updateProfile = new Privilege("UPDATE_PROFILE");
         privilegeRepository.saveAll(
-            Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser));
+            Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile));
 
         var adminAuthority = new Authority("ADMIN",
             new HashSet<>(
-                List.of(new Privilege[] {takeRoleOfUser, deactivateUser})));
+                List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile})));
         var authorAuthority =
-            new Authority("AUTHOR", new HashSet<>(List.of(new Privilege[] {allowAccountTakeover})));
+            new Authority("AUTHOR",
+                new HashSet<>(List.of(new Privilege[] {allowAccountTakeover, updateProfile})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(authorAuthority);
 
@@ -70,5 +76,8 @@ public class DbInitializer implements ApplicationRunner {
                 authorAuthority, person1, null);
         userRepository.save(adminUser);
         userRepository.save(authorUser);
+
+        var dummyOU = new OrganisationalUnit("dummy");
+        organisationalUnitRepository.save(dummyOU);
     }
 }

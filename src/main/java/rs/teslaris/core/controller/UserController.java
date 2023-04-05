@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ import rs.teslaris.core.dto.RefreshTokenRequestDTO;
 import rs.teslaris.core.dto.RegistrationRequestDTO;
 import rs.teslaris.core.dto.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.UserResponseDTO;
+import rs.teslaris.core.dto.UserUpdateRequestDTO;
 import rs.teslaris.core.service.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -80,6 +82,15 @@ public class UserController {
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
             newUser.getPreferredLanguage().getValue());
+    }
+
+    @PutMapping
+    @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateUser(@RequestHeader("Authorization") String bearerToken,
+                           @RequestBody UserUpdateRequestDTO updateRequest) {
+        userService.updateUser(updateRequest,
+            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
     }
 
     @PostMapping("/take-role")
