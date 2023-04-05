@@ -23,6 +23,10 @@ public class EmailUtil {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (Exception e) {
+            assert true; // Maybe log network error, that the email could ot be sent?
+        }
     }
 }

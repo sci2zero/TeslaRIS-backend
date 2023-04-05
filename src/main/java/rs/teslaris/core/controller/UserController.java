@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -40,7 +41,7 @@ public class UserController {
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponseDTO> authenticateUser(
-        @RequestBody AuthenticationRequestDTO authenticationRequest) {
+        @RequestBody @Valid AuthenticationRequestDTO authenticationRequest) {
         var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
 
         var authenticationResponse =
@@ -52,7 +53,7 @@ public class UserController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthenticationResponseDTO> refreshToken(
-        @RequestBody RefreshTokenRequestDTO refreshTokenRequest) {
+        @RequestBody @Valid RefreshTokenRequestDTO refreshTokenRequest) {
         var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
 
         var authenticationResponse =
@@ -70,13 +71,14 @@ public class UserController {
     }
 
     @PostMapping("/activate-account")
-    public void activateUserAccount(@RequestBody ActivateAccountRequestDTO activateRequest) {
+    public void activateUserAccount(@RequestBody @Valid ActivateAccountRequestDTO activateRequest) {
         userService.activateUserAccount(activateRequest.getActivationToken());
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponseDTO registerUser(@RequestBody RegistrationRequestDTO registrationRequest) {
+    public UserResponseDTO registerUser(
+        @RequestBody @Valid RegistrationRequestDTO registrationRequest) {
         var newUser = userService.registerUser(registrationRequest);
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
@@ -88,7 +90,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateUser(@RequestHeader("Authorization") String bearerToken,
-                           @RequestBody UserUpdateRequestDTO updateRequest) {
+                           @RequestBody @Valid UserUpdateRequestDTO updateRequest) {
         userService.updateUser(updateRequest,
             tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
     }
@@ -96,7 +98,7 @@ public class UserController {
     @PostMapping("/take-role")
     @PreAuthorize("hasAuthority('TAKE_ROLE')")
     public ResponseEntity<AuthenticationResponseDTO> takeRoleOfUser(
-        @RequestBody TakeRoleOfUserRequestDTO takeRoleRequest) {
+        @RequestBody @Valid TakeRoleOfUserRequestDTO takeRoleRequest) {
 
         var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
 

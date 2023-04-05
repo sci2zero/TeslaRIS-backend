@@ -242,13 +242,11 @@ public class UserServiceTest {
         requestDTO.setNewPassword("newPassword");
         requestDTO.setFirstname("John");
         requestDTO.setLastName("Doe");
-        requestDTO.setCanTakeRole(true);
         requestDTO.setPreferredLanguageId(1);
         requestDTO.setPersonId(2);
         requestDTO.setOrganisationalUnitId(3);
 
         var user = new User();
-        user.setId(1);
         user.setEmail("oldemail@example.com");
         user.setPassword("oldPassword");
         user.setFirstname("Jane");
@@ -277,7 +275,7 @@ public class UserServiceTest {
         assertEquals("test@example.com", user.getEmail());
         assertEquals("John", user.getFirstname());
         assertEquals("Doe", user.getLastName());
-        assertTrue(user.getCanTakeRole());
+        assertFalse(user.getCanTakeRole());
         assertEquals(preferredLanguage, user.getPreferredLanguage());
         assertEquals(person, user.getPerson());
         assertEquals(organisationalUnit, user.getOrganisationalUnit());

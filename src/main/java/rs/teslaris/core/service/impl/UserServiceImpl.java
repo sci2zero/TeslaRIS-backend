@@ -212,7 +212,6 @@ public class UserServiceImpl implements UserService {
         userToUpdate.setEmail(userUpdateRequest.getEmail());
         userToUpdate.setFirstname(userUpdateRequest.getFirstname());
         userToUpdate.setLastName(userUpdateRequest.getLastName());
-        userToUpdate.setCanTakeRole(userUpdateRequest.getCanTakeRole());
         userToUpdate.setPreferredLanguage(preferredLanguage);
         userToUpdate.setPerson(person);
         userToUpdate.setOrganisationalUnit(organisationalUnit);
