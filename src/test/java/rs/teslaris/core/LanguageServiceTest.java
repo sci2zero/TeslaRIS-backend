@@ -1,0 +1,50 @@
+package rs.teslaris.core;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.model.Language;
+import rs.teslaris.core.repository.LanguageRepository;
+import rs.teslaris.core.service.impl.LanguageServiceImpl;
+
+@SpringBootTest
+public class LanguageServiceTest {
+
+    @Mock
+    private LanguageRepository languageRepository;
+    @InjectMocks
+    private LanguageServiceImpl languageService;
+
+    @Test
+    public void shouldReturnLanguageWhenLanguageExists() {
+        // given
+        var expectedLanguage = new Language();
+        expectedLanguage.setValue("English");
+
+        when(languageRepository.findById(1)).thenReturn(Optional.of(expectedLanguage));
+
+        // when
+        Language actualLanguage = languageService.findLanguageById(1);
+
+        // then
+        assertEquals(expectedLanguage, actualLanguage);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenLanguageDoesNotExist() {
+        // given
+        when(languageRepository.findById(1)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class, () -> languageService.findLanguageById(1));
+
+        // then (NotFoundException should be thrown)
+    }
+}
