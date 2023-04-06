@@ -5,7 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,19 +20,27 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import rs.teslaris.core.dto.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.RegistrationRequestDTO;
 import rs.teslaris.core.dto.UserUpdateRequestDTO;
 import rs.teslaris.core.exception.CantRegisterAdminException;
+import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.model.Authority;
 import rs.teslaris.core.model.Language;
 import rs.teslaris.core.model.OrganisationalUnit;
 import rs.teslaris.core.model.Person;
+import rs.teslaris.core.model.RefreshToken;
 import rs.teslaris.core.model.User;
 import rs.teslaris.core.model.UserAccountActivation;
 import rs.teslaris.core.repository.AuthorityRepository;
+import rs.teslaris.core.repository.RefreshTokenRepository;
 import rs.teslaris.core.repository.UserAccountActivationRepository;
 import rs.teslaris.core.repository.UserRepository;
 import rs.teslaris.core.service.LanguageService;
@@ -37,12 +48,15 @@ import rs.teslaris.core.service.PersonService;
 import rs.teslaris.core.service.impl.OrganisationalUnitServiceImpl;
 import rs.teslaris.core.service.impl.UserServiceImpl;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @SpringBootTest
 public class UserServiceTest {
 
     @Mock
     EmailUtil emailUtil;
+    @Mock
+    private JwtUtil tokenUtil;
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -57,6 +71,8 @@ public class UserServiceTest {
     private OrganisationalUnitServiceImpl organisationalUnitService;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -322,5 +338,85 @@ public class UserServiceTest {
             () -> userService.updateUser(requestDTO, 1));
 
         // then (WrongPasswordProvidedException should be thrown)
+    }
+
+    @Test
+    void shouldReturnTokenForValidUser() {
+        // given
+        var authenticationManager = mock(AuthenticationManager.class);
+        var authenticationRequest = new AuthenticationRequestDTO("test@example.com", "password");
+        String fingerprint = "123456";
+
+        var authentication = mock(Authentication.class);
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword("password");
+        when(authenticationManager.authenticate(
+            any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(user);
+
+        when(tokenUtil.generateToken(any(Authentication.class), eq(fingerprint))).thenReturn(
+            "access_token");
+
+        // when
+        var response =
+            userService.authenticateUser(authenticationManager, authenticationRequest, fingerprint);
+
+        // then
+        assertEquals("access_token", response.getToken());
+        assertNotNull(response.getRefreshToken());
+        verify(refreshTokenRepository, times(1)).save(any());
+    }
+
+    @Test
+    void shouldThrowBadCredentialsForInvalidUser() {
+        // given
+        var authenticationManager = mock(AuthenticationManager.class);
+        var authenticationRequest =
+            new AuthenticationRequestDTO("test@example.com", "password");
+
+        when(authenticationManager.authenticate(
+            any(UsernamePasswordAuthenticationToken.class))).thenThrow(
+            new BadCredentialsException("Invalid credentials"));
+
+        // when
+        assertThrows(BadCredentialsException.class,
+            () -> userService.authenticateUser(authenticationManager, authenticationRequest,
+                "123456"));
+
+        // then (BadCredentialsException should be thrown)
+    }
+
+    @Test
+    void shouldReturnTokenWhenTokenIsValid() {
+        // given
+        var refreshTokenValue = "refresh_token";
+        var fingerprint = "123456";
+        var refreshToken = new RefreshToken("hashed_refresh_token", new User());
+
+        when(refreshTokenRepository.getRefreshToken(anyString())).thenReturn(
+            Optional.of(refreshToken));
+        when(tokenUtil.generateToken(any(User.class), eq(fingerprint))).thenReturn("access_token");
+
+        // when
+        var response = userService.refreshToken(refreshTokenValue, fingerprint);
+
+        // then
+        assertEquals("access_token", response.getToken());
+        assertNotNull(response.getRefreshToken());
+    }
+
+    @Test
+    void shouldThrowNonExistingRefreshTokenExceptionWhenRefreshTokenIsNotValid() {
+        // given
+        var refreshTokenValue = "refresh_token";
+        var refreshTokenRepository = mock(RefreshTokenRepository.class);
+        when(refreshTokenRepository.getRefreshToken(anyString())).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NonExistingRefreshTokenException.class,
+            () -> userService.refreshToken(refreshTokenValue, "123456"));
+
+        // then (NonExistingRefreshTokenException should be thrown)
     }
 }

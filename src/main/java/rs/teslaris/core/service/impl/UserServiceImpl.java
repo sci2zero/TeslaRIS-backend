@@ -69,6 +69,11 @@ public class UserServiceImpl implements UserService {
             () -> new UsernameNotFoundException("User with this email does not exist."));
     }
 
+    public UserDetails loadUserById(Integer userID) throws UsernameNotFoundException {
+        return userRepository.findById(userID).orElseThrow(
+            () -> new UsernameNotFoundException("User with this ID does not exist."));
+    }
+
     @Override
     public AuthenticationResponseDTO authenticateUser(AuthenticationManager authenticationManager,
                                                       AuthenticationRequestDTO authenticationRequest,
@@ -127,7 +132,7 @@ public class UserServiceImpl implements UserService {
         var email = tokenUtil.extractUsernameFromToken(bearerToken.split(" ")[1]);
 
         var user = (User) loadUserByUsername(email);
-        user.setCanTakeRole(true);
+        user.setCanTakeRole(!user.getCanTakeRole());
 
         userRepository.save(user);
     }

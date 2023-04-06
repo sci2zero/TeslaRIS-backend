@@ -1,5 +1,6 @@
 package rs.teslaris.core.configuration;
 
+import io.jsonwebtoken.MalformedJwtException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -71,5 +72,13 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleWrongPasswordProvidedException(HttpServletRequest request,
                                                  WrongPasswordProvidedException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(MalformedJwtException.class)
+    @ResponseBody
+    ErrorObject handleMalformedJwtException(HttpServletRequest request,
+                                                     MalformedJwtException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }
