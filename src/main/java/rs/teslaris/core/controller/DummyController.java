@@ -82,7 +82,7 @@ public class DummyController {
         )._toQuery();
     }
     
-    @PostMapping
+    @PostMapping("/email")
     public void testEmail() {
         emailUtil.sendSimpleEmail("email@email.com", "SUBJECT", "TEXT");
     }

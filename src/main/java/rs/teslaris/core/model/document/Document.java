@@ -1,8 +1,14 @@
 package rs.teslaris.core.model.document;
 
 import java.util.Set;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,18 +24,37 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @AllArgsConstructor
 @Entity
 @Table(name = "documents")
-public class Document extends BaseEntity {
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+public abstract class Document extends BaseEntity {
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> title;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> subTitle;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> description;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> note;
+
+    @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
     Set<PersonDocumentContribution> contributors;
+
+    @ElementCollection
     Set<String> uris;
 
     @Column(name = "document_date", nullable = false)
     String documentDate;
+
+    @OneToMany(fetch = FetchType.LAZY)
     Set<DocumentFile> fileItems;
+
+    @OneToMany(fetch = FetchType.LAZY)
     Set<DocumentFile> proof;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> keywords;
 
     @Column(name = "approve_status", nullable = false)
@@ -44,5 +69,6 @@ public class Document extends BaseEntity {
     @Column(name = "scopus_id", nullable = false, unique = true)
     String scopusId;
 
-    Set<PersonDocumentContribution> personDocumentContributions;
+//    @OneToMany(fetch = FetchType.LAZY)
+//    Set<PersonDocumentContribution> personDocumentContributions;
 }

@@ -1,8 +1,11 @@
 package rs.teslaris.core.model.document;
 
 import java.util.Set;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,9 +25,16 @@ public class Journal extends BaseEntity {
 
     @Column(name = "print_issn", nullable = false, unique = true)
     String printISSN;
+
+    @OneToMany(mappedBy = "journal", fetch = FetchType.LAZY)
     Set<PersonJournalContribution> contributors;
+
+    @OneToMany(fetch = FetchType.EAGER)
     Set<LanguageTag> languages;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> nameAbbreviation;
 
-    Set<PersonJournalContribution> personJournalContributions;
+//    @OneToMany(fetch = FetchType.LAZY)
+//    Set<PersonJournalContribution> personJournalContributions;
 }

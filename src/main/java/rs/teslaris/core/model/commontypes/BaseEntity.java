@@ -22,7 +22,7 @@ import org.hibernate.annotations.CreationTimestamp;
 public abstract class BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Integer id;
 
     @CreationTimestamp

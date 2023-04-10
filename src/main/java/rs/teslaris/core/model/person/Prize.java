@@ -30,7 +30,7 @@ public class Prize extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> description;
 
-    @OneToMany(mappedBy = "prize_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<DocumentFile> proofs;
 
     @Column(name = "date", nullable = false)

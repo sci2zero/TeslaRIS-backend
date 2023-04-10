@@ -26,7 +26,7 @@ public class LanguageServiceTest {
     public void shouldReturnLanguageWhenLanguageExists() {
         // given
         var expectedLanguage = new Language();
-        expectedLanguage.setValue("English");
+        expectedLanguage.setLanguageCode("ENG");
 
         when(languageRepository.findById(1)).thenReturn(Optional.of(expectedLanguage));
 

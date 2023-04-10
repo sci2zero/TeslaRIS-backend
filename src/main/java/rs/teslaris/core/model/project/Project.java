@@ -42,10 +42,10 @@ public class Project extends BaseEntity {
     @ElementCollection
     Set<String> uris;
 
-    @OneToMany(mappedBy = "project_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<PersonProjectContribution> contributions;
 
-    @OneToMany(mappedBy = "project_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<ProjectDocument> documents;
 
     @Column(name = "from", nullable = false)
@@ -53,11 +53,13 @@ public class Project extends BaseEntity {
 
     @Column(name = "to", nullable = false)
     LocalDate to;
+
+    @ElementCollection
     Set<ProjectStatus> statuses;
 
     @Column(name = "type", nullable = false)
     ProjectType type;
 
-    @OneToMany(mappedBy = "project_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<Funding> fundings;
 }

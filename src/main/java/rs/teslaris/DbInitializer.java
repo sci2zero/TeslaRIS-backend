@@ -10,6 +10,8 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
@@ -65,6 +67,7 @@ public class DbInitializer implements ApplicationRunner {
         languageRepository.save(serbianLanguage);
 
         var person1 = new Person();
+        person1.setApproveStatus(ApproveStatus.APPROVED);
         personRepository.save(person1);
 
         var adminUser =
@@ -79,6 +82,9 @@ public class DbInitializer implements ApplicationRunner {
         userRepository.save(authorUser);
 
         var dummyOU = new OrganisationUnit();
+        dummyOU.setAcronym("FTN");
+        dummyOU.setApproveStatus(ApproveStatus.APPROVED);
+        dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         organisationalUnitRepository.save(dummyOU);
     }
 }

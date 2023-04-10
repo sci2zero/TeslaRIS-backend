@@ -6,6 +6,8 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -26,6 +28,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @AllArgsConstructor
 @Entity
 @Table(name = "involvements")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class Involvement extends BaseEntity {
 
     @Column(name = "from", nullable = false)
@@ -37,7 +40,7 @@ public class Involvement extends BaseEntity {
     @Column(name = "approve_status", nullable = false)
     ApproveStatus approveStatus;
 
-    @OneToMany(mappedBy = "involvement_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<DocumentFile> proofs;
 
     @Column(name = "involvement_type", nullable = false)

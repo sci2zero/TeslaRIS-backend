@@ -34,10 +34,10 @@ public class Person extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY)
     Set<Involvement> involvements;
 
-    @OneToMany(mappedBy = "person_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<ExpertiseOrSkill> expertisesAndSkills;
 
-    @OneToMany(mappedBy = "person_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<Prize> prizes;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -46,20 +46,22 @@ public class Person extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> keyword;
 
-    @Column(name = "apvnt", nullable = false, unique = true)
+    @Column(name = "apvnt", unique = true)
     String apvnt;
 
-    @Column(name = "mnid", nullable = false, unique = true)
+    @Column(name = "mnid", unique = true)
     String mnid;
 
-    @Column(name = "orcid", nullable = false, unique = true)
-    String ORCID;
+    @Column(name = "orcid", unique = true)
+    String orcid;
 
-    @Column(name = "acopus_author_id", nullable = false, unique = true)
+    @Column(name = "acopus_author_id", unique = true)
     String scopusAuthorId;
 
-    @Column(name = "cris_uns_id", nullable = false, unique = true)
+    @Column(name = "cris_uns_id")
     int oldId;
+
+    @OneToMany(fetch = FetchType.LAZY)
     Set<ResearchArea> researchAreas;
 
     @Column(name = "approve_status", nullable = false)

@@ -28,6 +28,6 @@ public class ExpertiseOrSkill extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> description;
 
-    @OneToMany(mappedBy = "expertise_or_skill_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<DocumentFile> proofs;
 }

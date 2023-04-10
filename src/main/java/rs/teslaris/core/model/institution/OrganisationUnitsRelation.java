@@ -45,7 +45,7 @@ public class OrganisationUnitsRelation extends BaseEntity {
     @Column(name = "approve_status", nullable = false)
     ApproveStatus approveStatus;
 
-    @OneToMany(mappedBy = "relation_id", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<DocumentFile> proofs;
 
     @ManyToOne(fetch = FetchType.LAZY)
