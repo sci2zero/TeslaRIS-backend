@@ -1,11 +1,35 @@
 package rs.teslaris.core.model.person;
 
 import java.time.LocalDate;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 
-public class PersonName {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "person_names")
+public class PersonName extends BaseEntity {
+
+    @Column(name = "firstname", nullable = false)
     String firstname;
+
+    @Column(name = "other_name", nullable = false)
     String otherName;
+
+    @Column(name = "last_name", nullable = false)
     String lastname;
+
+    @Column(name = "from", nullable = false)
     LocalDate from;
+
+    @Column(name = "to", nullable = false)
     LocalDate to;
 }

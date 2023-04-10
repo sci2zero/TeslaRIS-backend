@@ -10,10 +10,10 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.AuthorityRepository;
@@ -60,10 +60,11 @@ public class DbInitializer implements ApplicationRunner {
         authorityRepository.save(adminAuthority);
         authorityRepository.save(authorAuthority);
 
-        var serbianLanguage = new Language("Serbian");
+        var serbianLanguage = new Language();
+        serbianLanguage.setLanguageCode("RS");
         languageRepository.save(serbianLanguage);
 
-        var person1 = new Person("dummy");
+        var person1 = new Person();
         personRepository.save(person1);
 
         var adminUser =
@@ -77,7 +78,7 @@ public class DbInitializer implements ApplicationRunner {
         userRepository.save(adminUser);
         userRepository.save(authorUser);
 
-        var dummyOU = new OrganisationUnit("dummy");
+        var dummyOU = new OrganisationUnit();
         organisationalUnitRepository.save(dummyOU);
     }
 }

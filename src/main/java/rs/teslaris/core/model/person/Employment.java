@@ -1,11 +1,29 @@
 package rs.teslaris.core.model.person;
 
+import java.util.Set;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
-import java.util.Set;
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "employments")
+public class Employment extends Involvement {
+//    Position position; // TODO: ADD NECESSARY CLASS WITH FIELDS
 
-public class Employment extends Involvement{
-    Position position;
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> title;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> role;
 }

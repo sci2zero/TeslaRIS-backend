@@ -1,6 +1,6 @@
 package rs.teslaris.core.model.project;
 
-public class ProjectContributionType {
+public enum ProjectContributionType {
     PRINCIPLE_INVESTIGATOR,
     PARTICIPATION,
 }

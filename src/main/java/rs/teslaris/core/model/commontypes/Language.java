@@ -1,15 +1,16 @@
 package rs.teslaris.core.model.commontypes;
 
+import java.util.Set;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import rs.teslaris.core.model.commontypes.BaseEntity;
-
-import java.util.Set;
 
 @Getter
 @Setter
@@ -19,9 +20,9 @@ import java.util.Set;
 @Table(name = "languages")
 public class Language extends BaseEntity {
 
-//    @Column(name = "value", nullable = false)
-//    private String value;
-
+    @Column(name = "language_code", nullable = false, unique = true)
     String languageCode;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> name;
 }

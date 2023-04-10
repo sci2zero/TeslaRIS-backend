@@ -83,7 +83,7 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getValue());
+            newUser.getPreferredLanguage().getLanguageCode());
     }
 
     @PutMapping
