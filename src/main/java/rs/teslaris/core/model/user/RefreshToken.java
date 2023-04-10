@@ -1,4 +1,4 @@
-package rs.teslaris.core.model;
+package rs.teslaris.core.model.user;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -11,17 +11,18 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user_account_activations")
-public class UserAccountActivation extends BaseEntity {
+@Table(name = "refresh_tokens")
+public class RefreshToken extends BaseEntity {
 
-    @Column(name = "activation_token")
-    private String activationToken;
+    @Column(name = "refresh_token_value")
+    private String refreshTokenValue;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinColumn(name = "user_id")

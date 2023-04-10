@@ -10,7 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.exception.NotFoundException;
-import rs.teslaris.core.model.Language;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.repository.LanguageRepository;
 import rs.teslaris.core.service.impl.LanguageServiceImpl;
 

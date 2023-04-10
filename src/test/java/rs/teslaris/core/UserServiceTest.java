@@ -32,13 +32,13 @@ import rs.teslaris.core.exception.CantRegisterAdminException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.WrongPasswordProvidedException;
-import rs.teslaris.core.model.Authority;
-import rs.teslaris.core.model.Language;
-import rs.teslaris.core.model.OrganisationalUnit;
-import rs.teslaris.core.model.Person;
-import rs.teslaris.core.model.RefreshToken;
-import rs.teslaris.core.model.User;
-import rs.teslaris.core.model.UserAccountActivation;
+import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.RefreshToken;
+import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.repository.AuthorityRepository;
 import rs.teslaris.core.repository.RefreshTokenRepository;
 import rs.teslaris.core.repository.UserAccountActivationRepository;
@@ -153,7 +153,7 @@ public class UserServiceTest {
         var person = new Person();
         when(personService.findPersonById(1)).thenReturn(person);
 
-        var organisationalUnit = new OrganisationalUnit();
+        var organisationalUnit = new OrganisationUnit();
         when(organisationalUnitService.findOrganisationalUnitById(1)).thenReturn(
             organisationalUnit);
 
@@ -270,11 +270,11 @@ public class UserServiceTest {
         user.setCanTakeRole(false);
         user.setPreferredLanguage(new Language());
         user.setPerson(new Person());
-        user.setOrganisationalUnit(new OrganisationalUnit());
+        user.setOrganisationUnit(new OrganisationUnit());
 
         var preferredLanguage = new Language();
         var person = new Person();
-        var organisationalUnit = new OrganisationalUnit();
+        var organisationalUnit = new OrganisationUnit();
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findLanguageById(1)).thenReturn(preferredLanguage);
@@ -294,7 +294,7 @@ public class UserServiceTest {
         assertFalse(user.getCanTakeRole());
         assertEquals(preferredLanguage, user.getPreferredLanguage());
         assertEquals(person, user.getPerson());
-        assertEquals(organisationalUnit, user.getOrganisationalUnit());
+        assertEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
     }
 
@@ -323,7 +323,7 @@ public class UserServiceTest {
         requestDTO.setPreferredLanguageId(1);
         var person = new Person();
         requestDTO.setPersonId(2);
-        var organisationalUnit = new OrganisationalUnit();
+        var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));

@@ -1,4 +1,4 @@
-package rs.teslaris.core.model;
+package rs.teslaris.core.model.user;
 
 import java.util.Collection;
 import javax.persistence.CascadeType;
@@ -15,6 +15,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Person;
 
 @Getter
 @Setter
@@ -59,7 +63,7 @@ public class User extends BaseEntity implements UserDetails {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "organisational_unit_id")
-    private OrganisationalUnit organisationalUnit;
+    private OrganisationUnit organisationUnit;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

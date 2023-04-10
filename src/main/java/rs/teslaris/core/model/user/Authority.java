@@ -1,4 +1,4 @@
-package rs.teslaris.core.model;
+package rs.teslaris.core.model.user;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 
 @Getter
 @Setter

@@ -1,4 +1,4 @@
-package rs.teslaris.core.model;
+package rs.teslaris.core.model.commontypes;
 
 import java.util.Date;
 import javax.persistence.Column;

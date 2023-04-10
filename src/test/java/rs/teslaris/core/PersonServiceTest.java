@@ -10,7 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.exception.NotFoundException;
-import rs.teslaris.core.model.Person;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.PersonRepository;
 import rs.teslaris.core.service.impl.PersonServiceImpl;
 

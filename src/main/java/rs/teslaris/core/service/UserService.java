@@ -9,7 +9,7 @@ import rs.teslaris.core.dto.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.RegistrationRequestDTO;
 import rs.teslaris.core.dto.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.UserUpdateRequestDTO;
-import rs.teslaris.core.model.User;
+import rs.teslaris.core.model.user.User;
 
 @Service
 public interface UserService extends UserDetailsService {

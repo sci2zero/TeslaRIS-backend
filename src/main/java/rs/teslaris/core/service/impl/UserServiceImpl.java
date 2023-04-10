@@ -24,9 +24,9 @@ import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.exception.WrongPasswordProvidedException;
-import rs.teslaris.core.model.RefreshToken;
-import rs.teslaris.core.model.User;
-import rs.teslaris.core.model.UserAccountActivation;
+import rs.teslaris.core.model.user.RefreshToken;
+import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.repository.AuthorityRepository;
 import rs.teslaris.core.repository.RefreshTokenRepository;
 import rs.teslaris.core.repository.UserAccountActivationRepository;
@@ -219,7 +219,7 @@ public class UserServiceImpl implements UserService {
         userToUpdate.setLastName(userUpdateRequest.getLastName());
         userToUpdate.setPreferredLanguage(preferredLanguage);
         userToUpdate.setPerson(person);
-        userToUpdate.setOrganisationalUnit(organisationalUnit);
+        userToUpdate.setOrganisationUnit(organisationalUnit);
 
         if (!userUpdateRequest.getOldPassword().equals("") &&
             passwordEncoder.matches(userUpdateRequest.getOldPassword(),
