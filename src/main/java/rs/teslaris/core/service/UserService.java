@@ -1,14 +1,20 @@
 package rs.teslaris.core.service;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.RegistrationRequestDTO;
 import rs.teslaris.core.dto.TakeRoleOfUserRequestDTO;
+import rs.teslaris.core.dto.UserUpdateRequestDTO;
+import rs.teslaris.core.model.User;
 
 @Service
 public interface UserService extends UserDetailsService {
+
+    UserDetails loadUserById(Integer userId);
 
     AuthenticationResponseDTO authenticateUser(AuthenticationManager authernticationManager,
                                                AuthenticationRequestDTO authenticationRequest,
@@ -20,4 +26,12 @@ public interface UserService extends UserDetailsService {
                                              String fingerprint);
 
     void allowTakingRoleOfAccount(String bearerToken);
+
+    void deactivateUser(Integer userId);
+
+    void activateUserAccount(String activationTokenValue);
+
+    User registerUser(RegistrationRequestDTO registrationRequest);
+
+    void updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userID);
 }

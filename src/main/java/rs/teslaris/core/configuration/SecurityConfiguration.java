@@ -58,6 +58,7 @@ public class SecurityConfiguration {
             // BASIC ENDPOINT CONFIGURATION
             .antMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/user/register").permitAll()
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");

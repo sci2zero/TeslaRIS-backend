@@ -14,27 +14,29 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.rememberme.InvalidCookieException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import rs.teslaris.core.service.UserService;
 
 @Slf4j
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil tokenUtil;
-    private final UserDetailsService userDetailsService;
+
+    private final UserService userService;
+
     @Value("${jwt.header.string}")
     public String headerString;
     @Value("${jwt.token.prefix}")
     public String tokenPrefix;
 
-    protected JwtFilter(JwtUtil tokenUtil, UserDetailsService userDetailsService) {
+    protected JwtFilter(JwtUtil tokenUtil,
+                        UserService userService) {
         this.tokenUtil = tokenUtil;
-        this.userDetailsService = userDetailsService;
+        this.userService = userService;
     }
 
     @Override
@@ -77,14 +79,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private void validateToken(String jwt, String cookieValue) {
         try {
-            String username = tokenUtil.extractUsernameFromToken(jwt);
+            Integer userId = tokenUtil.extractUserIdFromToken(jwt);
 
             var res = tokenUtil.checkAlgHeaderParam(jwt);
             if (!res) {
-                throw new MalformedJwtException(String.format("JWT signature algorithm is not %s.",
-                    JwtUtil.signatureAlgorithm.getValue()));
+                throw new MalformedJwtException(
+                    String.format("JWT signature algorithm is being tampered with >> %s",
+                        JwtUtil.signatureAlgorithm.getValue()));
             }
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            var userDetails = userService.loadUserById(userId);
 
             if (Boolean.TRUE.equals(tokenUtil.validateToken(jwt, userDetails, cookieValue))) {
                 var authenticationToken = new TokenBasedAuthentication(userDetails);

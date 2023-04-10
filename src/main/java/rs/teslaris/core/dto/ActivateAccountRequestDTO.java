@@ -1,6 +1,6 @@
 package rs.teslaris.core.dto;
 
-import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,8 +10,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TakeRoleOfUserRequestDTO {
+public class ActivateAccountRequestDTO {
 
-    @Email(message = "Email must be valid.")
-    private String userEmail;
+    @NotBlank(message = "Activation token cannot be blank.")
+    private String activationToken;
 }
