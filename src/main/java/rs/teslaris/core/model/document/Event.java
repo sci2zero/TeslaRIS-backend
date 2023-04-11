@@ -28,10 +28,10 @@ public abstract class Event extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> nameAbbreviation;
 
-    @Column(name = "from", nullable = false)
+    @Column(name = "date_from", nullable = false)
     LocalDate from;
 
-    @Column(name = "to", nullable = false)
+    @Column(name = "date_to", nullable = false)
     LocalDate to;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

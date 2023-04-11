@@ -27,9 +27,9 @@ public class PersonName extends BaseEntity {
     @Column(name = "last_name", nullable = false)
     String lastname;
 
-    @Column(name = "from", nullable = false)
+    @Column(name = "date_from", nullable = false)
     LocalDate from;
 
-    @Column(name = "to", nullable = false)
+    @Column(name = "date_to", nullable = false)
     LocalDate to;
 }

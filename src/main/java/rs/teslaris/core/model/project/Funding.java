@@ -47,9 +47,9 @@ public class Funding extends BaseEntity {
     @JoinColumn(name = "grant_id")
     MonetaryAmount grant;
 
-    @Column(name = "from", nullable = false)
+    @Column(name = "date_from", nullable = false)
     LocalDate from;
 
-    @Column(name = "to", nullable = false)
+    @Column(name = "date_to", nullable = false)
     LocalDate to;
 }

@@ -36,10 +36,10 @@ public class OrganisationUnitsRelation extends BaseEntity {
     @Column(name = "relation_type", nullable = false)
     OrganisationUnitRelationType relationType;
 
-    @Column(name = "from", nullable = false)
+    @Column(name = "date_from", nullable = false)
     LocalDate from;
 
-    @Column(name = "to", nullable = false)
+    @Column(name = "date_to", nullable = false)
     LocalDate to;
 
     @Column(name = "approve_status", nullable = false)

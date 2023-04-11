@@ -21,9 +21,9 @@ public class PersonProjectContribution extends PersonContribution {
     @Column(name = "contribution_type", nullable = false)
     ProjectContributionType contributionType;
 
-    @Column(name = "from", nullable = false)
+    @Column(name = "date_from", nullable = false)
     LocalDate from;
 
-    @Column(name = "to", nullable = false)
+    @Column(name = "date_to", nullable = false)
     LocalDate to;
 }

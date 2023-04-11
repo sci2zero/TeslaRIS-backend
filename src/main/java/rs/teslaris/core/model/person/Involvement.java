@@ -31,10 +31,10 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Inheritance(strategy = InheritanceType.JOINED)
 public class Involvement extends BaseEntity {
 
-    @Column(name = "from", nullable = false)
+    @Column(name = "date_from", nullable = false)
     LocalDate from;
 
-    @Column(name = "to", nullable = false)
+    @Column(name = "date_to", nullable = false)
     LocalDate to;
 
     @Column(name = "approve_status", nullable = false)

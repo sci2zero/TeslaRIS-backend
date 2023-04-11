@@ -4,6 +4,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -20,6 +22,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 @AllArgsConstructor
 @Entity
 @Table(name = "expertise_or_skills")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class ExpertiseOrSkill extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

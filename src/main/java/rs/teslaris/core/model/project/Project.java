@@ -48,10 +48,10 @@ public class Project extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY)
     Set<ProjectDocument> documents;
 
-    @Column(name = "from", nullable = false)
+    @Column(name = "date_from", nullable = false)
     LocalDate from;
 
-    @Column(name = "to", nullable = false)
+    @Column(name = "date_to", nullable = false)
     LocalDate to;
 
     @ElementCollection
