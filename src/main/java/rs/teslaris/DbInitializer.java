@@ -18,12 +18,12 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
-import rs.teslaris.core.repository.AuthorityRepository;
-import rs.teslaris.core.repository.LanguageRepository;
-import rs.teslaris.core.repository.OrganisationalUnitRepository;
-import rs.teslaris.core.repository.PersonRepository;
-import rs.teslaris.core.repository.PrivilegeRepository;
-import rs.teslaris.core.repository.UserRepository;
+import rs.teslaris.core.repository.commontypes.LanguageRepository;
+import rs.teslaris.core.repository.institution.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.PrivilegeRepository;
+import rs.teslaris.core.repository.user.UserRepository;
 
 @Component
 @RequiredArgsConstructor

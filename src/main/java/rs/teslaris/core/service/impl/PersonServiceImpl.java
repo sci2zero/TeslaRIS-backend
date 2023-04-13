@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.repository.PersonRepository;
+import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.PersonService;
 
 @Service

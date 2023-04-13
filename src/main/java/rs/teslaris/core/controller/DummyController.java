@@ -33,7 +33,7 @@ public class DummyController {
     private final DummyIndexRepository repo;
 
     private final EmailUtil emailUtil;
-    
+
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN_READ')")
@@ -81,7 +81,7 @@ public class DummyController {
             .should(s -> s.match(m -> m.field("test_text").query(text)))
         )._toQuery();
     }
-    
+
     @PostMapping("/email")
     public void testEmail() {
         emailUtil.sendSimpleEmail("email@email.com", "SUBJECT", "TEXT");

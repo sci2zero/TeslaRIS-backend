@@ -1,4 +1,4 @@
-package rs.teslaris.core.repository;
+package rs.teslaris.core.repository.institution;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

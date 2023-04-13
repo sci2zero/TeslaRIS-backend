@@ -54,7 +54,7 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(TakeOfRoleNotPermittedException.class)
     @ResponseBody
     ErrorObject handleTakeOfRoleNotPermittedException(HttpServletRequest request,
-                                                       TakeOfRoleNotPermittedException ex) {
+                                                      TakeOfRoleNotPermittedException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
@@ -70,7 +70,7 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(WrongPasswordProvidedException.class)
     @ResponseBody
     ErrorObject handleWrongPasswordProvidedException(HttpServletRequest request,
-                                                 WrongPasswordProvidedException ex) {
+                                                     WrongPasswordProvidedException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
@@ -78,7 +78,7 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(MalformedJwtException.class)
     @ResponseBody
     ErrorObject handleMalformedJwtException(HttpServletRequest request,
-                                                     MalformedJwtException ex) {
+                                            MalformedJwtException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }
