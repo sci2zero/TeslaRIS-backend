@@ -42,3 +42,7 @@ jobs:
               run: mvn test
             - name: Stop Docker Compose
               run: docker-compose down
+            - name: Generate Checkstyle Report
+              run: mvn checkstyle:checkstyle
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
