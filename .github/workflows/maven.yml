@@ -44,6 +44,8 @@ jobs:
                   DB_PASSWORD: postgres
             - name: Run Tests
               run: mvn test
+              env:
+                  DB_PASSWORD: postgres
             - name: Stop Docker Compose
               run: docker-compose down
             - name: Generate Checkstyle Report
