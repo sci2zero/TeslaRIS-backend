@@ -45,6 +45,15 @@ jobs:
               run: mvn test
               env:
                   DB_PASSWORD: postgres
+            - name: Run Tests with Code Coverage
+              run: mvn clean verify jacoco:report
+              env:
+                  DB_PASSWORD: postgres
+            # - name: Upload Code Coverage Report
+            #   uses: actions/upload-artifact@v2
+            #   with:
+            #       name: coverage-report
+            #       path: target/site/jacoco/index.html
             - name: Stop Docker Compose
               run: docker-compose down
             - name: Generate Checkstyle Report
