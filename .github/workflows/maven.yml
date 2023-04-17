@@ -90,7 +90,7 @@ jobs:
             # Perform GitHub Code Scanning.
             - name: Perform CodeQL Analysis
               uses: github/codeql-action/analyze@v2
-    code-style-check:
+    codestyle-check:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
