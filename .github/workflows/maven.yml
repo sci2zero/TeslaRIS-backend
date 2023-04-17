@@ -29,33 +29,44 @@ jobs:
 
         steps:
             - uses: actions/checkout@v3
+
             - name: Set up JDK 11
               uses: actions/setup-java@v3
               with:
                   java-version: "11"
                   distribution: "temurin"
                   cache: maven
+
             - name: Start Docker Compose
               run: docker-compose up -ds
+
             - name: Build with Maven
-              run: mvn -B package --file pom.xml
+              run: mvn -B package -DskipTests --file pom.xml
               env:
                   DB_PASSWORD: postgres
+
             - name: Run Tests
               run: mvn test
               env:
                   DB_PASSWORD: postgres
-            - name: Run Tests with Code Coverage
-              run: mvn clean verify jacoco:report
-              env:
-                  DB_PASSWORD: postgres
-            # - name: Upload Code Coverage Report
-            #   uses: actions/upload-artifact@v2
-            #   with:
-            #       name: coverage-report
-            #       path: target/site/jacoco/index.html
+            # Initializes the CodeQL tools for scanning.
+            # https://github.com/github/codeql-action
+            - name: Initialize CodeQL
+              uses: github/codeql-action/init@v2
+              with:
+                  languages: java
+
+            # Autobuild attempts to build any compiled languages
+            # - name: Autobuild
+            #   uses: github/codeql-action/autobuild@v2
+
+            # Perform GitHub Code Scanning.
+            - name: Perform CodeQL Analysis
+              uses: github/codeql-action/analyze@v2
+
             - name: Stop Docker Compose
               run: docker-compose down
+
             - name: Generate Checkstyle Report
               run: mvn checkstyle:checkstyle
               env:
