@@ -65,8 +65,8 @@ jobs:
                   languages: java
 
             # Autobuild attempts to build any compiled languages
-            # - name: Autobuild
-            #   uses: github/codeql-action/autobuild@v2
+            - name: Autobuild
+              uses: github/codeql-action/autobuild@v2
 
             # Perform GitHub Code Scanning.
             - name: Perform CodeQL Analysis
