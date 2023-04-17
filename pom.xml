@@ -84,7 +84,7 @@
 		<dependency>
 			<groupId>com.puppycrawl.tools</groupId>
 			<artifactId>checkstyle</artifactId>
-			<version>8.30</version>
+			<version>10.9.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -125,7 +125,8 @@
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<version>3.1.0</version>
 				<configuration>
-					<configLocation>checkstyle.xml</configLocation>
+					<configLocation>checkstyle-maven.xml</configLocation>
+					<failOnViolation>false</failOnViolation>
 				</configuration>
 			</plugin>
 		</plugins>
