@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
             () -> new UsernameNotFoundException("User with this email does not exist."));
     }
 
-    public UserDetails loadUserById(Integer userID) throws UsernameNotFoundException {
+    public User loadUserById(Integer userID) throws UsernameNotFoundException {
         return userRepository.findById(userID).orElseThrow(
             () -> new UsernameNotFoundException("User with this ID does not exist."));
     }
