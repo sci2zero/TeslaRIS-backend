@@ -11,8 +11,8 @@ on:
 
 jobs:
     setup-services:
-      runs-on: ubuntu-latest
-      services:
+        runs-on: ubuntu-latest
+        services:
             postgres:
                 image: postgres:13.3
                 env:
@@ -20,7 +20,7 @@ jobs:
                 POSTGRES_USER: postgres
                 POSTGRES_DB: TeslaRISDB
                 ports:
-                - 5432:5432
+                    - 5432:5432
             elasticsearch:
                 image: docker.elastic.co/elasticsearch/elasticsearch:8.4.3
                 env:
@@ -28,20 +28,20 @@ jobs:
                 ES_JAVA_OPTS: -Xms1g -Xmx1g
                 xpack.security.enabled: false
                 ports:
-                - 9200:9200
+                    - 9200:9200
         steps:
-        - name: Start Docker Compose
-          run: docker-compose up -d
-        - name: Wait for services to be available
-          run: |
-            until pg_isready -h localhost -p 5432; do
-                echo "Waiting for PostgreSQL to start...";
-                sleep 1;
-            done;
-            until curl -XGET -u elastic:changeme http://localhost:9200/; do
-                echo "Waiting for Elasticsearch to start...";
-                sleep 1;
-            done;
+            - name: Start Docker Compose
+              run: docker-compose up -d
+            - name: Wait for services to be available
+              run: |
+                  until pg_isready -h localhost -p 5432; do
+                      echo "Waiting for PostgreSQL to start...";
+                      sleep 1;
+                  done;
+                  until curl -XGET -u elastic:changeme http://localhost:9200/; do
+                      echo "Waiting for Elasticsearch to start...";
+                      sleep 1;
+                  done;
     build-test-analyze:
         runs-on: ubuntu-latest
         permissions:
