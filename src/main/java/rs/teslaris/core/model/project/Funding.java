@@ -30,17 +30,17 @@ public class Funding extends BaseEntity {
     @Column(name = "funding_number", nullable = false, unique = true)
     String fundingNumber;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "document_id")
     DocumentFile agreement;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> fundingCall;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> fundingProgram;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> fundingAgency;
 
     @ManyToOne(fetch = FetchType.LAZY)

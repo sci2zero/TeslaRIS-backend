@@ -20,12 +20,12 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Table(name = "educations")
 public class Education extends Involvement {
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> thesisTitle;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> title;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> shortTitle;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    Set<MultiLingualContent> abbreviationTitle;
 }

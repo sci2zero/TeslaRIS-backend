@@ -19,25 +19,28 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @Table(name = "monographs")
 public class Monograph extends Document {
 
-    @Column(name = "print_isbn", nullable = false, unique = true)
+    @Column(name = "monograph_type")
+    MonographType monographType;
+
+    @Column(name = "print_isbn", unique = true)
     String printISBN;
 
-    @Column(name = "e_isbn", nullable = false, unique = true)
+    @Column(name = "e_isbn", unique = true)
     String eISBN;
 
-    @Column(name = "number_of_pages", nullable = false)
+    @Column(name = "number_of_pages")
     Integer numberOfPages;
 
-    @Column(name = "edition_title", nullable = false)
+    @Column(name = "edition_title")
     String editionTitle;
 
-    @Column(name = "edition_number", nullable = false)
+    @Column(name = "edition_number")
     Integer editionNumber;
 
-    @Column(name = "edition_issn", nullable = false, unique = true)
+    @Column(name = "edition_issn", unique = false)
     String editionISSN;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<LanguageTag> languages;
 
     @ManyToOne(fetch = FetchType.LAZY)

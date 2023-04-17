@@ -30,14 +30,11 @@ public abstract class Document extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> title;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> subTitle;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> description;
-
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> note;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
     Set<PersonDocumentContribution> contributors;
@@ -45,7 +42,7 @@ public abstract class Document extends BaseEntity {
     @ElementCollection
     Set<String> uris;
 
-    @Column(name = "document_date", nullable = false)
+    @Column(name = "document_date")
     String documentDate;
 
     @OneToMany(fetch = FetchType.LAZY)
@@ -54,19 +51,16 @@ public abstract class Document extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY)
     Set<DocumentFile> proof;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> keywords;
 
     @Column(name = "approve_status", nullable = false)
     ApproveStatus approveStatus;
 
-    @Column(name = "admin_note", nullable = false)
-    String adminNote;
-
-    @Column(name = "doi", nullable = false, unique = true)
+    @Column(name = "doi", unique = true)
     String doi;
 
-    @Column(name = "scopus_id", nullable = false, unique = true)
+    @Column(name = "scopus_id", unique = true)
     String scopusId;
 
 //    @OneToMany(fetch = FetchType.LAZY)

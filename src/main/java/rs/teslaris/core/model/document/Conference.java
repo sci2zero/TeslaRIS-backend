@@ -17,9 +17,9 @@ import lombok.Setter;
 @Table(name = "conferences")
 public class Conference extends Event {
 
-    @Column(name = "number", nullable = false)
+    @Column(name = "number")
     String number;
 
-    @Column(name = "fee", nullable = false)
+    @Column(name = "fee")
     String fee;
 }

@@ -20,13 +20,13 @@ public class PersonJournalContribution extends PersonContribution {
     @Column(name = "contribution_type", nullable = false)
     JournalContributionType contributionType;
 
-    @Column(name = "date_from", nullable = false)
-    LocalDate from;
+    @Column(name = "date_from")
+    LocalDate dateFrom;
 
-    @Column(name = "date_to", nullable = false)
-    LocalDate to;
+    @Column(name = "date_to")
+    LocalDate dateTo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "journal_id")
+    @JoinColumn(name = "journal_id", nullable = false)
     Journal journal;
 }

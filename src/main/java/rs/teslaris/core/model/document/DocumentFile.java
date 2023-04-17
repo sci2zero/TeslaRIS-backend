@@ -28,7 +28,7 @@ public class DocumentFile extends BaseEntity {
     @Column(name = "server_filename", nullable = false, unique = true)
     String serverFilename;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> description;
 
     @Column(name = "mime_type", nullable = false)
@@ -40,6 +40,6 @@ public class DocumentFile extends BaseEntity {
     @Column(name = "resource_type", nullable = false)
     ResourceType resourceType;
 
-    @Column(name = "license", nullable = false)
+    @Column(name = "license")
     License license;
 }

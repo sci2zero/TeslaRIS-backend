@@ -15,7 +15,7 @@ import lombok.Setter;
 @Table(name = "softwares")
 public class Software extends Document {
 
-    @Column(name = "internal_number", nullable = false)
+    @Column(name = "internal_number")
     String internalNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)

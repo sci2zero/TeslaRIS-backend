@@ -25,7 +25,7 @@ public class ResearchArea extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> name;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> description;
 
     @ManyToOne(fetch = FetchType.LAZY)

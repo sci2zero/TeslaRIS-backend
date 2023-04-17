@@ -34,9 +34,8 @@ public class AffiliationStatement extends BaseEntity {
     @JoinColumn(name = "display_person_name_id")
     PersonName displayPersonName;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id")
-    PostalAddress address;
+    @Embedded
+    PostalAddress postalAddress;
 
     @Embedded
     Contact contact;

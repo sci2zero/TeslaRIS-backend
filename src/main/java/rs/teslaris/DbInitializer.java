@@ -14,6 +14,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.Privilege;
@@ -82,9 +83,10 @@ public class DbInitializer implements ApplicationRunner {
         userRepository.save(authorUser);
 
         var dummyOU = new OrganisationUnit();
-        dummyOU.setAcronym("FTN");
+        dummyOU.setNameAbbreviation("FTN");
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
+        dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationalUnitRepository.save(dummyOU);
     }
 }

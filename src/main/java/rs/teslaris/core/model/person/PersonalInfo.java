@@ -25,6 +25,7 @@ public class PersonalInfo {
     @Column(name = "sex", nullable = false)
     Sex sex;
 
+    @Embedded
     PostalAddress postalAddress;
 
     @Embedded

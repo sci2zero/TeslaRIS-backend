@@ -40,10 +40,10 @@ public class Person extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY)
     Set<Prize> prizes;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> biography;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> keyword;
 
     @Column(name = "apvnt", unique = true)
@@ -58,7 +58,7 @@ public class Person extends BaseEntity {
     @Column(name = "acopus_author_id", unique = true)
     String scopusAuthorId;
 
-    @Column(name = "cris_uns_id")
+    @Column(name = "cris_uns_id", unique = true)
     int oldId;
 
     @OneToMany(fetch = FetchType.LAZY)

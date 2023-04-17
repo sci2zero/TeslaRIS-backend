@@ -31,11 +31,11 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Inheritance(strategy = InheritanceType.JOINED)
 public class Involvement extends BaseEntity {
 
-    @Column(name = "date_from", nullable = false)
-    LocalDate from;
+    @Column(name = "date_from")
+    LocalDate dateFrom;
 
-    @Column(name = "date_to", nullable = false)
-    LocalDate to;
+    @Column(name = "date_to")
+    LocalDate dateTo;
 
     @Column(name = "approve_status", nullable = false)
     ApproveStatus approveStatus;
@@ -50,10 +50,10 @@ public class Involvement extends BaseEntity {
     Set<MultiLingualContent> affiliationStatement;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "person_id")
+    @JoinColumn(name = "person_id", nullable = false)
     Person personInvolved;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organisation_unit_id")
+    @JoinColumn(name = "organisation_unit_id", nullable = true)
     OrganisationUnit organisationUnit;
 }

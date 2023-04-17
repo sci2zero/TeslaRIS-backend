@@ -1,13 +1,8 @@
 package rs.teslaris.core.model.person;
 
 import java.util.Set;
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,9 +15,8 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "postal_address")
-public class PostalAddress extends BaseEntity {
+@Embeddable
+public class PostalAddress {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "country_id")

@@ -21,16 +21,16 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 public class Thesis extends Document {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organisation_unit_id")
+    @JoinColumn(name = "organisation_unit_id", nullable = false)
     OrganisationUnit organisationUnit;
 
-    @Column(name = "category", nullable = false)
-    ThesisCategory category;
+    @Column(name = "thesis_type", nullable = false)
+    ThesisType thesisType;
 
-    @Column(name = "number_of_pages", nullable = false)
+    @Column(name = "number_of_pages")
     Integer numberOfPages;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<LanguageTag> languages;
 
     @ManyToOne(fetch = FetchType.LAZY)

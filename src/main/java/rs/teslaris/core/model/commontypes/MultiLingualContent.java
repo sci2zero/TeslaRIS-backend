@@ -22,7 +22,7 @@ import lombok.Setter;
 public class MultiLingualContent extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "language_tag_id")
+    @JoinColumn(name = "language_tag_id", nullable = false)
     LanguageTag language;
 
     @Column(name = "content", nullable = false)

@@ -27,12 +27,12 @@ public class Prize extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> title;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> description;
 
     @OneToMany(fetch = FetchType.LAZY)
     Set<DocumentFile> proofs;
 
-    @Column(name = "date", nullable = false)
+    @Column(name = "date")
     LocalDate date;
 }

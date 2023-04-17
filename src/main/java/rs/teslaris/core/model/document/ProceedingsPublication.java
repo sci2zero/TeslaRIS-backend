@@ -15,19 +15,22 @@ import lombok.Setter;
 @Table(name = "proceedings_publications")
 public class ProceedingsPublication extends Document {
 
-    @Column(name = "start_page", nullable = false)
+    @Column(name = "proceedings_publication_type")
+    ProceedingsPublicationType proceedingsPublicationType;
+
+    @Column(name = "start_page")
     String startPage;
 
-    @Column(name = "end_page", nullable = false)
+    @Column(name = "end_page")
     String endPage;
 
-    @Column(name = "number_of_pages", nullable = false)
+    @Column(name = "number_of_pages")
     Integer numberOfPages;
 
-    @Column(name = "article_number", nullable = false)
+    @Column(name = "article_number")
     String articleNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "proceedings_id")
+    @JoinColumn(name = "proceedings_id", nullable = false)
     Proceedings proceedings;
 }

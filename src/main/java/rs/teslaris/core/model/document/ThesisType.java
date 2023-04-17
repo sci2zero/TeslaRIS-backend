@@ -1,6 +1,6 @@
 package rs.teslaris.core.model.document;
 
-public enum ThesisCategory {
+public enum ThesisType {
     MR,
     PHD,
     MASTER,

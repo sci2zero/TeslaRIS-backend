@@ -18,18 +18,18 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @Table(name = "person_names")
 public class PersonName extends BaseEntity {
 
-    @Column(name = "firstname", nullable = false)
+    @Column(name = "firstname")
     String firstname;
 
-    @Column(name = "other_name", nullable = false)
+    @Column(name = "other_name")
     String otherName;
 
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name")
     String lastname;
 
-    @Column(name = "date_from", nullable = false)
-    LocalDate from;
+    @Column(name = "date_from")
+    LocalDate dateFrom;
 
-    @Column(name = "date_to", nullable = false)
-    LocalDate to;
+    @Column(name = "date_to")
+    LocalDate dateTo;
 }

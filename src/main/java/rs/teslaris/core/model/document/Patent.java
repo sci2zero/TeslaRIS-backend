@@ -16,7 +16,7 @@ import lombok.Setter;
 @Table(name = "patents")
 public class Patent extends Document {
 
-    @Column(name = "number", nullable = false, unique = true)
+    @Column(name = "number", unique = true)
     String number;
 
     @ManyToOne(fetch = FetchType.LAZY)

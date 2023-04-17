@@ -21,11 +21,8 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Table(name = "employments")
 public class Employment extends Involvement {
 
-    @Column(name = "position", nullable = false)
-    Position position;
-
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> title;
+    @Column(name = "employment_position", nullable = false)
+    EmploymentPosition employmentPosition;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> role;

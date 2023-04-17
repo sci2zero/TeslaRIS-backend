@@ -31,10 +31,10 @@ import rs.teslaris.core.model.person.Person;
 public class PersonContribution extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "person_id")
+    @JoinColumn(name = "person_id", nullable = false)
     Person person;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> contributionDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)

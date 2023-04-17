@@ -20,7 +20,7 @@ import rs.teslaris.core.model.commontypes.Language;
 public class LanguageKnowledge extends ExpertiseOrSkill {
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "language_id")
+    @JoinColumn(name = "language_id", nullable = false)
     Language language;
 //    int speakingLevel;
 //    int readingLevel;

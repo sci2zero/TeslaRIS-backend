@@ -19,20 +19,22 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Entity
 @Table(name = "journals")
 public class Journal extends BaseEntity {
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    Set<MultiLingualContent> title;
 
-    @Column(name = "e_issn", nullable = false, unique = true)
+    @Column(name = "e_issn", unique = true)
     String eISSN;
 
-    @Column(name = "print_issn", nullable = false, unique = true)
+    @Column(name = "print_issn", unique = true)
     String printISSN;
 
     @OneToMany(mappedBy = "journal", fetch = FetchType.LAZY)
     Set<PersonJournalContribution> contributors;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<LanguageTag> languages;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> nameAbbreviation;
 
 //    @OneToMany(fetch = FetchType.LAZY)

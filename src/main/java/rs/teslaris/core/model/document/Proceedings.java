@@ -18,40 +18,40 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 @Table(name = "proceedings")
 public class Proceedings extends Document {
 
-    @Column(name = "e_isbn", nullable = false, unique = true)
+    @Column(name = "e_isbn", unique = true)
     String eISBN;
 
-    @Column(name = "print_isbn", nullable = false, unique = true)
+    @Column(name = "print_isbn", unique = true)
     String printISBN;
 
-    @Column(name = "number_of_pages", nullable = false)
+    @Column(name = "number_of_pages")
     Integer numberOfPages;
 
-    @Column(name = "edition_title", nullable = false)
+    @Column(name = "edition_title")
     String editionTitle;
 
-    @Column(name = "edition_number", nullable = false)
+    @Column(name = "edition_number")
     Integer editionNumber;
 
-    @Column(name = "edition_issn", nullable = false)
+    @Column(name = "edition_issn")
     String editionISSN;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.LAZY)
     Set<LanguageTag> languages;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "journal_id")
     Journal journal;
 
-    @Column(name = "journal_volume", nullable = false)
+    @Column(name = "journal_volume")
     String journalVolume;
 
-    @Column(name = "journal_issue", nullable = false)
+    @Column(name = "journal_issue")
     String journalIssue;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "conference_id")
-    Conference Conference;
+    @JoinColumn(name = "event_id", nullable = false)
+    Event event;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")

@@ -19,6 +19,6 @@ public class PersonEventContribution extends PersonContribution {
     EventContributionType contributionType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id")
+    @JoinColumn(name = "event_id", nullable = false)
     Event event;
 }

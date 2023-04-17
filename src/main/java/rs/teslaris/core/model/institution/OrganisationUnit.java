@@ -18,6 +18,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.person.Contact;
 
 @Getter
 @Setter
@@ -30,10 +31,10 @@ public class OrganisationUnit extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> name;
 
-    @Column(name = "acronym", nullable = false)
-    String acronym;
+    @Column(name = "name_abbreviation", nullable = false)
+    String nameAbbreviation;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> keyword;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -44,4 +45,7 @@ public class OrganisationUnit extends BaseEntity {
 
     @Column(name = "approve_status", nullable = false)
     ApproveStatus approveStatus;
+
+    @Embedded
+    Contact contact;
 }

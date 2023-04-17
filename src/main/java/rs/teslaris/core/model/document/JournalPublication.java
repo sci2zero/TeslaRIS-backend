@@ -15,25 +15,28 @@ import lombok.Setter;
 @Table(name = "journal_publications")
 public class JournalPublication extends Document {
 
-    @Column(name = "start_page", nullable = false)
+    @Column(name = "journal_publication_type")
+    JournalPublicationType journalPublicationType;
+
+    @Column(name = "start_page")
     String startPage;
 
-    @Column(name = "end_page", nullable = false)
+    @Column(name = "end_page")
     String endPage;
 
-    @Column(name = "number_of_pages", nullable = false)
+    @Column(name = "number_of_pages")
     Integer numberOfPages;
 
-    @Column(name = "article_number", nullable = false)
+    @Column(name = "article_number")
     String articleNumber;
 
-    @Column(name = "volume", nullable = false)
+    @Column(name = "volume")
     String volume;
 
-    @Column(name = "issue", nullable = false)
+    @Column(name = "issue")
     String issue;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "journal_id")
+    @JoinColumn(name = "journal_id", nullable = false)
     Journal journal;
 }

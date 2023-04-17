@@ -1,6 +1,6 @@
 package rs.teslaris.core.model.person;
 
-public enum Position {
+public enum EmploymentPosition {
     SCIENTIFIC_ADVISOR,
     ASSISTANT_TRAINEE,
     EXPERT_ASSOCIATE,

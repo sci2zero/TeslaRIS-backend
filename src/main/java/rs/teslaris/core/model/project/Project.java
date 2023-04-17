@@ -27,7 +27,7 @@ public class Project extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> name;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<MultiLingualContent> description;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -35,9 +35,6 @@ public class Project extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> keywords;
-
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> note;
 
     @ElementCollection
     Set<String> uris;
@@ -49,10 +46,10 @@ public class Project extends BaseEntity {
     Set<ProjectDocument> documents;
 
     @Column(name = "date_from", nullable = false)
-    LocalDate from;
+    LocalDate dateFrom;
 
     @Column(name = "date_to", nullable = false)
-    LocalDate to;
+    LocalDate dateTo;
 
     @ElementCollection
     Set<ProjectStatus> statuses;

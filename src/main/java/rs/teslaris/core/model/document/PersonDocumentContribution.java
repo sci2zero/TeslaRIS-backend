@@ -25,6 +25,6 @@ public class PersonDocumentContribution extends PersonContribution {
     boolean correspondingContributor;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id")
+    @JoinColumn(name = "document_id", nullable = false)
     Document document;
 }
