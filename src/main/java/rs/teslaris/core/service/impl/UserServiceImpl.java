@@ -202,7 +202,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userId) {
+    public AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest,
+                                                Integer userId, String fingerprint) {
         var userToUpdate = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("User with given ID does not exist."));
 
@@ -230,6 +231,9 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(userToUpdate);
+        var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
+        return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
+            refreshTokenValue);
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {

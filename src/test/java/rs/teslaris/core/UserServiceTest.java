@@ -285,7 +285,7 @@ public class UserServiceTest {
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
 
         // when
-        userService.updateUser(requestDTO, 1);
+        userService.updateUser(requestDTO, 1, "fingerprint");
 
         // then
         assertEquals("test@example.com", user.getEmail());
@@ -307,7 +307,8 @@ public class UserServiceTest {
         when(userRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> userService.updateUser(requestDTO, 1));
+        assertThrows(NotFoundException.class,
+            () -> userService.updateUser(requestDTO, 1, "fingerprint"));
 
         // then (NotFoundException should be thrown)
     }
@@ -335,7 +336,7 @@ public class UserServiceTest {
 
         // when
         assertThrows(WrongPasswordProvidedException.class,
-            () -> userService.updateUser(requestDTO, 1));
+            () -> userService.updateUser(requestDTO, 1, "fingerprint"));
 
         // then (WrongPasswordProvidedException should be thrown)
     }

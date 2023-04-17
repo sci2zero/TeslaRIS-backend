@@ -32,5 +32,6 @@ public interface UserService extends UserDetailsService {
 
     User registerUser(RegistrationRequestDTO registrationRequest);
 
-    void updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userID);
+    AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userID,
+                                         String fingerprint);
 }

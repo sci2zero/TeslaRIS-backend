@@ -88,11 +88,16 @@ public class UserController {
 
     @PutMapping
     @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateUser(@RequestHeader("Authorization") String bearerToken,
-                           @RequestBody @Valid UserUpdateRequestDTO updateRequest) {
-        userService.updateUser(updateRequest,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+    public ResponseEntity<AuthenticationResponseDTO> updateUser(
+        @RequestHeader("Authorization") String bearerToken,
+        @RequestBody @Valid UserUpdateRequestDTO updateRequest) {
+        var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
+
+        var authenticationResponse = userService.updateUser(updateRequest,
+            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]), fingerprint);
+
+        var headers = getJwtSecurityCookieHeader(fingerprint);
+        return new ResponseEntity<>(authenticationResponse, headers, HttpStatus.OK);
     }
 
     @PostMapping("/take-role")
