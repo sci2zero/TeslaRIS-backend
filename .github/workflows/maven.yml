@@ -10,8 +10,29 @@ on:
             - "**/*.txt"
 
 jobs:
-    setup-services:
+    build:
         runs-on: ubuntu-latest
+            steps:
+                - uses: actions/checkout@v3
+
+                - name: Set up JDK 11
+                  uses: actions/setup-java@v3
+                  with:
+                      java-version: "11"
+                      distribution: "temurin"
+                      cache: maven
+
+                - name: Build with Maven
+                  run: mvn -B package -DskipTests --file pom.xml
+                  env:
+                      DB_PASSWORD: postgres
+    test-analyze:
+        runs-on: ubuntu-latest
+        permissions:
+            actions: read
+            contents: read
+            security-events: write
+
         services:
             postgres:
                 image: postgres:13.3
@@ -29,43 +50,6 @@ jobs:
                     xpack.security.enabled: false
                 ports:
                     - 9200:9200
-        steps:
-            - name: Start Docker Compose
-              run: docker-compose up -ds
-            - name: Wait for services to be available
-              run: |
-                  until pg_isready -h localhost -p 5432; do
-                      echo "Waiting for PostgreSQL to start...";
-                      sleep 1;
-                  done;
-                  until curl -XGET -u elastic:changeme http://localhost:9200/; do
-                      echo "Waiting for Elasticsearch to start...";
-                      sleep 1;
-                  done;
-    build-test-analyze:
-        runs-on: ubuntu-latest
-        permissions:
-            actions: read
-            contents: read
-            security-events: write
-
-        # services:
-        #     postgres:
-        #         image: postgres:13.3
-        #         env:
-        #             POSTGRES_PASSWORD: postgres
-        #             POSTGRES_USER: postgres
-        #             POSTGRES_DB: TeslaRISDB
-        #         ports:
-        #             - 5432:5432
-        #     elasticsearch:
-        #         image: docker.elastic.co/elasticsearch/elasticsearch:8.4.3
-        #         env:
-        #             discovery.type: single-node
-        #             ES_JAVA_OPTS: -Xms1g -Xmx1g
-        #             xpack.security.enabled: false
-        #         ports:
-        #             - 9200:9200
 
         steps:
             - uses: actions/checkout@v3
@@ -77,13 +61,13 @@ jobs:
                   distribution: "temurin"
                   cache: maven
 
-            # - name: Start Docker Compose
-            #   run: docker-compose up -ds
+            - name: Start Docker Compose
+              run: docker-compose up -ds
 
-            - name: Build with Maven
-              run: mvn -B package -DskipTests --file pom.xml
-              env:
-                  DB_PASSWORD: postgres
+            # - name: Build with Maven
+            #   run: mvn -B package -DskipTests --file pom.xml
+            #   env:
+            #       DB_PASSWORD: postgres
 
             - name: Run Tests
               run: mvn test
@@ -104,8 +88,8 @@ jobs:
             - name: Perform CodeQL Analysis
               uses: github/codeql-action/analyze@v2
 
-            # - name: Stop Docker Compose
-            #   run: docker-compose down
+            - name: Stop Docker Compose
+              run: docker-compose down
 
             - name: Generate Checkstyle Report
               run: mvn checkstyle:checkstyle
