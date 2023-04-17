@@ -31,7 +31,7 @@ jobs:
                     - 9200:9200
         steps:
             - name: Start Docker Compose
-              run: docker-compose up -d
+              run: docker-compose up -ds
             - name: Wait for services to be available
               run: |
                   until pg_isready -h localhost -p 5432; do
