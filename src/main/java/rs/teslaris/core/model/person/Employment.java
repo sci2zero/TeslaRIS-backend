@@ -2,6 +2,7 @@ package rs.teslaris.core.model.person;
 
 import java.util.Set;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
@@ -19,7 +20,9 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Entity
 @Table(name = "employments")
 public class Employment extends Involvement {
-//    Position position; // TODO: ADD NECESSARY CLASS WITH FIELDS
+
+    @Column(name = "position", nullable = false)
+    Position position;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> title;
