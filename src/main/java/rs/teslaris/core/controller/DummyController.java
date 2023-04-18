@@ -14,8 +14,6 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.security.access.prepost.PreAuthorize;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,7 +33,7 @@ public class DummyController {
     private final DummyIndexRepository repo;
 
     private final EmailUtil emailUtil;
-    
+
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN_READ')")
@@ -83,8 +81,8 @@ public class DummyController {
             .should(s -> s.match(m -> m.field("test_text").query(text)))
         )._toQuery();
     }
-    
-    @PostMapping
+
+    @PostMapping("/email")
     public void testEmail() {
         emailUtil.sendSimpleEmail("email@email.com", "SUBJECT", "TEXT");
     }
