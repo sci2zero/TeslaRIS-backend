@@ -18,15 +18,15 @@ import lombok.Setter;
 public class PersonJournalContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)
-    JournalContributionType contributionType;
+    private JournalContributionType contributionType;
 
     @Column(name = "date_from")
-    LocalDate dateFrom;
+    private LocalDate dateFrom;
 
     @Column(name = "date_to")
-    LocalDate dateTo;
+    private LocalDate dateTo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "journal_id", nullable = false)
-    Journal journal;
+    private Journal journal;
 }

@@ -22,22 +22,22 @@ public class Thesis extends Document {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id", nullable = false)
-    OrganisationUnit organisationUnit;
+    private OrganisationUnit organisationUnit;
 
     @Column(name = "thesis_type", nullable = false)
-    ThesisType thesisType;
+    private ThesisType thesisType;
 
     @Column(name = "number_of_pages")
-    Integer numberOfPages;
+    private Integer numberOfPages;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<LanguageTag> languages;
+    private Set<LanguageTag> languages;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "research_area_id")
-    ResearchArea researchArea;
+    private ResearchArea researchArea;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
-    Publisher publisher;
+    private Publisher publisher;
 }

@@ -32,28 +32,28 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 public class Involvement extends BaseEntity {
 
     @Column(name = "date_from")
-    LocalDate dateFrom;
+    private LocalDate dateFrom;
 
     @Column(name = "date_to")
-    LocalDate dateTo;
+    private LocalDate dateTo;
 
     @Column(name = "approve_status", nullable = false)
-    ApproveStatus approveStatus;
+    private ApproveStatus approveStatus;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<DocumentFile> proofs;
+    private Set<DocumentFile> proofs;
 
     @Column(name = "involvement_type", nullable = false)
-    InvolvementType involvementType;
+    private InvolvementType involvementType;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> affiliationStatement;
+    private Set<MultiLingualContent> affiliationStatement;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", nullable = false)
-    Person personInvolved;
+    private Person personInvolved;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id", nullable = true)
-    OrganisationUnit organisationUnit;
+    private OrganisationUnit organisationUnit;
 }

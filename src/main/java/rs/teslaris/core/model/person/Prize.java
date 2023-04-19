@@ -25,14 +25,14 @@ import rs.teslaris.core.model.document.DocumentFile;
 public class Prize extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> title;
+    private Set<MultiLingualContent> title;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<DocumentFile> proofs;
+    private Set<DocumentFile> proofs;
 
     @Column(name = "date")
-    LocalDate date;
+    private LocalDate date;
 }

@@ -16,15 +16,15 @@ import lombok.Setter;
 public class PersonDocumentContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)
-    DocumentContributionType contributionType;
+    private DocumentContributionType contributionType;
 
     @Column(name = "main_contributor", nullable = false)
-    boolean mainContributor;
+    private boolean mainContributor;
 
     @Column(name = "corresponding_contributor", nullable = false)
-    boolean correspondingContributor;
+    private boolean correspondingContributor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
-    Document document;
+    private Document document;
 }

@@ -28,31 +28,31 @@ import rs.teslaris.core.model.document.DocumentFile;
 public class OrganisationUnitsRelation extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> sourceAffiliationStatement;
+    private Set<MultiLingualContent> sourceAffiliationStatement;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> targetAffiliationStatement;
+    private Set<MultiLingualContent> targetAffiliationStatement;
 
     @Column(name = "relation_type", nullable = false)
-    OrganisationUnitRelationType relationType;
+    private OrganisationUnitRelationType relationType;
 
     @Column(name = "date_from")
-    LocalDate dateFrom;
+    private LocalDate dateFrom;
 
     @Column(name = "date_to")
-    LocalDate dateTo;
+    private LocalDate dateTo;
 
     @Column(name = "approve_status", nullable = false)
-    ApproveStatus approveStatus;
+    private ApproveStatus approveStatus;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<DocumentFile> proofs;
+    private Set<DocumentFile> proofs;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_organisation_unit_id")
-    OrganisationUnit sourceOrganisationUnit;
+    private OrganisationUnit sourceOrganisationUnit;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_organisation_unit_id")
-    OrganisationUnit targetOrganisationUnit;
+    private OrganisationUnit targetOrganisationUnit;
 }

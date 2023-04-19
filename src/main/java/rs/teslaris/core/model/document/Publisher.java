@@ -18,11 +18,11 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public class Publisher extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> place;
+    private Set<MultiLingualContent> place;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> state;
+    private Set<MultiLingualContent> state;
 }

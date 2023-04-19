@@ -22,8 +22,8 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public class Employment extends Involvement {
 
     @Column(name = "employment_position", nullable = false)
-    EmploymentPosition employmentPosition;
+    private EmploymentPosition employmentPosition;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> role;
+    private Set<MultiLingualContent> role;
 }

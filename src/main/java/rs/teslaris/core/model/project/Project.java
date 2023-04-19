@@ -25,38 +25,38 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public class Project extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> nameAbbreviation;
+    private Set<MultiLingualContent> nameAbbreviation;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> keywords;
+    private Set<MultiLingualContent> keywords;
 
     @ElementCollection
-    Set<String> uris;
+    private Set<String> uris;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<PersonProjectContribution> contributions;
+    private Set<PersonProjectContribution> contributions;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<ProjectDocument> documents;
+    private Set<ProjectDocument> documents;
 
     @Column(name = "date_from", nullable = false)
-    LocalDate dateFrom;
+    private LocalDate dateFrom;
 
     @Column(name = "date_to", nullable = false)
-    LocalDate dateTo;
+    private LocalDate dateTo;
 
     @ElementCollection
-    Set<ProjectStatus> statuses;
+    private Set<ProjectStatus> statuses;
 
     @Column(name = "type", nullable = false)
-    ProjectType type;
+    private ProjectType type;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<Funding> fundings;
+    private Set<Funding> fundings;
 }

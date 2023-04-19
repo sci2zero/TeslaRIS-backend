@@ -17,9 +17,9 @@ import lombok.Setter;
 public class Patent extends Document {
 
     @Column(name = "number", unique = true)
-    String number;
+    private String number;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
-    Publisher publisher;
+    private Publisher publisher;
 }

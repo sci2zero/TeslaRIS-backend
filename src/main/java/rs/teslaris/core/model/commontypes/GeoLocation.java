@@ -15,11 +15,11 @@ import lombok.Setter;
 @Embeddable
 public class GeoLocation {
     @Column(name = "longitude", nullable = false)
-    Double longitude;
+    private Double longitude;
 
     @Column(name = "latitude", nullable = false)
-    Double latitude;
+    private Double latitude;
 
     @Column(name = "precision_in_meters", nullable = false)
-    int precisionInMeters;
+    private int precisionInMeters;
 }

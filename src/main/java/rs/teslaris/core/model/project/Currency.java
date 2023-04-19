@@ -23,11 +23,11 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public class Currency extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 
     @Column(name = "symbol", nullable = false)
-    String symbol;
+    private String symbol;
 
     @Column(name = "code", nullable = false)
-    String code;
+    private String code;
 }

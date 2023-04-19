@@ -19,41 +19,41 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 public class Proceedings extends Document {
 
     @Column(name = "e_isbn", unique = true)
-    String eISBN;
+    private String eISBN;
 
     @Column(name = "print_isbn", unique = true)
-    String printISBN;
+    private String printISBN;
 
     @Column(name = "number_of_pages")
-    Integer numberOfPages;
+    private Integer numberOfPages;
 
     @Column(name = "edition_title")
-    String editionTitle;
+    private String editionTitle;
 
     @Column(name = "edition_number")
-    Integer editionNumber;
+    private Integer editionNumber;
 
     @Column(name = "edition_issn")
-    String editionISSN;
+    private String editionISSN;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<LanguageTag> languages;
+    private Set<LanguageTag> languages;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "journal_id")
-    Journal journal;
+    private Journal journal;
 
     @Column(name = "journal_volume")
-    String journalVolume;
+    private String journalVolume;
 
     @Column(name = "journal_issue")
-    String journalIssue;
+    private String journalIssue;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
-    Event event;
+    private Event event;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
-    Publisher publisher;
+    private Publisher publisher;
 }

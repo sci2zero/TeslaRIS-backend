@@ -22,19 +22,19 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 public class ProjectsRelation extends BaseEntity {
 
     @Column(name = "relation_type", nullable = false)
-    ProjectsRelationType relationType;
+    private ProjectsRelationType relationType;
 
     @Column(name = "date_from", nullable = false)
-    LocalDate from;
+    private LocalDate from;
 
     @Column(name = "date_to", nullable = false)
-    LocalDate to;
+    private LocalDate to;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "source_project_id")
-    Project sourceProject;
+    private Project sourceProject;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "target_project_id")
-    Project targetProject;
+    private Project targetProject;
 }

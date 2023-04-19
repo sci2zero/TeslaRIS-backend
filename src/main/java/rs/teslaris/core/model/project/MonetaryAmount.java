@@ -21,9 +21,9 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 public class MonetaryAmount extends BaseEntity {
 
     @Column(name = "amount", nullable = false)
-    double amount;
+    private double amount;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "currency_id")
-    Currency currency;
+    private Currency currency;
 }

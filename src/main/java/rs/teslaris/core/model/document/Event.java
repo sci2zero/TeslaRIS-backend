@@ -23,25 +23,25 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public abstract class Event extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> nameAbbreviation;
+    private Set<MultiLingualContent> nameAbbreviation;
 
     @Column(name = "date_from")
-    LocalDate dateFrom;
+    private LocalDate dateFrom;
 
     @Column(name = "date_to")
-    LocalDate dateTo;
+    private LocalDate dateTo;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> state;
+    private Set<MultiLingualContent> state;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> place;
+    private Set<MultiLingualContent> place;
 
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
-    Set<PersonEventContribution> contributors;
+    private Set<PersonEventContribution> contributors;
 
 //    @OneToMany(fetch = FetchType.LAZY)
 //    Set<PersonEventContribution> personEventContribution; // JEL OVO DUPLIKAT??

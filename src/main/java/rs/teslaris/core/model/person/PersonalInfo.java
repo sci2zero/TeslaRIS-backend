@@ -17,17 +17,17 @@ import lombok.Setter;
 public class PersonalInfo {
 
     @Column(name = "birth_date", nullable = false)
-    LocalDate localBirthDate;
+    private LocalDate localBirthDate;
 
     @Column(name = "place_of_birth", nullable = false)
-    String placeOfBrith;
+    private String placeOfBrith;
 
     @Column(name = "sex", nullable = false)
-    Sex sex;
+    private Sex sex;
 
     @Embedded
-    PostalAddress postalAddress;
+    private PostalAddress postalAddress;
 
     @Embedded
-    Contact contact;
+    private Contact contact;
 }

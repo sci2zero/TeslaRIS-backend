@@ -21,8 +21,8 @@ import lombok.Setter;
 public class Language extends BaseEntity {
 
     @Column(name = "language_code", nullable = false, unique = true)
-    String languageCode;
+    private String languageCode;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 }

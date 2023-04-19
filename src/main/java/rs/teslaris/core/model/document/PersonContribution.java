@@ -32,21 +32,21 @@ public class PersonContribution extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", nullable = false)
-    Person person;
+    private Person person;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> contributionDescription;
+    private Set<MultiLingualContent> contributionDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "affiliation_statement_id")
-    AffiliationStatement affiliationStatement;
+    private AffiliationStatement affiliationStatement;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<OrganisationUnit> institutions;
+    private Set<OrganisationUnit> institutions;
 
     @Column(name = "order_number", nullable = false)
-    int orderNumber;
+    private int orderNumber;
 
     @Column(name = "approve_status", nullable = false)
-    ApproveStatus approveStatus;
+    private ApproveStatus approveStatus;
 }

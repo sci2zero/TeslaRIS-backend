@@ -21,8 +21,8 @@ import rs.teslaris.core.model.document.Document;
 public class ProjectDocument extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    Document document;
+    private Document document;
 
     @Column(name = "relation_type", nullable = false)
-    ProjectDocumentType relationType;
+    private ProjectDocumentType relationType;
 }

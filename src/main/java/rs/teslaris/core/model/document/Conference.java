@@ -18,8 +18,8 @@ import lombok.Setter;
 public class Conference extends Event {
 
     @Column(name = "number")
-    String number;
+    private String number;
 
     @Column(name = "fee")
-    String fee;
+    private String fee;
 }

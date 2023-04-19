@@ -21,7 +21,7 @@ public class LanguageKnowledge extends ExpertiseOrSkill {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "language_id", nullable = false)
-    Language language;
+    private Language language;
 //    int speakingLevel;
 //    int readingLevel;
 //    int writingLevel;

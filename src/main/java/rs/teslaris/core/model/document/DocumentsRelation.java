@@ -21,13 +21,13 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 public class DocumentsRelation extends BaseEntity {
 
     @Column(name = "relation_type", nullable = false)
-    DocumentsRelationType relationType;
+    private DocumentsRelationType relationType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_document_id")
-    Document sourceDocument;
+    private Document sourceDocument;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_document_id")
-    Document targetDocument;
+    private Document targetDocument;
 }

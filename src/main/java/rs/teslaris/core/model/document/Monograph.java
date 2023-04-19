@@ -24,30 +24,30 @@ public class Monograph extends Document {
     @Column(name = "monograph_type", nullable = false)
     @ColumnDefault("0")
     @Enumerated(value = EnumType.ORDINAL)
-    MonographType monographType;
+    private MonographType monographType;
 
     @Column(name = "print_isbn", unique = true)
-    String printISBN;
+    private String printISBN;
 
     @Column(name = "e_isbn", unique = true)
-    String eISBN;
+    private String eISBN;
 
     @Column(name = "number_of_pages")
-    Integer numberOfPages;
+    private Integer numberOfPages;
 
     @Column(name = "edition_title")
-    String editionTitle;
+    private String editionTitle;
 
     @Column(name = "edition_number")
-    Integer editionNumber;
+    private Integer editionNumber;
 
     @Column(name = "edition_issn", unique = false)
-    String editionISSN;
+    private String editionISSN;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<LanguageTag> languages;
+    private Set<LanguageTag> languages;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "research_area_id")
-    ResearchArea researchArea;
+    private ResearchArea researchArea;
 }

@@ -17,27 +17,27 @@ import org.hibernate.annotations.ColumnDefault;
 public class JournalPublication extends Document {
 
     @Column(name = "journal_publication_type", nullable = false)
-    JournalPublicationType journalPublicationType;
+    private JournalPublicationType journalPublicationType;
 
     @Column(name = "start_page")
-    String startPage;
+    private String startPage;
 
     @Column(name = "end_page")
-    String endPage;
+    private String endPage;
 
     @Column(name = "number_of_pages")
-    Integer numberOfPages;
+    private Integer numberOfPages;
 
     @Column(name = "article_number")
-    String articleNumber;
+    private String articleNumber;
 
     @Column(name = "volume")
-    String volume;
+    private String volume;
 
     @Column(name = "issue")
-    String issue;
+    private String issue;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "journal_id", nullable = false)
-    Journal journal;
+    private Journal journal;
 }

@@ -28,28 +28,28 @@ import rs.teslaris.core.model.document.DocumentFile;
 public class Funding extends BaseEntity {
 
     @Column(name = "funding_number", nullable = false, unique = true)
-    String fundingNumber;
+    private String fundingNumber;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "document_id")
-    DocumentFile agreement;
+    private DocumentFile agreement;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> fundingCall;
+    private Set<MultiLingualContent> fundingCall;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> fundingProgram;
+    private Set<MultiLingualContent> fundingProgram;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> fundingAgency;
+    private Set<MultiLingualContent> fundingAgency;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grant_id")
-    MonetaryAmount grant;
+    private MonetaryAmount grant;
 
     @Column(name = "date_from", nullable = false)
-    LocalDate from;
+    private LocalDate from;
 
     @Column(name = "date_to", nullable = false)
-    LocalDate to;
+    private LocalDate to;
 }

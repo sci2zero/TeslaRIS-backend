@@ -28,15 +28,15 @@ import rs.teslaris.core.model.person.PostalAddress;
 public class AffiliationStatement extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> displayAffiliationStatement;
+    private Set<MultiLingualContent> displayAffiliationStatement;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "display_person_name_id")
-    PersonName displayPersonName;
+    private PersonName displayPersonName;
 
     @Embedded
-    PostalAddress postalAddress;
+    private PostalAddress postalAddress;
 
     @Embedded
-    Contact contact;
+    private Contact contact;
 }

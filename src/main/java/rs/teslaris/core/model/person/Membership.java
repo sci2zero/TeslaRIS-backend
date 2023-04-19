@@ -21,8 +21,8 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public class Membership extends Involvement {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> contributionDescription;
+    private Set<MultiLingualContent> contributionDescription;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> role;
+    private Set<MultiLingualContent> role;
 }

@@ -27,47 +27,47 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 public class Person extends BaseEntity {
 
     @OneToOne(fetch = FetchType.EAGER)
-    PersonName name;
+    private PersonName name;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<PersonName> otherNames;
+    private Set<PersonName> otherNames;
 
     @Embedded
-    PersonalInfo personalInfo;
+    private PersonalInfo personalInfo;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<Involvement> involvements;
+    private Set<Involvement> involvements;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<ExpertiseOrSkill> expertisesAndSkills;
+    private Set<ExpertiseOrSkill> expertisesAndSkills;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<Prize> prizes;
+    private Set<Prize> prizes;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> biography;
+    private Set<MultiLingualContent> biography;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> keyword;
+    private Set<MultiLingualContent> keyword;
 
     @Column(name = "apvnt", unique = true)
-    String apvnt;
+    private String apvnt;
 
     @Column(name = "mnid", unique = true)
-    String mnid;
+    private String mnid;
 
     @Column(name = "orcid", unique = true)
-    String orcid;
+    private String orcid;
 
     @Column(name = "acopus_author_id", unique = true)
-    String scopusAuthorId;
+    private String scopusAuthorId;
 
     @Column(name = "cris_uns_id", unique = true)
-    int oldId;
+    private int oldId;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<ResearchArea> researchAreas;
+    private Set<ResearchArea> researchAreas;
 
     @Column(name = "approve_status", nullable = false)
-    ApproveStatus approveStatus;
+    private ApproveStatus approveStatus;
 }

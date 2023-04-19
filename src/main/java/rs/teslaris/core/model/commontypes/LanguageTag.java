@@ -17,8 +17,8 @@ import lombok.Setter;
 public class LanguageTag extends BaseEntity {
 
     @Column(name = "language_tag", nullable = false, unique = true)
-    String languageTag;
+    private String languageTag;
 
     @Column(name = "display", nullable = false)
-    String display;
+    private String display;
 }

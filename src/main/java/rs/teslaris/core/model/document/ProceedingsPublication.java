@@ -18,21 +18,21 @@ public class ProceedingsPublication extends Document {
 
     @Column(name = "proceedings_publication_type", nullable = false)
     @ColumnDefault("0")
-    ProceedingsPublicationType proceedingsPublicationType;
+    private ProceedingsPublicationType proceedingsPublicationType;
 
     @Column(name = "start_page")
-    String startPage;
+    private String startPage;
 
     @Column(name = "end_page")
-    String endPage;
+    private String endPage;
 
     @Column(name = "number_of_pages")
-    Integer numberOfPages;
+    private Integer numberOfPages;
 
     @Column(name = "article_number")
-    String articleNumber;
+    private String articleNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proceedings_id", nullable = false)
-    Proceedings proceedings;
+    private Proceedings proceedings;
 }

@@ -16,9 +16,9 @@ import lombok.Setter;
 public class PersonEventContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)
-    EventContributionType contributionType;
+    private EventContributionType contributionType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
-    Event event;
+    private Event event;
 }

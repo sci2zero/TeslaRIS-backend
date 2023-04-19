@@ -23,11 +23,11 @@ public class PostalAddress {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "country_id")
-    Country country;
+    private Country country;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> streetAndNumber;
+    private Set<MultiLingualContent> streetAndNumber;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> city;
+    private Set<MultiLingualContent> city;
 }

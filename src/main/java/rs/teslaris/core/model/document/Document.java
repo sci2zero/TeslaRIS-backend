@@ -28,40 +28,40 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public abstract class Document extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> title;
+    private Set<MultiLingualContent> title;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> subTitle;
+    private Set<MultiLingualContent> subTitle;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
-    Set<PersonDocumentContribution> contributors;
+    private Set<PersonDocumentContribution> contributors;
 
     @ElementCollection
-    Set<String> uris;
+    private Set<String> uris;
 
     @Column(name = "document_date")
-    String documentDate;
+    private String documentDate;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<DocumentFile> fileItems;
+    private Set<DocumentFile> fileItems;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<DocumentFile> proof;
+    private Set<DocumentFile> proof;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> keywords;
+    private Set<MultiLingualContent> keywords;
 
     @Column(name = "approve_status", nullable = false)
-    ApproveStatus approveStatus;
+    private ApproveStatus approveStatus;
 
     @Column(name = "doi", unique = true)
-    String doi;
+    private String doi;
 
     @Column(name = "scopus_id", unique = true)
-    String scopusId;
+    private String scopusId;
 
 //    @OneToMany(fetch = FetchType.LAZY)
 //    Set<PersonDocumentContribution> personDocumentContributions;

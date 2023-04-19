@@ -23,11 +23,11 @@ public class MultiLingualContent extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "language_tag_id", nullable = false)
-    LanguageTag language;
+    private LanguageTag language;
 
     @Column(name = "content", nullable = false)
-    String content;
+    private String content;
 
     @Column(name = "priority", nullable = false)
-    int priority;
+    private int priority;
 }

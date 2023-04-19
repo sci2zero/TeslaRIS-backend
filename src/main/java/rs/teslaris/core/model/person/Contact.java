@@ -15,8 +15,8 @@ import lombok.Setter;
 public class Contact {
 
     @Column(name = "contact_email", nullable = false)
-    String contactEmail;
+    private String contactEmail;
 
     @Column(name = "phone_number", nullable = false)
-    String phoneNumber;
+    private String phoneNumber;
 }

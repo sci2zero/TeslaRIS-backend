@@ -23,12 +23,12 @@ import lombok.Setter;
 public class ResearchArea extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "super_research_area_id")
-    ResearchArea superResearchArea;
+    private ResearchArea superResearchArea;
 }

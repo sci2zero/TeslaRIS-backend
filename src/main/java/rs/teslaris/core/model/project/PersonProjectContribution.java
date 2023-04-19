@@ -19,11 +19,11 @@ import rs.teslaris.core.model.document.PersonContribution;
 public class PersonProjectContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)
-    ProjectContributionType contributionType;
+    private ProjectContributionType contributionType;
 
     @Column(name = "date_from")
-    LocalDate dateFrom;
+    private LocalDate dateFrom;
 
     @Column(name = "date_to")
-    LocalDate dateTo;
+    private LocalDate dateTo;
 }

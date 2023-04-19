@@ -26,11 +26,11 @@ import rs.teslaris.core.model.document.DocumentFile;
 public class ExpertiseOrSkill extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description;
 
     @OneToMany(fetch = FetchType.LAZY)
-    Set<DocumentFile> proofs;
+    private Set<DocumentFile> proofs;
 }

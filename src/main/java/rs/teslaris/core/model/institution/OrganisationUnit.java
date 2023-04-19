@@ -29,23 +29,23 @@ import rs.teslaris.core.model.person.Contact;
 public class OrganisationUnit extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 
     @Column(name = "name_abbreviation", nullable = false)
-    String nameAbbreviation;
+    private String nameAbbreviation;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> keyword;
+    private Set<MultiLingualContent> keyword;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    Set<ResearchArea> researchAreas;
+    private Set<ResearchArea> researchAreas;
 
     @Embedded
-    GeoLocation location;
+    private GeoLocation location;
 
     @Column(name = "approve_status", nullable = false)
-    ApproveStatus approveStatus;
+    private ApproveStatus approveStatus;
 
     @Embedded
-    Contact contact;
+    private Contact contact;
 }

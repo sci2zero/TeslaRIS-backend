@@ -21,8 +21,8 @@ import lombok.Setter;
 @Table(name = "countries")
 public class Country extends BaseEntity {
     @Column(name = "code", nullable = false, unique = true)
-    String code;
+    private String code;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name;
 }

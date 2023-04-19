@@ -23,23 +23,23 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public class DocumentFile extends BaseEntity {
 
     @Column(name = "filename", nullable = false)
-    String filename;
+    private String filename;
 
     @Column(name = "server_filename", nullable = false, unique = true)
-    String serverFilename;
+    private String serverFilename;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description;
 
     @Column(name = "mime_type", nullable = false)
-    String mimeType;
+    private String mimeType;
 
     @Column(name = "file_size", nullable = false)
-    int fileSize;
+    private int fileSize;
 
     @Column(name = "resource_type", nullable = false)
-    ResourceType resourceType;
+    private ResourceType resourceType;
 
     @Column(name = "license")
-    License license;
+    private License license;
 }

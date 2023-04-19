@@ -21,9 +21,9 @@ import lombok.Setter;
 public class Dataset extends Document {
 
     @Column(name = "internal_number")
-    String internalNumber;
+    private String internalNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
-    Publisher publisher;
+    private Publisher publisher;
 }

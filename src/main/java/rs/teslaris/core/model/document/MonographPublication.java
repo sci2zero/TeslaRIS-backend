@@ -16,21 +16,21 @@ import lombok.Setter;
 public class MonographPublication extends Document {
 
     @Column(name = "monograph_publication_type")
-    MonographPublicationType monographPublicationType;
+    private MonographPublicationType monographPublicationType;
 
     @Column(name = "start_page")
-    String startPage;
+    private String startPage;
 
     @Column(name = "end_page")
-    String endPage;
+    private String endPage;
 
     @Column(name = "number_of_pages")
-    Integer numberOfPages;
+    private Integer numberOfPages;
 
     @Column(name = "article_number")
-    String articleNumber;
+    private String articleNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "monograph_id", nullable = false)
-    Monograph monograph;
+    private Monograph monograph;
 }
