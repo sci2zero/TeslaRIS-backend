@@ -34,7 +34,7 @@ public class Journal extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY)
     Set<LanguageTag> languages;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<MultiLingualContent> nameAbbreviation;
 
 //    @OneToMany(fetch = FetchType.LAZY)

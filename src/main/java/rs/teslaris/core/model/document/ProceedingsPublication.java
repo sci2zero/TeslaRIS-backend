@@ -8,6 +8,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 @Getter
 @Setter
@@ -15,7 +16,8 @@ import lombok.Setter;
 @Table(name = "proceedings_publications")
 public class ProceedingsPublication extends Document {
 
-    @Column(name = "proceedings_publication_type")
+    @Column(name = "proceedings_publication_type", nullable = false)
+    @ColumnDefault("0")
     ProceedingsPublicationType proceedingsPublicationType;
 
     @Column(name = "start_page")

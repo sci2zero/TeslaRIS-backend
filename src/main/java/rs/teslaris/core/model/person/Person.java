@@ -3,6 +3,7 @@ package rs.teslaris.core.model.person;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
@@ -30,6 +31,9 @@ public class Person extends BaseEntity {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<PersonName> otherNames;
+
+    @Embedded
+    PersonalInfo personalInfo;
 
     @OneToMany(fetch = FetchType.LAZY)
     Set<Involvement> involvements;
