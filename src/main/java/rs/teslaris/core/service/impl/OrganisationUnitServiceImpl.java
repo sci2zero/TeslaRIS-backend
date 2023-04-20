@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.institution.OrganisationalUnitRepository;
-import rs.teslaris.core.service.OrganisationalUnitService;
+import rs.teslaris.core.service.OrganisationUnitService;
 
 @Service
 @RequiredArgsConstructor
-public class OrganisationalUnitServiceImpl implements OrganisationalUnitService {
+public class OrganisationUnitServiceImpl implements OrganisationUnitService {
 
     private final OrganisationalUnitRepository organisationalUnitRepository;
 

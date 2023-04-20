@@ -32,7 +32,7 @@ import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.LanguageService;
-import rs.teslaris.core.service.OrganisationalUnitService;
+import rs.teslaris.core.service.OrganisationUnitService;
 import rs.teslaris.core.service.PersonService;
 import rs.teslaris.core.service.UserService;
 import rs.teslaris.core.util.email.EmailUtil;
@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
 
     private final PersonService personService;
 
-    private final OrganisationalUnitService organisationalUnitService;
+    private final OrganisationUnitService organisationUnitService;
 
     private final EmailUtil emailUtil;
 
@@ -180,7 +180,7 @@ public class UserServiceImpl implements UserService {
 
         var person = personService.findPersonById(registrationRequest.getPersonId());
 
-        var organisationalUnit = organisationalUnitService.findOrganisationalUnitById(
+        var organisationalUnit = organisationUnitService.findOrganisationalUnitById(
             registrationRequest.getOrganisationalUnitId());
 
         var newUser =
@@ -212,7 +212,7 @@ public class UserServiceImpl implements UserService {
 
         var person = personService.findPersonById(userUpdateRequest.getPersonId());
 
-        var organisationalUnit = organisationalUnitService.findOrganisationalUnitById(
+        var organisationalUnit = organisationUnitService.findOrganisationalUnitById(
             userUpdateRequest.getOrganisationalUnitId());
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());

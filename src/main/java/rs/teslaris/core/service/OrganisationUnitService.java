@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
 @Service
-public interface OrganisationalUnitService {
+public interface OrganisationUnitService {
 
     OrganisationUnit findOrganisationalUnitById(Integer id);
 }

@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.institution.OrganisationalUnitRepository;
-import rs.teslaris.core.service.impl.OrganisationalUnitServiceImpl;
+import rs.teslaris.core.service.impl.OrganisationUnitServiceImpl;
 
 @SpringBootTest
 public class OrganisationUnitServiceTest {
@@ -21,7 +21,7 @@ public class OrganisationUnitServiceTest {
     private OrganisationalUnitRepository organisationalUnitRepository;
 
     @InjectMocks
-    private OrganisationalUnitServiceImpl organisationalUnitService;
+    private OrganisationUnitServiceImpl organisationalUnitService;
 
 
     @Test

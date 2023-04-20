@@ -2,7 +2,6 @@ package rs.teslaris;
 
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -16,7 +15,6 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
-import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
@@ -62,12 +60,15 @@ public class DbInitializer implements ApplicationRunner {
         var takeRoleOfUser = new Privilege("TAKE_ROLE");
         var deactivateUser = new Privilege("DEACTIVATE_USER");
         var updateProfile = new Privilege("UPDATE_PROFILE");
+        var createUserBasic = new Privilege("CREATE_PERSON_BASIC");
         privilegeRepository.saveAll(
-            Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile));
+            Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
+                createUserBasic));
 
         var adminAuthority = new Authority("ADMIN",
             new HashSet<>(
-                List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile})));
+                List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile,
+                    createUserBasic})));
         var authorAuthority =
             new Authority("AUTHOR",
                 new HashSet<>(List.of(new Privilege[] {allowAccountTakeover, updateProfile})));
@@ -81,8 +82,11 @@ public class DbInitializer implements ApplicationRunner {
         var country = new Country("SRB", new HashSet<MultiLingualContent>());
         country = countryRepository.save(country);
 
-        var postalAddress = new PostalAddress(country, new HashSet<MultiLingualContent>(), new HashSet<MultiLingualContent>());
-        var personalInfo = new PersonalInfo(LocalDate.of(2000,1,25), "Sebia", Sex.MALE, postalAddress, new Contact("john@ftn.uns.ac.com", "021555666"));
+        var postalAddress = new PostalAddress(country, new HashSet<MultiLingualContent>(),
+            new HashSet<MultiLingualContent>());
+        var personalInfo =
+            new PersonalInfo(LocalDate.of(2000, 1, 25), "Sebia", Sex.MALE, postalAddress,
+                new Contact("john@ftn.uns.ac.com", "021555666"));
         var person1 = new Person();
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);

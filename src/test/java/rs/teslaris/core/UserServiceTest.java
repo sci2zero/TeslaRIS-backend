@@ -45,7 +45,7 @@ import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.LanguageService;
 import rs.teslaris.core.service.PersonService;
-import rs.teslaris.core.service.impl.OrganisationalUnitServiceImpl;
+import rs.teslaris.core.service.impl.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.UserServiceImpl;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -68,7 +68,7 @@ public class UserServiceTest {
     @Mock
     private PersonService personService;
     @Mock
-    private OrganisationalUnitServiceImpl organisationalUnitService;
+    private OrganisationUnitServiceImpl organisationalUnitService;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
