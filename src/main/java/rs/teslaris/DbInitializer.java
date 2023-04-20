@@ -1,6 +1,8 @@
 package rs.teslaris;
 
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -10,18 +12,28 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.model.Authority;
-import rs.teslaris.core.model.Language;
-import rs.teslaris.core.model.OrganisationalUnit;
-import rs.teslaris.core.model.Person;
-import rs.teslaris.core.model.Privilege;
-import rs.teslaris.core.model.User;
-import rs.teslaris.core.repository.AuthorityRepository;
-import rs.teslaris.core.repository.LanguageRepository;
-import rs.teslaris.core.repository.OrganisationalUnitRepository;
-import rs.teslaris.core.repository.PersonRepository;
-import rs.teslaris.core.repository.PrivilegeRepository;
-import rs.teslaris.core.repository.UserRepository;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.GeoLocation;
+import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonalInfo;
+import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.person.Sex;
+import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.user.Privilege;
+import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.repository.commontypes.CountryRepository;
+import rs.teslaris.core.repository.commontypes.LanguageRepository;
+import rs.teslaris.core.repository.institution.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.PrivilegeRepository;
+import rs.teslaris.core.repository.user.UserRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -40,6 +52,8 @@ public class DbInitializer implements ApplicationRunner {
     private final OrganisationalUnitRepository organisationalUnitRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final CountryRepository countryRepository;
 
     @Override
     @Transactional
@@ -60,10 +74,18 @@ public class DbInitializer implements ApplicationRunner {
         authorityRepository.save(adminAuthority);
         authorityRepository.save(authorAuthority);
 
-        var serbianLanguage = new Language("Serbian");
+        var serbianLanguage = new Language();
+        serbianLanguage.setLanguageCode("RS");
         languageRepository.save(serbianLanguage);
 
-        var person1 = new Person("dummy");
+        var country = new Country("SRB", new HashSet<MultiLingualContent>());
+        country = countryRepository.save(country);
+
+        var postalAddress = new PostalAddress(country, new HashSet<MultiLingualContent>(), new HashSet<MultiLingualContent>());
+        var personalInfo = new PersonalInfo(LocalDate.of(2000,1,25), "Sebia", Sex.MALE, postalAddress, new Contact("john@ftn.uns.ac.com", "021555666"));
+        var person1 = new Person();
+        person1.setApproveStatus(ApproveStatus.APPROVED);
+        person1.setPersonalInfo(personalInfo);
         personRepository.save(person1);
 
         var adminUser =
@@ -77,7 +99,11 @@ public class DbInitializer implements ApplicationRunner {
         userRepository.save(adminUser);
         userRepository.save(authorUser);
 
-        var dummyOU = new OrganisationalUnit("dummy");
+        var dummyOU = new OrganisationUnit();
+        dummyOU.setNameAbbreviation("FTN");
+        dummyOU.setApproveStatus(ApproveStatus.APPROVED);
+        dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
+        dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationalUnitRepository.save(dummyOU);
     }
 }

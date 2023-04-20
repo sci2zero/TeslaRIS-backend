@@ -24,13 +24,13 @@ import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.exception.WrongPasswordProvidedException;
-import rs.teslaris.core.model.RefreshToken;
-import rs.teslaris.core.model.User;
-import rs.teslaris.core.model.UserAccountActivation;
-import rs.teslaris.core.repository.AuthorityRepository;
-import rs.teslaris.core.repository.RefreshTokenRepository;
-import rs.teslaris.core.repository.UserAccountActivationRepository;
-import rs.teslaris.core.repository.UserRepository;
+import rs.teslaris.core.model.user.RefreshToken;
+import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserAccountActivation;
+import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.RefreshTokenRepository;
+import rs.teslaris.core.repository.user.UserAccountActivationRepository;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.LanguageService;
 import rs.teslaris.core.service.OrganisationalUnitService;
 import rs.teslaris.core.service.PersonService;
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
             () -> new UsernameNotFoundException("User with this email does not exist."));
     }
 
-    public UserDetails loadUserById(Integer userID) throws UsernameNotFoundException {
+    public User loadUserById(Integer userID) throws UsernameNotFoundException {
         return userRepository.findById(userID).orElseThrow(
             () -> new UsernameNotFoundException("User with this ID does not exist."));
     }
@@ -202,7 +202,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userId) {
+    public AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest,
+                                                Integer userId, String fingerprint) {
         var userToUpdate = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("User with given ID does not exist."));
 
@@ -219,7 +220,7 @@ public class UserServiceImpl implements UserService {
         userToUpdate.setLastName(userUpdateRequest.getLastName());
         userToUpdate.setPreferredLanguage(preferredLanguage);
         userToUpdate.setPerson(person);
-        userToUpdate.setOrganisationalUnit(organisationalUnit);
+        userToUpdate.setOrganisationUnit(organisationalUnit);
 
         if (!userUpdateRequest.getOldPassword().equals("") &&
             passwordEncoder.matches(userUpdateRequest.getOldPassword(),
@@ -230,6 +231,9 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(userToUpdate);
+        var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
+        return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
+            refreshTokenValue);
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {
