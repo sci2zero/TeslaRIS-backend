@@ -45,10 +45,10 @@ public class Person extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY)
     private Set<Prize> prizes;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MultiLingualContent> biography;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MultiLingualContent> keyword;
 
     @Column(name = "apvnt", unique = true)

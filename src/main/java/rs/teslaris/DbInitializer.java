@@ -29,8 +29,8 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
-import rs.teslaris.core.repository.institution.OrganisationalUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.repository.person.institution.OrganisationalUnitRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -65,11 +65,14 @@ public class DbInitializer implements ApplicationRunner {
         var deactivateUser = new Privilege("DEACTIVATE_USER");
         var updateProfile = new Privilege("UPDATE_PROFILE");
         var createUserBasic = new Privilege("CREATE_PERSON_BASIC");
-        var editPersonOtherNames = new Privilege("EDIT_PERSON_OTHER_NAMES");
+        var editPersonOtherNames = new Privilege("EDIT_PERSON_NAMES");
         var editPersonalInfo = new Privilege("EDIT_PERSONAL_INFO");
+        var editPersonBiography = new Privilege("EDIT_PERSON_BIOGRAPHY");
+        var editPersonKeyword = new Privilege("EDIT_PERSON_KEYWORD");
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonOtherNames, editPersonalInfo));
+                createUserBasic, editPersonOtherNames, editPersonalInfo, editPersonBiography,
+                editPersonKeyword));
 
         var adminAuthority = new Authority("ADMIN",
             new HashSet<>(
@@ -79,7 +82,7 @@ public class DbInitializer implements ApplicationRunner {
             new Authority("AUTHOR",
                 new HashSet<>(List.of(
                     new Privilege[] {allowAccountTakeover, updateProfile, editPersonOtherNames,
-                        editPersonalInfo})));
+                        editPersonalInfo, editPersonBiography, editPersonKeyword})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(authorAuthority);
 

@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.repository.institution.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.person.institution.OrganisationalUnitRepository;
 import rs.teslaris.core.service.impl.OrganisationUnitServiceImpl;
 
 @SpringBootTest
@@ -25,20 +25,20 @@ public class OrganisationUnitServiceTest {
 
 
     @Test
-    public void shouldReturnOrganisationalUnitWhenItExists() {
+    public void shouldReturnOrganisationUnitWhenItExists() {
         // given
         var expected = new OrganisationUnit();
         when(organisationalUnitRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        OrganisationUnit result = organisationalUnitService.findOrganisationalUnitById(1);
+        var result = organisationalUnitService.findOrganisationalUnitById(1);
 
         // then
         assertEquals(expected, result);
     }
 
     @Test
-    public void shouldThrowNotFoundExceptionWhenOrganisationalUnitDoesNotExist() {
+    public void shouldThrowNotFoundExceptionWhenOrganisationUnitDoesNotExist() {
         // given
         when(organisationalUnitRepository.findById(1)).thenReturn(Optional.empty());
 

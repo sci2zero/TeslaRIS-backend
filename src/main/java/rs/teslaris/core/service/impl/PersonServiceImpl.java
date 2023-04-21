@@ -2,9 +2,11 @@ package rs.teslaris.core.service.impl;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -22,6 +24,7 @@ import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.CountryService;
 import rs.teslaris.core.service.LanguageTagService;
 import rs.teslaris.core.service.OrganisationUnitService;
+import rs.teslaris.core.service.PersonNameService;
 import rs.teslaris.core.service.PersonService;
 
 @Service
@@ -35,6 +38,8 @@ public class PersonServiceImpl implements PersonService {
     private final CountryService countryService;
 
     private final LanguageTagService languageTagService;
+
+    private final PersonNameService personNameService;
 
 
     @Override
@@ -80,9 +85,71 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     @Transactional
+    public void setPersonBiography(List<MultilingualContentDTO> biographyDTO, Integer personId) {
+        var personToUpdate = findPersonById(personId);
+        personToUpdate.getBiography().clear();
+        biographyDTO.stream()
+            .map(biography -> {
+                var languageTag = languageTagService.findLanguageTagById(
+                    biography.getLanguageTagId());
+                return new MultiLingualContent(
+                    languageTag,
+                    biography.getContent(),
+                    biography.getPriority()
+                );
+            })
+            .forEach(biography -> {
+                personToUpdate.getBiography().add(biography);
+                personRepository.save(personToUpdate);
+            });
+    }
+
+    @Override
+    @Transactional
+    public void setPersonKeyword(List<MultilingualContentDTO> keywordDTO, Integer personId) {
+        var personToUpdate = findPersonById(personId);
+        personToUpdate.getKeyword().clear();
+        keywordDTO.stream()
+            .map(keyword -> {
+                var languageTag = languageTagService.findLanguageTagById(
+                    keyword.getLanguageTagId());
+                return new MultiLingualContent(
+                    languageTag,
+                    keyword.getContent(),
+                    keyword.getPriority()
+                );
+            })
+            .forEach(keyword -> {
+                personToUpdate.getBiography().add(keyword);
+                personRepository.save(personToUpdate);
+            });
+    }
+
+    @Override
+    @Transactional
+    public void setPersonMainName(Integer personNameId, Integer personId) {
+        var personToUpdate = findPersonById(personId);
+        var chosenName = personNameService.findPersonNameById(personNameId);
+
+        personToUpdate.getOtherNames().add(personToUpdate.getName());
+        personToUpdate.setName(chosenName);
+        personToUpdate.getOtherNames().remove(chosenName);
+
+        personRepository.save(personToUpdate);
+    }
+
+    @Override
+    @Transactional
     public void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId) {
         var personToUpdate = findPersonById(personId);
+
+        var personNameIds = personToUpdate.getOtherNames()
+            .stream()
+            .map(PersonName::getId)
+            .collect(Collectors.toList());
+
         personToUpdate.getOtherNames().clear();
+        personNameService.deletePersonNamesWithIds(personNameIds);
 
         personNameDTO.stream()
             .map(personName -> new PersonName(
@@ -117,23 +184,10 @@ public class PersonServiceImpl implements PersonService {
         personalInfoToUpdate.getPostalAddress().setCountry(country);
 
         personToUpdate.getPersonalInfo().getPostalAddress().getStreetAndNumber().clear();
-        for (var streetAndNumber : personalInfo.getPostalAddress().getStreetAndNumber()) {
-            var languageTag = languageTagService.findLanguageTagById(
-                streetAndNumber.getLanguageTagId());
-            personalInfoToUpdate.getPostalAddress().getStreetAndNumber().add(
-                new MultiLingualContent(languageTag, streetAndNumber.getContent(),
-                    streetAndNumber.getPriority()));
-            personRepository.save(personToUpdate);
-        }
+        setPersonStreetAndNumberInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
         personToUpdate.getPersonalInfo().getPostalAddress().getCity().clear();
-        for (var city : personalInfo.getPostalAddress().getCity()) {
-            var languageTag = languageTagService.findLanguageTagById(
-                city.getLanguageTagId());
-            personalInfoToUpdate.getPostalAddress().getCity()
-                .add(new MultiLingualContent(languageTag, city.getContent(), city.getPriority()));
-            personRepository.save(personToUpdate);
-        }
+        setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
         personalInfoToUpdate.getContact()
             .setContactEmail(personalInfo.getContact().getContactEmail());
@@ -141,5 +195,38 @@ public class PersonServiceImpl implements PersonService {
             .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
 
         personRepository.save(personToUpdate);
+    }
+
+    @Transactional
+    private void setPersonStreetAndNumberInfo(Person personToUpdate,
+                                              PersonalInfo personalInfoToUpdate,
+                                              PersonalInfoDTO personalInfo) {
+        personalInfo.getPostalAddress().getStreetAndNumber().stream()
+            .map(streetAndNumber -> {
+                var languageTag = languageTagService.findLanguageTagById(
+                    streetAndNumber.getLanguageTagId());
+                return new MultiLingualContent(languageTag, streetAndNumber.getContent(),
+                    streetAndNumber.getPriority());
+            })
+            .forEach(streetAndNumberContent -> {
+                personalInfoToUpdate.getPostalAddress().getStreetAndNumber()
+                    .add(streetAndNumberContent);
+                personRepository.save(personToUpdate);
+            });
+    }
+
+    @Transactional
+    private void setPersonCityInfo(Person personToUpdate,
+                                   PersonalInfo personalInfoToUpdate,
+                                   PersonalInfoDTO personalInfo) {
+        personalInfo.getPostalAddress().getCity().stream()
+            .map(city -> {
+                var languageTag = languageTagService.findLanguageTagById(city.getLanguageTagId());
+                return new MultiLingualContent(languageTag, city.getContent(), city.getPriority());
+            })
+            .forEach(city -> {
+                personalInfoToUpdate.getPostalAddress().getCity().add(city);
+                personRepository.save(personToUpdate);
+            });
     }
 }
