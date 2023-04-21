@@ -16,5 +16,5 @@ public interface PersonService {
 
     void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId);
 
-    void updatePersonalInfo(PersonalInfoDTO personalInfo);
+    void updatePersonalInfo(PersonalInfoDTO personalInfo, Integer personId);
 }

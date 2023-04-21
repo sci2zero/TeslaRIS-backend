@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.commontypes;
 
 
+import com.google.common.base.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -30,4 +31,24 @@ public class MultiLingualContent extends BaseEntity {
 
     @Column(name = "priority", nullable = false)
     private int priority;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        MultiLingualContent that = (MultiLingualContent) o;
+        return Objects.equal(content, that.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(super.hashCode(), content);
+    }
 }

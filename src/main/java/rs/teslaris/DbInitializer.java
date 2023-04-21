@@ -15,6 +15,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
@@ -27,6 +28,7 @@ import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
+import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.institution.OrganisationalUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
@@ -45,6 +47,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final LanguageRepository languageRepository;
 
+    private final LanguageTagRepository languageTagRepository;
+
     private final PersonRepository personRepository;
 
     private final OrganisationalUnitRepository organisationalUnitRepository;
@@ -61,9 +65,11 @@ public class DbInitializer implements ApplicationRunner {
         var deactivateUser = new Privilege("DEACTIVATE_USER");
         var updateProfile = new Privilege("UPDATE_PROFILE");
         var createUserBasic = new Privilege("CREATE_PERSON_BASIC");
+        var editPersonOtherNames = new Privilege("EDIT_PERSON_OTHER_NAMES");
+        var editPersonalInfo = new Privilege("EDIT_PERSONAL_INFO");
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic));
+                createUserBasic, editPersonOtherNames, editPersonalInfo));
 
         var adminAuthority = new Authority("ADMIN",
             new HashSet<>(
@@ -71,7 +77,9 @@ public class DbInitializer implements ApplicationRunner {
                     createUserBasic})));
         var authorAuthority =
             new Authority("AUTHOR",
-                new HashSet<>(List.of(new Privilege[] {allowAccountTakeover, updateProfile})));
+                new HashSet<>(List.of(
+                    new Privilege[] {allowAccountTakeover, updateProfile, editPersonOtherNames,
+                        editPersonalInfo})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(authorAuthority);
 
@@ -109,5 +117,8 @@ public class DbInitializer implements ApplicationRunner {
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationalUnitRepository.save(dummyOU);
+
+        var englishTag = new LanguageTag("EN", "English");
+        languageTagRepository.save(englishTag);
     }
 }

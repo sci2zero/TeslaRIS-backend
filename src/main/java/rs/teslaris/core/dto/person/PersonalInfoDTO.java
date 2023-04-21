@@ -23,4 +23,12 @@ public class PersonalInfoDTO {
 
     private ContactDTO contact;
 
+    private String apvnt;
+
+    private String mnid;
+
+    private String orcid;
+
+    private String scopusAuthorId;
+
 }
