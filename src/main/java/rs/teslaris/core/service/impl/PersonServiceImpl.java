@@ -1,10 +1,13 @@
 package rs.teslaris.core.service.impl;
 
 import java.util.HashSet;
+import java.util.List;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.person.Contact;
@@ -65,5 +68,29 @@ public class PersonServiceImpl implements PersonService {
         var savedPerson = personRepository.save(newPerson);
         newPerson.setId(savedPerson.getId());
         return newPerson;
+    }
+
+    @Override
+    @Transactional
+    public void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId) {
+        var personToUpdate = findPersonById(personId);
+        personToUpdate.getOtherNames().clear();
+
+        personNameDTO.stream()
+            .map(personName -> new PersonName(
+                personName.getFirstname(),
+                personName.getOtherName(),
+                personName.getLastname(),
+                personName.getDateFrom(),
+                personName.getDateTo()
+            ))
+            .forEach(personName -> personToUpdate.getOtherNames().add(personName));
+
+        personRepository.save(personToUpdate);
+    }
+
+    @Override
+    public void updatePersonalInfo(PersonalInfoDTO personalInfo) {
+
     }
 }

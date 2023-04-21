@@ -65,7 +65,7 @@ public class PersonServiceTest {
     }
 
     @Test
-    void testCreatePersonWithBasicInfo() {
+    void shouldCreatePersonWithBasicInfoWhenInfoIsValid() {
         // given
         BasicPersonDTO personDTO = new BasicPersonDTO();
         PersonNameDTO personNameDTO = new PersonNameDTO();
