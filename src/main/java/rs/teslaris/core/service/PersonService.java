@@ -13,6 +13,8 @@ public interface PersonService {
 
     Person findPersonById(Integer id);
 
+    boolean isPersonEmployedInOrganisationUnit(Integer personId, Integer organisationUnitId);
+
     Person createPersonWithBasicInfo(BasicPersonDTO personDTO);
 
     void setPersonBiography(List<MultilingualContentDTO> biography, Integer personId);

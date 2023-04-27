@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -25,7 +26,7 @@ public class PersonController {
     private final PersonService personService;
 
     @PostMapping("/basic")
-    @PreAuthorize("hasAuthority('CREATE_PERSON_BASIC')")
+    @PreAuthorize("hasAuthority('REGISTER_PERSON')")
     public BasicPersonDTO createPersonWithBasicInfo(@RequestBody BasicPersonDTO person) {
         var createdPerson = personService.createPersonWithBasicInfo(person);
         person.setId(createdPerson.getId());
@@ -33,32 +34,36 @@ public class PersonController {
     }
 
     @PatchMapping("/name/{personId}/{personNameId}")
-    @PreAuthorize("hasAuthority('EDIT_PERSON_NAMES')")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PersonEditCheck
     public void setPersonMainName(@PathVariable Integer personId,
                                   @PathVariable Integer personNameId) {
         personService.setPersonMainName(personNameId, personId);
     }
 
     @PatchMapping("/other-names/{personId}")
-    @PreAuthorize("hasAuthority('EDIT_PERSON_NAMES')")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PersonEditCheck
     public void setPersonOtherNames(@RequestBody List<PersonNameDTO> personNames,
                                     @PathVariable Integer personId) {
         personService.setPersonOtherNames(personNames, personId);
     }
 
     @PatchMapping("/biography/{personId}")
-    @PreAuthorize("hasAuthority('EDIT_PERSON_BIOGRAPHY')")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PersonEditCheck
     public void setPersonBiography(@RequestBody List<MultilingualContentDTO> biography,
                                    @PathVariable Integer personId) {
         personService.setPersonBiography(biography, personId);
     }
 
     @PatchMapping("/keyword/{personId}")
-    @PreAuthorize("hasAuthority('EDIT_PERSON_KEYWORD')")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PersonEditCheck
     public void setPersonKeyword(@RequestBody List<MultilingualContentDTO> keyword,
                                  @PathVariable Integer personId) {
         personService.setPersonKeyword(keyword, personId);
@@ -66,8 +71,9 @@ public class PersonController {
 
 
     @PatchMapping("/personal-info/{personId}")
-    @PreAuthorize("hasAuthority('EDIT_PERSONAL_INFO')")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PersonEditCheck
     public void updatePersonalInfo(@RequestBody PersonalInfoDTO personalInfo,
                                    @PathVariable Integer personId) {
         personService.updatePersonalInfo(personalInfo, personId);

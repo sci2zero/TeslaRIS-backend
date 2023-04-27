@@ -39,6 +39,11 @@ public class JwtUtil {
         return claims.get("userId", Integer.class);
     }
 
+    public String extractUserRoleFromToken(String token) {
+        var claims = this.getAllClaimsFromToken(token);
+        return claims.get("role", String.class);
+    }
+
     public String extractJWTSecurity(String token) {
         var claims = this.getAllClaimsFromToken(token);
         return claims.get("jwt-security-fingerprint", String.class);

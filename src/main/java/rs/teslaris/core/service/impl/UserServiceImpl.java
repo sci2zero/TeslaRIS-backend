@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +73,21 @@ public class UserServiceImpl implements UserService {
     public User loadUserById(Integer userID) throws UsernameNotFoundException {
         return userRepository.findById(userID).orElseThrow(
             () -> new UsernameNotFoundException("User with this ID does not exist."));
+    }
+
+    @Override
+    public int getUserOrganisationUnitId(Integer userId) {
+        return userRepository.findByIdWithOrganisationUnit(userId).orElseThrow(
+                () -> new NotFoundException("User with this ID does not exist."))
+            .getOrganisationUnit().getId();
+    }
+
+    @Override
+    @Transactional
+    public boolean isUserAPerson(Integer userId, Integer personId) {
+        var user = loadUserById(userId);
+
+        return user.getPerson() != null && Objects.equals(user.getPerson().getId(), personId);
     }
 
     @Override

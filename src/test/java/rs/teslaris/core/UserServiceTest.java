@@ -420,4 +420,65 @@ public class UserServiceTest {
 
         // then (NonExistingRefreshTokenException should be thrown)
     }
+
+    @Test
+    public void shouldReturnUserOrganisationUnitIdWhenIdIsValid() {
+        // given
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(1);
+        var user = new User();
+        user.setOrganisationUnit(organisationUnit);
+
+        when(userRepository.findByIdWithOrganisationUnit(1)).thenReturn(Optional.of(user));
+
+        // when
+        int result = userService.getUserOrganisationUnitId(1);
+
+        // then
+        assertEquals(organisationUnit.getId(), result);
+    }
+
+    @Test
+    public void testGetUserOrganisationUnitIdNotFound() {
+        // given
+        when(userRepository.findByIdWithOrganisationUnit(2)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class, () -> {
+            userService.getUserOrganisationUnitId(2);
+        });
+
+        // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldReturnFalseWhenNoMatch() {
+        // given
+        var person = new Person();
+        person.setId(1);
+        var user = new User();
+        user.setPerson(person);
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+        // when
+        boolean result = userService.isUserAPerson(1, 2);
+
+        //then
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenNoPerson() {
+        // given
+        var user = new User();
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+        //when
+        boolean result = userService.isUserAPerson(1, 1);
+
+        //then
+        assertFalse(result);
+    }
 }

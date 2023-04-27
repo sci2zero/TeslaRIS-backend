@@ -64,15 +64,11 @@ public class DbInitializer implements ApplicationRunner {
         var takeRoleOfUser = new Privilege("TAKE_ROLE");
         var deactivateUser = new Privilege("DEACTIVATE_USER");
         var updateProfile = new Privilege("UPDATE_PROFILE");
-        var createUserBasic = new Privilege("CREATE_PERSON_BASIC");
-        var editPersonOtherNames = new Privilege("EDIT_PERSON_NAMES");
-        var editPersonalInfo = new Privilege("EDIT_PERSONAL_INFO");
-        var editPersonBiography = new Privilege("EDIT_PERSON_BIOGRAPHY");
-        var editPersonKeyword = new Privilege("EDIT_PERSON_KEYWORD");
+        var createUserBasic = new Privilege("REGISTER_PERSON");
+        var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonOtherNames, editPersonalInfo, editPersonBiography,
-                editPersonKeyword));
+                createUserBasic, editPersonalInfo));
 
         var adminAuthority = new Authority("ADMIN",
             new HashSet<>(
@@ -81,8 +77,7 @@ public class DbInitializer implements ApplicationRunner {
         var authorAuthority =
             new Authority("AUTHOR",
                 new HashSet<>(List.of(
-                    new Privilege[] {allowAccountTakeover, updateProfile, editPersonOtherNames,
-                        editPersonalInfo, editPersonBiography, editPersonKeyword})));
+                    new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(authorAuthority);
 

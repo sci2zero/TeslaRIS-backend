@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,23 @@ public class PersonServiceImpl implements PersonService {
     public Person findPersonById(Integer id) {
         return personRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
+    }
+
+    @Override
+    @Transactional
+    public boolean isPersonEmployedInOrganisationUnit(Integer personId,
+                                                      Integer organisationUnitId) {
+        var person = findPersonById(personId);
+
+        for (var involvement : person.getInvolvements()) {
+            if (involvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
+                Objects.equals(involvement.getOrganisationUnit().getId(), organisationUnitId)) {
+                return true;
+                // TODO: add recursive check
+            }
+        }
+
+        return false;
     }
 
     @Override

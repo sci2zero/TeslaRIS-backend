@@ -15,6 +15,10 @@ public interface UserService extends UserDetailsService {
 
     User loadUserById(Integer userId);
 
+    int getUserOrganisationUnitId(Integer userId);
+
+    boolean isUserAPerson(Integer userId, Integer personId);
+
     AuthenticationResponseDTO authenticateUser(AuthenticationManager authernticationManager,
                                                AuthenticationRequestDTO authenticationRequest,
                                                String fingerprint);
