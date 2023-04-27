@@ -77,7 +77,8 @@ public class DbInitializer implements ApplicationRunner {
         var authorAuthority =
             new Authority("AUTHOR",
                 new HashSet<>(List.of(
-                    new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo})));
+                    new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
+                        createUserBasic})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(authorAuthority);
 

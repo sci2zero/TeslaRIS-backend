@@ -197,15 +197,17 @@ public class PersonServiceImpl implements PersonService {
         personalInfoToUpdate.setLocalBirthDate(personalInfo.getLocalBirthDate());
         personalInfoToUpdate.setSex(personalInfo.getSex());
 
-        var country =
-            countryService.findCountryById(personalInfo.getPostalAddress().getCountryId());
-        personalInfoToUpdate.getPostalAddress().setCountry(country);
+        if (personalInfo.getPostalAddress() != null) {
+            var country =
+                countryService.findCountryById(personalInfo.getPostalAddress().getCountryId());
+            personalInfoToUpdate.getPostalAddress().setCountry(country);
 
-        personToUpdate.getPersonalInfo().getPostalAddress().getStreetAndNumber().clear();
-        setPersonStreetAndNumberInfo(personToUpdate, personalInfoToUpdate, personalInfo);
+            personToUpdate.getPersonalInfo().getPostalAddress().getStreetAndNumber().clear();
+            setPersonStreetAndNumberInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
-        personToUpdate.getPersonalInfo().getPostalAddress().getCity().clear();
-        setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
+            personToUpdate.getPersonalInfo().getPostalAddress().getCity().clear();
+            setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
+        }
 
         personalInfoToUpdate.getContact()
             .setContactEmail(personalInfo.getContact().getContactEmail());
