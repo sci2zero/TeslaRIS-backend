@@ -13,6 +13,8 @@ public interface PersonService {
 
     Person findPersonById(Integer id);
 
+    Person readPersonWithBasicInfo(Integer id);
+
     boolean isPersonEmployedInOrganisationUnit(Integer personId, Integer organisationUnitId);
 
     Person createPersonWithBasicInfo(BasicPersonDTO personDTO);

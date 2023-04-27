@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.service.PersonService;
 
 @Validated
@@ -27,6 +31,41 @@ import rs.teslaris.core.service.PersonService;
 public class PersonController {
 
     private final PersonService personService;
+
+    @PostMapping("/{personId}")
+    public PersonResponseDto readPersonWithBasicInfo(@PathVariable Integer personId) {
+        var person = personService.readPersonWithBasicInfo(personId);
+        var otherNames = new ArrayList<PersonNameDTO>();
+        var biography = new ArrayList<MultilingualContentDTO>();
+        var keyword = new ArrayList<MultilingualContentDTO>();
+
+        for (var otherName : person.getOtherNames()) {
+            otherNames.add(new PersonNameDTO(otherName.getFirstname(), otherName.getOtherName(),
+                otherName.getLastname(), otherName.getDateFrom(), otherName.getDateTo()));
+        }
+
+        for (var bio : person.getBiography()) {
+            biography.add(new MultilingualContentDTO(bio.getLanguage().getId(), bio.getContent(),
+                bio.getPriority()));
+        }
+
+        for (var keyw : person.getKeyword()) {
+            biography.add(new MultilingualContentDTO(keyw.getLanguage().getId(), keyw.getContent(),
+                keyw.getPriority()));
+        }
+
+        return new PersonResponseDto(
+            new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
+                person.getName().getLastname(), person.getName().getDateFrom(),
+                person.getName().getDateTo()), otherNames,
+            new PersonalInfoDTO(person.getPersonalInfo()
+                .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
+                person.getPersonalInfo()
+                    .getSex(), new PostalAddressDTO(), new ContactDTO(), person.getApvnt(),
+                person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
+            keyword,
+            person.getApproveStatus());
+    }
 
     @PostMapping("/basic")
     @PreAuthorize("hasAuthority('REGISTER_PERSON')")

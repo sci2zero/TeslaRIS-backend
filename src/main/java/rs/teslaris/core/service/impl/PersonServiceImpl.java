@@ -50,6 +50,12 @@ public class PersonServiceImpl implements PersonService {
     }
 
     @Override
+    public Person readPersonWithBasicInfo(Integer id) {
+        return personRepository.findPersonWithIdWithBasicInfo(id)
+            .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
+    }
+
+    @Override
     @Transactional
     public boolean isPersonEmployedInOrganisationUnit(Integer personId,
                                                       Integer organisationUnitId) {
