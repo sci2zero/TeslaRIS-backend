@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.model.person.Person;
 
@@ -13,7 +14,7 @@ public interface PersonService {
 
     Person findPersonById(Integer id);
 
-    Person readPersonWithBasicInfo(Integer id);
+    PersonResponseDto readPersonWithBasicInfo(Integer id);
 
     boolean isPersonEmployedInOrganisationUnit(Integer personId, Integer organisationUnitId);
 
@@ -28,4 +29,6 @@ public interface PersonService {
     void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId);
 
     void updatePersonalInfo(PersonalInfoDTO personalInfo, Integer personId);
+
+    void approvePerson(Integer personId, Boolean approved);
 }

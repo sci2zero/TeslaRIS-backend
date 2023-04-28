@@ -1,27 +1,27 @@
 package rs.teslaris.core.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.PersonEditCheck;
+import rs.teslaris.core.converter.person.PersonToPersonDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
-import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
-import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.service.PersonService;
 
 @Validated
@@ -32,39 +32,11 @@ public class PersonController {
 
     private final PersonService personService;
 
-    @PostMapping("/{personId}")
+    private final PersonToPersonDTO personToPersonDTOConverter;
+
+    @GetMapping("/{personId}")
     public PersonResponseDto readPersonWithBasicInfo(@PathVariable Integer personId) {
-        var person = personService.readPersonWithBasicInfo(personId);
-        var otherNames = new ArrayList<PersonNameDTO>();
-        var biography = new ArrayList<MultilingualContentDTO>();
-        var keyword = new ArrayList<MultilingualContentDTO>();
-
-        for (var otherName : person.getOtherNames()) {
-            otherNames.add(new PersonNameDTO(otherName.getFirstname(), otherName.getOtherName(),
-                otherName.getLastname(), otherName.getDateFrom(), otherName.getDateTo()));
-        }
-
-        for (var bio : person.getBiography()) {
-            biography.add(new MultilingualContentDTO(bio.getLanguage().getId(), bio.getContent(),
-                bio.getPriority()));
-        }
-
-        for (var keyw : person.getKeyword()) {
-            biography.add(new MultilingualContentDTO(keyw.getLanguage().getId(), keyw.getContent(),
-                keyw.getPriority()));
-        }
-
-        return new PersonResponseDto(
-            new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
-                person.getName().getLastname(), person.getName().getDateFrom(),
-                person.getName().getDateTo()), otherNames,
-            new PersonalInfoDTO(person.getPersonalInfo()
-                .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
-                person.getPersonalInfo()
-                    .getSex(), new PostalAddressDTO(), new ContactDTO(), person.getApvnt(),
-                person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
-            keyword,
-            person.getApproveStatus());
+        return personService.readPersonWithBasicInfo(personId);
     }
 
     @PostMapping("/basic")
@@ -119,6 +91,14 @@ public class PersonController {
     public void updatePersonalInfo(@RequestBody @Valid PersonalInfoDTO personalInfo,
                                    @PathVariable Integer personId) {
         personService.updatePersonalInfo(personalInfo, personId);
+    }
+
+    @PatchMapping("/approve/{personId}")
+    @PreAuthorize("hasAuthority('APPROVE_PERSON')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void approvePerson(@RequestParam Boolean approve,
+                              @PathVariable Integer personId) {
+        personService.approvePerson(personId, approve);
     }
 
 }

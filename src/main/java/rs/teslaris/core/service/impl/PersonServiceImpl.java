@@ -6,10 +6,13 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.person.PersonToPersonDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -42,6 +45,11 @@ public class PersonServiceImpl implements PersonService {
 
     private final PersonNameService personNameService;
 
+    private final PersonToPersonDTO personToPersonDTOConverter;
+
+    @Value("${approval.approved_by_default}")
+    private Boolean approvedByDefault;
+
 
     @Override
     public Person findPersonById(Integer id) {
@@ -50,9 +58,10 @@ public class PersonServiceImpl implements PersonService {
     }
 
     @Override
-    public Person readPersonWithBasicInfo(Integer id) {
-        return personRepository.findPersonWithIdWithBasicInfo(id)
-            .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
+    @Transactional
+    public PersonResponseDto readPersonWithBasicInfo(Integer id) {
+        var person = findPersonById(id);
+        return personToPersonDTOConverter.toDTO(person);
     }
 
     @Override
@@ -75,6 +84,9 @@ public class PersonServiceImpl implements PersonService {
     @Override
     @Transactional
     public Person createPersonWithBasicInfo(BasicPersonDTO personDTO) {
+        var defaultApproveStatus =
+            approvedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED;
+
         var personNameDTO = personDTO.getPersonName();
         var personName = new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
             personNameDTO.getLastname(), personDTO.getLocalBirthDate(), null);
@@ -87,7 +99,7 @@ public class PersonServiceImpl implements PersonService {
             personDTO.getOrganisationUnitId());
 
         var currentEmployment =
-            new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
+            new Employment(null, null, defaultApproveStatus, new HashSet<>(),
                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
                 employmentInstitution, personDTO.getEmploymentPosition(),
                 new HashSet<>());
@@ -100,7 +112,7 @@ public class PersonServiceImpl implements PersonService {
         newPerson.setOrcid(personDTO.getOrcid());
         newPerson.setScopusAuthorId(personDTO.getScopusAuthorId());
         newPerson.addInvolvement(currentEmployment);
-        newPerson.setApproveStatus(ApproveStatus.APPROVED);
+        newPerson.setApproveStatus(defaultApproveStatus);
 
         var savedPerson = personRepository.save(newPerson);
         newPerson.setId(savedPerson.getId());
@@ -221,6 +233,18 @@ public class PersonServiceImpl implements PersonService {
             .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
 
         personRepository.save(personToUpdate);
+    }
+
+    @Override
+    public void approvePerson(Integer personId, Boolean approve) {
+        var personToBeApproved = findPersonById(personId);
+
+        var approveStatus = approve ? ApproveStatus.APPROVED : ApproveStatus.DECLINED;
+        if (personToBeApproved.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
+            personToBeApproved.setApproveStatus(approveStatus);
+        }
+
+        personRepository.save(personToBeApproved);
     }
 
     @Transactional
