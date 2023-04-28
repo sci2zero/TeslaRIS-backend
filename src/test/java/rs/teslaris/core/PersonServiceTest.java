@@ -15,10 +15,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
@@ -26,6 +28,8 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -33,7 +37,6 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
-import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -65,8 +68,17 @@ public class PersonServiceTest {
     @Mock
     private CountryService countryService;
 
+    @Mock
+    private PersonIndexRepository personIndexRepository;
+
     @InjectMocks
     private PersonServiceImpl personService;
+
+
+    @BeforeEach
+    public void setUp() {
+        ReflectionTestUtils.setField(personService, "approvedByDefault", true);
+    }
 
     @Test
     public void shouldReturnPersonWhenPersonExists() {
@@ -112,14 +124,22 @@ public class PersonServiceTest {
         personDTO.setOrganisationUnitId(1);
         personDTO.setEmploymentPosition(EmploymentPosition.ASSISTANT_PROFESSOR);
 
+        var personalInfo = new PersonalInfo();
+        personalInfo.setLocalBirthDate(LocalDate.now());
+
+        var person = new Person();
+        person.setName(new PersonName());
+        person.setInvolvements(new HashSet<>());
+        person.setPersonalInfo(personalInfo);
+
         // when
         OrganisationUnit employmentInstitution = new OrganisationUnit();
         when(organisationUnitService.findOrganisationalUnitById(2)).thenReturn(
             employmentInstitution);
-        when(personRepository.save(any(Person.class))).thenReturn(new Person());
+        when(personRepository.save(any(Person.class))).thenReturn(person);
 
         // then
-        Person result = personService.createPersonWithBasicInfo(personDTO);
+        var result = personService.createPersonWithBasicInfo(personDTO);
         assertNotNull(result);
         assertEquals("John", result.getName().getFirstname());
         assertEquals("Doe", result.getName().getLastname());
@@ -134,7 +154,7 @@ public class PersonServiceTest {
         assertEquals("00000000000", result.getScopusAuthorId());
         assertEquals(ApproveStatus.APPROVED, result.getApproveStatus());
         assertEquals(1, result.getInvolvements().size());
-        Involvement currentEmployment = result.getInvolvements().iterator().next();
+        var currentEmployment = result.getInvolvements().iterator().next();
         assertEquals(ApproveStatus.APPROVED, currentEmployment.getApproveStatus());
         assertEquals(InvolvementType.EMPLOYED_AT, currentEmployment.getInvolvementType());
         assertEquals(EmploymentPosition.ASSISTANT_PROFESSOR,
@@ -187,13 +207,21 @@ public class PersonServiceTest {
         var personName1 = new PersonName("Stan", "John", "Doe", null, null);
         var personName2 = new PersonName("Stan", "Jonny", "Doe", null, null);
 
+        var personalInfo = new PersonalInfo();
+        personalInfo.setLocalBirthDate(LocalDate.now());
+
         var person = new Person();
+        person.setId(1);
         person.setOtherNames(new HashSet<>());
         person.getOtherNames().add(personName2);
         person.setName(personName1);
+        person.setPersonalInfo(personalInfo);
+        person.setInvolvements(new HashSet<>());
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
         when(personNameService.findPersonNameById(2)).thenReturn(personName2);
+        when(personIndexRepository.findByDatabaseId(anyInt())).thenReturn(
+            Optional.of(new PersonIndex()));
 
         // when
         personService.setPersonMainName(2, 1);
@@ -296,10 +324,14 @@ public class PersonServiceTest {
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
         personToUpdate.setPersonalInfo(personalInfo);
+        personToUpdate.setName(new PersonName());
+        personToUpdate.setInvolvements(new HashSet<>());
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
         when(countryService.findCountryById(anyInt())).thenReturn(new Country());
         when(personRepository.save(any(Person.class))).thenReturn(personToUpdate);
+        when(personIndexRepository.findByDatabaseId(anyInt())).thenReturn(
+            Optional.of(new PersonIndex()));
 
         // when
         personService.updatePersonalInfo(personalInfoDTO, personId);

@@ -111,14 +111,20 @@ public class DbInitializer implements ApplicationRunner {
         userRepository.save(adminUser);
         userRepository.save(authorUser);
 
+        var englishTag = new LanguageTag("EN", "English");
+        languageTagRepository.save(englishTag);
+        var serbianTag = new LanguageTag("SRB", "Srpski");
+        languageTagRepository.save(serbianTag);
+
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
+        dummyOU.setName(new HashSet<>(
+            List.of(new MultiLingualContent[] {
+                new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
+                new MultiLingualContent(serbianTag, "Fakultet Tehnickih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationalUnitRepository.save(dummyOU);
-
-        var englishTag = new LanguageTag("EN", "English");
-        languageTagRepository.save(englishTag);
     }
 }

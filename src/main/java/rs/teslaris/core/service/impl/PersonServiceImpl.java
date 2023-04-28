@@ -15,10 +15,13 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -36,6 +39,8 @@ import rs.teslaris.core.service.PersonService;
 public class PersonServiceImpl implements PersonService {
 
     private final PersonRepository personRepository;
+
+    private final PersonIndexRepository personIndexRepository;
 
     private final OrganisationUnitService organisationUnitService;
 
@@ -60,7 +65,8 @@ public class PersonServiceImpl implements PersonService {
     @Override
     @Transactional
     public PersonResponseDto readPersonWithBasicInfo(Integer id) {
-        var person = findPersonById(id);
+        var person = personRepository.findPersonByIdWithBasicInfo(id)
+            .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
         return personToPersonDTOConverter.toDTO(person);
     }
 
@@ -116,6 +122,9 @@ public class PersonServiceImpl implements PersonService {
 
         var savedPerson = personRepository.save(newPerson);
         newPerson.setId(savedPerson.getId());
+
+        indexPerson(savedPerson, 0);
+
         return newPerson;
     }
 
@@ -172,6 +181,7 @@ public class PersonServiceImpl implements PersonService {
         personToUpdate.getOtherNames().remove(chosenName);
 
         personRepository.save(personToUpdate);
+        indexPerson(personToUpdate, personToUpdate.getId());
     }
 
     @Override
@@ -233,6 +243,7 @@ public class PersonServiceImpl implements PersonService {
             .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
 
         personRepository.save(personToUpdate);
+        indexPerson(personToUpdate, personToUpdate.getId());
     }
 
     @Override
@@ -278,5 +289,39 @@ public class PersonServiceImpl implements PersonService {
                 personalInfoToUpdate.getPostalAddress().getCity().add(city);
                 personRepository.save(personToUpdate);
             });
+    }
+
+    private void indexPerson(Person savedPerson, Integer personDatabaseId) {
+        PersonIndex personIndex = null;
+        if (personDatabaseId > 0) {
+            personIndex = personIndexRepository.findByDatabaseId(personDatabaseId).orElseThrow(
+                () -> new NotFoundException("Person index with given database ID does not exist."));
+        } else {
+            personIndex = new PersonIndex();
+        }
+
+        personIndex.setName(
+            savedPerson.getName().getFirstname() + " " + savedPerson.getName().getOtherName() +
+                " " + savedPerson.getName().getLastname());
+        personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
+        personIndex.setDatabaseId(savedPerson.getId());
+
+        var employmentInstitutions = savedPerson.getInvolvements().stream()
+            .filter(i -> i.getInvolvementType() == InvolvementType.EMPLOYED_AT).map(
+                Involvement::getOrganisationUnit).collect(Collectors.toList());
+
+        var employments = new StringBuilder();
+        for (var organisationUnit : employmentInstitutions) {
+            var institutionName = new StringBuilder();
+            organisationUnit.getName().stream()
+                .filter(mc -> mc.getLanguage().getLanguageTag().equals("EN") ||
+                    mc.getLanguage().getLanguageTag().equals("SRB"))
+                .forEach(mc -> institutionName.append(mc.getContent()).append(" | "));
+            employments.append(institutionName).append("( ")
+                .append(organisationUnit.getNameAbbreviation()).append(" )");
+        }
+        personIndex.setEmployments(employments.toString());
+
+        personIndexRepository.save(personIndex);
     }
 }
