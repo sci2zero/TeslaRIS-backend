@@ -1,5 +1,6 @@
 package rs.teslaris.core.indexmodel;
 
+import java.util.List;
 import javax.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +25,9 @@ public class PersonIndex {
 
     @Field(type = FieldType.Text, store = true, name = "employments")
     private String employments;
+
+    @Field(store = true, name = "employmentInstitutionsId")
+    private List<Integer> employmentInstitutionsId;
 
     @Field(type = FieldType.Text, store = true, name = "birthdate")
     private String birthdate;

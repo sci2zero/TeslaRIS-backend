@@ -18,6 +18,7 @@ import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
@@ -65,7 +66,7 @@ public class PersonServiceImpl implements PersonService {
     @Override
     @Transactional
     public PersonResponseDto readPersonWithBasicInfo(Integer id) {
-        var person = personRepository.findPersonByIdWithBasicInfo(id)
+        var person = personRepository.findApprovedPersonById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
         return personToPersonDTOConverter.toDTO(person);
     }
@@ -310,6 +311,10 @@ public class PersonServiceImpl implements PersonService {
             .filter(i -> i.getInvolvementType() == InvolvementType.EMPLOYED_AT).map(
                 Involvement::getOrganisationUnit).collect(Collectors.toList());
 
+        personIndex.setEmploymentInstitutionsId(
+            employmentInstitutions.stream().map(BaseEntity::getId).collect(
+                Collectors.toList()));
+
         var employments = new StringBuilder();
         for (var organisationUnit : employmentInstitutions) {
             var institutionName = new StringBuilder();
@@ -317,8 +322,7 @@ public class PersonServiceImpl implements PersonService {
                 .filter(mc -> mc.getLanguage().getLanguageTag().equals("EN") ||
                     mc.getLanguage().getLanguageTag().equals("SRB"))
                 .forEach(mc -> institutionName.append(mc.getContent()).append(" | "));
-            employments.append(institutionName).append("( ")
-                .append(organisationUnit.getNameAbbreviation()).append(" )");
+            employments.append(institutionName).append(organisationUnit.getNameAbbreviation());
         }
         personIndex.setEmployments(employments.toString());
 

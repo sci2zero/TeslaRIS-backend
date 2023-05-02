@@ -10,5 +10,5 @@ import rs.teslaris.core.model.person.Person;
 public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query("select p from Person p where p.id = :id and p.approveStatus = 1")
-    Optional<Person> findPersonByIdWithBasicInfo(Integer id);
+    Optional<Person> findApprovedPersonById(Integer id);
 }

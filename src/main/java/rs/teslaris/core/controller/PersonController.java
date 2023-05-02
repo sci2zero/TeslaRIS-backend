@@ -3,6 +3,8 @@ package rs.teslaris.core.controller;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +23,10 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonSearchRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.service.PersonIndexService;
 import rs.teslaris.core.service.PersonService;
 
 @Validated
@@ -32,11 +37,27 @@ public class PersonController {
 
     private final PersonService personService;
 
+    private final PersonIndexService personIndexService;
+
     private final PersonToPersonDTO personToPersonDTOConverter;
 
     @GetMapping("/{personId}")
     public PersonResponseDto readPersonWithBasicInfo(@PathVariable Integer personId) {
         return personService.readPersonWithBasicInfo(personId);
+    }
+
+    @GetMapping("/basic-search")
+    public Page<PersonIndex> findAllByNameAndEmployment(@RequestBody @Valid
+                                                        PersonSearchRequestDTO searchRequest,
+                                                        Pageable pageable) {
+        return personIndexService.findPeopleByNameAndEmployment(searchRequest.getTokens(),
+            pageable);
+    }
+
+    @GetMapping("/employed-at/{organisationUnitId}")
+    public Page<PersonIndex> findEmployeesForInstitution(@PathVariable Integer organisationUnitId,
+                                                         Pageable pageable) {
+        return personIndexService.findPeopleForOrganisationUnit(organisationUnitId, pageable);
     }
 
     @PostMapping("/basic")

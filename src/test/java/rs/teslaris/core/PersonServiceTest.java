@@ -21,10 +21,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.converter.person.PersonToPersonDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.exception.NotFoundException;
@@ -71,6 +73,9 @@ public class PersonServiceTest {
     @Mock
     private PersonIndexRepository personIndexRepository;
 
+    @Mock
+    private PersonToPersonDTO personToPersonDTOConverter;
+
     @InjectMocks
     private PersonServiceImpl personService;
 
@@ -106,10 +111,37 @@ public class PersonServiceTest {
     }
 
     @Test
+    public void shouldReadPersonWhenPersonIsApproved() {
+        // given
+        var expectedPerson = new Person();
+        var expectedResponse = new PersonResponseDto();
+
+        when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
+        when(personToPersonDTOConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
+
+        // when
+        var personDto = personService.readPersonWithBasicInfo(1);
+
+        // then
+        assertEquals(personDto, expectedResponse);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenPersonIsNotApproved() {
+        // given
+        when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class, () -> personService.readPersonWithBasicInfo(1));
+
+        // then (NotFoundException should be thrown)
+    }
+
+    @Test
     void shouldCreatePersonWithBasicInfoWhenInfoIsValid() {
         // given
-        BasicPersonDTO personDTO = new BasicPersonDTO();
-        PersonNameDTO personNameDTO = new PersonNameDTO();
+        var personDTO = new BasicPersonDTO();
+        var personNameDTO = new PersonNameDTO();
         personNameDTO.setFirstname("John");
         personNameDTO.setLastname("Doe");
         personDTO.setPersonName(personNameDTO);
@@ -133,7 +165,7 @@ public class PersonServiceTest {
         person.setPersonalInfo(personalInfo);
 
         // when
-        OrganisationUnit employmentInstitution = new OrganisationUnit();
+        var employmentInstitution = new OrganisationUnit();
         when(organisationUnitService.findOrganisationalUnitById(2)).thenReturn(
             employmentInstitution);
         when(personRepository.save(any(Person.class))).thenReturn(person);
@@ -280,7 +312,7 @@ public class PersonServiceTest {
     @Test
     void setPersonOtherNames_shouldThrowExceptionIfPersonNotFound() {
         // given
-        Integer personId = 1;
+        var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
         personNameDTOList.add(new PersonNameDTO("John", "Doe", "Smith", null, null));
 
