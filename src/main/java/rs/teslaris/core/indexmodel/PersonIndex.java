@@ -26,7 +26,7 @@ public class PersonIndex {
     @Field(type = FieldType.Text, store = true, name = "employments")
     private String employments;
 
-    @Field(store = true, name = "employmentInstitutionsId")
+    @Field(name = "employmentInstitutionsId")
     private List<Integer> employmentInstitutionsId;
 
     @Field(type = FieldType.Text, store = true, name = "birthdate")
