@@ -31,7 +31,7 @@ public class LanguageServiceTest {
         when(languageRepository.findById(1)).thenReturn(Optional.of(expectedLanguage));
 
         // when
-        Language actualLanguage = languageService.findLanguageById(1);
+        var actualLanguage = languageService.findLanguageById(1);
 
         // then
         assertEquals(expectedLanguage, actualLanguage);

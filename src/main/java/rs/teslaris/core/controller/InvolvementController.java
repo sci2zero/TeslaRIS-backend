@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.converter.involvement.InvolvementToInvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
@@ -23,25 +24,27 @@ public class InvolvementController {
 
     private final InvolvementService involvementService;
 
+    private final InvolvementToInvolvementDTO involvementToInvolvementDTO;
+
     @PostMapping("/education/{personId}")
     public EducationDTO addEducation(@RequestBody @Valid EducationDTO education,
                                      @PathVariable Integer personId) {
         var newEducation = involvementService.addEducation(personId, education);
-        return null;
+        return involvementToInvolvementDTO.toDTO(newEducation);
     }
 
     @PostMapping("/membership/{personId}")
     public MembershipDTO addMembership(@RequestBody @Valid MembershipDTO membership,
                                        @PathVariable Integer personId) {
         var newMembership = involvementService.addMembership(personId, membership);
-        return null;
+        return involvementToInvolvementDTO.toDTO(newMembership);
     }
 
     @PostMapping("/employment/{personId}")
     public EmploymentDTO addEmployment(@RequestBody @Valid EmploymentDTO employment,
                                        @PathVariable Integer personId) {
         var newEmployment = involvementService.addEmployment(personId, employment);
-        return null;
+        return involvementToInvolvementDTO.toDTO(newEmployment);
     }
 
     @PutMapping("/education/{involvementId}")

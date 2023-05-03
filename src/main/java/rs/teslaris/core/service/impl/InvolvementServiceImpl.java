@@ -46,7 +46,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     }
 
     @Override
-    public Involvement addEducation(Integer personId, EducationDTO education) {
+    public Education addEducation(Integer personId, EducationDTO education) {
         var personInvolved = personService.findPersonById(personId);
 
         var thesisTitle = getMultilingualContent(education.getThesisTitle());
@@ -65,7 +65,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     }
 
     @Override
-    public Involvement addMembership(Integer personId, MembershipDTO membership) {
+    public Membership addMembership(Integer personId, MembershipDTO membership) {
         var personInvolved = personService.findPersonById(personId);
 
         var contributorDescription =
@@ -83,7 +83,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     }
 
     @Override
-    public Involvement addEmployment(Integer personId, EmploymentDTO employment) {
+    public Employment addEmployment(Integer personId, EmploymentDTO employment) {
         var personInvolved = personService.findPersonById(personId);
 
         var role = getMultilingualContent(employment.getRole());
@@ -158,6 +158,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findInvolvementById(involvementId);
         involvementToDelete.getPersonInvolved().removeInvolvement(involvementToDelete);
+        involvementRepository.delete(involvementToDelete);
     }
 
     private Set<MultiLingualContent> getMultilingualContent(
