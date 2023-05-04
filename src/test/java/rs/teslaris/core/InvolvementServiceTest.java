@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,7 +22,6 @@ import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.exception.NotFoundException;
-import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
@@ -32,7 +30,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
-import rs.teslaris.core.service.LanguageTagService;
+import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.OrganisationUnitService;
 import rs.teslaris.core.service.PersonService;
 import rs.teslaris.core.service.impl.InvolvementServiceImpl;
@@ -47,10 +45,10 @@ public class InvolvementServiceTest {
     private OrganisationUnitService organisationUnitService;
 
     @Mock
-    private LanguageTagService languageTagService;
+    private InvolvementRepository involvementRepository;
 
     @Mock
-    private InvolvementRepository involvementRepository;
+    private MultilingualContentService multilingualContentService;
 
     @InjectMocks
     private InvolvementServiceImpl involvementService;
@@ -92,7 +90,6 @@ public class InvolvementServiceTest {
         educationDTO.setAbbreviationTitle(List.of(mc));
 
         when(personService.findPersonById(1)).thenReturn(person);
-        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
         when(involvementRepository.save(any())).thenReturn(new Education());
 
         // when
@@ -114,7 +111,6 @@ public class InvolvementServiceTest {
         membershipDTO.setContributionDescription(List.of(mc));
 
         when(personService.findPersonById(1)).thenReturn(person);
-        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
         when(involvementRepository.save(any())).thenReturn(new Membership());
 
         // when
@@ -135,7 +131,6 @@ public class InvolvementServiceTest {
         employmentDTO.setRole(List.of(mc));
 
         when(personService.findPersonById(1)).thenReturn(person);
-        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
         when(involvementRepository.save(any())).thenReturn(new Employment());
 
         // when
@@ -164,7 +159,7 @@ public class InvolvementServiceTest {
         educationDTO.setAbbreviationTitle(List.of(mc2));
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
-        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(Set.of(mc1));
         when(involvementRepository.save(any())).thenReturn(new Employment());
 
         // when
@@ -191,7 +186,7 @@ public class InvolvementServiceTest {
         membershipDTO.setContributionDescription(List.of(mc2));
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(membership));
-        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(Set.of(mc1));
         when(involvementRepository.save(any())).thenReturn(new Employment());
 
         // when
@@ -217,7 +212,6 @@ public class InvolvementServiceTest {
         employmentDTO.setRole(List.of(mc2));
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(employment));
-        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
         when(involvementRepository.save(any())).thenReturn(new Employment());
 
         // when

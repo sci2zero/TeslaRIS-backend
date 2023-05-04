@@ -1,30 +1,32 @@
-package rs.teslaris.core.converter.involvement;
+package rs.teslaris.core.converter.person.involvement;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.converter.commontypes.MultilingualContentToMultilingualContentDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 
 @Component
+@RequiredArgsConstructor
 public class InvolvementToInvolvementDTO {
+
+    private final MultilingualContentToMultilingualContentDTO multilingualContentConverter;
 
     public EducationDTO toDTO(Education education) {
         var dto = new EducationDTO();
         setCommonFields(education, dto);
 
-        var thesisTitle = getMultilingualContentDTO(education.getThesisTitle());
-        var title = getMultilingualContentDTO(education.getTitle());
-        var abbreviationTitle = getMultilingualContentDTO(education.getAbbreviationTitle());
+        var thesisTitle =
+            multilingualContentConverter.getMultilingualContentDTO(education.getThesisTitle());
+        var title = multilingualContentConverter.getMultilingualContentDTO(education.getTitle());
+        var abbreviationTitle = multilingualContentConverter.getMultilingualContentDTO(
+            education.getAbbreviationTitle());
 
         dto.setThesisTitle(thesisTitle);
         dto.setTitle(title);
@@ -38,8 +40,9 @@ public class InvolvementToInvolvementDTO {
         setCommonFields(membership, dto);
 
         var contributionDescription =
-            getMultilingualContentDTO(membership.getContributionDescription());
-        var role = getMultilingualContentDTO(membership.getRole());
+            multilingualContentConverter.getMultilingualContentDTO(
+                membership.getContributionDescription());
+        var role = multilingualContentConverter.getMultilingualContentDTO(membership.getRole());
 
         dto.setContributionDescription(contributionDescription);
         dto.setRole(role);
@@ -51,7 +54,7 @@ public class InvolvementToInvolvementDTO {
         var dto = new EmploymentDTO();
         setCommonFields(employment, dto);
 
-        var role = getMultilingualContentDTO(employment.getRole());
+        var role = multilingualContentConverter.getMultilingualContentDTO(employment.getRole());
 
         dto.setEmploymentPosition(employment.getEmploymentPosition());
         dto.setRole(role);
@@ -59,19 +62,11 @@ public class InvolvementToInvolvementDTO {
         return dto;
     }
 
-    private List<MultilingualContentDTO> getMultilingualContentDTO(
-        Set<MultiLingualContent> multilingualContent) {
-        return multilingualContent.stream().map(mc ->
-            new MultilingualContentDTO(
-                mc.getLanguage().getId(),
-                mc.getContent(),
-                mc.getPriority()
-            )).collect(Collectors.toList());
-    }
 
     private void setCommonFields(Involvement involvement, InvolvementDTO dto) {
         var affiliationStatements =
-            getMultilingualContentDTO(involvement.getAffiliationStatement());
+            multilingualContentConverter.getMultilingualContentDTO(
+                involvement.getAffiliationStatement());
 
         dto.setDateFrom(involvement.getDateFrom());
         dto.setDateTo(involvement.getDateTo());

@@ -1,27 +1,22 @@
 package rs.teslaris.core.service.impl;
 
 import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.InvolvementService;
-import rs.teslaris.core.service.LanguageTagService;
+import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.OrganisationUnitService;
 import rs.teslaris.core.service.PersonService;
 
@@ -34,7 +29,7 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     private final OrganisationUnitService organisationUnitService;
 
-    private final LanguageTagService languageTagService;
+    private final MultilingualContentService multilingualContentService;
 
     private final InvolvementRepository involvementRepository;
 
@@ -49,9 +44,11 @@ public class InvolvementServiceImpl implements InvolvementService {
     public Education addEducation(Integer personId, EducationDTO education) {
         var personInvolved = personService.findPersonById(personId);
 
-        var thesisTitle = getMultilingualContent(education.getThesisTitle());
-        var title = getMultilingualContent(education.getTitle());
-        var abbreviationTitle = getMultilingualContent(education.getAbbreviationTitle());
+        var thesisTitle =
+            multilingualContentService.getMultilingualContent(education.getThesisTitle());
+        var title = multilingualContentService.getMultilingualContent(education.getTitle());
+        var abbreviationTitle =
+            multilingualContentService.getMultilingualContent(education.getAbbreviationTitle());
 
         var newEducation = new Education();
         setCommonFields(newEducation, education);
@@ -69,8 +66,9 @@ public class InvolvementServiceImpl implements InvolvementService {
         var personInvolved = personService.findPersonById(personId);
 
         var contributorDescription =
-            getMultilingualContent(membership.getContributionDescription());
-        var role = getMultilingualContent(membership.getRole());
+            multilingualContentService.getMultilingualContent(
+                membership.getContributionDescription());
+        var role = multilingualContentService.getMultilingualContent(membership.getRole());
 
         var newMembership = new Membership();
         setCommonFields(newMembership, membership);
@@ -86,7 +84,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     public Employment addEmployment(Integer personId, EmploymentDTO employment) {
         var personInvolved = personService.findPersonById(personId);
 
-        var role = getMultilingualContent(employment.getRole());
+        var role = multilingualContentService.getMultilingualContent(employment.getRole());
 
         var newEmployment = new Employment();
         setCommonFields(newEmployment, employment);
@@ -102,9 +100,11 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void updateEducation(Integer involvementId, EducationDTO education) {
         var educationToUpdate = (Education) findInvolvementById(involvementId);
 
-        var thesisTitle = getMultilingualContent(education.getThesisTitle());
-        var title = getMultilingualContent(education.getTitle());
-        var abbreviationTitle = getMultilingualContent(education.getAbbreviationTitle());
+        var thesisTitle =
+            multilingualContentService.getMultilingualContent(education.getThesisTitle());
+        var title = multilingualContentService.getMultilingualContent(education.getTitle());
+        var abbreviationTitle =
+            multilingualContentService.getMultilingualContent(education.getAbbreviationTitle());
 
         clearCommonCollections(educationToUpdate);
         educationToUpdate.getThesisTitle().clear();
@@ -124,8 +124,9 @@ public class InvolvementServiceImpl implements InvolvementService {
         var membershipToUpdate = (Membership) findInvolvementById(involvementId);
 
         var contributorDescription =
-            getMultilingualContent(membership.getContributionDescription());
-        var role = getMultilingualContent(membership.getRole());
+            multilingualContentService.getMultilingualContent(
+                membership.getContributionDescription());
+        var role = multilingualContentService.getMultilingualContent(membership.getRole());
 
         clearCommonCollections(membershipToUpdate);
         membershipToUpdate.getContributionDescription().clear();
@@ -142,7 +143,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void updateEmployment(Integer involvementId, EmploymentDTO employment) {
         var employmentToUpdate = (Employment) findInvolvementById(involvementId);
 
-        var role = getMultilingualContent(employment.getRole());
+        var role = multilingualContentService.getMultilingualContent(employment.getRole());
 
         clearCommonCollections(employmentToUpdate);
         employmentToUpdate.getRole().clear();
@@ -161,25 +162,13 @@ public class InvolvementServiceImpl implements InvolvementService {
         involvementRepository.delete(involvementToDelete);
     }
 
-    private Set<MultiLingualContent> getMultilingualContent(
-        List<MultilingualContentDTO> multilingualContentDTO) {
-        return multilingualContentDTO.stream().map(multilingualContent -> {
-            var languageTag = languageTagService.findLanguageTagById(
-                multilingualContent.getLanguageTagId());
-            return new MultiLingualContent(
-                languageTag,
-                multilingualContent.getContent(),
-                multilingualContent.getPriority()
-            );
-        }).collect(Collectors.toSet());
-    }
-
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
         var organisationUnit =
             organisationUnitService.findOrganisationalUnitById(
                 commonFields.getOrganisationUnitId());
 
-        var affiliationStatements = getMultilingualContent(commonFields.getAffiliationStatement());
+        var affiliationStatements = multilingualContentService.getMultilingualContent(
+            commonFields.getAffiliationStatement());
 
         involvement.setDateFrom(commonFields.getDateFrom());
         involvement.setDateTo(commonFields.getDateTo());
