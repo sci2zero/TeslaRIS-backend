@@ -10,8 +10,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -22,8 +24,10 @@ import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
@@ -141,6 +145,89 @@ public class InvolvementServiceTest {
         assertNotNull(result);
         verify(involvementRepository, times(1)).save(result);
     }
+
+    @Test
+    public void shouldUpdateEducationWithValidData() {
+        // given
+        var mc1 = new MultiLingualContent(null, "aaa", 1);
+        var education = new Education();
+        education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        education.setProofs(new HashSet<>());
+        education.setThesisTitle(new HashSet<>(Set.of(mc1)));
+        education.setTitle(new HashSet<>(Set.of(mc1)));
+        education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
+        var educationDTO = new EducationDTO();
+        var mc2 = new MultilingualContentDTO(1, "bbb", 1);
+        educationDTO.setAffiliationStatement(List.of(mc2));
+        educationDTO.setThesisTitle(List.of(mc2));
+        educationDTO.setTitle(List.of(mc2));
+        educationDTO.setAbbreviationTitle(List.of(mc2));
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
+        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
+        when(involvementRepository.save(any())).thenReturn(new Employment());
+
+        // when
+        involvementService.updateEducation(1, educationDTO);
+
+        // then
+        assertEquals(education.getThesisTitle().size(), 1);
+        verify(involvementRepository, times(1)).save(education);
+    }
+
+    @Test
+    public void shouldUpdateMembershipWithValidData() {
+        // given
+        var mc1 = new MultiLingualContent(null, "aaa", 1);
+        var membership = new Membership();
+        membership.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        membership.setProofs(new HashSet<>());
+        membership.setContributionDescription(new HashSet<>(Set.of(mc1)));
+        membership.setRole(new HashSet<>(Set.of(mc1)));
+        var membershipDTO = new MembershipDTO();
+        var mc2 = new MultilingualContentDTO(1, "bbb", 1);
+        membershipDTO.setAffiliationStatement(List.of(mc2));
+        membershipDTO.setRole(List.of(mc2));
+        membershipDTO.setContributionDescription(List.of(mc2));
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(membership));
+        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
+        when(involvementRepository.save(any())).thenReturn(new Employment());
+
+        // when
+        involvementService.updateMembership(1, membershipDTO);
+
+        // then
+        assertEquals(membership.getContributionDescription().size(), 1);
+        verify(involvementRepository, times(1)).save(membership);
+    }
+
+    @Test
+    public void shouldUpdateEmploymentWithValidData() {
+        // given
+        var mc1 = new MultiLingualContent(null, "aaa", 1);
+        var employment = new Employment();
+        employment.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        employment.setProofs(new HashSet<>());
+        employment.setRole(new HashSet<>(Set.of(mc1)));
+        var employmentDTO = new EmploymentDTO();
+        employmentDTO.setEmploymentPosition(EmploymentPosition.ASSISTANT);
+        var mc2 = new MultilingualContentDTO(1, "bbb", 1);
+        employmentDTO.setAffiliationStatement(List.of(mc2));
+        employmentDTO.setRole(List.of(mc2));
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(employment));
+        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(new LanguageTag());
+        when(involvementRepository.save(any())).thenReturn(new Employment());
+
+        // when
+        involvementService.updateEmployment(1, employmentDTO);
+
+        // then
+        assertEquals(employment.getEmploymentPosition(), EmploymentPosition.ASSISTANT);
+        verify(involvementRepository, times(1)).save(employment);
+    }
+
 
     @Test
     public void shouldDeleteInvolvementWhenInvolvementExists() {
