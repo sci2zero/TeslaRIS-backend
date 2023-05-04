@@ -3,6 +3,7 @@ package rs.teslaris.core.controller;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,6 +28,8 @@ public class InvolvementController {
     private final InvolvementToInvolvementDTO involvementToInvolvementDTO;
 
     @PostMapping("/education/{personId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     public EducationDTO addEducation(@RequestBody @Valid EducationDTO education,
                                      @PathVariable Integer personId) {
         var newEducation = involvementService.addEducation(personId, education);
@@ -34,6 +37,8 @@ public class InvolvementController {
     }
 
     @PostMapping("/membership/{personId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     public MembershipDTO addMembership(@RequestBody @Valid MembershipDTO membership,
                                        @PathVariable Integer personId) {
         var newMembership = involvementService.addMembership(personId, membership);
@@ -41,6 +46,8 @@ public class InvolvementController {
     }
 
     @PostMapping("/employment/{personId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     public EmploymentDTO addEmployment(@RequestBody @Valid EmploymentDTO employment,
                                        @PathVariable Integer personId) {
         var newEmployment = involvementService.addEmployment(personId, employment);
@@ -49,6 +56,7 @@ public class InvolvementController {
 
     @PutMapping("/education/{involvementId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     public void updateEducation(@RequestBody @Valid EducationDTO education,
                                 @PathVariable Integer involvementId) {
         involvementService.updateEducation(involvementId, education);
@@ -56,6 +64,7 @@ public class InvolvementController {
 
     @PutMapping("/membership/{involvementId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     public void updateMembership(@RequestBody @Valid MembershipDTO membership,
                                  @PathVariable Integer involvementId) {
         involvementService.updateMembership(involvementId, membership);
@@ -63,6 +72,7 @@ public class InvolvementController {
 
     @PutMapping("/employment/{involvementId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     public void updateEmployment(@RequestBody @Valid EmploymentDTO employment,
                                  @PathVariable Integer involvementId) {
         involvementService.updateEmployment(involvementId, employment);
@@ -70,6 +80,7 @@ public class InvolvementController {
 
     @DeleteMapping("/{involvementId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     public void deleteInvolvement(@PathVariable Integer involvementId) {
         involvementService.deleteInvolvement(involvementId);
     }
