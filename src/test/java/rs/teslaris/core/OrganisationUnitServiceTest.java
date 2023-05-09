@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.repository.person.institution.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
 import rs.teslaris.core.service.impl.OrganisationUnitServiceImpl;
 
 @SpringBootTest

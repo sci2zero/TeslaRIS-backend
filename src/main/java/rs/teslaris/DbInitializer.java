@@ -26,11 +26,12 @@ import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
-import rs.teslaris.core.repository.person.institution.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -71,23 +72,23 @@ public class DbInitializer implements ApplicationRunner {
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson));
 
-        var adminAuthority = new Authority("ADMIN",
+        var adminAuthority = new Authority(UserRole.ADMIN.toString(),
             new HashSet<>(
                 List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile,
                     editPersonalInfo, createUserBasic, approvePerson})));
-        var authorAuthority =
-            new Authority("AUTHOR",
+        var researcherAuthority =
+            new Authority(UserRole.RESEARCHER.toString(),
                 new HashSet<>(List.of(
                     new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                         createUserBasic})));
         authorityRepository.save(adminAuthority);
-        authorityRepository.save(authorAuthority);
+        authorityRepository.save(researcherAuthority);
 
         var serbianLanguage = new Language();
         serbianLanguage.setLanguageCode("RS");
         languageRepository.save(serbianLanguage);
 
-        var country = new Country("SRB", new HashSet<MultiLingualContent>());
+        var country = new Country("RS", new HashSet<MultiLingualContent>());
         country = countryRepository.save(country);
 
         var postalAddress = new PostalAddress(country, new HashSet<MultiLingualContent>(),
@@ -104,12 +105,12 @@ public class DbInitializer implements ApplicationRunner {
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
                 "Markovic", false, false, serbianLanguage,
                 adminAuthority, null, null);
-        var authorUser =
+        var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
                 "Janko", "Jankovic", false, false, serbianLanguage,
-                authorAuthority, person1, null);
+                researcherAuthority, person1, null);
         userRepository.save(adminUser);
-        userRepository.save(authorUser);
+        userRepository.save(researcherUser);
 
         var englishTag = new LanguageTag("EN", "English");
         languageTagRepository.save(englishTag);

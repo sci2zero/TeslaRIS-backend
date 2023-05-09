@@ -17,7 +17,7 @@ public interface UserService extends UserDetailsService {
 
     int getUserOrganisationUnitId(Integer userId);
 
-    boolean isUserAPerson(Integer userId, Integer personId);
+    boolean isUserAResearcher(Integer userId, Integer personId);
 
     AuthenticationResponseDTO authenticateUser(AuthenticationManager authernticationManager,
                                                AuthenticationRequestDTO authenticationRequest,

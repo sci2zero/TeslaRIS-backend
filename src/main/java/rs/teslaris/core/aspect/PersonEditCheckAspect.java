@@ -12,6 +12,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.exception.CantEditPersonException;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.PersonService;
 import rs.teslaris.core.service.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -42,16 +43,16 @@ public class PersonEditCheckAspect {
         var role = tokenUtil.extractUserRoleFromToken(tokenValue);
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
 
-        switch (role) {
-            case "ADMIN":
+        switch (UserRole.valueOf(role)) {
+            case ADMIN:
                 break;
-            case "AUTHOR":
-                if (!userService.isUserAPerson(userId, personId)) {
+            case RESEARCHER:
+                if (!userService.isUserAResearcher(userId, personId)) {
                     throw new CantEditPersonException(
                         "You do not have the permission to edit this person.");
                 }
                 break;
-            case "INSTITUTIONAL_EDITOR":
+            case INSTITUTIONAL_EDITOR:
                 if (!personService.isPersonEmployedInOrganisationUnit(personId,
                     userService.getUserOrganisationUnitId(userId))) {
                     throw new CantEditPersonException(

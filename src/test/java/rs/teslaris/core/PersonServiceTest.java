@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.person.PersonToPersonDTO;
@@ -73,9 +75,6 @@ public class PersonServiceTest {
     @Mock
     private PersonIndexRepository personIndexRepository;
 
-    @Mock
-    private PersonToPersonDTO personToPersonDTOConverter;
-
     @InjectMocks
     private PersonServiceImpl personService;
 
@@ -117,7 +116,9 @@ public class PersonServiceTest {
         var expectedResponse = new PersonResponseDto();
 
         when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
-        when(personToPersonDTOConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
+
+        MockedStatic<PersonToPersonDTO> mocked = mockStatic(PersonToPersonDTO.class);
+        mocked.when(() -> PersonToPersonDTO.toDTO(expectedPerson)).thenReturn(expectedResponse);
 
         // when
         var personDto = personService.readPersonWithBasicInfo(1);

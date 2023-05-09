@@ -2,7 +2,6 @@ package rs.teslaris.core.converter.person;
 
 import java.util.ArrayList;
 import java.util.Set;
-import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -14,10 +13,9 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 
-@Component
 public class PersonToPersonDTO {
 
-    public PersonResponseDto toDTO(Person person) {
+    public static PersonResponseDto toDTO(Person person) {
         var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
@@ -39,7 +37,7 @@ public class PersonToPersonDTO {
             person.getApproveStatus());
     }
 
-    private PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
+    private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
         var postalAddressDto = new PostalAddressDTO();
         postalAddressDto.setCountryId(postalAddress.getCountry().getId());
 
@@ -65,7 +63,7 @@ public class PersonToPersonDTO {
         return postalAddressDto;
     }
 
-    private ArrayList<PersonNameDTO> getPersonOtherNamesDTO(Set<PersonName> otherNames) {
+    private static ArrayList<PersonNameDTO> getPersonOtherNamesDTO(Set<PersonName> otherNames) {
         var otherNamesDTO = new ArrayList<PersonNameDTO>();
 
         otherNames.forEach(otherName -> otherNamesDTO.add(
@@ -75,7 +73,7 @@ public class PersonToPersonDTO {
         return otherNamesDTO;
     }
 
-    private ArrayList<MultilingualContentDTO> getPersonBiographyDTO(
+    private static ArrayList<MultilingualContentDTO> getPersonBiographyDTO(
         Set<MultiLingualContent> biography) {
         var biographyDTO = new ArrayList<MultilingualContentDTO>();
 
@@ -86,7 +84,7 @@ public class PersonToPersonDTO {
         return biographyDTO;
     }
 
-    private ArrayList<MultilingualContentDTO> getPersonKeywordDTO(
+    private static ArrayList<MultilingualContentDTO> getPersonKeywordDTO(
         Set<MultiLingualContent> keyword) {
         var keywordDTO = new ArrayList<MultilingualContentDTO>();
 

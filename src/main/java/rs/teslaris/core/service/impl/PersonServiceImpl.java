@@ -51,8 +51,6 @@ public class PersonServiceImpl implements PersonService {
 
     private final PersonNameService personNameService;
 
-    private final PersonToPersonDTO personToPersonDTOConverter;
-
     @Value("${approval.approved_by_default}")
     private Boolean approvedByDefault;
 
@@ -68,7 +66,7 @@ public class PersonServiceImpl implements PersonService {
     public PersonResponseDto readPersonWithBasicInfo(Integer id) {
         var person = personRepository.findApprovedPersonById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
-        return personToPersonDTOConverter.toDTO(person);
+        return PersonToPersonDTO.toDTO(person);
     }
 
     @Override
@@ -320,7 +318,7 @@ public class PersonServiceImpl implements PersonService {
             var institutionName = new StringBuilder();
             organisationUnit.getName().stream()
                 .filter(mc -> mc.getLanguage().getLanguageTag().equals("EN") ||
-                    mc.getLanguage().getLanguageTag().equals("SRB"))
+                    mc.getLanguage().getLanguageTag().contains("RS"))
                 .forEach(mc -> institutionName.append(mc.getContent()).append(" | "));
             employments.append(institutionName).append(organisationUnit.getNameAbbreviation());
         }

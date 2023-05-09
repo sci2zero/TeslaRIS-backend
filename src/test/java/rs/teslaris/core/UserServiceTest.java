@@ -84,7 +84,7 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null,
-                new Authority("AUTHOR", null), null, null);
+                new Authority("RESEARCHER", null), null, null);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -462,7 +462,7 @@ public class UserServiceTest {
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         // when
-        boolean result = userService.isUserAPerson(1, 2);
+        boolean result = userService.isUserAResearcher(1, 2);
 
         //then
         assertFalse(result);
@@ -476,7 +476,7 @@ public class UserServiceTest {
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         //when
-        boolean result = userService.isUserAPerson(1, 1);
+        boolean result = userService.isUserAResearcher(1, 1);
 
         //then
         assertFalse(result);

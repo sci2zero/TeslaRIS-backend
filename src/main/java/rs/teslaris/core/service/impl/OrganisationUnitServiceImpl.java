@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.repository.person.institution.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
 import rs.teslaris.core.service.OrganisationUnitService;
 
 @Service

@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public boolean isUserAPerson(Integer userId, Integer personId) {
+    public boolean isUserAResearcher(Integer userId, Integer personId) {
         var user = loadUserById(userId);
 
         return user.getPerson() != null && Objects.equals(user.getPerson().getId(), personId);

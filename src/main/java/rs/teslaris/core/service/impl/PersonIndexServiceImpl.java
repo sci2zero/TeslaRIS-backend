@@ -19,7 +19,7 @@ import rs.teslaris.core.service.PersonIndexService;
 @RequiredArgsConstructor
 public class PersonIndexServiceImpl implements PersonIndexService {
 
-    private final ElasticsearchOperations template;
+    private final ElasticsearchOperations elasticsearchTemplate;
 
     private final PersonIndexRepository personIndexRepository;
 
@@ -33,7 +33,7 @@ public class PersonIndexServiceImpl implements PersonIndexService {
 
         var searchQuery = searchQueryBuilder.build();
 
-        var searchHits = template
+        var searchHits = elasticsearchTemplate
             .search(searchQuery, PersonIndex.class, IndexCoordinates.of("person"));
 
         var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());

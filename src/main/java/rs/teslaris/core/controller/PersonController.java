@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.PersonEditCheck;
-import rs.teslaris.core.converter.person.PersonToPersonDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -38,8 +37,6 @@ public class PersonController {
     private final PersonService personService;
 
     private final PersonIndexService personIndexService;
-
-    private final PersonToPersonDTO personToPersonDTOConverter;
 
     @GetMapping("/{personId}")
     public PersonResponseDto readPersonWithBasicInfo(@PathVariable Integer personId) {

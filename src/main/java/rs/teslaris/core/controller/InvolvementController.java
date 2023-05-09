@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.core.converter.person.involvement.InvolvementToInvolvementDTO;
+import rs.teslaris.core.converter.person.InvolvementToInvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
@@ -25,15 +25,13 @@ public class InvolvementController {
 
     private final InvolvementService involvementService;
 
-    private final InvolvementToInvolvementDTO involvementToInvolvementDTO;
-
     @PostMapping("/education/{personId}")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     public EducationDTO addEducation(@RequestBody @Valid EducationDTO education,
                                      @PathVariable Integer personId) {
         var newEducation = involvementService.addEducation(personId, education);
-        return involvementToInvolvementDTO.toDTO(newEducation);
+        return InvolvementToInvolvementDTO.toDTO(newEducation);
     }
 
     @PostMapping("/membership/{personId}")
@@ -42,7 +40,7 @@ public class InvolvementController {
     public MembershipDTO addMembership(@RequestBody @Valid MembershipDTO membership,
                                        @PathVariable Integer personId) {
         var newMembership = involvementService.addMembership(personId, membership);
-        return involvementToInvolvementDTO.toDTO(newMembership);
+        return InvolvementToInvolvementDTO.toDTO(newMembership);
     }
 
     @PostMapping("/employment/{personId}")
@@ -51,7 +49,7 @@ public class InvolvementController {
     public EmploymentDTO addEmployment(@RequestBody @Valid EmploymentDTO employment,
                                        @PathVariable Integer personId) {
         var newEmployment = involvementService.addEmployment(personId, employment);
-        return involvementToInvolvementDTO.toDTO(newEmployment);
+        return InvolvementToInvolvementDTO.toDTO(newEmployment);
     }
 
     @PutMapping("/education/{involvementId}")
