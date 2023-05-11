@@ -1,0 +1,186 @@
+package rs.teslaris.core.service.impl;
+
+import java.util.HashSet;
+import javax.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.person.involvement.EducationDTO;
+import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
+import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
+import rs.teslaris.core.dto.person.involvement.MembershipDTO;
+import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.person.Education;
+import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.service.InvolvementService;
+import rs.teslaris.core.service.MultilingualContentService;
+import rs.teslaris.core.service.OrganisationUnitService;
+import rs.teslaris.core.service.PersonService;
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class InvolvementServiceImpl implements InvolvementService {
+
+    private final PersonService personService;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final MultilingualContentService multilingualContentService;
+
+    private final InvolvementRepository involvementRepository;
+
+
+    @Override
+    public Involvement findInvolvementById(Integer involvementId) {
+        return involvementRepository.findById(involvementId)
+            .orElseThrow(() -> new NotFoundException("Involvement with given ID does not exist."));
+    }
+
+    @Override
+    public Education addEducation(Integer personId, EducationDTO education) {
+        var personInvolved = personService.findPersonById(personId);
+
+        var thesisTitle =
+            multilingualContentService.getMultilingualContent(education.getThesisTitle());
+        var title = multilingualContentService.getMultilingualContent(education.getTitle());
+        var abbreviationTitle =
+            multilingualContentService.getMultilingualContent(education.getAbbreviationTitle());
+
+        var newEducation = new Education();
+        setCommonFields(newEducation, education);
+        newEducation.setThesisTitle(thesisTitle);
+        newEducation.setTitle(title);
+        newEducation.setAbbreviationTitle(abbreviationTitle);
+
+        personInvolved.addInvolvement(newEducation);
+
+        return involvementRepository.save(newEducation);
+    }
+
+    @Override
+    public Membership addMembership(Integer personId, MembershipDTO membership) {
+        var personInvolved = personService.findPersonById(personId);
+
+        var contributorDescription =
+            multilingualContentService.getMultilingualContent(
+                membership.getContributionDescription());
+        var role = multilingualContentService.getMultilingualContent(membership.getRole());
+
+        var newMembership = new Membership();
+        setCommonFields(newMembership, membership);
+        newMembership.setContributionDescription(contributorDescription);
+        newMembership.setRole(role);
+
+        personInvolved.addInvolvement(newMembership);
+
+        return involvementRepository.save(newMembership);
+    }
+
+    @Override
+    public Employment addEmployment(Integer personId, EmploymentDTO employment) {
+        var personInvolved = personService.findPersonById(personId);
+
+        var role = multilingualContentService.getMultilingualContent(employment.getRole());
+
+        var newEmployment = new Employment();
+        setCommonFields(newEmployment, employment);
+        newEmployment.setEmploymentPosition(employment.getEmploymentPosition());
+        newEmployment.setRole(role);
+
+        personInvolved.addInvolvement(newEmployment);
+
+        return involvementRepository.save(newEmployment);
+    }
+
+    @Override
+    public void updateEducation(Integer involvementId, EducationDTO education) {
+        var educationToUpdate = (Education) findInvolvementById(involvementId);
+
+        var thesisTitle =
+            multilingualContentService.getMultilingualContent(education.getThesisTitle());
+        var title = multilingualContentService.getMultilingualContent(education.getTitle());
+        var abbreviationTitle =
+            multilingualContentService.getMultilingualContent(education.getAbbreviationTitle());
+
+        clearCommonCollections(educationToUpdate);
+        educationToUpdate.getThesisTitle().clear();
+        educationToUpdate.getTitle().clear();
+        educationToUpdate.getAbbreviationTitle().clear();
+
+        setCommonFields(educationToUpdate, education);
+        educationToUpdate.setThesisTitle(thesisTitle);
+        educationToUpdate.setTitle(title);
+        educationToUpdate.setAbbreviationTitle(abbreviationTitle);
+
+        involvementRepository.save(educationToUpdate);
+    }
+
+    @Override
+    public void updateMembership(Integer involvementId, MembershipDTO membership) {
+        var membershipToUpdate = (Membership) findInvolvementById(involvementId);
+
+        var contributorDescription =
+            multilingualContentService.getMultilingualContent(
+                membership.getContributionDescription());
+        var role = multilingualContentService.getMultilingualContent(membership.getRole());
+
+        clearCommonCollections(membershipToUpdate);
+        membershipToUpdate.getContributionDescription().clear();
+        membershipToUpdate.getRole().clear();
+
+        setCommonFields(membershipToUpdate, membership);
+        membershipToUpdate.setContributionDescription(contributorDescription);
+        membershipToUpdate.setRole(role);
+
+        involvementRepository.save(membershipToUpdate);
+    }
+
+    @Override
+    public void updateEmployment(Integer involvementId, EmploymentDTO employment) {
+        var employmentToUpdate = (Employment) findInvolvementById(involvementId);
+
+        var role = multilingualContentService.getMultilingualContent(employment.getRole());
+
+        clearCommonCollections(employmentToUpdate);
+        employmentToUpdate.getRole().clear();
+
+        setCommonFields(employmentToUpdate, employment);
+        employmentToUpdate.setEmploymentPosition(employment.getEmploymentPosition());
+        employmentToUpdate.setRole(role);
+
+        involvementRepository.save(employmentToUpdate);
+    }
+
+    @Override
+    public void deleteInvolvement(Integer involvementId) {
+        var involvementToDelete = findInvolvementById(involvementId);
+        involvementToDelete.getPersonInvolved().removeInvolvement(involvementToDelete);
+        involvementRepository.delete(involvementToDelete);
+    }
+
+    private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
+        var organisationUnit =
+            organisationUnitService.findOrganisationalUnitById(
+                commonFields.getOrganisationUnitId());
+
+        var affiliationStatements = multilingualContentService.getMultilingualContent(
+            commonFields.getAffiliationStatement());
+
+        involvement.setDateFrom(commonFields.getDateFrom());
+        involvement.setDateTo(commonFields.getDateTo());
+        involvement.setApproveStatus(ApproveStatus.APPROVED);
+        involvement.setProofs(new HashSet<>()); // TODO: ADD THIS
+        involvement.setInvolvementType(commonFields.getInvolvementType());
+        involvement.setAffiliationStatement(affiliationStatements);
+        involvement.setOrganisationUnit(organisationUnit);
+    }
+
+    private void clearCommonCollections(Involvement involvement) {
+        involvement.getAffiliationStatement().clear();
+        involvement.getProofs().clear();
+    }
+}

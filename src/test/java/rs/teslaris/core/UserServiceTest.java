@@ -45,7 +45,7 @@ import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.LanguageService;
 import rs.teslaris.core.service.PersonService;
-import rs.teslaris.core.service.impl.OrganisationalUnitServiceImpl;
+import rs.teslaris.core.service.impl.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.UserServiceImpl;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -68,7 +68,7 @@ public class UserServiceTest {
     @Mock
     private PersonService personService;
     @Mock
-    private OrganisationalUnitServiceImpl organisationalUnitService;
+    private OrganisationUnitServiceImpl organisationalUnitService;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
@@ -84,7 +84,7 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null,
-                new Authority("AUTHOR", null), null, null);
+                new Authority("RESEARCHER", null), null, null);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -419,5 +419,66 @@ public class UserServiceTest {
             () -> userService.refreshToken(refreshTokenValue, "123456"));
 
         // then (NonExistingRefreshTokenException should be thrown)
+    }
+
+    @Test
+    public void shouldReturnUserOrganisationUnitIdWhenIdIsValid() {
+        // given
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(1);
+        var user = new User();
+        user.setOrganisationUnit(organisationUnit);
+
+        when(userRepository.findByIdWithOrganisationUnit(1)).thenReturn(Optional.of(user));
+
+        // when
+        int result = userService.getUserOrganisationUnitId(1);
+
+        // then
+        assertEquals(organisationUnit.getId(), result);
+    }
+
+    @Test
+    public void testGetUserOrganisationUnitIdNotFound() {
+        // given
+        when(userRepository.findByIdWithOrganisationUnit(2)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class, () -> {
+            userService.getUserOrganisationUnitId(2);
+        });
+
+        // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldReturnFalseWhenNoMatch() {
+        // given
+        var person = new Person();
+        person.setId(1);
+        var user = new User();
+        user.setPerson(person);
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+        // when
+        boolean result = userService.isUserAResearcher(1, 2);
+
+        //then
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenNoPerson() {
+        // given
+        var user = new User();
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+        //when
+        boolean result = userService.isUserAResearcher(1, 1);
+
+        //then
+        assertFalse(result);
     }
 }

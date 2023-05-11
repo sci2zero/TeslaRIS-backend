@@ -19,7 +19,7 @@ public class PersonalInfo {
     @Column(name = "birth_date", nullable = false)
     private LocalDate localBirthDate;
 
-    @Column(name = "place_of_birth", nullable = false)
+    @Column(name = "place_of_birth")
     private String placeOfBrith;
 
     @Column(name = "sex", nullable = false)

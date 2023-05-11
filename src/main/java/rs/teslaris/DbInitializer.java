@@ -2,7 +2,6 @@ package rs.teslaris;
 
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -27,10 +26,12 @@ import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
-import rs.teslaris.core.repository.institution.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -47,6 +48,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final LanguageRepository languageRepository;
 
+    private final LanguageTagRepository languageTagRepository;
+
     private final PersonRepository personRepository;
 
     private final OrganisationalUnitRepository organisationalUnitRepository;
@@ -62,27 +65,37 @@ public class DbInitializer implements ApplicationRunner {
         var takeRoleOfUser = new Privilege("TAKE_ROLE");
         var deactivateUser = new Privilege("DEACTIVATE_USER");
         var updateProfile = new Privilege("UPDATE_PROFILE");
+        var createUserBasic = new Privilege("REGISTER_PERSON");
+        var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
+        var approvePerson = new Privilege("APPROVE_PERSON");
         privilegeRepository.saveAll(
-            Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile));
+            Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
+                createUserBasic, editPersonalInfo, approvePerson));
 
-        var adminAuthority = new Authority("ADMIN",
+        var adminAuthority = new Authority(UserRole.ADMIN.toString(),
             new HashSet<>(
-                List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile})));
-        var authorAuthority =
-            new Authority("AUTHOR",
-                new HashSet<>(List.of(new Privilege[] {allowAccountTakeover, updateProfile})));
+                List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile,
+                    editPersonalInfo, createUserBasic, approvePerson})));
+        var researcherAuthority =
+            new Authority(UserRole.RESEARCHER.toString(),
+                new HashSet<>(List.of(
+                    new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
+                        createUserBasic})));
         authorityRepository.save(adminAuthority);
-        authorityRepository.save(authorAuthority);
+        authorityRepository.save(researcherAuthority);
 
         var serbianLanguage = new Language();
         serbianLanguage.setLanguageCode("RS");
         languageRepository.save(serbianLanguage);
 
-        var country = new Country("SRB", new HashSet<MultiLingualContent>());
+        var country = new Country("RS", new HashSet<MultiLingualContent>());
         country = countryRepository.save(country);
 
-        var postalAddress = new PostalAddress(country, new HashSet<MultiLingualContent>(), new HashSet<MultiLingualContent>());
-        var personalInfo = new PersonalInfo(LocalDate.of(2000,1,25), "Sebia", Sex.MALE, postalAddress, new Contact("john@ftn.uns.ac.com", "021555666"));
+        var postalAddress = new PostalAddress(country, new HashSet<MultiLingualContent>(),
+            new HashSet<MultiLingualContent>());
+        var personalInfo =
+            new PersonalInfo(LocalDate.of(2000, 1, 25), "Sebia", Sex.MALE, postalAddress,
+                new Contact("john@ftn.uns.ac.com", "021555666"));
         var person1 = new Person();
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);
@@ -92,15 +105,24 @@ public class DbInitializer implements ApplicationRunner {
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
                 "Markovic", false, false, serbianLanguage,
                 adminAuthority, null, null);
-        var authorUser =
+        var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
                 "Janko", "Jankovic", false, false, serbianLanguage,
-                authorAuthority, person1, null);
+                researcherAuthority, person1, null);
         userRepository.save(adminUser);
-        userRepository.save(authorUser);
+        userRepository.save(researcherUser);
+
+        var englishTag = new LanguageTag("EN", "English");
+        languageTagRepository.save(englishTag);
+        var serbianTag = new LanguageTag("SRB", "Srpski");
+        languageTagRepository.save(serbianTag);
 
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
+        dummyOU.setName(new HashSet<>(
+            List.of(new MultiLingualContent[] {
+                new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
+                new MultiLingualContent(serbianTag, "Fakultet Tehnickih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));

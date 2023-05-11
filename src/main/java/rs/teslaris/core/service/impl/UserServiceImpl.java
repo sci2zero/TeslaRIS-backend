@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.LanguageService;
-import rs.teslaris.core.service.OrganisationalUnitService;
+import rs.teslaris.core.service.OrganisationUnitService;
 import rs.teslaris.core.service.PersonService;
 import rs.teslaris.core.service.UserService;
 import rs.teslaris.core.util.email.EmailUtil;
@@ -56,7 +57,7 @@ public class UserServiceImpl implements UserService {
 
     private final PersonService personService;
 
-    private final OrganisationalUnitService organisationalUnitService;
+    private final OrganisationUnitService organisationUnitService;
 
     private final EmailUtil emailUtil;
 
@@ -72,6 +73,21 @@ public class UserServiceImpl implements UserService {
     public User loadUserById(Integer userID) throws UsernameNotFoundException {
         return userRepository.findById(userID).orElseThrow(
             () -> new UsernameNotFoundException("User with this ID does not exist."));
+    }
+
+    @Override
+    public int getUserOrganisationUnitId(Integer userId) {
+        return userRepository.findByIdWithOrganisationUnit(userId).orElseThrow(
+                () -> new NotFoundException("User with this ID does not exist."))
+            .getOrganisationUnit().getId();
+    }
+
+    @Override
+    @Transactional
+    public boolean isUserAResearcher(Integer userId, Integer personId) {
+        var user = loadUserById(userId);
+
+        return user.getPerson() != null && Objects.equals(user.getPerson().getId(), personId);
     }
 
     @Override
@@ -180,7 +196,7 @@ public class UserServiceImpl implements UserService {
 
         var person = personService.findPersonById(registrationRequest.getPersonId());
 
-        var organisationalUnit = organisationalUnitService.findOrganisationalUnitById(
+        var organisationalUnit = organisationUnitService.findOrganisationalUnitById(
             registrationRequest.getOrganisationalUnitId());
 
         var newUser =
@@ -212,7 +228,7 @@ public class UserServiceImpl implements UserService {
 
         var person = personService.findPersonById(userUpdateRequest.getPersonId());
 
-        var organisationalUnit = organisationalUnitService.findOrganisationalUnitById(
+        var organisationalUnit = organisationUnitService.findOrganisationalUnitById(
             userUpdateRequest.getOrganisationalUnitId());
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());

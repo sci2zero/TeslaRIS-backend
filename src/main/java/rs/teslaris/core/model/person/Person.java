@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.person;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -26,7 +27,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @Table(name = "persons")
 public class Person extends BaseEntity {
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private PersonName name;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -35,7 +36,7 @@ public class Person extends BaseEntity {
     @Embedded
     private PersonalInfo personalInfo;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Involvement> involvements;
 
     @OneToMany(fetch = FetchType.LAZY)
@@ -44,10 +45,10 @@ public class Person extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY)
     private Set<Prize> prizes;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MultiLingualContent> biography;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MultiLingualContent> keyword;
 
     @Column(name = "apvnt", unique = true)
@@ -62,7 +63,7 @@ public class Person extends BaseEntity {
     @Column(name = "acopus_author_id", unique = true)
     private String scopusAuthorId;
 
-    @Column(name = "cris_uns_id", unique = true)
+    @Column(name = "cris_uns_id")
     private int oldId;
 
     @OneToMany(fetch = FetchType.LAZY)
@@ -70,4 +71,17 @@ public class Person extends BaseEntity {
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
+
+    public void addInvolvement(Involvement involvement) {
+        if (involvements == null) {
+            involvements = new HashSet<>();
+        }
+        involvements.add(involvement);
+        involvement.setPersonInvolved(this);
+    }
+
+    public void removeInvolvement(Involvement involvement) {
+        involvements.remove(involvement);
+        involvement.setPersonInvolved(null);
+    }
 }

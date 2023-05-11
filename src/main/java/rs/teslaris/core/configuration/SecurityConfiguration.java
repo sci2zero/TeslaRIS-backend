@@ -59,6 +59,7 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/register").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/basic-search").permitAll()
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");

@@ -4,12 +4,14 @@ import io.jsonwebtoken.MalformedJwtException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import rs.teslaris.core.exception.CantEditPersonException;
 import rs.teslaris.core.exception.CantRegisterAdminException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
@@ -33,6 +35,22 @@ public class ErrorHandlerConfiguration {
             .forEach(e -> errors.put(e.getObjectName(), e.getDefaultMessage()));
 
         return new ErrorObject(request, ex.getLocalizedMessage(), HttpStatus.BAD_REQUEST, errors);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseBody
+    ErrorObject handleConstraintViolationException(HttpServletRequest request,
+                                                   ConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(CantEditPersonException.class)
+    @ResponseBody
+    ErrorObject handleCantEditPersonException(HttpServletRequest request,
+                                              CantEditPersonException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
