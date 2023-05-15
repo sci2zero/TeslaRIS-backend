@@ -1,15 +1,13 @@
 package rs.teslaris.core.service.impl;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.apache.tika.Tika;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -24,7 +22,7 @@ public class FileServiceImpl implements FileService {
     private final String rootLocation = "src/main/resources/data";
 
     @Override
-    public String store(MultipartFile file) {
+    public String store(MultipartFile file, String serverFilename) {
         if (file.isEmpty()) {
             throw new StorageException("Failed to store empty file.");
         }
@@ -32,7 +30,6 @@ public class FileServiceImpl implements FileService {
         var originalFilenameTokens =
             Objects.requireNonNull(file.getOriginalFilename()).split("\\.");
         var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
-        var serverFilename = UUID.randomUUID().toString();
         var destinationFilePath = Paths.get(rootLocation, serverFilename + "." + extension)
             .normalize().toAbsolutePath();
 
@@ -52,25 +49,11 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public String detectMimeType(MultipartFile file) {
-        var contentAnalyzer = new Tika();
-
-        String trueMimeType;
-        String specifiedMimeType;
-        try {
-            trueMimeType = contentAnalyzer.detect(file.getBytes());
-            specifiedMimeType = Files.probeContentType(Path.of(
-                Objects.requireNonNull(file.getOriginalFilename())));
-        } catch (IOException e) {
-            throw new StorageException("Failed to detect mime type for file.");
+    public void delete(String serverFilename) {
+        var file = new File(Paths.get(rootLocation, serverFilename).toUri());
+        if (!file.delete()) {
+            throw new StorageException("Failed to delete " + serverFilename + " .");
         }
-
-        if (!trueMimeType.equals(specifiedMimeType) &&
-            !(trueMimeType.contains("zip") && specifiedMimeType.contains("zip"))) {
-            throw new StorageException("True mime type is different from specified one, aborting.");
-        }
-
-        return trueMimeType;
     }
 
     @Override

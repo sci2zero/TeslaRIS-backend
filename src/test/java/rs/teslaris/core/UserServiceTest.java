@@ -54,7 +54,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 public class UserServiceTest {
 
     @Mock
-    EmailUtil emailUtil;
+    private EmailUtil emailUtil;
     @Mock
     private JwtUtil tokenUtil;
     @Mock

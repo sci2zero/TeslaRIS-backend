@@ -7,9 +7,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public interface FileService {
 
-    String store(MultipartFile file);
+    String store(MultipartFile file, String serverFilename);
 
-    String detectMimeType(MultipartFile file);
+    void delete(String serverFilename);
 
     Resource loadAsResource(String serverFilename);
 }

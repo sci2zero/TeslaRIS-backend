@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.model.person.InvolvementType;
 
 @Getter
@@ -15,11 +16,13 @@ import rs.teslaris.core.model.person.InvolvementType;
 @AllArgsConstructor
 public class InvolvementDTO {
 
+    private Integer id;
+
     private LocalDate dateFrom;
 
     private LocalDate dateTo;
 
-    // TODO: ADD DOCUMENT PROOFS
+    private List<DocumentFileResponseDTO> proofs;
 
     private InvolvementType involvementType;
 

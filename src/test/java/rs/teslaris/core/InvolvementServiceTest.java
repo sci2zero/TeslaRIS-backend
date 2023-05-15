@@ -22,7 +22,9 @@ import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
@@ -74,6 +76,39 @@ public class InvolvementServiceTest {
 
         // when
         assertThrows(NotFoundException.class, () -> involvementService.findInvolvementById(1));
+
+        // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldReturnGenericInvolvementWhenInvolvementExists() {
+        // given
+        var mc1 = new MultiLingualContent(new LanguageTag(), "aaa", 1);
+        var education = new Education();
+        education.setOrganisationUnit(new OrganisationUnit());
+        education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        education.setProofs(new HashSet<>());
+        education.setThesisTitle(new HashSet<>(Set.of(mc1)));
+        education.setTitle(new HashSet<>(Set.of(mc1)));
+        education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
+
+        // when
+        var actual = (EducationDTO) involvementService.getInvolvement(1, Education.class);
+
+        // then
+        assertNotNull(actual);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenGenericInvolvementDoesNotExist() {
+        // given
+        when(involvementRepository.findById(1)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class,
+            () -> involvementService.getInvolvement(1, Education.class));
 
         // then (NotFoundException should be thrown)
     }

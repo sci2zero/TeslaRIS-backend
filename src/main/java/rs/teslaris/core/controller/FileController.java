@@ -9,12 +9,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.service.FileService;
 
 @RestController
@@ -34,12 +31,5 @@ public class FileController {
                 "attachment; filename=\"" + file.getFilename() + "\"")
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
             .body(file);
-    }
-
-    // ONLY FOR TESTING
-    @PostMapping("/")
-    public String handleFileUpload(@RequestParam("file") MultipartFile file) {
-        fileService.detectMimeType(file);
-        return fileService.store(file);
     }
 }

@@ -10,4 +10,8 @@ public interface DocumentFileService {
     DocumentFile findDocumentFileById(Integer id);
 
     DocumentFile saveNewDocument(DocumentFileDTO documentFile);
+
+    void editDocumentFile(DocumentFileDTO documentFile);
+
+    void deleteDocumentFile(String serverFilename);
 }
