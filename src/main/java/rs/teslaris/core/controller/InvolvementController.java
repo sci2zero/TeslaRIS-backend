@@ -78,9 +78,9 @@ public class InvolvementController {
     @PatchMapping("/{involvementId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
-    public void addInvolvementProofs(@ModelAttribute @Valid DocumentFileDTO proof,
+    public void addInvolvementProofs(@ModelAttribute @Valid List<DocumentFileDTO> proofs,
                                      @PathVariable Integer involvementId) {
-        involvementService.addInvolvementProofs(List.of(proof), involvementId);
+        involvementService.addInvolvementProofs(proofs, involvementId);
     }
 
     @DeleteMapping("/{involvementId}/{proofId}")

@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,8 @@ import rs.teslaris.core.service.FileService;
 @RequiredArgsConstructor
 public class FileServiceImpl implements FileService {
 
-    private final String rootLocation = "src/main/resources/data";
+    @Value("${document_storage.root_path}")
+    private String rootLocation;
 
     @Override
     public String store(MultipartFile file, String serverFilename) {
@@ -33,7 +35,8 @@ public class FileServiceImpl implements FileService {
         var destinationFilePath = Paths.get(rootLocation, serverFilename + "." + extension)
             .normalize().toAbsolutePath();
 
-        if (!destinationFilePath.getParent().endsWith("src/main/resources/data")) {
+        System.out.println(destinationFilePath.getParent());
+        if (!destinationFilePath.getParent().endsWith(rootLocation)) {
             throw new StorageException(
                 "Cannot store file outside current directory.");
         }
