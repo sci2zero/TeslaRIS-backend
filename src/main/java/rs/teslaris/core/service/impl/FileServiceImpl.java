@@ -34,7 +34,7 @@ public class FileServiceImpl implements FileService {
         var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
         var destinationFilePath = Paths.get(rootLocation, serverFilename + "." + extension)
             .normalize().toAbsolutePath();
-        
+
         if (!destinationFilePath.getParent().endsWith(rootLocation)) {
             throw new StorageException(
                 "Cannot store file outside current directory.");

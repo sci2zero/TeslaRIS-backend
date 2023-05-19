@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.converter.person.InvolvementToInvolvementDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
@@ -54,6 +55,7 @@ public class InvolvementController {
     @PostMapping("/education/{personId}")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public EducationDTO addEducation(@RequestBody @Valid EducationDTO education,
                                      @PathVariable Integer personId) {
         var newEducation = involvementService.addEducation(personId, education);
@@ -63,6 +65,7 @@ public class InvolvementController {
     @PostMapping("/membership/{personId}")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public MembershipDTO addMembership(@RequestBody @Valid MembershipDTO membership,
                                        @PathVariable Integer personId) {
         var newMembership = involvementService.addMembership(personId, membership);
@@ -72,55 +75,62 @@ public class InvolvementController {
     @PostMapping("/employment/{personId}")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public EmploymentDTO addEmployment(@RequestBody @Valid EmploymentDTO employment,
                                        @PathVariable Integer personId) {
         var newEmployment = involvementService.addEmployment(personId, employment);
         return InvolvementToInvolvementDTO.toDTO(newEmployment);
     }
 
-    @PatchMapping(value = "/{involvementId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/{involvementId}/{personId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public void addInvolvementProofs(@ModelAttribute @Valid DocumentFileDTO proof,
                                      @PathVariable Integer involvementId) {
         involvementService.addInvolvementProofs(List.of(proof), involvementId);
     }
 
-    @DeleteMapping("/{involvementId}/{proofId}")
+    @DeleteMapping("/{involvementId}/{personId}/{proofId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public void deleteInvolvementProof(@PathVariable Integer involvementId,
                                        @PathVariable Integer proofId) {
         involvementService.deleteProof(proofId, involvementId);
     }
 
-    @PutMapping("/education/{involvementId}")
+    @PutMapping("/education/{involvementId}/{personId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public void updateEducation(@RequestBody @Valid EducationDTO education,
                                 @PathVariable Integer involvementId) {
         involvementService.updateEducation(involvementId, education);
     }
 
-    @PutMapping("/membership/{involvementId}")
+    @PutMapping("/membership/{involvementId}/{personId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public void updateMembership(@RequestBody @Valid MembershipDTO membership,
                                  @PathVariable Integer involvementId) {
         involvementService.updateMembership(involvementId, membership);
     }
 
-    @PutMapping("/employment/{involvementId}")
+    @PutMapping("/employment/{involvementId}/{personId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public void updateEmployment(@RequestBody @Valid EmploymentDTO employment,
                                  @PathVariable Integer involvementId) {
         involvementService.updateEmployment(involvementId, employment);
     }
 
-    @DeleteMapping("/{involvementId}")
+    @DeleteMapping("/{involvementId}/{personId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
     public void deleteInvolvement(@PathVariable Integer involvementId) {
         involvementService.deleteInvolvement(involvementId);
     }
