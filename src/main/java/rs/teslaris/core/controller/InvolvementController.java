@@ -4,7 +4,9 @@ import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -26,6 +28,7 @@ import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.service.InvolvementService;
 
+@Validated
 @RestController
 @RequestMapping("api/involvement")
 @RequiredArgsConstructor
@@ -75,12 +78,12 @@ public class InvolvementController {
         return InvolvementToInvolvementDTO.toDTO(newEmployment);
     }
 
-    @PatchMapping("/{involvementId}")
+    @PatchMapping(value = "/{involvementId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
-    public void addInvolvementProofs(@ModelAttribute @Valid List<DocumentFileDTO> proofs,
+    public void addInvolvementProofs(@ModelAttribute @Valid DocumentFileDTO proof,
                                      @PathVariable Integer involvementId) {
-        involvementService.addInvolvementProofs(proofs, involvementId);
+        involvementService.addInvolvementProofs(List.of(proof), involvementId);
     }
 
     @DeleteMapping("/{involvementId}/{proofId}")
