@@ -46,6 +46,10 @@ jobs:
                     xpack.security.enabled: false
                 ports:
                     - 9200:9200
+                command: >
+                    bash -c "
+                    bin/elasticsearch-plugin install analysis-icu
+                    "
 
         steps:
             - uses: actions/checkout@v3
