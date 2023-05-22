@@ -1,0 +1,26 @@
+{
+  "analysis": {
+    "analyzer": {
+      "serbian_analyzer": {
+        "type": "custom",
+        "tokenizer": "icu_tokenizer",
+        "filter": [
+          "icu_folding",
+          "lowercase",
+          "serbian_stop",
+          "serbian_stemmer"
+        ]
+      }
+    },
+    "filter": {
+      "serbian_stop": {
+        "type": "stop",
+        "stopwords": "_serbian_"
+      },
+      "serbian_stemmer": {
+        "type": "stemmer",
+        "language": "serbian"
+      }
+    }
+  }
+}

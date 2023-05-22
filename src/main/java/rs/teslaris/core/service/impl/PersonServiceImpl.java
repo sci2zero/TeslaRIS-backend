@@ -312,17 +312,26 @@ public class PersonServiceImpl implements PersonService {
         personIndex.setEmploymentInstitutionsId(
             employmentInstitutions.stream().map(BaseEntity::getId).collect(
                 Collectors.toList()));
+        System.out.println(personIndex.getEmploymentInstitutionsId());
 
-        var employments = new StringBuilder();
+        var employments_sr = new StringBuilder();
+        var employments_other = new StringBuilder();
         for (var organisationUnit : employmentInstitutions) {
-            var institutionName = new StringBuilder();
+            var institutionName_sr = new StringBuilder();
+            var institutionName_other = new StringBuilder();
+
             organisationUnit.getName().stream()
-                .filter(mc -> mc.getLanguage().getLanguageTag().equals("EN") ||
-                    mc.getLanguage().getLanguageTag().contains("RS"))
-                .forEach(mc -> institutionName.append(mc.getContent()).append(" | "));
-            employments.append(institutionName).append(organisationUnit.getNameAbbreviation());
+                .filter(mc -> mc.getLanguage().getLanguageTag().startsWith("SR"))
+                .forEach(mc -> institutionName_sr.append(mc.getContent()).append(" | "));
+            organisationUnit.getName().stream()
+                .filter(mc -> !mc.getLanguage().getLanguageTag().startsWith("SR"))
+                .forEach(mc -> institutionName_other.append(mc.getContent()).append(" | "));
+            employments_sr.append(institutionName_sr)
+                .append(organisationUnit.getNameAbbreviation());
+            employments_other.append(institutionName_other);
         }
-        personIndex.setEmployments(employments.toString());
+        personIndex.setEmploymentsSrp(employments_sr.toString());
+        personIndex.setEmployments(employments_other.toString());
 
         personIndexRepository.save(personIndex);
     }

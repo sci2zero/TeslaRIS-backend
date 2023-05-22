@@ -115,7 +115,7 @@ public class DbInitializer implements ApplicationRunner {
 
         var englishTag = new LanguageTag("EN", "English");
         languageTagRepository.save(englishTag);
-        var serbianTag = new LanguageTag("SRB", "Srpski");
+        var serbianTag = new LanguageTag("SR", "Srpski");
         languageTagRepository.save(serbianTag);
 
         var dummyOU = new OrganisationUnit();

@@ -7,12 +7,18 @@ import java.util.Objects;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
+import org.apache.tika.language.detect.LanguageDetector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.exception.LoadingException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.StorageException;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
+import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.DocumentFileService;
@@ -30,6 +36,8 @@ public class DocumentFileServiceImpl implements DocumentFileService {
 
     private final MultilingualContentService multilingualContentService;
 
+    private final DocumentFileIndexRepository documentFileIndexRepository;
+
 
     @Override
     public DocumentFile findDocumentFileById(Integer id) {
@@ -41,6 +49,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
         documentFile.setFilename(documentFileDTO.getFile().getOriginalFilename());
         documentFile.setDescription(
             multilingualContentService.getMultilingualContent(documentFileDTO.getDescription()));
+
         documentFile.setMimeType(detectMimeType(documentFileDTO.getFile()));
         documentFile.setFileSize(documentFileDTO.getFile().getSize());
         documentFile.setResourceType(documentFileDTO.getResourceType());
@@ -56,6 +65,9 @@ public class DocumentFileServiceImpl implements DocumentFileService {
         var serverFilename =
             fileService.store(documentFile.getFile(), UUID.randomUUID().toString());
         newDocumentFile.setServerFilename(serverFilename);
+
+        parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(),
+            serverFilename); // TODO: REMOVE, only for PoC
 
         return documentFileRepository.save(newDocumentFile);
     }
@@ -96,5 +108,92 @@ public class DocumentFileServiceImpl implements DocumentFileService {
         }
 
         return trueMimeType;
+    }
+
+    public void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,
+                                         String serverFilename) {
+        if (!isPdfFile(multipartPdfFile)) {
+            return;
+        }
+
+        var documentContent = extractDocumentContent(multipartPdfFile);
+        var documentTitle = extractDocumentTitle(multipartPdfFile);
+
+        var contentLanguageDetected = detectLanguage(documentContent);
+        var titleLanguageDetected = detectLanguage(documentTitle);
+
+        var documentIndex =
+            createDocumentIndex(documentContent, documentTitle, contentLanguageDetected,
+                titleLanguageDetected, documentFile, serverFilename);
+
+        documentFileIndexRepository.save(documentIndex);
+    }
+
+    private boolean isPdfFile(MultipartFile multipartFile) {
+        return Objects.equals(multipartFile.getContentType(), "application/pdf");
+    }
+
+    private String extractDocumentContent(MultipartFile multipartPdfFile) {
+        String documentContent;
+        try (var pdfFile = multipartPdfFile.getInputStream()) {
+            var pdDocument = PDDocument.load(pdfFile);
+            var textStripper = new PDFTextStripper();
+            documentContent = textStripper.getText(pdDocument);
+            pdDocument.close();
+        } catch (IOException e) {
+            throw new LoadingException("Error while trying to load PDF file content.");
+        }
+        return documentContent;
+    }
+
+    private String extractDocumentTitle(MultipartFile multipartPdfFile) {
+        var originalFilename = Objects.requireNonNull(multipartPdfFile.getOriginalFilename());
+        return originalFilename.split("\\.")[0];
+    }
+
+    private String detectLanguage(String text) {
+        LanguageDetector languageDetector;
+        try {
+            languageDetector = LanguageDetector.getDefaultLanguageDetector().loadModels();
+        } catch (IOException e) {
+            throw new NotFoundException("Error while loading language models.");
+        }
+        return languageDetector.detect(text).getLanguage();
+    }
+
+    private DocumentFileIndex createDocumentIndex(String documentContent, String documentTitle,
+                                                  String contentLanguageDetected,
+                                                  String titleLanguageDetected,
+                                                  DocumentFile documentFile,
+                                                  String serverFilename) {
+        var documentIndex = new DocumentFileIndex();
+
+        if (contentLanguageDetected.equals("hr") || contentLanguageDetected.equals("sr")) {
+            documentIndex.setPdfTextSrp(documentContent);
+        } else {
+            documentIndex.setPdfTextOther(documentContent);
+        }
+
+        if (titleLanguageDetected.equals("hr") || titleLanguageDetected.equals("sr")) {
+            documentIndex.setTitleSrp(documentTitle);
+        } else {
+            documentIndex.setTitleOther(documentTitle);
+        }
+
+        documentIndex.setDescriptionSrp("");
+        documentFile.getDescription().stream()
+            .filter(d -> d.getLanguage().getLanguageTag().startsWith("SR")).forEach(
+                d -> documentIndex.setDescriptionSrp(
+                    documentIndex.getDescriptionSrp() + d.getContent()));
+
+        documentIndex.setDescriptionOther("");
+        documentFile.getDescription().stream()
+            .filter(d -> !d.getLanguage().getLanguageTag().startsWith("SR")).forEach(
+                d -> documentIndex.setDescriptionOther(
+                    documentIndex.getDescriptionOther() + d.getContent() + " | "));
+
+        documentIndex.setServerFilename(serverFilename);
+
+        return documentIndex;
     }
 }
