@@ -66,10 +66,12 @@ public class DocumentFileServiceImpl implements DocumentFileService {
             fileService.store(documentFile.getFile(), UUID.randomUUID().toString());
         newDocumentFile.setServerFilename(serverFilename);
 
-        parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(),
-            serverFilename); // TODO: REMOVE, only for PoC
+        newDocumentFile = documentFileRepository.save(newDocumentFile);
 
-        return documentFileRepository.save(newDocumentFile);
+        parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(),
+            serverFilename, new DocumentFileIndex()); // TODO: REMOVE, only for PoC
+
+        return newDocumentFile;
     }
 
     @Override
@@ -80,6 +82,13 @@ public class DocumentFileServiceImpl implements DocumentFileService {
 
         fileService.store(documentFile.getFile(), documentFileToEdit.getServerFilename());
         documentFileRepository.save(documentFileToEdit);
+
+        var documentIndexToUpdate = documentFileIndexRepository.findDocumentFileIndexByDatabaseId(
+            documentFileToEdit.getId()).orElseThrow(
+            () -> new NotFoundException("Document index with given ID does not exist."));
+
+        parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
+            documentFileToEdit.getServerFilename(), documentIndexToUpdate);
     }
 
     @Override
@@ -111,7 +120,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
     }
 
     public void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,
-                                         String serverFilename) {
+                                         String serverFilename, DocumentFileIndex documentIndex) {
         if (!isPdfFile(multipartPdfFile)) {
             return;
         }
@@ -122,9 +131,8 @@ public class DocumentFileServiceImpl implements DocumentFileService {
         var contentLanguageDetected = detectLanguage(documentContent);
         var titleLanguageDetected = detectLanguage(documentTitle);
 
-        var documentIndex =
-            createDocumentIndex(documentContent, documentTitle, contentLanguageDetected,
-                titleLanguageDetected, documentFile, serverFilename);
+        saveDocumentIndex(documentContent, documentTitle, contentLanguageDetected,
+            titleLanguageDetected, documentFile, serverFilename, documentIndex);
 
         documentFileIndexRepository.save(documentIndex);
     }
@@ -161,12 +169,10 @@ public class DocumentFileServiceImpl implements DocumentFileService {
         return languageDetector.detect(text).getLanguage();
     }
 
-    private DocumentFileIndex createDocumentIndex(String documentContent, String documentTitle,
-                                                  String contentLanguageDetected,
-                                                  String titleLanguageDetected,
-                                                  DocumentFile documentFile,
-                                                  String serverFilename) {
-        var documentIndex = new DocumentFileIndex();
+    private void saveDocumentIndex(String documentContent, String documentTitle,
+                                   String contentLanguageDetected, String titleLanguageDetected,
+                                   DocumentFile documentFile, String serverFilename,
+                                   DocumentFileIndex documentIndex) {
 
         if (contentLanguageDetected.equals("hr") || contentLanguageDetected.equals("sr")) {
             documentIndex.setPdfTextSrp(documentContent);
@@ -193,7 +199,6 @@ public class DocumentFileServiceImpl implements DocumentFileService {
                     documentIndex.getDescriptionOther() + d.getContent() + " | "));
 
         documentIndex.setServerFilename(serverFilename);
-
-        return documentIndex;
+        documentIndex.setDatabaseId(documentFile.getId());
     }
 }
