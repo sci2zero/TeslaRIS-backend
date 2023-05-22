@@ -58,7 +58,7 @@ jobs:
                   cache: maven
 
             - name: Start Docker Compose
-              run: docker-compose up -ds
+              run: docker-compose up -d
 
             - name: Install Elasticsearch plugin
               run: |
