@@ -17,6 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
+import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.FileService;
@@ -34,6 +36,9 @@ public class DocumentFileServiceTest {
 
     @Mock
     private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private DocumentFileIndexRepository documentFileIndexRepository;
 
     @InjectMocks
     private DocumentFileServiceImpl documentFileService;
@@ -91,9 +96,12 @@ public class DocumentFileServiceTest {
         dto.setId(1);
         dto.setFile(
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
+        var docIndex = new DocumentFileIndex();
 
         when(documentFileRepository.findById(dto.getId())).thenReturn(Optional.of(doc));
         when(fileService.store(any(), eq("UUID"))).thenReturn("UUID.pdf");
+        when(documentFileIndexRepository.findDocumentFileIndexByDatabaseId(any())).thenReturn(
+            Optional.of(docIndex));
 
         // when
         documentFileService.editDocumentFile(dto);
