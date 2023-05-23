@@ -64,7 +64,7 @@ jobs:
                   #!/bin/bash
                   docker ps
                   docker exec elasticsearch bash -c "bin/elasticsearch-plugin install analysis-icu"
-
+                  docker restart elasticsearch
 
             - name: Run Tests
               run: mvn test
