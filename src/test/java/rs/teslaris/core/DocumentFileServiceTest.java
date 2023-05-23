@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.exception.LoadingException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
@@ -128,5 +129,22 @@ public class DocumentFileServiceTest {
         // then
         verify(documentFileRepository, times(1)).delete(any());
         verify(fileService, times(1)).delete(any());
+    }
+
+    @Test
+    void shouldThrowLoadingExceptionWhenPdfFileCorrupted() {
+        // given
+        var documentFile = new DocumentFile();
+        var multipartPdfFile =
+            new MockMultipartFile("file", "test.pdf", "application/pdf", new byte[] {});
+        var serverFilename = "test.pdf";
+        var documentIndex = new DocumentFileIndex();
+
+        // when
+        assertThrows(LoadingException.class,
+            () -> documentFileService.parseAndIndexPdfDocument(documentFile, multipartPdfFile,
+                serverFilename, documentIndex));
+
+        // then (LoadingException should be thrown)
     }
 }

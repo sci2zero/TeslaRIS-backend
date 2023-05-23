@@ -119,6 +119,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
         return trueMimeType;
     }
 
+    @Override
     public void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,
                                          String serverFilename, DocumentFileIndex documentIndex) {
         if (!isPdfFile(multipartPdfFile)) {
