@@ -15,6 +15,7 @@ import rs.teslaris.core.exception.CantEditPersonException;
 import rs.teslaris.core.exception.CantRegisterAdminException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.exception.ResearchAreaInUseException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
@@ -90,6 +91,14 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleWrongPasswordProvidedException(HttpServletRequest request,
                                                      WrongPasswordProvidedException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ResearchAreaInUseException.class)
+    @ResponseBody
+    ErrorObject handleResearchAreaInUseException(HttpServletRequest request,
+                                                     ResearchAreaInUseException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
