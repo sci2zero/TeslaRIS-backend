@@ -1,6 +1,5 @@
 package rs.teslaris.core.dto.commontypes;
 
-import javax.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
