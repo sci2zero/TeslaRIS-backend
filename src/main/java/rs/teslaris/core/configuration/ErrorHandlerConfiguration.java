@@ -97,7 +97,7 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(ResearchAreaInUseException.class)
     @ResponseBody
     ErrorObject handleResearchAreaInUseException(HttpServletRequest request,
-                                                     ResearchAreaInUseException ex) {
+                                                 ResearchAreaInUseException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 

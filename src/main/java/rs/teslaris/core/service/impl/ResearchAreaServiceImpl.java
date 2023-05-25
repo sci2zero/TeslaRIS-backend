@@ -2,8 +2,12 @@ package rs.teslaris.core.service.impl;
 
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.institution.ResearchAreaToResearchAreaDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
+import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.exception.ResearchAreaInUseException;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
@@ -22,7 +26,12 @@ public class ResearchAreaServiceImpl implements ResearchAreaService {
 
     @Override
     public ResearchArea getReferenceToResearchAreaById(Integer id) {
-        return researchAreaRepository.getReferenceById(id);
+        return id == null ? null : researchAreaRepository.getReferenceById(id);
+    }
+
+    public Page<ResearchAreaResponseDTO> getResearchAreas(Pageable pageable) {
+        return researchAreaRepository.findAll(pageable).map(
+            ResearchAreaToResearchAreaDTO::toResponseDTO);
     }
 
     @Override
@@ -33,7 +42,7 @@ public class ResearchAreaServiceImpl implements ResearchAreaService {
         newResearchArea.setDescription(
             multilingualContentService.getMultilingualContent(researchAreaDTO.getDescription()));
         newResearchArea.setSuperResearchArea(
-            researchAreaRepository.getReferenceById(researchAreaDTO.getSuperResearchAreaId()));
+            getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
 
         return researchAreaRepository.save(newResearchArea);
     }
@@ -50,7 +59,7 @@ public class ResearchAreaServiceImpl implements ResearchAreaService {
             multilingualContentService.getMultilingualContent(researchAreaDTO.getDescription()));
 
         reserchAreaToUpdate.setSuperResearchArea(
-            researchAreaRepository.getReferenceById(researchAreaDTO.getSuperResearchAreaId()));
+            getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
 
         researchAreaRepository.save(reserchAreaToUpdate);
     }
