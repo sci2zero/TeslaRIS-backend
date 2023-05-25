@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
@@ -17,6 +18,7 @@ import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
@@ -30,6 +32,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
+import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
@@ -58,6 +61,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final CountryRepository countryRepository;
 
+    private final ResearchAreaRepository researchAreaRepository;
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
@@ -69,19 +74,17 @@ public class DbInitializer implements ApplicationRunner {
         var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
         var approvePerson = new Privilege("APPROVE_PERSON");
         var editProofs = new Privilege("EDIT_DOCUMENT_PROOFS");
+        var editResearchAreas = new Privilege("EDIT_RESEARCH_AREAS");
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonalInfo, approvePerson, editProofs));
+                createUserBasic, editPersonalInfo, approvePerson, editProofs, editResearchAreas));
 
-        var adminAuthority = new Authority(UserRole.ADMIN.toString(),
-            new HashSet<>(
-                List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile,
-                    editPersonalInfo, createUserBasic, approvePerson, editProofs})));
-        var researcherAuthority =
-            new Authority(UserRole.RESEARCHER.toString(),
-                new HashSet<>(List.of(
-                    new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
-                        createUserBasic, editProofs})));
+        var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
+            new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
+                createUserBasic, approvePerson, editProofs, editResearchAreas})));
+        var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
+            List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
+                createUserBasic, editProofs})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(researcherAuthority);
 
@@ -104,12 +107,11 @@ public class DbInitializer implements ApplicationRunner {
 
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage,
-                adminAuthority, null, null);
+                "Markovic", false, false, serbianLanguage, adminAuthority, null, null);
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
-                "Janko", "Jankovic", false, false, serbianLanguage,
-                researcherAuthority, person1, null);
+                "Janko", "Jankovic", false, false, serbianLanguage, researcherAuthority, person1,
+                null);
         userRepository.save(adminUser);
         userRepository.save(researcherUser);
 
@@ -120,13 +122,17 @@ public class DbInitializer implements ApplicationRunner {
 
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
-        dummyOU.setName(new HashSet<>(
-            List.of(new MultiLingualContent[] {
-                new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
-                new MultiLingualContent(serbianTag, "Fakultet Tehnickih Nauka", 2)})));
+        dummyOU.setName(new HashSet<>(List.of(new MultiLingualContent[] {
+            new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
+            new MultiLingualContent(serbianTag, "Fakultet Tehnickih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationalUnitRepository.save(dummyOU);
+
+        var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
+            new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
+            null, null);
+        researchAreaRepository.save(researchArea1);
     }
 }
