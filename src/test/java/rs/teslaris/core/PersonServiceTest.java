@@ -167,7 +167,7 @@ public class PersonServiceTest {
 
         // when
         var employmentInstitution = new OrganisationUnit();
-        when(organisationUnitService.findOrganisationalUnitById(2)).thenReturn(
+        when(organisationUnitService.findOrganisationUnitById(2)).thenReturn(
             employmentInstitution);
         when(personRepository.save(any(Person.class))).thenReturn(person);
 

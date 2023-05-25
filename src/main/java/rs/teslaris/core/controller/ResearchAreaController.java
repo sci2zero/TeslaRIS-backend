@@ -32,6 +32,7 @@ public class ResearchAreaController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_RESEARCH_AREAS')")
+    @ResponseStatus(HttpStatus.CREATED)
     public ResearchAreaDTO createResearchArea(@RequestBody ResearchAreaDTO researchArea) {
         var newResearchArea = researchAreaService.createResearchArea(researchArea);
         researchArea.setId(newResearchArea.getId());
@@ -40,6 +41,7 @@ public class ResearchAreaController {
 
     @PutMapping("/{researchAreaId}")
     @PreAuthorize("hasAuthority('EDIT_RESEARCH_AREAS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void editResearchArea(@RequestBody ResearchAreaDTO researchArea,
                                  @PathVariable Integer researchAreaId) {
         researchAreaService.editResearchArea(researchArea, researchAreaId);

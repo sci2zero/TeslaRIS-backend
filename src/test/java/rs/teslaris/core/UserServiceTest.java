@@ -154,7 +154,7 @@ public class UserServiceTest {
         when(personService.findPersonById(1)).thenReturn(person);
 
         var organisationalUnit = new OrganisationUnit();
-        when(organisationalUnitService.findOrganisationalUnitById(1)).thenReturn(
+        when(organisationalUnitService.findOrganisationUnitById(1)).thenReturn(
             organisationalUnit);
 
         User newUser = new User("johndoe@example.com", "password123", "",
@@ -279,7 +279,7 @@ public class UserServiceTest {
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findLanguageById(1)).thenReturn(preferredLanguage);
         when(personService.findPersonById(2)).thenReturn(person);
-        when(organisationalUnitService.findOrganisationalUnitById(3)).thenReturn(
+        when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
@@ -330,7 +330,7 @@ public class UserServiceTest {
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findLanguageById(1)).thenReturn(preferredLanguage);
         when(personService.findPersonById(2)).thenReturn(person);
-        when(organisationalUnitService.findOrganisationalUnitById(3)).thenReturn(
+        when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);
 

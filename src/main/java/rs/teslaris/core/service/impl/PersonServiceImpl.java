@@ -51,7 +51,7 @@ public class PersonServiceImpl implements PersonService {
 
     private final PersonNameService personNameService;
 
-    @Value("${approval.approved_by_default}")
+    @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
 
 
@@ -100,7 +100,7 @@ public class PersonServiceImpl implements PersonService {
         var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
             new PostalAddress(), personalContact);
 
-        var employmentInstitution = organisationUnitService.findOrganisationalUnitById(
+        var employmentInstitution = organisationUnitService.findOrganisationUnitById(
             personDTO.getOrganisationUnitId());
 
         var currentEmployment =

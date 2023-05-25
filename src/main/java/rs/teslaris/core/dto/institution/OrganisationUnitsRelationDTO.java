@@ -1,14 +1,13 @@
 package rs.teslaris.core.dto.institution;
 
 import java.time.LocalDate;
-import java.util.Collection;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 
 @Getter
@@ -16,9 +15,12 @@ import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrganisationUnitsRelationDTO {
-    private Collection<MultilingualContentDTO> sourceAffiliationStatement;
 
-    private Collection<MultilingualContentDTO> targetAffiliationStatement;
+    private Integer id;
+
+    private List<MultilingualContentDTO> sourceAffiliationStatement;
+
+    private List<MultilingualContentDTO> targetAffiliationStatement;
 
     private OrganisationUnitRelationType relationType;
 
@@ -26,11 +28,9 @@ public class OrganisationUnitsRelationDTO {
 
     private LocalDate dateTo;
 
-    private ApproveStatus approveStatus;
+    private List<DocumentFileDTO> proofs;
 
-    private Collection<DocumentFileDTO> proofs;
+    private Integer sourceOrganisationUnitId;
 
-    private OrganisationUnitDTO sourceOrganisationUnit;
-
-    private OrganisationUnitDTO targetOrganisationUnit;
+    private Integer targetOrganisationUnitId;
 }
