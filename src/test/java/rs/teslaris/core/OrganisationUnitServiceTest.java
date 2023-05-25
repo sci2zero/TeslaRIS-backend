@@ -31,7 +31,7 @@ public class OrganisationUnitServiceTest {
         when(organisationalUnitRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var result = organisationalUnitService.findOrganisationalUnitById(1);
+        var result = organisationalUnitService.findOrganisationUnitById(1);
 
         // then
         assertEquals(expected, result);
@@ -44,7 +44,7 @@ public class OrganisationUnitServiceTest {
 
         // when
         assertThrows(NotFoundException.class,
-            () -> organisationalUnitService.findOrganisationalUnitById(1));
+            () -> organisationalUnitService.findOrganisationUnitById(1));
 
         // then (NotFoundException should be thrown)
     }

@@ -199,7 +199,7 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
         var organisationUnit =
-            organisationUnitService.findOrganisationalUnitById(
+            organisationUnitService.findOrganisationUnitById(
                 commonFields.getOrganisationUnitId());
 
         var affiliationStatements = multilingualContentService.getMultilingualContent(
