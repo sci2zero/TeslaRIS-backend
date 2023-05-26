@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.service.OrganisationUnitService;
 
 @RestController
@@ -24,9 +25,9 @@ public class OrganisationUnitRelationController {
     private final OrganisationUnitService organisationUnitService;
 
     @GetMapping("/{sourceId}/{targetId}")
-    public Page<OrganisationUnitsRelationDTO> getOrganisationUnitsRelations(
+    public Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
         @PathVariable Integer sourceId, @PathVariable Integer targetId, Pageable pageable) {
-        return null;
+        return organisationUnitService.getOrganisationUnitsRelations(sourceId, targetId, pageable);
     }
 
     @PostMapping

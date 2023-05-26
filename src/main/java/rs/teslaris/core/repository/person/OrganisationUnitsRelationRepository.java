@@ -12,8 +12,8 @@ public interface OrganisationUnitsRelationRepository
     extends JpaRepository<OrganisationUnitsRelation, Integer> {
 
     @Query("select our from OrganisationUnitsRelation our" +
-        " where our.SourceOrganisationUnit.id = :sourceId " +
-        "and our.targetOrganisationUnit.id = :targetId " + "and our.approveStatus = 1")
+        " where our.sourceOrganisationUnit.id = :sourceId " +
+        " and our.targetOrganisationUnit.id = :targetId " + "and our.approveStatus = 1")
     Page<OrganisationUnitsRelation> getRelationsForOrganisationUnits(Pageable pageable,
                                                                      Integer sourceId,
                                                                      Integer targetId);
