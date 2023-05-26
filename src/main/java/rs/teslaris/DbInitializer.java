@@ -33,7 +33,7 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
-import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
@@ -55,7 +55,7 @@ public class DbInitializer implements ApplicationRunner {
 
     private final PersonRepository personRepository;
 
-    private final OrganisationalUnitRepository organisationalUnitRepository;
+    private final OrganisationUnitRepository organisationUnitRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -74,13 +74,15 @@ public class DbInitializer implements ApplicationRunner {
         var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
         var approvePerson = new Privilege("APPROVE_PERSON");
         var editResearchAreas = new Privilege("EDIT_RESEARCH_AREAS");
+        var editOURelations = new Privilege("EDIT_OU_RELATIONS");
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonalInfo, approvePerson, editResearchAreas));
+                createUserBasic, editPersonalInfo, approvePerson, editResearchAreas,
+                editOURelations));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
             new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
-                createUserBasic, approvePerson, editResearchAreas})));
+                createUserBasic, approvePerson, editResearchAreas, editOURelations})));
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic})));
@@ -127,7 +129,7 @@ public class DbInitializer implements ApplicationRunner {
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
-        organisationalUnitRepository.save(dummyOU);
+        organisationUnitRepository.save(dummyOU);
 
         var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),

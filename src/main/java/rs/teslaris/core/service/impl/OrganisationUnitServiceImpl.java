@@ -16,8 +16,8 @@ import rs.teslaris.core.exception.SelfRelationException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
-import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.OrganisationUnitService;
 
@@ -26,7 +26,7 @@ import rs.teslaris.core.service.OrganisationUnitService;
 @Transactional
 public class OrganisationUnitServiceImpl implements OrganisationUnitService {
 
-    private final OrganisationalUnitRepository organisationalUnitRepository;
+    private final OrganisationUnitRepository organisationUnitRepository;
 
     private final MultilingualContentService multilingualContentService;
 
@@ -38,7 +38,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
 
     @Override
     public OrganisationUnit findOrganisationUnitById(Integer id) {
-        return organisationalUnitRepository.findById(id).orElseThrow(
+        return organisationUnitRepository.findById(id).orElseThrow(
             () -> new NotFoundException("Organisation unit with given ID does not exist."));
     }
 
@@ -103,6 +103,14 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     public void deleteOrganisationUnitsRelation(Integer id) {
         var relationToDelete = organisationUnitsRelationRepository.getReferenceById(id);
         organisationUnitsRelationRepository.delete(relationToDelete);
+    }
+
+    @Override
+    public void approveRelation(Integer relationId, Boolean approve) {
+        var relationToApprove = findOrganisationUnitsRelationById(relationId);
+        relationToApprove.setApproveStatus(
+            approve ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
+        organisationUnitsRelationRepository.save(relationToApprove);
     }
 
     private void setCommonFields(OrganisationUnitsRelation relation,
