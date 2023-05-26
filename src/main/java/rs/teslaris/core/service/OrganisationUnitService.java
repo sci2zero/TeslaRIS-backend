@@ -29,4 +29,6 @@ public interface OrganisationUnitService {
                                        Integer id);
 
     void deleteOrganisationUnitsRelation(Integer id);
+
+    void approveRelation(Integer relationId, Boolean approve);
 }

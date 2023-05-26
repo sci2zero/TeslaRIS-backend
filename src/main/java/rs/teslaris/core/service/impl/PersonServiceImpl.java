@@ -99,7 +99,7 @@ public class PersonServiceImpl implements PersonService {
         var personalContact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
         var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
             new PostalAddress(), personalContact);
-        
+
         var employmentInstitution =
             organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
 
