@@ -1,14 +1,18 @@
 package rs.teslaris.core.service.impl;
 
+import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.institution.RelationToRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.exception.SelfRelationException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
@@ -46,11 +50,10 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     }
 
     @Override
-    public Page<OrganisationUnitsRelation> getOrganisationUnitsRelations(Integer sourceId,
-                                                                         Integer targetId,
-                                                                         Pageable pageable) {
+    public Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
+        Integer sourceId, Integer targetId, Pageable pageable) {
         return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(pageable,
-            sourceId, targetId);
+            sourceId, targetId).map(RelationToRelationDTO::toResponseDTO);
     }
 
     @Override
@@ -66,6 +69,11 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     @Override
     public OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO relationDTO) {
+        if (Objects.equals(relationDTO.getSourceOrganisationUnitId(),
+            relationDTO.getTargetOrganisationUnitId())) {
+            throw new SelfRelationException("Organisation unit cannot relate to itself.");
+        }
+
         var newRelation = new OrganisationUnitsRelation();
         setCommonFields(newRelation, relationDTO);
 
@@ -108,9 +116,9 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         relation.setDateFrom(relationDTO.getDateFrom());
         relation.setDateTo(relationDTO.getDateTo());
 
-        relation.setSourceOrganisationUnit(organisationalUnitRepository.getReferenceById(
-            relationDTO.getSourceOrganisationUnitId()));
-        relation.setTargetOrganisationUnit(organisationalUnitRepository.getReferenceById(
-            relationDTO.getTargetOrganisationUnitId()));
+        relation.setSourceOrganisationUnit(
+            findOrganisationUnitById(relationDTO.getSourceOrganisationUnitId()));
+        relation.setTargetOrganisationUnit(
+            findOrganisationUnitById(relationDTO.getTargetOrganisationUnitId()));
     }
 }
