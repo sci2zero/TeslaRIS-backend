@@ -1,7 +1,7 @@
 {
   "analysis": {
     "analyzer": {
-      "serbian_analyzer": {
+      "serbian": {
         "type": "custom",
         "tokenizer": "icu_tokenizer",
         "filter": [

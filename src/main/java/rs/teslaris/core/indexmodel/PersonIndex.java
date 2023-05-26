@@ -25,8 +25,8 @@ public class PersonIndex {
     @Field(type = FieldType.Text, store = true, name = "name")
     private String name;
 
-    @Field(type = FieldType.Text, store = true, name = "employments_srp", analyzer = "serbian_analyzer", searchAnalyzer = "serbian_analyzer")
-    private String employmentsSrp;
+    @Field(type = FieldType.Text, store = true, name = "employments_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String employmentsSr;
 
     @Field(type = FieldType.Text, store = true, name = "employments", analyzer = "english", searchAnalyzer = "english")
     private String employments;

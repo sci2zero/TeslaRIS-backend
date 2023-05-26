@@ -22,7 +22,7 @@ public class DocumentFileDTO {
 
     private Integer id;
 
-    @NotNull(message = "You must provide a valid proof file.")
+    @NotNull(message = "You must provide a valid document file.")
     private MultipartFile file;
 
     @Valid

@@ -21,20 +21,20 @@ public class DocumentFileIndex {
     @Id
     private String id;
 
-    @Field(type = FieldType.Text, store = true, name = "pdf_text_srp", analyzer = "serbian_analyzer", searchAnalyzer = "serbian_analyzer")
-    private String pdfTextSrp;
+    @Field(type = FieldType.Text, store = true, name = "pdf_text_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String pdfTextSr;
 
     @Field(type = FieldType.Text, store = true, name = "pdf_text_other", analyzer = "english", searchAnalyzer = "english")
     private String pdfTextOther;
 
-    @Field(type = FieldType.Text, store = true, name = "description_srp", analyzer = "serbian_analyzer", searchAnalyzer = "serbian_analyzer")
-    private String descriptionSrp;
+    @Field(type = FieldType.Text, store = true, name = "description_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String descriptionSr;
 
     @Field(type = FieldType.Text, store = true, name = "description_other", analyzer = "english", searchAnalyzer = "english")
     private String descriptionOther;
 
-    @Field(type = FieldType.Text, store = true, name = "title_srp", analyzer = "serbian_analyzer", searchAnalyzer = "serbian_analyzer")
-    private String titleSrp;
+    @Field(type = FieldType.Text, store = true, name = "title_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String titleSr;
 
     @Field(type = FieldType.Text, store = true, name = "title_other", analyzer = "english", searchAnalyzer = "english")
     private String titleOther;

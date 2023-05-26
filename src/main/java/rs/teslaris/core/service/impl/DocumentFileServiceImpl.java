@@ -38,6 +38,8 @@ public class DocumentFileServiceImpl implements DocumentFileService {
 
     private final DocumentFileIndexRepository documentFileIndexRepository;
 
+    private final LanguageDetector languageDetector;
+
 
     @Override
     public DocumentFile findDocumentFileById(Integer id) {
@@ -161,12 +163,6 @@ public class DocumentFileServiceImpl implements DocumentFileService {
     }
 
     private String detectLanguage(String text) {
-        LanguageDetector languageDetector;
-        try {
-            languageDetector = LanguageDetector.getDefaultLanguageDetector().loadModels();
-        } catch (IOException e) {
-            throw new NotFoundException("Error while loading language models.");
-        }
         return languageDetector.detect(text).getLanguage();
     }
 
@@ -176,22 +172,22 @@ public class DocumentFileServiceImpl implements DocumentFileService {
                                    DocumentFileIndex documentIndex) {
 
         if (contentLanguageDetected.equals("hr") || contentLanguageDetected.equals("sr")) {
-            documentIndex.setPdfTextSrp(documentContent);
+            documentIndex.setPdfTextSr(documentContent);
         } else {
             documentIndex.setPdfTextOther(documentContent);
         }
 
         if (titleLanguageDetected.equals("hr") || titleLanguageDetected.equals("sr")) {
-            documentIndex.setTitleSrp(documentTitle);
+            documentIndex.setTitleSr(documentTitle);
         } else {
             documentIndex.setTitleOther(documentTitle);
         }
 
-        documentIndex.setDescriptionSrp("");
+        documentIndex.setDescriptionSr("");
         documentFile.getDescription().stream()
             .filter(d -> d.getLanguage().getLanguageTag().startsWith("SR")).forEach(
-                d -> documentIndex.setDescriptionSrp(
-                    documentIndex.getDescriptionSrp() + d.getContent()));
+                d -> documentIndex.setDescriptionSr(
+                    documentIndex.getDescriptionSr() + d.getContent()));
 
         documentIndex.setDescriptionOther("");
         documentFile.getDescription().stream()
