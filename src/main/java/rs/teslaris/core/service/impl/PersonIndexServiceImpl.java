@@ -56,6 +56,7 @@ public class PersonIndexServiceImpl implements PersonIndexService {
                         token -> {
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments").query(token)));
+                            b.should(sb -> sb.match(m -> m.field("employments_srp").query(token)));
                         });
                     return b;
                 }

@@ -30,8 +30,8 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
-import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
+import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -68,19 +68,20 @@ public class DbInitializer implements ApplicationRunner {
         var createUserBasic = new Privilege("REGISTER_PERSON");
         var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
         var approvePerson = new Privilege("APPROVE_PERSON");
+        var editProofs = new Privilege("EDIT_DOCUMENT_PROOFS");
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonalInfo, approvePerson));
+                createUserBasic, editPersonalInfo, approvePerson, editProofs));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(),
             new HashSet<>(
                 List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile,
-                    editPersonalInfo, createUserBasic, approvePerson})));
+                    editPersonalInfo, createUserBasic, approvePerson, editProofs})));
         var researcherAuthority =
             new Authority(UserRole.RESEARCHER.toString(),
                 new HashSet<>(List.of(
                     new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
-                        createUserBasic})));
+                        createUserBasic, editProofs})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(researcherAuthority);
 
@@ -114,7 +115,7 @@ public class DbInitializer implements ApplicationRunner {
 
         var englishTag = new LanguageTag("EN", "English");
         languageTagRepository.save(englishTag);
-        var serbianTag = new LanguageTag("SRB", "Srpski");
+        var serbianTag = new LanguageTag("SR", "Srpski");
         languageTagRepository.save(serbianTag);
 
         var dummyOU = new OrganisationUnit();

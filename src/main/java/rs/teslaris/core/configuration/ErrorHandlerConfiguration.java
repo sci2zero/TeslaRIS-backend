@@ -3,6 +3,7 @@ package rs.teslaris.core.configuration;
 import io.jsonwebtoken.MalformedJwtException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,14 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(NotFoundException.class)
     @ResponseBody
     ErrorObject handleNotFoundException(HttpServletRequest request, NotFoundException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(EntityNotFoundException.class)
+    @ResponseBody
+    ErrorObject handleEntityNotFoundException(HttpServletRequest request,
+                                              EntityNotFoundException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 

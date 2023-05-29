@@ -35,7 +35,7 @@ public class DocumentFile extends BaseEntity {
     private String mimeType;
 
     @Column(name = "file_size", nullable = false)
-    private int fileSize;
+    private Long fileSize;
 
     @Column(name = "resource_type", nullable = false)
     private ResourceType resourceType;

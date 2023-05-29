@@ -18,11 +18,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
@@ -30,6 +34,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.OrganisationUnitService;
 import rs.teslaris.core.service.PersonService;
@@ -49,6 +54,9 @@ public class InvolvementServiceTest {
 
     @Mock
     private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private DocumentFileService documentFileService;
 
     @InjectMocks
     private InvolvementServiceImpl involvementService;
@@ -74,6 +82,39 @@ public class InvolvementServiceTest {
 
         // when
         assertThrows(NotFoundException.class, () -> involvementService.findInvolvementById(1));
+
+        // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldReturnGenericInvolvementWhenInvolvementExists() {
+        // given
+        var mc1 = new MultiLingualContent(new LanguageTag(), "aaa", 1);
+        var education = new Education();
+        education.setOrganisationUnit(new OrganisationUnit());
+        education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        education.setProofs(new HashSet<>());
+        education.setThesisTitle(new HashSet<>(Set.of(mc1)));
+        education.setTitle(new HashSet<>(Set.of(mc1)));
+        education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
+
+        // when
+        var actual = (EducationDTO) involvementService.getInvolvement(1, Education.class);
+
+        // then
+        assertNotNull(actual);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenGenericInvolvementDoesNotExist() {
+        // given
+        when(involvementRepository.findById(1)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class,
+            () -> involvementService.getInvolvement(1, Education.class));
 
         // then (NotFoundException should be thrown)
     }
@@ -250,5 +291,40 @@ public class InvolvementServiceTest {
         // then (NotFoundException should be thrown)
     }
 
+    @Test
+    public void shouldAddInvolvementProofWhenInvolvementExists() {
+        // given
+        var involvement = new Involvement();
+        involvement.setProofs(new HashSet<>());
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
+        when(documentFileService.saveNewDocument(any())).thenReturn(new DocumentFile());
+
+        // when
+        involvementService.addInvolvementProofs(
+            List.of(new DocumentFileDTO(), new DocumentFileDTO()), 1);
+
+        //then
+        verify(involvementRepository, times(2)).save(involvement);
+    }
+
+    @Test
+    public void shouldDeleteProofWhenDocumentExists() {
+        // given
+        var df = new DocumentFile();
+        df.setServerFilename("UUID");
+        var involvement = new Involvement();
+        involvement.setProofs(new HashSet<>(Set.of(df)));
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
+        when(documentFileService.findDocumentFileById(1)).thenReturn(df);
+
+        // when
+        involvementService.deleteProof(1, 1);
+
+        //then
+        verify(involvementRepository, times(1)).save(involvement);
+        verify(documentFileService, times(1)).deleteDocumentFile(df.getServerFilename());
+    }
 
 }

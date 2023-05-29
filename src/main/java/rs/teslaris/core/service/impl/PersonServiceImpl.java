@@ -100,14 +100,12 @@ public class PersonServiceImpl implements PersonService {
         var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
             new PostalAddress(), personalContact);
 
-        var employmentInstitution = organisationUnitService.findOrganisationalUnitById(
-            personDTO.getOrganisationUnitId());
+        var employmentInstitution =
+            organisationUnitService.findOrganisationalUnitById(personDTO.getOrganisationUnitId());
 
-        var currentEmployment =
-            new Employment(null, null, defaultApproveStatus, new HashSet<>(),
-                InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                employmentInstitution, personDTO.getEmploymentPosition(),
-                new HashSet<>());
+        var currentEmployment = new Employment(null, null, defaultApproveStatus, new HashSet<>(),
+            InvolvementType.EMPLOYED_AT, new HashSet<>(), null, employmentInstitution,
+            personDTO.getEmploymentPosition(), new HashSet<>());
 
         var newPerson = new Person();
         newPerson.setName(personName);
@@ -132,20 +130,14 @@ public class PersonServiceImpl implements PersonService {
     public void setPersonBiography(List<MultilingualContentDTO> biographyDTO, Integer personId) {
         var personToUpdate = findPersonById(personId);
         personToUpdate.getBiography().clear();
-        biographyDTO.stream()
-            .map(biography -> {
-                var languageTag = languageTagService.findLanguageTagById(
-                    biography.getLanguageTagId());
-                return new MultiLingualContent(
-                    languageTag,
-                    biography.getContent(),
-                    biography.getPriority()
-                );
-            })
-            .forEach(biography -> {
-                personToUpdate.getBiography().add(biography);
-                personRepository.save(personToUpdate);
-            });
+        biographyDTO.stream().map(biography -> {
+            var languageTag = languageTagService.findLanguageTagById(biography.getLanguageTagId());
+            return new MultiLingualContent(languageTag, biography.getContent(),
+                biography.getPriority());
+        }).forEach(biography -> {
+            personToUpdate.getBiography().add(biography);
+            personRepository.save(personToUpdate);
+        });
     }
 
     @Override
@@ -153,20 +145,14 @@ public class PersonServiceImpl implements PersonService {
     public void setPersonKeyword(List<MultilingualContentDTO> keywordDTO, Integer personId) {
         var personToUpdate = findPersonById(personId);
         personToUpdate.getKeyword().clear();
-        keywordDTO.stream()
-            .map(keyword -> {
-                var languageTag = languageTagService.findLanguageTagById(
-                    keyword.getLanguageTagId());
-                return new MultiLingualContent(
-                    languageTag,
-                    keyword.getContent(),
-                    keyword.getPriority()
-                );
-            })
-            .forEach(keyword -> {
-                personToUpdate.getBiography().add(keyword);
-                personRepository.save(personToUpdate);
-            });
+        keywordDTO.stream().map(keyword -> {
+            var languageTag = languageTagService.findLanguageTagById(keyword.getLanguageTagId());
+            return new MultiLingualContent(languageTag, keyword.getContent(),
+                keyword.getPriority());
+        }).forEach(keyword -> {
+            personToUpdate.getBiography().add(keyword);
+            personRepository.save(personToUpdate);
+        });
     }
 
     @Override
@@ -188,22 +174,15 @@ public class PersonServiceImpl implements PersonService {
     public void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId) {
         var personToUpdate = findPersonById(personId);
 
-        var personNameIds = personToUpdate.getOtherNames()
-            .stream()
-            .map(PersonName::getId)
+        var personNameIds = personToUpdate.getOtherNames().stream().map(PersonName::getId)
             .collect(Collectors.toList());
 
         personToUpdate.getOtherNames().clear();
         personNameService.deletePersonNamesWithIds(personNameIds);
 
-        personNameDTO.stream()
-            .map(personName -> new PersonName(
-                personName.getFirstname(),
-                personName.getOtherName(),
-                personName.getLastname(),
-                personName.getDateFrom(),
-                personName.getDateTo()
-            ))
+        personNameDTO.stream().map(
+                personName -> new PersonName(personName.getFirstname(), personName.getOtherName(),
+                    personName.getLastname(), personName.getDateFrom(), personName.getDateTo()))
             .forEach(personName -> {
                 personToUpdate.getOtherNames().add(personName);
                 personRepository.save(personToUpdate);
@@ -261,69 +240,84 @@ public class PersonServiceImpl implements PersonService {
     private void setPersonStreetAndNumberInfo(Person personToUpdate,
                                               PersonalInfo personalInfoToUpdate,
                                               PersonalInfoDTO personalInfo) {
-        personalInfo.getPostalAddress().getStreetAndNumber().stream()
-            .map(streetAndNumber -> {
-                var languageTag = languageTagService.findLanguageTagById(
-                    streetAndNumber.getLanguageTagId());
-                return new MultiLingualContent(languageTag, streetAndNumber.getContent(),
-                    streetAndNumber.getPriority());
-            })
-            .forEach(streetAndNumberContent -> {
-                personalInfoToUpdate.getPostalAddress().getStreetAndNumber()
-                    .add(streetAndNumberContent);
-                personRepository.save(personToUpdate);
-            });
+        personalInfo.getPostalAddress().getStreetAndNumber().stream().map(streetAndNumber -> {
+            var languageTag =
+                languageTagService.findLanguageTagById(streetAndNumber.getLanguageTagId());
+            return new MultiLingualContent(languageTag, streetAndNumber.getContent(),
+                streetAndNumber.getPriority());
+        }).forEach(streetAndNumberContent -> {
+            personalInfoToUpdate.getPostalAddress().getStreetAndNumber()
+                .add(streetAndNumberContent);
+            personRepository.save(personToUpdate);
+        });
     }
 
     @Transactional
-    private void setPersonCityInfo(Person personToUpdate,
-                                   PersonalInfo personalInfoToUpdate,
+    private void setPersonCityInfo(Person personToUpdate, PersonalInfo personalInfoToUpdate,
                                    PersonalInfoDTO personalInfo) {
-        personalInfo.getPostalAddress().getCity().stream()
-            .map(city -> {
-                var languageTag = languageTagService.findLanguageTagById(city.getLanguageTagId());
-                return new MultiLingualContent(languageTag, city.getContent(), city.getPriority());
-            })
-            .forEach(city -> {
-                personalInfoToUpdate.getPostalAddress().getCity().add(city);
-                personRepository.save(personToUpdate);
-            });
+        personalInfo.getPostalAddress().getCity().stream().map(city -> {
+            var languageTag = languageTagService.findLanguageTagById(city.getLanguageTagId());
+            return new MultiLingualContent(languageTag, city.getContent(), city.getPriority());
+        }).forEach(city -> {
+            personalInfoToUpdate.getPostalAddress().getCity().add(city);
+            personRepository.save(personToUpdate);
+        });
     }
 
     private void indexPerson(Person savedPerson, Integer personDatabaseId) {
-        PersonIndex personIndex = null;
+        var personIndex = getPersonIndexForId(personDatabaseId);
+
+        setPersonIndexProperties(personIndex, savedPerson);
+
+        setPersonIndexEmploymentDetails(personIndex, savedPerson);
+
+        personIndexRepository.save(personIndex);
+    }
+
+    private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
+        PersonIndex personIndex;
         if (personDatabaseId > 0) {
             personIndex = personIndexRepository.findByDatabaseId(personDatabaseId).orElseThrow(
                 () -> new NotFoundException("Person index with given database ID does not exist."));
         } else {
             personIndex = new PersonIndex();
         }
+        return personIndex;
+    }
 
+    private void setPersonIndexProperties(PersonIndex personIndex, Person savedPerson) {
         personIndex.setName(
             savedPerson.getName().getFirstname() + " " + savedPerson.getName().getOtherName() +
                 " " + savedPerson.getName().getLastname());
         personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
         personIndex.setDatabaseId(savedPerson.getId());
+    }
 
+    private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
         var employmentInstitutions = savedPerson.getInvolvements().stream()
-            .filter(i -> i.getInvolvementType() == InvolvementType.EMPLOYED_AT).map(
-                Involvement::getOrganisationUnit).collect(Collectors.toList());
+            .filter(i -> i.getInvolvementType() == InvolvementType.EMPLOYED_AT)
+            .map(Involvement::getOrganisationUnit).collect(Collectors.toList());
 
         personIndex.setEmploymentInstitutionsId(
-            employmentInstitutions.stream().map(BaseEntity::getId).collect(
-                Collectors.toList()));
+            employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
 
-        var employments = new StringBuilder();
+        var employments_sr = new StringBuilder();
+        var employments_other = new StringBuilder();
         for (var organisationUnit : employmentInstitutions) {
-            var institutionName = new StringBuilder();
-            organisationUnit.getName().stream()
-                .filter(mc -> mc.getLanguage().getLanguageTag().equals("EN") ||
-                    mc.getLanguage().getLanguageTag().contains("RS"))
-                .forEach(mc -> institutionName.append(mc.getContent()).append(" | "));
-            employments.append(institutionName).append(organisationUnit.getNameAbbreviation());
-        }
-        personIndex.setEmployments(employments.toString());
+            var institutionName_sr = new StringBuilder();
+            var institutionName_other = new StringBuilder();
 
-        personIndexRepository.save(personIndex);
+            organisationUnit.getName().stream()
+                .filter(mc -> mc.getLanguage().getLanguageTag().startsWith("SR"))
+                .forEach(mc -> institutionName_sr.append(mc.getContent()).append(" | "));
+            organisationUnit.getName().stream()
+                .filter(mc -> !mc.getLanguage().getLanguageTag().startsWith("SR"))
+                .forEach(mc -> institutionName_other.append(mc.getContent()).append(" | "));
+            employments_sr.append(institutionName_sr)
+                .append(organisationUnit.getNameAbbreviation());
+            employments_other.append(institutionName_other);
+        }
+        personIndex.setEmploymentsSr(employments_sr.toString());
+        personIndex.setEmployments(employments_other.toString());
     }
 }

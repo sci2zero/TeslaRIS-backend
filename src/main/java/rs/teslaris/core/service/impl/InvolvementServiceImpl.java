@@ -1,9 +1,12 @@
 package rs.teslaris.core.service.impl;
 
 import java.util.HashSet;
+import java.util.List;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.person.InvolvementToInvolvementDTO;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
@@ -15,6 +18,7 @@ import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.InvolvementService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.OrganisationUnitService;
@@ -33,11 +37,20 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     private final InvolvementRepository involvementRepository;
 
+    private final DocumentFileService documentFileService;
+
 
     @Override
     public Involvement findInvolvementById(Integer involvementId) {
         return involvementRepository.findById(involvementId)
             .orElseThrow(() -> new NotFoundException("Involvement with given ID does not exist."));
+    }
+
+    @Override
+    public <T extends Involvement, R> R getInvolvement(Integer involvementId,
+                                                       Class<T> involvementClass) {
+        var involvement = findInvolvementById(involvementId);
+        return (R) InvolvementToInvolvementDTO.toDTO(involvementClass.cast(involvement));
     }
 
     @Override
@@ -94,6 +107,27 @@ public class InvolvementServiceImpl implements InvolvementService {
         personInvolved.addInvolvement(newEmployment);
 
         return involvementRepository.save(newEmployment);
+    }
+
+    @Override
+    public void addInvolvementProofs(List<DocumentFileDTO> proofs, Integer involvementId) {
+        var involvement = findInvolvementById(involvementId);
+        proofs.forEach(proof -> {
+            var documentFile = documentFileService.saveNewDocument(proof);
+            involvement.getProofs().add(documentFile);
+            involvementRepository.save(involvement);
+        });
+    }
+
+    @Override
+    public void deleteProof(Integer proofId, Integer involvementId) {
+        var involvement = findInvolvementById(involvementId);
+        var documentFile = documentFileService.findDocumentFileById(proofId);
+
+        involvement.getProofs().remove(documentFile);
+        involvementRepository.save(involvement);
+
+        documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }
 
     @Override
@@ -162,6 +196,7 @@ public class InvolvementServiceImpl implements InvolvementService {
         involvementRepository.delete(involvementToDelete);
     }
 
+
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
         var organisationUnit =
             organisationUnitService.findOrganisationalUnitById(
@@ -173,7 +208,7 @@ public class InvolvementServiceImpl implements InvolvementService {
         involvement.setDateFrom(commonFields.getDateFrom());
         involvement.setDateTo(commonFields.getDateTo());
         involvement.setApproveStatus(ApproveStatus.APPROVED);
-        involvement.setProofs(new HashSet<>()); // TODO: ADD THIS
+        involvement.setProofs(new HashSet<>());
         involvement.setInvolvementType(commonFields.getInvolvementType());
         involvement.setAffiliationStatement(affiliationStatements);
         involvement.setOrganisationUnit(organisationUnit);

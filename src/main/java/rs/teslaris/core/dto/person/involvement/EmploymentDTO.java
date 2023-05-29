@@ -1,6 +1,8 @@
 package rs.teslaris.core.dto.person.involvement;
 
 import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +16,9 @@ import rs.teslaris.core.model.person.EmploymentPosition;
 @AllArgsConstructor
 public class EmploymentDTO extends InvolvementDTO {
 
+    @NotNull(message = "You must provide a valid employment position.")
     private EmploymentPosition employmentPosition;
 
+    @Valid
     private List<MultilingualContentDTO> role;
 }

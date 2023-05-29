@@ -58,7 +58,7 @@ import rs.teslaris.core.service.impl.PersonServiceImpl;
 public class PersonServiceTest {
 
     @Mock
-    OrganisationUnitServiceImpl organisationUnitService;
+    private OrganisationUnitServiceImpl organisationUnitService;
 
     @Mock
     private PersonRepository personRepository;

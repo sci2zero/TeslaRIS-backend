@@ -57,6 +57,7 @@ public class PersonController {
         return personIndexService.findPeopleForOrganisationUnit(organisationUnitId, pageable);
     }
 
+
     @PostMapping("/basic")
     @PreAuthorize("hasAuthority('REGISTER_PERSON')")
     public BasicPersonDTO createPersonWithBasicInfo(@RequestBody @Valid BasicPersonDTO person) {
