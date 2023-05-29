@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl;
 
+import java.util.List;
 import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.institution.RelationToRelationDTO;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
@@ -18,6 +20,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.OrganisationUnitService;
 
@@ -31,6 +34,8 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     private final MultilingualContentService multilingualContentService;
 
     private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+
+    private final DocumentFileService documentFileService;
 
     @Value("${relation.approved_by_default}")
     private Boolean approvedByDefault;
@@ -128,5 +133,26 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
             findOrganisationUnitById(relationDTO.getSourceOrganisationUnitId()));
         relation.setTargetOrganisationUnit(
             findOrganisationUnitById(relationDTO.getTargetOrganisationUnitId()));
+    }
+
+    @Override
+    public void addRelationProofs(List<DocumentFileDTO> proofs, Integer relationId) {
+        var relation = findOrganisationUnitsRelationById(relationId);
+        proofs.forEach(proof -> {
+            var documentFile = documentFileService.saveNewDocument(proof);
+            relation.getProofs().add(documentFile);
+            organisationUnitsRelationRepository.save(relation);
+        });
+    }
+
+    @Override
+    public void deleteRelationProof(Integer relationId, Integer proofId) {
+        var relation = findOrganisationUnitsRelationById(relationId);
+        var documentFile = documentFileService.findDocumentFileById(proofId);
+
+        relation.getProofs().remove(documentFile);
+        organisationUnitsRelationRepository.save(relation);
+
+        documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }
 }

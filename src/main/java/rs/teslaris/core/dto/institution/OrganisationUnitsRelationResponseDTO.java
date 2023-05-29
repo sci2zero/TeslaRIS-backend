@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 
 @Getter
@@ -28,7 +28,7 @@ public class OrganisationUnitsRelationResponseDTO {
 
     private LocalDate dateTo;
 
-    private List<DocumentFileDTO> proofs;
+    private List<DocumentFileResponseDTO> proofs;
 
     private List<MultilingualContentDTO> sourceOrganisationUnitName;
 

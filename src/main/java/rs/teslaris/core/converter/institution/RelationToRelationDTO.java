@@ -1,6 +1,8 @@
 package rs.teslaris.core.converter.institution;
 
+import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentToMultilingualContentDTO;
+import rs.teslaris.core.converter.document.DocumentFileToDocumentFileResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
@@ -21,7 +23,9 @@ public class RelationToRelationDTO {
         relationResponse.setDateTo(relation.getDateTo());
         relationResponse.setRelationType(relation.getRelationType());
 
-        // TODO: add document proofs
+        relationResponse.setProofs(relation.getProofs().stream()
+            .map(DocumentFileToDocumentFileResponseDTO::toDTO).collect(
+                Collectors.toList()));
 
         relationResponse.setSourceOrganisationUnitName(
             MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(

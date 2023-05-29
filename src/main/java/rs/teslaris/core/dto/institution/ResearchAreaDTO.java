@@ -1,6 +1,7 @@
 package rs.teslaris.core.dto.institution;
 
 import java.util.List;
+import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,8 +16,10 @@ public class ResearchAreaDTO {
 
     private Integer id;
 
+    @Valid
     private List<MultilingualContentDTO> name;
 
+    @Valid
     private List<MultilingualContentDTO> description;
 
     private Integer superResearchAreaId;
