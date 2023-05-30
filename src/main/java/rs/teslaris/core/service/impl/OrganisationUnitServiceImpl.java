@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,16 +10,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.GeoLocationDTOToGeoLocation;
+import rs.teslaris.core.converter.institution.RelationToRelationDTO;
 import rs.teslaris.core.converter.person.ContactConverter;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.exception.SelfRelationException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
-import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
+import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.OrganisationUnitService;
 import rs.teslaris.core.service.ResearchAreaService;
@@ -28,13 +34,14 @@ import rs.teslaris.core.service.ResearchAreaService;
 @Transactional
 public class OrganisationUnitServiceImpl implements OrganisationUnitService {
 
-    private final OrganisationalUnitRepository organisationalUnitRepository;
+    private final OrganisationUnitRepository organisationUnitRepository;
 
     private final MultilingualContentService multilingualContentService;
 
     private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
     private final ResearchAreaService researchAreaService;
+    private final DocumentFileService documentFileService;
 
     @Value("${relation.approved_by_default}")
     private Boolean approvedByDefault;
@@ -42,13 +49,13 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
 
     @Override
     public OrganisationUnit findOrganisationUnitById(Integer id) {
-        return organisationalUnitRepository.findById(id).orElseThrow(
+        return organisationUnitRepository.findById(id).orElseThrow(
             () -> new NotFoundException("Organisation unit with given ID does not exist."));
     }
 
     @Override
     public Page<OrganisationUnit> findOrganisationUnits(Pageable pageable) {
-        return organisationalUnitRepository.findAll(pageable);
+        return organisationUnitRepository.findAll(pageable);
     }
 
     @Override
@@ -59,16 +66,15 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     }
 
     @Override
-    public Page<OrganisationUnitsRelation> getOrganisationUnitsRelations(Integer sourceId,
-                                                                         Integer targetId,
-                                                                         Pageable pageable) {
+    public Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
+        Integer sourceId, Integer targetId, Pageable pageable) {
         return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(pageable,
-            sourceId, targetId);
+            sourceId, targetId).map(RelationToRelationDTO::toResponseDTO);
     }
 
     @Override
     public OrganisationUnit getReferenceToOrganisationUnitById(Integer id) {
-        return id == null ? null : organisationalUnitRepository.getReferenceById(id);
+        return id == null ? null : organisationUnitRepository.getReferenceById(id);
     }
 
     @Override
@@ -95,7 +101,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
 
-        organisationUnit = organisationalUnitRepository.save(organisationUnit);
+        organisationUnit = organisationUnitRepository.save(organisationUnit);
 
 
         return organisationUnit;
@@ -132,7 +138,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
 
-        organisationUnit = organisationalUnitRepository.save(organisationUnit);
+        organisationUnit = organisationUnitRepository.save(organisationUnit);
 
         return organisationUnit;
     }
@@ -140,12 +146,17 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     @Override
     public void deleteOrganisationalUnit(Integer organisationUnitId) {
         var organisationUnitReference = getReferenceToOrganisationUnitById(organisationUnitId);
-        organisationalUnitRepository.delete(organisationUnitReference);
+        organisationUnitRepository.delete(organisationUnitReference);
     }
 
     @Override
     public OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO relationDTO) {
+        if (Objects.equals(relationDTO.getSourceOrganisationUnitId(),
+            relationDTO.getTargetOrganisationUnitId())) {
+            throw new SelfRelationException("Organisation unit cannot relate to itself.");
+        }
+
         var newRelation = new OrganisationUnitsRelation();
         setCommonFields(newRelation, relationDTO);
 
@@ -177,6 +188,14 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         organisationUnitsRelationRepository.delete(relationToDelete);
     }
 
+    @Override
+    public void approveRelation(Integer relationId, Boolean approve) {
+        var relationToApprove = findOrganisationUnitsRelationById(relationId);
+        relationToApprove.setApproveStatus(
+            approve ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
+        organisationUnitsRelationRepository.save(relationToApprove);
+    }
+
     private void setCommonFields(OrganisationUnitsRelation relation,
                                  OrganisationUnitsRelationDTO relationDTO) {
         relation.setSourceAffiliationStatement(multilingualContentService.getMultilingualContent(
@@ -188,9 +207,30 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         relation.setDateFrom(relationDTO.getDateFrom());
         relation.setDateTo(relationDTO.getDateTo());
 
-        relation.setSourceOrganisationUnit(organisationalUnitRepository.getReferenceById(
-            relationDTO.getSourceOrganisationUnitId()));
-        relation.setTargetOrganisationUnit(organisationalUnitRepository.getReferenceById(
-            relationDTO.getTargetOrganisationUnitId()));
+        relation.setSourceOrganisationUnit(
+            findOrganisationUnitById(relationDTO.getSourceOrganisationUnitId()));
+        relation.setTargetOrganisationUnit(
+            findOrganisationUnitById(relationDTO.getTargetOrganisationUnitId()));
+    }
+
+    @Override
+    public void addRelationProofs(List<DocumentFileDTO> proofs, Integer relationId) {
+        var relation = findOrganisationUnitsRelationById(relationId);
+        proofs.forEach(proof -> {
+            var documentFile = documentFileService.saveNewDocument(proof);
+            relation.getProofs().add(documentFile);
+            organisationUnitsRelationRepository.save(relation);
+        });
+    }
+
+    @Override
+    public void deleteRelationProof(Integer relationId, Integer proofId) {
+        var relation = findOrganisationUnitsRelationById(relationId);
+        var documentFile = documentFileService.findDocumentFileById(proofId);
+
+        relation.getProofs().remove(documentFile);
+        organisationUnitsRelationRepository.save(relation);
+
+        documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }
 }

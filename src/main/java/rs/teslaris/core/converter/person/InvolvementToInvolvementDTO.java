@@ -1,6 +1,8 @@
 package rs.teslaris.core.converter.person;
 
+import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentToMultilingualContentDTO;
+import rs.teslaris.core.converter.document.DocumentFileToDocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
@@ -67,11 +69,26 @@ public class InvolvementToInvolvementDTO {
             MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
                 involvement.getAffiliationStatement());
 
+        dto.setId(involvement.getId());
         dto.setDateFrom(involvement.getDateFrom());
         dto.setDateTo(involvement.getDateTo());
-        // TODO: ADD PROOFS
+        dto.setProofs(involvement.getProofs().stream()
+            .map(DocumentFileToDocumentFileResponseDTO::toDTO).collect(
+                Collectors.toList()));
         dto.setInvolvementType(involvement.getInvolvementType());
         dto.setAffiliationStatement(affiliationStatements);
         dto.setOrganisationUnitId(involvement.getOrganisationUnit().getId());
+    }
+
+    public static <R extends InvolvementDTO, T extends Involvement> R toDTO(T cast) {
+        if (cast instanceof Education) {
+            return (R) toDTO((Education) cast);
+        } else if (cast instanceof Membership) {
+            return (R) toDTO((Membership) cast);
+        } else if (cast instanceof Employment) {
+            return (R) toDTO((Employment) cast);
+        } else {
+            throw new IllegalArgumentException("Unsupported involvement type");
+        }
     }
 }

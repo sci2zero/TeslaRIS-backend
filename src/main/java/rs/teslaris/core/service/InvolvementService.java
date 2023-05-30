@@ -1,6 +1,8 @@
 package rs.teslaris.core.service;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
@@ -14,11 +16,17 @@ public interface InvolvementService {
 
     Involvement findInvolvementById(Integer involvementId);
 
+    <T extends Involvement, R> R getInvolvement(Integer involvementId, Class<T> involvementClass);
+
     Education addEducation(Integer personId, EducationDTO education);
 
     Membership addMembership(Integer personId, MembershipDTO membership);
 
     Employment addEmployment(Integer personId, EmploymentDTO employment);
+
+    void addInvolvementProofs(List<DocumentFileDTO> proofs, Integer involvementId);
+
+    void deleteProof(Integer proofId, Integer involvementId);
 
     void updateEducation(Integer involvementId, EducationDTO education);
 

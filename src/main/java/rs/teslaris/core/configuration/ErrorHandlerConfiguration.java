@@ -3,6 +3,7 @@ package rs.teslaris.core.configuration;
 import io.jsonwebtoken.MalformedJwtException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import rs.teslaris.core.exception.CantRegisterAdminException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.ResearchAreaInUseException;
+import rs.teslaris.core.exception.SelfRelationException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
@@ -47,6 +49,14 @@ public class ErrorHandlerConfiguration {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseBody
+    ErrorObject handleIllegalArgumentException(HttpServletRequest request,
+                                               IllegalArgumentException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(CantEditPersonException.class)
     @ResponseBody
     ErrorObject handleCantEditPersonException(HttpServletRequest request,
@@ -58,6 +68,14 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(NotFoundException.class)
     @ResponseBody
     ErrorObject handleNotFoundException(HttpServletRequest request, NotFoundException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(EntityNotFoundException.class)
+    @ResponseBody
+    ErrorObject handleEntityNotFoundException(HttpServletRequest request,
+                                              EntityNotFoundException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
@@ -101,11 +119,17 @@ public class ErrorHandlerConfiguration {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(SelfRelationException.class)
+    @ResponseBody
+    ErrorObject handleSelfRelationException(HttpServletRequest request, SelfRelationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(MalformedJwtException.class)
     @ResponseBody
-    ErrorObject handleMalformedJwtException(HttpServletRequest request,
-                                            MalformedJwtException ex) {
+    ErrorObject handleMalformedJwtException(HttpServletRequest request, MalformedJwtException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }

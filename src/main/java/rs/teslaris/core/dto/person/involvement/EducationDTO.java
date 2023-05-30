@@ -1,6 +1,7 @@
 package rs.teslaris.core.dto.person.involvement;
 
 import java.util.List;
+import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,9 +14,12 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @AllArgsConstructor
 public class EducationDTO extends InvolvementDTO {
 
+    @Valid
     private List<MultilingualContentDTO> thesisTitle;
 
+    @Valid
     private List<MultilingualContentDTO> title;
 
+    @Valid
     private List<MultilingualContentDTO> abbreviationTitle;
 }

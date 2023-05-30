@@ -1,11 +1,14 @@
 package rs.teslaris.core.service;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
@@ -20,9 +23,9 @@ public interface OrganisationUnitService {
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
-    Page<OrganisationUnitsRelation> getOrganisationUnitsRelations(Integer sourceId,
-                                                                  Integer targetId,
-                                                                  Pageable pageable);
+    Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(Integer sourceId,
+                                                                             Integer targetId,
+                                                                             Pageable pageable);
 
     OrganisationUnit createOrganisationalUnit(OrganisationUnitDTORequest organisationUnitDTORequest);
 
@@ -37,4 +40,10 @@ public interface OrganisationUnitService {
                                        Integer id);
 
     void deleteOrganisationUnitsRelation(Integer id);
+
+    void approveRelation(Integer relationId, Boolean approve);
+
+    void addRelationProofs(List<DocumentFileDTO> documentFiles, Integer relationId);
+
+    void deleteRelationProof(Integer relationId, Integer proofId);
 }
