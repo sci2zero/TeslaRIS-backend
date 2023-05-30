@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl;
 
+import java.util.List;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -76,5 +77,10 @@ public class ResearchAreaServiceImpl implements ResearchAreaService {
 
         var researchAreaToDelete = getReferenceToResearchAreaById(researchAreaId);
         researchAreaRepository.delete(researchAreaToDelete);
+    }
+
+    @Override
+    public List<ResearchArea> getResearchAreasByIds(List<Integer> ids) {
+        return researchAreaRepository.findAllById(ids);
     }
 }

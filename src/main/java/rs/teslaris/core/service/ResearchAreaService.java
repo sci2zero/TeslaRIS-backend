@@ -1,5 +1,6 @@
 package rs.teslaris.core.service;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,4 +20,6 @@ public interface ResearchAreaService {
     void editResearchArea(ResearchAreaDTO researchAreaDTO, Integer researchAreaId);
 
     void deleteResearchArea(Integer researchAreaId);
+
+    List<ResearchArea> getResearchAreasByIds(List<Integer> id);
 }

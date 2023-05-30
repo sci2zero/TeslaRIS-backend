@@ -1,11 +1,19 @@
 package rs.teslaris.core.dto.commontypes;
 
-import java.util.Set;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ResearchAreaDTO {
-    private Set<MultilingualContentDTO> name;
+    private List<MultilingualContentDTO> name;
 
-    private Set<MultilingualContentDTO> description;
+    private List<MultilingualContentDTO> description;
 
     private ResearchAreaDTO superResearchArea;
 }

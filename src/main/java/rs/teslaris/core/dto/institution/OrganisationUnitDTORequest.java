@@ -2,7 +2,6 @@ package rs.teslaris.core.dto.institution;
 
 
 import java.util.List;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,20 +11,19 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrganisationUnitDTO {
+public class OrganisationUnitDTORequest {
     private List<MultilingualContentDTO> name;
 
     private String nameAbbreviation;
 
     private List<MultilingualContentDTO> keyword;
 
-    private List<ResearchAreaDTO> researchAreas;
+    private List<Integer> researchAreasId;
 
     private GeoLocationDTO location;
 
