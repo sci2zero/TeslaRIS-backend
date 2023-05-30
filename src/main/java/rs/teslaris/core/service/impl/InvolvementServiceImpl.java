@@ -113,7 +113,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void addInvolvementProofs(List<DocumentFileDTO> proofs, Integer involvementId) {
         var involvement = findInvolvementById(involvementId);
         proofs.forEach(proof -> {
-            var documentFile = documentFileService.saveNewDocument(proof);
+            var documentFile = documentFileService.saveNewDocument(proof, true);
             involvement.getProofs().add(documentFile);
             involvementRepository.save(involvement);
         });
