@@ -74,13 +74,17 @@ public class DbInitializer implements ApplicationRunner {
         var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
         var approvePerson = new Privilege("APPROVE_PERSON");
         var editResearchAreas = new Privilege("EDIT_RESEARCH_AREAS");
+
+//      Organisation Units
+        var editOrganisationUnit = new Privilege("EDIT_ORGANISATION_UNITS");
+
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonalInfo, approvePerson, editResearchAreas));
+                createUserBasic, editPersonalInfo, approvePerson, editResearchAreas, editOrganisationUnit));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
             new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
-                createUserBasic, approvePerson, editResearchAreas})));
+                createUserBasic, approvePerson, editResearchAreas, editOrganisationUnit})));
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic})));
