@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import javax.transaction.Transactional;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.OrganisationUnitService;
 
 @RestController
@@ -29,8 +32,7 @@ public class InstitutionController {
 
     @GetMapping("/organisation-units")
     public Page<OrganisationUnitDTO> getAllOrganisationUnits(Pageable pageable) {
-        return organisationUnitService.findOrganisationUnits(pageable)
-            .map(OrganisationUnitConverter::toDTO);
+        return organisationUnitService.findOrganisationUnits(pageable);
     }
 
     @GetMapping("/organisation-units/{organisationUnitId}")
@@ -63,6 +65,17 @@ public class InstitutionController {
         return OrganisationUnitConverter.toDTO(organisationUnit);
     }
 
+    @PatchMapping("/organisation-units/{organisationUnitId}/approve-status")
+    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @ResponseStatus(HttpStatus.OK)
+    public OrganisationUnitDTO updateOrganisationUnit(
+        @RequestBody @Valid ApproveStatus approveStatus,
+        @PathVariable Integer organisationUnitId) {
+        var organisationUnit =
+            organisationUnitService.editOrganisationalUnitApproveStatus(approveStatus,
+                organisationUnitId);
+        return OrganisationUnitConverter.toDTO(organisationUnit);
+    }
 
     @DeleteMapping("/organisation-units/{organisationUnitId}")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")

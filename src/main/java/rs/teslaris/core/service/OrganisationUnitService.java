@@ -9,6 +9,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
@@ -19,7 +20,7 @@ public interface OrganisationUnitService {
 
     OrganisationUnit getReferenceToOrganisationUnitById(Integer id);
 
-    Page<OrganisationUnit> findOrganisationUnits(Pageable pageable);
+    Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable);
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
@@ -30,6 +31,8 @@ public interface OrganisationUnitService {
     OrganisationUnit createOrganisationalUnit(OrganisationUnitDTORequest organisationUnitDTORequest);
 
     OrganisationUnit editOrganisationalUnit(OrganisationUnitDTORequest organisationUnitDTORequest, Integer organisationUnitId);
+
+    OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus, Integer organisationUnitId);
 
     void deleteOrganisationalUnit(Integer organisationUnitId);
 

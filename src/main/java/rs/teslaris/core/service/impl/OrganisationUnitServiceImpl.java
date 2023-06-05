@@ -10,9 +10,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.GeoLocationDTOToGeoLocation;
+import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationToRelationDTO;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
@@ -44,18 +46,21 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     private final DocumentFileService documentFileService;
 
     @Value("${relation.approved_by_default}")
-    private Boolean approvedByDefault;
+    private Boolean relationApprovedByDefault;
 
+    @Value("${organisation_unit.approved_by_default}")
+    private Boolean organisationUnitApprovedByDefault;
 
     @Override
     public OrganisationUnit findOrganisationUnitById(Integer id) {
-        return organisationUnitRepository.findById(id).orElseThrow(
+        return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id).orElseThrow(
             () -> new NotFoundException("Organisation unit with given ID does not exist."));
     }
 
     @Override
-    public Page<OrganisationUnit> findOrganisationUnits(Pageable pageable) {
-        return organisationUnitRepository.findAll(pageable);
+    @Transactional
+    public Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable) {
+        return organisationUnitRepository.findAllWithLangData(pageable).map(OrganisationUnitConverter::toDTO);
     }
 
     @Override
@@ -97,7 +102,12 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         organisationUnit.setLocation(
             GeoLocationDTOToGeoLocation.fromDTO(organisationUnitDTORequest.getLocation()));
 
-        organisationUnit.setApproveStatus(organisationUnitDTORequest.getApproveStatus());
+        if (organisationUnitApprovedByDefault) {
+            organisationUnit.setApproveStatus(ApproveStatus.APPROVED);
+        } else {
+            organisationUnit.setApproveStatus(ApproveStatus.REQUESTED);
+        }
+
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
 
@@ -134,12 +144,25 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         organisationUnit.setLocation(
             GeoLocationDTOToGeoLocation.fromDTO(organisationUnitDTORequest.getLocation()));
 
-        organisationUnit.setApproveStatus(organisationUnitDTORequest.getApproveStatus());
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
 
         organisationUnit = organisationUnitRepository.save(organisationUnit);
 
+        return organisationUnit;
+    }
+
+    @Override
+    @Transactional
+    public OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
+                                                                Integer organisationUnitId) {
+        OrganisationUnit organisationUnit = organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId).orElseThrow(
+            () -> new NotFoundException(
+                "Organisation units relation with given ID does not exist."));
+
+        organisationUnit.setApproveStatus(approveStatus);
+
+        organisationUnitRepository.save(organisationUnit);
         return organisationUnit;
     }
 
@@ -160,7 +183,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         var newRelation = new OrganisationUnitsRelation();
         setCommonFields(newRelation, relationDTO);
 
-        if (approvedByDefault) {
+        if (relationApprovedByDefault) {
             newRelation.setApproveStatus(ApproveStatus.APPROVED);
         } else {
             newRelation.setApproveStatus(ApproveStatus.REQUESTED);
