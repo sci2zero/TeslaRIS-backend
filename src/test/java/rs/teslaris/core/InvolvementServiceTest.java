@@ -268,6 +268,7 @@ public class InvolvementServiceTest {
     public void shouldDeleteInvolvementWhenInvolvementExists() {
         // given
         var involvement = new Involvement();
+        involvement.setProofs(new HashSet<>());
         var person = new Person();
         person.addInvolvement(involvement);
 

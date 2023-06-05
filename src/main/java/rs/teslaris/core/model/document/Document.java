@@ -36,7 +36,7 @@ public abstract class Document extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description;
 
-    @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "document", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<PersonDocumentContribution> contributors;
 
     @ElementCollection
@@ -49,7 +49,7 @@ public abstract class Document extends BaseEntity {
     private Set<DocumentFile> fileItems;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<DocumentFile> proof;
+    private Set<DocumentFile> proofs;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> keywords;
@@ -57,12 +57,19 @@ public abstract class Document extends BaseEntity {
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
 
-    @Column(name = "doi", unique = true)
+    @Column(name = "doi")
     private String doi;
 
-    @Column(name = "scopus_id", unique = true)
+    @Column(name = "scopus_id")
     private String scopusId;
 
-//    @OneToMany(fetch = FetchType.LAZY)
-//    Set<PersonDocumentContribution> personDocumentContributions;
+    public void addDocumentContribution(PersonDocumentContribution contribution) {
+        contribution.setDocument(this);
+        contributors.add(contribution);
+    }
+
+    public void removeDocumentContribution(PersonDocumentContribution contribution) {
+        contribution.setDocument(null);
+        contributors.remove(contribution);
+    }
 }

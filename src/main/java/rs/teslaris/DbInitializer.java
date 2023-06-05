@@ -17,6 +17,7 @@ import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
@@ -30,6 +31,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
+import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.person.OrganisationalUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
@@ -57,6 +59,8 @@ public class DbInitializer implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
 
     private final CountryRepository countryRepository;
+
+    private final JournalRepository journalRepository;
 
     @Override
     @Transactional
@@ -128,5 +132,8 @@ public class DbInitializer implements ApplicationRunner {
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationalUnitRepository.save(dummyOU);
+
+        var dummyJournal = new Journal();
+        journalRepository.save(dummyJournal);
     }
 }

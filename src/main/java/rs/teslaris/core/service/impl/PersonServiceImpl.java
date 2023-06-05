@@ -51,7 +51,7 @@ public class PersonServiceImpl implements PersonService {
 
     private final PersonNameService personNameService;
 
-    @Value("${approval.approved_by_default}")
+    @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
 
 
@@ -120,7 +120,9 @@ public class PersonServiceImpl implements PersonService {
         var savedPerson = personRepository.save(newPerson);
         newPerson.setId(savedPerson.getId());
 
-        indexPerson(savedPerson, 0);
+        if (savedPerson.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(savedPerson, 0);
+        }
 
         return newPerson;
     }
@@ -166,7 +168,10 @@ public class PersonServiceImpl implements PersonService {
         personToUpdate.getOtherNames().remove(chosenName);
 
         personRepository.save(personToUpdate);
-        indexPerson(personToUpdate, personToUpdate.getId());
+
+        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(personToUpdate, personToUpdate.getId());
+        }
     }
 
     @Override
@@ -221,7 +226,10 @@ public class PersonServiceImpl implements PersonService {
             .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
 
         personRepository.save(personToUpdate);
-        indexPerson(personToUpdate, personToUpdate.getId());
+
+        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(personToUpdate, personToUpdate.getId());
+        }
     }
 
     @Override
@@ -233,7 +241,11 @@ public class PersonServiceImpl implements PersonService {
             personToBeApproved.setApproveStatus(approveStatus);
         }
 
-        personRepository.save(personToBeApproved);
+        var approvedPerson = personRepository.save(personToBeApproved);
+
+        if (approve) {
+            indexPerson(approvedPerson, 0);
+        }
     }
 
     @Transactional

@@ -78,9 +78,8 @@ public class InvolvementServiceImpl implements InvolvementService {
     public Membership addMembership(Integer personId, MembershipDTO membership) {
         var personInvolved = personService.findPersonById(personId);
 
-        var contributorDescription =
-            multilingualContentService.getMultilingualContent(
-                membership.getContributionDescription());
+        var contributorDescription = multilingualContentService.getMultilingualContent(
+            membership.getContributionDescription());
         var role = multilingualContentService.getMultilingualContent(membership.getRole());
 
         var newMembership = new Membership();
@@ -157,9 +156,8 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void updateMembership(Integer involvementId, MembershipDTO membership) {
         var membershipToUpdate = (Membership) findInvolvementById(involvementId);
 
-        var contributorDescription =
-            multilingualContentService.getMultilingualContent(
-                membership.getContributionDescription());
+        var contributorDescription = multilingualContentService.getMultilingualContent(
+            membership.getContributionDescription());
         var role = multilingualContentService.getMultilingualContent(membership.getRole());
 
         clearCommonCollections(membershipToUpdate);
@@ -193,14 +191,17 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findInvolvementById(involvementId);
         involvementToDelete.getPersonInvolved().removeInvolvement(involvementToDelete);
+
+        involvementToDelete.getProofs()
+            .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
+
         involvementRepository.delete(involvementToDelete);
     }
 
 
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
-        var organisationUnit =
-            organisationUnitService.findOrganisationalUnitById(
-                commonFields.getOrganisationUnitId());
+        var organisationUnit = organisationUnitService.findOrganisationalUnitById(
+            commonFields.getOrganisationUnitId());
 
         var affiliationStatements = multilingualContentService.getMultilingualContent(
             commonFields.getAffiliationStatement());
