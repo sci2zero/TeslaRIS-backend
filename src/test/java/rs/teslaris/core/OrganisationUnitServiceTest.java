@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -241,7 +242,7 @@ public class OrganisationUnitServiceTest {
         relation.setProofs(new HashSet<>());
 
         when(organisationUnitsRelationRepository.findById(1)).thenReturn(Optional.of(relation));
-        when(documentFileService.saveNewDocument(any())).thenReturn(new DocumentFile());
+        when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
 
         // when
         organisationUnitService.addRelationProofs(

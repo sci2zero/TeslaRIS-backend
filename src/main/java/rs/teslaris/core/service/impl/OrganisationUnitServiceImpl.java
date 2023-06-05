@@ -240,7 +240,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     public void addRelationProofs(List<DocumentFileDTO> proofs, Integer relationId) {
         var relation = findOrganisationUnitsRelationById(relationId);
         proofs.forEach(proof -> {
-            var documentFile = documentFileService.saveNewDocument(proof);
+            var documentFile = documentFileService.saveNewDocument(proof, true);
             relation.getProofs().add(documentFile);
             organisationUnitsRelationRepository.save(relation);
         });
