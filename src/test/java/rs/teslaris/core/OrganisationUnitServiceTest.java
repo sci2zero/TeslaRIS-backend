@@ -20,21 +20,34 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
+import rs.teslaris.core.dto.institution.ResearchAreaDTO;
+import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.SelfRelationException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.GeoLocation;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.MultilingualContentService;
+import rs.teslaris.core.service.ResearchAreaService;
 import rs.teslaris.core.service.impl.OrganisationUnitServiceImpl;
 
 @SpringBootTest
@@ -52,40 +65,75 @@ public class OrganisationUnitServiceTest {
     @Mock
     private DocumentFileService documentFileService;
 
+    @Mock
+    private ResearchAreaService researchAreaService;
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
 
 
     @BeforeEach
     public void setUp() {
-        ReflectionTestUtils.setField(organisationUnitService, "approvedByDefault", true);
+        ReflectionTestUtils.setField(organisationUnitService, "relationApprovedByDefault", true);
+        ReflectionTestUtils.setField(organisationUnitService, "organisationUnitApprovedByDefault", true);
     }
 
     @Test
     public void shouldReturnOrganisationUnitWhenItExists() {
         // given
-        var expected = new OrganisationUnit();
-        when(organisationUnitRepository.findById(1)).thenReturn(Optional.of(expected));
+        Integer id = 21;
+        OrganisationUnit organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(id);
+
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(id))
+            .thenReturn(Optional.of(organisationUnit));
 
         // when
-        var result = organisationUnitService.findOrganisationUnitById(1);
+        OrganisationUnit result = organisationUnitService.findOrganisationUnitById(id);
 
         // then
-        assertEquals(expected, result);
+        assertEquals(organisationUnit, result);
+        verify(organisationUnitRepository, times(1)).findByIdWithLangDataAndResearchArea(id);
+
     }
 
     @Test
     public void shouldThrowNotFoundExceptionWhenOrganisationUnitDoesNotExist() {
         // given
-        when(organisationUnitRepository.findById(1)).thenReturn(Optional.empty());
+        Integer id = 1;
 
         // when
-        assertThrows(NotFoundException.class,
-            () -> organisationUnitService.findOrganisationUnitById(1));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(id))
+            .thenReturn(Optional.empty());
 
         // then (NotFoundException should be thrown)
+        assertThrows(NotFoundException.class, () -> organisationUnitService.findOrganisationUnitById(id));
+        verify(organisationUnitRepository, times(1)).findByIdWithLangDataAndResearchArea(id);
+
     }
 
+    @Test
+    void shouldReturnOrganisationUnitPage() {
+        // given
+        Pageable pageable = PageRequest.of(0, 10);
+        OrganisationUnit organisationUnit = new OrganisationUnit();
+        organisationUnit.setNameAbbreviation("ID1");
+        organisationUnit.setResearchAreas(new HashSet<>());
+        organisationUnit.setKeyword(new HashSet<>());
+        organisationUnit.setName(new HashSet<>());
+        organisationUnit.setLocation(new GeoLocation());
+        organisationUnit.setContact(new Contact());
+        Page<OrganisationUnit>
+            organisationUnitPage = new PageImpl<>(List.of(organisationUnit), pageable, 1);
+
+        // when
+        when(organisationUnitRepository.findAllWithLangData(pageable)).thenReturn(organisationUnitPage);
+
+        Page<OrganisationUnitDTO> result = organisationUnitService.findOrganisationUnits(pageable);
+
+        assertEquals(1, result.getContent().size());
+        assertEquals(organisationUnit.getNameAbbreviation(), result.getContent().get(0).getNameAbbreviation());
+        verify(organisationUnitRepository, times(1)).findAllWithLangData(pageable);
+    }
 
     @Test
     public void shouldReturnOrganisationUnitsRelationWhenItExists() {
@@ -269,5 +317,68 @@ public class OrganisationUnitServiceTest {
         //then
         verify(organisationUnitsRelationRepository, times(1)).save(relation);
         verify(documentFileService, times(1)).deleteDocumentFile(df.getServerFilename());
+    }
+
+    @Test
+    void testCreateOrganisationalUnit() {
+        OrganisationUnitDTORequest organisationUnitDTORequest = new OrganisationUnitDTORequest();
+        // Set properties for organisationUnitDTORequest
+
+        MultiLingualContent name = new MultiLingualContent();
+        name.setContent("A1");
+
+        MultiLingualContent keyword = new MultiLingualContent();
+        keyword.setContent("B1");
+
+        ResearchArea researchArea = new ResearchArea();
+        researchArea.setId(1);
+        List<ResearchArea> researchAreas = List.of(new ResearchArea());
+
+
+        GeoLocation location = new GeoLocation(1.0,2.0,3);
+        Contact contact = new Contact("a", "b");
+
+        organisationUnitDTORequest.setName(List.of(new MultilingualContentDTO()));
+        organisationUnitDTORequest.setKeyword(List.of(new MultilingualContentDTO()));
+        organisationUnitDTORequest.setResearchAreasId(List.of(1));
+        organisationUnitDTORequest.setLocation(new GeoLocationDTO(1.0,2.0,3));
+        organisationUnitDTORequest.setContact(new ContactDTO("a", "b"));
+
+        when(
+            multilingualContentService.getMultilingualContent(organisationUnitDTORequest.getName()))
+            .thenReturn(Set.of(name));
+        when(multilingualContentService.getMultilingualContent(
+            organisationUnitDTORequest.getKeyword()))
+            .thenReturn(Set.of(keyword));
+        when(researchAreaService.getResearchAreasByIds(
+            organisationUnitDTORequest.getResearchAreasId()))
+            .thenReturn(researchAreas);
+        when(organisationUnitRepository.save(any(OrganisationUnit.class))).thenAnswer(
+            invocation -> {
+                OrganisationUnit organisationUnit = invocation.getArgument(0);
+                organisationUnit.setId(1);
+                return organisationUnit;
+            });
+
+        OrganisationUnit result =
+            organisationUnitService.createOrganisationalUnit(organisationUnitDTORequest);
+
+        assertEquals(Set.of(name), result.getName());
+        assertEquals(organisationUnitDTORequest.getNameAbbreviation(),
+            result.getNameAbbreviation());
+        assertEquals(Set.of(keyword), result.getKeyword());
+        assertEquals(new HashSet<>(researchAreas), result.getResearchAreas());
+        assertEquals(location.getLatitude(), result.getLocation().getLatitude());
+        assertEquals(ApproveStatus.APPROVED, result.getApproveStatus());
+        assertEquals(contact, result.getContact());
+        assertEquals(1, result.getId());
+
+        verify(multilingualContentService, times(1)).getMultilingualContent(
+            organisationUnitDTORequest.getName());
+        verify(multilingualContentService, times(1)).getMultilingualContent(
+            organisationUnitDTORequest.getKeyword());
+        verify(researchAreaService, times(1)).getResearchAreasByIds(
+            organisationUnitDTORequest.getResearchAreasId());
+        verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));
     }
 }
