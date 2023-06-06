@@ -13,13 +13,12 @@ import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublication;
-import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.DocumentPublicationService;
 import rs.teslaris.core.service.JournalService;
 import rs.teslaris.core.service.MultilingualContentService;
-import rs.teslaris.core.service.PersonService;
+import rs.teslaris.core.service.PersonContributionService;
 
 @Service
 @RequiredArgsConstructor
@@ -34,13 +33,11 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
     private final JournalService journalService;
 
-    private final PersonService personService;
+    private final PersonContributionService personContributionService;
 
     @Value("${document.approved_by_default}")
     private Boolean documentApprovedByDefault;
 
-    @Value("${contribution.approved_by_default}")
-    private Boolean contributionApprovedByDefault;
 
     @Override
     public Document findDocumentById(Integer documentId) {
@@ -136,7 +133,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         document.setKeywords(
             multilingualContentService.getMultilingualContent(documentDTO.getKeywords()));
 
-        setPersonContributions(document, documentDTO);
+        personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
         document.setUris(documentDTO.getUris());
         document.setDocumentDate(documentDTO.getDocumentDate());
@@ -145,30 +142,6 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
         document.setProofs(new HashSet<>());
         document.setFileItems(new HashSet<>());
-    }
-
-    private void setPersonContributions(Document document, DocumentDTO documentDTO) {
-        document.setContributors(new HashSet<>());
-        documentDTO.getContributions().forEach(contributionDTO -> {
-            var contribution = new PersonDocumentContribution();
-            contribution.setContributionType(contributionDTO.getContributionType());
-            contribution.setMainContributor(contributionDTO.getIsMainContributor());
-            contribution.setCorrespondingContributor(
-                contributionDTO.getIsCorrespondingContributor());
-
-            // TODO: SET AFFILIATION STATEMENT AND INSTITUTIONS
-            contribution.setContributionDescription(
-                multilingualContentService.getMultilingualContent(
-                    contributionDTO.getContributionDescription()));
-            contribution.setOrderNumber(contributionDTO.getOrderNumber());
-
-            contribution.setPerson(personService.findPersonById(contributionDTO.getPersonId()));
-
-            contribution.setApproveStatus(
-                contributionApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
-            document.addDocumentContribution(contribution);
-        });
     }
 
     private void clearCommonFields(Document publication) {

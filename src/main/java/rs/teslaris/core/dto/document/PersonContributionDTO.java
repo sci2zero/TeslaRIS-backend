@@ -9,6 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PostalAddressDTO;
 
 @Getter
 @Setter
@@ -16,17 +19,29 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @AllArgsConstructor
 public class PersonContributionDTO {
 
-    @NotNull(message = "You have to provide a person ID.")
-    @Positive(message = "Person ID must be a positive number.")
-    Integer personId;
+    private Integer personId;
 
     @Valid
-    List<MultilingualContentDTO> contributionDescription;
+    private List<MultilingualContentDTO> contributionDescription;
 
     @NotNull(message = "You have to specify an order number.")
     @Positive(message = "Order number must be a positive number.")
-    Integer orderNumber;
+    private Integer orderNumber;
 
     @NotNull(message = "You have to provide a list of institution Ids.")
-    List<Integer> institutionIds;
+    private List<Integer> institutionIds;
+
+    @Valid
+    @NotNull(message = "You have to provide a display affiliation statement.")
+    private List<MultilingualContentDTO> displayAffiliationStatement;
+
+    @NotNull(message = "You have to provide a person name.")
+    private PersonNameDTO personName;
+
+    @Valid
+    @NotNull(message = "You have to provide a person postal address.")
+    private PostalAddressDTO postalAddress;
+
+    @NotNull(message = "You have to provide a person contact info.")
+    private ContactDTO contact;
 }

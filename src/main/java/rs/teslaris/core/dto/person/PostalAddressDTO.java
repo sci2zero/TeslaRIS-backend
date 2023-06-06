@@ -21,8 +21,10 @@ public class PostalAddressDTO {
     private Integer countryId;
 
     @Valid
+    @NotNull(message = "You have to provide street and number")
     private List<MultilingualContentDTO> streetAndNumber;
 
     @Valid
+    @NotNull(message = "You have to provide a city.")
     private List<MultilingualContentDTO> city;
 }

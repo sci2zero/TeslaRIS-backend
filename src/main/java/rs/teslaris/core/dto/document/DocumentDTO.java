@@ -20,18 +20,23 @@ public class DocumentDTO {
     private Integer id;
 
     @Valid
+    @NotNull(message = "You have to provide a title.")
     private List<MultilingualContentDTO> title;
 
     @Valid
+    @NotNull(message = "You have to provide a subtitle.")
     private List<MultilingualContentDTO> subTitle;
 
     @Valid
+    @NotNull(message = "You have to provide a description.")
     private List<MultilingualContentDTO> description;
 
     @Valid
+    @NotNull(message = "You have to provide keywords.")
     private List<MultilingualContentDTO> keywords;
 
     @Valid
+    @NotNull(message = "You have to provide contributions.")
     private List<PersonDocumentContributionDTO> contributions;
 
     @NotNull(message = "You have to provide a list of URIs.")
