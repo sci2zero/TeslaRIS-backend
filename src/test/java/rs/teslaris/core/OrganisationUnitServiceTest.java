@@ -10,10 +10,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import javax.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -31,7 +34,6 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
-import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.SelfRelationException;
@@ -74,7 +76,8 @@ public class OrganisationUnitServiceTest {
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(organisationUnitService, "relationApprovedByDefault", true);
-        ReflectionTestUtils.setField(organisationUnitService, "organisationUnitApprovedByDefault", true);
+        ReflectionTestUtils.setField(organisationUnitService, "organisationUnitApprovedByDefault",
+            true);
     }
 
     @Test
@@ -106,7 +109,8 @@ public class OrganisationUnitServiceTest {
             .thenReturn(Optional.empty());
 
         // then (NotFoundException should be thrown)
-        assertThrows(NotFoundException.class, () -> organisationUnitService.findOrganisationUnitById(id));
+        assertThrows(NotFoundException.class,
+            () -> organisationUnitService.findOrganisationUnitById(id));
         verify(organisationUnitRepository, times(1)).findByIdWithLangDataAndResearchArea(id);
 
     }
@@ -126,12 +130,14 @@ public class OrganisationUnitServiceTest {
             organisationUnitPage = new PageImpl<>(List.of(organisationUnit), pageable, 1);
 
         // when
-        when(organisationUnitRepository.findAllWithLangData(pageable)).thenReturn(organisationUnitPage);
+        when(organisationUnitRepository.findAllWithLangData(pageable)).thenReturn(
+            organisationUnitPage);
 
         Page<OrganisationUnitDTO> result = organisationUnitService.findOrganisationUnits(pageable);
 
         assertEquals(1, result.getContent().size());
-        assertEquals(organisationUnit.getNameAbbreviation(), result.getContent().get(0).getNameAbbreviation());
+        assertEquals(organisationUnit.getNameAbbreviation(),
+            result.getContent().get(0).getNameAbbreviation());
         verify(organisationUnitRepository, times(1)).findAllWithLangData(pageable);
     }
 
@@ -320,7 +326,7 @@ public class OrganisationUnitServiceTest {
     }
 
     @Test
-    void testCreateOrganisationalUnit() {
+    void shouldCreateOrganisationUnits() {
         OrganisationUnitDTORequest organisationUnitDTORequest = new OrganisationUnitDTORequest();
         // Set properties for organisationUnitDTORequest
 
@@ -335,13 +341,13 @@ public class OrganisationUnitServiceTest {
         List<ResearchArea> researchAreas = List.of(new ResearchArea());
 
 
-        GeoLocation location = new GeoLocation(1.0,2.0,3);
+        GeoLocation location = new GeoLocation(1.0, 2.0, 3);
         Contact contact = new Contact("a", "b");
 
         organisationUnitDTORequest.setName(List.of(new MultilingualContentDTO()));
         organisationUnitDTORequest.setKeyword(List.of(new MultilingualContentDTO()));
         organisationUnitDTORequest.setResearchAreasId(List.of(1));
-        organisationUnitDTORequest.setLocation(new GeoLocationDTO(1.0,2.0,3));
+        organisationUnitDTORequest.setLocation(new GeoLocationDTO(1.0, 2.0, 3));
         organisationUnitDTORequest.setContact(new ContactDTO("a", "b"));
 
         when(
@@ -380,5 +386,100 @@ public class OrganisationUnitServiceTest {
         verify(researchAreaService, times(1)).getResearchAreasByIds(
             organisationUnitDTORequest.getResearchAreasId());
         verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));
+    }
+
+
+    @Test
+    void shouldEditOrganisationUnits() {
+        OrganisationUnitDTORequest organisationUnitDTORequest = new OrganisationUnitDTORequest();
+        organisationUnitDTORequest.setName(List.of(new MultilingualContentDTO()));
+        organisationUnitDTORequest.setKeyword(List.of(new MultilingualContentDTO()));
+        organisationUnitDTORequest.setResearchAreasId(List.of(1));
+        organisationUnitDTORequest.setLocation(new GeoLocationDTO(10.0, 20.0, 30));
+        organisationUnitDTORequest.setContact(new ContactDTO("b", "b"));
+
+        OrganisationUnit organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent()).stream().collect(Collectors.toSet()));
+        organisationUnit.setKeyword(
+            Set.of(new MultiLingualContent()).stream().collect(Collectors.toSet()));
+        organisationUnit.setResearchAreas(
+            Set.of(new ResearchArea()).stream().collect(Collectors.toSet()));
+        organisationUnit.setLocation(new GeoLocation(1.0, 2.0, 3));
+        organisationUnit.setContact(new Contact("a", "a"));
+
+        organisationUnit.getName().clear();
+        Integer organisationUnitId = 1;
+
+//        OrganisationUnit organisationUnit = new OrganisationUnit();
+
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(
+            Set.of(new MultiLingualContent()));
+        when(organisationUnitRepository.getReferenceById(any())).thenReturn(organisationUnit);
+        when(researchAreaService.getResearchAreasByIds(any())).thenReturn(Collections.emptyList());
+        when(organisationUnitRepository.save(any(OrganisationUnit.class))).thenReturn(
+            organisationUnit);
+
+        // Act
+        OrganisationUnit editedOrganisationUnit =
+            organisationUnitService.editOrganisationalUnit(organisationUnitDTORequest,
+                organisationUnitId);
+
+        // Assert
+        assertNotNull(editedOrganisationUnit);
+        assertEquals(organisationUnit, editedOrganisationUnit);
+        assertEquals(organisationUnitDTORequest.getName().stream().findFirst().get().getContent(), editedOrganisationUnit.getName().stream().findFirst().get().getContent());
+        assertEquals(organisationUnitDTORequest.getKeyword().stream().findFirst().get().getContent(), editedOrganisationUnit.getKeyword().stream().findFirst().get().getContent());
+        verify(multilingualContentService, times(2)).getMultilingualContent(any());
+        verify(researchAreaService, times(1)).getResearchAreasByIds(any());
+        verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));
+    }
+
+    @Test
+    public void shouldDeleteOrganisationalUnit() {
+        Integer organisationUnitId = 1;
+        OrganisationUnit organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(organisationUnitId);
+        when(organisationUnitRepository.getReferenceById(organisationUnitId)).thenReturn(organisationUnit);
+
+        organisationUnitService.deleteOrganisationalUnit(organisationUnitId);
+
+        verify(organisationUnitRepository, times(1)).delete(organisationUnit);
+    }
+
+    @Test
+    public void shouldIgnoreNullOrganisationalUnit() {
+        Integer organisationUnitId = 1;
+        when(organisationUnitRepository.getReferenceById(organisationUnitId)).thenReturn(null);
+
+        organisationUnitService.deleteOrganisationalUnit(organisationUnitId);
+
+        verify(organisationUnitRepository, times(1)).delete(null);
+
+    }
+
+    @Test
+    public void shouldEditOrganisationalUnitApproveStatus() {
+        Integer organisationUnitId = 1;
+        ApproveStatus approveStatus = ApproveStatus.APPROVED;
+        OrganisationUnit organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(organisationUnitId);
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)).thenReturn(Optional.of(organisationUnit));
+
+        OrganisationUnit result = organisationUnitService.editOrganisationalUnitApproveStatus(approveStatus, organisationUnitId);
+
+        verify(organisationUnitRepository, times(1)).save(organisationUnit);
+        assertEquals(approveStatus, result.getApproveStatus());
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenOrganisationalUnitNotFound() {
+        Integer organisationUnitId = 1;
+        ApproveStatus approveStatus = ApproveStatus.APPROVED;
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> {
+            organisationUnitService.editOrganisationalUnitApproveStatus(approveStatus, organisationUnitId);
+        });
     }
 }
