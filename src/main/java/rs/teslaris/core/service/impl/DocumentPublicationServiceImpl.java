@@ -87,8 +87,10 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     public void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved) {
         var documentToUpdate = findDocumentById(documentId);
 
-        documentToUpdate.setApproveStatus(
-            isApproved ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
+        if (documentToUpdate.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
+            documentToUpdate.setApproveStatus(
+                isApproved ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
+        }
 
         documentRepository.save(documentToUpdate);
     }
