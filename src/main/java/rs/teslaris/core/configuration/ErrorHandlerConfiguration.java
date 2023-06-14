@@ -16,6 +16,7 @@ import rs.teslaris.core.exception.CantEditPersonException;
 import rs.teslaris.core.exception.CantRegisterAdminException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.exception.StorageException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
@@ -36,6 +37,13 @@ public class ErrorHandlerConfiguration {
             .forEach(e -> errors.put(e.getObjectName(), e.getDefaultMessage()));
 
         return new ErrorObject(request, ex.getLocalizedMessage(), HttpStatus.BAD_REQUEST, errors);
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(StorageException.class)
+    @ResponseBody
+    ErrorObject handleStorageException(HttpServletRequest request, StorageException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

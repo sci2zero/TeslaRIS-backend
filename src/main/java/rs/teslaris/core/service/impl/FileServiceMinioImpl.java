@@ -12,6 +12,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.StorageException;
 import rs.teslaris.core.service.FileService;
 
@@ -53,7 +54,6 @@ public class FileServiceMinioImpl implements FileService {
                 .object(serverFilename)
                 .build();
             minioClient.removeObject(args);
-            System.out.println("AAAAAAAAAAAAAAAAAAAAAA");
         } catch (Exception e) {
             throw new StorageException("Error while deleting " + serverFilename + " from Minio.");
         }
@@ -68,7 +68,7 @@ public class FileServiceMinioImpl implements FileService {
                 .build();
             return new InputStreamResource(minioClient.getObject(args));
         } catch (Exception e) {
-            throw new StorageException("Error while fetching " + serverFilename + " from Minio.");
+            throw new NotFoundException("Document " + serverFilename + " does not exist.");
         }
     }
 }
