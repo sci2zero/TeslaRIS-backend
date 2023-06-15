@@ -7,7 +7,6 @@ import io.minio.RemoveObjectArgs;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import rs.teslaris.core.service.FileService;
 
 @Service
 @RequiredArgsConstructor
-@Profile("MINIOStorage")
 public class FileServiceMinioImpl implements FileService {
 
     private final MinioClient minioClient;
@@ -28,6 +26,10 @@ public class FileServiceMinioImpl implements FileService {
 
     @Override
     public String store(MultipartFile file, String serverFilename) {
+        if (file.isEmpty()) {
+            throw new StorageException("Failed to store empty file.");
+        }
+
         var originalFilenameTokens =
             Objects.requireNonNull(file.getOriginalFilename()).split("\\.");
         var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
