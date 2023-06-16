@@ -38,6 +38,12 @@ public class PersonController {
 
     private final PersonIndexService personIndexService;
 
+    
+    @GetMapping
+    public Page<PersonIndex> findAll(Pageable pageable) {
+        return personIndexService.findAll(pageable);
+    }
+
     @GetMapping("/{personId}")
     public PersonResponseDto readPersonWithBasicInfo(@PathVariable Integer personId) {
         return personService.readPersonWithBasicInfo(personId);

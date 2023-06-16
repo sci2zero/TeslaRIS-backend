@@ -23,6 +23,12 @@ public class PersonIndexServiceImpl implements PersonIndexService {
 
     private final PersonIndexRepository personIndexRepository;
 
+
+    @Override
+    public Page<PersonIndex> findAll(Pageable pageable) {
+        return personIndexRepository.findAll(pageable);
+    }
+
     @Override
     public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable) {
         var query = buildNameAndEmploymentQuery(tokens);

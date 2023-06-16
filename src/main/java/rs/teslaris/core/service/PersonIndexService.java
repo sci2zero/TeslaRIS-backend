@@ -9,6 +9,8 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 @Service
 public interface PersonIndexService {
 
+    Page<PersonIndex> findAll(Pageable pageable);
+
     Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable);
 
     Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
