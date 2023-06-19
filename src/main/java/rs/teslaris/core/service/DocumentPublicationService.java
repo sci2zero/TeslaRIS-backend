@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublication;
 
@@ -11,6 +12,8 @@ import rs.teslaris.core.model.document.JournalPublication;
 public interface DocumentPublicationService {
 
     Document findDocumentById(Integer documentId);
+
+    JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId);
 
     JournalPublication createJournalPublication(JournalPublicationDTO journalPublicationDTO);
 

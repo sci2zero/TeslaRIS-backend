@@ -4,6 +4,7 @@ import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.service.DocumentPublicationService;
 
 @RestController
@@ -20,6 +22,12 @@ import rs.teslaris.core.service.DocumentPublicationService;
 public class JournalPublicationController {
 
     private final DocumentPublicationService documentPublicationService;
+
+    @GetMapping("/{publicationId}")
+    public JournalPublicationResponseDTO readJournalPublication(
+        @PathVariable Integer publicationId) {
+        return documentPublicationService.readJournalPublicationById(publicationId);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

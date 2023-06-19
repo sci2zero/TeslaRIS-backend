@@ -39,7 +39,7 @@ public abstract class Document extends BaseEntity {
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<PersonDocumentContribution> contributors;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> uris;
 
     @Column(name = "document_date")

@@ -6,9 +6,11 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Document;
@@ -43,6 +45,12 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     public Document findDocumentById(Integer documentId) {
         return documentRepository.findById(documentId)
             .orElseThrow(() -> new NotFoundException("Document with given id does not exist."));
+    }
+
+    @Override
+    public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
+        var publication = (JournalPublication) findDocumentById(publicationId);
+        return JournalPublicationConverter.toDTO(publication);
     }
 
     @Override
