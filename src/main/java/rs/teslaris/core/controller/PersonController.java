@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -60,6 +61,7 @@ public class PersonController {
 
     @PostMapping("/basic")
     @PreAuthorize("hasAuthority('REGISTER_PERSON')")
+    @Idempotent
     public BasicPersonDTO createPersonWithBasicInfo(@RequestBody @Valid BasicPersonDTO person) {
         var createdPerson = personService.createPersonWithBasicInfo(person);
         person.setId(createdPerson.getId());
