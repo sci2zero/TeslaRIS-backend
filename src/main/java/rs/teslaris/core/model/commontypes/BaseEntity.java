@@ -51,6 +51,11 @@ public abstract class BaseEntity {
     @LastModifiedBy
     private String updatedBy;
 
-    @Column(name = "admin_note", nullable = true)
+    @Column(name = "admin_note")
     private String adminNote;
+
+
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    private Boolean deleted;
+
 }
