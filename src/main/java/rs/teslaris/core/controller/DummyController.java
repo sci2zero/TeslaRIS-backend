@@ -61,6 +61,13 @@ public class DummyController {
         return languageService.findAll();
     }
 
+    //    TEMP MAPPING
+    //    TODO: REMOVE
+    @GetMapping("/allPage")
+    public Page<Language> getAllPage(Pageable pageable) {
+        return languageService.findAll(pageable);
+    }
+
     @PostMapping
     public DummyIndex testIndex() throws IOException {
         var indexingUnit = new DummyIndex();
