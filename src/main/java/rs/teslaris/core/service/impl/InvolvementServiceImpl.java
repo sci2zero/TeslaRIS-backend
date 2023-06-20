@@ -5,7 +5,7 @@ import java.util.List;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.person.InvolvementToInvolvementDTO;
+import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
@@ -50,7 +50,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     public <T extends Involvement, R> R getInvolvement(Integer involvementId,
                                                        Class<T> involvementClass) {
         var involvement = findInvolvementById(involvementId);
-        return (R) InvolvementToInvolvementDTO.toDTO(involvementClass.cast(involvement));
+        return (R) InvolvementConverter.toDTO(involvementClass.cast(involvement));
     }
 
     @Override

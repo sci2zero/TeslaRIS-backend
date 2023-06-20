@@ -23,7 +23,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.converter.person.PersonToPersonDTO;
+import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
@@ -117,8 +117,8 @@ public class PersonServiceTest {
 
         when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
 
-        MockedStatic<PersonToPersonDTO> mocked = mockStatic(PersonToPersonDTO.class);
-        mocked.when(() -> PersonToPersonDTO.toDTO(expectedPerson)).thenReturn(expectedResponse);
+        MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class);
+        mocked.when(() -> PersonConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
 
         // when
         var personDto = personService.readPersonWithBasicInfo(1);

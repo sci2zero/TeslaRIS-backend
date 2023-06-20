@@ -81,12 +81,14 @@ public class DbInitializer implements ApplicationRunner {
         var editOURelations = new Privilege("EDIT_OU_RELATIONS");
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
+                createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
+                editResearchAreas,
                 editOURelations));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
             new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
-                createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas, editOURelations})));
+                createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
+                editOURelations})));
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editProofs})));
@@ -134,6 +136,17 @@ public class DbInitializer implements ApplicationRunner {
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
+
+
+        var dummyOU2 = new OrganisationUnit();
+        dummyOU2.setNameAbbreviation("PMF");
+        dummyOU2.setName(new HashSet<>(List.of(new MultiLingualContent[] {
+            new MultiLingualContent(englishTag, "Faculty of Sciences", 1),
+            new MultiLingualContent(serbianTag, "Prirodno matematicki fakultet", 2)})));
+        dummyOU2.setApproveStatus(ApproveStatus.APPROVED);
+        dummyOU2.setLocation(new GeoLocation(120.00, 120.00, 100));
+        dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
+        organisationUnitRepository.save(dummyOU2);
 
         var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),

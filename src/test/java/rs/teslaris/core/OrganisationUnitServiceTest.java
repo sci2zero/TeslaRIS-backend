@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -428,8 +427,11 @@ public class OrganisationUnitServiceTest {
         // Assert
         assertNotNull(editedOrganisationUnit);
         assertEquals(organisationUnit, editedOrganisationUnit);
-        assertEquals(organisationUnitDTORequest.getName().stream().findFirst().get().getContent(), editedOrganisationUnit.getName().stream().findFirst().get().getContent());
-        assertEquals(organisationUnitDTORequest.getKeyword().stream().findFirst().get().getContent(), editedOrganisationUnit.getKeyword().stream().findFirst().get().getContent());
+        assertEquals(organisationUnitDTORequest.getName().stream().findFirst().get().getContent(),
+            editedOrganisationUnit.getName().stream().findFirst().get().getContent());
+        assertEquals(
+            organisationUnitDTORequest.getKeyword().stream().findFirst().get().getContent(),
+            editedOrganisationUnit.getKeyword().stream().findFirst().get().getContent());
         verify(multilingualContentService, times(2)).getMultilingualContent(any());
         verify(researchAreaService, times(1)).getResearchAreasByIds(any());
         verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));
@@ -440,7 +442,8 @@ public class OrganisationUnitServiceTest {
         Integer organisationUnitId = 1;
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setId(organisationUnitId);
-        when(organisationUnitRepository.getReferenceById(organisationUnitId)).thenReturn(organisationUnit);
+        when(organisationUnitRepository.getReferenceById(organisationUnitId)).thenReturn(
+            organisationUnit);
 
         organisationUnitService.deleteOrganisationalUnit(organisationUnitId);
 
@@ -464,9 +467,12 @@ public class OrganisationUnitServiceTest {
         ApproveStatus approveStatus = ApproveStatus.APPROVED;
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setId(organisationUnitId);
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)).thenReturn(Optional.of(organisationUnit));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            organisationUnitId)).thenReturn(Optional.of(organisationUnit));
 
-        OrganisationUnit result = organisationUnitService.editOrganisationalUnitApproveStatus(approveStatus, organisationUnitId);
+        OrganisationUnit result =
+            organisationUnitService.editOrganisationalUnitApproveStatus(approveStatus,
+                organisationUnitId);
 
         verify(organisationUnitRepository, times(1)).save(organisationUnit);
         assertEquals(approveStatus, result.getApproveStatus());
@@ -476,10 +482,12 @@ public class OrganisationUnitServiceTest {
     public void shouldThrowExceptionWhenOrganisationalUnitNotFound() {
         Integer organisationUnitId = 1;
         ApproveStatus approveStatus = ApproveStatus.APPROVED;
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)).thenReturn(Optional.empty());
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            organisationUnitId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> {
-            organisationUnitService.editOrganisationalUnitApproveStatus(approveStatus, organisationUnitId);
+            organisationUnitService.editOrganisationalUnitApproveStatus(approveStatus,
+                organisationUnitId);
         });
     }
 }

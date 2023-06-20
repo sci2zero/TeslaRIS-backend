@@ -28,11 +28,14 @@ public interface OrganisationUnitService {
                                                                              Integer targetId,
                                                                              Pageable pageable);
 
-    OrganisationUnit createOrganisationalUnit(OrganisationUnitDTORequest organisationUnitDTORequest);
+    OrganisationUnit createOrganisationalUnit(
+        OrganisationUnitDTORequest organisationUnitDTORequest);
 
-    OrganisationUnit editOrganisationalUnit(OrganisationUnitDTORequest organisationUnitDTORequest, Integer organisationUnitId);
+    OrganisationUnit editOrganisationalUnit(OrganisationUnitDTORequest organisationUnitDTORequest,
+                                            Integer organisationUnitId);
 
-    OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus, Integer organisationUnitId);
+    OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
+                                                         Integer organisationUnitId);
 
     void deleteOrganisationalUnit(Integer organisationUnitId);
 

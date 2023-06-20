@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.institution.ResearchAreaToResearchAreaDTO;
+import rs.teslaris.core.converter.institution.ResearchAreaConverter;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.exception.ResearchAreaInUseException;
@@ -32,7 +32,7 @@ public class ResearchAreaServiceImpl implements ResearchAreaService {
 
     public Page<ResearchAreaResponseDTO> getResearchAreas(Pageable pageable) {
         return researchAreaRepository.findAll(pageable).map(
-            ResearchAreaToResearchAreaDTO::toResponseDTO);
+            ResearchAreaConverter::toResponseDTO);
     }
 
     @Override

@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.commontypes.GeoLocationDTOToGeoLocation;
+import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
-import rs.teslaris.core.converter.institution.RelationToRelationDTO;
+import rs.teslaris.core.converter.institution.RelationConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
@@ -60,7 +60,8 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     @Override
     @Transactional
     public Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable) {
-        return organisationUnitRepository.findAllWithLangData(pageable).map(OrganisationUnitConverter::toDTO);
+        return organisationUnitRepository.findAllWithLangData(pageable)
+            .map(OrganisationUnitConverter::toDTO);
     }
 
     @Override
@@ -74,7 +75,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     public Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
         Integer sourceId, Integer targetId, Pageable pageable) {
         return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(pageable,
-            sourceId, targetId).map(RelationToRelationDTO::toResponseDTO);
+            sourceId, targetId).map(RelationConverter::toResponseDTO);
     }
 
     @Override
@@ -100,7 +101,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         organisationUnit.setResearchAreas(new HashSet<>(researchAreas));
 
         organisationUnit.setLocation(
-            GeoLocationDTOToGeoLocation.fromDTO(organisationUnitDTORequest.getLocation()));
+            GeoLocationConverter.fromDTO(organisationUnitDTORequest.getLocation()));
 
         if (organisationUnitApprovedByDefault) {
             organisationUnit.setApproveStatus(ApproveStatus.APPROVED);
@@ -142,7 +143,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         organisationUnit.setResearchAreas(new HashSet<>(researchAreas));
 
         organisationUnit.setLocation(
-            GeoLocationDTOToGeoLocation.fromDTO(organisationUnitDTORequest.getLocation()));
+            GeoLocationConverter.fromDTO(organisationUnitDTORequest.getLocation()));
 
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
@@ -156,9 +157,11 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     @Transactional
     public OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
                                                                 Integer organisationUnitId) {
-        OrganisationUnit organisationUnit = organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId).orElseThrow(
-            () -> new NotFoundException(
-                "Organisation units relation with given ID does not exist."));
+        OrganisationUnit organisationUnit =
+            organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)
+                .orElseThrow(
+                    () -> new NotFoundException(
+                        "Organisation units relation with given ID does not exist."));
 
         organisationUnit.setApproveStatus(approveStatus);
 

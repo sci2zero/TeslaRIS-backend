@@ -8,7 +8,7 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.person.PersonToPersonDTO;
+import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -66,7 +66,7 @@ public class PersonServiceImpl implements PersonService {
     public PersonResponseDto readPersonWithBasicInfo(Integer id) {
         var person = personRepository.findApprovedPersonById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
-        return PersonToPersonDTO.toDTO(person);
+        return PersonConverter.toDTO(person);
     }
 
     @Override

@@ -7,8 +7,9 @@ public class ResearchAreaConverter {
     public static ResearchAreaDTO toDTO(ResearchArea researchArea) {
         var dto = new ResearchAreaDTO();
 
-        dto.setName(MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(researchArea.getName()));
-        dto.setDescription(MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(researchArea.getDescription()));
+        dto.setName(MultilingualContentConverter.getMultilingualContentDTO(researchArea.getName()));
+        dto.setDescription(
+            MultilingualContentConverter.getMultilingualContentDTO(researchArea.getDescription()));
         dto.setSuperResearchArea(ResearchAreaConverter.toDTO(researchArea.getSuperResearchArea()));
 
         return dto;
