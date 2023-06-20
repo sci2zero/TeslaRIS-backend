@@ -1,6 +1,5 @@
 package rs.teslaris.core.controller;
 
-import javax.transaction.Transactional;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,25 +23,25 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.OrganisationUnitService;
 
 @RestController
-@RequestMapping("/api/institution")
+@RequestMapping("/api/organisation-units")
 @RequiredArgsConstructor
-public class InstitutionController {
+public class OrganisationUnitController {
 
     private final OrganisationUnitService organisationUnitService;
 
-    @GetMapping("/organisation-units")
+    @GetMapping
     public Page<OrganisationUnitDTO> getAllOrganisationUnits(Pageable pageable) {
         return organisationUnitService.findOrganisationUnits(pageable);
     }
 
-    @GetMapping("/organisation-units/{organisationUnitId}")
+    @GetMapping("/{organisationUnitId}")
     public OrganisationUnitDTO getOrganisationUnit(@PathVariable Integer organisationUnitId) {
         return OrganisationUnitConverter.toDTO(
             organisationUnitService.findOrganisationUnitById(organisationUnitId));
     }
 
 
-    @PostMapping("/organisation-units")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     public OrganisationUnitDTO createOrganisationUnit(
@@ -53,7 +52,7 @@ public class InstitutionController {
     }
 
 
-    @PutMapping("/organisation-units/{organisationUnitId}")
+    @PutMapping("/{organisationUnitId}")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.OK)
     public OrganisationUnitDTO updateOrganisationUnit(
@@ -65,7 +64,7 @@ public class InstitutionController {
         return OrganisationUnitConverter.toDTO(organisationUnit);
     }
 
-    @PatchMapping("/organisation-units/{organisationUnitId}/approve-status")
+    @PatchMapping("/{organisationUnitId}/approve-status")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.OK)
     public OrganisationUnitDTO updateOrganisationUnit(
@@ -77,7 +76,7 @@ public class InstitutionController {
         return OrganisationUnitConverter.toDTO(organisationUnit);
     }
 
-    @DeleteMapping("/organisation-units/{organisationUnitId}")
+    @DeleteMapping("/{organisationUnitId}")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrganisationUnit(@PathVariable Integer organisationUnitId) {

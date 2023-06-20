@@ -5,6 +5,7 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,6 +15,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Embeddable
+@EqualsAndHashCode
 public class GeoLocation {
     @Column(name = "longitude", nullable = false)
     private Double longitude;
@@ -24,21 +26,4 @@ public class GeoLocation {
     @Column(name = "precision_in_meters", nullable = false)
     private int precisionInMeters;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        GeoLocation that = (GeoLocation) o;
-        return precisionInMeters == that.precisionInMeters && longitude.equals(that.longitude) &&
-            latitude.equals(that.latitude);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(longitude, latitude, precisionInMeters);
-    }
 }

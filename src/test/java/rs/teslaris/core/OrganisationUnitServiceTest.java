@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -399,11 +400,11 @@ public class OrganisationUnitServiceTest {
 
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
-            Set.of(new MultiLingualContent()).stream().collect(Collectors.toSet()));
+            Stream.of(new MultiLingualContent()).collect(Collectors.toSet()));
         organisationUnit.setKeyword(
-            Set.of(new MultiLingualContent()).stream().collect(Collectors.toSet()));
+            Stream.of(new MultiLingualContent()).collect(Collectors.toSet()));
         organisationUnit.setResearchAreas(
-            Set.of(new ResearchArea()).stream().collect(Collectors.toSet()));
+            Stream.of(new ResearchArea()).collect(Collectors.toSet()));
         organisationUnit.setLocation(new GeoLocation(1.0, 2.0, 3));
         organisationUnit.setContact(new Contact("a", "a"));
 

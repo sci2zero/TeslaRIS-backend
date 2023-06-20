@@ -25,7 +25,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.service.OrganisationUnitService;
 
 @RestController
-@RequestMapping("/api/relation")
+@RequestMapping("/api/organisation-unit-relation")
 @RequiredArgsConstructor
 public class OrganisationUnitRelationController {
 
