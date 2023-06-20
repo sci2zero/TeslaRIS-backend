@@ -67,6 +67,9 @@ public class PersonContributionServiceTest {
         contributionDTO1.setPersonId(1);
         contributionDTO1.setPersonName(new PersonNameDTO());
         contributionDTO1.setContact(new ContactDTO());
+        contributionDTO1.setPostalAddress(
+            new PostalAddressDTO(null, new ArrayList<>(), new ArrayList<>()));
+        contributionDTO1.setContact(new ContactDTO(null, "phone"));
 
         var institutionIds1 = new ArrayList<Integer>();
         institutionIds1.add(1);

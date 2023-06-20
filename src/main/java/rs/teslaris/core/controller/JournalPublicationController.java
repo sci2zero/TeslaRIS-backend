@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.service.DocumentPublicationService;
@@ -31,6 +32,7 @@ public class JournalPublicationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PublicationEditCheck("CREATE")
     public JournalPublicationDTO createJournalPublication(
         @RequestBody @Valid JournalPublicationDTO journalPublication) {
         var savedJournalPublication =
@@ -41,6 +43,7 @@ public class JournalPublicationController {
 
     @PutMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PublicationEditCheck
     public void editJournalPublication(@PathVariable Integer publicationId,
                                        @RequestBody
                                        @Valid JournalPublicationDTO journalPublication) {
@@ -49,6 +52,7 @@ public class JournalPublicationController {
 
     @DeleteMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PublicationEditCheck
     public void deleteJournalPublication(@PathVariable Integer publicationId) {
         documentPublicationService.deleteJournalPublication(publicationId);
     }

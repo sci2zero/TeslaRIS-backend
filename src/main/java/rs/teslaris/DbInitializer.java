@@ -73,19 +73,17 @@ public class DbInitializer implements ApplicationRunner {
         var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
         var approvePerson = new Privilege("APPROVE_PERSON");
         var editProofs = new Privilege("EDIT_DOCUMENT_PROOFS");
+        var approvePublication = new Privilege("APPROVE_PUBLICATION");
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonalInfo, approvePerson, editProofs));
+                createUserBasic, editPersonalInfo, approvePerson, editProofs, approvePublication));
 
-        var adminAuthority = new Authority(UserRole.ADMIN.toString(),
-            new HashSet<>(
-                List.of(new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile,
-                    editPersonalInfo, createUserBasic, approvePerson, editProofs})));
-        var researcherAuthority =
-            new Authority(UserRole.RESEARCHER.toString(),
-                new HashSet<>(List.of(
-                    new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
-                        createUserBasic, editProofs})));
+        var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
+            new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
+                createUserBasic, approvePerson, editProofs, approvePublication})));
+        var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
+            List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
+                createUserBasic, editProofs})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(researcherAuthority);
 
@@ -108,12 +106,11 @@ public class DbInitializer implements ApplicationRunner {
 
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage,
-                adminAuthority, null, null);
+                "Markovic", false, false, serbianLanguage, adminAuthority, null, null);
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
-                "Janko", "Jankovic", false, false, serbianLanguage,
-                researcherAuthority, person1, null);
+                "Janko", "Jankovic", false, false, serbianLanguage, researcherAuthority, person1,
+                null);
         userRepository.save(adminUser);
         userRepository.save(researcherUser);
 
@@ -124,10 +121,9 @@ public class DbInitializer implements ApplicationRunner {
 
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
-        dummyOU.setName(new HashSet<>(
-            List.of(new MultiLingualContent[] {
-                new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
-                new MultiLingualContent(serbianTag, "Fakultet Tehnickih Nauka", 2)})));
+        dummyOU.setName(new HashSet<>(List.of(new MultiLingualContent[] {
+            new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
+            new MultiLingualContent(serbianTag, "Fakultet Tehnickih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));

@@ -71,15 +71,26 @@ public class UserServiceImpl implements UserService {
     }
 
     public User loadUserById(Integer userID) throws UsernameNotFoundException {
-        return userRepository.findById(userID).orElseThrow(
-            () -> new UsernameNotFoundException("User with this ID does not exist."));
+        return userRepository.findById(userID)
+            .orElseThrow(() -> new UsernameNotFoundException("User with this ID does not exist."));
     }
 
     @Override
     public int getUserOrganisationUnitId(Integer userId) {
-        return userRepository.findByIdWithOrganisationUnit(userId).orElseThrow(
-                () -> new NotFoundException("User with this ID does not exist."))
+        return userRepository.findByIdWithOrganisationUnit(userId)
+            .orElseThrow(() -> new NotFoundException("User with this ID does not exist."))
             .getOrganisationUnit().getId();
+    }
+
+    @Override
+    @Transactional
+    public Integer getPersonIdForUser(Integer userId) {
+        var user = loadUserById(userId);
+        if (user.getPerson() == null) {
+            return -1;
+        }
+
+        return user.getPerson().getId();
     }
 
     @Override
@@ -96,8 +107,7 @@ public class UserServiceImpl implements UserService {
                                                       String fingerprint) {
         var authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(authenticationRequest.getEmail(),
-                authenticationRequest.getPassword())
-        );
+                authenticationRequest.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         var refreshTokenValue =
@@ -109,9 +119,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public AuthenticationResponseDTO refreshToken(String refreshTokenValue, String fingerprint) {
-        var hashedRefreshToken = Hashing.sha256()
-            .hashString(refreshTokenValue, StandardCharsets.UTF_8)
-            .toString();
+        var hashedRefreshToken =
+            Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();
 
         var refreshToken = refreshTokenRepository.getRefreshToken(hashedRefreshToken).orElseThrow(
             () -> new NonExistingRefreshTokenException("Non existing refresh token provided."));
@@ -120,8 +129,7 @@ public class UserServiceImpl implements UserService {
         refreshTokenRepository.delete(refreshToken);
 
         return new AuthenticationResponseDTO(
-            tokenUtil.generateToken(refreshToken.getUser(), fingerprint),
-            newRefreshToken);
+            tokenUtil.generateToken(refreshToken.getUser(), fingerprint), newRefreshToken);
     }
 
     @Override
@@ -201,8 +209,8 @@ public class UserServiceImpl implements UserService {
 
         var newUser =
             new User(registrationRequest.getEmail(), registrationRequest.getPassword(), "",
-                registrationRequest.getFirstname(), registrationRequest.getLastName(), true,
-                false, preferredLanguage, authority, person, organisationalUnit);
+                registrationRequest.getFirstname(), registrationRequest.getLastName(), true, false,
+                preferredLanguage, authority, person, organisationalUnit);
 
         var savedUser = userRepository.save(newUser);
 
@@ -254,9 +262,8 @@ public class UserServiceImpl implements UserService {
 
     private String createAndSaveRefreshTokenForUser(User user) {
         var refreshTokenValue = UUID.randomUUID().toString();
-        var hashedRefreshToken = Hashing.sha256()
-            .hashString(refreshTokenValue, StandardCharsets.UTF_8)
-            .toString();
+        var hashedRefreshToken =
+            Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();
         refreshTokenRepository.save(new RefreshToken(hashedRefreshToken, user));
 
         return refreshTokenValue;
@@ -269,8 +276,7 @@ public class UserServiceImpl implements UserService {
         var now = new Date();
         var twentyMinutesAgo = new Date(now.getTime() - (20 * 60 * 1000));
 
-        refreshTokens.stream()
-            .filter(token -> token.getCreateDate().before(twentyMinutesAgo))
+        refreshTokens.stream().filter(token -> token.getCreateDate().before(twentyMinutesAgo))
             .forEach(refreshTokenRepository::delete);
     }
 
@@ -281,8 +287,7 @@ public class UserServiceImpl implements UserService {
         var now = new Date();
         var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
-        activationTokens.stream()
-            .filter(token -> token.getCreateDate().before(sevenDaysAgo))
+        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
             .forEach(userAccountActivationRepository::delete);
     }
 }
