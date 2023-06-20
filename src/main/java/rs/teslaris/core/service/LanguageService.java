@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.model.commontypes.Language;
 
 @Service
-public interface LanguageService {
+public interface LanguageService extends CRUDService {
 
     Language findLanguageById(Integer id);
 }

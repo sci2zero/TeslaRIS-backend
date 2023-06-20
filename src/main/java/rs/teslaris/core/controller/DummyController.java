@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.indexmodel.DummyIndex;
 import rs.teslaris.core.indexrepository.DummyIndexRepository;
+import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.service.LanguageService;
 import rs.teslaris.core.util.email.EmailUtil;
 
 
@@ -34,6 +36,10 @@ public class DummyController {
 
     private final EmailUtil emailUtil;
 
+    //    TEMP SERVICE FOR TESTING
+    //    TODO: REMOVE
+    private final LanguageService languageService;
+
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN_READ')")
@@ -46,6 +52,13 @@ public class DummyController {
         return StreamSupport
             .stream(repo.findAll().spliterator(), false)
             .collect(Collectors.toList());
+    }
+
+    //    TEMP MAPPING
+    //    TODO: REMOVE
+    @GetMapping("/all2")
+    public List<Language> getAll2() {
+        return languageService.findAll();
     }
 
     @PostMapping

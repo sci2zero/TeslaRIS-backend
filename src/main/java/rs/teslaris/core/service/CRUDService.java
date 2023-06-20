@@ -5,9 +5,14 @@ import java.util.List;
 
 public interface CRUDService<T> {
     List<T> findAll();
-    T findOne(Long id);
+
+    T findOne(Integer id);
+
     T save(T entity);
+
     T update(T entity);
+
     List<T> saveAll(Collection<T> entities);
-    void delete(Long id);
+
+    void delete(Integer id);
 }
