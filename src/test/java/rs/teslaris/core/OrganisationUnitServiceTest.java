@@ -241,7 +241,7 @@ public class OrganisationUnitServiceTest {
         var newRelation = Mockito.mock(OrganisationUnitsRelation.class);
         when(organisationUnitsRelationRepository.save(
             any(OrganisationUnitsRelation.class))).thenReturn(newRelation);
-        when(organisationUnitRepository.findById(any())).thenReturn(
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
 
         // when
@@ -279,7 +279,7 @@ public class OrganisationUnitServiceTest {
 
         when(organisationUnitsRelationRepository.findById(relationId)).thenReturn(
             Optional.of(relation));
-        when(organisationUnitRepository.findById(any())).thenReturn(
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
 
         // when
