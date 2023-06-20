@@ -41,6 +41,8 @@ public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDServi
 
     @Override
     public void delete(Integer id) {
-        getEntityRepository().delete(this.findOne(id));
+        T entity = findOne(id);
+        entity.setDeleted(true);
+        this.save(entity);
     }
 }
