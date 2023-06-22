@@ -50,6 +50,9 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     @Override
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
         var publication = (JournalPublication) findDocumentById(publicationId);
+        if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
         return JournalPublicationConverter.toDTO(publication);
     }
 

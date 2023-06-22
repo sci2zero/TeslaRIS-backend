@@ -7,6 +7,7 @@ import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
 
 public class JournalPublicationConverter {
@@ -47,33 +48,34 @@ public class JournalPublicationConverter {
     private static void setContributions(JournalPublication publication,
                                          JournalPublicationResponseDTO publicationDTO) {
         var contributions = new ArrayList<PersonDocumentContributionDTO>();
-        publication.getContributors().forEach((c) -> {
-            var contribution = new PersonDocumentContributionDTO();
-            contribution.setContributionDescription(
-                MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
-                    c.getContributionDescription()));
-            contribution.setDisplayAffiliationStatement(
-                MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
-                    c.getAffiliationStatement().getDisplayAffiliationStatement()));
+        publication.getContributors().stream()
+            .filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED)).forEach((c) -> {
+                var contribution = new PersonDocumentContributionDTO();
+                contribution.setContributionDescription(
+                    MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+                        c.getContributionDescription()));
+                contribution.setDisplayAffiliationStatement(
+                    MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+                        c.getAffiliationStatement().getDisplayAffiliationStatement()));
 
-            contribution.setOrderNumber(c.getOrderNumber());
+                contribution.setOrderNumber(c.getOrderNumber());
 
-            contribution.setInstitutionIds(new ArrayList<>());
-            c.getInstitutions().forEach(i -> contribution.getInstitutionIds().add(i.getId()));
+                contribution.setInstitutionIds(new ArrayList<>());
+                c.getInstitutions().forEach(i -> contribution.getInstitutionIds().add(i.getId()));
 
-            contribution.setPersonName(
-                PersonNameConverter.toDTO(c.getAffiliationStatement().getDisplayPersonName()));
-            contribution.setPostalAddress(
-                PostalAddressConverter.toDto(c.getAffiliationStatement().getPostalAddress()));
-            contribution.setContact(
-                ContactConverter.toDTO(c.getAffiliationStatement().getContact()));
+                contribution.setPersonName(
+                    PersonNameConverter.toDTO(c.getAffiliationStatement().getDisplayPersonName()));
+                contribution.setPostalAddress(
+                    PostalAddressConverter.toDto(c.getAffiliationStatement().getPostalAddress()));
+                contribution.setContact(
+                    ContactConverter.toDTO(c.getAffiliationStatement().getContact()));
 
-            contribution.setContributionType(c.getContributionType());
-            contribution.setIsMainContributor(c.isMainContributor());
-            contribution.setIsCorrespondingContributor(c.isCorrespondingContributor());
+                contribution.setContributionType(c.getContributionType());
+                contribution.setIsMainContributor(c.isMainContributor());
+                contribution.setIsCorrespondingContributor(c.isCorrespondingContributor());
 
-            contributions.add(contribution);
-        });
+                contributions.add(contribution);
+            });
         publicationDTO.setContributions(contributions);
     }
 
