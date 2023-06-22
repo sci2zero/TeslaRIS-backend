@@ -52,4 +52,8 @@ public interface OrganisationUnitService {
     void addRelationProofs(List<DocumentFileDTO> documentFiles, Integer relationId);
 
     void deleteRelationProof(Integer relationId, Integer proofId);
+
+    boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer organisationUnitId,
+                                                      Integer belongOrganisationUnit);
+
 }

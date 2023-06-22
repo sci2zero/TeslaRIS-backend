@@ -75,16 +75,23 @@ public class PersonServiceImpl implements PersonService {
                                                       Integer organisationUnitId) {
         var person = findPersonById(personId);
 
-        for (var involvement : person.getInvolvements()) {
-            if (involvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
-                Objects.equals(involvement.getOrganisationUnit().getId(), organisationUnitId)) {
+        for (var personInvolvement : person.getInvolvements()) {
+            Integer personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
+            if (personInvolvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
+                Objects.equals(personOrganisationUnitId, organisationUnitId)) {
                 return true;
-                // TODO: add recursive check
             }
+
+            if (organisationUnitService.recursiveCheckIfOrganisationUnitBelongsTo(
+                organisationUnitId, personOrganisationUnitId)) {
+                return true;
+            }
+
         }
 
         return false;
     }
+
 
     @Override
     @Transactional

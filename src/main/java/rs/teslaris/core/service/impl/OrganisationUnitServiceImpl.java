@@ -23,6 +23,7 @@ import rs.teslaris.core.exception.SelfRelationException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
@@ -258,5 +259,29 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
         organisationUnitsRelationRepository.save(relation);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+    }
+
+    @Override
+    public boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer sourceOrganisationUnitId,
+                                                             Integer targetOrganisationUnit) {
+        List<OrganisationUnitsRelation> relationsToCheck =
+            organisationUnitsRelationRepository.findBySourceOrganisationUnitAnAndRelationType(
+                sourceOrganisationUnitId, OrganisationUnitRelationType.BELONGS_TO);
+
+        while (!relationsToCheck.isEmpty()) {
+            OrganisationUnitsRelation newTargetOrganisationUnit = relationsToCheck.remove(0);
+
+            if (newTargetOrganisationUnit.getId().equals(targetOrganisationUnit)) {
+                return true;
+            }
+
+            List<OrganisationUnitsRelation> newRelationToCheck =
+                organisationUnitsRelationRepository.findBySourceOrganisationUnitAnAndRelationType(
+                    newTargetOrganisationUnit.getId(), OrganisationUnitRelationType.BELONGS_TO);
+            relationsToCheck.addAll(newRelationToCheck);
+
+        }
+        return false;
+
     }
 }

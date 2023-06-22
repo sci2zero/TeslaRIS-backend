@@ -1,10 +1,12 @@
 package rs.teslaris.core.repository.person;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
 @Repository
@@ -17,4 +19,11 @@ public interface OrganisationUnitsRelationRepository
     Page<OrganisationUnitsRelation> getRelationsForOrganisationUnits(Pageable pageable,
                                                                      Integer sourceId,
                                                                      Integer targetId);
+
+    List<OrganisationUnitsRelation> findBySourceOrganisationUnit(Integer sourceOrganisationId);
+
+    List<OrganisationUnitsRelation> findBySourceOrganisationUnitAnAndRelationType(
+        Integer sourceOrganisationId, OrganisationUnitRelationType relationType);
+
+    List<OrganisationUnitsRelation> findByTargetOrganisationUnit(Integer destinationOrganisationId);
 }

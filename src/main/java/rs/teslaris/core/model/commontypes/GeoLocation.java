@@ -1,7 +1,6 @@
 package rs.teslaris.core.model.commontypes;
 
 
-import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import lombok.AllArgsConstructor;
