@@ -90,9 +90,7 @@ public class PublicationEditCheckAspect {
 
     private List<Integer> getContributorsFromDatabase(Map<String, String> attributeMap) {
         int publicationId = Integer.parseInt(attributeMap.get("publicationId"));
-        return documentPublicationService.readJournalPublicationById(publicationId)
-            .getContributions().stream().map(PersonContributionDTO::getPersonId)
-            .filter(Objects::nonNull).collect(Collectors.toList());
+        return documentPublicationService.getContributorIds(publicationId);
     }
 
     private void checkPermission(String role, int userId, List<Integer> contributors) {
@@ -101,8 +99,6 @@ public class PublicationEditCheckAspect {
             case ADMIN:
                 break;
             case RESEARCHER:
-                contributors.forEach(System.out::println);
-                System.out.println(userId);
                 if (!contributors.contains(userId)) {
                     throw new CantEditPublicationException(
                         "You do not have the permission to edit this publication.");

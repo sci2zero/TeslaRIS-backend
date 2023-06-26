@@ -15,19 +15,19 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
-import rs.teslaris.core.service.DocumentPublicationService;
+import rs.teslaris.core.service.JournalPublicationService;
 
 @RestController
 @RequestMapping("api/journal-publication")
 @RequiredArgsConstructor
 public class JournalPublicationController {
 
-    private final DocumentPublicationService documentPublicationService;
+    private final JournalPublicationService journalPublicationService;
 
     @GetMapping("/{publicationId}")
     public JournalPublicationResponseDTO readJournalPublication(
         @PathVariable Integer publicationId) {
-        return documentPublicationService.readJournalPublicationById(publicationId);
+        return journalPublicationService.readJournalPublicationById(publicationId);
     }
 
     @PostMapping
@@ -36,7 +36,7 @@ public class JournalPublicationController {
     public JournalPublicationDTO createJournalPublication(
         @RequestBody @Valid JournalPublicationDTO journalPublication) {
         var savedJournalPublication =
-            documentPublicationService.createJournalPublication(journalPublication);
+            journalPublicationService.createJournalPublication(journalPublication);
         journalPublication.setId(savedJournalPublication.getId());
         return journalPublication;
     }
@@ -47,13 +47,13 @@ public class JournalPublicationController {
     public void editJournalPublication(@PathVariable Integer publicationId,
                                        @RequestBody
                                        @Valid JournalPublicationDTO journalPublication) {
-        documentPublicationService.editJournalPublication(publicationId, journalPublication);
+        journalPublicationService.editJournalPublication(publicationId, journalPublication);
     }
 
     @DeleteMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
     public void deleteJournalPublication(@PathVariable Integer publicationId) {
-        documentPublicationService.deleteJournalPublication(publicationId);
+        journalPublicationService.deleteJournalPublication(publicationId);
     }
 }
