@@ -26,11 +26,10 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          DocumentFileService documentFileService,
                                          MultilingualContentService multilingualContentService,
                                          JournalService journalService,
-                                         PersonContributionService personContributionService,
-                                         JournalService journalService1) {
+                                         PersonContributionService personContributionService) {
         super(documentRepository, documentFileService, multilingualContentService,
             personContributionService);
-        this.journalService = journalService1;
+        this.journalService = journalService;
     }
 
     @Override
