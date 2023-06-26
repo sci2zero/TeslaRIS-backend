@@ -11,11 +11,14 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.DocumentPublicationService;
 import rs.teslaris.core.service.JournalService;
@@ -36,6 +39,8 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     private final JournalService journalService;
 
     private final PersonContributionService personContributionService;
+
+    private final ProceedingsRepository proceedingsRepository; // TODO: replace with service
 
     @Value("${document.approved_by_default}")
     private Boolean documentApprovedByDefault;
@@ -85,12 +90,42 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     public void deleteJournalPublication(Integer journalPublicationId) {
         var publicationToDelete = (JournalPublication) findDocumentById(journalPublicationId);
 
-        publicationToDelete.getProofs()
-            .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
+        deleteProofsAndFileItems(publicationToDelete);
+        documentRepository.delete(publicationToDelete);
+    }
 
-        publicationToDelete.getFileItems().forEach(
-            fileItem -> documentFileService.deleteDocumentFile(fileItem.getServerFilename()));
+    @Override
+    public ProceedingsPublication createProceedingsPublication(
+        ProceedingsPublicationDTO proceedingsPublicationDTO) {
+        var publication = new ProceedingsPublication();
 
+        setCommonFields(publication, proceedingsPublicationDTO);
+        setProceedingsPublicationRelatedFields(publication, proceedingsPublicationDTO);
+
+        publication.setApproveStatus(
+            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
+
+        return documentRepository.save(publication);
+    }
+
+    @Override
+    public void editProceedingsPublication(Integer publicationId,
+                                           ProceedingsPublicationDTO publicationDTO) {
+        var publicationToUpdate = (ProceedingsPublication) findDocumentById(publicationId);
+
+        clearCommonFields(publicationToUpdate);
+        publicationToUpdate.getUris().clear();
+
+        setCommonFields(publicationToUpdate, publicationDTO);
+        setProceedingsPublicationRelatedFields(publicationToUpdate, publicationDTO);
+    }
+
+    @Override
+    public void deleteProceedingsPublication(Integer proceedingsPublicationId) {
+        var publicationToDelete =
+            (ProceedingsPublication) findDocumentById(proceedingsPublicationId);
+
+        deleteProofsAndFileItems(publicationToDelete);
         documentRepository.delete(publicationToDelete);
     }
 
@@ -165,6 +200,13 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         publication.getContributors().clear();
     }
 
+    private void deleteProofsAndFileItems(Document publicationToDelete) {
+        publicationToDelete.getProofs()
+            .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
+        publicationToDelete.getFileItems().forEach(
+            fileItem -> documentFileService.deleteDocumentFile(fileItem.getServerFilename()));
+    }
+
     private void setJournalPublicationRelatedFields(JournalPublication publication,
                                                     JournalPublicationDTO publicationDTO) {
         publication.setJournalPublicationType(publicationDTO.getJournalPublicationType());
@@ -176,5 +218,16 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         publication.setIssue(publicationDTO.getIssue());
 
         publication.setJournal(journalService.findJournalById(publicationDTO.getJournalId()));
+    }
+
+    private void setProceedingsPublicationRelatedFields(ProceedingsPublication publication,
+                                                        ProceedingsPublicationDTO publicationDTO) {
+        publication.setProceedingsPublicationType(publicationDTO.getProceedingsPublicationType());
+        publication.setStartPage(publicationDTO.getStartPage());
+        publication.setEndPage(publicationDTO.getEndPage());
+        publication.setNumberOfPages(publicationDTO.getNumberOfPages());
+        publication.setArticleNumber(publicationDTO.getArticleNumber());
+        publication.setProceedings(
+            proceedingsRepository.getReferenceById(publicationDTO.getProceedingsId()));
     }
 }
