@@ -22,7 +22,7 @@ public interface OrganisationUnitsRelationRepository
 
     List<OrganisationUnitsRelation> findBySourceOrganisationUnit(Integer sourceOrganisationId);
 
-    List<OrganisationUnitsRelation> findBySourceOrganisationUnitAnAndRelationType(
+    List<OrganisationUnitsRelation> findBySourceOrganisationUnitAndRelationType(
         Integer sourceOrganisationId, OrganisationUnitRelationType relationType);
 
     List<OrganisationUnitsRelation> findByTargetOrganisationUnit(Integer destinationOrganisationId);

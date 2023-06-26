@@ -265,7 +265,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     public boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer sourceOrganisationUnitId,
                                                              Integer targetOrganisationUnit) {
         List<OrganisationUnitsRelation> relationsToCheck =
-            organisationUnitsRelationRepository.findBySourceOrganisationUnitAnAndRelationType(
+            organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationType(
                 sourceOrganisationUnitId, OrganisationUnitRelationType.BELONGS_TO);
 
         while (!relationsToCheck.isEmpty()) {
@@ -276,7 +276,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
             }
 
             List<OrganisationUnitsRelation> newRelationToCheck =
-                organisationUnitsRelationRepository.findBySourceOrganisationUnitAnAndRelationType(
+                organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationType(
                     newTargetOrganisationUnit.getId(), OrganisationUnitRelationType.BELONGS_TO);
             relationsToCheck.addAll(newRelationToCheck);
 
