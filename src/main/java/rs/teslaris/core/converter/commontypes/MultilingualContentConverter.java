@@ -6,8 +6,7 @@ import java.util.stream.Collectors;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
-@Deprecated
-public class MultilingualContentToMultilingualContentDTO {
+public class MultilingualContentConverter {
 
     public static List<MultilingualContentDTO> getMultilingualContentDTO(
         Set<MultiLingualContent> multilingualContent) {

@@ -8,7 +8,7 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.person.PersonToPersonDTO;
+import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -51,7 +51,7 @@ public class PersonServiceImpl implements PersonService {
 
     private final PersonNameService personNameService;
 
-    @Value("${approval.approved_by_default}")
+    @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
 
 
@@ -66,7 +66,7 @@ public class PersonServiceImpl implements PersonService {
     public PersonResponseDto readPersonWithBasicInfo(Integer id) {
         var person = personRepository.findApprovedPersonById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
-        return PersonToPersonDTO.toDTO(person);
+        return PersonConverter.toDTO(person);
     }
 
     @Override
@@ -75,16 +75,23 @@ public class PersonServiceImpl implements PersonService {
                                                       Integer organisationUnitId) {
         var person = findPersonById(personId);
 
-        for (var involvement : person.getInvolvements()) {
-            if (involvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
-                Objects.equals(involvement.getOrganisationUnit().getId(), organisationUnitId)) {
+        for (var personInvolvement : person.getInvolvements()) {
+            Integer personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
+            if (personInvolvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
+                Objects.equals(personOrganisationUnitId, organisationUnitId)) {
                 return true;
-                // TODO: add recursive check
             }
+
+            if (organisationUnitService.recursiveCheckIfOrganisationUnitBelongsTo(
+                organisationUnitId, personOrganisationUnitId)) {
+                return true;
+            }
+
         }
 
         return false;
     }
+
 
     @Override
     @Transactional
@@ -101,7 +108,7 @@ public class PersonServiceImpl implements PersonService {
             new PostalAddress(), personalContact);
 
         var employmentInstitution =
-            organisationUnitService.findOrganisationalUnitById(personDTO.getOrganisationUnitId());
+            organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
 
         var currentEmployment = new Employment(null, null, defaultApproveStatus, new HashSet<>(),
             InvolvementType.EMPLOYED_AT, new HashSet<>(), null, employmentInstitution,
