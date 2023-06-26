@@ -25,7 +25,6 @@ import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonSearchRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
-import rs.teslaris.core.service.PersonIndexService;
 import rs.teslaris.core.service.PersonService;
 
 @Validated
@@ -36,12 +35,10 @@ public class PersonController {
 
     private final PersonService personService;
 
-    private final PersonIndexService personIndexService;
 
-    
     @GetMapping
     public Page<PersonIndex> findAll(Pageable pageable) {
-        return personIndexService.findAll(pageable);
+        return personService.findAll(pageable);
     }
 
     @GetMapping("/{personId}")
@@ -53,14 +50,14 @@ public class PersonController {
     public Page<PersonIndex> findAllByNameAndEmployment(@RequestBody @Valid
                                                         PersonSearchRequestDTO searchRequest,
                                                         Pageable pageable) {
-        return personIndexService.findPeopleByNameAndEmployment(searchRequest.getTokens(),
+        return personService.findPeopleByNameAndEmployment(searchRequest.getTokens(),
             pageable);
     }
 
     @GetMapping("/employed-at/{organisationUnitId}")
     public Page<PersonIndex> findEmployeesForInstitution(@PathVariable Integer organisationUnitId,
                                                          Pageable pageable) {
-        return personIndexService.findPeopleForOrganisationUnit(organisationUnitId, pageable);
+        return personService.findPeopleForOrganisationUnit(organisationUnitId, pageable);
     }
 
 

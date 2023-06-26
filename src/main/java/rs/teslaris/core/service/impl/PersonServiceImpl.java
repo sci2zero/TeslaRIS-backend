@@ -1,5 +1,7 @@
 package rs.teslaris.core.service.impl;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -7,6 +9,12 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHitSupport;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.person.PersonToPersonDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -40,6 +48,8 @@ import rs.teslaris.core.service.PersonService;
 public class PersonServiceImpl implements PersonService {
 
     private final PersonRepository personRepository;
+
+    private final ElasticsearchOperations elasticsearchTemplate;
 
     private final PersonIndexRepository personIndexRepository;
 
@@ -319,5 +329,51 @@ public class PersonServiceImpl implements PersonService {
         }
         personIndex.setEmploymentsSr(employments_sr.toString());
         personIndex.setEmployments(employments_other.toString());
+    }
+
+    @Override
+    public Page<PersonIndex> findAll(Pageable pageable) {
+        return personIndexRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable) {
+        var query = buildNameAndEmploymentQuery(tokens);
+
+        var searchQueryBuilder = new NativeQueryBuilder()
+            .withQuery(query)
+            .withPageable(pageable);
+
+        var searchQuery = searchQueryBuilder.build();
+
+        var searchHits = elasticsearchTemplate
+            .search(searchQuery, PersonIndex.class, IndexCoordinates.of("person"));
+
+        var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
+
+        return (Page<PersonIndex>) SearchHitSupport.unwrapSearchHits(searchHitsPaged);
+    }
+
+    @Override
+    public Page<PersonIndex> findPeopleForOrganisationUnit(
+        Integer employmentInstitutionId,
+        Pageable pageable) {
+        return personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
+            List.of(employmentInstitutionId));
+    }
+
+    private Query buildNameAndEmploymentQuery(List<String> tokens) {
+        return BoolQuery.of(q -> q
+            .must(mb -> mb.bool(b -> {
+                    tokens.forEach(
+                        token -> {
+                            b.should(sb -> sb.match(m -> m.field("name").query(token)));
+                            b.should(sb -> sb.match(m -> m.field("employments").query(token)));
+                            b.should(sb -> sb.match(m -> m.field("employments_srp").query(token)));
+                        });
+                    return b;
+                }
+            ))
+        )._toQuery();
     }
 }
