@@ -81,6 +81,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getPersonName().getDateFrom(),
             contributionDTO.getPersonName().getDateTo());
 
+
         var countryId = contributionDTO.getPostalAddress().getCountryId();
         var postalAddress =
             new PostalAddress(countryId != null ? countryService.findCountryById(countryId) : null,

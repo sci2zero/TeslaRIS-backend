@@ -67,6 +67,7 @@ public class DbInitializer implements ApplicationRunner {
 
     private final ResearchAreaRepository researchAreaRepository;
 
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
@@ -89,9 +90,9 @@ public class DbInitializer implements ApplicationRunner {
                 editResearchAreas, approvePublication, editOURelations));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
-            new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
-                createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
-                editOURelations, approvePublication,})));
+            takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
+            createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
+            editOURelations, approvePublication)));
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editProofs})));

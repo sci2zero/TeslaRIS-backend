@@ -1,39 +1,40 @@
 package rs.teslaris.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
+import io.minio.GetObjectResponse;
+import io.minio.MinioClient;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.StorageException;
-import rs.teslaris.core.service.impl.FileServiceImpl;
+import rs.teslaris.core.service.impl.FileServiceMinioImpl;
 
 @SpringBootTest
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class FileServiceTest {
+public class FileServiceMinioTest {
 
-    private final String testRootPath = "src/main/resources/dataTest";
+    @Mock
+    private MinioClient minioClient;
 
     @InjectMocks
-    private FileServiceImpl fileService;
+    private FileServiceMinioImpl fileService;
+
 
     @BeforeEach
     public void setUp() {
-        ReflectionTestUtils.setField(fileService, "rootLocation", testRootPath);
+        ReflectionTestUtils.setField(fileService, "bucketName", "bucket-name");
     }
 
     private MultipartFile createMockMultipartFile(String filename, String content) {
@@ -41,8 +42,7 @@ public class FileServiceTest {
     }
 
     @Test
-    @Order(1)
-    public void ShouldStoreNonEmptyFile() {
+    public void ShouldStoreNonEmptyFile() throws Exception {
         // given
         var file = createMockMultipartFile("test.txt", "Test file content");
         var serverFilename = "file1";
@@ -52,6 +52,7 @@ public class FileServiceTest {
 
         // then
         assertEquals("file1.txt", result);
+        verify(minioClient, times(1)).putObject(any());
     }
 
     @Test
@@ -67,30 +68,19 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldThrowExceptionWhenStoringFileOutsideCurrentDirectory() {
-        // given
-        var file = createMockMultipartFile("test.txt", "Test file content");
-        var serverFilename = "../file3";
-
-        // when
-        assertThrows(StorageException.class, () -> fileService.store(file, serverFilename));
-
-        // then (StorageException should be thrown)
-    }
-
-    @Test
-    @Order(2)
-    public void ShouldLoadExistingReadableResource() {
+    public void ShouldLoadExistingReadableResource() throws Exception {
         // given
         var filename = "file1.txt";
+
+        when(minioClient.getObject(any())).thenReturn(
+            new GetObjectResponse(null, null, null, null, null));
 
         // when
         var resource = fileService.loadAsResource(filename);
 
         // then
         assertNotNull(resource);
-        assertTrue(resource.exists());
-        assertTrue(resource.isReadable());
+        verify(minioClient, times(1)).getObject(any());
     }
 
     @Test
@@ -99,34 +89,20 @@ public class FileServiceTest {
         var filename = "nonExistingFile.txt";
 
         // when
-        assertThrows(StorageException.class, () -> fileService.loadAsResource(filename));
+        assertThrows(NotFoundException.class, () -> fileService.loadAsResource(filename));
 
         // then (StorageException should be thrown)
     }
 
     @Test
-    @Order(3)
-    public void ShouldDeleteFile() throws IOException {
+    public void ShouldDeleteFileWhenItExists() throws Exception {
         // given
         var serverFilename = "file1.txt";
-        var file = new File(Paths.get(testRootPath, serverFilename).toUri());
 
         // when
         fileService.delete(serverFilename);
 
         // then
-        assertFalse(file.exists());
+        verify(minioClient, times(1)).removeObject(any());
     }
-
-    @Test
-    public void ShouldThrowExceptionWhenDeleteFileDoesNotExist() throws IOException {
-        // given
-        var serverFilename = "nonExistingFile.txt";
-
-        // when
-        assertThrows(StorageException.class, () -> fileService.delete(serverFilename));
-
-        // then (StorageException should be thrown)
-    }
-
 }

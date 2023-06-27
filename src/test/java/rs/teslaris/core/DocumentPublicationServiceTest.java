@@ -24,6 +24,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.DocumentFileService;
+import rs.teslaris.core.service.JournalService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.PersonContributionService;
 import rs.teslaris.core.service.impl.DocumentPublicationServiceImpl;
@@ -39,6 +40,9 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private JournalService journalService;
 
     @Mock
     private PersonContributionService personContributionService;
@@ -130,6 +134,7 @@ public class DocumentPublicationServiceTest {
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
         when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
             documentFile);
 

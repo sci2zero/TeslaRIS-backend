@@ -19,10 +19,10 @@ public class PersonDocumentContribution extends PersonContribution {
     private DocumentContributionType contributionType;
 
     @Column(name = "main_contributor", nullable = false)
-    private boolean mainContributor;
+    private boolean isMainContributor;
 
     @Column(name = "corresponding_contributor", nullable = false)
-    private boolean correspondingContributor;
+    private boolean isCorrespondingContributor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)

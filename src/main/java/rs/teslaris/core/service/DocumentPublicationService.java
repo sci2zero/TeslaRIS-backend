@@ -17,4 +17,5 @@ public interface DocumentPublicationService {
     void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof);
 
     List<Integer> getContributorIds(Integer publicationId);
+
 }
