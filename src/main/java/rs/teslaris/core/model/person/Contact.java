@@ -16,10 +16,10 @@ import lombok.Setter;
 @EqualsAndHashCode
 public class Contact {
 
-    @Column(name = "contact_email", nullable = false)
+    @Column(name = "contact_email")
     private String contactEmail;
 
-    @Column(name = "phone_number", nullable = false)
+    @Column(name = "phone_number")
     private String phoneNumber;
 
 }

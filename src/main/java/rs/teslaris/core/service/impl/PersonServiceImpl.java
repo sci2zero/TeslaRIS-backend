@@ -137,7 +137,9 @@ public class PersonServiceImpl implements PersonService {
         var savedPerson = personRepository.save(newPerson);
         newPerson.setId(savedPerson.getId());
 
-        indexPerson(savedPerson, 0);
+        if (savedPerson.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(savedPerson, 0);
+        }
 
         return newPerson;
     }
@@ -183,7 +185,10 @@ public class PersonServiceImpl implements PersonService {
         personToUpdate.getOtherNames().remove(chosenName);
 
         personRepository.save(personToUpdate);
-        indexPerson(personToUpdate, personToUpdate.getId());
+
+        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(personToUpdate, personToUpdate.getId());
+        }
     }
 
     @Override
@@ -220,17 +225,16 @@ public class PersonServiceImpl implements PersonService {
         personalInfoToUpdate.setLocalBirthDate(personalInfo.getLocalBirthDate());
         personalInfoToUpdate.setSex(personalInfo.getSex());
 
-        if (personalInfo.getPostalAddress() != null) {
-            var country =
-                countryService.findCountryById(personalInfo.getPostalAddress().getCountryId());
-            personalInfoToUpdate.getPostalAddress().setCountry(country);
+        var countryId = personalInfo.getPostalAddress().getCountryId();
 
-            personToUpdate.getPersonalInfo().getPostalAddress().getStreetAndNumber().clear();
-            setPersonStreetAndNumberInfo(personToUpdate, personalInfoToUpdate, personalInfo);
+        personalInfoToUpdate.getPostalAddress()
+            .setCountry(countryId != null ? countryService.findCountryById(countryId) : null);
 
-            personToUpdate.getPersonalInfo().getPostalAddress().getCity().clear();
-            setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
-        }
+        personToUpdate.getPersonalInfo().getPostalAddress().getStreetAndNumber().clear();
+        setPersonStreetAndNumberInfo(personToUpdate, personalInfoToUpdate, personalInfo);
+
+        personToUpdate.getPersonalInfo().getPostalAddress().getCity().clear();
+        setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
         personalInfoToUpdate.getContact()
             .setContactEmail(personalInfo.getContact().getContactEmail());
@@ -238,7 +242,10 @@ public class PersonServiceImpl implements PersonService {
             .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
 
         personRepository.save(personToUpdate);
-        indexPerson(personToUpdate, personToUpdate.getId());
+
+        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(personToUpdate, personToUpdate.getId());
+        }
     }
 
     @Override
@@ -250,7 +257,11 @@ public class PersonServiceImpl implements PersonService {
             personToBeApproved.setApproveStatus(approveStatus);
         }
 
-        personRepository.save(personToBeApproved);
+        var approvedPerson = personRepository.save(personToBeApproved);
+
+        if (approve) {
+            indexPerson(approvedPerson, 0);
+        }
     }
 
     @Transactional

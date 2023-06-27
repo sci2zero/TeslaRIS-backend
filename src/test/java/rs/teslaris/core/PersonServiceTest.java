@@ -175,6 +175,7 @@ public class PersonServiceTest {
         person.setName(new PersonName());
         person.setInvolvements(new HashSet<>());
         person.setPersonalInfo(personalInfo);
+        person.setApproveStatus(ApproveStatus.APPROVED);
 
         // when
         var employmentInstitution = new OrganisationUnit();
@@ -215,8 +216,8 @@ public class PersonServiceTest {
         var bioList = Arrays.asList(bio1, bio2);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
-        when(languageTagService.findLanguageTagById(anyInt()))
-            .thenReturn(new LanguageTag("en", "English"));
+        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(
+            new LanguageTag("en", "English"));
 
         // when
         personService.setPersonBiography(bioList, 1);
@@ -235,8 +236,8 @@ public class PersonServiceTest {
         var keywordList = Arrays.asList(keyword1, keyword2);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
-        when(languageTagService.findLanguageTagById(anyInt()))
-            .thenReturn(new LanguageTag("en", "English"));
+        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(
+            new LanguageTag("en", "English"));
 
         // when
         personService.setPersonBiography(keywordList, 1);
@@ -261,6 +262,7 @@ public class PersonServiceTest {
         person.setName(personName1);
         person.setPersonalInfo(personalInfo);
         person.setInvolvements(new HashSet<>());
+        person.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
         when(personNameService.findPersonNameById(2)).thenReturn(personName2);
@@ -370,6 +372,7 @@ public class PersonServiceTest {
         personToUpdate.setPersonalInfo(personalInfo);
         personToUpdate.setName(new PersonName());
         personToUpdate.setInvolvements(new HashSet<>());
+        personToUpdate.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
         when(countryService.findCountryById(anyInt())).thenReturn(new Country());

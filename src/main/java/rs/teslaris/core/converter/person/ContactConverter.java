@@ -4,6 +4,7 @@ import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.model.person.Contact;
 
 public class ContactConverter {
+
     public static ContactDTO toDTO(Contact contact) {
         var dto = new ContactDTO();
         dto.setContactEmail(contact.getContactEmail());

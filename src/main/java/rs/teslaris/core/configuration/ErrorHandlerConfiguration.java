@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.exception.CantEditPersonException;
+import rs.teslaris.core.exception.CantEditPublicationException;
 import rs.teslaris.core.exception.CantRegisterAdminException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
@@ -61,6 +62,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleCantEditPersonException(HttpServletRequest request,
                                               CantEditPersonException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(CantEditPublicationException.class)
+    @ResponseBody
+    ErrorObject handleCantEditPublicationException(HttpServletRequest request,
+                                                   CantEditPublicationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 

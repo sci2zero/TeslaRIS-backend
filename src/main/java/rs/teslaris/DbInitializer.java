@@ -19,6 +19,7 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
@@ -33,6 +34,7 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
@@ -61,6 +63,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final CountryRepository countryRepository;
 
+    private final JournalRepository journalRepository;
+
     private final ResearchAreaRepository researchAreaRepository;
 
     @Override
@@ -74,21 +78,20 @@ public class DbInitializer implements ApplicationRunner {
         var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
         var approvePerson = new Privilege("APPROVE_PERSON");
         var editProofs = new Privilege("EDIT_DOCUMENT_PROOFS");
+        var approvePublication = new Privilege("APPROVE_PUBLICATION");
         var editResearchAreas = new Privilege("EDIT_RESEARCH_AREAS");
-        //      Organisation Units
         var editOrganisationUnit = new Privilege("EDIT_ORGANISATION_UNITS");
-
         var editOURelations = new Privilege("EDIT_OU_RELATIONS");
+
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
-                editResearchAreas,
-                editOURelations));
+                editResearchAreas, approvePublication, editOURelations));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
             new Privilege[] {takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
                 createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
-                editOURelations})));
+                editOURelations, approvePublication,})));
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editProofs})));
@@ -137,6 +140,8 @@ public class DbInitializer implements ApplicationRunner {
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
 
+        var dummyJournal = new Journal();
+        journalRepository.save(dummyJournal);
 
         var dummyOU2 = new OrganisationUnit();
         dummyOU2.setNameAbbreviation("PMF");
