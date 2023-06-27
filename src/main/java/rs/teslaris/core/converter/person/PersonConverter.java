@@ -13,8 +13,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 
-@Deprecated
-public class PersonToPersonDTO {
+public class PersonConverter {
 
     public static PersonResponseDto toDTO(Person person) {
         var otherNames = getPersonOtherNamesDTO(person.getOtherNames());

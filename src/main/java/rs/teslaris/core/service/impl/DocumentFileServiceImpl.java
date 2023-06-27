@@ -59,7 +59,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
     }
 
     @Override
-    public DocumentFile saveNewDocument(DocumentFileDTO documentFile) {
+    public DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index) {
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
@@ -70,8 +70,10 @@ public class DocumentFileServiceImpl implements DocumentFileService {
 
         newDocumentFile = documentFileRepository.save(newDocumentFile);
 
-        parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(),
-            serverFilename, new DocumentFileIndex()); // TODO: REMOVE, only for PoC
+        if (index) {
+            parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(), serverFilename,
+                new DocumentFileIndex());
+        }
 
         return newDocumentFile;
     }
@@ -186,8 +188,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
         documentIndex.setDescriptionSr("");
         documentFile.getDescription().stream()
             .filter(d -> d.getLanguage().getLanguageTag().startsWith("SR")).forEach(
-                d -> documentIndex.setDescriptionSr(
-                    documentIndex.getDescriptionSr() + d.getContent()));
+                d -> documentIndex.setDescriptionSr(documentIndex.getDescriptionSr() + d.getContent()));
 
         documentIndex.setDescriptionOther("");
         documentFile.getDescription().stream()
