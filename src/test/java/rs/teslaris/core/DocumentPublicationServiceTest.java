@@ -3,6 +3,7 @@ package rs.teslaris.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -129,7 +130,7 @@ public class DocumentPublicationServiceTest {
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
-        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class))).thenReturn(
+        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
             documentFile);
 
         // When
@@ -151,7 +152,7 @@ public class DocumentPublicationServiceTest {
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
-        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class))).thenReturn(
+        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
             documentFile);
 
         // When

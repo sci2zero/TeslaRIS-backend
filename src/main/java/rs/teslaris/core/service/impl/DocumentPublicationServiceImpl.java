@@ -62,7 +62,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
                                 Boolean isProof) {
         var document = findDocumentById(documentId);
         documentFiles.forEach(file -> {
-            var documentFile = documentFileService.saveNewDocument(file);
+            var documentFile = documentFileService.saveNewDocument(file, true);
             if (isProof) {
                 document.getProofs().add(documentFile);
             } else {
