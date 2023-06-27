@@ -54,7 +54,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contribution.setInstitutions(new HashSet<>());
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
                 contribution.getInstitutions()
-                    .add(organisationUnitService.findOrganisationalUnitById(institutionId));
+                    .add(organisationUnitService.findOrganisationUnitById(institutionId));
             });
 
             contribution.setContributionDescription(
@@ -81,15 +81,14 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getPersonName().getDateFrom(),
             contributionDTO.getPersonName().getDateTo());
 
-        PostalAddress postalAddress = null;
-        if (contributionDTO.getPostalAddress() != null) {
-            postalAddress = new PostalAddress(
-                countryService.findCountryById(contributionDTO.getPostalAddress().getCountryId()),
+
+        var countryId = contributionDTO.getPostalAddress().getCountryId();
+        var postalAddress =
+            new PostalAddress(countryId != null ? countryService.findCountryById(countryId) : null,
                 multilingualContentService.getMultilingualContent(
                     contributionDTO.getPostalAddress().getStreetAndNumber()),
                 multilingualContentService.getMultilingualContent(
                     contributionDTO.getPostalAddress().getCity()));
-        }
 
         var contact = new Contact(contributionDTO.getContact().getContactEmail(),
             contributionDTO.getContact().getPhoneNumber());

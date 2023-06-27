@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +24,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.converter.person.PersonToPersonDTO;
+import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
@@ -75,6 +83,9 @@ public class PersonServiceTest {
     @Mock
     private PersonIndexRepository personIndexRepository;
 
+    @Mock
+    private ElasticsearchOperations template;
+
     @InjectMocks
     private PersonServiceImpl personService;
 
@@ -117,8 +128,8 @@ public class PersonServiceTest {
 
         when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
 
-        MockedStatic<PersonToPersonDTO> mocked = mockStatic(PersonToPersonDTO.class);
-        mocked.when(() -> PersonToPersonDTO.toDTO(expectedPerson)).thenReturn(expectedResponse);
+        MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class);
+        mocked.when(() -> PersonConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
 
         // when
         var personDto = personService.readPersonWithBasicInfo(1);
@@ -168,7 +179,7 @@ public class PersonServiceTest {
 
         // when
         var employmentInstitution = new OrganisationUnit();
-        when(organisationUnitService.findOrganisationalUnitById(2)).thenReturn(
+        when(organisationUnitService.findOrganisationUnitById(2)).thenReturn(
             employmentInstitution);
         when(personRepository.save(any(Person.class))).thenReturn(person);
 
@@ -403,6 +414,57 @@ public class PersonServiceTest {
         });
 
         // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldFindAll() {
+        // Given
+        var pageable = Pageable.ofSize(10).withPage(0);
+        var expected = new PageImpl<>(List.of(new PersonIndex(), new PersonIndex()));
+
+        when(personIndexRepository.findAll(pageable)).thenReturn(expected);
+
+        // When
+        var actual = personService.findAll(pageable);
+
+        // Then
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void shouldFindPeopleByNameAndEmploymentWhenProperQueryIsGiven() throws Exception {
+        // given
+        var tokens = Arrays.asList("Ivan", "FTN");
+        var pageable = PageRequest.of(0, 10);
+
+        var searchHits = mock(SearchHits.class);
+        when(searchHits.getTotalHits()).thenReturn(2L);
+
+        when(template.search((Query) any(), any(), any())).thenReturn(searchHits);
+
+        // when
+        var result = personService.findPeopleByNameAndEmployment(tokens, pageable);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    void shouldFindPeopleForOrganisationUnitWhenGivenValidId() {
+        // given
+        var employmentInstitutionId = 123;
+        var pageable = PageRequest.of(0, 10);
+
+        when(personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
+            List.of(employmentInstitutionId))).thenReturn(
+            new PageImpl<>(List.of(new PersonIndex())));
+
+        // when
+        var result =
+            personService.findPeopleForOrganisationUnit(employmentInstitutionId, pageable);
+
+        // then
+        assertEquals(result.getTotalElements(), 1L);
     }
 
 }

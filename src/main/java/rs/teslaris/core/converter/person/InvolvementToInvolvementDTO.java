@@ -12,6 +12,7 @@ import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 
+@Deprecated
 public class InvolvementToInvolvementDTO {
 
     public static EducationDTO toDTO(Education education) {

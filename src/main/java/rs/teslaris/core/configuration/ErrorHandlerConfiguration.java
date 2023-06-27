@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.exception.CantEditPersonException;
+import rs.teslaris.core.exception.CantEditPublicationException;
 import rs.teslaris.core.exception.CantRegisterAdminException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.exception.ResearchAreaInUseException;
+import rs.teslaris.core.exception.SelfRelationException;
 import rs.teslaris.core.exception.StorageException;
 import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.exception.WrongPasswordProvidedException;
@@ -55,10 +58,26 @@ public class ErrorHandlerConfiguration {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseBody
+    ErrorObject handleIllegalArgumentException(HttpServletRequest request,
+                                               IllegalArgumentException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(CantEditPersonException.class)
     @ResponseBody
     ErrorObject handleCantEditPersonException(HttpServletRequest request,
                                               CantEditPersonException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(CantEditPublicationException.class)
+    @ResponseBody
+    ErrorObject handleCantEditPublicationException(HttpServletRequest request,
+                                                   CantEditPublicationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
@@ -109,11 +128,25 @@ public class ErrorHandlerConfiguration {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ResearchAreaInUseException.class)
+    @ResponseBody
+    ErrorObject handleResearchAreaInUseException(HttpServletRequest request,
+                                                 ResearchAreaInUseException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(SelfRelationException.class)
+    @ResponseBody
+    ErrorObject handleSelfRelationException(HttpServletRequest request, SelfRelationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(MalformedJwtException.class)
     @ResponseBody
-    ErrorObject handleMalformedJwtException(HttpServletRequest request,
-                                            MalformedJwtException ex) {
+    ErrorObject handleMalformedJwtException(HttpServletRequest request, MalformedJwtException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }

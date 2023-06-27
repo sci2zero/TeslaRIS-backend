@@ -16,7 +16,7 @@ public class MinioClientConfiguration {
 
     @Value("${spring.minio.secret-key}")
     private String minioSecretKey;
-    
+
     @Bean
     public MinioClient minioClient() {
         return MinioClient.builder().endpoint(minioHost).credentials(minioAccessKey, minioSecretKey)

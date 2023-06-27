@@ -4,6 +4,7 @@ import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.service.DocumentPublicationService;
 
@@ -23,25 +25,28 @@ public class DocumentPublicationController {
     private final DocumentPublicationService documentPublicationService;
 
 
-    @PatchMapping("/{documentId}/approval")
+    @PatchMapping("/{publicationId}/approval")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void updateDocumentApprovalStatus(@PathVariable Integer documentId,
+    @PreAuthorize("hasAuthority('APPROVE_DOCUMENT')")
+    void updateDocumentApprovalStatus(@PathVariable Integer publicationId,
                                       @RequestParam Boolean isApproved) {
-        documentPublicationService.updateDocumentApprovalStatus(documentId, isApproved);
+        documentPublicationService.updateDocumentApprovalStatus(publicationId, isApproved);
     }
 
-    @PatchMapping("/{documentId}")
+    @PatchMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void addDocumentFile(@PathVariable Integer documentId,
+    @PublicationEditCheck
+    void addDocumentFile(@PathVariable Integer publicationId,
                          @ModelAttribute @Valid DocumentFileDTO documentFile,
                          @RequestParam Boolean isProof) {
-        documentPublicationService.addDocumentFile(documentId, List.of(documentFile), isProof);
+        documentPublicationService.addDocumentFile(publicationId, List.of(documentFile), isProof);
     }
 
-    @DeleteMapping("/{documentId}/{documentFileId}")
+    @DeleteMapping("/{publicationId}/{documentFileId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void deleteDocumentFile(@PathVariable Integer documentId, @PathVariable Integer documentFileId,
-                            @RequestParam Boolean isProof) {
-        documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
+    @PublicationEditCheck
+    void deleteDocumentFile(@PathVariable Integer publicationId,
+                            @PathVariable Integer documentFileId, @RequestParam Boolean isProof) {
+        documentPublicationService.deleteDocumentFile(publicationId, documentFileId, isProof);
     }
 }
