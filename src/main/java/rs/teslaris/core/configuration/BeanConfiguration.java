@@ -37,5 +37,4 @@ public class BeanConfiguration {
             .expireAfterWrite(5, TimeUnit.SECONDS)
             .build();
     }
-
 }

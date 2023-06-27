@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -268,6 +269,7 @@ public class InvolvementServiceTest {
     public void shouldDeleteInvolvementWhenInvolvementExists() {
         // given
         var involvement = new Involvement();
+        involvement.setProofs(new HashSet<>());
         var person = new Person();
         person.addInvolvement(involvement);
 
@@ -298,7 +300,7 @@ public class InvolvementServiceTest {
         involvement.setProofs(new HashSet<>());
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
-        when(documentFileService.saveNewDocument(any())).thenReturn(new DocumentFile());
+        when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
 
         // when
         involvementService.addInvolvementProofs(

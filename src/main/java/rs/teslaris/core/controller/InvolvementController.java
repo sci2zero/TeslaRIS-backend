@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
-import rs.teslaris.core.converter.person.InvolvementToInvolvementDTO;
+import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
@@ -61,7 +61,7 @@ public class InvolvementController {
     public EducationDTO addEducation(@RequestBody @Valid EducationDTO education,
                                      @PathVariable Integer personId) {
         var newEducation = involvementService.addEducation(personId, education);
-        return InvolvementToInvolvementDTO.toDTO(newEducation);
+        return InvolvementConverter.toDTO(newEducation);
     }
 
     @PostMapping("/membership/{personId}")
@@ -72,7 +72,7 @@ public class InvolvementController {
     public MembershipDTO addMembership(@RequestBody @Valid MembershipDTO membership,
                                        @PathVariable Integer personId) {
         var newMembership = involvementService.addMembership(personId, membership);
-        return InvolvementToInvolvementDTO.toDTO(newMembership);
+        return InvolvementConverter.toDTO(newMembership);
     }
 
     @PostMapping("/employment/{personId}")
@@ -83,7 +83,7 @@ public class InvolvementController {
     public EmploymentDTO addEmployment(@RequestBody @Valid EmploymentDTO employment,
                                        @PathVariable Integer personId) {
         var newEmployment = involvementService.addEmployment(personId, employment);
-        return InvolvementToInvolvementDTO.toDTO(newEmployment);
+        return InvolvementConverter.toDTO(newEmployment);
     }
 
     @PatchMapping(value = "/{involvementId}/{personId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -5,7 +5,7 @@ import java.util.List;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.person.InvolvementToInvolvementDTO;
+import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
@@ -50,7 +50,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     public <T extends Involvement, R> R getInvolvement(Integer involvementId,
                                                        Class<T> involvementClass) {
         var involvement = findInvolvementById(involvementId);
-        return (R) InvolvementToInvolvementDTO.toDTO(involvementClass.cast(involvement));
+        return (R) InvolvementConverter.toDTO(involvementClass.cast(involvement));
     }
 
     @Override
@@ -78,9 +78,8 @@ public class InvolvementServiceImpl implements InvolvementService {
     public Membership addMembership(Integer personId, MembershipDTO membership) {
         var personInvolved = personService.findPersonById(personId);
 
-        var contributorDescription =
-            multilingualContentService.getMultilingualContent(
-                membership.getContributionDescription());
+        var contributorDescription = multilingualContentService.getMultilingualContent(
+            membership.getContributionDescription());
         var role = multilingualContentService.getMultilingualContent(membership.getRole());
 
         var newMembership = new Membership();
@@ -113,7 +112,7 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void addInvolvementProofs(List<DocumentFileDTO> proofs, Integer involvementId) {
         var involvement = findInvolvementById(involvementId);
         proofs.forEach(proof -> {
-            var documentFile = documentFileService.saveNewDocument(proof);
+            var documentFile = documentFileService.saveNewDocument(proof, true);
             involvement.getProofs().add(documentFile);
             involvementRepository.save(involvement);
         });
@@ -157,9 +156,8 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void updateMembership(Integer involvementId, MembershipDTO membership) {
         var membershipToUpdate = (Membership) findInvolvementById(involvementId);
 
-        var contributorDescription =
-            multilingualContentService.getMultilingualContent(
-                membership.getContributionDescription());
+        var contributorDescription = multilingualContentService.getMultilingualContent(
+            membership.getContributionDescription());
         var role = multilingualContentService.getMultilingualContent(membership.getRole());
 
         clearCommonCollections(membershipToUpdate);
@@ -193,13 +191,17 @@ public class InvolvementServiceImpl implements InvolvementService {
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findInvolvementById(involvementId);
         involvementToDelete.getPersonInvolved().removeInvolvement(involvementToDelete);
+
+        involvementToDelete.getProofs()
+            .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
+
         involvementRepository.delete(involvementToDelete);
     }
 
 
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
         var organisationUnit =
-            organisationUnitService.findOrganisationalUnitById(
+            organisationUnitService.findOrganisationUnitById(
                 commonFields.getOrganisationUnitId());
 
         var affiliationStatements = multilingualContentService.getMultilingualContent(
