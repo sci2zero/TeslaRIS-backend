@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
@@ -44,6 +45,7 @@ public class OrganisationUnitController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @Idempotent
     public OrganisationUnitDTO createOrganisationUnit(
         @RequestBody @Valid OrganisationUnitDTORequest organisationUnitDTORequest) {
         var organisationUnit =
