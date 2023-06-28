@@ -1,7 +1,7 @@
 package rs.teslaris.core.converter;
 
 import java.util.ArrayList;
-import rs.teslaris.core.converter.commontypes.MultilingualContentToMultilingualContentDTO;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
@@ -25,16 +25,16 @@ public class JournalPublicationConverter {
                                         JournalPublicationResponseDTO publicationDTO) {
         publicationDTO.setId(publication.getId());
         publicationDTO.setTitle(
-            MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+            MultilingualContentConverter.getMultilingualContentDTO(
                 publication.getTitle()));
         publicationDTO.setSubTitle(
-            MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+            MultilingualContentConverter.getMultilingualContentDTO(
                 publication.getSubTitle()));
         publicationDTO.setDescription(
-            MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+            MultilingualContentConverter.getMultilingualContentDTO(
                 publication.getDescription()));
         publicationDTO.setKeywords(
-            MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+            MultilingualContentConverter.getMultilingualContentDTO(
                 publication.getKeywords()));
 
         setContributions(publication, publicationDTO);
@@ -52,10 +52,10 @@ public class JournalPublicationConverter {
             .filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED)).forEach((c) -> {
                 var contribution = new PersonDocumentContributionDTO();
                 contribution.setContributionDescription(
-                    MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+                    MultilingualContentConverter.getMultilingualContentDTO(
                         c.getContributionDescription()));
                 contribution.setDisplayAffiliationStatement(
-                    MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+                    MultilingualContentConverter.getMultilingualContentDTO(
                         c.getAffiliationStatement().getDisplayAffiliationStatement()));
 
                 contribution.setOrderNumber(c.getOrderNumber());
@@ -90,7 +90,7 @@ public class JournalPublicationConverter {
         publicationDTO.setIssue(publication.getIssue());
         publicationDTO.setJournalId(publication.getJournal().getId());
         publicationDTO.setJournalName(
-            MultilingualContentToMultilingualContentDTO.getMultilingualContentDTO(
+            MultilingualContentConverter.getMultilingualContentDTO(
                 publication.getJournal().getTitle()));
     }
 }

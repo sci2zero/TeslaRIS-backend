@@ -54,7 +54,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contribution.setInstitutions(new HashSet<>());
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
                 contribution.getInstitutions()
-                    .add(organisationUnitService.findOrganisationalUnitById(institutionId));
+                    .add(organisationUnitService.findOrganisationUnitById(institutionId));
             });
 
             contribution.setContributionDescription(

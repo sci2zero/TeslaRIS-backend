@@ -204,7 +204,7 @@ public class UserServiceImpl implements UserService {
 
         var person = personService.findPersonById(registrationRequest.getPersonId());
 
-        var organisationalUnit = organisationUnitService.findOrganisationalUnitById(
+        var organisationalUnit = organisationUnitService.findOrganisationUnitById(
             registrationRequest.getOrganisationalUnitId());
 
         var newUser =
@@ -236,7 +236,7 @@ public class UserServiceImpl implements UserService {
 
         var person = personService.findPersonById(userUpdateRequest.getPersonId());
 
-        var organisationalUnit = organisationUnitService.findOrganisationalUnitById(
+        var organisationalUnit = organisationUnitService.findOrganisationUnitById(
             userUpdateRequest.getOrganisationalUnitId());
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
