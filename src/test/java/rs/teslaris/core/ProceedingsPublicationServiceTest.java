@@ -1,5 +1,8 @@
 package rs.teslaris.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -12,16 +15,27 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
+import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.DocumentFileService;
@@ -111,67 +125,68 @@ public class ProceedingsPublicationServiceTest {
             eq(publicationToUpdate), eq(publicationDTO));
     }
 
-//    @ParameterizedTest
-//    @EnumSource(value = ApproveStatus.class, names = {"REQUESTED", "DECLINED"})
-//    public void shouldNotReadUnapprovedPublications(ApproveStatus status) {
-//        // Given
-//        var publicationId = 1;
-//        var publication = new ProceedingsPublication();
-//        publication.setApproveStatus(status);
-//
-//        when(documentRepository.findById(publicationId)).thenReturn(
-//            Optional.of(publication));
-//
-//        // When
-//        assertThrows(NotFoundException.class,
-//            () -> proceedingsPublicationService.readProceedingsPublicationById(publicationId));
-//
-//        // Then (NotFoundException should be thrown)
-//    }
-//
-//    @ParameterizedTest
-//    @MethodSource("argumentSources")
-//    public void shouldReadProceedingsPublication(DocumentContributionType type, Boolean isMainAuthor,
-//                                             Boolean isCorrespondingAuthor, Country country) {
-//        // Given
-//        var publicationId = 1;
-//        var publication = new ProceedingsPublication();
-//        publication.setTitle(new HashSet<>());
-//        publication.setSubTitle(new HashSet<>());
-//        publication.setDescription(new HashSet<>());
-//        publication.setKeywords(new HashSet<>());
-//        publication.setApproveStatus(ApproveStatus.APPROVED);
-//
-//        var contribution = new PersonDocumentContribution();
-//        contribution.setContributionDescription(new HashSet<>());
-//        contribution.setInstitutions(new HashSet<>());
-//        contribution.setContributionType(type);
-//        contribution.setMainContributor(isMainAuthor);
-//        contribution.setCorrespondingContributor(isCorrespondingAuthor);
-//        contribution.setApproveStatus(ApproveStatus.APPROVED);
-//        var affiliationStatement = new AffiliationStatement();
-//        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
-//        affiliationStatement.setContact(new Contact());
-//        affiliationStatement.setDisplayPersonName(new PersonName());
-//        affiliationStatement.setPostalAddress(
-//            new PostalAddress(country, new HashSet<>(), new HashSet<>()));
-//        contribution.setAffiliationStatement(affiliationStatement);
-//        publication.setContributors(Set.of(contribution));
-//
-//        publication.setUris(new HashSet<>());
-//        var proceedings = new Proceedings();
-//        proceedings.setTitle(new HashSet<>());
-//        publication.setProceedings(proceedings);
-//
-//        when(documentRepository.findById(publicationId)).thenReturn(
-//            Optional.of(publication));
-//
-//        // When
-//        var result = ProceedingsPublicationService.readProceedingsPublicationById(publicationId);
-//
-//        // Then
-//        verify(documentRepository).findById(eq(publicationId));
-//        assertNotNull(result);
-//        assertEquals(1, result.getContributions().size());
-//    }
+    @ParameterizedTest
+    @EnumSource(value = ApproveStatus.class, names = {"REQUESTED", "DECLINED"})
+    public void shouldNotReadUnapprovedPublications(ApproveStatus status) {
+        // Given
+        var publicationId = 1;
+        var publication = new ProceedingsPublication();
+        publication.setApproveStatus(status);
+
+        when(documentRepository.findById(publicationId)).thenReturn(
+            Optional.of(publication));
+
+        // When
+        assertThrows(NotFoundException.class,
+            () -> proceedingsPublicationService.readProceedingsPublicationById(publicationId));
+
+        // Then (NotFoundException should be thrown)
+    }
+
+    @ParameterizedTest
+    @MethodSource("argumentSources")
+    public void shouldReadProceedingsPublication(DocumentContributionType type,
+                                                 Boolean isMainAuthor,
+                                                 Boolean isCorrespondingAuthor, Country country) {
+        // Given
+        var publicationId = 1;
+        var publication = new ProceedingsPublication();
+        publication.setTitle(new HashSet<>());
+        publication.setSubTitle(new HashSet<>());
+        publication.setDescription(new HashSet<>());
+        publication.setKeywords(new HashSet<>());
+        publication.setApproveStatus(ApproveStatus.APPROVED);
+
+        var contribution = new PersonDocumentContribution();
+        contribution.setContributionDescription(new HashSet<>());
+        contribution.setInstitutions(new HashSet<>());
+        contribution.setContributionType(type);
+        contribution.setMainContributor(isMainAuthor);
+        contribution.setCorrespondingContributor(isCorrespondingAuthor);
+        contribution.setApproveStatus(ApproveStatus.APPROVED);
+        var affiliationStatement = new AffiliationStatement();
+        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
+        affiliationStatement.setContact(new Contact());
+        affiliationStatement.setDisplayPersonName(new PersonName());
+        affiliationStatement.setPostalAddress(
+            new PostalAddress(country, new HashSet<>(), new HashSet<>()));
+        contribution.setAffiliationStatement(affiliationStatement);
+        publication.setContributors(Set.of(contribution));
+
+        publication.setUris(new HashSet<>());
+        var proceedings = new Proceedings();
+        proceedings.setId(1);
+        publication.setProceedings(proceedings);
+
+        when(documentRepository.findById(publicationId)).thenReturn(
+            Optional.of(publication));
+
+        // When
+        var result = proceedingsPublicationService.readProceedingsPublicationById(publicationId);
+
+        // Then
+        verify(documentRepository).findById(eq(publicationId));
+        assertNotNull(result);
+        assertEquals(1, result.getContributions().size());
+    }
 }

@@ -3,7 +3,9 @@ package rs.teslaris.core.service.impl;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -20,6 +22,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     private final ProceedingsRepository proceedingsRepository;
 
+
     @Autowired
     public ProceedingsPublicationServiceImpl(
         DocumentRepository documentRepository,
@@ -30,6 +33,15 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         super(documentRepository, documentFileService, multilingualContentService,
             personContributionService);
         this.proceedingsRepository = proceedingsRepository;
+    }
+
+    @Override
+    public ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId) {
+        var publication = (ProceedingsPublication) findDocumentById(proceedingsId);
+        if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+        return ProceedingsPublicationConverter.toDTO(publication);
     }
 
     @Override

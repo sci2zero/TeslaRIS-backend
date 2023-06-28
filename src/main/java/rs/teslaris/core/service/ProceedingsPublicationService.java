@@ -7,6 +7,8 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 @Service
 public interface ProceedingsPublicationService {
 
+    ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId);
+
     ProceedingsPublication createProceedingsPublication(
         ProceedingsPublicationDTO proceedingsPublicationDTO);
 

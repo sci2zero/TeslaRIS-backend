@@ -19,7 +19,7 @@ public class DocumentFileStorageConfiguration {
     @Value("${document.file.storage}")
     private String implementation;
 
-    
+
     @Bean
     public FileService fileService() {
         switch (implementation) {
