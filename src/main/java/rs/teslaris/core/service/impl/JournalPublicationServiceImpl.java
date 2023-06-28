@@ -3,7 +3,7 @@ package rs.teslaris.core.service.impl;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.JournalPublicationConverter;
+import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.exception.NotFoundException;

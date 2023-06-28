@@ -64,12 +64,6 @@ public class JournalPublicationServiceTest {
     @InjectMocks
     private JournalPublicationServiceImpl journalPublicationService;
 
-
-    @BeforeEach
-    public void setUp() {
-        ReflectionTestUtils.setField(journalPublicationService, "documentApprovedByDefault", true);
-    }
-
     private static Stream<Arguments> argumentSources() {
         var country = new Country();
         country.setId(1);
@@ -80,6 +74,11 @@ public class JournalPublicationServiceTest {
             Arguments.of(DocumentContributionType.REVIEWER, false, true, null),
             Arguments.of(DocumentContributionType.ADVISOR, false, false, country)
         );
+    }
+
+    @BeforeEach
+    public void setUp() {
+        ReflectionTestUtils.setField(journalPublicationService, "documentApprovedByDefault", true);
     }
 
     @Test

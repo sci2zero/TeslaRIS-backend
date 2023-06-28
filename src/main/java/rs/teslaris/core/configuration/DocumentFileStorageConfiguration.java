@@ -12,14 +12,14 @@ import rs.teslaris.core.service.impl.FileServiceMinioImpl;
 @RequiredArgsConstructor
 public class DocumentFileStorageConfiguration {
 
-    @Value("${document.file.storage}")
-    private String implementation;
-
     private final FileServiceImpl filesystemImpl;
 
     private final FileServiceMinioImpl minioImpl;
 
+    @Value("${document.file.storage}")
+    private String implementation;
 
+    
     @Bean
     public FileService fileService() {
         switch (implementation) {

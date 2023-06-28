@@ -2,7 +2,7 @@ package rs.teslaris.core.converter.person;
 
 import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.converter.document.DocumentFileToDocumentFileResponseDTO;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
@@ -73,7 +73,7 @@ public class InvolvementConverter {
         dto.setDateFrom(involvement.getDateFrom());
         dto.setDateTo(involvement.getDateTo());
         dto.setProofs(involvement.getProofs().stream()
-            .map(DocumentFileToDocumentFileResponseDTO::toDTO).collect(
+            .map(DocumentFileConverter::toDTO).collect(
                 Collectors.toList()));
         dto.setInvolvementType(involvement.getInvolvementType());
         dto.setAffiliationStatement(affiliationStatements);

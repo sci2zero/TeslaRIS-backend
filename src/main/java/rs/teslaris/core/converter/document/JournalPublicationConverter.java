@@ -1,4 +1,4 @@
-package rs.teslaris.core.converter;
+package rs.teslaris.core.converter.document;
 
 import java.util.ArrayList;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;

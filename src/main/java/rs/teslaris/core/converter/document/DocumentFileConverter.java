@@ -4,7 +4,7 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.model.document.DocumentFile;
 
-public class DocumentFileToDocumentFileResponseDTO {
+public class DocumentFileConverter {
 
     public static DocumentFileResponseDTO toDTO(DocumentFile documentFile) {
         return new DocumentFileResponseDTO(documentFile.getId(), documentFile.getFilename(),
