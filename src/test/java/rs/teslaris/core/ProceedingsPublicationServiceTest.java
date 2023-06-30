@@ -37,10 +37,10 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.PersonContributionService;
+import rs.teslaris.core.service.ProceedingsService;
 import rs.teslaris.core.service.impl.ProceedingsPublicationServiceImpl;
 
 @SpringBootTest
@@ -56,7 +56,7 @@ public class ProceedingsPublicationServiceTest {
     private MultilingualContentService multilingualContentService;
 
     @Mock
-    private ProceedingsRepository proceedingsRepository;
+    private ProceedingsService proceedingsService;
 
     @Mock
     private PersonContributionService personContributionService;
@@ -84,11 +84,14 @@ public class ProceedingsPublicationServiceTest {
     public void shouldCreateProceedingsPublication() {
         // Given
         var publicationDTO = new ProceedingsPublicationDTO();
+        publicationDTO.setProceedingsId(1);
         var document = new ProceedingsPublication();
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
         when(documentRepository.save(any())).thenReturn(document);
+        when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
+            new Proceedings());
 
         // When
         var result = proceedingsPublicationService.createProceedingsPublication(publicationDTO);
@@ -105,6 +108,7 @@ public class ProceedingsPublicationServiceTest {
         // Given
         var publicationId = 1;
         var publicationDTO = new ProceedingsPublicationDTO();
+        publicationDTO.setProceedingsId(1);
         var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setTitle(new HashSet<>());
         publicationToUpdate.setSubTitle(new HashSet<>());
@@ -115,6 +119,8 @@ public class ProceedingsPublicationServiceTest {
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
+        when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
+            new Proceedings());
 
         // When
         proceedingsPublicationService.editProceedingsPublication(publicationId, publicationDTO);
@@ -133,8 +139,7 @@ public class ProceedingsPublicationServiceTest {
         var publication = new ProceedingsPublication();
         publication.setApproveStatus(status);
 
-        when(documentRepository.findById(publicationId)).thenReturn(
-            Optional.of(publication));
+        when(documentRepository.findById(publicationId)).thenReturn(Optional.of(publication));
 
         // When
         assertThrows(NotFoundException.class,
@@ -178,8 +183,7 @@ public class ProceedingsPublicationServiceTest {
         proceedings.setId(1);
         publication.setProceedings(proceedings);
 
-        when(documentRepository.findById(publicationId)).thenReturn(
-            Optional.of(publication));
+        when(documentRepository.findById(publicationId)).thenReturn(Optional.of(publication));
 
         // When
         var result = proceedingsPublicationService.readProceedingsPublicationById(publicationId);
