@@ -9,18 +9,18 @@ import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.PersonContributionService;
 import rs.teslaris.core.service.ProceedingsPublicationService;
+import rs.teslaris.core.service.ProceedingsService;
 
 @Service
 @Transactional
 public class ProceedingsPublicationServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsPublicationService {
 
-    private final ProceedingsRepository proceedingsRepository;
+    private final ProceedingsService proceedingsService;
 
 
     @Autowired
@@ -29,10 +29,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         DocumentFileService documentFileService,
         MultilingualContentService multilingualContentService,
         PersonContributionService personContributionService,
-        ProceedingsRepository proceedingsRepository) {
+        ProceedingsService proceedingsService) {
         super(documentRepository, documentFileService, multilingualContentService,
             personContributionService);
-        this.proceedingsRepository = proceedingsRepository;
+        this.proceedingsService = proceedingsService;
     }
 
     @Override
@@ -87,6 +87,6 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         publication.setNumberOfPages(publicationDTO.getNumberOfPages());
         publication.setArticleNumber(publicationDTO.getArticleNumber());
         publication.setProceedings(
-            proceedingsRepository.getReferenceById(publicationDTO.getProceedingsId()));
+            proceedingsService.findProceedingsById(publicationDTO.getProceedingsId()));
     }
 }
