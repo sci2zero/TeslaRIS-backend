@@ -10,6 +10,7 @@ import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.JournalPublicationService;
 import rs.teslaris.core.service.JournalService;
@@ -23,15 +24,20 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     private final JournalService journalService;
 
+    private final JournalPublicationRepository journalPublicationRepository;
+
+
     @Autowired
     public JournalPublicationServiceImpl(DocumentRepository documentRepository,
                                          DocumentFileService documentFileService,
+                                         PersonContributionService personContributionService,
                                          MultilingualContentService multilingualContentService,
                                          JournalService journalService,
-                                         PersonContributionService personContributionService) {
-        super(documentRepository, documentFileService, multilingualContentService,
+                                         JournalPublicationRepository journalPublicationRepository) {
+        super(multilingualContentService, documentRepository, documentFileService,
             personContributionService);
         this.journalService = journalService;
+        this.journalPublicationRepository = journalPublicationRepository;
     }
 
     @Override
@@ -53,7 +59,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setApproveStatus(
             documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
 
-        return documentRepository.save(publication);
+        return journalPublicationRepository.save(publication);
     }
 
     @Override
@@ -66,6 +72,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         setCommonFields(publicationToUpdate, publicationDTO);
         setJournalPublicationRelatedFields(publicationToUpdate, publicationDTO);
+
+        journalPublicationRepository.save(publicationToUpdate);
     }
 
     @Override
@@ -73,7 +81,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         var publicationToDelete = (JournalPublication) findDocumentById(journalPublicationId);
 
         deleteProofsAndFileItems(publicationToDelete);
-        documentRepository.delete(publicationToDelete);
+        journalPublicationRepository.delete(publicationToDelete);
     }
 
     private void setJournalPublicationRelatedFields(JournalPublication publication,

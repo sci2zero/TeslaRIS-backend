@@ -1,7 +1,7 @@
 package rs.teslaris.core.service.impl;
 
 import java.util.HashSet;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.exception.NotFoundException;
@@ -18,6 +18,7 @@ import rs.teslaris.core.service.ProceedingsService;
 import rs.teslaris.core.service.PublisherService;
 
 @Service
+@Transactional
 public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsService {
 
@@ -32,16 +33,15 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     private final PublisherService publisherService;
 
 
-    @Autowired
-    public ProceedingsServiceImpl(DocumentRepository documentRepository,
+    public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
+                                  DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
-                                  MultilingualContentService multilingualContentService,
                                   PersonContributionService personContributionService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
                                   JournalService journalService, EventService eventService,
                                   PublisherService publisherService) {
-        super(documentRepository, documentFileService, multilingualContentService,
+        super(multilingualContentService, documentRepository, documentFileService,
             personContributionService);
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
@@ -49,6 +49,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.eventService = eventService;
         this.publisherService = publisherService;
     }
+
 
     @Override
     public Proceedings findProceedingsById(Integer proceedingsId) {
@@ -76,6 +77,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         setCommonFields(proceedingsToUpdate, proceedingsDTO);
         setProceedingsRelatedFields(proceedingsToUpdate, proceedingsDTO);
+
+        proceedingsRepository.save(proceedingsToUpdate);
     }
 
     @Override

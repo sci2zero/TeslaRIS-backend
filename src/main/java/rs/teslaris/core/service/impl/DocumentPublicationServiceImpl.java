@@ -27,14 +27,10 @@ import rs.teslaris.core.service.PersonContributionService;
 @Transactional
 public class DocumentPublicationServiceImpl implements DocumentPublicationService {
 
-    protected final DocumentRepository documentRepository;
-
-    protected final DocumentFileService documentFileService;
-
     protected final MultilingualContentService multilingualContentService;
-
+    private final DocumentRepository documentRepository;
+    private final DocumentFileService documentFileService;
     private final PersonContributionService personContributionService;
-
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
 

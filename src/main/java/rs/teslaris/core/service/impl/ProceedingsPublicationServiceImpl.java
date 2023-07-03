@@ -9,6 +9,7 @@ import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.PersonContributionService;
@@ -22,17 +23,20 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     private final ProceedingsService proceedingsService;
 
+    private final ProceedingsPublicationRepository proceedingsPublicationRepository;
+
 
     @Autowired
-    public ProceedingsPublicationServiceImpl(
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        MultilingualContentService multilingualContentService,
-        PersonContributionService personContributionService,
-        ProceedingsService proceedingsService) {
-        super(documentRepository, documentFileService, multilingualContentService,
+    public ProceedingsPublicationServiceImpl(DocumentRepository documentRepository,
+                                             DocumentFileService documentFileService,
+                                             MultilingualContentService multilingualContentService,
+                                             PersonContributionService personContributionService,
+                                             ProceedingsService proceedingsService,
+                                             ProceedingsPublicationRepository proceedingsPublicationRepository) {
+        super(multilingualContentService, documentRepository, documentFileService,
             personContributionService);
         this.proceedingsService = proceedingsService;
+        this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }
 
     @Override
@@ -55,7 +59,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         publication.setApproveStatus(
             documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
 
-        return documentRepository.save(publication);
+        return proceedingsPublicationRepository.save(publication);
     }
 
     @Override
@@ -68,6 +72,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         setCommonFields(publicationToUpdate, publicationDTO);
         setProceedingsPublicationRelatedFields(publicationToUpdate, publicationDTO);
+
+        proceedingsPublicationRepository.save(publicationToUpdate);
     }
 
     @Override
@@ -76,7 +82,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             (ProceedingsPublication) findDocumentById(proceedingsPublicationId);
 
         deleteProofsAndFileItems(publicationToDelete);
-        documentRepository.delete(publicationToDelete);
+        proceedingsPublicationRepository.delete(publicationToDelete);
     }
 
     private void setProceedingsPublicationRelatedFields(ProceedingsPublication publication,

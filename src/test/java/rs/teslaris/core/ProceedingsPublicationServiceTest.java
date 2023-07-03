@@ -37,6 +37,7 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.PersonContributionService;
@@ -60,6 +61,9 @@ public class ProceedingsPublicationServiceTest {
 
     @Mock
     private PersonContributionService personContributionService;
+
+    @Mock
+    private ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     @InjectMocks
     private ProceedingsPublicationServiceImpl proceedingsPublicationService;
@@ -100,7 +104,7 @@ public class ProceedingsPublicationServiceTest {
         verify(multilingualContentService, times(4)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(publicationDTO));
-        verify(documentRepository).save(eq(document));
+        verify(proceedingsPublicationRepository).save(eq(document));
     }
 
     @Test
