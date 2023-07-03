@@ -6,4 +6,5 @@ import rs.teslaris.core.model.person.Membership;
 
 @Repository
 public interface MembershipRepository extends JpaRepository<Membership, Integer> {
+
 }

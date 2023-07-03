@@ -48,6 +48,13 @@ jobs:
                     xpack.security.enabled: false
                 ports:
                     - 9200:9200
+            minio:
+                image: minio/minio
+                env:
+                    MINIO_ACCESS_KEY: minio-access-key
+                    MINIO_SECRET_KEY: minio-secret-key
+                ports:
+                    - 9000:9000
 
         steps:
             - uses: actions/checkout@v3

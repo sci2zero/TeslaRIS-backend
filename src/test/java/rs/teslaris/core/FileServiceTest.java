@@ -42,7 +42,7 @@ public class FileServiceTest {
 
     @Test
     @Order(1)
-    public void testStoreNonEmptyFile() {
+    public void ShouldStoreNonEmptyFile() {
         // given
         var file = createMockMultipartFile("test.txt", "Test file content");
         var serverFilename = "file1";
@@ -55,7 +55,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testStoreEmptyFile() {
+    public void ShouldThrowExceptionWhenStoringEmptyFile() {
         // given
         var file = createMockMultipartFile("empty.txt", "");
         var serverFilename = "file2";
@@ -67,7 +67,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testStoreFileOutsideCurrentDirectory() {
+    public void ShouldThrowExceptionWhenStoringFileOutsideCurrentDirectory() {
         // given
         var file = createMockMultipartFile("test.txt", "Test file content");
         var serverFilename = "../file3";
@@ -80,7 +80,7 @@ public class FileServiceTest {
 
     @Test
     @Order(2)
-    public void testLoadExistingReadableResource() {
+    public void ShouldLoadExistingReadableResource() {
         // given
         var filename = "file1.txt";
 
@@ -94,17 +94,19 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testLoadNonExistingResource() {
+    public void ShouldThrowExceptionWhenLoadingNonExistingResource() {
         // given
         var filename = "nonExistingFile.txt";
 
         // when
         assertThrows(StorageException.class, () -> fileService.loadAsResource(filename));
+
+        // then (StorageException should be thrown)
     }
 
     @Test
     @Order(3)
-    public void testDeleteFile() throws IOException {
+    public void ShouldDeleteFile() throws IOException {
         // given
         var serverFilename = "file1.txt";
         var file = new File(Paths.get(testRootPath, serverFilename).toUri());
@@ -117,7 +119,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testDeleteFileFailure() throws IOException {
+    public void ShouldThrowExceptionWhenDeleteFileDoesNotExist() throws IOException {
         // given
         var serverFilename = "nonExistingFile.txt";
 

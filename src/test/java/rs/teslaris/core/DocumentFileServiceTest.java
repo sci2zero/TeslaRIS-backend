@@ -82,7 +82,7 @@ public class DocumentFileServiceTest {
         when(documentFileRepository.save(any())).thenReturn(doc);
 
         // when
-        var actual = documentFileService.saveNewDocument(dto);
+        var actual = documentFileService.saveNewDocument(dto, true);
 
         // then
         assertEquals(doc.getFilename(), actual.getFilename());
