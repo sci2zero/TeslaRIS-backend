@@ -19,7 +19,9 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
@@ -34,7 +36,9 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
@@ -66,6 +70,10 @@ public class DbInitializer implements ApplicationRunner {
     private final JournalRepository journalRepository;
 
     private final ResearchAreaRepository researchAreaRepository;
+
+    private final ProceedingsRepository proceedingsRepository;
+
+    private final ConferenceRepository conferenceRepository;
 
 
     @Override
@@ -159,5 +167,15 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
             null, null);
         researchAreaRepository.save(researchArea1);
+
+        var conferenceEvent1 = new Conference();
+        conferenceRepository.save(conferenceEvent1);
+        conferenceEvent1.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija", 1)));
+
+        var proceedings1 = new Proceedings();
+        proceedings1.setEISBN("MOCK_eISBN");
+        proceedings1.setApproveStatus(ApproveStatus.APPROVED);
+        proceedings1.setEvent(conferenceEvent1);
+        proceedingsRepository.save(proceedings1);
     }
 }

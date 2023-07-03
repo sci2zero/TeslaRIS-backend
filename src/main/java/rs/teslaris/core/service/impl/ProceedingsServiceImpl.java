@@ -3,8 +3,11 @@ package rs.teslaris.core.service.impl;
 import java.util.HashSet;
 import javax.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -50,6 +53,15 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.publisherService = publisherService;
     }
 
+
+    @Override
+    public ProceedingsResponseDTO readProceedingsById(Integer proceedingsId) {
+        var proceedings = findProceedingsById(proceedingsId);
+        if (!proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Proceedings with given ID does not exist.");
+        }
+        return ProceedingsConverter.toDTO(proceedings);
+    }
 
     @Override
     public Proceedings findProceedingsById(Integer proceedingsId) {
