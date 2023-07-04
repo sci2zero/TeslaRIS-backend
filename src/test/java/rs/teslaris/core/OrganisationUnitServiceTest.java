@@ -145,7 +145,7 @@ public class OrganisationUnitServiceTest {
     public void shouldReturnOrganisationUnitsRelationWhenItExists() {
         // given
         var expected = new OrganisationUnitsRelation();
-        when(organisationUnitsRelationRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expected));
 
         // when
         var result = organisationUnitService.findOrganisationUnitsRelationById(1);
@@ -157,7 +157,7 @@ public class OrganisationUnitServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenOrganisationUnitsRelationDoesNotExist() {
         // given
-        when(organisationUnitsRelationRepository.findById(1)).thenReturn(Optional.empty());
+        when(organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,
@@ -220,7 +220,7 @@ public class OrganisationUnitServiceTest {
         var approve = true;
 
         var relationToApprove = Mockito.mock(OrganisationUnitsRelation.class);
-        when(organisationUnitsRelationRepository.findById(relationId)).thenReturn(
+        when(organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(relationId)).thenReturn(
             Optional.of(relationToApprove));
 
         // when
@@ -277,7 +277,7 @@ public class OrganisationUnitServiceTest {
         relation.setSourceAffiliationStatement(new HashSet<>());
         relation.setTargetAffiliationStatement(new HashSet<>());
 
-        when(organisationUnitsRelationRepository.findById(relationId)).thenReturn(
+        when(organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(relationId)).thenReturn(
             Optional.of(relation));
         when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
@@ -295,7 +295,7 @@ public class OrganisationUnitServiceTest {
         var relation = new OrganisationUnitsRelation();
         relation.setProofs(new HashSet<>());
 
-        when(organisationUnitsRelationRepository.findById(1)).thenReturn(Optional.of(relation));
+        when(organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(relation));
         when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
 
         // when
@@ -314,7 +314,7 @@ public class OrganisationUnitServiceTest {
         var relation = new OrganisationUnitsRelation();
         relation.setProofs(new HashSet<>(Set.of(df)));
 
-        when(organisationUnitsRelationRepository.findById(1)).thenReturn(Optional.of(relation));
+        when(organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(relation));
         when(documentFileService.findDocumentFileById(1)).thenReturn(df);
 
         // when
@@ -443,8 +443,8 @@ public class OrganisationUnitServiceTest {
         Integer organisationUnitId = 1;
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setId(organisationUnitId);
-        when(organisationUnitRepository.getReferenceById(organisationUnitId)).thenReturn(
-            organisationUnit);
+        when(organisationUnitRepository.findByIdAndDeletedIsFalse(organisationUnitId)).thenReturn(
+            Optional.of(organisationUnit));
 
         organisationUnitService.delete(organisationUnitId);
 
@@ -454,7 +454,7 @@ public class OrganisationUnitServiceTest {
     @Test
     public void shouldIgnoreNullOrganisationalUnit() {
         Integer organisationUnitId = 1;
-        when(organisationUnitRepository.getReferenceById(organisationUnitId)).thenReturn(null);
+        when(organisationUnitRepository.findByIdAndDeletedIsFalse(organisationUnitId)).thenReturn(null);
 
         organisationUnitService.delete(organisationUnitId);
 

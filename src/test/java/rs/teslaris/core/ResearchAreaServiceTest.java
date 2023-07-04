@@ -56,7 +56,7 @@ public class ResearchAreaServiceTest {
 
         var researchAreasPage = new PageImpl<>(List.of(researchArea1, researchArea2));
 
-        when(researchAreaRepository.findAll(pageable)).thenReturn(researchAreasPage);
+        when(researchAreaRepository.findAllByDeletedIsFalse(pageable)).thenReturn(researchAreasPage);
 
         // when
         var resultPage = researchAreaService.findAll(pageable);
@@ -145,6 +145,7 @@ public class ResearchAreaServiceTest {
         // given
         var researchAreaId = 1;
 
+        when(researchAreaRepository.findByIdAndDeletedIsFalse(researchAreaId)).thenReturn(null);
         when(researchAreaRepository.isSuperArea(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedBySomeone(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedInMonograph(researchAreaId)).thenReturn(false);

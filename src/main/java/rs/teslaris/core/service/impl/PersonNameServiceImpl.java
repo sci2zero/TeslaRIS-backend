@@ -24,7 +24,7 @@ public class PersonNameServiceImpl extends JPAServiceImpl<PersonName> implements
     @Override
     @Deprecated(forRemoval = true)
     public PersonName findPersonNameById(Integer personNameId) {
-        return personNameRepository.findById(personNameId)
+        return personNameRepository.findByIdAndDeletedIsFalse(personNameId)
             .orElseThrow(() -> new NotFoundException("Person name with given ID does not exist."));
     }
 

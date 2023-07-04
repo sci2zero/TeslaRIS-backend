@@ -27,7 +27,7 @@ public class JournalServiceTest {
     public void shouldReturnJournalWhenItExists() {
         // given
         var expected = new Journal();
-        when(journalRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(journalRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expected));
 
         // when
         var result = journalService.findOne(1);
@@ -39,7 +39,7 @@ public class JournalServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenJournalDoesNotExist() {
         // given
-        when(journalRepository.findById(1)).thenReturn(Optional.empty());
+        when(journalRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> journalService.findOne(1));

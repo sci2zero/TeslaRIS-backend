@@ -33,7 +33,7 @@ public class PersonNameServiceTest {
     public void shouldReturnPersonNameWhenItExists() {
         // given
         var expected = new PersonName();
-        when(personNameRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(personNameRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expected));
 
         // when
         var result = personNameService.findOne(1);
@@ -45,7 +45,7 @@ public class PersonNameServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenPersonNameDoesNotExist() {
         // given
-        when(personNameRepository.findById(1)).thenReturn(Optional.empty());
+        when(personNameRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,
@@ -65,8 +65,8 @@ public class PersonNameServiceTest {
         personName2.setId(id2);
         var personNameIds = Arrays.asList(id1, id2);
 
-        when(personNameRepository.findById(id1)).thenReturn(Optional.of(personName1));
-        when(personNameRepository.findById(id2)).thenReturn(Optional.of(personName2));
+        when(personNameRepository.findByIdAndDeletedIsFalse(id1)).thenReturn(Optional.of(personName1));
+        when(personNameRepository.findByIdAndDeletedIsFalse(id2)).thenReturn(Optional.of(personName2));
 
         // when
         personNameService.deletePersonNamesWithIds(personNameIds);
@@ -95,8 +95,8 @@ public class PersonNameServiceTest {
         Integer id2 = 2;
         var personNameIds = Arrays.asList(id1, id2);
 
-        when(personNameRepository.findById(id1)).thenReturn(Optional.empty());
-        when(personNameRepository.findById(id2)).thenReturn(Optional.empty());
+        when(personNameRepository.findByIdAndDeletedIsFalse(id1)).thenReturn(Optional.empty());
+        when(personNameRepository.findByIdAndDeletedIsFalse(id2)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,

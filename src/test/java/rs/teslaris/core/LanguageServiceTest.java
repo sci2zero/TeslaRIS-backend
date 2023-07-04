@@ -28,7 +28,7 @@ public class LanguageServiceTest {
         var expectedLanguage = new Language();
         expectedLanguage.setLanguageCode("ENG");
 
-        when(languageRepository.findById(1)).thenReturn(Optional.of(expectedLanguage));
+        when(languageRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expectedLanguage));
 
         // when
         var actualLanguage = languageService.findOne(1);
@@ -40,7 +40,7 @@ public class LanguageServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenLanguageDoesNotExist() {
         // given
-        when(languageRepository.findById(1)).thenReturn(Optional.empty());
+        when(languageRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> languageService.findOne(1));

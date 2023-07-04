@@ -78,7 +78,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id) {
-        return organisationUnitsRelationRepository.findById(id).orElseThrow(
+        return organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(id).orElseThrow(
             () -> new NotFoundException(
                 "Organisation units relation with given ID does not exist."));
     }
