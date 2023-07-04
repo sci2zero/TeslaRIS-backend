@@ -87,7 +87,7 @@ public class OrganisationUnitServiceTest {
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setId(id);
 
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(id))
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(id))
             .thenReturn(Optional.of(organisationUnit));
 
         // when
@@ -95,7 +95,7 @@ public class OrganisationUnitServiceTest {
 
         // then
         assertEquals(organisationUnit, result);
-        verify(organisationUnitRepository, times(1)).findByIdWithLangDataAndResearchArea(id);
+        verify(organisationUnitRepository, times(1)).findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(id);
 
     }
 
@@ -105,13 +105,13 @@ public class OrganisationUnitServiceTest {
         Integer id = 1;
 
         // when
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(id))
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(id))
             .thenReturn(Optional.empty());
 
         // then (NotFoundException should be thrown)
         assertThrows(NotFoundException.class,
             () -> organisationUnitService.findOrganisationUnitById(id));
-        verify(organisationUnitRepository, times(1)).findByIdWithLangDataAndResearchArea(id);
+        verify(organisationUnitRepository, times(1)).findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(id);
 
     }
 
@@ -241,7 +241,7 @@ public class OrganisationUnitServiceTest {
         var newRelation = Mockito.mock(OrganisationUnitsRelation.class);
         when(organisationUnitsRelationRepository.save(
             any(OrganisationUnitsRelation.class))).thenReturn(newRelation);
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
 
         // when
@@ -279,7 +279,7 @@ public class OrganisationUnitServiceTest {
 
         when(organisationUnitsRelationRepository.findById(relationId)).thenReturn(
             Optional.of(relation));
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
 
         // when
@@ -446,7 +446,7 @@ public class OrganisationUnitServiceTest {
         when(organisationUnitRepository.getReferenceById(organisationUnitId)).thenReturn(
             organisationUnit);
 
-        organisationUnitService.deleteOrganisationalUnit(organisationUnitId);
+        organisationUnitService.delete(organisationUnitId);
 
         verify(organisationUnitRepository, times(1)).delete(organisationUnit);
     }
@@ -456,7 +456,7 @@ public class OrganisationUnitServiceTest {
         Integer organisationUnitId = 1;
         when(organisationUnitRepository.getReferenceById(organisationUnitId)).thenReturn(null);
 
-        organisationUnitService.deleteOrganisationalUnit(organisationUnitId);
+        organisationUnitService.delete(organisationUnitId);
 
         verify(organisationUnitRepository, times(1)).delete(null);
 
@@ -468,7 +468,7 @@ public class OrganisationUnitServiceTest {
         ApproveStatus approveStatus = ApproveStatus.APPROVED;
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setId(organisationUnitId);
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(
             organisationUnitId)).thenReturn(Optional.of(organisationUnit));
 
         OrganisationUnit result =
@@ -483,7 +483,7 @@ public class OrganisationUnitServiceTest {
     public void shouldThrowExceptionWhenOrganisationalUnitNotFound() {
         Integer organisationUnitId = 1;
         ApproveStatus approveStatus = ApproveStatus.APPROVED;
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(
             organisationUnitId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> {

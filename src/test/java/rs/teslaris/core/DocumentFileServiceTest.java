@@ -52,7 +52,7 @@ public class DocumentFileServiceTest {
         when(documentFileRepository.findById(1)).thenReturn(Optional.of(documentFile));
 
         // when
-        var actual = documentFileService.findDocumentFileById(1);
+        var actual = documentFileService.findOne(1);
 
         // then
         assertEquals(documentFile, actual);
@@ -64,7 +64,7 @@ public class DocumentFileServiceTest {
         when(documentFileRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> documentFileService.findDocumentFileById(1));
+        assertThrows(NotFoundException.class, () -> documentFileService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }

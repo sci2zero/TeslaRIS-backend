@@ -15,6 +15,7 @@ import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.DocumentPublicationService;
@@ -25,7 +26,7 @@ import rs.teslaris.core.service.PersonContributionService;
 @Primary
 @RequiredArgsConstructor
 @Transactional
-public class DocumentPublicationServiceImpl implements DocumentPublicationService {
+public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document> implements DocumentPublicationService {
 
     protected final DocumentRepository documentRepository;
 
@@ -38,16 +39,21 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
 
+    @Override
+    protected JPASoftDeleteRepository<Document> getEntityRepository() {
+        return documentRepository;
+    }
 
     @Override
+    @Deprecated(forRemoval = true)
     public Document findDocumentById(Integer documentId) {
-        return documentRepository.findById(documentId)
+        return documentRepository.findByIdAndDeletedIsFalse(documentId)
             .orElseThrow(() -> new NotFoundException("Document with given id does not exist."));
     }
 
     @Override
     public void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved) {
-        var documentToUpdate = findDocumentById(documentId);
+        var documentToUpdate = findOne(documentId);
 
         if (documentToUpdate.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
             documentToUpdate.setApproveStatus(
@@ -60,7 +66,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     @Override
     public void addDocumentFile(Integer documentId, List<DocumentFileDTO> documentFiles,
                                 Boolean isProof) {
-        var document = findDocumentById(documentId);
+        var document = findOne(documentId);
         documentFiles.forEach(file -> {
             var documentFile = documentFileService.saveNewDocument(file, true);
             if (isProof) {
@@ -74,7 +80,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
     @Override
     public void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof) {
-        var document = findDocumentById(documentId);
+        var document = findOne(documentId);
         var documentFile = documentFileService.findDocumentFileById(documentFileId);
 
         if (isProof) {
@@ -89,7 +95,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
     @Override
     public List<Integer> getContributorIds(Integer publicationId) {
-        return findDocumentById(publicationId).getContributors().stream().map(BaseEntity::getId)
+        return findOne(publicationId).getContributors().stream().map(BaseEntity::getId)
             .filter(Objects::nonNull).collect(Collectors.toList());
     }
 

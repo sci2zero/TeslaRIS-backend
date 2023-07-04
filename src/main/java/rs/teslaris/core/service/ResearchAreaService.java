@@ -9,7 +9,7 @@ import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 
 @Service
-public interface ResearchAreaService {
+public interface ResearchAreaService extends JPAService<ResearchArea> {
 
     ResearchArea getReferenceToResearchAreaById(Integer id);
 

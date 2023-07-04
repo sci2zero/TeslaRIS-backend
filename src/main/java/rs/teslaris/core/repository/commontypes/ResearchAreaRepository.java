@@ -4,9 +4,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 
 @Repository
-public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Integer> {
+public interface ResearchAreaRepository extends JPASoftDeleteRepository<ResearchArea> {
 
     @Query("select count(re) > 0 from ResearchArea re join re.superResearchArea where re.superResearchArea.id = :researchAreaId")
     boolean isSuperArea(Integer researchAreaId);

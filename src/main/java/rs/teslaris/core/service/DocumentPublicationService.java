@@ -6,7 +6,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.model.document.Document;
 
 @Service
-public interface DocumentPublicationService {
+public interface DocumentPublicationService extends JPAService<Document> {
 
     Document findDocumentById(Integer documentId);
 

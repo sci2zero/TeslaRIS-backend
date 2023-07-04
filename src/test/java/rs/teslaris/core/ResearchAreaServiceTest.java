@@ -59,7 +59,7 @@ public class ResearchAreaServiceTest {
         when(researchAreaRepository.findAll(pageable)).thenReturn(researchAreasPage);
 
         // when
-        var resultPage = researchAreaService.getResearchAreas(pageable);
+        var resultPage = researchAreaService.findAll(pageable);
 
         // then
         assertEquals(2, resultPage.getTotalElements());

@@ -31,7 +31,7 @@ public class LanguageServiceTest {
         when(languageRepository.findById(1)).thenReturn(Optional.of(expectedLanguage));
 
         // when
-        var actualLanguage = languageService.findLanguageById(1);
+        var actualLanguage = languageService.findOne(1);
 
         // then
         assertEquals(expectedLanguage, actualLanguage);
@@ -43,7 +43,7 @@ public class LanguageServiceTest {
         when(languageRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> languageService.findLanguageById(1));
+        assertThrows(NotFoundException.class, () -> languageService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }

@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.model.document.Journal;
 
 @Service
-public interface JournalService {
+public interface JournalService extends JPAService<Journal> {
 
     Journal findJournalById(Integer journalId);
 }

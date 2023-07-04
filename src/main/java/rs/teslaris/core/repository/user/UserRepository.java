@@ -5,9 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Integer> {
+public interface UserRepository extends JPASoftDeleteRepository<User> {
 
     Optional<User> findByEmail(String email);
 

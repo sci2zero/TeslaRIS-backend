@@ -3,8 +3,9 @@ package rs.teslaris.core.repository.project;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.project.PersonProjectContribution;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 
 @Repository
 public interface PersonProjectContributionRepository
-    extends JpaRepository<PersonProjectContribution, Integer> {
+    extends JPASoftDeleteRepository<PersonProjectContribution> {
 }

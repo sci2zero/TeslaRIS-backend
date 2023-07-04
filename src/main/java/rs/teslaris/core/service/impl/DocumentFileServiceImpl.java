@@ -20,6 +20,7 @@ import rs.teslaris.core.exception.StorageException;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.FileService;
@@ -28,7 +29,7 @@ import rs.teslaris.core.service.MultilingualContentService;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class DocumentFileServiceImpl implements DocumentFileService {
+public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile> implements DocumentFileService {
 
     private final FileService fileService;
 
@@ -40,10 +41,15 @@ public class DocumentFileServiceImpl implements DocumentFileService {
 
     private final LanguageDetector languageDetector;
 
+    @Override
+    protected JPASoftDeleteRepository<DocumentFile> getEntityRepository() {
+        return documentFileRepository;
+    }
 
     @Override
+    @Deprecated(forRemoval = true)
     public DocumentFile findDocumentFileById(Integer id) {
-        return documentFileRepository.findById(id).orElseThrow(
+        return documentFileRepository.findByIdAndDeletedIsFalse(id).orElseThrow(
             () -> new NotFoundException("Document file with given id does not exist."));
     }
 
@@ -68,7 +74,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
             fileService.store(documentFile.getFile(), UUID.randomUUID().toString());
         newDocumentFile.setServerFilename(serverFilename);
 
-        newDocumentFile = documentFileRepository.save(newDocumentFile);
+        newDocumentFile = save(newDocumentFile);
 
         if (index) {
             parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(), serverFilename,

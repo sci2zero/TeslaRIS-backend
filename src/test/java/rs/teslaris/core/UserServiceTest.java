@@ -87,7 +87,7 @@ public class UserServiceTest {
                 new Authority("RESEARCHER", null), null, null);
         user.setId(1);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndDeletedIsFalse(userId)).thenReturn(Optional.of(user));
 
         // when
         userService.deactivateUser(userId);
@@ -107,7 +107,7 @@ public class UserServiceTest {
                 new Authority("ADMIN", null), null, null);
         user.setId(1);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndDeletedIsFalse(userId)).thenReturn(Optional.of(user));
 
         // when
         userService.deactivateUser(userId);
@@ -122,7 +122,7 @@ public class UserServiceTest {
         // given
         var userId = 0;
 
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(userRepository.findByIdAndDeletedIsFalse(userId)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> userService.deactivateUser(userId));
@@ -144,14 +144,14 @@ public class UserServiceTest {
         registrationRequest.setOrganisationalUnitId(1);
 
         var language = new Language();
-        when(languageService.findLanguageById(1)).thenReturn(language);
+        when(languageService.findOne(1)).thenReturn(language);
 
         Authority authority = new Authority();
         authority.setName("USER");
-        when(authorityRepository.findById(2)).thenReturn(Optional.of(authority));
+        when(authorityRepository.findByIdAndDeletedIsFalse(2)).thenReturn(Optional.of(authority));
 
         var person = new Person();
-        when(personService.findPersonById(1)).thenReturn(person);
+        when(personService.findOne(1)).thenReturn(person);
 
         var organisationalUnit = new OrganisationUnit();
         when(organisationalUnitService.findOrganisationUnitById(1)).thenReturn(
@@ -184,7 +184,7 @@ public class UserServiceTest {
         var registrationRequest = new RegistrationRequestDTO();
         registrationRequest.setAuthorityId(2);
 
-        when(authorityRepository.findById(2)).thenReturn(Optional.empty());
+        when(authorityRepository.findByIdAndDeletedIsFalse(2)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> userService.registerUser(registrationRequest));
@@ -201,10 +201,10 @@ public class UserServiceTest {
 
         var adminAuthority = new Authority();
         adminAuthority.setName("ADMIN");
-        when(authorityRepository.findById(1)).thenReturn(Optional.of(adminAuthority));
+        when(authorityRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(adminAuthority));
 
         var language = new Language();
-        when(languageService.findLanguageById(1)).thenReturn(language);
+        when(languageService.findOne(1)).thenReturn(language);
 
         // when
         assertThrows(CantRegisterAdminException.class,
@@ -276,9 +276,9 @@ public class UserServiceTest {
         var person = new Person();
         var organisationalUnit = new OrganisationUnit();
 
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(languageService.findLanguageById(1)).thenReturn(preferredLanguage);
-        when(personService.findPersonById(2)).thenReturn(person);
+        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
+        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
@@ -304,7 +304,7 @@ public class UserServiceTest {
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setEmail("test@example.com");
 
-        when(userRepository.findById(1)).thenReturn(Optional.empty());
+        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,
@@ -327,9 +327,9 @@ public class UserServiceTest {
         var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
 
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(languageService.findLanguageById(1)).thenReturn(preferredLanguage);
-        when(personService.findPersonById(2)).thenReturn(person);
+        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
+        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);
@@ -459,7 +459,7 @@ public class UserServiceTest {
         var user = new User();
         user.setPerson(person);
 
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
 
         // when
         boolean result = userService.isUserAResearcher(1, 2);
@@ -473,7 +473,7 @@ public class UserServiceTest {
         // given
         var user = new User();
 
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
 
         //when
         boolean result = userService.isUserAResearcher(1, 1);

@@ -7,13 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 
 @Repository
-public interface OrganisationUnitRepository extends JpaRepository<OrganisationUnit, Integer> {
+public interface OrganisationUnitRepository extends JPASoftDeleteRepository<OrganisationUnit> {
 
-
-    @Query("select ou from  OrganisationUnit ou left join fetch ou.keyword left join fetch ou.name left join fetch ou.researchAreas where ou.id = :id")
-    Optional<OrganisationUnit> findByIdWithLangDataAndResearchArea(Integer id);
+    @Query("select ou from  OrganisationUnit ou left join fetch ou.keyword left join fetch ou.name left join fetch ou.researchAreas where ou.id = :id and ou.deleted = false")
+    Optional<OrganisationUnit> findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(Integer id);
 
     @Query(value = "select ou from  OrganisationUnit ou left join fetch ou.keyword left join fetch ou.name left join fetch ou.researchAreas", countQuery = "select count(ou) from OrganisationUnit ou")
     Page<OrganisationUnit> findAllWithLangData(Pageable pageable);

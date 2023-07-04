@@ -25,6 +25,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.DocumentFileService;
@@ -35,7 +36,7 @@ import rs.teslaris.core.service.ResearchAreaService;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class OrganisationUnitServiceImpl implements OrganisationUnitService {
+public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit> implements OrganisationUnitService {
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
@@ -53,8 +54,18 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     private Boolean organisationUnitApprovedByDefault;
 
     @Override
+    protected JPASoftDeleteRepository<OrganisationUnit> getEntityRepository() {
+        return organisationUnitRepository;
+    }
+
+    @Override
     public OrganisationUnit findOrganisationUnitById(Integer id) {
-        return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id).orElseThrow(
+        return findOne(id);
+    }
+
+    @Override
+    public OrganisationUnit findOne(Integer id) {
+        return organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(id).orElseThrow(
             () -> new NotFoundException("Organisation unit with given ID does not exist."));
     }
 
@@ -159,7 +170,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     public OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
                                                                 Integer organisationUnitId) {
         OrganisationUnit organisationUnit =
-            organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)
+            organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(organisationUnitId)
                 .orElseThrow(
                     () -> new NotFoundException(
                         "Organisation units relation with given ID does not exist."));
@@ -171,6 +182,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     }
 
     @Override
+    @Deprecated(forRemoval = true)
     public void deleteOrganisationalUnit(Integer organisationUnitId) {
         var organisationUnitReference = getReferenceToOrganisationUnitById(organisationUnitId);
         organisationUnitRepository.delete(organisationUnitReference);

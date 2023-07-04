@@ -8,10 +8,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 
 @Repository
 public interface OrganisationUnitsRelationRepository
-    extends JpaRepository<OrganisationUnitsRelation, Integer> {
+    extends JPASoftDeleteRepository<OrganisationUnitsRelation> {
 
     @Query("select our from OrganisationUnitsRelation our" +
         " where our.sourceOrganisationUnit.id = :sourceId " +

@@ -28,6 +28,7 @@ import rs.teslaris.core.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
+import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
@@ -41,7 +42,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends JPAServiceImpl<User> implements UserService {
 
     private final JwtUtil tokenUtil;
 
@@ -63,6 +64,10 @@ public class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder;
 
+    @Override
+    protected JPASoftDeleteRepository<User> getEntityRepository() {
+        return userRepository;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -70,8 +75,9 @@ public class UserServiceImpl implements UserService {
             () -> new UsernameNotFoundException("User with this email does not exist."));
     }
 
+    @Deprecated(forRemoval = true)
     public User loadUserById(Integer userID) throws UsernameNotFoundException {
-        return userRepository.findById(userID)
+        return userRepository.findByIdAndDeletedIsFalse(userID)
             .orElseThrow(() -> new UsernameNotFoundException("User with this ID does not exist."));
     }
 
@@ -85,7 +91,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public Integer getPersonIdForUser(Integer userId) {
-        var user = loadUserById(userId);
+        var user = findOne(userId);
         if (user.getPerson() == null) {
             return -1;
         }
@@ -96,7 +102,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public boolean isUserAResearcher(Integer userId, Integer personId) {
-        var user = loadUserById(userId);
+        var user = findOne(userId);
 
         return user.getPerson() != null && Objects.equals(user.getPerson().getId(), personId);
     }
@@ -164,9 +170,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deactivateUser(Integer userId) {
-        var userToDeactivate = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("User with given ID does not exist."));
-
+        var userToDeactivate = findOne(userId);
         if (userToDeactivate.getAuthority().getName().equals("ADMIN")) {
             return;
         }
@@ -193,16 +197,16 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User registerUser(RegistrationRequestDTO registrationRequest) {
         var preferredLanguage =
-            languageService.findLanguageById(registrationRequest.getPreferredLanguageId());
+            languageService.findOne(registrationRequest.getPreferredLanguageId());
 
-        var authority = authorityRepository.findById(registrationRequest.getAuthorityId())
+        var authority = authorityRepository.findByIdAndDeletedIsFalse(registrationRequest.getAuthorityId())
             .orElseThrow(() -> new NotFoundException("Authority with given ID does not exist."));
 
         if (authority.getName().equals("ADMIN")) {
             throw new CantRegisterAdminException("Can't register new admin.");
         }
 
-        var person = personService.findPersonById(registrationRequest.getPersonId());
+        var person = personService.findOne(registrationRequest.getPersonId());
 
         var organisationalUnit = organisationUnitService.findOrganisationUnitById(
             registrationRequest.getOrganisationalUnitId());
@@ -228,13 +232,12 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest,
                                                 Integer userId, String fingerprint) {
-        var userToUpdate = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("User with given ID does not exist."));
+        var userToUpdate = findOne(userId);
 
         var preferredLanguage =
-            languageService.findLanguageById(userUpdateRequest.getPreferredLanguageId());
+            languageService.findOne(userUpdateRequest.getPreferredLanguageId());
 
-        var person = personService.findPersonById(userUpdateRequest.getPersonId());
+        var person = personService.findOne(userUpdateRequest.getPersonId());
 
         var organisationalUnit = organisationUnitService.findOrganisationUnitById(
             userUpdateRequest.getOrganisationalUnitId());

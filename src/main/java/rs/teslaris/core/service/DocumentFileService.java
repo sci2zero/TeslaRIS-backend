@@ -7,7 +7,7 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.model.document.DocumentFile;
 
 @Service
-public interface DocumentFileService {
+public interface DocumentFileService extends JPAService<DocumentFile> {
 
     DocumentFile findDocumentFileById(Integer id);
 

@@ -32,7 +32,7 @@ public class MultilingualContentServiceTest {
             new ArrayList<>(List.of(new MultilingualContentDTO(1, "aaa", 1)));
 
         var languageTag = new LanguageTag();
-        when(languageTagService.findLanguageTagById(1)).thenReturn(languageTag);
+        when(languageTagService.findOne(1)).thenReturn(languageTag);
 
         var result = multilingualContentService.getMultilingualContent(multilingualContentDTO);
 

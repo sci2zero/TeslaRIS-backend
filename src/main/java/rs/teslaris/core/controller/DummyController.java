@@ -15,6 +15,7 @@ import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -59,6 +60,11 @@ public class DummyController {
     @GetMapping("/all2")
     public List<Language> getAll2() {
         return languageService.findAll();
+    }
+
+    @GetMapping("/all2/{id}")
+    public Language getAll2(@PathVariable Integer id) {
+        return languageService.findOne(id);
     }
 
     //    TEMP MAPPING
