@@ -1,4 +1,4 @@
-package rs.teslaris.core;
+package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -23,29 +23,29 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
-import rs.teslaris.core.model.document.Journal;
-import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.DocumentFileService;
-import rs.teslaris.core.service.JournalService;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.PersonContributionService;
-import rs.teslaris.core.service.impl.JournalPublicationServiceImpl;
+import rs.teslaris.core.service.ProceedingsService;
+import rs.teslaris.core.service.impl.ProceedingsPublicationServiceImpl;
 
 @SpringBootTest
-public class JournalPublicationServiceTest {
+public class ProceedingsPublicationServiceTest {
 
     @Mock
     private DocumentRepository documentRepository;
@@ -57,60 +57,63 @@ public class JournalPublicationServiceTest {
     private MultilingualContentService multilingualContentService;
 
     @Mock
-    private JournalService journalService;
-
-    @Mock
-    private JournalPublicationRepository journalPublicationRepository;
+    private ProceedingsService proceedingsService;
 
     @Mock
     private PersonContributionService personContributionService;
 
+    @Mock
+    private ProceedingsPublicationRepository proceedingsPublicationRepository;
+
     @InjectMocks
-    private JournalPublicationServiceImpl journalPublicationService;
+    private ProceedingsPublicationServiceImpl proceedingsPublicationService;
 
     private static Stream<Arguments> argumentSources() {
         var country = new Country();
         country.setId(1);
-        return Stream.of(
-            Arguments.of(DocumentContributionType.AUTHOR, true, false, null),
+        return Stream.of(Arguments.of(DocumentContributionType.AUTHOR, true, false, null),
             Arguments.of(DocumentContributionType.AUTHOR, false, true, country),
             Arguments.of(DocumentContributionType.EDITOR, false, true, country),
             Arguments.of(DocumentContributionType.REVIEWER, false, true, null),
-            Arguments.of(DocumentContributionType.ADVISOR, false, false, country)
-        );
+            Arguments.of(DocumentContributionType.ADVISOR, false, false, country));
     }
 
     @BeforeEach
     public void setUp() {
-        ReflectionTestUtils.setField(journalPublicationService, "documentApprovedByDefault", true);
+        ReflectionTestUtils.setField(proceedingsPublicationService, "documentApprovedByDefault",
+            true);
     }
 
     @Test
-    public void shouldCreateJournalPublication() {
+    public void shouldCreateProceedingsPublication() {
         // Given
-        var publicationDTO = new JournalPublicationDTO();
-        var document = new JournalPublication();
+        var publicationDTO = new ProceedingsPublicationDTO();
+        publicationDTO.setProceedingsId(1);
+        var document = new ProceedingsPublication();
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
         when(documentRepository.save(any())).thenReturn(document);
+        when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
+            new Proceedings());
 
         // When
-        var result = journalPublicationService.createJournalPublication(publicationDTO);
+        var result = proceedingsPublicationService.createProceedingsPublication(publicationDTO);
 
         // Then
         verify(multilingualContentService, times(4)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(publicationDTO));
-        verify(journalPublicationRepository).save(eq(document));
+        verify(proceedingsPublicationRepository).save(eq(document));
     }
 
     @Test
-    public void shouldEditJournalPublication() {
+    public void shouldEditProceedingsPublication() {
         // Given
         var publicationId = 1;
-        var publicationDTO = new JournalPublicationDTO();
-        var publicationToUpdate = new JournalPublication();
+        var publicationDTO = new ProceedingsPublicationDTO();
+        publicationDTO.setProceedingsId(1);
+        var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setTitle(new HashSet<>());
         publicationToUpdate.setSubTitle(new HashSet<>());
         publicationToUpdate.setDescription(new HashSet<>());
@@ -120,9 +123,11 @@ public class JournalPublicationServiceTest {
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
+        when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
+            new Proceedings());
 
         // When
-        journalPublicationService.editJournalPublication(publicationId, publicationDTO);
+        proceedingsPublicationService.editProceedingsPublication(publicationId, publicationDTO);
 
         // Then
         verify(documentRepository).findById(eq(publicationId));
@@ -135,26 +140,26 @@ public class JournalPublicationServiceTest {
     public void shouldNotReadUnapprovedPublications(ApproveStatus status) {
         // Given
         var publicationId = 1;
-        var publication = new JournalPublication();
+        var publication = new ProceedingsPublication();
         publication.setApproveStatus(status);
 
-        when(documentRepository.findById(publicationId)).thenReturn(
-            Optional.of(publication));
+        when(documentRepository.findById(publicationId)).thenReturn(Optional.of(publication));
 
         // When
         assertThrows(NotFoundException.class,
-            () -> journalPublicationService.readJournalPublicationById(publicationId));
+            () -> proceedingsPublicationService.readProceedingsPublicationById(publicationId));
 
         // Then (NotFoundException should be thrown)
     }
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldReadJournalPublication(DocumentContributionType type, Boolean isMainAuthor,
-                                             Boolean isCorrespondingAuthor, Country country) {
+    public void shouldReadProceedingsPublication(DocumentContributionType type,
+                                                 Boolean isMainAuthor,
+                                                 Boolean isCorrespondingAuthor, Country country) {
         // Given
         var publicationId = 1;
-        var publication = new JournalPublication();
+        var publication = new ProceedingsPublication();
         publication.setTitle(new HashSet<>());
         publication.setSubTitle(new HashSet<>());
         publication.setDescription(new HashSet<>());
@@ -178,15 +183,14 @@ public class JournalPublicationServiceTest {
         publication.setContributors(Set.of(contribution));
 
         publication.setUris(new HashSet<>());
-        var journal = new Journal();
-        journal.setTitle(new HashSet<>());
-        publication.setJournal(journal);
+        var proceedings = new Proceedings();
+        proceedings.setId(1);
+        publication.setProceedings(proceedings);
 
-        when(documentRepository.findById(publicationId)).thenReturn(
-            Optional.of(publication));
+        when(documentRepository.findById(publicationId)).thenReturn(Optional.of(publication));
 
         // When
-        var result = journalPublicationService.readJournalPublicationById(publicationId);
+        var result = proceedingsPublicationService.readProceedingsPublicationById(publicationId);
 
         // Then
         verify(documentRepository).findById(eq(publicationId));

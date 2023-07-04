@@ -77,6 +77,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         setCommonFields(proceedings, proceedingsDTO);
         setProceedingsRelatedFields(proceedings, proceedingsDTO);
 
+        proceedings.setApproveStatus(ApproveStatus.APPROVED);
+
         return proceedingsRepository.save(proceedings);
     }
 
@@ -115,12 +117,18 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             proceedings.getLanguages().add(languageTagService.findLanguageTagById(id));
         });
 
-        proceedings.setJournal(journalService.findJournalById(proceedingsDTO.getJournalId()));
         proceedings.setJournalVolume(proceedingsDTO.getJournalVolume());
         proceedings.setJournalIssue(proceedingsDTO.getJournalIssue());
-
         proceedings.setEvent(eventService.findEventById(proceedingsDTO.getEventId()));
-        proceedings.setPublisher(
-            publisherService.findPublisherById(proceedingsDTO.getPublisherId()));
+
+        if (proceedingsDTO.getJournalId() != null) {
+            proceedings.setJournal(journalService.findJournalById(proceedingsDTO.getJournalId()));
+        }
+
+        if (proceedingsDTO.getPublisherId() != null) {
+            proceedings.setPublisher(
+                publisherService.findPublisherById(proceedingsDTO.getPublisherId()));
+        }
+
     }
 }

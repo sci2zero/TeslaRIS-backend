@@ -17,7 +17,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.annotation.PublicationEditCheck;
-import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.exception.CantEditPublicationException;
 import rs.teslaris.core.model.user.UserRole;
@@ -83,7 +83,7 @@ public class PublicationEditCheckAspect {
     }
 
     private List<Integer> getContributorsFromDTO(ProceedingJoinPoint joinPoint) {
-        JournalPublicationDTO publicationDTO = (JournalPublicationDTO) joinPoint.getArgs()[0];
+        var publicationDTO = (DocumentDTO) joinPoint.getArgs()[0];
         return publicationDTO.getContributions().stream().map(PersonContributionDTO::getPersonId)
             .filter(Objects::nonNull).collect(Collectors.toList());
     }
