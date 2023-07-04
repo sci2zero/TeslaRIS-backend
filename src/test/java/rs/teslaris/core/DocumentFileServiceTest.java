@@ -70,7 +70,7 @@ public class DocumentFileServiceTest {
     }
 
     @Test
-    public void shouldSaveNewDocumentWhenValidDataIsProvided() throws IOException {
+    public void shouldSaveNewDocumentWhenValidDataIsProvided() {
         // given
         var dto = new DocumentFileDTO();
         var doc = new DocumentFile();
@@ -89,7 +89,7 @@ public class DocumentFileServiceTest {
     }
 
     @Test
-    public void shouldEditDocumentWhenValidDataIsProvided() throws IOException {
+    public void shouldEditDocumentWhenValidDataIsProvided() {
         // given
         var doc = new DocumentFile();
         doc.setFilename("filename.txt");
@@ -112,7 +112,7 @@ public class DocumentFileServiceTest {
     }
 
     @Test
-    public void shouldDeleteDocumentWhenValidDataIsProvided() throws IOException {
+    public void shouldDeleteDocumentWhenValidDataIsProvided() {
         // given
         var doc = new DocumentFile();
         doc.setFilename("filename.txt");
@@ -120,6 +120,7 @@ public class DocumentFileServiceTest {
         dto.setFile(
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
 
+        when(documentFileRepository.findByIdAndDeletedIsFalse(any())).thenReturn(Optional.of(doc));
         when(documentFileRepository.getReferenceByServerFilenameAndDeletedIsFalse("UUID")).thenReturn(doc);
         when(fileService.store(any(), eq("UUID"))).thenReturn("UUID.pdf");
 
@@ -127,7 +128,7 @@ public class DocumentFileServiceTest {
         documentFileService.deleteDocumentFile("UUID");
 
         // then
-        verify(documentFileRepository, times(1)).delete(any());
+        verify(documentFileRepository, times(1)).save(any());
         verify(fileService, times(1)).delete(any());
     }
 
