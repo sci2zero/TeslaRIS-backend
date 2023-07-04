@@ -130,8 +130,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         var involvement = findOne(involvementId);
         var documentFile = documentFileService.findDocumentFileById(proofId);
 
-        involvement.getProofs().remove(documentFile);
-        involvementRepository.save(involvement);
+        involvement.setDeleted(true);
+        save(involvement);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }
@@ -197,12 +197,13 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Override
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findOne(involvementId);
+//        TODO: Do i need to delete those involvments or just logicaly avoid (soft delete)
         involvementToDelete.getPersonInvolved().removeInvolvement(involvementToDelete);
 
         involvementToDelete.getProofs()
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
 
-        involvementRepository.delete(involvementToDelete);
+        delete(involvementId);
     }
 
 

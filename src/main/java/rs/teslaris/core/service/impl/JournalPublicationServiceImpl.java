@@ -70,13 +70,14 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     public void deleteJournalPublication(Integer journalPublicationId) {
         var publicationToDelete = (JournalPublication) findOne(journalPublicationId);
 
+//        TODO: Do we need to delete document files from db
         publicationToDelete.getProofs()
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
 
         publicationToDelete.getFileItems().forEach(
             fileItem -> documentFileService.deleteDocumentFile(fileItem.getServerFilename()));
 
-        documentRepository.delete(publicationToDelete);
+        this.delete(journalPublicationId);
     }
 
     private void setJournalPublicationRelatedFields(JournalPublication publication,

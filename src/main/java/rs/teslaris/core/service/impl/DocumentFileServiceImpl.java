@@ -104,9 +104,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public void deleteDocumentFile(String serverFilename) {
-        var documentToDelete = documentFileRepository.getReferenceByServerFilename(serverFilename);
+        var documentToDelete = documentFileRepository.getReferenceByServerFilenameAndDeletedIsFalse(serverFilename);
         fileService.delete(serverFilename);
-        documentFileRepository.delete(documentToDelete);
+        delete(documentToDelete.getId());
     }
 
     private String detectMimeType(MultipartFile file) {

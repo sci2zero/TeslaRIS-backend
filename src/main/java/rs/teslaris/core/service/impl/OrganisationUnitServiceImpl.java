@@ -267,12 +267,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public void deleteRelationProof(Integer relationId, Integer proofId) {
-        var relation = findOrganisationUnitsRelationById(relationId);
         var documentFile = documentFileService.findDocumentFileById(proofId);
-
-        relation.getProofs().remove(documentFile);
-        organisationUnitsRelationRepository.save(relation);
-
+        documentFileService.delete(proofId);
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }
 

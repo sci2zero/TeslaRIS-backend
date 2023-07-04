@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.DocumentFileService;
@@ -80,16 +82,25 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof) {
         var document = findOne(documentId);
         var documentFile = documentFileService.findDocumentFileById(documentFileId);
 
         if (isProof) {
-            document.getProofs().remove(documentFile);
+            Set<DocumentFile> proofs = document.getProofs();
+            proofs.stream().forEach(p -> {
+                p.setDeleted(true);
+            });
+            documentFileService.saveAll(proofs);
         } else {
-            document.getFileItems().remove(documentFile);
+            Set<DocumentFile> fileItems = document.getFileItems();
+            fileItems.stream().forEach(p -> {
+                p.setDeleted(true);
+            });
+            documentFileService.saveAll(fileItems);
+
         }
-        documentRepository.save(document);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }

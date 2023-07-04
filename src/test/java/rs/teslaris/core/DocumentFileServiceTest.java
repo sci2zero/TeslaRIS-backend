@@ -120,7 +120,7 @@ public class DocumentFileServiceTest {
         dto.setFile(
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
 
-        when(documentFileRepository.getReferenceByServerFilename("UUID")).thenReturn(doc);
+        when(documentFileRepository.getReferenceByServerFilenameAndDeletedIsFalse("UUID")).thenReturn(doc);
         when(fileService.store(any(), eq("UUID"))).thenReturn("UUID.pdf");
 
         // when
