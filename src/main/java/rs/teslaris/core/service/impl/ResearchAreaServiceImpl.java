@@ -19,7 +19,8 @@ import rs.teslaris.core.service.ResearchAreaService;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea> implements ResearchAreaService {
+public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
+    implements ResearchAreaService {
 
     private final ResearchAreaRepository researchAreaRepository;
 

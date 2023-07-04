@@ -10,7 +10,8 @@ import rs.teslaris.core.service.LanguageTagService;
 
 @Service
 @RequiredArgsConstructor
-public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag> implements LanguageTagService {
+public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag>
+    implements LanguageTagService {
 
     private final LanguageTagRepository languageTagRepository;
 

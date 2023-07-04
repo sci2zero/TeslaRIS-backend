@@ -26,7 +26,8 @@ import rs.teslaris.core.service.PersonContributionService;
 @Primary
 @RequiredArgsConstructor
 @Transactional
-public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document> implements DocumentPublicationService {
+public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
+    implements DocumentPublicationService {
 
     protected final DocumentRepository documentRepository;
 

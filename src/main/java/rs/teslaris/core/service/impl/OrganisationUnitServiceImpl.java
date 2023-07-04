@@ -36,7 +36,8 @@ import rs.teslaris.core.service.ResearchAreaService;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit> implements OrganisationUnitService {
+public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
+    implements OrganisationUnitService {
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
@@ -65,14 +66,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnit findOne(Integer id) {
-        return organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(id).orElseThrow(
-            () -> new NotFoundException("Organisation unit with given ID does not exist."));
+        return organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(id)
+            .orElseThrow(
+                () -> new NotFoundException("Organisation unit with given ID does not exist."));
     }
 
     @Override
     @Transactional
     public Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable) {
-        return organisationUnitRepository.findAllWithLangData(pageable)
+        return organisationUnitRepository.findAllWithLangDataAndDeletedIsFalse(pageable)
             .map(OrganisationUnitConverter::toDTO);
     }
 
@@ -170,7 +172,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
                                                                 Integer organisationUnitId) {
         OrganisationUnit organisationUnit =
-            organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(organisationUnitId)
+            organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(
+                    organisationUnitId)
                 .orElseThrow(
                     () -> new NotFoundException(
                         "Organisation units relation with given ID does not exist."));
@@ -277,7 +280,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer sourceOrganisationUnitId,
                                                              Integer targetOrganisationUnit) {
         List<OrganisationUnitsRelation> relationsToCheck =
-            organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationType(
+            organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationTypeAndDeletedIsFalse(
                 sourceOrganisationUnitId, OrganisationUnitRelationType.BELONGS_TO);
 
         while (!relationsToCheck.isEmpty()) {
@@ -288,7 +291,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             }
 
             List<OrganisationUnitsRelation> newRelationToCheck =
-                organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationType(
+                organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationTypeAndDeletedIsFalse(
                     newTargetOrganisationUnit.getId(), OrganisationUnitRelationType.BELONGS_TO);
             relationsToCheck.addAll(newRelationToCheck);
 

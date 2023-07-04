@@ -29,7 +29,8 @@ import rs.teslaris.core.service.MultilingualContentService;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile> implements DocumentFileService {
+public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
+    implements DocumentFileService {
 
     private final FileService fileService;
 

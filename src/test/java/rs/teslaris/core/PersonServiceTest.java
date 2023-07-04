@@ -126,7 +126,7 @@ public class PersonServiceTest {
         var expectedPerson = new Person();
         var expectedResponse = new PersonResponseDto();
 
-        when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
+        when(personRepository.findApprovedPersonByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expectedPerson));
 
         MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class);
         mocked.when(() -> PersonConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
@@ -141,7 +141,7 @@ public class PersonServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenPersonIsNotApproved() {
         // given
-        when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.empty());
+        when(personRepository.findApprovedPersonByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> personService.readPersonWithBasicInfo(1));

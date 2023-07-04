@@ -130,7 +130,7 @@ public class OrganisationUnitServiceTest {
             organisationUnitPage = new PageImpl<>(List.of(organisationUnit), pageable, 1);
 
         // when
-        when(organisationUnitRepository.findAllWithLangData(pageable)).thenReturn(
+        when(organisationUnitRepository.findAllWithLangDataAndDeletedIsFalse(pageable)).thenReturn(
             organisationUnitPage);
 
         Page<OrganisationUnitDTO> result = organisationUnitService.findOrganisationUnits(pageable);
@@ -138,7 +138,7 @@ public class OrganisationUnitServiceTest {
         assertEquals(1, result.getContent().size());
         assertEquals(organisationUnit.getNameAbbreviation(),
             result.getContent().get(0).getNameAbbreviation());
-        verify(organisationUnitRepository, times(1)).findAllWithLangData(pageable);
+        verify(organisationUnitRepository, times(1)).findAllWithLangDataAndDeletedIsFalse(pageable);
     }
 
     @Test

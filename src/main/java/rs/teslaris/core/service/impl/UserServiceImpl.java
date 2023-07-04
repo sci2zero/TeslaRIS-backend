@@ -71,7 +71,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByEmail(username).orElseThrow(
+        return userRepository.findByEmailAndDeletedIsFalse(username).orElseThrow(
             () -> new UsernameNotFoundException("User with this email does not exist."));
     }
 
@@ -83,7 +83,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Override
     public int getUserOrganisationUnitId(Integer userId) {
-        return userRepository.findByIdWithOrganisationUnit(userId)
+        return userRepository.findByIdWithOrganisationUnitAndDeletedIsFalse(userId)
             .orElseThrow(() -> new NotFoundException("User with this ID does not exist."))
             .getOrganisationUnit().getId();
     }
@@ -183,7 +183,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public void activateUserAccount(String activationTokenValue) {
         var accountActivation =
-            userAccountActivationRepository.findByActivationToken(activationTokenValue)
+            userAccountActivationRepository.findByActivationTokenAndDeletedIsFalse(
+                    activationTokenValue)
                 .orElseThrow(() -> new NotFoundException("Invalid activation token"));
 
         var userToActivate = accountActivation.getUser();
@@ -199,8 +200,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var preferredLanguage =
             languageService.findOne(registrationRequest.getPreferredLanguageId());
 
-        var authority = authorityRepository.findByIdAndDeletedIsFalse(registrationRequest.getAuthorityId())
-            .orElseThrow(() -> new NotFoundException("Authority with given ID does not exist."));
+        var authority =
+            authorityRepository.findByIdAndDeletedIsFalse(registrationRequest.getAuthorityId())
+                .orElseThrow(
+                    () -> new NotFoundException("Authority with given ID does not exist."));
 
         if (authority.getName().equals("ADMIN")) {
             throw new CantRegisterAdminException("Can't register new admin.");

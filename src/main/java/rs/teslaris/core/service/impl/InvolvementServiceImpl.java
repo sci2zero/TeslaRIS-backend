@@ -28,7 +28,8 @@ import rs.teslaris.core.service.PersonService;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class InvolvementServiceImpl extends JPAServiceImpl<Involvement> implements InvolvementService {
+public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
+    implements InvolvementService {
 
     private final PersonService personService;
 

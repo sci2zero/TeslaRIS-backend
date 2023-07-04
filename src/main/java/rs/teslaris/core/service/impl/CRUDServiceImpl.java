@@ -42,7 +42,8 @@ public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDServi
         return getEntityRepository().findByIdAndDeletedIsFalse(id)
             .orElseThrow(() -> {
                 printGenericTypeName();
-                return new NotFoundException("Cannot find entity " + printGenericTypeName() + " with id: " + id);
+                return new NotFoundException(
+                    "Cannot find entity " + printGenericTypeName() + " with id: " + id);
             });
     }
 

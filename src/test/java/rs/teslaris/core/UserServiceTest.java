@@ -222,7 +222,7 @@ public class UserServiceTest {
                 "John", "Doe", true,
                 true, new Language(), new Authority(), null, null));
         when(
-            userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
+            userAccountActivationRepository.findByActivationTokenAndDeletedIsFalse(activationTokenValue)).thenReturn(
             Optional.of(accountActivation));
 
         // when
@@ -239,7 +239,7 @@ public class UserServiceTest {
         // given
         var activationTokenValue = "invalid_token";
         when(
-            userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
+            userAccountActivationRepository.findByActivationTokenAndDeletedIsFalse(activationTokenValue)).thenReturn(
             Optional.empty());
 
         // when
@@ -429,7 +429,7 @@ public class UserServiceTest {
         var user = new User();
         user.setOrganisationUnit(organisationUnit);
 
-        when(userRepository.findByIdWithOrganisationUnit(1)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdWithOrganisationUnitAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
 
         // when
         int result = userService.getUserOrganisationUnitId(1);
@@ -441,7 +441,7 @@ public class UserServiceTest {
     @Test
     public void testGetUserOrganisationUnitIdNotFound() {
         // given
-        when(userRepository.findByIdWithOrganisationUnit(2)).thenReturn(Optional.empty());
+        when(userRepository.findByIdWithOrganisationUnitAndDeletedIsFalse(2)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> {

@@ -7,6 +7,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 
 public interface JPAService<T extends BaseEntity> extends CRUDService<T> {
     Iterable<T> findAll(Sort sorter);
+
     Page<T> findAll(Pageable page);
 
 }

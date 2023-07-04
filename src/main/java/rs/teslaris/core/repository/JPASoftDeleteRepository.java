@@ -12,13 +12,14 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @NoRepositoryBean
 public interface JPASoftDeleteRepository<T extends BaseEntity> extends JpaRepository<T, Integer> {
     List<T> findAllByDeletedIsFalse();
+
     List<T> findAllByDeletedIsFalse(Sort sort);
+
     Page<T> findAllByDeletedIsFalse(Pageable pageable);
 
     List<T> findAllByDeletedIsTrue();
 
     Optional<T> findByIdAndDeletedIsFalse(Integer integer);
-
 
 
 }
