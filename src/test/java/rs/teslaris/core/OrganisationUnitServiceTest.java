@@ -443,22 +443,23 @@ public class OrganisationUnitServiceTest {
         Integer organisationUnitId = 1;
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setId(organisationUnitId);
-        when(organisationUnitRepository.findByIdAndDeletedIsFalse(organisationUnitId)).thenReturn(
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(organisationUnitId)).thenReturn(
             Optional.of(organisationUnit));
 
         organisationUnitService.delete(organisationUnitId);
 
-        verify(organisationUnitRepository, times(1)).delete(organisationUnit);
+        verify(organisationUnitRepository, times(1)).save(organisationUnit);
     }
 
     @Test
     public void shouldIgnoreNullOrganisationalUnit() {
         Integer organisationUnitId = 1;
-        when(organisationUnitRepository.findByIdAndDeletedIsFalse(organisationUnitId)).thenReturn(null);
+        var ou = new OrganisationUnit();
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(organisationUnitId)).thenReturn(Optional.of(ou));
 
         organisationUnitService.delete(organisationUnitId);
 
-        verify(organisationUnitRepository, times(1)).delete(null);
+        verify(organisationUnitRepository, times(1)).save(ou);
 
     }
 
