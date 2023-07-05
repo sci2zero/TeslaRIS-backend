@@ -3,6 +3,7 @@ package rs.teslaris.core.service;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.Document;
 
 @Service
@@ -17,4 +18,6 @@ public interface DocumentPublicationService {
     void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof);
 
     List<Integer> getContributorIds(Integer publicationId);
+
+    void indexCommonFields(Document document, DocumentPublicationIndex index);
 }

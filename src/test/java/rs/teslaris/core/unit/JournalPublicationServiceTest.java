@@ -82,7 +82,7 @@ public class JournalPublicationServiceTest {
 
     @BeforeEach
     public void setUp() {
-        ReflectionTestUtils.setField(journalPublicationService, "documentApprovedByDefault", true);
+        ReflectionTestUtils.setField(journalPublicationService, "documentApprovedByDefault", false);
     }
 
     @Test

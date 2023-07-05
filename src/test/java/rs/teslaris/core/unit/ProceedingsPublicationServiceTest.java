@@ -81,7 +81,7 @@ public class ProceedingsPublicationServiceTest {
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(proceedingsPublicationService, "documentApprovedByDefault",
-            true);
+            false);
     }
 
     @Test

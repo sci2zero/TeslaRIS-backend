@@ -7,6 +7,8 @@ import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -26,6 +28,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     private final JournalPublicationRepository journalPublicationRepository;
 
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
 
     @Autowired
     public JournalPublicationServiceImpl(DocumentRepository documentRepository,
@@ -33,11 +37,13 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          PersonContributionService personContributionService,
                                          MultilingualContentService multilingualContentService,
                                          JournalService journalService,
-                                         JournalPublicationRepository journalPublicationRepository) {
+                                         JournalPublicationRepository journalPublicationRepository,
+                                         DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(multilingualContentService, documentRepository, documentFileService,
             personContributionService);
         this.journalService = journalService;
         this.journalPublicationRepository = journalPublicationRepository;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
 
     @Override
@@ -58,6 +64,10 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         publication.setApproveStatus(
             documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
+
+        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexJournalPublication(publication, new DocumentPublicationIndex());
+        }
 
         return journalPublicationRepository.save(publication);
     }
@@ -82,6 +92,16 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         deleteProofsAndFileItems(publicationToDelete);
         journalPublicationRepository.delete(publicationToDelete);
+    }
+
+    @Override
+    public void indexJournalPublication(JournalPublication publication,
+                                        DocumentPublicationIndex index) {
+        indexCommonFields(publication, index);
+
+        index.setJournalId(publication.getJournal().getId());
+
+        documentPublicationIndexRepository.save(index);
     }
 
     private void setJournalPublicationRelatedFields(JournalPublication publication,

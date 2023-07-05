@@ -7,6 +7,8 @@ import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -35,6 +37,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private final PublisherService publisherService;
 
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
 
     public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
                                   DocumentRepository documentRepository,
@@ -43,7 +47,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
                                   JournalService journalService, EventService eventService,
-                                  PublisherService publisherService) {
+                                  PublisherService publisherService,
+                                  DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(multilingualContentService, documentRepository, documentFileService,
             personContributionService);
         this.proceedingsRepository = proceedingsRepository;
@@ -51,6 +56,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.journalService = journalService;
         this.eventService = eventService;
         this.publisherService = publisherService;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
 
 
@@ -102,6 +108,23 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         deleteProofsAndFileItems(proceedingsToDelete);
 
         proceedingsRepository.delete(proceedingsToDelete);
+    }
+
+    @Override
+    public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
+        indexCommonFields(proceedings, index);
+
+        if (proceedings.getJournal() != null) {
+            index.setJournalId(proceedings.getJournal().getId());
+        }
+
+        if (proceedings.getPublisher() != null) {
+            index.setPublisherId(proceedings.getPublisher().getId());
+        }
+
+        index.setEventId(proceedings.getEvent().getId());
+
+        documentPublicationIndexRepository.save(index);
     }
 
     private void setProceedingsRelatedFields(Proceedings proceedings,

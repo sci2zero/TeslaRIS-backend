@@ -76,7 +76,23 @@ public class ProceedingsControllerTest extends BaseTest {
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/proceedings")
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-            .andExpect(status().isCreated());
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.documentDate").value("MOCK_DATE"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testUpdateProceedings() throws Exception {
+        String jwtToken = authenticateAndGetToken();
+
+        var proceedingsDTO = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(proceedingsDTO);
+        mockMvc.perform(
+                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{publicationId}", 32)
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test

@@ -3,6 +3,7 @@ package rs.teslaris.core.service;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.Proceedings;
 
 @Service
@@ -17,4 +18,6 @@ public interface ProceedingsService {
     void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO);
 
     void deleteProceedings(Integer proceedingsId);
+
+    void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index);
 }

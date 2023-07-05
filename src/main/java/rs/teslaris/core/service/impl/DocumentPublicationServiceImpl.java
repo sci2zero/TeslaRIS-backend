@@ -1,5 +1,8 @@
 package rs.teslaris.core.service.impl;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
@@ -89,6 +93,98 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
             .filter(Objects::nonNull).collect(Collectors.toList());
     }
 
+    @Override
+    public void indexCommonFields(Document document, DocumentPublicationIndex index) {
+        clearCommonIndexFields(index);
+
+        var year = parseYear(document.getDocumentDate());
+        if (parseYear(document.getDocumentDate()) > 0) {
+            index.setYear(year);
+        }
+
+        document.getTitle().forEach(mc -> {
+            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+                index.setTitleSr(mc.getContent());
+            } else {
+                index.setTitleOther(mc.getContent());
+            }
+        });
+        document.getSubTitle().forEach(mc -> {
+            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+                index.setTitleSr(index.getTitleSr() + " " + mc.getContent());
+            } else {
+                index.setTitleOther(index.getTitleOther() + " " + mc.getContent());
+            }
+        });
+
+        document.getDescription().forEach(mc -> {
+            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+                index.setDescriptionSr(mc.getContent());
+            } else {
+                index.setDescriptionOther(mc.getContent());
+            }
+        });
+
+        document.getKeywords().forEach(mc -> {
+            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+                index.setKeywordsSr(mc.getContent());
+            } else {
+                index.setKeywordsOther(mc.getContent());
+            }
+        });
+
+        document.getContributors().forEach(contribution -> {
+            var personExists = contribution.getPerson() != null;
+            var contributorName =
+                contribution.getAffiliationStatement().getDisplayPersonName().getFirstname() + " " +
+                    contribution.getAffiliationStatement().getDisplayPersonName().getLastname();
+            switch (contribution.getContributionType()) {
+                case AUTHOR:
+                    if (personExists) {
+                        index.getAuthorIds().add(contribution.getPerson().getId());
+                    }
+                    index.setAuthorNames(index.getAuthorNames() + ", " + contributorName);
+                    break;
+                case EDITOR:
+                    if (personExists) {
+                        index.getEditorIds().add(contribution.getPerson().getId());
+                    }
+                    index.setEditorNames(index.getEditorNames() + ", " + contributorName);
+                    break;
+                case ADVISOR:
+                    if (personExists) {
+                        index.getAdvisorIds().add(contribution.getPerson().getId());
+                    }
+                    index.setAdvisorNames(index.getAdvisorNames() + ", " + contributorName);
+                    break;
+                case REVIEWER:
+                    if (personExists) {
+                        index.getReviewerIds().add(contribution.getPerson().getId());
+                    }
+                    index.setReviewerNames(index.getReviewerNames() + ", " + contributorName);
+                    break;
+            }
+        });
+    }
+
+    private int parseYear(String dateString) {
+        DateTimeFormatter[] formatters =
+            {DateTimeFormatter.ofPattern("yyyy"), DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+                DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+                DateTimeFormatter.ofPattern("dd.MM.yyyy")};
+
+        for (var formatter : formatters) {
+            try {
+                var date = LocalDate.parse(dateString, formatter);
+                return date.getYear();
+            } catch (DateTimeParseException e) {
+                // Parsing failed, try the next formatter
+            }
+        }
+
+        return -1;
+    }
+
     protected void setCommonFields(Document document, DocumentDTO documentDTO) {
         document.setTitle(
             multilingualContentService.getMultilingualContent(documentDTO.getTitle()));
@@ -116,6 +212,18 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         publication.getDescription().clear();
         publication.getKeywords().clear();
         publication.getContributors().clear();
+    }
+
+    private void clearCommonIndexFields(DocumentPublicationIndex index) {
+        index.setAuthorNames("");
+        index.setEditorNames("");
+        index.setReviewerNames("");
+        index.setAdvisorNames("");
+
+        index.getAuthorIds().clear();
+        index.getEditorIds().clear();
+        index.getReviewerIds().clear();
+        index.getAdvisorIds().clear();
     }
 
     protected void deleteProofsAndFileItems(Document publicationToDelete) {
