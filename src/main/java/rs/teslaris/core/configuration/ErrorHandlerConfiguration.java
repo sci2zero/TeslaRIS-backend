@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.exception.CantEditPersonException;
 import rs.teslaris.core.exception.CantEditPublicationException;
 import rs.teslaris.core.exception.CantRegisterAdminException;
+import rs.teslaris.core.exception.IdempotencyException;
 import rs.teslaris.core.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.exception.ResearchAreaInUseException;
@@ -54,6 +55,13 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleConstraintViolationException(HttpServletRequest request,
                                                    ConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IdempotencyException.class)
+    @ResponseBody
+    ErrorObject handleIdempotencyException(HttpServletRequest request, IdempotencyException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
