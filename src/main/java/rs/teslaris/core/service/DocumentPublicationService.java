@@ -20,4 +20,6 @@ public interface DocumentPublicationService {
     List<Integer> getContributorIds(Integer publicationId);
 
     void indexCommonFields(Document document, DocumentPublicationIndex index);
+
+    DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId);
 }

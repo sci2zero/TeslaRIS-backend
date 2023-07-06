@@ -16,6 +16,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
@@ -32,9 +33,15 @@ import rs.teslaris.core.service.PersonContributionService;
 public class DocumentPublicationServiceImpl implements DocumentPublicationService {
 
     protected final MultilingualContentService multilingualContentService;
+
+    protected final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     private final DocumentRepository documentRepository;
+
     private final DocumentFileService documentFileService;
+
     private final PersonContributionService personContributionService;
+
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
 
@@ -62,7 +69,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
                                 Boolean isProof) {
         var document = findDocumentById(documentId);
         documentFiles.forEach(file -> {
-            var documentFile = documentFileService.saveNewDocument(file, true);
+            var documentFile = documentFileService.saveNewDocument(file, !isProof);
             if (isProof) {
                 document.getProofs().add(documentFile);
             } else {
@@ -97,41 +104,16 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
         clearCommonIndexFields(index);
 
+        index.setDatabaseId(document.getId());
+
         var year = parseYear(document.getDocumentDate());
         if (parseYear(document.getDocumentDate()) > 0) {
             index.setYear(year);
         }
 
-        document.getTitle().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().equals("SR")) {
-                index.setTitleSr(mc.getContent());
-            } else {
-                index.setTitleOther(mc.getContent());
-            }
-        });
-        document.getSubTitle().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().equals("SR")) {
-                index.setTitleSr(index.getTitleSr() + " " + mc.getContent());
-            } else {
-                index.setTitleOther(index.getTitleOther() + " " + mc.getContent());
-            }
-        });
-
-        document.getDescription().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().equals("SR")) {
-                index.setDescriptionSr(mc.getContent());
-            } else {
-                index.setDescriptionOther(mc.getContent());
-            }
-        });
-
-        document.getKeywords().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().equals("SR")) {
-                index.setKeywordsSr(mc.getContent());
-            } else {
-                index.setKeywordsOther(mc.getContent());
-            }
-        });
+        indexTitle(document, index);
+        indexDescription(document, index);
+        indexKeywords(document, index);
 
         document.getContributors().forEach(contribution -> {
             var personExists = contribution.getPerson() != null;
@@ -163,6 +145,50 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
                     }
                     index.setReviewerNames(index.getReviewerNames() + ", " + contributorName);
                     break;
+            }
+        });
+    }
+
+    @Override
+    public DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId) {
+        return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            documentId).orElseThrow(() -> new NotFoundException(
+            "Document publication index with given ID does not exist."));
+    }
+
+    private void indexTitle(Document document, DocumentPublicationIndex index) {
+        document.getTitle().forEach(mc -> {
+            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+                index.setTitleSr(mc.getContent());
+            } else {
+                index.setTitleOther(mc.getContent());
+            }
+        });
+        document.getSubTitle().forEach(mc -> {
+            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+                index.setTitleSr(index.getTitleSr() + " " + mc.getContent());
+            } else {
+                index.setTitleOther(index.getTitleOther() + " " + mc.getContent());
+            }
+        });
+    }
+
+    private void indexDescription(Document document, DocumentPublicationIndex index) {
+        document.getDescription().forEach(mc -> {
+            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+                index.setDescriptionSr(mc.getContent());
+            } else {
+                index.setDescriptionOther(mc.getContent());
+            }
+        });
+    }
+
+    private void indexKeywords(Document document, DocumentPublicationIndex index) {
+        document.getKeywords().forEach(mc -> {
+            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+                index.setKeywordsSr(mc.getContent());
+            } else {
+                index.setKeywordsOther(mc.getContent());
             }
         });
     }

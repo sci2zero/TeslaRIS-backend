@@ -114,6 +114,7 @@ public class ProceedingsPublicationServiceTest {
         var publicationDTO = new ProceedingsPublicationDTO();
         publicationDTO.setProceedingsId(1);
         var publicationToUpdate = new ProceedingsPublication();
+        publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         publicationToUpdate.setTitle(new HashSet<>());
         publicationToUpdate.setSubTitle(new HashSet<>());
         publicationToUpdate.setDescription(new HashSet<>());

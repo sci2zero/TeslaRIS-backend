@@ -89,7 +89,7 @@ public class ProceedingsControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(proceedingsDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{publicationId}", 32)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{publicationId}", 33)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -102,7 +102,7 @@ public class ProceedingsControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/proceedings/{publicationId}",
-                        32).contentType(MediaType.APPLICATION_JSON)
+                        33).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

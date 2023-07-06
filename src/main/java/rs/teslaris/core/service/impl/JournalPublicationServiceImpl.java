@@ -1,7 +1,6 @@
 package rs.teslaris.core.service.impl;
 
 import javax.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
@@ -31,19 +30,19 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
 
-    @Autowired
-    public JournalPublicationServiceImpl(DocumentRepository documentRepository,
+    public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
+                                         DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                         DocumentRepository documentRepository,
                                          DocumentFileService documentFileService,
                                          PersonContributionService personContributionService,
-                                         MultilingualContentService multilingualContentService,
                                          JournalService journalService,
                                          JournalPublicationRepository journalPublicationRepository,
-                                         DocumentPublicationIndexRepository documentPublicationIndexRepository) {
-        super(multilingualContentService, documentRepository, documentFileService,
-            personContributionService);
+                                         DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
+        super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
+            documentFileService, personContributionService);
         this.journalService = journalService;
         this.journalPublicationRepository = journalPublicationRepository;
-        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
     }
 
     @Override
@@ -65,11 +64,13 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setApproveStatus(
             documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
 
+        var savedPublication = journalPublicationRepository.save(publication);
+
         if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexJournalPublication(publication, new DocumentPublicationIndex());
+            indexJournalPublication(savedPublication, new DocumentPublicationIndex());
         }
 
-        return journalPublicationRepository.save(publication);
+        return savedPublication;
     }
 
     @Override
@@ -83,6 +84,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         setCommonFields(publicationToUpdate, publicationDTO);
         setJournalPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
+        if (publicationToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
+            indexJournalPublication(publicationToUpdate, indexToUpdate);
+        }
+
         journalPublicationRepository.save(publicationToUpdate);
     }
 
@@ -92,6 +98,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         deleteProofsAndFileItems(publicationToDelete);
         journalPublicationRepository.delete(publicationToDelete);
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(journalPublicationId));
     }
 
     @Override

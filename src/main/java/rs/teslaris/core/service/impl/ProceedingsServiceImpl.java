@@ -37,28 +37,24 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private final PublisherService publisherService;
 
-    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
-
 
     public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
+                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
                                   JournalService journalService, EventService eventService,
-                                  PublisherService publisherService,
-                                  DocumentPublicationIndexRepository documentPublicationIndexRepository) {
-        super(multilingualContentService, documentRepository, documentFileService,
-            personContributionService);
+                                  PublisherService publisherService) {
+        super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
+            documentFileService, personContributionService);
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
         this.journalService = journalService;
         this.eventService = eventService;
         this.publisherService = publisherService;
-        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
-
 
     @Override
     public ProceedingsResponseDTO readProceedingsById(Integer proceedingsId) {
@@ -85,7 +81,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         proceedings.setApproveStatus(ApproveStatus.APPROVED);
 
-        return proceedingsRepository.save(proceedings);
+        var savedProceedings = proceedingsRepository.save(proceedings);
+
+        if (proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexProceedings(savedProceedings, new DocumentPublicationIndex());
+        }
+
+        return savedProceedings;
     }
 
     @Override
@@ -98,6 +100,11 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         setCommonFields(proceedingsToUpdate, proceedingsDTO);
         setProceedingsRelatedFields(proceedingsToUpdate, proceedingsDTO);
 
+        if (proceedingsToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            var proceedingsIndex = findDocumentPublicationIndexByDatabaseId(proceedingsId);
+            indexProceedings(proceedingsToUpdate, proceedingsIndex);
+        }
+
         proceedingsRepository.save(proceedingsToUpdate);
     }
 
@@ -107,7 +114,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         deleteProofsAndFileItems(proceedingsToDelete);
 
+        deleteProofsAndFileItems(proceedingsToDelete);
         proceedingsRepository.delete(proceedingsToDelete);
+
+        if (proceedingsToDelete.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            documentPublicationIndexRepository.delete(
+                findDocumentPublicationIndexByDatabaseId(proceedingsId));
+        }
     }
 
     @Override

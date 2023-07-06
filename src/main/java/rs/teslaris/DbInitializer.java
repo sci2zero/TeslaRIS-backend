@@ -173,9 +173,15 @@ public class DbInitializer implements ApplicationRunner {
         conferenceEvent1.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija", 1)));
 
         var proceedings1 = new Proceedings();
-        proceedings1.setEISBN("MOCK_eISBN");
         proceedings1.setApproveStatus(ApproveStatus.APPROVED);
+        proceedings1.setEISBN("MOCK_eISBN");
         proceedings1.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings1);
+
+        var proceedings2 = new Proceedings();
+        proceedings2.setApproveStatus(ApproveStatus.REQUESTED);
+        proceedings2.setEISBN("MOCK_eISBN");
+        proceedings2.setEvent(conferenceEvent1);
+        proceedingsRepository.save(proceedings2);
     }
 }

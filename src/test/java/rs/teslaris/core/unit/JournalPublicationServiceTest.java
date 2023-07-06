@@ -111,6 +111,7 @@ public class JournalPublicationServiceTest {
         var publicationId = 1;
         var publicationDTO = new JournalPublicationDTO();
         var publicationToUpdate = new JournalPublication();
+        publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         publicationToUpdate.setTitle(new HashSet<>());
         publicationToUpdate.setSubTitle(new HashSet<>());
         publicationToUpdate.setDescription(new HashSet<>());

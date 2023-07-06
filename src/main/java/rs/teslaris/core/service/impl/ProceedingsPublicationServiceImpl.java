@@ -1,7 +1,6 @@
 package rs.teslaris.core.service.impl;
 
 import javax.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -27,21 +26,17 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     private final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
-    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
-
-    @Autowired
-    public ProceedingsPublicationServiceImpl(DocumentRepository documentRepository,
+    public ProceedingsPublicationServiceImpl(MultilingualContentService multilingualContentService,
+                                             DocumentRepository documentRepository,
                                              DocumentFileService documentFileService,
-                                             MultilingualContentService multilingualContentService,
                                              PersonContributionService personContributionService,
+                                             DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                              ProceedingsService proceedingsService,
-                                             ProceedingsPublicationRepository proceedingsPublicationRepository,
-                                             DocumentPublicationIndexRepository documentPublicationIndexRepository) {
-        super(multilingualContentService, documentRepository, documentFileService,
-            personContributionService);
+                                             ProceedingsPublicationRepository proceedingsPublicationRepository) {
+        super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
+            documentFileService, personContributionService);
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
-        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
 
     @Override
@@ -64,11 +59,13 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         publication.setApproveStatus(
             documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
 
+        var savedPublication = proceedingsPublicationRepository.save(publication);
+
         if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexProceedingsPublication(publication, new DocumentPublicationIndex());
+            indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
         }
 
-        return proceedingsPublicationRepository.save(publication);
+        return savedPublication;
     }
 
     @Override
@@ -82,6 +79,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         setCommonFields(publicationToUpdate, publicationDTO);
         setProceedingsPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
+        if (publicationToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
+            indexProceedingsPublication(publicationToUpdate, indexToUpdate);
+        }
+
         proceedingsPublicationRepository.save(publicationToUpdate);
     }
 
@@ -92,6 +94,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         deleteProofsAndFileItems(publicationToDelete);
         proceedingsPublicationRepository.delete(publicationToDelete);
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(proceedingsPublicationId));
     }
 
     @Override

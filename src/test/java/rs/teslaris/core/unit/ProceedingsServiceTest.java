@@ -20,7 +20,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -63,6 +66,9 @@ public class ProceedingsServiceTest {
     @Mock
     private PublisherService publisherService;
 
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
 
@@ -103,10 +109,19 @@ public class ProceedingsServiceTest {
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setLanguageTagIds(new ArrayList<>());
         var document = new Proceedings();
+        document.setDocumentDate("MOCK DATE");
+        document.setEvent(new Conference());
+        document.setLanguages(new HashSet<>());
+        document.setTitle(new HashSet<>());
+        document.setSubTitle(new HashSet<>());
+        document.setDescription(new HashSet<>());
+        document.setKeywords(new HashSet<>());
+        document.setContributors(new HashSet<>());
+        document.setUris(new HashSet<>());
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
-        when(documentRepository.save(any())).thenReturn(document);
+        when(proceedingsRepository.save(any())).thenReturn(document);
 
         // When
         var result = proceedingsService.createProceedings(proceedingsDTO);
@@ -125,6 +140,7 @@ public class ProceedingsServiceTest {
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setLanguageTagIds(new ArrayList<>());
         var proceedingsToUpdate = new Proceedings();
+        proceedingsToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         proceedingsToUpdate.setLanguages(new HashSet<>());
         proceedingsToUpdate.setTitle(new HashSet<>());
         proceedingsToUpdate.setSubTitle(new HashSet<>());
