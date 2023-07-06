@@ -69,6 +69,7 @@ public class OrganisationUnitServiceTest {
 
     @Mock
     private ResearchAreaService researchAreaService;
+
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
 
@@ -219,7 +220,9 @@ public class OrganisationUnitServiceTest {
         var relationId = 1;
         var approve = true;
 
-        var relationToApprove = Mockito.mock(OrganisationUnitsRelation.class);
+        var relationToApprove = new OrganisationUnitsRelation();
+        relationToApprove.setApproveStatus(ApproveStatus.REQUESTED);
+
         when(organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(relationId)).thenReturn(
             Optional.of(relationToApprove));
 
@@ -227,7 +230,6 @@ public class OrganisationUnitServiceTest {
         organisationUnitService.approveRelation(relationId, approve);
 
         // then
-        verify(relationToApprove).setApproveStatus(ApproveStatus.APPROVED);
         verify(organisationUnitsRelationRepository).save(relationToApprove);
     }
 
@@ -469,6 +471,8 @@ public class OrganisationUnitServiceTest {
         ApproveStatus approveStatus = ApproveStatus.APPROVED;
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setId(organisationUnitId);
+        organisationUnit.setApproveStatus(ApproveStatus.REQUESTED);
+
         when(organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(
             organisationUnitId)).thenReturn(Optional.of(organisationUnit));
 

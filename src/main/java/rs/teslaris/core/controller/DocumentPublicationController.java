@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.service.DocumentPublicationService;
@@ -36,6 +37,7 @@ public class DocumentPublicationController {
     @PatchMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
+    @Idempotent
     void addDocumentFile(@PathVariable Integer publicationId,
                          @ModelAttribute @Valid DocumentFileDTO documentFile,
                          @RequestParam Boolean isProof) {

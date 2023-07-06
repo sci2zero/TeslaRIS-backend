@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -33,6 +34,7 @@ public class JournalPublicationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")
+    @Idempotent
     public JournalPublicationDTO createJournalPublication(
         @RequestBody @Valid JournalPublicationDTO journalPublication) {
         var savedJournalPublication =

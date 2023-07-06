@@ -178,7 +178,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     () -> new NotFoundException(
                         "Organisation units relation with given ID does not exist."));
 
-        organisationUnit.setApproveStatus(approveStatus);
+        if (organisationUnit.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
+            organisationUnit.setApproveStatus(approveStatus);
+        }
 
         organisationUnitRepository.save(organisationUnit);
         return organisationUnit;
@@ -233,8 +235,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     public void approveRelation(Integer relationId, Boolean approve) {
         var relationToApprove = findOrganisationUnitsRelationById(relationId);
-        relationToApprove.setApproveStatus(
-            approve ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
+        if (relationToApprove.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
+            relationToApprove.setApproveStatus(
+                approve ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
+        }
         organisationUnitsRelationRepository.save(relationToApprove);
     }
 

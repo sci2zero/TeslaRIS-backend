@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
@@ -40,6 +41,7 @@ public class OrganisationUnitRelationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_OU_RELATIONS')")
+    @Idempotent
     public OrganisationUnitsRelationDTO createOrganisationUnitsRelations(
         @RequestBody @Valid OrganisationUnitsRelationDTO relationDTO) {
         var newRelation = organisationUnitService.createOrganisationUnitsRelation(relationDTO);
@@ -75,6 +77,7 @@ public class OrganisationUnitRelationController {
     @PatchMapping(value = "/{relationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_OU_RELATIONS')")
+    @Idempotent
     public void addRelationProofs(@ModelAttribute @Valid DocumentFileDTO proof,
                                   @PathVariable Integer relationId) {
         organisationUnitService.addRelationProofs(List.of(proof), relationId);
