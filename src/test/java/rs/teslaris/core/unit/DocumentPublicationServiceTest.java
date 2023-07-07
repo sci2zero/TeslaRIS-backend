@@ -19,6 +19,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -46,6 +49,9 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private PersonContributionService personContributionService;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;
@@ -88,10 +94,14 @@ public class DocumentPublicationServiceTest {
         var isProof = true;
         var document = new JournalPublication();
         document.setProofs(new HashSet<>());
+        document.setFileItems(new HashSet<>());
+        document.setApproveStatus(ApproveStatus.REQUESTED);
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.findDocumentFileById(documentFileId)).thenReturn(documentFile);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
         documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
@@ -108,11 +118,14 @@ public class DocumentPublicationServiceTest {
         var documentFileId = 1;
         var isProof = false;
         var document = new JournalPublication();
+        document.setApproveStatus(ApproveStatus.REQUESTED);
         document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.findDocumentFileById(documentFileId)).thenReturn(documentFile);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
         documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
@@ -130,12 +143,16 @@ public class DocumentPublicationServiceTest {
         documentFiles.add(new DocumentFileDTO());
         var isProof = true;
         var document = new JournalPublication();
+        document.setApproveStatus(ApproveStatus.REQUESTED);
         document.setProofs(new HashSet<>());
+        document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
             documentFile);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
         documentPublicationService.addDocumentFile(documentId, documentFiles, isProof);
@@ -152,12 +169,18 @@ public class DocumentPublicationServiceTest {
         documentFiles.add(new DocumentFileDTO());
         var isProof = false;
         var document = new JournalPublication();
+        document.setApproveStatus(ApproveStatus.REQUESTED);
         document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
+        documentFile.setId(1);
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
             documentFile);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
+        when(documentFileService.findDocumentFileIndexByDatabaseId(any())).thenReturn(
+            new DocumentFileIndex());
 
         // When
         documentPublicationService.addDocumentFile(documentId, documentFiles, isProof);

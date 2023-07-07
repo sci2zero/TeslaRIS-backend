@@ -11,6 +11,8 @@ public interface DocumentFileService {
 
     DocumentFile findDocumentFileById(Integer id);
 
+    DocumentFileIndex findDocumentFileIndexByDatabaseId(Integer databaseId);
+
     DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index);
 
     void editDocumentFile(DocumentFileDTO documentFile);

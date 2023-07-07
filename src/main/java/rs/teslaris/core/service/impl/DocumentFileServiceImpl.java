@@ -47,6 +47,13 @@ public class DocumentFileServiceImpl implements DocumentFileService {
             () -> new NotFoundException("Document file with given id does not exist."));
     }
 
+    @Override
+    public DocumentFileIndex findDocumentFileIndexByDatabaseId(Integer databaseId) {
+        return documentFileIndexRepository.findDocumentFileIndexByDatabaseId(databaseId)
+            .orElseThrow(
+                () -> new NotFoundException("Document file index with given ID does not exist."));
+    }
+
     private void setCommonFields(DocumentFile documentFile, DocumentFileDTO documentFileDTO) {
         documentFile.setFilename(documentFileDTO.getFile().getOriginalFilename());
         documentFile.setDescription(
@@ -87,9 +94,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
         fileService.store(documentFile.getFile(), documentFileToEdit.getServerFilename());
         documentFileRepository.save(documentFileToEdit);
 
-        var documentIndexToUpdate = documentFileIndexRepository.findDocumentFileIndexByDatabaseId(
-            documentFileToEdit.getId()).orElseThrow(
-            () -> new NotFoundException("Document index with given ID does not exist."));
+        var documentIndexToUpdate = findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
 
         parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
             documentFileToEdit.getServerFilename(), documentIndexToUpdate);

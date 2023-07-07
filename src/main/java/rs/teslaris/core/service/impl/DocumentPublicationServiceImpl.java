@@ -77,6 +77,11 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
             }
             documentRepository.save(document);
         });
+
+        if (document.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexDocumentFilesContent(document,
+                findDocumentPublicationIndexByDatabaseId(documentId));
+        }
     }
 
     @Override
@@ -90,8 +95,12 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
             document.getFileItems().remove(documentFile);
         }
         documentRepository.save(document);
-
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+
+        if (document.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexDocumentFilesContent(document,
+                findDocumentPublicationIndexByDatabaseId(documentId));
+        }
     }
 
     @Override
@@ -114,6 +123,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         indexTitle(document, index);
         indexDescription(document, index);
         indexKeywords(document, index);
+        indexDocumentFilesContent(document, index);
 
         document.getContributors().forEach(contribution -> {
             var personExists = contribution.getPerson() != null;
@@ -154,6 +164,16 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             documentId).orElseThrow(() -> new NotFoundException(
             "Document publication index with given ID does not exist."));
+    }
+
+    private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
+        index.setFullTextSr("");
+        index.setFullTextOther("");
+        document.getFileItems().forEach(documentFile -> {
+            var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
+            index.setFullTextSr(index.getFullTextSr() + "" + file.getPdfTextSr());
+            index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
+        });
     }
 
     private void indexTitle(Document document, DocumentPublicationIndex index) {

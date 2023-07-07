@@ -110,6 +110,7 @@ public class ProceedingsServiceTest {
         proceedingsDTO.setLanguageTagIds(new ArrayList<>());
         var document = new Proceedings();
         document.setDocumentDate("MOCK DATE");
+        document.setFileItems(new HashSet<>());
         document.setEvent(new Conference());
         document.setLanguages(new HashSet<>());
         document.setTitle(new HashSet<>());
