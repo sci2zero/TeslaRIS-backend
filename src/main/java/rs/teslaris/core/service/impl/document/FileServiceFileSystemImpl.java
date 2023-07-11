@@ -13,12 +13,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Service
 @RequiredArgsConstructor
-public class FileServiceImpl implements FileService {
+public class FileServiceFileSystemImpl implements FileService {
 
     @Value("${document_storage.root_path}")
     private String rootLocation;

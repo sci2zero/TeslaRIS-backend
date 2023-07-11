@@ -20,11 +20,11 @@ import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.service.impl.person.PersonContributionServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.service.impl.person.PersonContributionServiceImpl;
 
 @SpringBootTest
 public class PersonContributionServiceTest {

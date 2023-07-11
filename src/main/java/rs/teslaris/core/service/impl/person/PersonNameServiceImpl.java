@@ -4,10 +4,10 @@ import java.util.List;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.person.PersonNameRepository;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor

@@ -14,17 +14,17 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
-import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
-import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @Primary
@@ -78,7 +78,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
             documentRepository.save(document);
         });
 
-        if (document.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
@@ -97,7 +97,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         documentRepository.save(document);
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
 
-        if (document.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
@@ -114,12 +114,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         clearCommonIndexFields(index);
 
         index.setDatabaseId(document.getId());
-
-        var year = parseYear(document.getDocumentDate());
-        if (parseYear(document.getDocumentDate()) > 0) {
-            index.setYear(year);
-        }
-
+        index.setYear(parseYear(document.getDocumentDate()));
         indexTitle(document, index);
         indexDescription(document, index);
         indexKeywords(document, index);
@@ -217,7 +212,8 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
         DateTimeFormatter[] formatters =
             {DateTimeFormatter.ofPattern("yyyy"), DateTimeFormatter.ofPattern("dd-MM-yyyy"),
                 DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-                DateTimeFormatter.ofPattern("dd.MM.yyyy")};
+                DateTimeFormatter.ofPattern("dd.MM.yyyy"),
+                DateTimeFormatter.ofPattern("dd.MM.yyyy.")};
 
         for (var formatter : formatters) {
             try {

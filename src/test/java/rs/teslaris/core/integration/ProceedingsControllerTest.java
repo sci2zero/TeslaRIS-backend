@@ -75,7 +75,8 @@ public class ProceedingsControllerTest extends BaseTest {
         String requestBody = objectMapper.writeValueAsString(proceedingsDTO);
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/proceedings")
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.documentDate").value("MOCK_DATE"));
     }

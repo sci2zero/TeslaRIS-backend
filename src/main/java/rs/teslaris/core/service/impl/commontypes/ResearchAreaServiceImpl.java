@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.institution.ResearchAreaConverter;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
-import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaInUseException;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaInUseException;
 
 @Service
 @RequiredArgsConstructor

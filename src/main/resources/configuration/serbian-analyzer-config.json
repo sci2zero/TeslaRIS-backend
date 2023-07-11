@@ -15,7 +15,7 @@
         "type": "custom",
         "tokenizer": "standard",
         "filter": [
-          "serbian_latinic_to_cyrillic",
+          "serbian_cyrillic_to_latinic",
           "icu_folding",
           "lowercase"
         ]
@@ -30,7 +30,7 @@
         "type": "stemmer",
         "language": "serbian"
       },
-      "serbian_latinic_to_cyrillic": {
+      "serbian_cyrillic_to_latinic": {
         "type": "icu_transform",
         "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC"
       }

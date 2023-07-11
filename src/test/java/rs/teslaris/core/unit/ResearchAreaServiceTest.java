@@ -20,12 +20,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
-import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaInUseException;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
-import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.impl.commontypes.ResearchAreaServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaInUseException;
 
 @SpringBootTest
 public class ResearchAreaServiceTest {
