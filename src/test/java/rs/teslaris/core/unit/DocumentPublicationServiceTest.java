@@ -18,7 +18,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
-import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -26,11 +26,11 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.service.DocumentFileService;
-import rs.teslaris.core.service.JournalService;
-import rs.teslaris.core.service.MultilingualContentService;
-import rs.teslaris.core.service.PersonContributionService;
-import rs.teslaris.core.service.impl.DocumentPublicationServiceImpl;
+import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
 
 @SpringBootTest
 public class DocumentPublicationServiceTest {

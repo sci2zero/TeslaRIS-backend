@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
-import rs.teslaris.core.service.impl.JournalServiceImpl;
+import rs.teslaris.core.service.impl.document.JournalServiceImpl;
 
 @SpringBootTest
 public class JournalServiceTest {

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
-import rs.teslaris.core.service.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 
 @RestController
 @RequestMapping("/api/document-file")

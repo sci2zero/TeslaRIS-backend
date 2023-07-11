@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
-import rs.teslaris.core.service.impl.CountryServiceImpl;
+import rs.teslaris.core.service.impl.commontypes.CountryServiceImpl;
 
 @SpringBootTest
 @RequiredArgsConstructor

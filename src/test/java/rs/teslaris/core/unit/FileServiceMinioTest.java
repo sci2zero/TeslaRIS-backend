@@ -18,9 +18,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
-import rs.teslaris.core.exception.NotFoundException;
-import rs.teslaris.core.exception.StorageException;
-import rs.teslaris.core.service.impl.FileServiceMinioImpl;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.service.impl.document.FileServiceMinioImpl;
 
 @SpringBootTest
 public class FileServiceMinioTest {

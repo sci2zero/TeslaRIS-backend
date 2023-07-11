@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
-import rs.teslaris.core.service.impl.LanguageServiceImpl;
+import rs.teslaris.core.service.impl.commontypes.LanguageServiceImpl;
 
 @SpringBootTest
 public class LanguageServiceTest {

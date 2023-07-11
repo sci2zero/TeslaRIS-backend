@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
-import rs.teslaris.core.service.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
 @RestController
 @RequestMapping("/api/document")

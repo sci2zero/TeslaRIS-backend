@@ -26,7 +26,7 @@ import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonSearchRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
-import rs.teslaris.core.service.PersonService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Validated
 @RestController

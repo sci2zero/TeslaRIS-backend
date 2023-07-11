@@ -12,17 +12,17 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import rs.teslaris.core.exception.CantEditPersonException;
-import rs.teslaris.core.exception.CantEditPublicationException;
-import rs.teslaris.core.exception.CantRegisterAdminException;
-import rs.teslaris.core.exception.IdempotencyException;
-import rs.teslaris.core.exception.NonExistingRefreshTokenException;
-import rs.teslaris.core.exception.NotFoundException;
-import rs.teslaris.core.exception.ResearchAreaInUseException;
-import rs.teslaris.core.exception.SelfRelationException;
-import rs.teslaris.core.exception.StorageException;
-import rs.teslaris.core.exception.TakeOfRoleNotPermittedException;
-import rs.teslaris.core.exception.WrongPasswordProvidedException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantRegisterAdminException;
+import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
+import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
+import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
+import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 
 @ControllerAdvice

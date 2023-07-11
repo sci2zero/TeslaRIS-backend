@@ -13,8 +13,8 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
-import rs.teslaris.core.service.LanguageTagService;
-import rs.teslaris.core.service.impl.MultilingualContentServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.impl.commontypes.MultilingualContentServiceImpl;
 
 @SpringBootTest
 public class MultilingualContentServiceTest {

@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
-import rs.teslaris.core.service.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 
 @RestController
 @RequestMapping("/api/proceedings")
@@ -33,6 +34,7 @@ public class ProceedingsController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")
+    @Idempotent
     public ProceedingsDTO createProceedings(@RequestBody @Valid ProceedingsDTO proceedings) {
         var savedProceedings = proceedingsService.createProceedings(proceedings);
         proceedings.setId(savedProceedings.getId());

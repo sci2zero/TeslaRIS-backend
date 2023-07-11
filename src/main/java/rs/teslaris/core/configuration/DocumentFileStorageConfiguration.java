@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import rs.teslaris.core.service.FileService;
-import rs.teslaris.core.service.impl.FileServiceImpl;
-import rs.teslaris.core.service.impl.FileServiceMinioImpl;
+import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.service.impl.document.FileServiceImpl;
+import rs.teslaris.core.service.impl.document.FileServiceMinioImpl;
 
 @Configuration
 @RequiredArgsConstructor

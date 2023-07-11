@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.core.service.FileService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 
 @RestController
 @RequestMapping("api/file")

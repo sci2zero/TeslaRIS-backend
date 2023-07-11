@@ -15,10 +15,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.person.PersonNameRepository;
-import rs.teslaris.core.service.impl.PersonNameServiceImpl;
+import rs.teslaris.core.service.impl.person.PersonNameServiceImpl;
 
 @SpringBootTest
 public class PersonNameServiceTest {

@@ -39,7 +39,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
-import rs.teslaris.core.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -56,11 +56,11 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.repository.person.PersonRepository;
-import rs.teslaris.core.service.CountryService;
-import rs.teslaris.core.service.LanguageTagService;
-import rs.teslaris.core.service.PersonNameService;
-import rs.teslaris.core.service.impl.OrganisationUnitServiceImpl;
-import rs.teslaris.core.service.impl.PersonServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.person.PersonNameService;
+import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
+import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 
 @SpringBootTest
 public class PersonServiceTest {

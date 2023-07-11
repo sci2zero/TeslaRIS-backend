@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
-import rs.teslaris.core.service.ProceedingsPublicationService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 
 @RestController
 @RequestMapping("api/proceedings-publication")
@@ -33,6 +34,7 @@ public class ProceedingsPublicationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")
+    @Idempotent
     public ProceedingsPublicationDTO createProceedingsPublication(
         @RequestBody @Valid ProceedingsPublicationDTO proceedingsPublication) {
         var savedProceedingsPublication =
