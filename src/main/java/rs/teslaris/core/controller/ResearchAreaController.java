@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.service.ResearchAreaService;
@@ -33,6 +34,7 @@ public class ResearchAreaController {
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_RESEARCH_AREAS')")
     @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
     public ResearchAreaDTO createResearchArea(@RequestBody ResearchAreaDTO researchArea) {
         var newResearchArea = researchAreaService.createResearchArea(researchArea);
         researchArea.setId(newResearchArea.getId());

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.AuthenticationResponseDTO;
@@ -77,6 +78,7 @@ public class UserController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
     public UserResponseDTO registerUser(
         @RequestBody @Valid RegistrationRequestDTO registrationRequest) {
         var newUser = userService.registerUser(registrationRequest);
