@@ -19,6 +19,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantRegisterAdminExcept
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PublisherInUseException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaInUseException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
@@ -141,6 +142,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleResearchAreaInUseException(HttpServletRequest request,
                                                  ResearchAreaInUseException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(PublisherInUseException.class)
+    @ResponseBody
+    ErrorObject handlePublisherInUseException(HttpServletRequest request,
+                                              PublisherInUseException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 

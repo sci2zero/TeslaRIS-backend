@@ -22,6 +22,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
@@ -39,11 +40,13 @@ import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Component
 @RequiredArgsConstructor
@@ -75,6 +78,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final ConferenceRepository conferenceRepository;
 
+    private final PublisherRepository publisherRepository;
+
 
     @Override
     @Transactional
@@ -91,16 +96,17 @@ public class DbInitializer implements ApplicationRunner {
         var editResearchAreas = new Privilege("EDIT_RESEARCH_AREAS");
         var editOrganisationUnit = new Privilege("EDIT_ORGANISATION_UNITS");
         var editOURelations = new Privilege("EDIT_OU_RELATIONS");
+        var editPublishers = new Privilege("EDIT_PUBLISHERS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
-                editResearchAreas, approvePublication, editOURelations));
+                editResearchAreas, approvePublication, editOURelations, editPublishers));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
             takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
             createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
-            editOURelations, approvePublication)));
+            editOURelations, approvePublication, editPublishers)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
@@ -135,9 +141,9 @@ public class DbInitializer implements ApplicationRunner {
         userRepository.save(adminUser);
         userRepository.save(researcherUser);
 
-        var englishTag = new LanguageTag("EN", "English");
+        var englishTag = new LanguageTag(LanguageAbbreviations.ENGLISH, "English");
         languageTagRepository.save(englishTag);
-        var serbianTag = new LanguageTag("SR", "Srpski");
+        var serbianTag = new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski");
         languageTagRepository.save(serbianTag);
 
         var dummyOU = new OrganisationUnit();
@@ -183,5 +189,11 @@ public class DbInitializer implements ApplicationRunner {
         proceedings2.setEISBN("MOCK_eISBN");
         proceedings2.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings2);
+
+        var publisher1 = new Publisher();
+        publisher1.setName(Set.of(new MultiLingualContent(englishTag, "Name1", 1)));
+        publisher1.setPlace(Set.of(new MultiLingualContent(englishTag, "Place1", 1)));
+        publisher1.setState(Set.of(new MultiLingualContent(englishTag, "State1", 1)));
+        publisherRepository.save(publisher1);
     }
 }

@@ -1,7 +1,11 @@
 package rs.teslaris.core.service.impl.document;
 
+import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
@@ -12,12 +16,21 @@ import rs.teslaris.core.util.exceptionhandling.exception.PublisherInUseException
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PublisherServiceImpl implements PublisherService {
 
     private final PublisherRepository publisherRepository;
 
     private final MultilingualContentService multilingualContentService;
 
+
+    @Override
+    public Page<PublisherDTO> readAllPublishers(Pageable pageable) {
+        return publisherRepository.findAll(pageable).map(p -> new PublisherDTO(p.getId(),
+            MultilingualContentConverter.getMultilingualContentDTO(p.getName()),
+            MultilingualContentConverter.getMultilingualContentDTO(p.getPlace()),
+            MultilingualContentConverter.getMultilingualContentDTO(p.getState())));
+    }
 
     @Override
     public Publisher findPublisherById(Integer publisherId) {

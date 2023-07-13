@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Service
 @RequiredArgsConstructor
@@ -170,7 +171,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
     }
 
     private String detectLanguage(String text) {
-        return languageDetector.detect(text).getLanguage();
+        return languageDetector.detect(text).getLanguage().toUpperCase();
     }
 
     private void saveDocumentIndex(String documentContent, String documentTitle,
@@ -178,13 +179,15 @@ public class DocumentFileServiceImpl implements DocumentFileService {
                                    DocumentFile documentFile, String serverFilename,
                                    DocumentFileIndex documentIndex) {
 
-        if (contentLanguageDetected.equals("hr") || contentLanguageDetected.equals("sr")) {
+        if (contentLanguageDetected.equals(LanguageAbbreviations.CROATIAN) ||
+            contentLanguageDetected.equals(LanguageAbbreviations.SERBIAN)) {
             documentIndex.setPdfTextSr(documentContent);
         } else {
             documentIndex.setPdfTextOther(documentContent);
         }
 
-        if (titleLanguageDetected.equals("hr") || titleLanguageDetected.equals("sr")) {
+        if (titleLanguageDetected.equals(LanguageAbbreviations.CROATIAN) ||
+            titleLanguageDetected.equals(LanguageAbbreviations.SERBIAN)) {
             documentIndex.setTitleSr(documentTitle);
         } else {
             documentIndex.setTitleOther(documentTitle);
@@ -192,12 +195,16 @@ public class DocumentFileServiceImpl implements DocumentFileService {
 
         documentIndex.setDescriptionSr("");
         documentFile.getDescription().stream()
-            .filter(d -> d.getLanguage().getLanguageTag().startsWith("SR")).forEach(
-                d -> documentIndex.setDescriptionSr(documentIndex.getDescriptionSr() + d.getContent()));
+            .filter(d -> d.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN))
+            .forEach(
+                d -> documentIndex.setDescriptionSr(
+                    documentIndex.getDescriptionSr() + d.getContent()));
 
         documentIndex.setDescriptionOther("");
         documentFile.getDescription().stream()
-            .filter(d -> !d.getLanguage().getLanguageTag().startsWith("SR")).forEach(
+            .filter(
+                d -> !d.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN))
+            .forEach(
                 d -> documentIndex.setDescriptionOther(
                     documentIndex.getDescriptionOther() + d.getContent() + " | "));
 

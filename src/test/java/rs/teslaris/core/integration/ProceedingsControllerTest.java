@@ -30,7 +30,7 @@ public class ProceedingsControllerTest extends BaseTest {
 
 
     private ProceedingsDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(20, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(21, "Content", 1));
 
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setTitle(dummyMC);
@@ -38,7 +38,7 @@ public class ProceedingsControllerTest extends BaseTest {
         proceedingsDTO.setDescription(dummyMC);
         proceedingsDTO.setKeywords(dummyMC);
         proceedingsDTO.setDocumentDate("MOCK_DATE");
-        proceedingsDTO.setEventId(31);
+        proceedingsDTO.setEventId(32);
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
@@ -47,7 +47,7 @@ public class ProceedingsControllerTest extends BaseTest {
         contribution.setPersonName(new PersonNameDTO());
         contribution.setContact(new ContactDTO());
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(16, dummyMC, dummyMC));
+        contribution.setPostalAddress(new PostalAddressDTO(17, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
         proceedingsDTO.setContributions(List.of(contribution));
         proceedingsDTO.setUris(new HashSet<>());
@@ -60,7 +60,7 @@ public class ProceedingsControllerTest extends BaseTest {
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testReadProceedings() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.get("http://localhost:8081/api/proceedings/{publicationId}", 32)
+                MockMvcRequestBuilders.get("http://localhost:8081/api/proceedings/{publicationId}", 33)
                     .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
             .andExpect(jsonPath("$.eisbn").value("MOCK_eISBN"));
     }
@@ -76,7 +76,7 @@ public class ProceedingsControllerTest extends BaseTest {
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/proceedings")
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY"))
+                .header("Idempotency-Key", "MOCK_KEY_PROCEEDINGS"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.documentDate").value("MOCK_DATE"));
     }
@@ -90,7 +90,7 @@ public class ProceedingsControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(proceedingsDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{publicationId}", 33)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{publicationId}", 34)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -103,7 +103,7 @@ public class ProceedingsControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/proceedings/{publicationId}",
-                        33).contentType(MediaType.APPLICATION_JSON)
+                        34).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

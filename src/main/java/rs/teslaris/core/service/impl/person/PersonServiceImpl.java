@@ -42,6 +42,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Service
 @RequiredArgsConstructor
@@ -336,10 +337,12 @@ public class PersonServiceImpl implements PersonService {
             var institutionName_other = new StringBuilder();
 
             organisationUnit.getName().stream()
-                .filter(mc -> mc.getLanguage().getLanguageTag().startsWith("SR"))
+                .filter(mc -> mc.getLanguage().getLanguageTag()
+                    .startsWith(LanguageAbbreviations.SERBIAN))
                 .forEach(mc -> institutionName_sr.append(mc.getContent()).append(" | "));
             organisationUnit.getName().stream()
-                .filter(mc -> !mc.getLanguage().getLanguageTag().startsWith("SR"))
+                .filter(mc -> !mc.getLanguage().getLanguageTag()
+                    .startsWith(LanguageAbbreviations.SERBIAN))
                 .forEach(mc -> institutionName_other.append(mc.getContent()).append(" | "));
             employments_sr.append(institutionName_sr)
                 .append(organisationUnit.getNameAbbreviation());

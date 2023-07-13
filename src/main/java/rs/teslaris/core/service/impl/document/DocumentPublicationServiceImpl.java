@@ -25,6 +25,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Service
 @Primary
@@ -173,14 +174,14 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
     private void indexTitle(Document document, DocumentPublicationIndex index) {
         document.getTitle().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
                 index.setTitleSr(mc.getContent());
             } else {
                 index.setTitleOther(mc.getContent());
             }
         });
         document.getSubTitle().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
                 index.setTitleSr(index.getTitleSr() + " " + mc.getContent());
             } else {
                 index.setTitleOther(index.getTitleOther() + " " + mc.getContent());
@@ -190,7 +191,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
     private void indexDescription(Document document, DocumentPublicationIndex index) {
         document.getDescription().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
                 index.setDescriptionSr(mc.getContent());
             } else {
                 index.setDescriptionOther(mc.getContent());
@@ -200,7 +201,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
     private void indexKeywords(Document document, DocumentPublicationIndex index) {
         document.getKeywords().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().equals("SR")) {
+            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
                 index.setKeywordsSr(mc.getContent());
             } else {
                 index.setKeywordsOther(mc.getContent());
