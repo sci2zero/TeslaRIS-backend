@@ -17,6 +17,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantRegisterAdminException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
+import rs.teslaris.core.util.exceptionhandling.exception.JournalInUseException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherInUseException;
@@ -150,6 +151,13 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handlePublisherInUseException(HttpServletRequest request,
                                               PublisherInUseException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(JournalInUseException.class)
+    @ResponseBody
+    ErrorObject handleJournalInUseException(HttpServletRequest request, JournalInUseException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 

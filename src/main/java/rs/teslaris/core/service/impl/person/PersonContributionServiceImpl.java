@@ -6,11 +6,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
-import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.PersonJournalContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -44,37 +48,34 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         document.setContributors(new HashSet<>());
         documentDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonDocumentContribution();
+            setPersonContributionCommonFields(contribution, contributionDTO);
+
             contribution.setContributionType(contributionDTO.getContributionType());
             contribution.setMainContributor(contributionDTO.getIsMainContributor());
             contribution.setCorrespondingContributor(
                 contributionDTO.getIsCorrespondingContributor());
 
-            setAffiliationStatement(contribution, contributionDTO);
-
-            contribution.setInstitutions(new HashSet<>());
-            contributionDTO.getInstitutionIds().forEach(institutionId -> {
-                contribution.getInstitutions()
-                    .add(organisationUnitService.findOrganisationUnitById(institutionId));
-            });
-
-            contribution.setContributionDescription(
-                multilingualContentService.getMultilingualContent(
-                    contributionDTO.getContributionDescription()));
-            contribution.setOrderNumber(contributionDTO.getOrderNumber());
-
-            if (contributionDTO.getPersonId() != null) {
-                contribution.setPerson(personService.findPersonById(contributionDTO.getPersonId()));
-            }
-
-            contribution.setApproveStatus(
-                contributionApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
             document.addDocumentContribution(contribution);
         });
     }
 
-    private void setAffiliationStatement(PersonDocumentContribution contribution,
-                                         PersonDocumentContributionDTO contributionDTO) {
+    @Override
+    public void setPersonJournalContributionsForJournal(Journal journal, JournalDTO journalDTO) {
+        journal.setContributions(new HashSet<>());
+        journalDTO.getContributions().forEach(contributionDTO -> {
+            var contribution = new PersonJournalContribution();
+            setPersonContributionCommonFields(contribution, contributionDTO);
+
+            contribution.setContributionType(contributionDTO.getContributionType());
+            contribution.setDateFrom(contributionDTO.getDateFrom());
+            contribution.setDateTo(contributionDTO.getDateTo());
+
+            journal.addContribution(contribution);
+        });
+    }
+
+    private void setAffiliationStatement(PersonContribution contribution,
+                                         PersonContributionDTO contributionDTO) {
         var personName = new PersonName(contributionDTO.getPersonName().getFirstname(),
             contributionDTO.getPersonName().getOtherName(),
             contributionDTO.getPersonName().getLastname(),
@@ -96,5 +97,23 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             multilingualContentService.getMultilingualContent(
                 contributionDTO.getDisplayAffiliationStatement()), personName, postalAddress,
             contact));
+    }
+
+    private void setPersonContributionCommonFields(PersonContribution contribution,
+                                                   PersonContributionDTO contributionDTO) {
+        if (contributionDTO.getPersonId() != null) {
+            contribution.setPerson(personService.findPersonById(contributionDTO.getPersonId()));
+        }
+        contribution.setContributionDescription(multilingualContentService.getMultilingualContent(
+            contributionDTO.getContributionDescription()));
+        setAffiliationStatement(contribution, contributionDTO);
+
+        contribution.setInstitutions(new HashSet<>());
+        contributionDTO.getInstitutionIds().forEach(institutionId -> contribution.getInstitutions()
+            .add(organisationUnitService.findOrganisationUnitById(institutionId)));
+
+        contribution.setOrderNumber(contributionDTO.getOrderNumber());
+        contribution.setApproveStatus(
+            contributionApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
     }
 }

@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
@@ -152,5 +156,29 @@ public class PublisherServiceTest {
             () -> publisherService.deletePublisher(publisherId));
 
         // then (PublisherInUseException should be thrown)
+    }
+
+    @Test
+    public void shouldReadAllPublishers() {
+        // given
+        var pageable = Pageable.ofSize(5);
+        var publisher1 = new Publisher();
+        publisher1.setName(new HashSet<>());
+        publisher1.setPlace(new HashSet<>());
+        publisher1.setState(new HashSet<>());
+        var publisher2 = new Publisher();
+        publisher2.setName(new HashSet<>());
+        publisher2.setPlace(new HashSet<>());
+        publisher2.setState(new HashSet<>());
+
+        when(publisherRepository.findAll(pageable)).thenReturn(
+            new PageImpl<>(List.of(publisher1, publisher2)));
+
+        // when
+        var response = publisherService.readAllPublishers(pageable);
+
+        // then
+        assertEquals(2, response.getTotalElements());
+        assertEquals(1, response.getTotalPages());
     }
 }

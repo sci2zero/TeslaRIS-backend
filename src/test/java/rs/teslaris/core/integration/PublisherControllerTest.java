@@ -23,9 +23,9 @@ public class PublisherControllerTest extends BaseTest {
 
     private PublisherDTO getTestPayload() {
         var publisherDTO = new PublisherDTO();
-        publisherDTO.setName(List.of(new MultilingualContentDTO(21, "Name", 1)));
-        publisherDTO.setPlace(List.of(new MultilingualContentDTO(21, "Place", 1)));
-        publisherDTO.setState(List.of(new MultilingualContentDTO(21, "State", 1)));
+        publisherDTO.setName(List.of(new MultilingualContentDTO(22, "Name", 1)));
+        publisherDTO.setPlace(List.of(new MultilingualContentDTO(22, "Place", 1)));
+        publisherDTO.setState(List.of(new MultilingualContentDTO(22, "State", 1)));
         return publisherDTO;
     }
 
@@ -61,7 +61,7 @@ public class PublisherControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(publisherDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/publisher/{publisherId}", 35)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/publisher/{publisherId}", 36)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -73,7 +73,7 @@ public class PublisherControllerTest extends BaseTest {
         String jwtToken = authenticateAndGetToken();
 
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("http://localhost:8081/api/publisher/{publisherId}", 35)
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/publisher/{publisherId}", 36)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
