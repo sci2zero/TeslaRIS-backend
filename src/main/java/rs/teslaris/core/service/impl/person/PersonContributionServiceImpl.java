@@ -61,7 +61,12 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
     @Override
     public void setPersonJournalContributionsForJournal(Journal journal, JournalDTO journalDTO) {
-        journal.setContributions(new HashSet<>());
+        if (journal.getContributions() != null) {
+            journal.getContributions().clear();
+        } else {
+            journal.setContributions(new HashSet<>());
+        }
+
         journalDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonJournalContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);

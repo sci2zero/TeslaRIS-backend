@@ -2,6 +2,8 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.HashSet;
 import javax.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
@@ -37,24 +39,26 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private final PublisherService publisherService;
 
-
+    @Autowired
     public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
+                                  ElasticsearchTemplate elasticsearchTemplate,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
                                   JournalService journalService, EventService eventService,
                                   PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService);
+            documentFileService, personContributionService, elasticsearchTemplate);
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
         this.journalService = journalService;
         this.eventService = eventService;
         this.publisherService = publisherService;
     }
+
 
     @Override
     public ProceedingsResponseDTO readProceedingsById(Integer proceedingsId) {

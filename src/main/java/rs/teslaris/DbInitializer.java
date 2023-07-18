@@ -159,6 +159,8 @@ public class DbInitializer implements ApplicationRunner {
         organisationUnitRepository.save(dummyOU);
 
         var dummyJournal = new Journal();
+        dummyJournal.setTitle(Set.of(new MultiLingualContent(englishTag, "Title1", 1)));
+        dummyJournal.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR1", 1)));
         journalRepository.save(dummyJournal);
 
         var dummyOU2 = new OrganisationUnit();

@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
 import javax.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
@@ -29,21 +31,23 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
-
+    @Autowired
     public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                          DocumentRepository documentRepository,
                                          DocumentFileService documentFileService,
                                          PersonContributionService personContributionService,
+                                         ElasticsearchTemplate elasticsearchTemplate,
                                          JournalService journalService,
                                          JournalPublicationRepository journalPublicationRepository,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService);
+            documentFileService, personContributionService, elasticsearchTemplate);
         this.journalService = journalService;
         this.journalPublicationRepository = journalPublicationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
     }
+
 
     @Override
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {

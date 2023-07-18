@@ -61,7 +61,7 @@ public class PublisherControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(publisherDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/publisher/{publisherId}", 36)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/publisher/{publisherId}", 38)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -73,7 +73,7 @@ public class PublisherControllerTest extends BaseTest {
         String jwtToken = authenticateAndGetToken();
 
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("http://localhost:8081/api/publisher/{publisherId}", 36)
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/publisher/{publisherId}", 38)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

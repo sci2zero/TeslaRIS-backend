@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -29,17 +30,19 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Autowired
     public ProceedingsPublicationServiceImpl(MultilingualContentService multilingualContentService,
+                                             DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                              DocumentRepository documentRepository,
                                              DocumentFileService documentFileService,
                                              PersonContributionService personContributionService,
-                                             DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                             ElasticsearchTemplate elasticsearchTemplate,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService);
+            documentFileService, personContributionService, elasticsearchTemplate);
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }
+
 
     @Override
     public ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId) {

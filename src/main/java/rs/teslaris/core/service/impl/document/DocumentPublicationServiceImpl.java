@@ -1,5 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -9,8 +11,15 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
+import org.springframework.data.elasticsearch.core.SearchHitSupport;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -42,6 +51,8 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     private final DocumentFileService documentFileService;
 
     private final PersonContributionService personContributionService;
+
+    private final ElasticsearchTemplate elasticsearchTemplate;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -274,5 +285,61 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
         publicationToDelete.getFileItems().forEach(
             fileItem -> documentFileService.deleteDocumentFile(fileItem.getServerFilename()));
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> searchDocumentPublicationsSimple(List<String> tokens,
+                                                                           Pageable pageable) {
+        var query = buildSimpleSearchQuery(tokens);
+
+        var searchQueryBuilder = new NativeQueryBuilder().withQuery(query).withPageable(pageable);
+
+        var searchQuery = searchQueryBuilder.build();
+
+        var searchHits = elasticsearchTemplate.search(searchQuery, DocumentPublicationIndex.class,
+            IndexCoordinates.of("document_publication"));
+
+        var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
+
+        return (Page<DocumentPublicationIndex>) SearchHitSupport.unwrapSearchHits(searchHitsPaged);
+    }
+
+    private Query buildSimpleSearchQuery(List<String> tokens) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            tokens.forEach(token -> {
+                b.should(sb -> sb.match(
+                    m -> m.field("title_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("title_other").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("description_sr").fuzziness(Fuzziness.ONE.asString())
+                        .query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("description_other").fuzziness(Fuzziness.ONE.asString())
+                        .query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("keywords_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("keywords_other").fuzziness(Fuzziness.ONE.asString())
+                        .query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("full_text_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("full_text_other").fuzziness(Fuzziness.ONE.asString())
+                        .query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("authorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("editorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("reviewerNames").fuzziness(Fuzziness.ONE.asString())
+                        .query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("advisorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("type").fuzziness(Fuzziness.ONE.asString()).query(token)));
+            });
+            return b;
+        })))._toQuery();
     }
 }

@@ -1,4 +1,4 @@
-package rs.teslaris.core.dto.person;
+package rs.teslaris.core.dto.commontypes;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PersonSearchRequestDTO {
+public class SimpleSearchRequestDTO {
 
     @NotNull(message = "You have to provide a valid search input.")
     private List<String> tokens;
