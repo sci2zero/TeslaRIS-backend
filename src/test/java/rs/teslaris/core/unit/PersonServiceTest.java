@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -435,9 +433,6 @@ public class PersonServiceTest {
         // given
         var tokens = Arrays.asList("Ivan", "FTN");
         var pageable = PageRequest.of(0, 10);
-
-        var searchHits = mock(SearchHits.class);
-        when(searchHits.getTotalHits()).thenReturn(2L);
 
         when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
             new PageImpl<>(List.of(new PersonIndex(), new PersonIndex())));

@@ -9,13 +9,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
@@ -27,6 +31,7 @@ import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -46,6 +51,9 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private JournalService journalService;
+
+    @Mock
+    private SearchService<DocumentPublicationIndex> searchService;
 
     @Mock
     private PersonContributionService personContributionService;
@@ -223,5 +231,22 @@ public class DocumentPublicationServiceTest {
         // Then
         assertEquals(ApproveStatus.DECLINED, document.getApproveStatus());
         verify(documentRepository, times(1)).save(document);
+    }
+
+    @Test
+    public void shouldFindPersonsWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("ključna", "ријеч", "keyword");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+
+        // when
+        var result = documentPublicationService.searchDocumentPublicationsSimple(tokens, pageable);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

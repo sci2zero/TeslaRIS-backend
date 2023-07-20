@@ -6,14 +6,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.model.document.PersonJournalContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
@@ -76,6 +79,18 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contribution.setDateTo(contributionDTO.getDateTo());
 
             journal.addContribution(contribution);
+        });
+    }
+
+    @Override
+    public void setPersonEventContributionForEvent(Event event, EventDTO eventDTO) {
+        eventDTO.getContributions().forEach(contributionDTO -> {
+            var contribution = new PersonEventContribution();
+            setPersonContributionCommonFields(contribution, contributionDTO);
+
+            contribution.setContributionType(contributionDTO.getEventContributionType());
+
+            event.addContribution(contribution);
         });
     }
 

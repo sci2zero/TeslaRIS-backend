@@ -48,7 +48,8 @@ public class ProceedingsPublicationController {
     @PublicationEditCheck
     public void editProceedingsPublication(@PathVariable Integer publicationId,
                                            @RequestBody
-                                           @Valid ProceedingsPublicationDTO proceedingsPublication) {
+                                           @Valid
+                                           ProceedingsPublicationDTO proceedingsPublication) {
         proceedingsPublicationService.editProceedingsPublication(publicationId,
             proceedingsPublication);
     }
