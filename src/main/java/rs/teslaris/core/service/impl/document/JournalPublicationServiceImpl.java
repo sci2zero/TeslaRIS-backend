@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
@@ -14,6 +13,7 @@ import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -32,17 +32,17 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Autowired
-    public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
-                                         DocumentPublicationIndexRepository documentPublicationIndexRepository,
-                                         DocumentRepository documentRepository,
-                                         DocumentFileService documentFileService,
-                                         PersonContributionService personContributionService,
-                                         ElasticsearchTemplate elasticsearchTemplate,
-                                         JournalService journalService,
-                                         JournalPublicationRepository journalPublicationRepository,
-                                         DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
+    public JournalPublicationServiceImpl(
+        MultilingualContentService multilingualContentService,
+        DocumentPublicationIndexRepository documentPublicationIndexRepository,
+        DocumentRepository documentRepository,
+        DocumentFileService documentFileService,
+        PersonContributionService personContributionService,
+        SearchService<DocumentPublicationIndex> searchService, JournalService journalService,
+        JournalPublicationRepository journalPublicationRepository,
+        DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, elasticsearchTemplate);
+            documentFileService, personContributionService, searchService);
         this.journalService = journalService;
         this.journalPublicationRepository = journalPublicationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;

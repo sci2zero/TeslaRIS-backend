@@ -27,9 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -59,6 +57,7 @@ import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -84,7 +83,7 @@ public class PersonServiceTest {
     private PersonIndexRepository personIndexRepository;
 
     @Mock
-    private ElasticsearchOperations template;
+    private SearchService<PersonIndex> searchService;
 
     @InjectMocks
     private PersonServiceImpl personService;
@@ -432,7 +431,7 @@ public class PersonServiceTest {
     }
 
     @Test
-    void shouldFindPeopleByNameAndEmploymentWhenProperQueryIsGiven() throws Exception {
+    void shouldFindPeopleByNameAndEmploymentWhenProperQueryIsGiven() {
         // given
         var tokens = Arrays.asList("Ivan", "FTN");
         var pageable = PageRequest.of(0, 10);
@@ -440,7 +439,8 @@ public class PersonServiceTest {
         var searchHits = mock(SearchHits.class);
         when(searchHits.getTotalHits()).thenReturn(2L);
 
-        when(template.search((Query) any(), any(), any())).thenReturn(searchHits);
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(List.of(new PersonIndex(), new PersonIndex())));
 
         // when
         var result = personService.findPeopleByNameAndEmployment(tokens, pageable);

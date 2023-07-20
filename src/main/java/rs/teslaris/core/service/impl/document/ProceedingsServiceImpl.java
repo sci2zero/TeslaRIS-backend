@@ -3,7 +3,6 @@ package rs.teslaris.core.service.impl.document;
 import java.util.HashSet;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
@@ -16,6 +15,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -45,13 +45,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
-                                  ElasticsearchTemplate elasticsearchTemplate,
+                                  SearchService<DocumentPublicationIndex> searchService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
                                   JournalService journalService, EventService eventService,
                                   PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, elasticsearchTemplate);
+            documentFileService, personContributionService, searchService);
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
         this.journalService = journalService;

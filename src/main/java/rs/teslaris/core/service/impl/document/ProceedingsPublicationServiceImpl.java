@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -13,6 +12,7 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -34,11 +34,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              DocumentRepository documentRepository,
                                              DocumentFileService documentFileService,
                                              PersonContributionService personContributionService,
-                                             ElasticsearchTemplate elasticsearchTemplate,
+                                             SearchService<DocumentPublicationIndex> searchService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, elasticsearchTemplate);
+            documentFileService, personContributionService, searchService);
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }

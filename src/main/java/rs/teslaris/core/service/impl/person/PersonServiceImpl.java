@@ -11,10 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHitSupport;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -38,6 +34,7 @@ import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -50,7 +47,7 @@ public class PersonServiceImpl implements PersonService {
 
     private final PersonRepository personRepository;
 
-    private final ElasticsearchOperations elasticsearchTemplate;
+    private final SearchService<PersonIndex> searchService;
 
     private final PersonIndexRepository personIndexRepository;
 
@@ -359,20 +356,8 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable) {
-        var query = buildNameAndEmploymentQuery(tokens);
-
-        var searchQueryBuilder = new NativeQueryBuilder()
-            .withQuery(query)
-            .withPageable(pageable);
-
-        var searchQuery = searchQueryBuilder.build();
-
-        var searchHits = elasticsearchTemplate
-            .search(searchQuery, PersonIndex.class, IndexCoordinates.of("person"));
-
-        var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
-
-        return (Page<PersonIndex>) SearchHitSupport.unwrapSearchHits(searchHitsPaged);
+        return searchService.runQuery(buildNameAndEmploymentQuery(tokens), pageable,
+            PersonIndex.class, "person");
     }
 
     @Override

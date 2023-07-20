@@ -16,10 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
-import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
-import org.springframework.data.elasticsearch.core.SearchHitSupport;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -30,6 +26,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -52,7 +49,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
     private final PersonContributionService personContributionService;
 
-    private final ElasticsearchTemplate elasticsearchTemplate;
+    private final SearchService<DocumentPublicationIndex> searchService;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -290,18 +287,8 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     @Override
     public Page<DocumentPublicationIndex> searchDocumentPublicationsSimple(List<String> tokens,
                                                                            Pageable pageable) {
-        var query = buildSimpleSearchQuery(tokens);
-
-        var searchQueryBuilder = new NativeQueryBuilder().withQuery(query).withPageable(pageable);
-
-        var searchQuery = searchQueryBuilder.build();
-
-        var searchHits = elasticsearchTemplate.search(searchQuery, DocumentPublicationIndex.class,
-            IndexCoordinates.of("document_publication"));
-
-        var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
-
-        return (Page<DocumentPublicationIndex>) SearchHitSupport.unwrapSearchHits(searchHitsPaged);
+        return searchService.runQuery(buildSimpleSearchQuery(tokens), pageable,
+            DocumentPublicationIndex.class, "document_publication");
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
