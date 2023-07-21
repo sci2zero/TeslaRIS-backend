@@ -75,7 +75,7 @@ public class JournalControllerTest extends BaseTest {
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/journal")
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY_PROCEEDINGS"))
+                .header("Idempotency-Key", "MOCK_KEY_JOURNAL"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.printISSN").value("printISSN"))
             .andExpect(jsonPath("$.eissn").value("eISSN"));
