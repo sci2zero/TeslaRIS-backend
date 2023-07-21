@@ -2,7 +2,10 @@ package rs.teslaris.core.service.impl.document;
 
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.ConferenceRepository;
@@ -27,6 +30,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         this.conferenceRepository = conferenceRepository;
     }
 
+
+    @Override
+    public Page<ConferenceDTO> readAllConferences(Pageable pageable) {
+        return conferenceRepository.findAll(pageable).map(ConferenceConverter::toDTO);
+    }
+
+    @Override
+    public ConferenceDTO readConference(Integer conferenceId) {
+        return ConferenceConverter.toDTO(findConferenceById(conferenceId));
+    }
 
     @Override
     public Conference findConferenceById(Integer conferenceId) {

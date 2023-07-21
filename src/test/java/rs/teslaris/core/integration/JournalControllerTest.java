@@ -31,7 +31,7 @@ public class JournalControllerTest extends BaseTest {
 
 
     private JournalDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(22, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(23, "Content", 1));
 
         var journalDTO = new JournalDTO();
         journalDTO.setTitle(dummyMC);
@@ -47,7 +47,7 @@ public class JournalControllerTest extends BaseTest {
         contribution.setPersonName(new PersonNameDTO());
         contribution.setContact(new ContactDTO());
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(18, dummyMC, dummyMC));
+        contribution.setPostalAddress(new PostalAddressDTO(19, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
         journalDTO.setContributions(List.of(contribution));
         journalDTO.setLanguageTagIds(new ArrayList<>());
@@ -92,7 +92,7 @@ public class JournalControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(journalDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/journal/{journalId}", 27)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/journal/{journalId}", 28)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -106,7 +106,7 @@ public class JournalControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/journal/{journalId}",
-                        44).contentType(MediaType.APPLICATION_JSON)
+                        45).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
