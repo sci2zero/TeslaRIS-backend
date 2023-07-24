@@ -60,7 +60,7 @@ public class DocumentPublicationServiceTest {
     public void shouldReturnDocumentWhenItExists() {
         // given
         var expected = new JournalPublication();
-        when(documentRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expected));
+        when(documentRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
         var result = documentPublicationService.findOne(1);
@@ -72,7 +72,7 @@ public class DocumentPublicationServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenDocumentDoesNotExist() {
         // given
-        when(documentRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(documentRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> documentPublicationService.findOne(1));
@@ -90,7 +90,7 @@ public class DocumentPublicationServiceTest {
         document.setProofs(new HashSet<>());
         var documentFile = new DocumentFile();
 
-        when(documentRepository.findByIdAndDeletedIsFalse(documentId)).thenReturn(Optional.of(document));
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.findDocumentFileById(documentFileId)).thenReturn(documentFile);
 
         // When
@@ -111,7 +111,7 @@ public class DocumentPublicationServiceTest {
         document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
 
-        when(documentRepository.findByIdAndDeletedIsFalse(documentId)).thenReturn(Optional.of(document));
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.findDocumentFileById(documentFileId)).thenReturn(documentFile);
 
         // When
@@ -133,7 +133,7 @@ public class DocumentPublicationServiceTest {
         document.setProofs(new HashSet<>());
         var documentFile = new DocumentFile();
 
-        when(documentRepository.findByIdAndDeletedIsFalse(documentId)).thenReturn(Optional.of(document));
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
 
         when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
             documentFile);
@@ -156,7 +156,7 @@ public class DocumentPublicationServiceTest {
         document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
 
-        when(documentRepository.findByIdAndDeletedIsFalse(documentId)).thenReturn(Optional.of(document));
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
             documentFile);
 
@@ -175,7 +175,7 @@ public class DocumentPublicationServiceTest {
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
 
-        when(documentRepository.findByIdAndDeletedIsFalse(documentId)).thenReturn(Optional.of(document));
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
 
         // When
         documentPublicationService.updateDocumentApprovalStatus(documentId, isApproved);
@@ -193,7 +193,7 @@ public class DocumentPublicationServiceTest {
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
 
-        when(documentRepository.findByIdAndDeletedIsFalse(documentId)).thenReturn(Optional.of(document));
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
 
         // When
         documentPublicationService.updateDocumentApprovalStatus(documentId, isApproved);

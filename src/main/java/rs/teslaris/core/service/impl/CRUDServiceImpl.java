@@ -4,15 +4,15 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.BaseEntity;
-import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.service.CRUDService;
 
 public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDService<T> {
 
-    protected abstract JPASoftDeleteRepository<T> getEntityRepository();
+    protected abstract JpaRepository<T, Integer> getEntityRepository();
 
     private String printGenericTypeName() {
         Type genericSuperclass = getClass().getGenericSuperclass();
@@ -34,14 +34,13 @@ public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDServi
     @Override
     @Transactional(readOnly = true)
     public List<T> findAll() {
-        return getEntityRepository().findAllByDeletedIsFalse();
+        return getEntityRepository().findAll();
     }
 
     @Override
     public T findOne(Integer id) {
-        return getEntityRepository().findByIdAndDeletedIsFalse(id)
+        return getEntityRepository().findById(id)
             .orElseThrow(() -> {
-                printGenericTypeName();
                 return new NotFoundException(
                     "Cannot find entity " + printGenericTypeName() + " with id: " + id);
             });

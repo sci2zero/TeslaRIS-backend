@@ -57,7 +57,7 @@ public class ResearchAreaServiceTest {
 
         var researchAreasPage = new PageImpl<>(List.of(researchArea1, researchArea2));
 
-        when(researchAreaRepository.findAllByDeletedIsFalse(pageable)).thenReturn(researchAreasPage);
+        when(researchAreaRepository.findAll(pageable)).thenReturn(researchAreasPage);
 
         // when
         var resultPage = researchAreaService.findAll(pageable);
@@ -69,7 +69,7 @@ public class ResearchAreaServiceTest {
         assertEquals(2, resultPage.getContent().get(1).getId());
         assertEquals(0, resultPage.getContent().get(1).getName().size());
 
-        verify(researchAreaRepository, times(1)).findAllByDeletedIsFalse(pageable);
+        verify(researchAreaRepository, times(1)).findAll(pageable);
         verifyNoMoreInteractions(researchAreaRepository);
     }
 
@@ -147,7 +147,7 @@ public class ResearchAreaServiceTest {
         var researchAreaId = 1;
         var researchArea = new ResearchArea();
 
-        when(researchAreaRepository.findByIdAndDeletedIsFalse(researchAreaId)).thenReturn(Optional.of(researchArea));
+        when(researchAreaRepository.findById(researchAreaId)).thenReturn(Optional.of(researchArea));
         when(researchAreaRepository.isSuperArea(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedBySomeone(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedInMonograph(researchAreaId)).thenReturn(false);
@@ -162,7 +162,7 @@ public class ResearchAreaServiceTest {
         verify(researchAreaRepository, times(1)).isResearchedInMonograph(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedInThesis(researchAreaId);
         verify(researchAreaRepository, times(1)).save(researchArea);
-        verify(researchAreaRepository, times(1)).findByIdAndDeletedIsFalse(any());
+        verify(researchAreaRepository, times(1)).findById(any());
         verifyNoMoreInteractions(researchAreaRepository);
     }
 

@@ -27,7 +27,7 @@ public class LanguageTagServiceTest {
     public void shouldReturnLanguageTagWhenItExists() {
         // given
         var expected = new LanguageTag();
-        when(languageTagRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expected));
+        when(languageTagRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
         var result = languageTagService.findOne(1);
@@ -39,7 +39,7 @@ public class LanguageTagServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenLanguageTagDoesNotExist() {
         // given
-        when(languageTagRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(languageTagRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,

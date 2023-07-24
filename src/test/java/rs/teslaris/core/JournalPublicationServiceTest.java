@@ -115,14 +115,14 @@ public class JournalPublicationServiceTest {
         publicationToUpdate.setContributors(new HashSet<>());
         publicationToUpdate.setUris(new HashSet<>());
 
-        when(documentRepository.findByIdAndDeletedIsFalse(publicationId)).thenReturn(
+        when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
 
         // When
         journalPublicationService.editJournalPublication(publicationId, publicationDTO);
 
         // Then
-        verify(documentRepository).findByIdAndDeletedIsFalse(eq(publicationId));
+        verify(documentRepository).findById(eq(publicationId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             eq(publicationToUpdate), eq(publicationDTO));
     }
@@ -135,7 +135,7 @@ public class JournalPublicationServiceTest {
         var publication = new JournalPublication();
         publication.setApproveStatus(status);
 
-        when(documentRepository.findByIdAndDeletedIsFalse(publicationId)).thenReturn(
+        when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publication));
 
         // When
@@ -179,14 +179,14 @@ public class JournalPublicationServiceTest {
         journal.setTitle(new HashSet<>());
         publication.setJournal(journal);
 
-        when(documentRepository.findByIdAndDeletedIsFalse(publicationId)).thenReturn(
+        when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publication));
 
         // When
         var result = journalPublicationService.readJournalPublicationById(publicationId);
 
         // Then
-        verify(documentRepository).findByIdAndDeletedIsFalse(eq(publicationId));
+        verify(documentRepository).findById(eq(publicationId));
         assertNotNull(result);
         assertEquals(1, result.getContributions().size());
     }

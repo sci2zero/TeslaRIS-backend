@@ -67,7 +67,7 @@ public class InvolvementServiceTest {
         // given
         var expected = new Involvement();
 
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expected));
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
         var actual = involvementService.findOne(1);
@@ -79,7 +79,7 @@ public class InvolvementServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenInvolvementDoesNotExist() {
         // given
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(involvementRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> involvementService.findOne(1));
@@ -99,7 +99,7 @@ public class InvolvementServiceTest {
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
 
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(education));
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
 
         // when
         var actual = (EducationDTO) involvementService.getInvolvement(1, Education.class);
@@ -111,7 +111,7 @@ public class InvolvementServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenGenericInvolvementDoesNotExist() {
         // given
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(involvementRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,
@@ -200,7 +200,7 @@ public class InvolvementServiceTest {
         educationDTO.setTitle(List.of(mc2));
         educationDTO.setAbbreviationTitle(List.of(mc2));
 
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(education));
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(Set.of(mc1));
         when(involvementRepository.save(any())).thenReturn(new Employment());
 
@@ -227,7 +227,7 @@ public class InvolvementServiceTest {
         membershipDTO.setRole(List.of(mc2));
         membershipDTO.setContributionDescription(List.of(mc2));
 
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(membership));
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(membership));
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(Set.of(mc1));
         when(involvementRepository.save(any())).thenReturn(new Employment());
 
@@ -253,7 +253,7 @@ public class InvolvementServiceTest {
         employmentDTO.setAffiliationStatement(List.of(mc2));
         employmentDTO.setRole(List.of(mc2));
 
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(employment));
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(employment));
         when(involvementRepository.save(any())).thenReturn(new Employment());
 
         // when
@@ -273,7 +273,7 @@ public class InvolvementServiceTest {
         var person = new Person();
         person.addInvolvement(involvement);
 
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(involvement));
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
 
         // when
         involvementService.deleteInvolvement(1);
@@ -285,7 +285,7 @@ public class InvolvementServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenDeletingNonExistentInvolvement() {
         // given
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(involvementRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> involvementService.deleteInvolvement(1));
@@ -299,7 +299,7 @@ public class InvolvementServiceTest {
         var involvement = new Involvement();
         involvement.setProofs(new HashSet<>());
 
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(involvement));
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
         when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
 
         // when
@@ -318,7 +318,7 @@ public class InvolvementServiceTest {
         var involvement = new Involvement();
         involvement.setProofs(new HashSet<>(Set.of(df)));
 
-        when(involvementRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(involvement));
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
         when(documentFileService.findDocumentFileById(1)).thenReturn(df);
 
         // when

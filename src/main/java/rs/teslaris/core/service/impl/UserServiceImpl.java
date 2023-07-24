@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,7 +29,6 @@ import rs.teslaris.core.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
-import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
@@ -65,25 +65,25 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    protected JPASoftDeleteRepository<User> getEntityRepository() {
+    protected JpaRepository<User, Integer> getEntityRepository() {
         return userRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByEmailAndDeletedIsFalse(username).orElseThrow(
+        return userRepository.findByEmail(username).orElseThrow(
             () -> new UsernameNotFoundException("User with this email does not exist."));
     }
 
     @Deprecated(forRemoval = true)
     public User loadUserById(Integer userID) throws UsernameNotFoundException {
-        return userRepository.findByIdAndDeletedIsFalse(userID)
+        return userRepository.findById(userID)
             .orElseThrow(() -> new UsernameNotFoundException("User with this ID does not exist."));
     }
 
     @Override
     public int getUserOrganisationUnitId(Integer userId) {
-        return userRepository.findByIdWithOrganisationUnitAndDeletedIsFalse(userId)
+        return userRepository.findByIdWithOrganisationUnit(userId)
             .orElseThrow(() -> new NotFoundException("User with this ID does not exist."))
             .getOrganisationUnit().getId();
     }
@@ -183,7 +183,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public void activateUserAccount(String activationTokenValue) {
         var accountActivation =
-            userAccountActivationRepository.findByActivationTokenAndDeletedIsFalse(
+            userAccountActivationRepository.findByActivationToken(
                     activationTokenValue)
                 .orElseThrow(() -> new NotFoundException("Invalid activation token"));
 
@@ -201,7 +201,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             languageService.findOne(registrationRequest.getPreferredLanguageId());
 
         var authority =
-            authorityRepository.findByIdAndDeletedIsFalse(registrationRequest.getAuthorityId())
+            authorityRepository.findById(registrationRequest.getAuthorityId())
                 .orElseThrow(
                     () -> new NotFoundException("Authority with given ID does not exist."));
 

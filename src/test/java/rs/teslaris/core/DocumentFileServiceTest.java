@@ -49,7 +49,7 @@ public class DocumentFileServiceTest {
         // given
         var documentFile = new DocumentFile();
 
-        when(documentFileRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(documentFile));
+        when(documentFileRepository.findById(1)).thenReturn(Optional.of(documentFile));
 
         // when
         var actual = documentFileService.findOne(1);
@@ -61,7 +61,7 @@ public class DocumentFileServiceTest {
     @Test
     public void shouldThrowExceptionWhenInvalidIdIsProvided() {
         // given
-        when(documentFileRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(documentFileRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> documentFileService.findOne(1));
@@ -99,7 +99,7 @@ public class DocumentFileServiceTest {
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
         var docIndex = new DocumentFileIndex();
 
-        when(documentFileRepository.findByIdAndDeletedIsFalse(dto.getId())).thenReturn(Optional.of(doc));
+        when(documentFileRepository.findById(dto.getId())).thenReturn(Optional.of(doc));
         when(fileService.store(any(), eq("UUID"))).thenReturn("UUID.pdf");
         when(documentFileIndexRepository.findDocumentFileIndexByDatabaseId(any())).thenReturn(
             Optional.of(docIndex));
@@ -120,8 +120,8 @@ public class DocumentFileServiceTest {
         dto.setFile(
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
 
-        when(documentFileRepository.findByIdAndDeletedIsFalse(any())).thenReturn(Optional.of(doc));
-        when(documentFileRepository.getReferenceByServerFilenameAndDeletedIsFalse("UUID")).thenReturn(doc);
+        when(documentFileRepository.findById(any())).thenReturn(Optional.of(doc));
+        when(documentFileRepository.getReferenceByServerFilename("UUID")).thenReturn(doc);
         when(fileService.store(any(), eq("UUID"))).thenReturn("UUID.pdf");
 
         // when

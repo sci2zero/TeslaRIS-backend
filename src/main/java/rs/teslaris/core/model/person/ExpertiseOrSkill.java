@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -22,6 +23,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 @AllArgsConstructor
 @Entity
 @Table(name = "expertise_or_skills")
+@Where(clause = "deleted=false")
 @Inheritance(strategy = InheritanceType.JOINED)
 public class ExpertiseOrSkill extends BaseEntity {
 

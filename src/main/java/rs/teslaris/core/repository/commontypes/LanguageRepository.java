@@ -1,9 +1,9 @@
 package rs.teslaris.core.repository.commontypes;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.commontypes.Language;
-import rs.teslaris.core.repository.JPASoftDeleteRepository;
 
 @Repository
-public interface LanguageRepository extends JPASoftDeleteRepository<Language> {
+public interface LanguageRepository extends JpaRepository<Language, Integer> {
 }

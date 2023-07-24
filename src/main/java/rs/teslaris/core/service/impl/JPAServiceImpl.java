@@ -13,12 +13,12 @@ public abstract class JPAServiceImpl<T extends BaseEntity> extends CRUDServiceIm
     @Override
     @Transactional(readOnly = true)
     public Iterable<T> findAll(Sort sorter) {
-        return getEntityRepository().findAllByDeletedIsFalse(sorter);
+        return getEntityRepository().findAll(sorter);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<T> findAll(Pageable page) {
-        return getEntityRepository().findAllByDeletedIsFalse(page);
+        return getEntityRepository().findAll(page);
     }
 }

@@ -100,7 +100,7 @@ public class PersonServiceTest {
         // given
         var expectedPerson = new Person();
 
-        when(personRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expectedPerson));
+        when(personRepository.findById(1)).thenReturn(Optional.of(expectedPerson));
 
         // when
         Person actualPerson = personService.findOne(1);
@@ -112,7 +112,7 @@ public class PersonServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenPersonDoesNotExist() {
         // given
-        when(personRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(personRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> personService.findOne(1));
@@ -126,7 +126,7 @@ public class PersonServiceTest {
         var expectedPerson = new Person();
         var expectedResponse = new PersonResponseDto();
 
-        when(personRepository.findApprovedPersonByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(expectedPerson));
+        when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
 
         MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class);
         mocked.when(() -> PersonConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
@@ -141,7 +141,7 @@ public class PersonServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenPersonIsNotApproved() {
         // given
-        when(personRepository.findApprovedPersonByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> personService.readPersonWithBasicInfo(1));
@@ -215,7 +215,7 @@ public class PersonServiceTest {
         var bio2 = new MultilingualContentDTO(2, "Contenu français", 2);
         var bioList = Arrays.asList(bio1, bio2);
 
-        when(personRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(person));
+        when(personRepository.findById(1)).thenReturn(Optional.of(person));
         when(languageTagService.findOne(anyInt())).thenReturn(
             new LanguageTag("en", "English"));
 
@@ -235,7 +235,7 @@ public class PersonServiceTest {
         var keyword2 = new MultilingualContentDTO(2, "Contenu français", 2);
         var keywordList = Arrays.asList(keyword1, keyword2);
 
-        when(personRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(person));
+        when(personRepository.findById(1)).thenReturn(Optional.of(person));
         when(languageTagService.findOne(anyInt())).thenReturn(
             new LanguageTag("en", "English"));
 
@@ -264,7 +264,7 @@ public class PersonServiceTest {
         person.setInvolvements(new HashSet<>());
         person.setApproveStatus(ApproveStatus.APPROVED);
 
-        when(personRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(person));
+        when(personRepository.findById(1)).thenReturn(Optional.of(person));
         when(personNameService.findOne(2)).thenReturn(personName2);
         when(personIndexRepository.findByDatabaseId(anyInt())).thenReturn(
             Optional.of(new PersonIndex()));
@@ -289,13 +289,13 @@ public class PersonServiceTest {
         personToUpdate.setId(personId);
         personToUpdate.setOtherNames(new HashSet<>());
 
-        when(personRepository.findByIdAndDeletedIsFalse(personId)).thenReturn(Optional.of(personToUpdate));
+        when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
 
         // when
         personService.setPersonOtherNames(personNameDTOList, personId);
 
         // then
-        verify(personRepository, times(1)).findByIdAndDeletedIsFalse(personId);
+        verify(personRepository, times(1)).findById(personId);
         verify(personRepository, times(2)).save(personToUpdate);
     }
 
@@ -313,7 +313,7 @@ public class PersonServiceTest {
         personNames.add(new PersonName("Jane", "Marie", "Doe", null, null));
         personToUpdate.setOtherNames(personNames);
 
-        when(personRepository.findByIdAndDeletedIsFalse(personId)).thenReturn(Optional.of(personToUpdate));
+        when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
 
         // when
         personService.setPersonOtherNames(personNameDTOList, personId);
@@ -330,7 +330,7 @@ public class PersonServiceTest {
         var personNameDTOList = new ArrayList<PersonNameDTO>();
         personNameDTOList.add(new PersonNameDTO("John", "Doe", "Smith", null, null));
 
-        when(personRepository.findByIdAndDeletedIsFalse(personId)).thenReturn(Optional.empty());
+        when(personRepository.findById(personId)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> {
@@ -374,7 +374,7 @@ public class PersonServiceTest {
         personToUpdate.setInvolvements(new HashSet<>());
         personToUpdate.setApproveStatus(ApproveStatus.APPROVED);
 
-        when(personRepository.findByIdAndDeletedIsFalse(personId)).thenReturn(Optional.of(personToUpdate));
+        when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
         when(countryService.findOne(anyInt())).thenReturn(new Country());
         when(personRepository.save(any(Person.class))).thenReturn(personToUpdate);
         when(personIndexRepository.findByDatabaseId(anyInt())).thenReturn(
@@ -384,7 +384,7 @@ public class PersonServiceTest {
         personService.updatePersonalInfo(personalInfoDTO, personId);
 
         // then
-        verify(personRepository, times(1)).findByIdAndDeletedIsFalse(personId);
+        verify(personRepository, times(1)).findById(personId);
         verify(personRepository, times(1)).save(personToUpdate);
         assertEquals("Mr.", personToUpdate.getApvnt());
         assertEquals("123456", personToUpdate.getMnid());
@@ -406,7 +406,7 @@ public class PersonServiceTest {
         var personId = 1;
         var personalInfoDTO = new PersonalInfoDTO();
 
-        when(personRepository.findByIdAndDeletedIsFalse(personId)).thenReturn(Optional.empty());
+        when(personRepository.findById(personId)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> {

@@ -10,12 +10,14 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "proceedings")
+@Where(clause = "deleted=false")
 public class Proceedings extends Document {
 
     @Column(name = "e_isbn", unique = true)

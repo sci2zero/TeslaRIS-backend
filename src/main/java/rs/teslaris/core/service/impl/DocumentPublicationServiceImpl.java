@@ -9,6 +9,7 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -17,7 +18,6 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
-import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.DocumentPublicationService;
@@ -43,14 +43,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     protected Boolean documentApprovedByDefault;
 
     @Override
-    protected JPASoftDeleteRepository<Document> getEntityRepository() {
+    protected JpaRepository<Document, Integer> getEntityRepository() {
         return documentRepository;
     }
 
     @Override
     @Deprecated(forRemoval = true)
     public Document findDocumentById(Integer documentId) {
-        return documentRepository.findByIdAndDeletedIsFalse(documentId)
+        return documentRepository.findById(documentId)
             .orElseThrow(() -> new NotFoundException("Document with given id does not exist."));
     }
 

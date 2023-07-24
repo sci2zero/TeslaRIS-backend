@@ -87,7 +87,7 @@ public class UserServiceTest {
                 new Authority("RESEARCHER", null), null, null);
         user.setId(1);
 
-        when(userRepository.findByIdAndDeletedIsFalse(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // when
         userService.deactivateUser(userId);
@@ -107,7 +107,7 @@ public class UserServiceTest {
                 new Authority("ADMIN", null), null, null);
         user.setId(1);
 
-        when(userRepository.findByIdAndDeletedIsFalse(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // when
         userService.deactivateUser(userId);
@@ -122,7 +122,7 @@ public class UserServiceTest {
         // given
         var userId = 0;
 
-        when(userRepository.findByIdAndDeletedIsFalse(userId)).thenReturn(Optional.empty());
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> userService.deactivateUser(userId));
@@ -148,7 +148,7 @@ public class UserServiceTest {
 
         Authority authority = new Authority();
         authority.setName("USER");
-        when(authorityRepository.findByIdAndDeletedIsFalse(2)).thenReturn(Optional.of(authority));
+        when(authorityRepository.findById(2)).thenReturn(Optional.of(authority));
 
         var person = new Person();
         when(personService.findOne(1)).thenReturn(person);
@@ -184,7 +184,7 @@ public class UserServiceTest {
         var registrationRequest = new RegistrationRequestDTO();
         registrationRequest.setAuthorityId(2);
 
-        when(authorityRepository.findByIdAndDeletedIsFalse(2)).thenReturn(Optional.empty());
+        when(authorityRepository.findById(2)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> userService.registerUser(registrationRequest));
@@ -201,7 +201,7 @@ public class UserServiceTest {
 
         var adminAuthority = new Authority();
         adminAuthority.setName("ADMIN");
-        when(authorityRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(adminAuthority));
+        when(authorityRepository.findById(1)).thenReturn(Optional.of(adminAuthority));
 
         var language = new Language();
         when(languageService.findOne(1)).thenReturn(language);
@@ -222,7 +222,7 @@ public class UserServiceTest {
                 "John", "Doe", true,
                 true, new Language(), new Authority(), null, null));
         when(
-            userAccountActivationRepository.findByActivationTokenAndDeletedIsFalse(activationTokenValue)).thenReturn(
+            userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
             Optional.of(accountActivation));
 
         // when
@@ -239,7 +239,7 @@ public class UserServiceTest {
         // given
         var activationTokenValue = "invalid_token";
         when(
-            userAccountActivationRepository.findByActivationTokenAndDeletedIsFalse(activationTokenValue)).thenReturn(
+            userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
             Optional.empty());
 
         // when
@@ -276,7 +276,7 @@ public class UserServiceTest {
         var person = new Person();
         var organisationalUnit = new OrganisationUnit();
 
-        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
         when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
@@ -304,7 +304,7 @@ public class UserServiceTest {
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setEmail("test@example.com");
 
-        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.empty());
+        when(userRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,
@@ -327,7 +327,7 @@ public class UserServiceTest {
         var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
 
-        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
         when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
@@ -429,7 +429,7 @@ public class UserServiceTest {
         var user = new User();
         user.setOrganisationUnit(organisationUnit);
 
-        when(userRepository.findByIdWithOrganisationUnitAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdWithOrganisationUnit(1)).thenReturn(Optional.of(user));
 
         // when
         int result = userService.getUserOrganisationUnitId(1);
@@ -441,7 +441,7 @@ public class UserServiceTest {
     @Test
     public void testGetUserOrganisationUnitIdNotFound() {
         // given
-        when(userRepository.findByIdWithOrganisationUnitAndDeletedIsFalse(2)).thenReturn(Optional.empty());
+        when(userRepository.findByIdWithOrganisationUnit(2)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class, () -> {
@@ -459,7 +459,7 @@ public class UserServiceTest {
         var user = new User();
         user.setPerson(person);
 
-        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         // when
         boolean result = userService.isUserAResearcher(1, 2);
@@ -473,7 +473,7 @@ public class UserServiceTest {
         // given
         var user = new User();
 
-        when(userRepository.findByIdAndDeletedIsFalse(1)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         //when
         boolean result = userService.isUserAResearcher(1, 1);

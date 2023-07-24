@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 
 @Getter
 @Setter
@@ -20,6 +21,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "multi_lingual_content")
+@Where(clause = "deleted=false")
 public class MultiLingualContent extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)

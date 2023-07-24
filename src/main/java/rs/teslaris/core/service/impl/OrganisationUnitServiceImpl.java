@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
@@ -25,7 +26,6 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
-import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.DocumentFileService;
@@ -55,7 +55,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private Boolean organisationUnitApprovedByDefault;
 
     @Override
-    protected JPASoftDeleteRepository<OrganisationUnit> getEntityRepository() {
+    protected JpaRepository<OrganisationUnit, Integer> getEntityRepository() {
         return organisationUnitRepository;
     }
 
@@ -66,7 +66,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnit findOne(Integer id) {
-        return organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(id)
+        return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id)
             .orElseThrow(
                 () -> new NotFoundException("Organisation unit with given ID does not exist."));
     }
@@ -74,13 +74,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     @Transactional
     public Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable) {
-        return organisationUnitRepository.findAllWithLangDataAndDeletedIsFalse(pageable)
+        return organisationUnitRepository.findAllWithLangData(pageable)
             .map(OrganisationUnitConverter::toDTO);
     }
 
     @Override
     public OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id) {
-        return organisationUnitsRelationRepository.findByIdAndDeletedIsFalse(id).orElseThrow(
+        return organisationUnitsRelationRepository.findById(id).orElseThrow(
             () -> new NotFoundException(
                 "Organisation units relation with given ID does not exist."));
     }
@@ -172,7 +172,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
                                                                 Integer organisationUnitId) {
         OrganisationUnit organisationUnit =
-            organisationUnitRepository.findByIdWithLangDataAndResearchAreaAndDeletedIsFalse(
+            organisationUnitRepository.findByIdWithLangDataAndResearchArea(
                     organisationUnitId)
                 .orElseThrow(
                     () -> new NotFoundException(
@@ -280,7 +280,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer sourceOrganisationUnitId,
                                                              Integer targetOrganisationUnit) {
         List<OrganisationUnitsRelation> relationsToCheck =
-            organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationTypeAndDeletedIsFalse(
+            organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationType(
                 sourceOrganisationUnitId, OrganisationUnitRelationType.BELONGS_TO);
 
         while (!relationsToCheck.isEmpty()) {
@@ -291,7 +291,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             }
 
             List<OrganisationUnitsRelation> newRelationToCheck =
-                organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationTypeAndDeletedIsFalse(
+                organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationType(
                     newTargetOrganisationUnit.getId(), OrganisationUnitRelationType.BELONGS_TO);
             relationsToCheck.addAll(newRelationToCheck);
 

@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -17,7 +18,6 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
-import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.InvolvementService;
@@ -42,14 +42,14 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     private final DocumentFileService documentFileService;
 
     @Override
-    protected JPASoftDeleteRepository<Involvement> getEntityRepository() {
+    protected JpaRepository<Involvement, Integer> getEntityRepository() {
         return involvementRepository;
     }
 
     @Override
     @Deprecated(forRemoval = true)
     public Involvement findInvolvementById(Integer involvementId) {
-        return involvementRepository.findByIdAndDeletedIsFalse(involvementId)
+        return involvementRepository.findById(involvementId)
             .orElseThrow(() -> new NotFoundException("Involvement with given ID does not exist."));
     }
 

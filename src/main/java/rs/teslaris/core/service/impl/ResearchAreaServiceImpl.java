@@ -5,13 +5,13 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.institution.ResearchAreaConverter;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.exception.ResearchAreaInUseException;
 import rs.teslaris.core.model.commontypes.ResearchArea;
-import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.service.MultilingualContentService;
 import rs.teslaris.core.service.ResearchAreaService;
@@ -27,7 +27,7 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     private final MultilingualContentService multilingualContentService;
 
     @Override
-    protected JPASoftDeleteRepository<ResearchArea> getEntityRepository() {
+    protected JpaRepository<ResearchArea, Integer> getEntityRepository() {
         return researchAreaRepository;
     }
 

@@ -15,6 +15,7 @@ import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -36,7 +37,6 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
-import rs.teslaris.core.repository.JPASoftDeleteRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.CountryService;
 import rs.teslaris.core.service.LanguageTagService;
@@ -66,21 +66,21 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private Boolean approvedByDefault;
 
     @Override
-    protected JPASoftDeleteRepository<Person> getEntityRepository() {
+    protected JpaRepository<Person, Integer> getEntityRepository() {
         return personRepository;
     }
 
     @Override
     @Deprecated(forRemoval = true)
     public Person findPersonById(Integer id) {
-        return personRepository.findByIdAndDeletedIsFalse(id)
+        return personRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
     }
 
     @Override
     @Transactional
     public PersonResponseDto readPersonWithBasicInfo(Integer id) {
-        var person = personRepository.findApprovedPersonByIdAndDeletedIsFalse(id)
+        var person = personRepository.findApprovedPersonById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
         return PersonConverter.toDTO(person);
     }
