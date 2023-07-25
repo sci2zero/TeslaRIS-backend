@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.HashSet;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.ConferenceInUseException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -50,8 +52,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     public Conference createConference(ConferenceDTO conferenceDTO) {
         var conference = new Conference();
-        setEventCommonFields(conference, conferenceDTO);
+        conference.setContributions(new HashSet<>());
 
+        setEventCommonFields(conference, conferenceDTO);
         setConferenceRelatedFields(conference, conferenceDTO);
 
         return conferenceRepository.save(conference);
@@ -72,7 +75,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         var conferenceToDelete = findConferenceById(conferenceId);
 
         if (hasCommonUsage(conferenceId)) {
-            return;
+            throw new ConferenceInUseException(
+                "Conference with given ID is in use and cannot be deleted.");
         }
 
         conferenceRepository.delete(conferenceToDelete);

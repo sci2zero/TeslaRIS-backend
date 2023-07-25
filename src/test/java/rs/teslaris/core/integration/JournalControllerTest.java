@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -64,7 +63,6 @@ public class JournalControllerTest extends BaseTest {
     }
 
     @Test
-    @Order(1)
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateJournal() throws Exception {
         String jwtToken = authenticateAndGetToken();
@@ -83,7 +81,7 @@ public class JournalControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
-    public void testUpdateProceedings() throws Exception {
+    public void testUpdateJournal() throws Exception {
         String jwtToken = authenticateAndGetToken();
 
         var journalDTO = getTestPayload();
@@ -99,14 +97,13 @@ public class JournalControllerTest extends BaseTest {
     }
 
     @Test
-    @Order(2)
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testDeleteJournal() throws Exception {
         String jwtToken = authenticateAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/journal/{journalId}",
-                        45).contentType(MediaType.APPLICATION_JSON)
+                        46).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

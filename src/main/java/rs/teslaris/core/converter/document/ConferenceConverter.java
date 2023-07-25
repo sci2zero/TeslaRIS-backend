@@ -26,7 +26,7 @@ public class ConferenceConverter {
             PersonContributionConverter.eventContributionToDTO(conference.getContributions()));
 
         conferenceDTO.setNumber(conference.getNumber());
-        conferenceDTO.setFee(conferenceDTO.getFee());
+        conferenceDTO.setFee(conference.getFee());
 
         return conferenceDTO;
     }

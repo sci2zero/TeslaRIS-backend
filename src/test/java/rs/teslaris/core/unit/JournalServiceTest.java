@@ -174,5 +174,11 @@ public class JournalServiceTest {
 
         when(journalRepository.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(journal1, journal2)));
+
+        // when
+        var response = journalService.readAllJournals(pageable);
+
+        // then
+        assertNotNull(response);
     }
 }

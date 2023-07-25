@@ -181,8 +181,8 @@ public class DbInitializer implements ApplicationRunner {
         researchAreaRepository.save(researchArea1);
 
         var conferenceEvent1 = new Conference();
-        conferenceRepository.save(conferenceEvent1);
         conferenceEvent1.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija", 1)));
+        conferenceRepository.save(conferenceEvent1);
 
         var proceedings1 = new Proceedings();
         proceedings1.setApproveStatus(ApproveStatus.APPROVED);
@@ -201,5 +201,14 @@ public class DbInitializer implements ApplicationRunner {
         publisher1.setPlace(Set.of(new MultiLingualContent(englishTag, "Place1", 1)));
         publisher1.setState(Set.of(new MultiLingualContent(englishTag, "State1", 1)));
         publisherRepository.save(publisher1);
+
+        var conferenceEvent2 = new Conference();
+        conferenceEvent2.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija2", 1)));
+        conferenceRepository.save(conferenceEvent2);
+
+        var journal2 = new Journal();
+        journal2.setTitle(Set.of(new MultiLingualContent(englishTag, "Title2", 1)));
+        journal2.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR2", 1)));
+        journalRepository.save(journal2);
     }
 }
