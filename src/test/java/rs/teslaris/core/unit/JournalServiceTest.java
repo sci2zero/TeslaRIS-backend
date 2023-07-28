@@ -181,4 +181,27 @@ public class JournalServiceTest {
         // then
         assertNotNull(response);
     }
+
+    @Test
+    public void shouldReadJournal() {
+        // given
+        var journalId = 1;
+        var journal = new Journal();
+        journal.setTitle(new HashSet<>());
+        journal.setNameAbbreviation(new HashSet<>());
+        journal.setEISSN("eISSN1");
+        journal.setPrintISSN("printISSN1");
+        journal.setContributions(new HashSet<>());
+        journal.setLanguages(new HashSet<>());
+
+        when(journalRepository.findById(journalId)).thenReturn(Optional.of(journal));
+
+        // when
+        var response = journalService.readJournal(journalId);
+
+        // then
+        assertNotNull(response);
+        assertEquals(response.getEISSN(), journal.getEISSN());
+        assertEquals(response.getPrintISSN(), journal.getPrintISSN());
+    }
 }

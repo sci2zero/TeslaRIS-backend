@@ -12,6 +12,8 @@ public interface JournalService {
 
     Page<JournalResponseDTO> readAllJournals(Pageable pageable);
 
+    JournalResponseDTO readJournal(Integer journalId);
+
     Journal findJournalById(Integer journalId);
 
     Journal createJournal(JournalDTO journalDTO);

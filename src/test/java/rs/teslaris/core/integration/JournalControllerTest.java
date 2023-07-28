@@ -64,17 +64,25 @@ public class JournalControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testReadJournal() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get("http://localhost:8081/api/journal/{journalId}", 28)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateJournal() throws Exception {
         String jwtToken = authenticateAndGetToken();
 
         var journalDTO = getTestPayload();
 
         String requestBody = objectMapper.writeValueAsString(journalDTO);
-        mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/journal")
-                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY_JOURNAL"))
-            .andExpect(status().isCreated())
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/journal").content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_JOURNAL")).andExpect(status().isCreated())
             .andExpect(jsonPath("$.printISSN").value("printISSN"))
             .andExpect(jsonPath("$.eissn").value("eISSN"));
     }
@@ -102,8 +110,8 @@ public class JournalControllerTest extends BaseTest {
         String jwtToken = authenticateAndGetToken();
 
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("http://localhost:8081/api/journal/{journalId}",
-                        46).contentType(MediaType.APPLICATION_JSON)
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/journal/{journalId}", 46)
+                    .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

@@ -6,7 +6,7 @@ import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.model.document.Journal;
 
-public class JournalConvereter {
+public class JournalConverter {
 
     public static JournalResponseDTO toDTO(Journal journal) {
         var responseDTO = new JournalResponseDTO();

@@ -32,6 +32,11 @@ public class JournalController {
         return journalService.readAllJournals(pageable);
     }
 
+    @GetMapping("/{journalId}")
+    public JournalResponseDTO readJournal(@PathVariable Integer journalId) {
+        return journalService.readJournal(journalId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_JOURNALS')")

@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.document.JournalConvereter;
+import rs.teslaris.core.converter.document.JournalConverter;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.model.document.Journal;
@@ -34,7 +34,12 @@ public class JournalServiceImpl implements JournalService {
 
     @Override
     public Page<JournalResponseDTO> readAllJournals(Pageable pageable) {
-        return journalRepository.findAll(pageable).map(JournalConvereter::toDTO);
+        return journalRepository.findAll(pageable).map(JournalConverter::toDTO);
+    }
+
+    @Override
+    public JournalResponseDTO readJournal(Integer journalId) {
+        return JournalConverter.toDTO(findJournalById(journalId));
     }
 
     @Override
