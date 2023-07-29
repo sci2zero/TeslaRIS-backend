@@ -63,7 +63,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contribution.setOrderNumber(contributionDTO.getOrderNumber());
 
             if (contributionDTO.getPersonId() != null) {
-                contribution.setPerson(personService.findPersonById(contributionDTO.getPersonId()));
+                contribution.setPerson(personService.findOne(contributionDTO.getPersonId()));
             }
 
             contribution.setApproveStatus(
@@ -84,7 +84,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
         var countryId = contributionDTO.getPostalAddress().getCountryId();
         var postalAddress =
-            new PostalAddress(countryId != null ? countryService.findCountryById(countryId) : null,
+            new PostalAddress(countryId != null ? countryService.findOne(countryId) : null,
                 multilingualContentService.getMultilingualContent(
                     contributionDTO.getPostalAddress().getStreetAndNumber()),
                 multilingualContentService.getMultilingualContent(

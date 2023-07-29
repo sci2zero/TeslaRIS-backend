@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.converter.institution.ResearchAreaConverter;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.service.ResearchAreaService;
@@ -28,7 +29,8 @@ public class ResearchAreaController {
 
     @GetMapping
     public Page<ResearchAreaResponseDTO> getResearchAreas(Pageable pageable) {
-        return researchAreaService.getResearchAreas(pageable);
+        return researchAreaService.findAll(pageable).map(
+            ResearchAreaConverter::toResponseDTO);
     }
 
     @PostMapping

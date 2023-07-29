@@ -11,7 +11,7 @@ import rs.teslaris.core.dto.UserUpdateRequestDTO;
 import rs.teslaris.core.model.user.User;
 
 @Service
-public interface UserService extends UserDetailsService {
+public interface UserService extends UserDetailsService, JPAService<User> {
 
     User loadUserById(Integer userId);
 

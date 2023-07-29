@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -22,6 +23,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @AllArgsConstructor
 @Entity
 @Table(name = "memberships")
+@Where(clause = "deleted=false")
 public class Membership extends Involvement {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

@@ -8,7 +8,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @Repository
 public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Integer> {
 
-    @Query("select count(re) > 0 from ResearchArea re join re.superResearchArea where re.superResearchArea.id = :researchAreaId")
+    @Query("select count(ra) > 0 from ResearchArea ra join ra.superResearchArea ras where ra.superResearchArea.id = :researchAreaId")
     boolean isSuperArea(Integer researchAreaId);
 
     @Query("select count(p) > 0 from Person p join p.researchAreas ra where ra.id = :researchAreaId")

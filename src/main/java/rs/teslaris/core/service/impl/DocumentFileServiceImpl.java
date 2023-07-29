@@ -11,6 +11,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -28,7 +29,8 @@ import rs.teslaris.core.service.MultilingualContentService;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class DocumentFileServiceImpl implements DocumentFileService {
+public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
+    implements DocumentFileService {
 
     private final FileService fileService;
 
@@ -40,8 +42,13 @@ public class DocumentFileServiceImpl implements DocumentFileService {
 
     private final LanguageDetector languageDetector;
 
+    @Override
+    protected JpaRepository<DocumentFile, Integer> getEntityRepository() {
+        return documentFileRepository;
+    }
 
     @Override
+    @Deprecated(forRemoval = true)
     public DocumentFile findDocumentFileById(Integer id) {
         return documentFileRepository.findById(id).orElseThrow(
             () -> new NotFoundException("Document file with given id does not exist."));
@@ -68,7 +75,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
             fileService.store(documentFile.getFile(), UUID.randomUUID().toString());
         newDocumentFile.setServerFilename(serverFilename);
 
-        newDocumentFile = documentFileRepository.save(newDocumentFile);
+        newDocumentFile = save(newDocumentFile);
 
         if (index) {
             parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(), serverFilename,
@@ -99,7 +106,7 @@ public class DocumentFileServiceImpl implements DocumentFileService {
     public void deleteDocumentFile(String serverFilename) {
         var documentToDelete = documentFileRepository.getReferenceByServerFilename(serverFilename);
         fileService.delete(serverFilename);
-        documentFileRepository.delete(documentToDelete);
+        delete(documentToDelete.getId());
     }
 
     private String detectMimeType(MultipartFile file) {

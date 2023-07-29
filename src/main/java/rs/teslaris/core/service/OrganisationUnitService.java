@@ -14,7 +14,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
 @Service
-public interface OrganisationUnitService {
+public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnit findOrganisationUnitById(Integer id);
 

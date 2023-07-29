@@ -15,6 +15,7 @@ import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -45,7 +46,7 @@ import rs.teslaris.core.service.PersonService;
 
 @Service
 @RequiredArgsConstructor
-public class PersonServiceImpl implements PersonService {
+public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonService {
 
     private final PersonRepository personRepository;
 
@@ -64,8 +65,13 @@ public class PersonServiceImpl implements PersonService {
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
 
+    @Override
+    protected JpaRepository<Person, Integer> getEntityRepository() {
+        return personRepository;
+    }
 
     @Override
+    @Deprecated(forRemoval = true)
     public Person findPersonById(Integer id) {
         return personRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
@@ -83,7 +89,7 @@ public class PersonServiceImpl implements PersonService {
     @Transactional
     public boolean isPersonEmployedInOrganisationUnit(Integer personId,
                                                       Integer organisationUnitId) {
-        var person = findPersonById(personId);
+        var person = findOne(personId);
 
         for (var personInvolvement : person.getInvolvements()) {
             Integer personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
@@ -134,7 +140,7 @@ public class PersonServiceImpl implements PersonService {
         newPerson.addInvolvement(currentEmployment);
         newPerson.setApproveStatus(defaultApproveStatus);
 
-        var savedPerson = personRepository.save(newPerson);
+        var savedPerson = this.save(newPerson);
         newPerson.setId(savedPerson.getId());
 
         if (savedPerson.getApproveStatus().equals(ApproveStatus.APPROVED)) {
@@ -147,44 +153,44 @@ public class PersonServiceImpl implements PersonService {
     @Override
     @Transactional
     public void setPersonBiography(List<MultilingualContentDTO> biographyDTO, Integer personId) {
-        var personToUpdate = findPersonById(personId);
+        var personToUpdate = findOne(personId);
         personToUpdate.getBiography().clear();
         biographyDTO.stream().map(biography -> {
-            var languageTag = languageTagService.findLanguageTagById(biography.getLanguageTagId());
+            var languageTag = languageTagService.findOne(biography.getLanguageTagId());
             return new MultiLingualContent(languageTag, biography.getContent(),
                 biography.getPriority());
         }).forEach(biography -> {
             personToUpdate.getBiography().add(biography);
-            personRepository.save(personToUpdate);
+            this.save(personToUpdate);
         });
     }
 
     @Override
     @Transactional
     public void setPersonKeyword(List<MultilingualContentDTO> keywordDTO, Integer personId) {
-        var personToUpdate = findPersonById(personId);
+        var personToUpdate = findOne(personId);
         personToUpdate.getKeyword().clear();
         keywordDTO.stream().map(keyword -> {
-            var languageTag = languageTagService.findLanguageTagById(keyword.getLanguageTagId());
+            var languageTag = languageTagService.findOne(keyword.getLanguageTagId());
             return new MultiLingualContent(languageTag, keyword.getContent(),
                 keyword.getPriority());
         }).forEach(keyword -> {
             personToUpdate.getBiography().add(keyword);
-            personRepository.save(personToUpdate);
+            this.save(personToUpdate);
         });
     }
 
     @Override
     @Transactional
     public void setPersonMainName(Integer personNameId, Integer personId) {
-        var personToUpdate = findPersonById(personId);
-        var chosenName = personNameService.findPersonNameById(personNameId);
+        var personToUpdate = findOne(personId);
+        var chosenName = personNameService.findOne(personNameId);
 
         personToUpdate.getOtherNames().add(personToUpdate.getName());
         personToUpdate.setName(chosenName);
         personToUpdate.getOtherNames().remove(chosenName);
 
-        personRepository.save(personToUpdate);
+        this.save(personToUpdate);
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate, personToUpdate.getId());
@@ -194,7 +200,7 @@ public class PersonServiceImpl implements PersonService {
     @Override
     @Transactional
     public void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId) {
-        var personToUpdate = findPersonById(personId);
+        var personToUpdate = findOne(personId);
 
         var personNameIds = personToUpdate.getOtherNames().stream().map(PersonName::getId)
             .collect(Collectors.toList());
@@ -214,7 +220,7 @@ public class PersonServiceImpl implements PersonService {
     @Override
     @Transactional
     public void updatePersonalInfo(PersonalInfoDTO personalInfo, Integer personId) {
-        var personToUpdate = findPersonById(personId);
+        var personToUpdate = findOne(personId);
         personToUpdate.setApvnt(personalInfo.getApvnt());
         personToUpdate.setMnid(personalInfo.getMnid());
         personToUpdate.setOrcid(personalInfo.getOrcid());
@@ -228,7 +234,7 @@ public class PersonServiceImpl implements PersonService {
         var countryId = personalInfo.getPostalAddress().getCountryId();
 
         personalInfoToUpdate.getPostalAddress()
-            .setCountry(countryId != null ? countryService.findCountryById(countryId) : null);
+            .setCountry(countryId != null ? countryService.findOne(countryId) : null);
 
         personToUpdate.getPersonalInfo().getPostalAddress().getStreetAndNumber().clear();
         setPersonStreetAndNumberInfo(personToUpdate, personalInfoToUpdate, personalInfo);
@@ -241,7 +247,7 @@ public class PersonServiceImpl implements PersonService {
         personalInfoToUpdate.getContact()
             .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
 
-        personRepository.save(personToUpdate);
+        this.save(personToUpdate);
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate, personToUpdate.getId());
@@ -250,14 +256,14 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public void approvePerson(Integer personId, Boolean approve) {
-        var personToBeApproved = findPersonById(personId);
+        var personToBeApproved = findOne(personId);
 
         var approveStatus = approve ? ApproveStatus.APPROVED : ApproveStatus.DECLINED;
         if (personToBeApproved.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
             personToBeApproved.setApproveStatus(approveStatus);
         }
 
-        var approvedPerson = personRepository.save(personToBeApproved);
+        var approvedPerson = this.save(personToBeApproved);
 
         if (approve) {
             indexPerson(approvedPerson, 0);
@@ -270,13 +276,13 @@ public class PersonServiceImpl implements PersonService {
                                               PersonalInfoDTO personalInfo) {
         personalInfo.getPostalAddress().getStreetAndNumber().stream().map(streetAndNumber -> {
             var languageTag =
-                languageTagService.findLanguageTagById(streetAndNumber.getLanguageTagId());
+                languageTagService.findOne(streetAndNumber.getLanguageTagId());
             return new MultiLingualContent(languageTag, streetAndNumber.getContent(),
                 streetAndNumber.getPriority());
         }).forEach(streetAndNumberContent -> {
             personalInfoToUpdate.getPostalAddress().getStreetAndNumber()
                 .add(streetAndNumberContent);
-            personRepository.save(personToUpdate);
+            this.save(personToUpdate);
         });
     }
 
@@ -284,11 +290,11 @@ public class PersonServiceImpl implements PersonService {
     private void setPersonCityInfo(Person personToUpdate, PersonalInfo personalInfoToUpdate,
                                    PersonalInfoDTO personalInfo) {
         personalInfo.getPostalAddress().getCity().stream().map(city -> {
-            var languageTag = languageTagService.findLanguageTagById(city.getLanguageTagId());
+            var languageTag = languageTagService.findOne(city.getLanguageTagId());
             return new MultiLingualContent(languageTag, city.getContent(), city.getPriority());
         }).forEach(city -> {
             personalInfoToUpdate.getPostalAddress().getCity().add(city);
-            personRepository.save(personToUpdate);
+            this.save(personToUpdate);
         });
     }
 
@@ -350,7 +356,7 @@ public class PersonServiceImpl implements PersonService {
     }
 
     @Override
-    public Page<PersonIndex> findAll(Pageable pageable) {
+    public Page<PersonIndex> findAllIndex(Pageable pageable) {
         return personIndexRepository.findAll(pageable);
     }
 

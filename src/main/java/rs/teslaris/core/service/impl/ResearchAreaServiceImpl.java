@@ -5,6 +5,7 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.institution.ResearchAreaConverter;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
@@ -18,18 +19,25 @@ import rs.teslaris.core.service.ResearchAreaService;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ResearchAreaServiceImpl implements ResearchAreaService {
+public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
+    implements ResearchAreaService {
 
     private final ResearchAreaRepository researchAreaRepository;
 
     private final MultilingualContentService multilingualContentService;
 
+    @Override
+    protected JpaRepository<ResearchArea, Integer> getEntityRepository() {
+        return researchAreaRepository;
+    }
 
     @Override
     public ResearchArea getReferenceToResearchAreaById(Integer id) {
         return id == null ? null : researchAreaRepository.getReferenceById(id);
     }
 
+    @Override
+    @Deprecated(forRemoval = true)
     public Page<ResearchAreaResponseDTO> getResearchAreas(Pageable pageable) {
         return researchAreaRepository.findAll(pageable).map(
             ResearchAreaConverter::toResponseDTO);
@@ -45,7 +53,7 @@ public class ResearchAreaServiceImpl implements ResearchAreaService {
         newResearchArea.setSuperResearchArea(
             getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
 
-        return researchAreaRepository.save(newResearchArea);
+        return this.save(newResearchArea);
     }
 
     @Override
@@ -62,7 +70,7 @@ public class ResearchAreaServiceImpl implements ResearchAreaService {
         reserchAreaToUpdate.setSuperResearchArea(
             getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
 
-        researchAreaRepository.save(reserchAreaToUpdate);
+        this.save(reserchAreaToUpdate);
     }
 
     @Override
@@ -75,8 +83,7 @@ public class ResearchAreaServiceImpl implements ResearchAreaService {
                 "Research area with id " + researchAreaId + " cannot be deleted as it is in use.");
         }
 
-        var researchAreaToDelete = getReferenceToResearchAreaById(researchAreaId);
-        researchAreaRepository.delete(researchAreaToDelete);
+        this.delete(researchAreaId);
     }
 
     @Override

@@ -98,8 +98,8 @@ public class PersonContributionServiceTest {
         contributionsDTO.add(contributionDTO2);
         documentDTO.setContributions(contributionsDTO);
 
-        when(personService.findPersonById(1)).thenReturn(new Person());
-        when(countryService.findCountryById(1)).thenReturn(new Country());
+        when(personService.findOne(1)).thenReturn(new Person());
+        when(countryService.findOne(1)).thenReturn(new Country());
 
         // When
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);

@@ -30,7 +30,7 @@ public class JournalServiceTest {
         when(journalRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var result = journalService.findJournalById(1);
+        var result = journalService.findOne(1);
 
         // then
         assertEquals(expected, result);
@@ -42,7 +42,7 @@ public class JournalServiceTest {
         when(journalRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> journalService.findJournalById(1));
+        assertThrows(NotFoundException.class, () -> journalService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }

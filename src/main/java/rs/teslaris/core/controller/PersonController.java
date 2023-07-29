@@ -39,7 +39,7 @@ public class PersonController {
 
     @GetMapping
     public Page<PersonIndex> findAll(Pageable pageable) {
-        return personService.findAll(pageable);
+        return personService.findAllIndex(pageable);
     }
 
     @GetMapping("/{personId}")

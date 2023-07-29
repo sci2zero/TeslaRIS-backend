@@ -10,4 +10,5 @@ public interface UserAccountActivationRepository
     extends JpaRepository<UserAccountActivation, Integer> {
 
     Optional<UserAccountActivation> findByActivationToken(String activationToken);
+
 }

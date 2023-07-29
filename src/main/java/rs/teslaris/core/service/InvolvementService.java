@@ -12,7 +12,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 
 @Service
-public interface InvolvementService {
+public interface InvolvementService extends JPAService<Involvement> {
 
     Involvement findInvolvementById(Integer involvementId);
 

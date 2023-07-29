@@ -8,11 +8,13 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "journal_publications")
+@Where(clause = "deleted=false")
 public class JournalPublication extends Document {
 
     @Column(name = "journal_publication_type", nullable = false)

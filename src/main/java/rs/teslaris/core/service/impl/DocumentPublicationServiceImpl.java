@@ -3,11 +3,13 @@ package rs.teslaris.core.service.impl;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -15,6 +17,7 @@ import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.DocumentFileService;
 import rs.teslaris.core.service.DocumentPublicationService;
@@ -25,7 +28,8 @@ import rs.teslaris.core.service.PersonContributionService;
 @Primary
 @RequiredArgsConstructor
 @Transactional
-public class DocumentPublicationServiceImpl implements DocumentPublicationService {
+public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
+    implements DocumentPublicationService {
 
     protected final DocumentRepository documentRepository;
 
@@ -38,8 +42,13 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
 
+    @Override
+    protected JpaRepository<Document, Integer> getEntityRepository() {
+        return documentRepository;
+    }
 
     @Override
+    @Deprecated(forRemoval = true)
     public Document findDocumentById(Integer documentId) {
         return documentRepository.findById(documentId)
             .orElseThrow(() -> new NotFoundException("Document with given id does not exist."));
@@ -47,7 +56,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
 
     @Override
     public void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved) {
-        var documentToUpdate = findDocumentById(documentId);
+        var documentToUpdate = findOne(documentId);
 
         if (documentToUpdate.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
             documentToUpdate.setApproveStatus(
@@ -60,7 +69,7 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     @Override
     public void addDocumentFile(Integer documentId, List<DocumentFileDTO> documentFiles,
                                 Boolean isProof) {
-        var document = findDocumentById(documentId);
+        var document = findOne(documentId);
         documentFiles.forEach(file -> {
             var documentFile = documentFileService.saveNewDocument(file, true);
             if (isProof) {
@@ -73,23 +82,32 @@ public class DocumentPublicationServiceImpl implements DocumentPublicationServic
     }
 
     @Override
+    @Transactional
     public void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof) {
-        var document = findDocumentById(documentId);
+        var document = findOne(documentId);
         var documentFile = documentFileService.findDocumentFileById(documentFileId);
 
         if (isProof) {
-            document.getProofs().remove(documentFile);
+            Set<DocumentFile> proofs = document.getProofs();
+            proofs.stream().forEach(p -> {
+                p.setDeleted(true);
+            });
+            documentFileService.saveAll(proofs);
         } else {
-            document.getFileItems().remove(documentFile);
+            Set<DocumentFile> fileItems = document.getFileItems();
+            fileItems.stream().forEach(p -> {
+                p.setDeleted(true);
+            });
+            documentFileService.saveAll(fileItems);
+
         }
-        documentRepository.save(document);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }
 
     @Override
     public List<Integer> getContributorIds(Integer publicationId) {
-        return findDocumentById(publicationId).getContributors().stream().map(BaseEntity::getId)
+        return findOne(publicationId).getContributors().stream().map(BaseEntity::getId)
             .filter(Objects::nonNull).collect(Collectors.toList());
     }
 

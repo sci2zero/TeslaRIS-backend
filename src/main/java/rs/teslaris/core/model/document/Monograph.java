@@ -13,6 +13,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Where;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 
@@ -20,6 +21,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @Setter
 @Entity
 @Table(name = "monographs")
+@Where(clause = "deleted=false")
 public class Monograph extends Document {
     @Column(name = "monograph_type", nullable = false)
     @ColumnDefault("0")

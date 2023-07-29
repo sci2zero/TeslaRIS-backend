@@ -13,9 +13,9 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.model.person.Person;
 
 @Service
-public interface PersonService {
+public interface PersonService extends JPAService<Person> {
 
-    Page<PersonIndex> findAll(Pageable pageable);
+    Page<PersonIndex> findAllIndex(Pageable pageable);
 
     Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable);
 
