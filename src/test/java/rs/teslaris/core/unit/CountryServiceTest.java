@@ -34,7 +34,7 @@ public class CountryServiceTest {
         when(countryRepository.findById(1)).thenReturn(Optional.of(expectedCountry));
 
         // when
-        var actualCountry = countryService.findCountryById(1);
+        var actualCountry = countryService.findOne(1);
 
         // then
         assertEquals(expectedCountry.getCode(), actualCountry.getCode());
@@ -46,7 +46,7 @@ public class CountryServiceTest {
         when(countryRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> countryService.findCountryById(1));
+        assertThrows(NotFoundException.class, () -> countryService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }

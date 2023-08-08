@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -17,6 +18,7 @@ import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
@@ -27,7 +29,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class InvolvementServiceImpl implements InvolvementService {
+public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
+    implements InvolvementService {
 
     private final PersonService personService;
 
@@ -39,8 +42,13 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     private final DocumentFileService documentFileService;
 
+    @Override
+    protected JpaRepository<Involvement, Integer> getEntityRepository() {
+        return involvementRepository;
+    }
 
     @Override
+    @Deprecated(forRemoval = true)
     public Involvement findInvolvementById(Integer involvementId) {
         return involvementRepository.findById(involvementId)
             .orElseThrow(() -> new NotFoundException("Involvement with given ID does not exist."));
@@ -49,13 +57,13 @@ public class InvolvementServiceImpl implements InvolvementService {
     @Override
     public <T extends Involvement, R> R getInvolvement(Integer involvementId,
                                                        Class<T> involvementClass) {
-        var involvement = findInvolvementById(involvementId);
+        var involvement = findOne(involvementId);
         return (R) InvolvementConverter.toDTO(involvementClass.cast(involvement));
     }
 
     @Override
     public Education addEducation(Integer personId, EducationDTO education) {
-        var personInvolved = personService.findPersonById(personId);
+        var personInvolved = personService.findOne(personId);
 
         var thesisTitle =
             multilingualContentService.getMultilingualContent(education.getThesisTitle());
@@ -76,7 +84,7 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     @Override
     public Membership addMembership(Integer personId, MembershipDTO membership) {
-        var personInvolved = personService.findPersonById(personId);
+        var personInvolved = personService.findOne(personId);
 
         var contributorDescription = multilingualContentService.getMultilingualContent(
             membership.getContributionDescription());
@@ -94,7 +102,7 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     @Override
     public Employment addEmployment(Integer personId, EmploymentDTO employment) {
-        var personInvolved = personService.findPersonById(personId);
+        var personInvolved = personService.findOne(personId);
 
         var role = multilingualContentService.getMultilingualContent(employment.getRole());
 
@@ -110,7 +118,7 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     @Override
     public void addInvolvementProofs(List<DocumentFileDTO> proofs, Integer involvementId) {
-        var involvement = findInvolvementById(involvementId);
+        var involvement = findOne(involvementId);
         proofs.forEach(proof -> {
             var documentFile = documentFileService.saveNewDocument(proof, true);
             involvement.getProofs().add(documentFile);
@@ -120,18 +128,18 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     @Override
     public void deleteProof(Integer proofId, Integer involvementId) {
-        var involvement = findInvolvementById(involvementId);
+        var involvement = findOne(involvementId);
         var documentFile = documentFileService.findDocumentFileById(proofId);
 
-        involvement.getProofs().remove(documentFile);
-        involvementRepository.save(involvement);
+        involvement.setDeleted(true);
+        save(involvement);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }
 
     @Override
     public void updateEducation(Integer involvementId, EducationDTO education) {
-        var educationToUpdate = (Education) findInvolvementById(involvementId);
+        var educationToUpdate = (Education) findOne(involvementId);
 
         var thesisTitle =
             multilingualContentService.getMultilingualContent(education.getThesisTitle());
@@ -154,7 +162,7 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     @Override
     public void updateMembership(Integer involvementId, MembershipDTO membership) {
-        var membershipToUpdate = (Membership) findInvolvementById(involvementId);
+        var membershipToUpdate = (Membership) findOne(involvementId);
 
         var contributorDescription = multilingualContentService.getMultilingualContent(
             membership.getContributionDescription());
@@ -173,7 +181,7 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     @Override
     public void updateEmployment(Integer involvementId, EmploymentDTO employment) {
-        var employmentToUpdate = (Employment) findInvolvementById(involvementId);
+        var employmentToUpdate = (Employment) findOne(involvementId);
 
         var role = multilingualContentService.getMultilingualContent(employment.getRole());
 
@@ -189,13 +197,14 @@ public class InvolvementServiceImpl implements InvolvementService {
 
     @Override
     public void deleteInvolvement(Integer involvementId) {
-        var involvementToDelete = findInvolvementById(involvementId);
+        var involvementToDelete = findOne(involvementId);
+//        TODO: Do i need to delete those involvments or just logicaly avoid (soft delete)
         involvementToDelete.getPersonInvolved().removeInvolvement(involvementToDelete);
 
         involvementToDelete.getProofs()
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
 
-        involvementRepository.delete(involvementToDelete);
+        delete(involvementId);
     }
 
 

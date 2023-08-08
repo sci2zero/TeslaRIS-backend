@@ -82,7 +82,7 @@ public class OrganisationUnitController {
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
-        organisationUnitService.deleteOrganisationalUnit(organisationUnitId);
+        organisationUnitService.delete(organisationUnitId);
     }
 
 }

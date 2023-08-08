@@ -11,11 +11,12 @@ import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.service.JPAService;
 
 @Service
-public interface PersonService {
+public interface PersonService extends JPAService<Person> {
 
-    Page<PersonIndex> findAll(Pageable pageable);
+    Page<PersonIndex> findAllIndex(Pageable pageable);
 
     Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable);
 

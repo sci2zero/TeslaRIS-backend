@@ -122,6 +122,16 @@ public class DbInitializer implements ApplicationRunner {
         serbianLanguage.setLanguageCode("RS");
         languageRepository.save(serbianLanguage);
 
+        var englishLanguage = new Language();
+        englishLanguage.setLanguageCode("EN");
+        languageRepository.save(englishLanguage);
+
+
+        var yuLanguage = new Language();
+        yuLanguage.setLanguageCode("YU");
+        yuLanguage.setDeleted(true);
+        languageRepository.save(yuLanguage);
+
         var country = new Country("RS", new HashSet<MultiLingualContent>());
         country = countryRepository.save(country);
 

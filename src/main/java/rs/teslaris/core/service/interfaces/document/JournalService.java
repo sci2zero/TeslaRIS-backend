@@ -6,9 +6,10 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.service.JPAService;
 
 @Service
-public interface JournalService {
+public interface JournalService extends JPAService<Journal> {
 
     Page<JournalResponseDTO> readAllJournals(Pageable pageable);
 

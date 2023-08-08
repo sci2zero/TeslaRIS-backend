@@ -6,6 +6,5 @@ import rs.teslaris.core.model.document.DocumentFile;
 
 @Repository
 public interface DocumentFileRepository extends JpaRepository<DocumentFile, Integer> {
-
     DocumentFile getReferenceByServerFilename(String serverFilename);
 }

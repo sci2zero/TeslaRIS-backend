@@ -144,14 +144,14 @@ public class UserServiceTest {
         registrationRequest.setOrganisationalUnitId(1);
 
         var language = new Language();
-        when(languageService.findLanguageById(1)).thenReturn(language);
+        when(languageService.findOne(1)).thenReturn(language);
 
         Authority authority = new Authority();
         authority.setName("USER");
         when(authorityRepository.findById(2)).thenReturn(Optional.of(authority));
 
         var person = new Person();
-        when(personService.findPersonById(1)).thenReturn(person);
+        when(personService.findOne(1)).thenReturn(person);
 
         var organisationalUnit = new OrganisationUnit();
         when(organisationalUnitService.findOrganisationUnitById(1)).thenReturn(
@@ -204,7 +204,7 @@ public class UserServiceTest {
         when(authorityRepository.findById(1)).thenReturn(Optional.of(adminAuthority));
 
         var language = new Language();
-        when(languageService.findLanguageById(1)).thenReturn(language);
+        when(languageService.findOne(1)).thenReturn(language);
 
         // when
         assertThrows(CantRegisterAdminException.class,
@@ -277,8 +277,8 @@ public class UserServiceTest {
         var organisationalUnit = new OrganisationUnit();
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(languageService.findLanguageById(1)).thenReturn(preferredLanguage);
-        when(personService.findPersonById(2)).thenReturn(person);
+        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
@@ -328,8 +328,8 @@ public class UserServiceTest {
         requestDTO.setOrganisationalUnitId(3);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(languageService.findLanguageById(1)).thenReturn(preferredLanguage);
-        when(personService.findPersonById(2)).thenReturn(person);
+        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);

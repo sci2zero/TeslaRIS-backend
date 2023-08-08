@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Contact;
@@ -25,6 +26,7 @@ import rs.teslaris.core.model.person.PostalAddress;
 @AllArgsConstructor
 @Entity
 @Table(name = "affiliation_statements")
+@Where(clause = "deleted=false")
 public class AffiliationStatement extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

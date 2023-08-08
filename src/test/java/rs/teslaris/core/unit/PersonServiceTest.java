@@ -100,7 +100,7 @@ public class PersonServiceTest {
         when(personRepository.findById(1)).thenReturn(Optional.of(expectedPerson));
 
         // when
-        Person actualPerson = personService.findPersonById(1);
+        Person actualPerson = personService.findOne(1);
 
         // then
         assertEquals(expectedPerson, actualPerson);
@@ -112,7 +112,7 @@ public class PersonServiceTest {
         when(personRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> personService.findPersonById(1));
+        assertThrows(NotFoundException.class, () -> personService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }
@@ -213,7 +213,7 @@ public class PersonServiceTest {
         var bioList = Arrays.asList(bio1, bio2);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
-        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(
+        when(languageTagService.findOne(anyInt())).thenReturn(
             new LanguageTag("en", "English"));
 
         // when
@@ -233,7 +233,7 @@ public class PersonServiceTest {
         var keywordList = Arrays.asList(keyword1, keyword2);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
-        when(languageTagService.findLanguageTagById(anyInt())).thenReturn(
+        when(languageTagService.findOne(anyInt())).thenReturn(
             new LanguageTag("en", "English"));
 
         // when
@@ -262,7 +262,7 @@ public class PersonServiceTest {
         person.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
-        when(personNameService.findPersonNameById(2)).thenReturn(personName2);
+        when(personNameService.findOne(2)).thenReturn(personName2);
         when(personIndexRepository.findByDatabaseId(anyInt())).thenReturn(
             Optional.of(new PersonIndex()));
 
@@ -372,7 +372,7 @@ public class PersonServiceTest {
         personToUpdate.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
-        when(countryService.findCountryById(anyInt())).thenReturn(new Country());
+        when(countryService.findOne(anyInt())).thenReturn(new Country());
         when(personRepository.save(any(Person.class))).thenReturn(personToUpdate);
         when(personIndexRepository.findByDatabaseId(anyInt())).thenReturn(
             Optional.of(new PersonIndex()));
@@ -422,7 +422,7 @@ public class PersonServiceTest {
         when(personIndexRepository.findAll(pageable)).thenReturn(expected);
 
         // When
-        var actual = personService.findAll(pageable);
+        var actual = personService.findAllIndex(pageable);
 
         // Then
         assertEquals(expected, actual);

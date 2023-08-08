@@ -104,7 +104,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
         var countryId = contributionDTO.getPostalAddress().getCountryId();
         var postalAddress =
-            new PostalAddress(countryId != null ? countryService.findCountryById(countryId) : null,
+            new PostalAddress(countryId != null ? countryService.findOne(countryId) : null,
                 multilingualContentService.getMultilingualContent(
                     contributionDTO.getPostalAddress().getStreetAndNumber()),
                 multilingualContentService.getMultilingualContent(
@@ -122,7 +122,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     private void setPersonContributionCommonFields(PersonContribution contribution,
                                                    PersonContributionDTO contributionDTO) {
         if (contributionDTO.getPersonId() != null) {
-            contribution.setPerson(personService.findPersonById(contributionDTO.getPersonId()));
+            contribution.setPerson(personService.findOne(contributionDTO.getPersonId()));
         }
         contribution.setContributionDescription(multilingualContentService.getMultilingualContent(
             contributionDTO.getContributionDescription()));
@@ -130,7 +130,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
         contribution.setInstitutions(new HashSet<>());
         contributionDTO.getInstitutionIds().forEach(institutionId -> contribution.getInstitutions()
-            .add(organisationUnitService.findOrganisationUnitById(institutionId)));
+            .add(organisationUnitService.findOne(institutionId)));
 
         contribution.setOrderNumber(contributionDTO.getOrderNumber());
         contribution.setApproveStatus(

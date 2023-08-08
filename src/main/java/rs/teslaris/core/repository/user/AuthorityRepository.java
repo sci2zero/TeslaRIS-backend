@@ -7,6 +7,5 @@ import rs.teslaris.core.model.user.Authority;
 
 @Repository
 public interface AuthorityRepository extends JpaRepository<Authority, Integer> {
-
     Optional<Authority> findByName(String name);
 }

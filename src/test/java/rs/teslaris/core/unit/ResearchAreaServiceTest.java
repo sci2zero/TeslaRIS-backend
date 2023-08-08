@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -59,7 +60,7 @@ public class ResearchAreaServiceTest {
         when(researchAreaRepository.findAll(pageable)).thenReturn(researchAreasPage);
 
         // when
-        var resultPage = researchAreaService.getResearchAreas(pageable);
+        var resultPage = researchAreaService.findAll(pageable);
 
         // then
         assertEquals(2, resultPage.getTotalElements());
@@ -144,7 +145,9 @@ public class ResearchAreaServiceTest {
     void shouldDeleteResearchAreaIfAllChecksPass() {
         // given
         var researchAreaId = 1;
+        var researchArea = new ResearchArea();
 
+        when(researchAreaRepository.findById(researchAreaId)).thenReturn(Optional.of(researchArea));
         when(researchAreaRepository.isSuperArea(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedBySomeone(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedInMonograph(researchAreaId)).thenReturn(false);
@@ -158,8 +161,8 @@ public class ResearchAreaServiceTest {
         verify(researchAreaRepository, times(1)).isResearchedBySomeone(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedInMonograph(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedInThesis(researchAreaId);
-        verify(researchAreaRepository, times(1)).delete(any());
-        verify(researchAreaRepository, times(1)).getReferenceById(any());
+        verify(researchAreaRepository, times(1)).save(researchArea);
+        verify(researchAreaRepository, times(1)).findById(any());
         verifyNoMoreInteractions(researchAreaRepository);
     }
 

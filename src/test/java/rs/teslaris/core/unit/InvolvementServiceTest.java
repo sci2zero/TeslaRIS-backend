@@ -70,7 +70,7 @@ public class InvolvementServiceTest {
         when(involvementRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var actual = involvementService.findInvolvementById(1);
+        var actual = involvementService.findOne(1);
 
         // then
         assertEquals(expected, actual);
@@ -82,7 +82,7 @@ public class InvolvementServiceTest {
         when(involvementRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> involvementService.findInvolvementById(1));
+        assertThrows(NotFoundException.class, () -> involvementService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }
@@ -131,7 +131,7 @@ public class InvolvementServiceTest {
         educationDTO.setTitle(List.of(mc));
         educationDTO.setAbbreviationTitle(List.of(mc));
 
-        when(personService.findPersonById(1)).thenReturn(person);
+        when(personService.findOne(1)).thenReturn(person);
         when(involvementRepository.save(any())).thenReturn(new Education());
 
         // when
@@ -152,7 +152,7 @@ public class InvolvementServiceTest {
         membershipDTO.setRole(List.of(mc));
         membershipDTO.setContributionDescription(List.of(mc));
 
-        when(personService.findPersonById(1)).thenReturn(person);
+        when(personService.findOne(1)).thenReturn(person);
         when(involvementRepository.save(any())).thenReturn(new Membership());
 
         // when
@@ -172,7 +172,7 @@ public class InvolvementServiceTest {
         employmentDTO.setAffiliationStatement(List.of(mc));
         employmentDTO.setRole(List.of(mc));
 
-        when(personService.findPersonById(1)).thenReturn(person);
+        when(personService.findOne(1)).thenReturn(person);
         when(involvementRepository.save(any())).thenReturn(new Employment());
 
         // when

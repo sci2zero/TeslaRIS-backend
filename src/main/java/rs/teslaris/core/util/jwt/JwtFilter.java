@@ -88,7 +88,7 @@ public class JwtFilter extends OncePerRequestFilter {
                         JwtUtil.signatureAlgorithm.getValue()));
             }
 
-            var userDetails = userService.loadUserById(userId);
+            var userDetails = userService.findOne(userId);
 
             if (Boolean.TRUE.equals(tokenUtil.validateToken(jwt, userDetails, cookieValue))) {
                 var authenticationToken = new TokenBasedAuthentication(userDetails);

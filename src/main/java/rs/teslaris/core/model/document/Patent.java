@@ -9,11 +9,13 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "patents")
+@Where(clause = "deleted=false")
 public class Patent extends Document {
 
     @Column(name = "number", unique = true)

@@ -51,7 +51,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     @Override
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
-        var publication = (JournalPublication) findDocumentById(publicationId);
+        var publication = (JournalPublication) findOne(publicationId);
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -80,7 +80,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     @Override
     public void editJournalPublication(Integer publicationId,
                                        JournalPublicationDTO publicationDTO) {
-        var publicationToUpdate = (JournalPublication) findDocumentById(publicationId);
+        var publicationToUpdate = (JournalPublication) findOne(publicationId);
 
         clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
@@ -98,7 +98,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     @Override
     public void deleteJournalPublication(Integer journalPublicationId) {
-        var publicationToDelete = (JournalPublication) findDocumentById(journalPublicationId);
+        var publicationToDelete = (JournalPublication) findOne(journalPublicationId);
 
         deleteProofsAndFileItems(publicationToDelete);
         journalPublicationRepository.delete(publicationToDelete);
@@ -126,6 +126,6 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setVolume(publicationDTO.getVolume());
         publication.setIssue(publicationDTO.getIssue());
 
-        publication.setJournal(journalService.findJournalById(publicationDTO.getJournalId()));
+        publication.setJournal(journalService.findOne(publicationDTO.getJournalId()));
     }
 }

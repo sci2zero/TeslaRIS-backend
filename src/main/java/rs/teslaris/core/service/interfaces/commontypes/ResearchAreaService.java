@@ -7,9 +7,10 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.service.JPAService;
 
 @Service
-public interface ResearchAreaService {
+public interface ResearchAreaService extends JPAService<ResearchArea> {
 
     ResearchArea getReferenceToResearchAreaById(Integer id);
 

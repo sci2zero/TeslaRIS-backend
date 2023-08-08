@@ -36,7 +36,7 @@ public class PersonNameServiceTest {
         when(personNameRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var result = personNameService.findPersonNameById(1);
+        var result = personNameService.findOne(1);
 
         // then
         assertEquals(expected, result);
@@ -49,7 +49,7 @@ public class PersonNameServiceTest {
 
         // when
         assertThrows(NotFoundException.class,
-            () -> personNameService.findPersonNameById(1));
+            () -> personNameService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }
@@ -72,8 +72,8 @@ public class PersonNameServiceTest {
         personNameService.deletePersonNamesWithIds(personNameIds);
 
         // then
-        verify(personNameRepository, times(1)).delete(personName1);
-        verify(personNameRepository, times(1)).delete(personName2);
+        verify(personNameRepository, times(1)).save(personName1);
+        verify(personNameRepository, times(1)).save(personName2);
     }
 
     @Test

@@ -5,5 +5,6 @@ import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Repository
-public interface MultilingualContentRepository extends JpaRepository<MultiLingualContent, Integer> {
+public interface MultilingualContentRepository
+    extends JpaRepository<MultiLingualContent, Integer> {
 }

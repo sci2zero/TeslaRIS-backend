@@ -23,7 +23,7 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
     public Set<MultiLingualContent> getMultilingualContent(
         List<MultilingualContentDTO> multilingualContentDTO) {
         return multilingualContentDTO.stream().map(multilingualContent -> {
-            var languageTag = languageTagService.findLanguageTagById(
+            var languageTag = languageTagService.findOne(
                 multilingualContent.getLanguageTagId());
             return new MultiLingualContent(
                 languageTag,

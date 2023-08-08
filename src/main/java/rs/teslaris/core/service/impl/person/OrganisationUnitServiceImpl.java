@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
@@ -25,6 +26,7 @@ import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -35,7 +37,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class OrganisationUnitServiceImpl implements OrganisationUnitService {
+public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
+    implements OrganisationUnitService {
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
@@ -53,9 +56,20 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     private Boolean organisationUnitApprovedByDefault;
 
     @Override
+    protected JpaRepository<OrganisationUnit, Integer> getEntityRepository() {
+        return organisationUnitRepository;
+    }
+
+    @Override
     public OrganisationUnit findOrganisationUnitById(Integer id) {
-        return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id).orElseThrow(
-            () -> new NotFoundException("Organisation unit with given ID does not exist."));
+        return findOne(id);
+    }
+
+    @Override
+    public OrganisationUnit findOne(Integer id) {
+        return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id)
+            .orElseThrow(
+                () -> new NotFoundException("Organisation unit with given ID does not exist."));
     }
 
     @Override
@@ -159,7 +173,8 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     public OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
                                                                 Integer organisationUnitId) {
         OrganisationUnit organisationUnit =
-            organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)
+            organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+                    organisationUnitId)
                 .orElseThrow(
                     () -> new NotFoundException(
                         "Organisation units relation with given ID does not exist."));
@@ -173,6 +188,7 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
     }
 
     @Override
+    @Deprecated(forRemoval = true)
     public void deleteOrganisationalUnit(Integer organisationUnitId) {
         var organisationUnitReference = getReferenceToOrganisationUnitById(organisationUnitId);
         organisationUnitRepository.delete(organisationUnitReference);
@@ -256,12 +272,8 @@ public class OrganisationUnitServiceImpl implements OrganisationUnitService {
 
     @Override
     public void deleteRelationProof(Integer relationId, Integer proofId) {
-        var relation = findOrganisationUnitsRelationById(relationId);
         var documentFile = documentFileService.findDocumentFileById(proofId);
-
-        relation.getProofs().remove(documentFile);
-        organisationUnitsRelationRepository.save(relation);
-
+        documentFileService.delete(proofId);
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
     }
 

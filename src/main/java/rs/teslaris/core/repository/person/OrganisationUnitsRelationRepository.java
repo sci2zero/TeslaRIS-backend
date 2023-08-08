@@ -26,4 +26,5 @@ public interface OrganisationUnitsRelationRepository
         Integer sourceOrganisationId, OrganisationUnitRelationType relationType);
 
     List<OrganisationUnitsRelation> findByTargetOrganisationUnit(Integer destinationOrganisationId);
+
 }

@@ -1,21 +1,30 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
+import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
-public class CountryServiceImpl implements CountryService {
+public class CountryServiceImpl extends JPAServiceImpl<Country> implements CountryService {
 
     private final CountryRepository countryRepository;
 
     @Override
-    public Country findCountryById(Integer countryId) {
-        return countryRepository.findById(countryId)
-            .orElseThrow(() -> new NotFoundException("Country with given ID does not exist."));
+    protected JpaRepository<Country, Integer> getEntityRepository() {
+        return countryRepository;
     }
+
+    @Override
+    @Deprecated(forRemoval = true)
+    public Country findCountryById(Integer countryId) {
+        return this.findOne(countryId);
+    }
+
+
 }

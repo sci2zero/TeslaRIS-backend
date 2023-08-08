@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -28,6 +29,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @AllArgsConstructor
 @Entity
 @Table(name = "involvements")
+@Where(clause = "deleted=false")
 @Inheritance(strategy = InheritanceType.JOINED)
 public class Involvement extends BaseEntity {
 

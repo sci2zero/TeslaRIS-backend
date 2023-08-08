@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import java.util.HashSet;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -21,7 +23,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class JournalServiceImpl implements JournalService {
+public class JournalServiceImpl extends JPAServiceImpl<Journal> implements JournalService {
 
     private final JournalRepository journalRepository;
 
@@ -31,6 +33,10 @@ public class JournalServiceImpl implements JournalService {
 
     private final PersonContributionService personContributionService;
 
+    @Override
+    protected JpaRepository<Journal, Integer> getEntityRepository() {
+        return journalRepository;
+    }
 
     @Override
     public Page<JournalResponseDTO> readAllJournals(Pageable pageable) {
@@ -39,10 +45,11 @@ public class JournalServiceImpl implements JournalService {
 
     @Override
     public JournalResponseDTO readJournal(Integer journalId) {
-        return JournalConverter.toDTO(findJournalById(journalId));
+        return JournalConverter.toDTO(findOne(journalId));
     }
 
     @Override
+    @Deprecated(forRemoval = true)
     public Journal findJournalById(Integer journalId) {
         return journalRepository.findById(journalId)
             .orElseThrow(() -> new NotFoundException("Journal with given id does not exist."));
@@ -60,7 +67,7 @@ public class JournalServiceImpl implements JournalService {
 
     @Override
     public void updateJournal(JournalDTO journalDTO, Integer journalId) {
-        var journalToUpdate = findJournalById(journalId);
+        var journalToUpdate = findOne(journalId);
         journalToUpdate.getLanguages().clear();
 
         setCommonFields(journalToUpdate, journalDTO);
@@ -70,7 +77,7 @@ public class JournalServiceImpl implements JournalService {
 
     @Override
     public void deleteJournal(Integer journalId) {
-        var journalToDelete = findJournalById(journalId);
+        var journalToDelete = findOne(journalId);
 
         if (journalRepository.hasPublication(journalId) ||
             journalRepository.hasProceedings(journalId)) {
