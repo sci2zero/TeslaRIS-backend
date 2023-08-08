@@ -10,7 +10,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
-import rs.teslaris.core.service.JPAService;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
 public interface InvolvementService extends JPAService<Involvement> {

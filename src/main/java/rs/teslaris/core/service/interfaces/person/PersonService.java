@@ -11,7 +11,7 @@ import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.service.JPAService;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
 public interface PersonService extends JPAService<Person> {

@@ -9,7 +9,7 @@ import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.model.user.User;
-import rs.teslaris.core.service.JPAService;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
 public interface UserService extends UserDetailsService, JPAService<User> {

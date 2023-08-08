@@ -1,4 +1,4 @@
-package rs.teslaris.core.service;
+package rs.teslaris.core.service.interfaces;
 
 import java.util.Collection;
 import java.util.List;

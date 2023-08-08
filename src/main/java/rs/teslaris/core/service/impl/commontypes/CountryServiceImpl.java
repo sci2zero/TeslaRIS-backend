@@ -7,7 +7,6 @@ import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
-import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor

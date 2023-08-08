@@ -29,7 +29,7 @@ public class ConferenceControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private ConferenceDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(23, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
 
         var conferenceDTO = new ConferenceDTO();
         conferenceDTO.setName(dummyMC);
@@ -48,7 +48,7 @@ public class ConferenceControllerTest extends BaseTest {
         contribution.setPersonName(new PersonNameDTO());
         contribution.setContact(new ContactDTO());
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(19, dummyMC, dummyMC));
+        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
         conferenceDTO.setContributions(List.of(contribution));
 
@@ -67,7 +67,7 @@ public class ConferenceControllerTest extends BaseTest {
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testReadConference() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/conference/{conferenceId}", 36)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/conference/{conferenceId}", 38)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
@@ -97,7 +97,7 @@ public class ConferenceControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(conferenceDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/conference/{conferenceId}", 36)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/conference/{conferenceId}", 38)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -110,7 +110,7 @@ public class ConferenceControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/conference/{conferenceId}",
-                        44).contentType(MediaType.APPLICATION_JSON)
+                        46).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

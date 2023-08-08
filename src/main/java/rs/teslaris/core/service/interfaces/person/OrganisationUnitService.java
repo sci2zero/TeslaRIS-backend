@@ -12,7 +12,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
-import rs.teslaris.core.service.JPAService;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
 public interface OrganisationUnitService extends JPAService<OrganisationUnit> {

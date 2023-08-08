@@ -5,7 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.model.document.DocumentFile;
-import rs.teslaris.core.service.JPAService;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
 public interface DocumentFileService extends JPAService<DocumentFile> {

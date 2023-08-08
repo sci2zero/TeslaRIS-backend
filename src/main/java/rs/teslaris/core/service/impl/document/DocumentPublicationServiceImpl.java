@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -24,12 +25,11 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -41,7 +41,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 @Primary
 @RequiredArgsConstructor
 @Transactional
-public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document> implements DocumentPublicationService {
+public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
+    implements DocumentPublicationService {
 
     protected final MultilingualContentService multilingualContentService;
 

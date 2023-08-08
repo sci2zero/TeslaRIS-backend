@@ -1,4 +1,4 @@
-package rs.teslaris.core.service;
+package rs.teslaris.core.service.interfaces;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

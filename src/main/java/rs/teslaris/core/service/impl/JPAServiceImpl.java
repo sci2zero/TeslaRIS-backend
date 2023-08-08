@@ -5,7 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.commontypes.BaseEntity;
-import rs.teslaris.core.service.JPAService;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 public abstract class JPAServiceImpl<T extends BaseEntity> extends CRUDServiceImpl<T> implements
     JPAService<T> {

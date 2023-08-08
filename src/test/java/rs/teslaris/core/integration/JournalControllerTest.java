@@ -30,7 +30,7 @@ public class JournalControllerTest extends BaseTest {
 
 
     private JournalDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(23, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
 
         var journalDTO = new JournalDTO();
         journalDTO.setTitle(dummyMC);
@@ -46,7 +46,7 @@ public class JournalControllerTest extends BaseTest {
         contribution.setPersonName(new PersonNameDTO());
         contribution.setContact(new ContactDTO());
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(19, dummyMC, dummyMC));
+        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
         journalDTO.setContributions(List.of(contribution));
         journalDTO.setLanguageTagIds(new ArrayList<>());
@@ -66,7 +66,7 @@ public class JournalControllerTest extends BaseTest {
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testReadJournal() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/journal/{journalId}", 28)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/journal/{journalId}", 30)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
@@ -98,7 +98,7 @@ public class JournalControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(journalDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/journal/{journalId}", 28)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/journal/{journalId}", 30)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -110,7 +110,7 @@ public class JournalControllerTest extends BaseTest {
         String jwtToken = authenticateAndGetToken();
 
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("http://localhost:8081/api/journal/{journalId}", 46)
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/journal/{journalId}", 48)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

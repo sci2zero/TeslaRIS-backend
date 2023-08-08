@@ -445,7 +445,8 @@ public class OrganisationUnitServiceTest {
         Integer organisationUnitId = 1;
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setId(organisationUnitId);
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)).thenReturn(
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            organisationUnitId)).thenReturn(
             Optional.of(organisationUnit));
 
         organisationUnitService.delete(organisationUnitId);
@@ -457,7 +458,8 @@ public class OrganisationUnitServiceTest {
     public void shouldIgnoreNullOrganisationalUnit() {
         Integer organisationUnitId = 1;
         var ou = new OrganisationUnit();
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId)).thenReturn(Optional.of(ou));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            organisationUnitId)).thenReturn(Optional.of(ou));
 
         organisationUnitService.delete(organisationUnitId);
 
