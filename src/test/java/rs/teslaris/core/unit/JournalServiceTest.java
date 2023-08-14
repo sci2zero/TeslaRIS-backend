@@ -27,7 +27,7 @@ import rs.teslaris.core.service.impl.document.JournalServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.exceptionhandling.exception.JournalInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
@@ -148,7 +148,8 @@ public class JournalServiceTest {
         when(journalRepository.hasProceedings(journalId)).thenReturn(hasProceedings);
 
         // when
-        assertThrows(JournalInUseException.class, () -> journalService.deleteJournal(journalId));
+        assertThrows(JournalReferenceConstraintViolationException.class,
+            () -> journalService.deleteJournal(journalId));
 
         // then (JournalInUseException should be thrown)
     }

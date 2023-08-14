@@ -17,11 +17,11 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantRegisterAdminException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
-import rs.teslaris.core.util.exceptionhandling.exception.JournalInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.exceptionhandling.exception.PublisherInUseException;
-import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
@@ -139,25 +139,26 @@ public class ErrorHandlerConfiguration {
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(ResearchAreaInUseException.class)
+    @ExceptionHandler(ResearchAreaReferenceConstraintViolationException.class)
     @ResponseBody
     ErrorObject handleResearchAreaInUseException(HttpServletRequest request,
-                                                 ResearchAreaInUseException ex) {
+                                                 ResearchAreaReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(PublisherInUseException.class)
+    @ExceptionHandler(PublisherReferenceConstraintViolationException.class)
     @ResponseBody
     ErrorObject handlePublisherInUseException(HttpServletRequest request,
-                                              PublisherInUseException ex) {
+                                              PublisherReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(JournalInUseException.class)
+    @ExceptionHandler(JournalReferenceConstraintViolationException.class)
     @ResponseBody
-    ErrorObject handleJournalInUseException(HttpServletRequest request, JournalInUseException ex) {
+    ErrorObject handleJournalInUseException(HttpServletRequest request,
+                                            JournalReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 

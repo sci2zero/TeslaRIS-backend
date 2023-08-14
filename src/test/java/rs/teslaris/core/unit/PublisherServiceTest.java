@@ -27,7 +27,7 @@ import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.impl.document.PublisherServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.exceptionhandling.exception.PublisherInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 
 @SpringBootTest
 public class PublisherServiceTest {
@@ -118,11 +118,11 @@ public class PublisherServiceTest {
         publisher.setId(publisherId);
 
         when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(publisher));
-        when(publisherRepository.publishedDataset(publisherId)).thenReturn(false);
-        when(publisherRepository.publishedPatent(publisherId)).thenReturn(false);
-        when(publisherRepository.publishedProceedings(publisherId)).thenReturn(false);
-        when(publisherRepository.publishedSoftware(publisherId)).thenReturn(false);
-        when(publisherRepository.publishedThesis(publisherId)).thenReturn(false);
+        when(publisherRepository.hasPublishedDataset(publisherId)).thenReturn(false);
+        when(publisherRepository.hasPublishedPatent(publisherId)).thenReturn(false);
+        when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(false);
+        when(publisherRepository.hasPublishedSoftware(publisherId)).thenReturn(false);
+        when(publisherRepository.hasPublishedThesis(publisherId)).thenReturn(false);
 
         // when
         publisherService.deletePublisher(publisherId);
@@ -144,15 +144,15 @@ public class PublisherServiceTest {
         publisher.setId(publisherId);
 
         when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(publisher));
-        when(publisherRepository.publishedDataset(publisherId)).thenReturn(publishedDataset);
-        when(publisherRepository.publishedPatent(publisherId)).thenReturn(publishedPatent);
-        when(publisherRepository.publishedProceedings(publisherId)).thenReturn(
+        when(publisherRepository.hasPublishedDataset(publisherId)).thenReturn(publishedDataset);
+        when(publisherRepository.hasPublishedPatent(publisherId)).thenReturn(publishedPatent);
+        when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(
             publishedProceedings);
-        when(publisherRepository.publishedSoftware(publisherId)).thenReturn(publishedSoftware);
-        when(publisherRepository.publishedThesis(publisherId)).thenReturn(publishedThesis);
+        when(publisherRepository.hasPublishedSoftware(publisherId)).thenReturn(publishedSoftware);
+        when(publisherRepository.hasPublishedThesis(publisherId)).thenReturn(publishedThesis);
 
         // when
-        assertThrows(PublisherInUseException.class,
+        assertThrows(PublisherReferenceConstraintViolationException.class,
             () -> publisherService.deletePublisher(publisherId));
 
         // then (PublisherInUseException should be thrown)

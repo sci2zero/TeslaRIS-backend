@@ -24,58 +24,58 @@ public class DocumentPublicationIndex {
     @Id
     private String id;
 
-    @Field(type = FieldType.Text, store = true, name = "title_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Text, name = "title_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String titleSr;
 
-    @Field(type = FieldType.Text, store = true, name = "title_other", analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Text, name = "title_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String titleOther;
 
-    @Field(type = FieldType.Text, store = true, name = "description_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Text, name = "description_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String descriptionSr;
 
-    @Field(type = FieldType.Text, store = true, name = "description_other", analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Text, name = "description_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String descriptionOther;
 
-    @Field(type = FieldType.Text, store = true, name = "keywords_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Text, name = "keywords_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String keywordsSr;
 
-    @Field(type = FieldType.Text, store = true, name = "keywords_other", analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Text, name = "keywords_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String keywordsOther;
 
-    @Field(type = FieldType.Text, store = true, name = "full_text_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Text, name = "full_text_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String fullTextSr;
 
-    @Field(type = FieldType.Text, store = true, name = "full_text_other", analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Text, name = "full_text_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String fullTextOther;
 
     @Field(type = FieldType.Integer, name = "author_ids", store = true)
     private List<Integer> authorIds = new ArrayList<>();
 
-    @Field(type = FieldType.Text, store = true, name = "authorNames", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @Field(type = FieldType.Text, name = "authorNames", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String authorNames = "";
 
     @Field(type = FieldType.Integer, name = "editor_ids", store = true)
     private List<Integer> editorIds = new ArrayList<>();
 
-    @Field(type = FieldType.Text, store = true, name = "editorNames", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @Field(type = FieldType.Text, name = "editorNames", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String editorNames = "";
 
     @Field(type = FieldType.Integer, name = "reviewer_ids", store = true)
     private List<Integer> reviewerIds = new ArrayList<>();
 
-    @Field(type = FieldType.Text, store = true, name = "reviewerNames", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @Field(type = FieldType.Text, name = "reviewerNames", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String reviewerNames = "";
 
     @Field(type = FieldType.Integer, name = "advisor_ids", store = true)
     private List<Integer> advisorIds = new ArrayList<>();
 
-    @Field(type = FieldType.Text, store = true, name = "advisorNames", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @Field(type = FieldType.Text, name = "advisorNames", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String advisorNames = "";
 
     @Field(type = FieldType.Integer, name = "year", store = true)
     private Integer year;
 
-    @Field(type = FieldType.Text, store = true, name = "type")
+    @Field(type = FieldType.Text, name = "type", store = true)
     private String type;
 
     @Field(type = FieldType.Integer, name = "journal_id", store = true)
@@ -87,6 +87,6 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "publisher_id", store = true)
     private Integer publisherId;
 
-    @Field(type = FieldType.Integer, store = true, name = "database_id")
+    @Field(type = FieldType.Integer, name = "database_id", store = true)
     private Integer databaseId;
 }

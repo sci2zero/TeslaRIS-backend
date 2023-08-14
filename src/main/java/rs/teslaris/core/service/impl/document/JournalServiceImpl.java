@@ -17,7 +17,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.exceptionhandling.exception.JournalInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -81,7 +81,8 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal> implements Journ
 
         if (journalRepository.hasPublication(journalId) ||
             journalRepository.hasProceedings(journalId)) {
-            throw new JournalInUseException("Journal with given ID is allready in use.");
+            throw new JournalReferenceConstraintViolationException(
+                "Journal with given ID is allready in use.");
         }
 
         journalRepository.delete(journalToDelete);

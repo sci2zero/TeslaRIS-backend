@@ -15,7 +15,7 @@ import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
-import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
 
 @Service
 @RequiredArgsConstructor
@@ -80,7 +80,7 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
             researchAreaRepository.isResearchedBySomeone(researchAreaId) ||
             researchAreaRepository.isResearchedInMonograph(researchAreaId) ||
             researchAreaRepository.isResearchedInThesis(researchAreaId)) {
-            throw new ResearchAreaInUseException(
+            throw new ResearchAreaReferenceConstraintViolationException(
                 "Research area with id " + researchAreaId + " cannot be deleted as it is in use.");
         }
 

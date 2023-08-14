@@ -12,7 +12,7 @@ import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.exceptionhandling.exception.PublisherInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 
 @Service
 @RequiredArgsConstructor
@@ -60,12 +60,12 @@ public class PublisherServiceImpl implements PublisherService {
     public void deletePublisher(Integer publisherId) {
         var publisherToDelete = findPublisherById(publisherId);
 
-        if (publisherRepository.publishedDataset(publisherId) ||
-            publisherRepository.publishedPatent(publisherId) ||
-            publisherRepository.publishedProceedings(publisherId) ||
-            publisherRepository.publishedSoftware(publisherId) ||
-            publisherRepository.publishedThesis(publisherId)) {
-            throw new PublisherInUseException(
+        if (publisherRepository.hasPublishedDataset(publisherId) ||
+            publisherRepository.hasPublishedPatent(publisherId) ||
+            publisherRepository.hasPublishedProceedings(publisherId) ||
+            publisherRepository.hasPublishedSoftware(publisherId) ||
+            publisherRepository.hasPublishedThesis(publisherId)) {
+            throw new PublisherReferenceConstraintViolationException(
                 "Publisher with id " + publisherId + " is already in use.");
         }
 

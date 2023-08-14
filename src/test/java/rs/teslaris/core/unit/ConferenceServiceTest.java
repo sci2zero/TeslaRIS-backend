@@ -26,7 +26,7 @@ import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.ConferenceServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.exceptionhandling.exception.ConferenceInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
@@ -188,7 +188,7 @@ public class ConferenceServiceTest {
         when(eventRepository.hasProceedings(conferenceId)).thenReturn(true);
 
         // when
-        assertThrows(ConferenceInUseException.class,
+        assertThrows(ConferenceReferenceConstraintViolationException.class,
             () -> conferenceService.deleteConference(conferenceId));
 
         // then (JournalInUseException should be thrown)

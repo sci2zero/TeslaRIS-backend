@@ -14,7 +14,7 @@ import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.exceptionhandling.exception.ConferenceInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -75,7 +75,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         var conferenceToDelete = findConferenceById(conferenceId);
 
         if (hasCommonUsage(conferenceId)) {
-            throw new ConferenceInUseException(
+            throw new ConferenceReferenceConstraintViolationException(
                 "Conference with given ID is in use and cannot be deleted.");
         }
 
