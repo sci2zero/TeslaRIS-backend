@@ -101,7 +101,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         var publicationToDelete = (JournalPublication) findOne(journalPublicationId);
 
         deleteProofsAndFileItems(publicationToDelete);
-        journalPublicationRepository.delete(publicationToDelete);
+        delete(journalPublicationId);
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(journalPublicationId));
     }
