@@ -77,15 +77,13 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal> implements Journ
 
     @Override
     public void deleteJournal(Integer journalId) {
-        var journalToDelete = findOne(journalId);
-
         if (journalRepository.hasPublication(journalId) ||
             journalRepository.hasProceedings(journalId)) {
             throw new JournalReferenceConstraintViolationException(
                 "Journal with given ID is allready in use.");
         }
 
-        journalRepository.delete(journalToDelete);
+        this.delete(journalId);
     }
 
     private void setCommonFields(Journal journal, JournalDTO journalDTO) {

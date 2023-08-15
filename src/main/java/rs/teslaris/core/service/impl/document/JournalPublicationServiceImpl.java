@@ -12,6 +12,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.service.impl.document.adapters.JournalPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -25,6 +26,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 public class JournalPublicationServiceImpl extends DocumentPublicationServiceImpl
     implements JournalPublicationService {
 
+    private final JournalPublicationJPAServiceImpl journalPublicationJPAService;
     private final JournalService journalService;
 
     private final JournalPublicationRepository journalPublicationRepository;
@@ -38,11 +40,14 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         DocumentRepository documentRepository,
         DocumentFileService documentFileService,
         PersonContributionService personContributionService,
-        SearchService<DocumentPublicationIndex> searchService, JournalService journalService,
+        SearchService<DocumentPublicationIndex> searchService,
+        JournalPublicationJPAServiceImpl journalPublicationJPAService,
+        JournalService journalService,
         JournalPublicationRepository journalPublicationRepository,
         DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService, personContributionService, searchService);
+        this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.journalPublicationRepository = journalPublicationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
@@ -68,7 +73,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setApproveStatus(
             documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
 
-        var savedPublication = journalPublicationRepository.save(publication);
+        var savedPublication = journalPublicationJPAService.save(publication);
 
         if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
@@ -93,7 +98,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             indexJournalPublication(publicationToUpdate, indexToUpdate);
         }
 
-        journalPublicationRepository.save(publicationToUpdate);
+        journalPublicationJPAService.save(publicationToUpdate);
     }
 
     @Override
@@ -102,8 +107,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         deleteProofsAndFileItems(publicationToDelete);
         delete(journalPublicationId);
-        documentPublicationIndexRepository.delete(
-            findDocumentPublicationIndexByDatabaseId(journalPublicationId));
+        this.delete(journalPublicationId);
     }
 
     @Override

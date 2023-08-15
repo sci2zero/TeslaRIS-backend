@@ -9,13 +9,14 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 
 
 @Getter
 @Setter
 @Entity
 @Table(name = "person_journal_contributions")
-//@Where(clause = "deleted=false")
+@Where(clause = "deleted=false")
 public class PersonJournalContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)

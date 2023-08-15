@@ -13,6 +13,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.service.impl.document.adapters.ProceedingJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -28,6 +29,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Transactional
 public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsService {
+
+    private final ProceedingJPAServiceImpl proceedingJPAService;
 
     private final ProceedingsRepository proceedingsRepository;
 
@@ -46,12 +49,14 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
                                   SearchService<DocumentPublicationIndex> searchService,
+                                  ProceedingJPAServiceImpl proceedingJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
                                   JournalService journalService, EventService eventService,
                                   PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService, personContributionService, searchService);
+        this.proceedingJPAService = proceedingJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
         this.journalService = journalService;
@@ -71,8 +76,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     @Override
     public Proceedings findProceedingsById(Integer proceedingsId) {
-        return proceedingsRepository.findById(proceedingsId)
-            .orElseThrow(() -> new NotFoundException("Proceedings with given ID does not exist."));
+        return proceedingJPAService.findOne(proceedingsId);
     }
 
     @Override
@@ -85,7 +89,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         proceedings.setApproveStatus(ApproveStatus.APPROVED);
 
-        var savedProceedings = proceedingsRepository.save(proceedings);
+        var savedProceedings = proceedingJPAService.save(proceedings);
 
         if (proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexProceedings(savedProceedings, new DocumentPublicationIndex());
@@ -109,17 +113,17 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             indexProceedings(proceedingsToUpdate, proceedingsIndex);
         }
 
-        proceedingsRepository.save(proceedingsToUpdate);
+        proceedingJPAService.save(proceedingsToUpdate);
     }
 
     @Override
     public void deleteProceedings(Integer proceedingsId) {
         var proceedingsToDelete = findProceedingsById(proceedingsId);
 
-        deleteProofsAndFileItems(proceedingsToDelete);
-
-        deleteProofsAndFileItems(proceedingsToDelete);
-        proceedingsRepository.delete(proceedingsToDelete);
+//        TODO: Should we delete files if we have soft delete
+//        deleteProofsAndFileItems(proceedingsToDelete);
+//        deleteProofsAndFileItems(proceedingsToDelete);
+        proceedingJPAService.delete(proceedingsId);
 
         if (proceedingsToDelete.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             documentPublicationIndexRepository.delete(

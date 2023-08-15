@@ -11,6 +11,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.service.impl.document.adapters.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -24,6 +25,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 public class ProceedingsPublicationServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsPublicationService {
 
+    private final ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService;
     private final ProceedingsService proceedingsService;
 
     private final ProceedingsPublicationRepository proceedingsPublicationRepository;
@@ -35,10 +37,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              DocumentFileService documentFileService,
                                              PersonContributionService personContributionService,
                                              SearchService<DocumentPublicationIndex> searchService,
+                                             ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService, personContributionService, searchService);
+        this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }
@@ -46,7 +50,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Override
     public ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId) {
-        var publication = (ProceedingsPublication) findDocumentById(proceedingsId);
+        var publication = (ProceedingsPublication) this.findOne(proceedingsId);
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -64,7 +68,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         publication.setApproveStatus(
             documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
 
-        var savedPublication = proceedingsPublicationRepository.save(publication);
+        var savedPublication = proceedingPublicationJPAService.save(publication);
 
         if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
@@ -76,7 +80,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Override
     public void editProceedingsPublication(Integer publicationId,
                                            ProceedingsPublicationDTO publicationDTO) {
-        var publicationToUpdate = (ProceedingsPublication) findDocumentById(publicationId);
+        var publicationToUpdate = (ProceedingsPublication) this.findOne(publicationId);
 
         clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
@@ -89,18 +93,18 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             indexProceedingsPublication(publicationToUpdate, indexToUpdate);
         }
 
-        proceedingsPublicationRepository.save(publicationToUpdate);
+        proceedingPublicationJPAService.save(publicationToUpdate);
     }
 
     @Override
     public void deleteProceedingsPublication(Integer proceedingsPublicationId) {
-        var publicationToDelete =
-            (ProceedingsPublication) findDocumentById(proceedingsPublicationId);
+//        var publicationToDelete =
+//            (ProceedingsPublication) findDocumentById(proceedingsPublicationId);
+//        TODO: check if this is needed because of soft delete
+//        deleteProofsAndFileItems(publicationToDelete);
 
-        deleteProofsAndFileItems(publicationToDelete);
-        proceedingsPublicationRepository.delete(publicationToDelete);
-        documentPublicationIndexRepository.delete(
-            findDocumentPublicationIndexByDatabaseId(proceedingsPublicationId));
+        proceedingPublicationJPAService.delete(proceedingsPublicationId);
+        this.delete(proceedingsPublicationId);
     }
 
     @Override

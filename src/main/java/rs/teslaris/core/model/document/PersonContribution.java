@@ -29,7 +29,7 @@ import rs.teslaris.core.model.person.Person;
 @Entity
 @Table(name = "person_contributions")
 @Where(clause = "deleted=false")
-@Inheritance(strategy = InheritanceType.JOINED)
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class PersonContribution extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

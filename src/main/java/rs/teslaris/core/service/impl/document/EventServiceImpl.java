@@ -3,10 +3,12 @@ package rs.teslaris.core.service.impl.document;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -16,7 +18,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Primary
 @RequiredArgsConstructor
 @Transactional
-public class EventServiceImpl implements EventService {
+public class EventServiceImpl extends JPAServiceImpl<Event> implements EventService {
 
     private final EventRepository eventRepository;
 
@@ -57,5 +59,10 @@ public class EventServiceImpl implements EventService {
     @Override
     public Boolean hasCommonUsage(Integer eventId) {
         return eventRepository.hasProceedings(eventId);
+    }
+
+    @Override
+    protected JpaRepository<Event, Integer> getEntityRepository() {
+        return eventRepository;
     }
 }

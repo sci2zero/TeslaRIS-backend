@@ -27,6 +27,7 @@ import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.impl.person.adapter.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -40,6 +41,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
     implements OrganisationUnitService {
 
+    private final OrganisationUnitsRelationJPAServiceImpl organisationUnitsRelationJPAService;
     private final OrganisationUnitRepository organisationUnitRepository;
 
     private final MultilingualContentService multilingualContentService;
@@ -81,9 +83,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id) {
-        return organisationUnitsRelationRepository.findById(id).orElseThrow(
-            () -> new NotFoundException(
-                "Organisation units relation with given ID does not exist."));
+        return organisationUnitsRelationJPAService.findOne(id);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
 
-        organisationUnit = organisationUnitRepository.save(organisationUnit);
+        organisationUnit = this.save(organisationUnit);
 
 
         return organisationUnit;
@@ -163,7 +163,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
 
-        organisationUnit = organisationUnitRepository.save(organisationUnit);
+        organisationUnit = this.save(organisationUnit);
 
         return organisationUnit;
     }
@@ -183,15 +183,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnit.setApproveStatus(approveStatus);
         }
 
-        organisationUnitRepository.save(organisationUnit);
+        this.save(organisationUnit);
         return organisationUnit;
     }
 
     @Override
     @Deprecated(forRemoval = true)
     public void deleteOrganisationalUnit(Integer organisationUnitId) {
-        var organisationUnitReference = getReferenceToOrganisationUnitById(organisationUnitId);
-        organisationUnitRepository.delete(organisationUnitReference);
+        this.delete(organisationUnitId);
     }
 
     @Override
@@ -211,7 +210,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             newRelation.setApproveStatus(ApproveStatus.REQUESTED);
         }
 
-        return organisationUnitsRelationRepository.save(newRelation);
+        return organisationUnitsRelationJPAService.save(newRelation);
     }
 
     @Override
@@ -224,13 +223,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         setCommonFields(relationToUpdate, relationDTO);
 
-        organisationUnitsRelationRepository.save(relationToUpdate);
+        organisationUnitsRelationJPAService.save(relationToUpdate);
     }
 
     @Override
     public void deleteOrganisationUnitsRelation(Integer id) {
-        var relationToDelete = organisationUnitsRelationRepository.getReferenceById(id);
-        organisationUnitsRelationRepository.delete(relationToDelete);
+        organisationUnitsRelationJPAService.delete(id);
     }
 
     @Override
@@ -240,7 +238,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             relationToApprove.setApproveStatus(
                 approve ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
         }
-        organisationUnitsRelationRepository.save(relationToApprove);
+        organisationUnitsRelationJPAService.save(relationToApprove);
     }
 
     private void setCommonFields(OrganisationUnitsRelation relation,
@@ -266,7 +264,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         proofs.forEach(proof -> {
             var documentFile = documentFileService.saveNewDocument(proof, true);
             relation.getProofs().add(documentFile);
-            organisationUnitsRelationRepository.save(relation);
+            organisationUnitsRelationJPAService.save(relation);
         });
     }
 

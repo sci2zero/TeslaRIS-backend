@@ -4,20 +4,21 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
+import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class PublisherServiceImpl implements PublisherService {
+public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements PublisherService {
 
     private final PublisherRepository publisherRepository;
 
@@ -26,7 +27,7 @@ public class PublisherServiceImpl implements PublisherService {
 
     @Override
     public Page<PublisherDTO> readAllPublishers(Pageable pageable) {
-        return publisherRepository.findAll(pageable).map(p -> new PublisherDTO(p.getId(),
+        return this.findAll(pageable).map(p -> new PublisherDTO(p.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(p.getName()),
             MultilingualContentConverter.getMultilingualContentDTO(p.getPlace()),
             MultilingualContentConverter.getMultilingualContentDTO(p.getState())));
@@ -34,8 +35,7 @@ public class PublisherServiceImpl implements PublisherService {
 
     @Override
     public Publisher findPublisherById(Integer publisherId) {
-        return publisherRepository.findById(publisherId)
-            .orElseThrow(() -> new NotFoundException("Publisher with given ID does not exist."));
+        return this.findOne(publisherId);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class PublisherServiceImpl implements PublisherService {
 
         setCommonFields(publisher, publisherDTO);
 
-        return publisherRepository.save(publisher);
+        return this.save(publisher);
     }
 
     @Override
@@ -53,12 +53,11 @@ public class PublisherServiceImpl implements PublisherService {
 
         setCommonFields(publisherToUpdate, publisherDTO);
 
-        publisherRepository.save(publisherToUpdate);
+        this.save(publisherToUpdate);
     }
 
     @Override
     public void deletePublisher(Integer publisherId) {
-        var publisherToDelete = findPublisherById(publisherId);
 
         if (publisherRepository.hasPublishedDataset(publisherId) ||
             publisherRepository.hasPublishedPatent(publisherId) ||
@@ -69,7 +68,7 @@ public class PublisherServiceImpl implements PublisherService {
                 "Publisher with id " + publisherId + " is already in use.");
         }
 
-        publisherRepository.delete(publisherToDelete);
+        this.delete(publisherId);
     }
 
     private void setCommonFields(Publisher publisher, PublisherDTO publisherDTO) {
@@ -79,5 +78,10 @@ public class PublisherServiceImpl implements PublisherService {
             multilingualContentService.getMultilingualContent(publisherDTO.getPlace()));
         publisher.setState(
             multilingualContentService.getMultilingualContent(publisherDTO.getState()));
+    }
+
+    @Override
+    protected JpaRepository<Publisher, Integer> getEntityRepository() {
+        return publisherRepository;
     }
 }

@@ -11,15 +11,17 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.service.impl.document.adapters.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
-import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @Transactional
 public class ConferenceServiceImpl extends EventServiceImpl implements ConferenceService {
+
+    private final ConferenceJPAServiceImpl conferenceJPAService;
 
     private final ConferenceRepository conferenceRepository;
 
@@ -27,15 +29,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public ConferenceServiceImpl(EventRepository eventRepository,
                                  PersonContributionService personContributionService,
                                  MultilingualContentService multilingualContentService,
+                                 ConferenceJPAServiceImpl conferenceJPAService,
                                  ConferenceRepository conferenceRepository) {
         super(eventRepository, personContributionService, multilingualContentService);
         this.conferenceRepository = conferenceRepository;
+        this.conferenceJPAService = conferenceJPAService;
     }
-
 
     @Override
     public Page<ConferenceDTO> readAllConferences(Pageable pageable) {
-        return conferenceRepository.findAll(pageable).map(ConferenceConverter::toDTO);
+        return conferenceJPAService.findAll(pageable).map(ConferenceConverter::toDTO);
     }
 
     @Override
@@ -45,8 +48,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     @Override
     public Conference findConferenceById(Integer conferenceId) {
-        return conferenceRepository.findById(conferenceId)
-            .orElseThrow(() -> new NotFoundException("Conference with given ID does not exist."));
+        return conferenceJPAService.findOne(conferenceId);
     }
 
     @Override
@@ -57,7 +59,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         setEventCommonFields(conference, conferenceDTO);
         setConferenceRelatedFields(conference, conferenceDTO);
 
-        return conferenceRepository.save(conference);
+        return conferenceJPAService.save(conference);
     }
 
     @Override
@@ -67,19 +69,18 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         clearEventCommonFields(conferenceToUpdate);
         setConferenceRelatedFields(conferenceToUpdate, conferenceDTO);
 
-        conferenceRepository.save(conferenceToUpdate);
+        conferenceJPAService.save(conferenceToUpdate);
     }
 
     @Override
     public void deleteConference(Integer conferenceId) {
-        var conferenceToDelete = findConferenceById(conferenceId);
 
         if (hasCommonUsage(conferenceId)) {
             throw new ConferenceReferenceConstraintViolationException(
                 "Conference with given ID is in use and cannot be deleted.");
         }
 
-        conferenceRepository.delete(conferenceToDelete);
+        this.conferenceJPAService.delete(conferenceId);
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
