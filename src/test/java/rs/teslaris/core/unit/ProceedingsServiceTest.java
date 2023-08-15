@@ -27,6 +27,7 @@ import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsServiceImpl;
+import rs.teslaris.core.service.impl.document.adapters.ProceedingJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -69,6 +70,9 @@ public class ProceedingsServiceTest {
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    @Mock
+    private ProceedingJPAServiceImpl proceedingJPAService;
+
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
 
@@ -83,7 +87,7 @@ public class ProceedingsServiceTest {
         // given
         var expectedProceedings = new Proceedings();
 
-        when(proceedingsRepository.findById(1)).thenReturn(Optional.of(expectedProceedings));
+        when(proceedingJPAService.findOne(1)).thenReturn(expectedProceedings);
 
         // when
         var actualProceedings = proceedingsService.findProceedingsById(1);
@@ -95,7 +99,7 @@ public class ProceedingsServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenProceedingsDoesNotExist() {
         // given
-        when(proceedingsRepository.findById(1)).thenReturn(Optional.empty());
+        when(proceedingJPAService.findOne(1)).thenThrow(NotFoundException.class);
 
         // when
         assertThrows(NotFoundException.class, () -> proceedingsService.findProceedingsById(1));
@@ -122,7 +126,7 @@ public class ProceedingsServiceTest {
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
-        when(proceedingsRepository.save(any())).thenReturn(document);
+        when(proceedingJPAService.save(any())).thenReturn(document);
 
         // When
         var result = proceedingsService.createProceedings(proceedingsDTO);
@@ -131,7 +135,7 @@ public class ProceedingsServiceTest {
         verify(multilingualContentService, times(4)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(proceedingsDTO));
-        verify(proceedingsRepository).save(eq(document));
+        verify(proceedingJPAService).save(eq(document));
     }
 
     @Test
@@ -150,14 +154,13 @@ public class ProceedingsServiceTest {
         proceedingsToUpdate.setContributors(new HashSet<>());
         proceedingsToUpdate.setUris(new HashSet<>());
 
-        when(proceedingsRepository.findById(proceedingsId)).thenReturn(
-            Optional.of(proceedingsToUpdate));
+        when(proceedingJPAService.findOne(proceedingsId)).thenReturn(proceedingsToUpdate);
 
         // When
         proceedingsService.updateProceedings(proceedingsId, proceedingsDTO);
 
         // Then
-        verify(proceedingsRepository).findById(eq(proceedingsId));
+        verify(proceedingJPAService).findOne(eq(proceedingsId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             eq(proceedingsToUpdate), eq(proceedingsDTO));
     }

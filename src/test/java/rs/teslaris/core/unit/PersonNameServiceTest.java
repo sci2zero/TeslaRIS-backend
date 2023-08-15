@@ -74,6 +74,7 @@ public class PersonNameServiceTest {
         // then
         verify(personNameRepository, times(1)).save(personName1);
         verify(personNameRepository, times(1)).save(personName2);
+        verify(personNameRepository, never()).delete(any());
     }
 
     @Test

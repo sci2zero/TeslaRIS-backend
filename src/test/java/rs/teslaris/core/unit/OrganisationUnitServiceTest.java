@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,6 +47,7 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
+import rs.teslaris.core.service.impl.person.adapter.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -69,6 +71,9 @@ public class OrganisationUnitServiceTest {
 
     @Mock
     private ResearchAreaService researchAreaService;
+
+    @Mock
+    private OrganisationUnitsRelationJPAServiceImpl organisationUnitsRelationJPAService;
 
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
@@ -146,7 +151,7 @@ public class OrganisationUnitServiceTest {
     public void shouldReturnOrganisationUnitsRelationWhenItExists() {
         // given
         var expected = new OrganisationUnitsRelation();
-        when(organisationUnitsRelationRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(organisationUnitsRelationJPAService.findOne(1)).thenReturn(expected);
 
         // when
         var result = organisationUnitService.findOrganisationUnitsRelationById(1);
@@ -158,7 +163,7 @@ public class OrganisationUnitServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenOrganisationUnitsRelationDoesNotExist() {
         // given
-        when(organisationUnitsRelationRepository.findById(1)).thenReturn(Optional.empty());
+        when(organisationUnitsRelationJPAService.findOne(1)).thenThrow(NotFoundException.class);
 
         // when
         assertThrows(NotFoundException.class,
@@ -203,15 +208,11 @@ public class OrganisationUnitServiceTest {
         // given
         var relationId = 1;
 
-        var relationToDelete = Mockito.mock(OrganisationUnitsRelation.class);
-        when(organisationUnitsRelationRepository.getReferenceById(relationId)).thenReturn(
-            relationToDelete);
-
         // when
         organisationUnitService.deleteOrganisationUnitsRelation(relationId);
 
         // then
-        verify(organisationUnitsRelationRepository).delete(relationToDelete);
+        verify(organisationUnitsRelationJPAService).delete(relationId);
     }
 
     @Test
@@ -223,14 +224,13 @@ public class OrganisationUnitServiceTest {
         var relationToApprove = new OrganisationUnitsRelation();
         relationToApprove.setApproveStatus(ApproveStatus.REQUESTED);
 
-        when(organisationUnitsRelationRepository.findById(relationId)).thenReturn(
-            Optional.of(relationToApprove));
+        when(organisationUnitsRelationJPAService.findOne(relationId)).thenReturn(relationToApprove);
 
         // when
         organisationUnitService.approveRelation(relationId, approve);
 
         // then
-        verify(organisationUnitsRelationRepository).save(relationToApprove);
+        verify(organisationUnitsRelationJPAService).save(relationToApprove);
     }
 
     @Test
@@ -241,7 +241,7 @@ public class OrganisationUnitServiceTest {
         relationDTO.setTargetOrganisationUnitId(2);
 
         var newRelation = Mockito.mock(OrganisationUnitsRelation.class);
-        when(organisationUnitsRelationRepository.save(
+        when(organisationUnitsRelationJPAService.save(
             any(OrganisationUnitsRelation.class))).thenReturn(newRelation);
         when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
@@ -252,7 +252,7 @@ public class OrganisationUnitServiceTest {
         // then
         assertNotNull(result);
         assertEquals(newRelation, result);
-        verify(organisationUnitsRelationRepository).save(any(OrganisationUnitsRelation.class));
+        verify(organisationUnitsRelationJPAService).save(any(OrganisationUnitsRelation.class));
     }
 
     @Test
@@ -279,8 +279,7 @@ public class OrganisationUnitServiceTest {
         relation.setSourceAffiliationStatement(new HashSet<>());
         relation.setTargetAffiliationStatement(new HashSet<>());
 
-        when(organisationUnitsRelationRepository.findById(relationId)).thenReturn(
-            Optional.of(relation));
+        when(organisationUnitsRelationJPAService.findOne(relationId)).thenReturn(relation);
         when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
 
@@ -288,7 +287,7 @@ public class OrganisationUnitServiceTest {
         organisationUnitService.editOrganisationUnitsRelation(relationDTO, relationId);
 
         // then
-        verify(organisationUnitsRelationRepository).save(relation);
+        verify(organisationUnitsRelationJPAService).save(relation);
     }
 
     @Test
@@ -297,7 +296,7 @@ public class OrganisationUnitServiceTest {
         var relation = new OrganisationUnitsRelation();
         relation.setProofs(new HashSet<>());
 
-        when(organisationUnitsRelationRepository.findById(1)).thenReturn(Optional.of(relation));
+        when(organisationUnitsRelationJPAService.findOne(1)).thenReturn(relation);
         when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
 
         // when
@@ -305,7 +304,7 @@ public class OrganisationUnitServiceTest {
             List.of(new DocumentFileDTO(), new DocumentFileDTO()), 1);
 
         //then
-        verify(organisationUnitsRelationRepository, times(2)).save(relation);
+        verify(organisationUnitsRelationJPAService, times(2)).save(relation);
     }
 
     @Test
@@ -452,6 +451,7 @@ public class OrganisationUnitServiceTest {
         organisationUnitService.delete(organisationUnitId);
 
         verify(organisationUnitRepository, times(1)).save(organisationUnit);
+        verify(organisationUnitRepository, never()).delete(any());
     }
 
     @Test
@@ -464,6 +464,7 @@ public class OrganisationUnitServiceTest {
         organisationUnitService.delete(organisationUnitId);
 
         verify(organisationUnitRepository, times(1)).save(ou);
+        verify(organisationUnitRepository, never()).delete(any());
 
     }
 

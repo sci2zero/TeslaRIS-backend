@@ -3,8 +3,10 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -128,7 +130,8 @@ public class PublisherServiceTest {
         publisherService.deletePublisher(publisherId);
 
         // then
-        verify(publisherRepository).delete(publisher);
+        verify(publisherRepository).save(publisher);
+        verify(publisherRepository, never()).delete(publisher);
     }
 
     @ParameterizedTest

@@ -38,6 +38,7 @@ import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.service.impl.document.JournalPublicationServiceImpl;
+import rs.teslaris.core.service.impl.document.adapters.JournalPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -64,6 +65,9 @@ public class JournalPublicationServiceTest {
 
     @Mock
     private PersonContributionService personContributionService;
+
+    @Mock
+    private JournalPublicationJPAServiceImpl journalPublicationJPAService;
 
     @InjectMocks
     private JournalPublicationServiceImpl journalPublicationService;
@@ -93,7 +97,7 @@ public class JournalPublicationServiceTest {
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
-        when(documentRepository.save(any())).thenReturn(document);
+        when(journalPublicationJPAService.save(any())).thenReturn(document);
 
         // When
         var result = journalPublicationService.createJournalPublication(publicationDTO);
@@ -102,7 +106,7 @@ public class JournalPublicationServiceTest {
         verify(multilingualContentService, times(4)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(publicationDTO));
-        verify(journalPublicationRepository).save(eq(document));
+        verify(journalPublicationJPAService).save(eq(document));
     }
 
     @Test

@@ -24,6 +24,7 @@ import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.ConferenceServiceImpl;
+import rs.teslaris.core.service.impl.document.adapters.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
@@ -44,6 +45,9 @@ public class ConferenceServiceTest {
     @Mock
     private ConferenceRepository conferenceRepository;
 
+    @Mock
+    private ConferenceJPAServiceImpl conferenceJPAService;
+
     @InjectMocks
     private ConferenceServiceImpl conferenceService;
 
@@ -52,7 +56,7 @@ public class ConferenceServiceTest {
     public void shouldReturnConferenceWhenItExists() {
         // given
         var expected = new Conference();
-        when(conferenceRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(conferenceJPAService.findOne(1)).thenReturn(expected);
 
         // when
         var result = conferenceService.findConferenceById(1);
@@ -64,7 +68,7 @@ public class ConferenceServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenConferenceDoesNotExist() {
         // given
-        when(conferenceRepository.findById(1)).thenReturn(Optional.empty());
+        when(conferenceJPAService.findOne(1)).thenThrow(NotFoundException.class);
 
         // when
         assertThrows(NotFoundException.class, () -> conferenceService.findConferenceById(1));
@@ -89,7 +93,7 @@ public class ConferenceServiceTest {
         conference2.setPlace(new HashSet<>());
         conference2.setContributions(new HashSet<>());
 
-        when(conferenceRepository.findAll(pageable)).thenReturn(
+        when(conferenceJPAService.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(conference1, conference2)));
     }
 
@@ -105,7 +109,7 @@ public class ConferenceServiceTest {
         conference1.setFee("fee");
         conference1.setNumber("number");
 
-        when(conferenceRepository.findById(1)).thenReturn(Optional.of(conference1));
+        when(conferenceJPAService.findOne(1)).thenReturn(conference1);
 
         // when
         var actual = conferenceService.readConference(1);
@@ -118,7 +122,7 @@ public class ConferenceServiceTest {
     @Test
     public void shouldThrowExceptionWhenConferenceDoesNotExist() {
         // given
-        when(conferenceRepository.findById(1)).thenReturn(Optional.empty());
+        when(conferenceJPAService.findOne(1)).thenThrow(NotFoundException.class);
 
         // when
         assertThrows(NotFoundException.class, () -> conferenceService.readConference(1));
@@ -138,14 +142,14 @@ public class ConferenceServiceTest {
         conferenceDTO.setDateTo(LocalDate.now());
         conferenceDTO.setContributions(new ArrayList<>());
 
-        when(conferenceRepository.save(any())).thenReturn(new Conference());
+        when(conferenceJPAService.save(any())).thenReturn(new Conference());
 
         // when
         var savedConference = conferenceService.createConference(conferenceDTO);
 
         // then
         assertNotNull(savedConference);
-        verify(conferenceRepository, times(1)).save(any());
+        verify(conferenceJPAService, times(1)).save(any());
     }
 
     @Test
@@ -167,14 +171,14 @@ public class ConferenceServiceTest {
         conferenceDTO.setDateTo(LocalDate.now());
         conferenceDTO.setContributions(new ArrayList<>());
 
-        when(conferenceRepository.findById(1)).thenReturn(Optional.of(conference1));
-        when(conferenceRepository.save(any())).thenReturn(new Conference());
+        when(conferenceJPAService.findOne(1)).thenReturn(conference1);
+        when(conferenceJPAService.save(any())).thenReturn(new Conference());
 
         // when
         conferenceService.updateConference(conferenceDTO, 1);
 
         // then
-        verify(conferenceRepository, times(1)).save(any());
+        verify(conferenceJPAService, times(1)).save(any());
     }
 
     @Test
