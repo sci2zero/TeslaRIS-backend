@@ -27,7 +27,7 @@ import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.impl.person.adapter.OrganisationUnitsRelationJPAServiceImpl;
+import rs.teslaris.core.service.impl.person.stragtegydecorator.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;

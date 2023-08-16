@@ -1,4 +1,4 @@
-package rs.teslaris.core.service.impl.person.adapter;
+package rs.teslaris.core.service.impl.person.stragtegydecorator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;

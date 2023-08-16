@@ -11,7 +11,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
-import rs.teslaris.core.service.impl.document.adapters.ProceedingPublicationJPAServiceImpl;
+import rs.teslaris.core.service.impl.document.strategydecorator.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
