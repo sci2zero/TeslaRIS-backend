@@ -1,6 +1,7 @@
 # Getting Started
 
 ### Reference Documentation
+
 For further reference, please consider the following sections:
 
 * [Official Apache Maven documentation](https://maven.apache.org/guides/index.html)
@@ -14,6 +15,7 @@ For further reference, please consider the following sections:
 * [Spring REST Docs](https://docs.spring.io/spring-restdocs/docs/current/reference/html5/)
 
 ### Guides
+
 The following guides illustrate how to use some features concretely:
 
 * [Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)

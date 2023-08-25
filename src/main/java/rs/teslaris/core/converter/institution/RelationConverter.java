@@ -2,7 +2,7 @@ package rs.teslaris.core.converter.institution;
 
 import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.converter.document.DocumentFileToDocumentFileResponseDTO;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
@@ -24,7 +24,7 @@ public class RelationConverter {
         relationResponse.setRelationType(relation.getRelationType());
 
         relationResponse.setProofs(relation.getProofs().stream()
-            .map(DocumentFileToDocumentFileResponseDTO::toDTO).collect(
+            .map(DocumentFileConverter::toDTO).collect(
                 Collectors.toList()));
 
         relationResponse.setSourceOrganisationUnitName(

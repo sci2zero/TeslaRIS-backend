@@ -23,7 +23,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
-import rs.teslaris.core.service.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 
 @RestController
 @RequestMapping("/api/organisation-unit-relation")

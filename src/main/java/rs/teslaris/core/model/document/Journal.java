@@ -30,8 +30,8 @@ public class Journal extends BaseEntity {
     @Column(name = "print_issn", unique = true)
     private String printISSN;
 
-    @OneToMany(mappedBy = "journal", fetch = FetchType.LAZY)
-    private Set<PersonJournalContribution> contributors;
+    @OneToMany(mappedBy = "journal", fetch = FetchType.LAZY, orphanRemoval = true)
+    private Set<PersonJournalContribution> contributions;
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<LanguageTag> languages;
@@ -39,6 +39,13 @@ public class Journal extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> nameAbbreviation;
 
-//    @OneToMany(fetch = FetchType.LAZY)
-//    Set<PersonJournalContribution> personJournalContributions;
+    public void addContribution(PersonJournalContribution contribution) {
+        contributions.add(contribution);
+        contribution.setJournal(this);
+    }
+
+    public void removeContribution(PersonJournalContribution contribution) {
+        contribution.setJournal(null);
+        contributions.remove(contribution);
+    }
 }

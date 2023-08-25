@@ -42,9 +42,17 @@ public abstract class Event extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> place;
 
-    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
-    private Set<PersonEventContribution> contributors;
+    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, orphanRemoval = true)
+    private Set<PersonEventContribution> contributions;
 
-//    @OneToMany(fetch = FetchType.LAZY)
-//    Set<PersonEventContribution> personEventContribution; // JEL OVO DUPLIKAT??
+
+    public void addContribution(PersonEventContribution contribution) {
+        contributions.add(contribution);
+        contribution.setEvent(this);
+    }
+
+    public void removeContribution(PersonEventContribution contribution) {
+        contribution.setEvent(null);
+        contributions.remove(contribution);
+    }
 }

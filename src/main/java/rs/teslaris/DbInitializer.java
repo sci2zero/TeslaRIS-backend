@@ -19,7 +19,10 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
@@ -34,12 +37,16 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Component
 @RequiredArgsConstructor
@@ -67,6 +74,12 @@ public class DbInitializer implements ApplicationRunner {
 
     private final ResearchAreaRepository researchAreaRepository;
 
+    private final ProceedingsRepository proceedingsRepository;
+
+    private final ConferenceRepository conferenceRepository;
+
+    private final PublisherRepository publisherRepository;
+
 
     @Override
     @Transactional
@@ -83,16 +96,22 @@ public class DbInitializer implements ApplicationRunner {
         var editResearchAreas = new Privilege("EDIT_RESEARCH_AREAS");
         var editOrganisationUnit = new Privilege("EDIT_ORGANISATION_UNITS");
         var editOURelations = new Privilege("EDIT_OU_RELATIONS");
+        var editPublishers = new Privilege("EDIT_PUBLISHERS");
+        var editJournals = new Privilege("EDIT_JOURNALS");
+        var editConferences = new Privilege("EDIT_CONFERENCES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
-                editResearchAreas, approvePublication, editOURelations));
+                editResearchAreas, approvePublication, editOURelations, editPublishers,
+                editJournals, editConferences));
 
-        var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(List.of(
-            takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
-            createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
-            editOURelations, approvePublication)));
+        var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
+            List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
+                createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
+                editOURelations, approvePublication, editPublishers, editJournals,
+                editConferences)));
+
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editProofs})));
@@ -136,22 +155,24 @@ public class DbInitializer implements ApplicationRunner {
         userRepository.save(adminUser);
         userRepository.save(researcherUser);
 
-        var englishTag = new LanguageTag("EN", "English");
+        var englishTag = new LanguageTag(LanguageAbbreviations.ENGLISH, "English");
         languageTagRepository.save(englishTag);
-        var serbianTag = new LanguageTag("SR", "Srpski");
+        var serbianTag = new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski");
         languageTagRepository.save(serbianTag);
 
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
         dummyOU.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
-            new MultiLingualContent(serbianTag, "Fakultet Tehnickih Nauka", 2)})));
+            new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
 
         var dummyJournal = new Journal();
+        dummyJournal.setTitle(Set.of(new MultiLingualContent(englishTag, "Title1", 1)));
+        dummyJournal.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR1", 1)));
         journalRepository.save(dummyJournal);
 
         var dummyOU2 = new OrganisationUnit();
@@ -168,5 +189,36 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
             null, null);
         researchAreaRepository.save(researchArea1);
+
+        var conferenceEvent1 = new Conference();
+        conferenceEvent1.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija", 1)));
+        conferenceRepository.save(conferenceEvent1);
+
+        var proceedings1 = new Proceedings();
+        proceedings1.setApproveStatus(ApproveStatus.APPROVED);
+        proceedings1.setEISBN("MOCK_eISBN");
+        proceedings1.setEvent(conferenceEvent1);
+        proceedingsRepository.save(proceedings1);
+
+        var proceedings2 = new Proceedings();
+        proceedings2.setApproveStatus(ApproveStatus.REQUESTED);
+        proceedings2.setEISBN("MOCK_eISBN");
+        proceedings2.setEvent(conferenceEvent1);
+        proceedingsRepository.save(proceedings2);
+
+        var publisher1 = new Publisher();
+        publisher1.setName(Set.of(new MultiLingualContent(englishTag, "Name1", 1)));
+        publisher1.setPlace(Set.of(new MultiLingualContent(englishTag, "Place1", 1)));
+        publisher1.setState(Set.of(new MultiLingualContent(englishTag, "State1", 1)));
+        publisherRepository.save(publisher1);
+
+        var conferenceEvent2 = new Conference();
+        conferenceEvent2.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija2", 1)));
+        conferenceRepository.save(conferenceEvent2);
+
+        var journal2 = new Journal();
+        journal2.setTitle(Set.of(new MultiLingualContent(englishTag, "Title2", 1)));
+        journal2.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR2", 1)));
+        journalRepository.save(journal2);
     }
 }

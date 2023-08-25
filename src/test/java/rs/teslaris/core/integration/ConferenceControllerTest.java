@@ -1,0 +1,117 @@
+package rs.teslaris.core.integration;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.PersonEventContributionDTO;
+import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PostalAddressDTO;
+import rs.teslaris.core.model.document.EventContributionType;
+
+@SpringBootTest
+public class ConferenceControllerTest extends BaseTest {
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private ConferenceDTO getTestPayload() {
+        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
+
+        var conferenceDTO = new ConferenceDTO();
+        conferenceDTO.setName(dummyMC);
+        conferenceDTO.setNameAbbreviation(dummyMC);
+        conferenceDTO.setState(dummyMC);
+        conferenceDTO.setPlace(dummyMC);
+        conferenceDTO.setDateFrom(LocalDate.now());
+        conferenceDTO.setDateTo(LocalDate.now());
+        conferenceDTO.setNumber("12R34A");
+        conferenceDTO.setFee("100$");
+
+        var contribution =
+            new PersonEventContributionDTO(EventContributionType.ORGANIZATION_BOARD_CHAIR);
+        contribution.setOrderNumber(1);
+        contribution.setInstitutionIds(new ArrayList<>());
+        contribution.setPersonName(new PersonNameDTO());
+        contribution.setContact(new ContactDTO());
+        contribution.setContributionDescription(dummyMC);
+        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
+        contribution.setDisplayAffiliationStatement(dummyMC);
+        conferenceDTO.setContributions(List.of(contribution));
+
+        return conferenceDTO;
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testReadAllConferences() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get("http://localhost:8081/api/conference?page=0&size=5")
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testReadConference() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get("http://localhost:8081/api/conference/{conferenceId}", 38)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testCreateConference() throws Exception {
+        String jwtToken = authenticateAndGetToken();
+
+        var conferenceDTO = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(conferenceDTO);
+        mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/conference")
+                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_CONFERENCE"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.number").value("12R34A"))
+            .andExpect(jsonPath("$.fee").value("100$"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testUpdateConference() throws Exception {
+        String jwtToken = authenticateAndGetToken();
+
+        var conferenceDTO = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(conferenceDTO);
+        mockMvc.perform(
+                MockMvcRequestBuilders.put("http://localhost:8081/api/conference/{conferenceId}", 38)
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testDeleteConference() throws Exception {
+        String jwtToken = authenticateAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/conference/{conferenceId}",
+                        46).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+}

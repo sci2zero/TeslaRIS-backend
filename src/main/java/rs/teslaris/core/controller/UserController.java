@@ -17,15 +17,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
-import rs.teslaris.core.dto.ActivateAccountRequestDTO;
-import rs.teslaris.core.dto.AuthenticationRequestDTO;
-import rs.teslaris.core.dto.AuthenticationResponseDTO;
-import rs.teslaris.core.dto.RefreshTokenRequestDTO;
-import rs.teslaris.core.dto.RegistrationRequestDTO;
-import rs.teslaris.core.dto.TakeRoleOfUserRequestDTO;
-import rs.teslaris.core.dto.UserResponseDTO;
-import rs.teslaris.core.dto.UserUpdateRequestDTO;
-import rs.teslaris.core.service.UserService;
+import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
+import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
+import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
+import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
+import rs.teslaris.core.dto.user.UserResponseDTO;
+import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController

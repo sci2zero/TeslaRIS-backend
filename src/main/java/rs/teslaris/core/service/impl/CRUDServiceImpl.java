@@ -6,9 +6,9 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.exception.NotFoundException;
 import rs.teslaris.core.model.commontypes.BaseEntity;
-import rs.teslaris.core.service.CRUDService;
+import rs.teslaris.core.service.interfaces.CRUDService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDService<T> {
 
@@ -23,8 +23,7 @@ public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDServi
                 Type typeArgument = typeArguments[0];
                 if (typeArgument instanceof Class) {
                     Class<?> typeClass = (Class<?>) typeArgument;
-                    String typeName = typeClass.getSimpleName();
-                    return typeName;
+                    return typeClass.getSimpleName();
                 }
             }
         }
@@ -40,10 +39,8 @@ public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDServi
     @Override
     public T findOne(Integer id) {
         return getEntityRepository().findById(id)
-            .orElseThrow(() -> {
-                return new NotFoundException(
-                    "Cannot find entity " + printGenericTypeName() + " with id: " + id);
-            });
+            .orElseThrow(() -> new NotFoundException(
+                "Cannot find entity " + printGenericTypeName() + " with id: " + id));
     }
 
     @Override

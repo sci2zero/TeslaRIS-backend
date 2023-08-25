@@ -18,7 +18,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.rememberme.InvalidCookieException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import rs.teslaris.core.service.UserService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Slf4j
 @Component

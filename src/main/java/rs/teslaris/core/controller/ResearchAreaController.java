@@ -18,7 +18,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.institution.ResearchAreaConverter;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
-import rs.teslaris.core.service.ResearchAreaService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 
 @RestController
 @RequestMapping("/api/research-area")

@@ -16,7 +16,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
-import rs.teslaris.core.service.JournalPublicationService;
+import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 
 @RestController
 @RequestMapping("api/journal-publication")
@@ -24,6 +24,7 @@ import rs.teslaris.core.service.JournalPublicationService;
 public class JournalPublicationController {
 
     private final JournalPublicationService journalPublicationService;
+
 
     @GetMapping("/{publicationId}")
     public JournalPublicationResponseDTO readJournalPublication(

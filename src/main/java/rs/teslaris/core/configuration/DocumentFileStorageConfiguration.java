@@ -4,20 +4,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import rs.teslaris.core.service.FileService;
-import rs.teslaris.core.service.impl.FileServiceImpl;
-import rs.teslaris.core.service.impl.FileServiceMinioImpl;
+import rs.teslaris.core.service.impl.document.FileServiceFileSystemImpl;
+import rs.teslaris.core.service.impl.document.FileServiceMinioImpl;
+import rs.teslaris.core.service.interfaces.document.FileService;
 
 @Configuration
 @RequiredArgsConstructor
 public class DocumentFileStorageConfiguration {
 
-    @Value("${document.file.storage}")
-    private String implementation;
-
-    private final FileServiceImpl filesystemImpl;
+    private final FileServiceFileSystemImpl filesystemImpl;
 
     private final FileServiceMinioImpl minioImpl;
+
+    @Value("${document.file.storage}")
+    private String implementation;
 
 
     @Bean

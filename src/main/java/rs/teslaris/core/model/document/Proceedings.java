@@ -20,10 +20,10 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 @Where(clause = "deleted=false")
 public class Proceedings extends Document {
 
-    @Column(name = "e_isbn", unique = true)
+    @Column(name = "e_isbn")
     private String eISBN;
 
-    @Column(name = "print_isbn", unique = true)
+    @Column(name = "print_isbn")
     private String printISBN;
 
     @Column(name = "number_of_pages")

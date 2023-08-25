@@ -21,7 +21,7 @@ import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.service.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 
 @RestController
 @RequestMapping("/api/organisation-units")

@@ -28,7 +28,7 @@ import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Membership;
-import rs.teslaris.core.service.InvolvementService;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
 
 @Validated
 @RestController

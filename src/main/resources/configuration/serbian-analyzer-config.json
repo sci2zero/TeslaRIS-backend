@@ -10,6 +10,15 @@
           "serbian_stop",
           "serbian_stemmer"
         ]
+      },
+      "serbian_simple": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": [
+          "serbian_cyrillic_to_latinic",
+          "icu_folding",
+          "lowercase"
+        ]
       }
     },
     "filter": {
@@ -20,6 +29,10 @@
       "serbian_stemmer": {
         "type": "stemmer",
         "language": "serbian"
+      },
+      "serbian_cyrillic_to_latinic": {
+        "type": "icu_transform",
+        "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC"
       }
     }
   }
