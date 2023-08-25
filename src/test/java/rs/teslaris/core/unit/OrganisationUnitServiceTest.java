@@ -47,7 +47,7 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
-import rs.teslaris.core.service.impl.person.stragtegydecorator.OrganisationUnitsRelationJPAServiceImpl;
+import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;

@@ -38,7 +38,7 @@ import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsPublicationServiceImpl;
-import rs.teslaris.core.service.impl.document.strategydecorator.ProceedingPublicationJPAServiceImpl;
+import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;

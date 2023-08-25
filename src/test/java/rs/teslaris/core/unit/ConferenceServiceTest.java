@@ -24,7 +24,7 @@ import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.ConferenceServiceImpl;
-import rs.teslaris.core.service.impl.document.strategydecorator.ConferenceJPAServiceImpl;
+import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
