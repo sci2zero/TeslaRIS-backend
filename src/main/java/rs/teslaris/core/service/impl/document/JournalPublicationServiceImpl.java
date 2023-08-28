@@ -20,6 +20,7 @@ import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
 @Transactional
@@ -34,19 +35,19 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Autowired
-    public JournalPublicationServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        PersonContributionService personContributionService,
-        SearchService<DocumentPublicationIndex> searchService,
-        JournalPublicationJPAServiceImpl journalPublicationJPAService,
-        JournalService journalService,
-        JournalPublicationRepository journalPublicationRepository,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
+    public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
+                                         DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                         DocumentRepository documentRepository,
+                                         DocumentFileService documentFileService,
+                                         PersonContributionService personContributionService,
+                                         SearchService<DocumentPublicationIndex> searchService,
+                                         ExpressionTransformer expressionTransformer,
+                                         JournalPublicationJPAServiceImpl journalPublicationJPAService,
+                                         JournalService journalService,
+                                         JournalPublicationRepository journalPublicationRepository,
+                                         DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService);
+            documentFileService, personContributionService, searchService, expressionTransformer);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.journalPublicationRepository = journalPublicationRepository;

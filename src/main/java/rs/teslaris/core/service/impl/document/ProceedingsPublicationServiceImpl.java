@@ -19,6 +19,7 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationServic
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
 @Transactional
@@ -37,11 +38,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              DocumentFileService documentFileService,
                                              PersonContributionService personContributionService,
                                              SearchService<DocumentPublicationIndex> searchService,
+                                             ExpressionTransformer expressionTransformer,
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService);
+            documentFileService, personContributionService, searchService, expressionTransformer);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;

@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -36,6 +37,8 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
 @Primary
@@ -55,6 +58,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final PersonContributionService personContributionService;
 
     private final SearchService<DocumentPublicationIndex> searchService;
+
+    private final ExpressionTransformer expressionTransformer;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -153,9 +158,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.getContributors().forEach(contribution -> {
             var personExists = contribution.getPerson() != null;
+
+            var contributorDisplayName =
+                contribution.getAffiliationStatement().getDisplayPersonName();
             var contributorName =
-                contribution.getAffiliationStatement().getDisplayPersonName().getFirstname() + " " +
-                    contribution.getAffiliationStatement().getDisplayPersonName().getLastname();
+                Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
+                    Objects.toString(contributorDisplayName.getLastname(), "");
+
             switch (contribution.getContributionType()) {
                 case AUTHOR:
                     if (personExists) {
@@ -307,9 +316,16 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public Page<DocumentPublicationIndex> searchDocumentPublicationsSimple(List<String> tokens,
-                                                                           Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens), pageable,
+    public Page<DocumentPublicationIndex> searchDocumentPublications(SearchRequestDTO searchRequest,
+                                                                     Pageable pageable,
+                                                                     SearchRequestType type) {
+        if (type.equals(SearchRequestType.SIMPLE)) {
+            return searchService.runQuery(buildSimpleSearchQuery(searchRequest.getTokens()),
+                pageable,
+                DocumentPublicationIndex.class, "document_publication");
+        }
+
+        return searchService.runQuery(buildAdvancedSearchQuery(searchRequest.getTokens()), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -351,4 +367,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             return b;
         })))._toQuery();
     }
+
+    private Query buildAdvancedSearchQuery(List<String> expression) {
+        var postfixExpression =
+            expressionTransformer.transformToPostFixNotation(expression);
+        return expressionTransformer.buildQueryFromPostFixExpression(postfixExpression);
+    }
+
 }

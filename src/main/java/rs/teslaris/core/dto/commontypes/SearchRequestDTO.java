@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SimpleSearchRequestDTO {
+public class SearchRequestDTO {
 
     @NotNull(message = "You have to provide a valid search input.")
     private List<String> tokens;

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.commontypes.SimpleSearchRequestDTO;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDto;
@@ -49,7 +49,7 @@ public class PersonController {
 
     @GetMapping("/simple-search")
     public Page<PersonIndex> findAllByNameAndEmployment(@RequestBody @Valid
-                                                        SimpleSearchRequestDTO searchRequest,
+                                                        SearchRequestDTO searchRequest,
                                                         Pageable pageable) {
         return personService.findPeopleByNameAndEmployment(searchRequest.getTokens(),
             pageable);

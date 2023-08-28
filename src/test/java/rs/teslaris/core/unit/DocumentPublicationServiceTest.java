@@ -21,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -36,6 +37,8 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchRequestType;
 
 @SpringBootTest
 public class DocumentPublicationServiceTest {
@@ -54,6 +57,9 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private SearchService<DocumentPublicationIndex> searchService;
+
+    @Mock
+    private ExpressionTransformer expressionTransformer;
 
     @Mock
     private PersonContributionService personContributionService;
@@ -234,7 +240,7 @@ public class DocumentPublicationServiceTest {
     }
 
     @Test
-    public void shouldFindPersonsWhenSearchingWithSimpleQuery() {
+    public void shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery() {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -244,7 +250,28 @@ public class DocumentPublicationServiceTest {
                 List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
 
         // when
-        var result = documentPublicationService.searchDocumentPublicationsSimple(tokens, pageable);
+        var result =
+            documentPublicationService.searchDocumentPublications(new SearchRequestDTO(tokens),
+                pageable, SearchRequestType.SIMPLE);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldFindDocumentPublicationsWhenSearchingWithAdvancedQuery() {
+        // given
+        var tokens = Arrays.asList("keyword_sr:ključna ријеч");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+
+        // when
+        var result =
+            documentPublicationService.searchDocumentPublications(new SearchRequestDTO(tokens),
+                pageable, SearchRequestType.ADVANCED);
 
         // then
         assertEquals(result.getTotalElements(), 2L);

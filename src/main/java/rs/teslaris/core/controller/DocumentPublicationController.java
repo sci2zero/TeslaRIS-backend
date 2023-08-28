@@ -19,10 +19,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
-import rs.teslaris.core.dto.commontypes.SimpleSearchRequestDTO;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.util.search.SearchRequestType;
 
 @RestController
 @RequestMapping("/api/document")
@@ -34,9 +35,16 @@ public class DocumentPublicationController {
 
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
-        @RequestBody @Valid SimpleSearchRequestDTO searchRequest, Pageable pageable) {
-        return documentPublicationService.searchDocumentPublicationsSimple(
-            searchRequest.getTokens(), pageable);
+        @RequestBody @Valid SearchRequestDTO searchRequest, Pageable pageable) {
+        return documentPublicationService.searchDocumentPublications(searchRequest, pageable,
+            SearchRequestType.SIMPLE);
+    }
+
+    @GetMapping("/advanced-search")
+    public Page<DocumentPublicationIndex> advancedSearch(
+        @RequestBody @Valid SearchRequestDTO searchRequest, Pageable pageable) {
+        return documentPublicationService.searchDocumentPublications(searchRequest, pageable,
+            SearchRequestType.ADVANCED);
     }
 
     @PatchMapping("/{publicationId}/approval")
