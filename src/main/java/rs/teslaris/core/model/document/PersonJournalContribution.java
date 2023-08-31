@@ -29,6 +29,6 @@ public class PersonJournalContribution extends PersonContribution {
     private LocalDate dateTo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "journal_id", nullable = false)
-    private Journal journal;
+    @JoinColumn(name = "publication_series_id", nullable = false)
+    private PublicationSeries publicationSeries;
 }

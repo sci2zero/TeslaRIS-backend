@@ -6,14 +6,15 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Event;
-import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.PublicationSeries;
 
 @Service
 public interface PersonContributionService {
 
     void setPersonDocumentContributionsForDocument(Document document, DocumentDTO documentDTO);
 
-    void setPersonJournalContributionsForJournal(Journal journal, JournalDTO journalDTO);
+    void setPersonJournalContributionsForJournal(PublicationSeries publicationSeries,
+                                                 JournalDTO journalDTO);
 
     void setPersonEventContributionForEvent(Event event, EventDTO eventDTO);
 }

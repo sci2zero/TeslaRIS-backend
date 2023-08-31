@@ -105,6 +105,8 @@ public class ConferenceServiceTest {
         conference1.setNameAbbreviation(new HashSet<>());
         conference1.setState(new HashSet<>());
         conference1.setPlace(new HashSet<>());
+        conference1.setDescription(new HashSet<>());
+        conference1.setKeywords(new HashSet<>());
         conference1.setContributions(new HashSet<>());
         conference1.setFee("fee");
         conference1.setNumber("number");
@@ -158,6 +160,8 @@ public class ConferenceServiceTest {
         var conference1 = new Conference();
         conference1.setName(new HashSet<>());
         conference1.setNameAbbreviation(new HashSet<>());
+        conference1.setDescription(new HashSet<>());
+        conference1.setKeywords(new HashSet<>());
         conference1.setState(new HashSet<>());
         conference1.setPlace(new HashSet<>());
         conference1.setContributions(new HashSet<>());
@@ -165,6 +169,8 @@ public class ConferenceServiceTest {
         var conferenceDTO = new ConferenceDTO();
         conferenceDTO.setName(new ArrayList<>());
         conferenceDTO.setNameAbbreviation(new ArrayList<>());
+        conferenceDTO.setDescription(new ArrayList<>());
+        conferenceDTO.setKeywords(new ArrayList<>());
         conferenceDTO.setPlace(new ArrayList<>());
         conferenceDTO.setState(new ArrayList<>());
         conferenceDTO.setDateFrom(LocalDate.now());

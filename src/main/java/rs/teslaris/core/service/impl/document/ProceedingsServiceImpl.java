@@ -49,18 +49,19 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
                                   SearchService<DocumentPublicationIndex> searchService,
+                                  EventService eventService,
                                   ProceedingJPAServiceImpl proceedingJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
-                                  JournalService journalService, EventService eventService,
-                                  PublisherService publisherService) {
+                                  JournalService journalService,
+                                  EventService eventService1, PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService);
+            documentFileService, personContributionService, searchService, eventService);
         this.proceedingJPAService = proceedingJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
         this.journalService = journalService;
-        this.eventService = eventService;
+        this.eventService = eventService1;
         this.publisherService = publisherService;
     }
 
@@ -135,8 +136,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
         indexCommonFields(proceedings, index);
 
-        if (proceedings.getJournal() != null) {
-            index.setJournalId(proceedings.getJournal().getId());
+        if (proceedings.getPublicationSeries() != null) {
+            index.setPublicationSeriesId(proceedings.getPublicationSeries().getId());
         }
 
         if (proceedings.getPublisher() != null) {
@@ -153,20 +154,18 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         proceedings.setEISBN(proceedingsDTO.getEISBN());
         proceedings.setPrintISBN(proceedingsDTO.getPrintISBN());
         proceedings.setNumberOfPages(proceedingsDTO.getNumberOfPages());
-        proceedings.setEditionTitle(proceedingsDTO.getEditionTitle());
-        proceedings.setEditionNumber(proceedingsDTO.getEditionNumber());
-        proceedings.setEditionISSN(proceedingsDTO.getEditionISSN());
+        proceedings.setPublicationSeriesVolume(proceedingsDTO.getPublicationSeriesVolume());
+        proceedings.setPublicationSeriesIssue(proceedingsDTO.getPublicationSeriesIssue());
 
         proceedingsDTO.getLanguageTagIds().forEach(id -> {
             proceedings.getLanguages().add(languageTagService.findLanguageTagById(id));
         });
 
-        proceedings.setJournalVolume(proceedingsDTO.getJournalVolume());
-        proceedings.setJournalIssue(proceedingsDTO.getJournalIssue());
         proceedings.setEvent(eventService.findEventById(proceedingsDTO.getEventId()));
 
-        if (proceedingsDTO.getJournalId() != null) {
-            proceedings.setJournal(journalService.findJournalById(proceedingsDTO.getJournalId()));
+        if (proceedingsDTO.getPublicationSeriesId() != null) {
+            proceedings.setPublicationSeries(
+                journalService.findJournalById(proceedingsDTO.getPublicationSeriesId()));
         }
 
         if (proceedingsDTO.getPublisherId() != null) {

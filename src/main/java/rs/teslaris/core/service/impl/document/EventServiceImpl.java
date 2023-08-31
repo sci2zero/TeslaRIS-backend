@@ -38,11 +38,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.setName(multilingualContentService.getMultilingualContent(eventDTO.getName()));
         event.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(eventDTO.getNameAbbreviation()));
+        event.setDescription(
+            multilingualContentService.getMultilingualContent(eventDTO.getDescription()));
+        event.setKeywords(
+            multilingualContentService.getMultilingualContent(eventDTO.getKeywords()));
         event.setState(multilingualContentService.getMultilingualContent(eventDTO.getState()));
         event.setPlace(multilingualContentService.getMultilingualContent(eventDTO.getPlace()));
 
         event.setDateFrom(eventDTO.getDateFrom());
         event.setDateTo(eventDTO.getDateTo());
+        event.setSerialEvent(eventDTO.getSerialEvent());
 
         personContributionService.setPersonEventContributionForEvent(event, eventDTO);
     }
@@ -54,6 +59,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.getState().clear();
         event.getPlace().clear();
         event.getContributions().clear();
+        event.getDescription().clear();
+        event.getKeywords().clear();
     }
 
     @Override

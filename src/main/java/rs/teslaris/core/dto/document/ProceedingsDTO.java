@@ -18,21 +18,15 @@ public class ProceedingsDTO extends DocumentDTO {
 
     private Integer numberOfPages;
 
-    private String editionTitle;
-
-    private Integer editionNumber;
-
-    private String editionISSN;
-
     private List<Integer> languageTagIds;
-
-    private Integer journalId;
-
-    private String journalVolume;
-
-    private String journalIssue;
 
     private Integer eventId;
 
     private Integer publisherId;
+
+    private Integer publicationSeriesId;
+
+    private String publicationSeriesVolume;
+
+    private String publicationSeriesIssue;
 }

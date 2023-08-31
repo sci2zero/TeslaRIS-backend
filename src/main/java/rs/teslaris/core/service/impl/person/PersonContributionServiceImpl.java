@@ -13,11 +13,11 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Event;
-import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.model.document.PersonJournalContribution;
+import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -63,11 +63,12 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     }
 
     @Override
-    public void setPersonJournalContributionsForJournal(Journal journal, JournalDTO journalDTO) {
-        if (journal.getContributions() != null) {
-            journal.getContributions().clear();
+    public void setPersonJournalContributionsForJournal(PublicationSeries publicationSeries,
+                                                        JournalDTO journalDTO) {
+        if (publicationSeries.getContributions() != null) {
+            publicationSeries.getContributions().clear();
         } else {
-            journal.setContributions(new HashSet<>());
+            publicationSeries.setContributions(new HashSet<>());
         }
 
         journalDTO.getContributions().forEach(contributionDTO -> {
@@ -78,7 +79,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contribution.setDateFrom(contributionDTO.getDateFrom());
             contribution.setDateTo(contributionDTO.getDateTo());
 
-            journal.addContribution(contribution);
+            publicationSeries.addContribution(contribution);
         });
     }
 

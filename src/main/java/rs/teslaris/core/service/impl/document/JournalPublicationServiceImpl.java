@@ -16,6 +16,7 @@ import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPA
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -34,19 +35,19 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Autowired
-    public JournalPublicationServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        PersonContributionService personContributionService,
-        SearchService<DocumentPublicationIndex> searchService,
-        JournalPublicationJPAServiceImpl journalPublicationJPAService,
-        JournalService journalService,
-        JournalPublicationRepository journalPublicationRepository,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
+    public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
+                                         DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                         DocumentRepository documentRepository,
+                                         DocumentFileService documentFileService,
+                                         PersonContributionService personContributionService,
+                                         SearchService<DocumentPublicationIndex> searchService,
+                                         EventService eventService,
+                                         JournalPublicationJPAServiceImpl journalPublicationJPAService,
+                                         JournalService journalService,
+                                         JournalPublicationRepository journalPublicationRepository,
+                                         DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService);
+            documentFileService, personContributionService, searchService, eventService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.journalPublicationRepository = journalPublicationRepository;
@@ -115,7 +116,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                         DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
 
-        index.setJournalId(publication.getJournal().getId());
+        index.setPublicationSeriesId(publication.getPublicationSeries().getId());
 
         documentPublicationIndexRepository.save(index);
     }
@@ -130,6 +131,6 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setVolume(publicationDTO.getVolume());
         publication.setIssue(publicationDTO.getIssue());
 
-        publication.setJournal(journalService.findOne(publicationDTO.getJournalId()));
+        publication.setPublicationSeries(journalService.findOne(publicationDTO.getJournalId()));
     }
 }

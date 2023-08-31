@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.JournalConverter;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
-import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -23,7 +23,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class JournalServiceImpl extends JPAServiceImpl<Journal> implements JournalService {
+public class JournalServiceImpl extends JPAServiceImpl<PublicationSeries>
+    implements JournalService {
 
     private final JournalRepository journalRepository;
 
@@ -34,7 +35,7 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal> implements Journ
     private final PersonContributionService personContributionService;
 
     @Override
-    protected JpaRepository<Journal, Integer> getEntityRepository() {
+    protected JpaRepository<PublicationSeries, Integer> getEntityRepository() {
         return journalRepository;
     }
 
@@ -50,14 +51,15 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal> implements Journ
 
     @Override
     @Deprecated(forRemoval = true)
-    public Journal findJournalById(Integer journalId) {
+    public PublicationSeries findJournalById(Integer journalId) {
         return journalRepository.findById(journalId)
-            .orElseThrow(() -> new NotFoundException("Journal with given id does not exist."));
+            .orElseThrow(
+                () -> new NotFoundException("PublicationSeries with given id does not exist."));
     }
 
     @Override
-    public Journal createJournal(JournalDTO journalDTO) {
-        var journal = new Journal();
+    public PublicationSeries createJournal(JournalDTO journalDTO) {
+        var journal = new PublicationSeries();
         journal.setLanguages(new HashSet<>());
 
         setCommonFields(journal, journalDTO);
@@ -80,24 +82,27 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal> implements Journ
         if (journalRepository.hasPublication(journalId) ||
             journalRepository.hasProceedings(journalId)) {
             throw new JournalReferenceConstraintViolationException(
-                "Journal with given ID is allready in use.");
+                "PublicationSeries with given ID is allready in use.");
         }
 
         this.delete(journalId);
     }
 
-    private void setCommonFields(Journal journal, JournalDTO journalDTO) {
-        journal.setTitle(multilingualContentService.getMultilingualContent(journalDTO.getTitle()));
-        journal.setNameAbbreviation(
+    private void setCommonFields(PublicationSeries publicationSeries, JournalDTO journalDTO) {
+        publicationSeries.setTitle(
+            multilingualContentService.getMultilingualContent(journalDTO.getTitle()));
+        publicationSeries.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(journalDTO.getNameAbbreviation()));
 
-        journal.setEISSN(journalDTO.getEISSN());
-        journal.setPrintISSN(journalDTO.getPrintISSN());
+        publicationSeries.setEISSN(journalDTO.getEISSN());
+        publicationSeries.setPrintISSN(journalDTO.getPrintISSN());
 
-        personContributionService.setPersonJournalContributionsForJournal(journal, journalDTO);
+        personContributionService.setPersonJournalContributionsForJournal(publicationSeries,
+            journalDTO);
 
         journalDTO.getLanguageTagIds().forEach(languageTagId -> {
-            journal.getLanguages().add(languageTagService.findLanguageTagById(languageTagId));
+            publicationSeries.getLanguages()
+                .add(languageTagService.findLanguageTagById(languageTagId));
         });
     }
 }

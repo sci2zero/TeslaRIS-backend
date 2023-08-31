@@ -39,6 +39,6 @@ public class JournalPublication extends Document {
     private String issue;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "journal_id", nullable = false)
-    private Journal journal;
+    @JoinColumn(name = "publication_series_id", nullable = false)
+    private PublicationSeries publicationSeries;
 }

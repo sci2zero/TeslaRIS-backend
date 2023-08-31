@@ -48,4 +48,6 @@ public class DocumentDTO {
     private String doi;
 
     private String scopusId;
+
+    private Integer eventId;
 }

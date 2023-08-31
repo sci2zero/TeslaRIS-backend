@@ -18,6 +18,12 @@ public class EventDTO {
 
     private List<MultilingualContentDTO> nameAbbreviation;
 
+    private List<MultilingualContentDTO> description;
+
+    private List<MultilingualContentDTO> keywords;
+
+    private Boolean serialEvent;
+
     private LocalDate dateFrom;
 
     private LocalDate dateTo;

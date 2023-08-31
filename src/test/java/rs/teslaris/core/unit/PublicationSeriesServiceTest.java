@@ -22,7 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.JournalDTO;
-import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.impl.document.JournalServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -32,7 +32,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstra
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
-public class JournalServiceTest {
+public class PublicationSeriesServiceTest {
 
     @Mock
     private JournalRepository journalRepository;
@@ -53,7 +53,7 @@ public class JournalServiceTest {
     @Test
     public void shouldReturnJournalWhenItExists() {
         // given
-        var expected = new Journal();
+        var expected = new PublicationSeries();
         when(journalRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
@@ -85,7 +85,7 @@ public class JournalServiceTest {
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
-        when(journalRepository.save(any())).thenReturn(new Journal());
+        when(journalRepository.save(any())).thenReturn(new PublicationSeries());
 
         // when
         var savedJournal = journalService.createJournal(journalDTO);
@@ -107,11 +107,11 @@ public class JournalServiceTest {
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
-        var journal = new Journal();
+        var journal = new PublicationSeries();
         journal.setLanguages(new HashSet<>());
 
         when(journalRepository.findById(journalId)).thenReturn(Optional.of(journal));
-        when(journalRepository.save(any())).thenReturn(new Journal());
+        when(journalRepository.save(any())).thenReturn(new PublicationSeries());
 
         // when
         journalService.updateJournal(journalDTO, journalId);
@@ -124,7 +124,7 @@ public class JournalServiceTest {
     public void shouldDeleteJournalWhenNotUsed() {
         // given
         var journalId = 1;
-        var journalToDelete = new Journal();
+        var journalToDelete = new PublicationSeries();
 
         when(journalRepository.findById(journalId)).thenReturn(Optional.of(journalToDelete));
         when(journalRepository.hasPublication(journalId)).thenReturn(false);
@@ -143,7 +143,7 @@ public class JournalServiceTest {
     public void shouldNotDeleteJournalIfInUsage(Boolean hasPublication, Boolean hasProceedings) {
         // given
         var journalId = 1;
-        var journalToDelete = new Journal();
+        var journalToDelete = new PublicationSeries();
 
         when(journalRepository.findById(journalId)).thenReturn(Optional.of(journalToDelete));
         when(journalRepository.hasPublication(journalId)).thenReturn(hasPublication);
@@ -160,14 +160,14 @@ public class JournalServiceTest {
     public void shouldReadAllJournals() {
         // given
         var pageable = Pageable.ofSize(5);
-        var journal1 = new Journal();
+        var journal1 = new PublicationSeries();
         journal1.setTitle(new HashSet<>());
         journal1.setNameAbbreviation(new HashSet<>());
         journal1.setEISSN("eISSN1");
         journal1.setPrintISSN("printISSN1");
         journal1.setContributions(new HashSet<>());
         journal1.setLanguages(new HashSet<>());
-        var journal2 = new Journal();
+        var journal2 = new PublicationSeries();
         journal2.setTitle(new HashSet<>());
         journal2.setNameAbbreviation(new HashSet<>());
         journal2.setEISSN("eISSN2");
@@ -189,7 +189,7 @@ public class JournalServiceTest {
     public void shouldReadJournal() {
         // given
         var journalId = 1;
-        var journal = new Journal();
+        var journal = new PublicationSeries();
         journal.setTitle(new HashSet<>());
         journal.setNameAbbreviation(new HashSet<>());
         journal.setEISSN("eISSN1");

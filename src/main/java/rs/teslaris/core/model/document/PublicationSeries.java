@@ -18,9 +18,10 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Getter
 @Setter
 @Entity
-@Table(name = "journals")
+@Table(name = "publication_series")
 @Where(clause = "deleted=false")
-public class Journal extends BaseEntity {
+public class PublicationSeries extends BaseEntity {
+
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title;
 
@@ -30,7 +31,7 @@ public class Journal extends BaseEntity {
     @Column(name = "print_issn", unique = true)
     private String printISSN;
 
-    @OneToMany(mappedBy = "journal", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "publicationSeries", fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<PersonJournalContribution> contributions;
 
     @OneToMany(fetch = FetchType.LAZY)
@@ -41,11 +42,11 @@ public class Journal extends BaseEntity {
 
     public void addContribution(PersonJournalContribution contribution) {
         contributions.add(contribution);
-        contribution.setJournal(this);
+        contribution.setPublicationSeries(this);
     }
 
     public void removeContribution(PersonJournalContribution contribution) {
-        contribution.setJournal(null);
+        contribution.setPublicationSeries(null);
         contributions.remove(contribution);
     }
 }
