@@ -61,6 +61,12 @@ public class PersonController {
         return personService.findPeopleForOrganisationUnit(organisationUnitId, pageable);
     }
 
+    @GetMapping("/advanced-search")
+    public Page<PersonIndex> searchPersonsAdvanced(
+        @RequestBody @Valid SearchRequestDTO searchRequest,
+        Pageable pageable) {
+        return personService.searchPersonsAdvanced(searchRequest, pageable);
+    }
 
     @PostMapping("/basic")
     @PreAuthorize("hasAuthority('REGISTER_PERSON')")

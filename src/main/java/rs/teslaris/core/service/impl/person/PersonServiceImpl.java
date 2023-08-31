@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDto;
@@ -42,6 +43,7 @@ import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +52,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final PersonRepository personRepository;
 
     private final SearchService<PersonIndex> searchService;
+
+    private final ExpressionTransformer expressionTransformer;
 
     private final PersonIndexRepository personIndexRepository;
 
@@ -373,6 +377,16 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         Pageable pageable) {
         return personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
             List.of(employmentInstitutionId));
+    }
+
+    @Override
+    public Page<PersonIndex> searchPersonsAdvanced(SearchRequestDTO searchRequest,
+                                                   Pageable pageable) {
+        var postfixExpression =
+            expressionTransformer.transformToPostFixNotation(searchRequest.getTokens());
+        var query = expressionTransformer.buildQueryFromPostFixExpression(postfixExpression);
+
+        return searchService.runQuery(query, pageable, PersonIndex.class, "person");
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens) {
