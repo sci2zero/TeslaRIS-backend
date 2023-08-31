@@ -1,17 +1,5 @@
 @startuml
 
-'TODO: Da li uri kod ovih objekata predstavlja ID?
-'TODO: Za sta suzi locale
-'TODO: Sta da radim sa reocrd DTO
-'TODO: Author Position i Title razlike?
-'TODO: Da li treba JMBG u autora
-'TODO: Sta je PAVNT
-'TODO: Da li treba za autora is active
-'TODO: Fizicko ili logicko brisanje
-'TODO: Da li da autora identifikujemo preko ID foregin key ili preko emaila ili kako vec
-'TODO: Da li se Author ima id Usera ili User ima id Authora 
-
-
 package commonTypes {
 
 enum ApproveStatus {
@@ -34,9 +22,6 @@ class Country {
    -String code ' ISO_3166_Alpha2_Code
    -Set<MultiLingualContent> name
 }
-
-
-' TODO: Ekvivalent RecordDTO klasi, cilj je da se zajednicki metapodaci za razlicite entitete modeluju kako bi bili lako dostupni
 
 class MultiLingualContent {
   LanguageTag language
@@ -241,14 +226,14 @@ package institution {
 
 }
 
-' TODO: za svaki tip publikacije dodati zasebnu klasu ili modelovati sve u jednoj velikoj tabeli
 package document {
 
   enum DocumentContributionType {
     AUTHOR
     EDITOR
     REVIEWER
-    ADVISOR  ' TODO: check contribution types at https://credit.niso.org/ and https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonOutputContributions.xml
+    ADVISOR
+    ' TODO: check contribution types at https://credit.niso.org/ and https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonOutputContributions.xml
   }
 
   class Publisher {
@@ -263,7 +248,8 @@ package document {
     -AffiliationStatement affiliationStatement
     -Set<OrganisationUnit> institutions
     -int orderNumber
-    -ApproveStatus approveStatus ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
+    -ApproveStatus approveStatus
+    ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
   }
 
   class AffiliationStatement {
@@ -329,13 +315,9 @@ package document {
     -String eISBN
     -String printISBN
     -Integer numberOfPages
-    -String editionTitle
-    -Integer editionNumber
-    -String editionISSN
     -Set<LanguageTag> languages
-    -Journal journal
-    -String journalVolume
-    -String journalIssue
+    -String publicationSeriesVolume
+    -String publicationSeriesIssue
   }
 
   class Conference extends Event{
@@ -346,6 +328,9 @@ package document {
   class Event {
     -Set<MultiLingualContent> name
     -Set<MultiLingualContent> nameAbbreviation
+    -Set<MultiLingualContent> description
+    -Set<MultiLingualContent> keywords
+    -Boolean serialEvent
     -LocalDate from
     -LocalDate to
     -Set<MultiLingualContent> state
@@ -358,14 +343,39 @@ package document {
      ORGANIZATION_BOARD_MEMBER
      REVIEWER
      PROGRAMME_BOARD_MEMBER  ' TODO: check other types here - https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonEventInvolvements.xml
+     SPEAKER
+     PANELISTS
+     CHAIR
+     AUDIENCE
+     DEMONSTRATOR
   }
 
   class PersonEventContribution extends PersonContribution {
      -EventContributionType contributionType
   }
 
+  EventsRelation "*" --> "0..1" Event : source
+  EventsRelation "*" --> "0..1" Event : target
+
+  class EventsRelation {
+    EventsRelationType relationType
+  }
+
+
+  enum EventsRelationType {
+    PART_OF
+' the relation type above is used to link one event which is part of the another event (for instance, workshop at a conference)
+    BELONGS_TO_SERIES
+' the relation type above is used to link an event occurence (conference, for instance ICIST 2023) with event series (event with data property serialEvent=true, for instance ICIST)
+    COLLOCATED_WITH
+' the relation type above is used to link two events organized together
+  }
+
   ProceedingsPublication "1..*" --> "1" Proceedings
-  Proceedings "1..*" --> "1" Conference
+' Proceedings "1..*" --> "1" Conference the relation below should replace this one. However, the conference should have one or more linked proceedings,
+' but also any event (for instance plenary presentation is an event which is part of conference) could have linked documents (presentation, dataset, etc.)
+  Document "*" --> "0..1" Event
+  Proceedings "1..*" --> "0..1" PublicationSeries : publicationSeries
 
   class JournalPublication extends Document {
     -String startPage;
@@ -376,12 +386,21 @@ package document {
 	-String issue
   }
 
-  class Journal {
+  class PublicationSeries {
     -String eISSN
     -String printISSN
     -Set<PersonJournalContribution> contributors
     -Set<LanguageTag> languages
+    -Set<MultiLingualContent> name
     -Set<MultiLingualContent> nameAbbreviation
+  }
+
+  class Journal extends PublicationSeries {
+
+  }
+
+  class BookSeries extends PublicationSeries {
+' for instance https://www.springer.com/gp/computer-science/lncs
   }
 
   class PersonJournalContribution extends PersonContribution {
@@ -400,7 +419,6 @@ package document {
 
   JournalPublication "1..*" --> "1" Journal
 
-  ' TODO: Da li je poglavlje u monografiji dovoljno da se modeluje kao monografija pa da se u author contibution navede ko je sta radio
   class MonographPublication extends Document {
     -String startPage;
 	-String endPage
@@ -412,12 +430,15 @@ package document {
     -String printISBN
     -String eISBN
     -Integer numberOfPages
-    -String editionTitle
-    -Integer editionNumber
-    -String editionISSN
+    -String volume
+' volume and number are defined only in the case publicationSeries is defined.
+' We can even model that with link entity PublicationToPublicationSeriesRelation (with volume and number)
+    -String number
     -Set<LanguageTag> languages
     -ResearchArea researchArea
   }
+
+  Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
 
   MonographPublication "1..*" --> "1" Monograph
 
