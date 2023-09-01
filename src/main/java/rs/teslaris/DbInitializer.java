@@ -20,8 +20,8 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
-import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
@@ -170,7 +170,7 @@ public class DbInitializer implements ApplicationRunner {
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
 
-        var dummyJournal = new PublicationSeries();
+        var dummyJournal = new Journal();
         dummyJournal.setTitle(Set.of(new MultiLingualContent(englishTag, "Title1", 1)));
         dummyJournal.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR1", 1)));
         journalRepository.save(dummyJournal);
@@ -216,7 +216,7 @@ public class DbInitializer implements ApplicationRunner {
         conferenceEvent2.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija2", 1)));
         conferenceRepository.save(conferenceEvent2);
 
-        var journal2 = new PublicationSeries();
+        var journal2 = new Journal();
         journal2.setTitle(Set.of(new MultiLingualContent(englishTag, "Title2", 1)));
         journal2.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR2", 1)));
         journalRepository.save(journal2);

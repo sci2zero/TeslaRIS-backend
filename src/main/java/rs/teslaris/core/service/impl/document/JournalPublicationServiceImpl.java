@@ -116,7 +116,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                         DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
 
-        index.setPublicationSeriesId(publication.getPublicationSeries().getId());
+        index.setPublicationSeriesId(publication.getJournal().getId());
 
         documentPublicationIndexRepository.save(index);
     }
@@ -131,6 +131,6 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setVolume(publicationDTO.getVolume());
         publication.setIssue(publicationDTO.getIssue());
 
-        publication.setPublicationSeries(journalService.findOne(publicationDTO.getJournalId()));
+        publication.setJournal(journalService.findOne(publicationDTO.getJournalId()));
     }
 }

@@ -24,9 +24,9 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
         publicationDTO.setArticleNumber(publication.getArticleNumber());
         publicationDTO.setVolume(publication.getVolume());
         publicationDTO.setIssue(publication.getIssue());
-        publicationDTO.setJournalId(publication.getPublicationSeries().getId());
+        publicationDTO.setJournalId(publication.getJournal().getId());
         publicationDTO.setJournalName(
             MultilingualContentConverter.getMultilingualContentDTO(
-                publication.getPublicationSeries().getTitle()));
+                publication.getJournal().getTitle()));
     }
 }

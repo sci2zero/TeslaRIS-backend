@@ -4,33 +4,33 @@ import java.util.ArrayList;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
-import rs.teslaris.core.model.document.PublicationSeries;
+import rs.teslaris.core.model.document.Journal;
 
 public class JournalConverter {
 
-    public static JournalResponseDTO toDTO(PublicationSeries publicationSeries) {
+    public static JournalResponseDTO toDTO(Journal journal) {
         var responseDTO = new JournalResponseDTO();
-        responseDTO.setId(publicationSeries.getId());
+        responseDTO.setId(journal.getId());
         responseDTO.setTitle(
-            MultilingualContentConverter.getMultilingualContentDTO(publicationSeries.getTitle()));
-        responseDTO.setEISSN(publicationSeries.getEISSN());
-        responseDTO.setPrintISSN(publicationSeries.getPrintISSN());
+            MultilingualContentConverter.getMultilingualContentDTO(journal.getTitle()));
+        responseDTO.setEISSN(journal.getEISSN());
+        responseDTO.setPrintISSN(journal.getPrintISSN());
         responseDTO.setNameAbbreviation(
             MultilingualContentConverter.getMultilingualContentDTO(
-                publicationSeries.getNameAbbreviation()));
+                journal.getNameAbbreviation()));
 
         responseDTO.setLanguageTagIds(new ArrayList<>());
-        publicationSeries.getLanguages()
+        journal.getLanguages()
             .forEach(languageTag -> responseDTO.getLanguageTagIds().add(languageTag.getId()));
 
         responseDTO.setLanguageTagNames(new ArrayList<>());
-        publicationSeries.getLanguages()
+        journal.getLanguages()
             .forEach(languageTag -> responseDTO.getLanguageTagNames().add(
                 languageTag.getLanguageTag()));
 
         responseDTO.setContributions(
             PersonContributionConverter.journalContributionToDTO(
-                publicationSeries.getContributions()));
+                journal.getContributions()));
 
         return responseDTO;
     }

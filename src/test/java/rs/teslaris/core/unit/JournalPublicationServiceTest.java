@@ -30,9 +30,9 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
-import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -48,7 +48,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
-public class PublicationSeriesPublicationServiceTest {
+public class JournalPublicationServiceTest {
 
     @Mock
     private DocumentRepository documentRepository;
@@ -192,9 +192,9 @@ public class PublicationSeriesPublicationServiceTest {
         publication.setContributors(Set.of(contribution));
 
         publication.setUris(new HashSet<>());
-        var journal = new PublicationSeries();
+        var journal = new Journal();
         journal.setTitle(new HashSet<>());
-        publication.setPublicationSeries(journal);
+        publication.setJournal(journal);
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publication));

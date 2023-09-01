@@ -5,6 +5,8 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.Getter;
@@ -20,7 +22,8 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Entity
 @Table(name = "publication_series")
 @Where(clause = "deleted=false")
-public class PublicationSeries extends BaseEntity {
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+public abstract class PublicationSeries extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title;

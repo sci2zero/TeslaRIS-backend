@@ -38,6 +38,6 @@ public class JournalPublicationDTO extends DocumentDTO {
     private String issue;
 
     @NotNull(message = "You have to provide a journal ID.")
-    @Positive(message = "PublicationSeries ID must be a positive number.")
+    @Positive(message = "Journal ID must be a positive number.")
     private Integer journalId;
 }
