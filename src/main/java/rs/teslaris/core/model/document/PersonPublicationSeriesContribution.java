@@ -17,10 +17,10 @@ import org.hibernate.annotations.Where;
 @Entity
 @Table(name = "person_journal_contributions")
 @Where(clause = "deleted=false")
-public class PersonJournalContribution extends PersonContribution {
+public class PersonPublicationSeriesContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)
-    private JournalContributionType contributionType;
+    private PublicationSeriesContributionType contributionType;
 
     @Column(name = "date_from")
     private LocalDate dateFrom;

@@ -16,11 +16,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
-import rs.teslaris.core.dto.document.PersonJournalContributionDTO;
+import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
-import rs.teslaris.core.model.document.JournalContributionType;
+import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 @SpringBootTest
 public class PublicationSeriesControllerTest extends BaseTest {
@@ -39,7 +39,8 @@ public class PublicationSeriesControllerTest extends BaseTest {
         journalDTO.setPrintISSN("printISSN");
 
         var contribution =
-            new PersonJournalContributionDTO(JournalContributionType.SCIENTIFIC_BOARD_MEMBER,
+            new PersonPublicationSeriesContributionDTO(
+                PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER,
                 LocalDate.now(), LocalDate.now());
         contribution.setOrderNumber(1);
         contribution.setInstitutionIds(new ArrayList<>());

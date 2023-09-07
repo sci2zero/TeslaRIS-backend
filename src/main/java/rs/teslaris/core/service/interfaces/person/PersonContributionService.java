@@ -13,8 +13,8 @@ public interface PersonContributionService {
 
     void setPersonDocumentContributionsForDocument(Document document, DocumentDTO documentDTO);
 
-    void setPersonJournalContributionsForJournal(PublicationSeries publicationSeries,
-                                                 JournalDTO journalDTO);
+    void setPersonPublicationSeriesContributionsForJournal(PublicationSeries publicationSeries,
+                                                           JournalDTO journalDTO);
 
     void setPersonEventContributionForEvent(Event event, EventDTO eventDTO);
 }

@@ -16,7 +16,7 @@ import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonEventContribution;
-import rs.teslaris.core.model.document.PersonJournalContribution;
+import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
@@ -63,8 +63,9 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     }
 
     @Override
-    public void setPersonJournalContributionsForJournal(PublicationSeries publicationSeries,
-                                                        JournalDTO journalDTO) {
+    public void setPersonPublicationSeriesContributionsForJournal(
+        PublicationSeries publicationSeries,
+        JournalDTO journalDTO) {
         if (publicationSeries.getContributions() != null) {
             publicationSeries.getContributions().clear();
         } else {
@@ -72,7 +73,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         }
 
         journalDTO.getContributions().forEach(contributionDTO -> {
-            var contribution = new PersonJournalContribution();
+            var contribution = new PersonPublicationSeriesContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
 
             contribution.setContributionType(contributionDTO.getContributionType());

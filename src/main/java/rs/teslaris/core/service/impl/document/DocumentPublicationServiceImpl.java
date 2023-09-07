@@ -200,7 +200,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setFullTextOther("");
         document.getFileItems().forEach(documentFile -> {
             var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
-            index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
+            index.setFullTextSr(index.getFullTextSr() + " " + file.getPdfTextSr());
             index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
         });
     }

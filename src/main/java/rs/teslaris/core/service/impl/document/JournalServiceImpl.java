@@ -97,7 +97,7 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         journal.setEISSN(journalDTO.getEISSN());
         journal.setPrintISSN(journalDTO.getPrintISSN());
 
-        personContributionService.setPersonJournalContributionsForJournal(journal,
+        personContributionService.setPersonPublicationSeriesContributionsForJournal(journal,
             journalDTO);
 
         journalDTO.getLanguageTagIds().forEach(languageTagId -> {

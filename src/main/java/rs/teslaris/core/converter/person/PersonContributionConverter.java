@@ -6,12 +6,12 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
-import rs.teslaris.core.dto.document.PersonJournalContributionDTO;
+import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonEventContribution;
-import rs.teslaris.core.model.document.PersonJournalContribution;
+import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 
 public class PersonContributionConverter {
 
@@ -32,12 +32,12 @@ public class PersonContributionConverter {
         return contributionDTOs;
     }
 
-    public static ArrayList<PersonJournalContributionDTO> journalContributionToDTO(
-        Set<PersonJournalContribution> contributions) {
-        var contributionDTOs = new ArrayList<PersonJournalContributionDTO>();
+    public static ArrayList<PersonPublicationSeriesContributionDTO> publicationSeriesContributionToDTO(
+        Set<PersonPublicationSeriesContribution> contributions) {
+        var contributionDTOs = new ArrayList<PersonPublicationSeriesContributionDTO>();
         contributions.stream().filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED))
             .forEach((c) -> {
-                var contribution = new PersonJournalContributionDTO();
+                var contribution = new PersonPublicationSeriesContributionDTO();
                 setCommonFields(contribution, c);
 
                 contribution.setContributionType(c.getContributionType());

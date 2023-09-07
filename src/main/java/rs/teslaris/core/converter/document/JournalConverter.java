@@ -29,7 +29,7 @@ public class JournalConverter {
                 languageTag.getLanguageTag()));
 
         responseDTO.setContributions(
-            PersonContributionConverter.journalContributionToDTO(
+            PersonContributionConverter.publicationSeriesContributionToDTO(
                 journal.getContributions()));
 
         return responseDTO;

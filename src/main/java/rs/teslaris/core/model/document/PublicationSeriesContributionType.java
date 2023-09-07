@@ -1,6 +1,6 @@
 package rs.teslaris.core.model.document;
 
-public enum JournalContributionType {
+public enum PublicationSeriesContributionType {
     EDITOR,
     ASSOCIATE_EDITOR,
     REVIEWER,

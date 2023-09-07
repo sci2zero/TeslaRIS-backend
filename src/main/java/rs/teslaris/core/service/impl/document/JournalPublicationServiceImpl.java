@@ -11,7 +11,6 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -30,8 +29,6 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     private final JournalPublicationJPAServiceImpl journalPublicationJPAService;
     private final JournalService journalService;
 
-    private final JournalPublicationRepository journalPublicationRepository;
-
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Autowired
@@ -44,13 +41,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          EventService eventService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
-                                         JournalPublicationRepository journalPublicationRepository,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService, personContributionService, searchService, eventService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
-        this.journalPublicationRepository = journalPublicationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
     }
 

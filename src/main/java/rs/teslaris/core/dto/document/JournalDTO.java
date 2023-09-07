@@ -21,7 +21,7 @@ public class JournalDTO {
 
     private String printISSN;
 
-    private List<PersonJournalContributionDTO> contributions;
+    private List<PersonPublicationSeriesContributionDTO> contributions;
 
     private List<Integer> languageTagIds;
 

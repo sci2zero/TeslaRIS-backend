@@ -35,7 +35,7 @@ public abstract class PublicationSeries extends BaseEntity {
     private String printISSN;
 
     @OneToMany(mappedBy = "publicationSeries", fetch = FetchType.LAZY, orphanRemoval = true)
-    private Set<PersonJournalContribution> contributions;
+    private Set<PersonPublicationSeriesContribution> contributions;
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<LanguageTag> languages;
@@ -43,12 +43,12 @@ public abstract class PublicationSeries extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> nameAbbreviation;
 
-    public void addContribution(PersonJournalContribution contribution) {
+    public void addContribution(PersonPublicationSeriesContribution contribution) {
         contributions.add(contribution);
         contribution.setPublicationSeries(this);
     }
 
-    public void removeContribution(PersonJournalContribution contribution) {
+    public void removeContribution(PersonPublicationSeriesContribution contribution) {
         contribution.setPublicationSeries(null);
         contributions.remove(contribution);
     }
