@@ -23,7 +23,7 @@ import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 @SpringBootTest
-public class PublicationSeriesControllerTest extends BaseTest {
+public class JournalControllerTest extends BaseTest {
 
     @Autowired
     private ObjectMapper objectMapper;

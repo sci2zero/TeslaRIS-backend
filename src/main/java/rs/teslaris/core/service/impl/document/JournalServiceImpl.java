@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.document.JournalConverter;
+import rs.teslaris.core.converter.document.BookSeriesConverter;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.model.document.Journal;
@@ -41,12 +41,12 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
 
     @Override
     public Page<JournalResponseDTO> readAllJournals(Pageable pageable) {
-        return journalRepository.findAll(pageable).map(JournalConverter::toDTO);
+        return journalRepository.findAll(pageable).map(BookSeriesConverter::toDTO);
     }
 
     @Override
     public JournalResponseDTO readJournal(Integer journalId) {
-        return JournalConverter.toDTO(findOne(journalId));
+        return BookSeriesConverter.toDTO(findOne(journalId));
     }
 
     @Override

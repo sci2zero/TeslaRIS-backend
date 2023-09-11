@@ -5,6 +5,7 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -73,6 +74,28 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         }
 
         journalDTO.getContributions().forEach(contributionDTO -> {
+            var contribution = new PersonPublicationSeriesContribution();
+            setPersonContributionCommonFields(contribution, contributionDTO);
+
+            contribution.setContributionType(contributionDTO.getContributionType());
+            contribution.setDateFrom(contributionDTO.getDateFrom());
+            contribution.setDateTo(contributionDTO.getDateTo());
+
+            publicationSeries.addContribution(contribution);
+        });
+    }
+
+    @Override
+    public void setPersonPublicationSeriesContributionsForBookSeries(
+        PublicationSeries publicationSeries,
+        BookSeriesDTO bookSeriesDTO) {
+        if (publicationSeries.getContributions() != null) {
+            publicationSeries.getContributions().clear();
+        } else {
+            publicationSeries.setContributions(new HashSet<>());
+        }
+
+        bookSeriesDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonPublicationSeriesContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
 

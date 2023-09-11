@@ -16,49 +16,49 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
-import rs.teslaris.core.dto.document.JournalDTO;
-import rs.teslaris.core.dto.document.JournalResponseDTO;
-import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.dto.document.BookSeriesDTO;
+import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 
 @RestController
-@RequestMapping("/api/journal")
+@RequestMapping("/api/book-series")
 @RequiredArgsConstructor
-public class JournalController {
+public class BookSeriesController {
 
-    private final JournalService journalService;
+    private final BookSeriesService bookSeriesService;
 
     @GetMapping
-    public Page<JournalResponseDTO> readAll(Pageable pageable) {
-        return journalService.readAllJournals(pageable);
+    public Page<BookSeriesResponseDTO> readAll(Pageable pageable) {
+        return bookSeriesService.readAllBookSeries(pageable);
     }
 
-    @GetMapping("/{journalId}")
-    public JournalResponseDTO readJournal(@PathVariable Integer journalId) {
-        return journalService.readJournal(journalId);
+    @GetMapping("/{bookSeriesId}")
+    public BookSeriesResponseDTO readBookSeries(@PathVariable Integer bookSeriesId) {
+        return bookSeriesService.readBookSeries(bookSeriesId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     @Idempotent
-    public JournalDTO createJournal(@RequestBody @Valid JournalDTO journalDTO) {
-        var createdJournal = journalService.createJournal(journalDTO);
-        journalDTO.setId(createdJournal.getId());
-        return journalDTO;
+    public BookSeriesDTO createBookSeries(@RequestBody @Valid BookSeriesDTO bookSeriesDTO) {
+        var createdBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO);
+        bookSeriesDTO.setId(createdBookSeries.getId());
+        return bookSeriesDTO;
     }
 
-    @PutMapping("/{journalId}")
+    @PutMapping("/{bookSeriesId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
-    public void updateJournal(@RequestBody @Valid JournalDTO journalDTO,
-                              @PathVariable Integer journalId) {
-        journalService.updateJournal(journalDTO, journalId);
+    public void updateBookSeries(@RequestBody @Valid BookSeriesDTO bookSeriesDTO,
+                                 @PathVariable Integer bookSeriesId) {
+        bookSeriesService.updateBookSeries(bookSeriesDTO, bookSeriesId);
     }
 
-    @DeleteMapping("/{journalId}")
+    @DeleteMapping("/{bookSeriesId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
-    public void deleteJournal(@PathVariable Integer journalId) {
-        journalService.deleteJournal(journalId);
+    public void deleteBookSeries(@PathVariable Integer bookSeriesId) {
+        bookSeriesService.deleteBookSeries(bookSeriesId);
     }
 }

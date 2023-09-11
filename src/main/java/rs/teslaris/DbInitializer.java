@@ -19,6 +19,7 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
@@ -37,6 +38,7 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -72,6 +74,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final JournalRepository journalRepository;
 
+    private final BookSeriesRepository bookSeriesRepository;
+
     private final ResearchAreaRepository researchAreaRepository;
 
     private final ProceedingsRepository proceedingsRepository;
@@ -97,19 +101,19 @@ public class DbInitializer implements ApplicationRunner {
         var editOrganisationUnit = new Privilege("EDIT_ORGANISATION_UNITS");
         var editOURelations = new Privilege("EDIT_OU_RELATIONS");
         var editPublishers = new Privilege("EDIT_PUBLISHERS");
-        var editJournals = new Privilege("EDIT_JOURNALS");
+        var editPublicationSeries = new Privilege("EDIT_PUBLICATION_SERIES");
         var editConferences = new Privilege("EDIT_CONFERENCES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
                 editResearchAreas, approvePublication, editOURelations, editPublishers,
-                editJournals, editConferences));
+                editPublicationSeries, editConferences));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
                 createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
-                editOURelations, approvePublication, editPublishers, editJournals,
+                editOURelations, approvePublication, editPublishers, editPublicationSeries,
                 editConferences)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -220,5 +224,15 @@ public class DbInitializer implements ApplicationRunner {
         journal2.setTitle(Set.of(new MultiLingualContent(englishTag, "Title2", 1)));
         journal2.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR2", 1)));
         journalRepository.save(journal2);
+
+        var bookSeries1 = new BookSeries();
+        bookSeries1.setTitle(Set.of(new MultiLingualContent(englishTag, "BookSeries1", 1)));
+        bookSeries1.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR1", 1)));
+        bookSeriesRepository.save(bookSeries1);
+
+        var bookSeries2 = new BookSeries();
+        bookSeries2.setTitle(Set.of(new MultiLingualContent(englishTag, "BookSeries2", 1)));
+        bookSeries2.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR2", 1)));
+        bookSeriesRepository.save(bookSeries2);
     }
 }

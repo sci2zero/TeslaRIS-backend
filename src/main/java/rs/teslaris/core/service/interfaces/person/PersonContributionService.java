@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.person;
 
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -15,6 +16,9 @@ public interface PersonContributionService {
 
     void setPersonPublicationSeriesContributionsForJournal(PublicationSeries publicationSeries,
                                                            JournalDTO journalDTO);
+
+    void setPersonPublicationSeriesContributionsForBookSeries(PublicationSeries publicationSeries,
+                                                              BookSeriesDTO bookSeriesDTO);
 
     void setPersonEventContributionForEvent(Event event, EventDTO eventDTO);
 }
