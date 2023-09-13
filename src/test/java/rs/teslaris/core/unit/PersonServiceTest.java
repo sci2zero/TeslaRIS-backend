@@ -478,11 +478,9 @@ public class PersonServiceTest {
                 List.of(new PersonIndex(), new PersonIndex())));
 
         // when
-        var result =
-            personService.searchPersonsAdvanced(new SearchRequestDTO(tokens), pageable);
+        var result = personService.advancedSearch(new SearchRequestDTO(tokens), pageable);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
     }
-
 }

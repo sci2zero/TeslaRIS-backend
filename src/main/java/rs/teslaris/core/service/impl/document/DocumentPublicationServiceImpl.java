@@ -206,7 +206,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setFullTextOther("");
         document.getFileItems().forEach(documentFile -> {
             var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
-            index.setFullTextSr(index.getFullTextSr() + "" + file.getPdfTextSr());
+            index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
             index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
         });
     }
@@ -325,7 +325,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 DocumentPublicationIndex.class, "document_publication");
         }
 
-        return searchService.runQuery(buildAdvancedSearchQuery(searchRequest.getTokens()), pageable,
+        return searchService.runQuery(
+            expressionTransformer.parseAdvancedQuery(searchRequest.getTokens()), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -367,11 +368,4 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             return b;
         })))._toQuery();
     }
-
-    private Query buildAdvancedSearchQuery(List<String> expression) {
-        var postfixExpression =
-            expressionTransformer.transformToPostFixNotation(expression);
-        return expressionTransformer.buildQueryFromPostFixExpression(postfixExpression);
-    }
-
 }

@@ -48,9 +48,9 @@ public class PersonController {
     }
 
     @GetMapping("/simple-search")
-    public Page<PersonIndex> findAllByNameAndEmployment(@RequestBody @Valid
-                                                        SearchRequestDTO searchRequest,
-                                                        Pageable pageable) {
+    public Page<PersonIndex> simpleSearch(@RequestBody @Valid
+                                          SearchRequestDTO searchRequest,
+                                          Pageable pageable) {
         return personService.findPeopleByNameAndEmployment(searchRequest.getTokens(),
             pageable);
     }
@@ -62,10 +62,10 @@ public class PersonController {
     }
 
     @GetMapping("/advanced-search")
-    public Page<PersonIndex> searchPersonsAdvanced(
+    public Page<PersonIndex> advancedSearch(
         @RequestBody @Valid SearchRequestDTO searchRequest,
         Pageable pageable) {
-        return personService.searchPersonsAdvanced(searchRequest, pageable);
+        return personService.advancedSearch(searchRequest, pageable);
     }
 
     @PostMapping("/basic")

@@ -12,7 +12,11 @@ import org.springframework.stereotype.Component;
 public class ExpressionTransformer {
     private final Map<String, Integer> priorities = Map.of("AND", 2, "OR", 1, "NOT", 3);
 
-    public List<String> transformToPostFixNotation(List<String> expression) {
+    public Query parseAdvancedQuery(List<String> expression) {
+        return buildQueryFromPostFixExpression(transformToPostFixNotation(expression));
+    }
+
+    private List<String> transformToPostFixNotation(List<String> expression) {
         var tokenStack = new Stack<String>();
         var postfixExpression = new ArrayList<String>();
 
@@ -28,46 +32,53 @@ public class ExpressionTransformer {
             }
         }
 
-        postfixExpression.addAll(tokenStack);
+        while (!tokenStack.isEmpty()) {
+            postfixExpression.add(tokenStack.pop());
+        }
+
         return postfixExpression;
     }
 
-    public Query buildQueryFromPostFixExpression(List<String> postfixExpression) {
+    private Query buildQueryFromPostFixExpression(List<String> postfixExpression) {
         var queryStack = new Stack<Query>();
 
         for (var token : postfixExpression) {
-            if (token.equalsIgnoreCase("AND")) {
-                var other = queryStack.pop();
-                queryStack.push(BoolQuery.of(q -> {
-                    q.must(other);
-                    q.must(queryStack.pop());
-                    return q;
-                })._toQuery());
-            } else if (token.equalsIgnoreCase("OR")) {
-                var other = queryStack.pop();
-                queryStack.push(BoolQuery.of(q -> {
-                    q.should(other);
-                    q.should(queryStack.pop());
-                    return q;
-                })._toQuery());
-            } else if (token.equalsIgnoreCase("NOT")) {
-                var other = queryStack.pop();
-                queryStack.push(BoolQuery.of(q -> {
-                    q.must(queryStack.pop());
-                    q.mustNot(other);
-                    return q;
-                })._toQuery());
-            } else {
-                var fieldValueTuple = token.split(":");
-                var searchType = SearchType.regular;
-                if (fieldValueTuple[1].startsWith("\"") && fieldValueTuple[1].endsWith("\"")) {
-                    searchType = SearchType.phrase;
-                }
+            switch (token.toUpperCase()) {
+                case "AND":
+                    var mustContain = queryStack.pop();
+                    queryStack.push(BoolQuery.of(q -> {
+                        q.must(mustContain);
+                        q.must(queryStack.pop());
+                        return q;
+                    })._toQuery());
+                    break;
+                case "OR":
+                    var shouldContain = queryStack.pop();
+                    queryStack.push(BoolQuery.of(q -> {
+                        q.should(shouldContain);
+                        q.should(queryStack.pop());
+                        return q;
+                    })._toQuery());
+                    break;
+                case "NOT":
+                    var mustNotContain = queryStack.pop();
+                    queryStack.push(BoolQuery.of(q -> {
+                        q.must(queryStack.pop());
+                        q.mustNot(mustNotContain);
+                        return q;
+                    })._toQuery());
+                    break;
+                default:
+                    var fieldValueTuple = token.split(":");
+                    var searchType = SearchType.regular;
+                    if (fieldValueTuple[1].startsWith("\"") && fieldValueTuple[1].endsWith("\"")) {
+                        searchType = SearchType.phrase;
+                    }
 
-                queryStack.push(CustomQueryBuilder.buildQuery(
-                    searchType,
-                    fieldValueTuple[0],
-                    fieldValueTuple[1]));
+                    queryStack.push(CustomQueryBuilder.buildQuery(
+                        searchType,
+                        fieldValueTuple[0],
+                        fieldValueTuple[1]));
             }
         }
 

@@ -380,12 +380,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public Page<PersonIndex> searchPersonsAdvanced(SearchRequestDTO searchRequest,
-                                                   Pageable pageable) {
-        var postfixExpression =
-            expressionTransformer.transformToPostFixNotation(searchRequest.getTokens());
-        var query = expressionTransformer.buildQueryFromPostFixExpression(postfixExpression);
-
+    public Page<PersonIndex> advancedSearch(SearchRequestDTO searchRequest,
+                                            Pageable pageable) {
+        var query = expressionTransformer.parseAdvancedQuery(searchRequest.getTokens());
         return searchService.runQuery(query, pageable, PersonIndex.class, "person");
     }
 

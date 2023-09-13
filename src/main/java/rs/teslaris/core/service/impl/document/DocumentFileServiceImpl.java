@@ -178,7 +178,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 DocumentFileIndex.class, "document_file");
         }
 
-        return searchService.runQuery(buildAdvancedSearchQuery(searchRequest.getTokens()), pageable,
+        return searchService.runQuery(
+            expressionTransformer.parseAdvancedQuery(searchRequest.getTokens()), pageable,
             DocumentFileIndex.class, "document_file");
     }
 
@@ -201,12 +202,6 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             });
             return b;
         })))._toQuery();
-    }
-
-    private Query buildAdvancedSearchQuery(List<String> expression) {
-        var postfixExpression =
-            expressionTransformer.transformToPostFixNotation(expression);
-        return expressionTransformer.buildQueryFromPostFixExpression(postfixExpression);
     }
 
     private boolean isPdfFile(MultipartFile multipartFile) {

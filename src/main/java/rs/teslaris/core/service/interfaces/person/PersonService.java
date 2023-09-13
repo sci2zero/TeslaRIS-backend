@@ -24,7 +24,7 @@ public interface PersonService extends JPAService<Person> {
     Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
                                                     Pageable pageable);
 
-    Page<PersonIndex> searchPersonsAdvanced(SearchRequestDTO searchRequest, Pageable pageable);
+    Page<PersonIndex> advancedSearch(SearchRequestDTO searchRequest, Pageable pageable);
 
     Person findPersonById(Integer id);
 
