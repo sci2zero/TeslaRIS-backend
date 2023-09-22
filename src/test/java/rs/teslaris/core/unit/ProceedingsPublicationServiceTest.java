@@ -28,6 +28,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
@@ -41,6 +42,7 @@ import rs.teslaris.core.service.impl.document.ProceedingsPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -59,6 +61,9 @@ public class ProceedingsPublicationServiceTest {
 
     @Mock
     private ProceedingsService proceedingsService;
+
+    @Mock
+    private EventService eventService;
 
     @Mock
     private PersonContributionService personContributionService;
@@ -93,6 +98,7 @@ public class ProceedingsPublicationServiceTest {
         // Given
         var publicationDTO = new ProceedingsPublicationDTO();
         publicationDTO.setProceedingsId(1);
+        publicationDTO.setEventId(1);
         var document = new ProceedingsPublication();
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
@@ -100,6 +106,8 @@ public class ProceedingsPublicationServiceTest {
         when(documentRepository.save(any())).thenReturn(document);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
+        when(eventService.findEventById(publicationDTO.getProceedingsId())).thenReturn(
+            new Conference());
 
         // When
         var result = proceedingsPublicationService.createProceedingsPublication(publicationDTO);
@@ -117,6 +125,7 @@ public class ProceedingsPublicationServiceTest {
         var publicationId = 1;
         var publicationDTO = new ProceedingsPublicationDTO();
         publicationDTO.setProceedingsId(1);
+        publicationDTO.setEventId(1);
         var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         publicationToUpdate.setTitle(new HashSet<>());
@@ -130,6 +139,8 @@ public class ProceedingsPublicationServiceTest {
             Optional.of(publicationToUpdate));
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
+        when(eventService.findEventById(publicationDTO.getProceedingsId())).thenReturn(
+            new Conference());
 
         // When
         proceedingsPublicationService.editProceedingsPublication(publicationId, publicationDTO);

@@ -78,8 +78,8 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Text, name = "type", store = true)
     private String type;
 
-    @Field(type = FieldType.Integer, name = "journal_id", store = true)
-    private Integer journalId;
+    @Field(type = FieldType.Integer, name = "publication_series_id", store = true)
+    private Integer publicationSeriesId;
 
     @Field(type = FieldType.Integer, name = "event_id", store = true)
     private Integer eventId;

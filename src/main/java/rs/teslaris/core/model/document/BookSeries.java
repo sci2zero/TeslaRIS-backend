@@ -9,7 +9,7 @@ import org.hibernate.annotations.Where;
 @Getter
 @Setter
 @Entity
-@Table(name = "journals")
+@Table(name = "book_series")
 @Where(clause = "deleted=false")
-public class Journal extends PublicationSeries {
+public class BookSeries extends PublicationSeries {
 }

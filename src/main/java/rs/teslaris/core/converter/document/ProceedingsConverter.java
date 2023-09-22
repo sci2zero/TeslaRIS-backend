@@ -20,12 +20,11 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         proceedingsResponseDTO.setEISBN(proceedings.getEISBN());
         proceedingsResponseDTO.setPrintISBN(proceedings.getPrintISBN());
         proceedingsResponseDTO.setNumberOfPages(proceedings.getNumberOfPages());
-        proceedingsResponseDTO.setEditionTitle(proceedings.getEditionTitle());
-        proceedingsResponseDTO.setEditionNumber(proceedings.getEditionNumber());
-        proceedingsResponseDTO.setEditionISSN(proceedings.getEditionISSN());
+        proceedingsResponseDTO.setPublicationSeriesIssue(proceedings.getPublicationSeriesIssue());
+        proceedingsResponseDTO.setPublicationSeriesVolume(proceedings.getPublicationSeriesVolume());
 
         setLanguageInfo(proceedings, proceedingsResponseDTO);
-        setJournalInfo(proceedings, proceedingsResponseDTO);
+        setPublicationSeriesInfo(proceedings, proceedingsResponseDTO);
         setEventInfo(proceedings, proceedingsResponseDTO);
         setPublisherInfo(proceedings, proceedingsResponseDTO);
     }
@@ -37,12 +36,11 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         });
     }
 
-    private static void setJournalInfo(Proceedings proceedings,
-                                       ProceedingsResponseDTO proceedingsResponseDTO) {
-        var journal = proceedings.getJournal();
-        proceedingsResponseDTO.setJournalId(journal != null ? journal.getId() : 0);
-        proceedingsResponseDTO.setJournalVolume(proceedings.getJournalVolume());
-        proceedingsResponseDTO.setJournalIssue(proceedings.getJournalIssue());
+    private static void setPublicationSeriesInfo(Proceedings proceedings,
+                                                 ProceedingsResponseDTO proceedingsResponseDTO) {
+        var publicationSeries = proceedings.getPublicationSeries();
+        proceedingsResponseDTO.setPublicationSeriesId(
+            publicationSeries != null ? publicationSeries.getId() : 0);
     }
 
     private static void setEventInfo(Proceedings proceedings,

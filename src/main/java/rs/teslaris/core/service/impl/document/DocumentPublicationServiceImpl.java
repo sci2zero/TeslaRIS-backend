@@ -33,6 +33,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -55,6 +56,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final PersonContributionService personContributionService;
 
     private final SearchService<DocumentPublicationIndex> searchService;
+
+    private final EventService eventService;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -197,7 +200,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setFullTextOther("");
         document.getFileItems().forEach(documentFile -> {
             var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
-            index.setFullTextSr(index.getFullTextSr() + "" + file.getPdfTextSr());
+            index.setFullTextSr(index.getFullTextSr() + " " + file.getPdfTextSr());
             index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
         });
     }
@@ -277,6 +280,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setProofs(new HashSet<>());
         document.setFileItems(new HashSet<>());
+
+        document.setEvent(eventService.findEventById(documentDTO.getEventId()));
     }
 
     protected void clearCommonFields(Document publication) {

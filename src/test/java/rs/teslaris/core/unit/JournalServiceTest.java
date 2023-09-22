@@ -153,7 +153,7 @@ public class JournalServiceTest {
         assertThrows(JournalReferenceConstraintViolationException.class,
             () -> journalService.deleteJournal(journalId));
 
-        // then (JournalInUseException should be thrown)
+        // then (JournalReferenceConstraintViolationException should be thrown)
     }
 
     @Test
