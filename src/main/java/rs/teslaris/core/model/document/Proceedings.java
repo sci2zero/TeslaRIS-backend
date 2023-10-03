@@ -29,27 +29,8 @@ public class Proceedings extends Document {
     @Column(name = "number_of_pages")
     private Integer numberOfPages;
 
-    @Column(name = "edition_title")
-    private String editionTitle;
-
-    @Column(name = "edition_number")
-    private Integer editionNumber;
-
-    @Column(name = "edition_issn")
-    private String editionISSN;
-
     @OneToMany(fetch = FetchType.LAZY)
     private Set<LanguageTag> languages;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "journal_id")
-    private Journal journal;
-
-    @Column(name = "journal_volume")
-    private String journalVolume;
-
-    @Column(name = "journal_issue")
-    private String journalIssue;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
@@ -58,4 +39,14 @@ public class Proceedings extends Document {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "publication_series_id")
+    private PublicationSeries publicationSeries;
+
+    @Column(name = "publication_series_volume")
+    private String publicationSeriesVolume;
+
+    @Column(name = "publication_series_issue")
+    private String publicationSeriesIssue;
 }

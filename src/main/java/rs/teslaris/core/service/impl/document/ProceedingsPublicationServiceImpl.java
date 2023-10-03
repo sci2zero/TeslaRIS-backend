@@ -15,6 +15,7 @@ import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublication
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -27,9 +28,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     implements ProceedingsPublicationService {
 
     private final ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService;
+
     private final ProceedingsService proceedingsService;
 
     private final ProceedingsPublicationRepository proceedingsPublicationRepository;
+
 
     @Autowired
     public ProceedingsPublicationServiceImpl(MultilingualContentService multilingualContentService,
@@ -39,16 +42,17 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              PersonContributionService personContributionService,
                                              SearchService<DocumentPublicationIndex> searchService,
                                              ExpressionTransformer expressionTransformer,
+                                             EventService eventService,
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService, expressionTransformer);
+            documentFileService,
+            personContributionService, searchService, expressionTransformer, eventService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }
-
 
     @Override
     public ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId) {

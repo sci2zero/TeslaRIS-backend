@@ -95,6 +95,10 @@ public class EventServiceTest {
         var conference = new Conference();
         conference.setName(new HashSet<>());
         conference.getName().add(dummyMC);
+        conference.setDescription(new HashSet<>());
+        conference.getDescription().add(dummyMC);
+        conference.setKeywords(new HashSet<>());
+        conference.getKeywords().add(dummyMC);
         conference.setNameAbbreviation(new HashSet<>());
         conference.getNameAbbreviation().add(dummyMC);
         conference.setState(new HashSet<>());

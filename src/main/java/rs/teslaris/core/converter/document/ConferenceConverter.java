@@ -15,6 +15,10 @@ public class ConferenceConverter {
             MultilingualContentConverter.getMultilingualContentDTO(conference.getName()));
         conferenceDTO.setNameAbbreviation(MultilingualContentConverter.getMultilingualContentDTO(
             conference.getNameAbbreviation()));
+        conferenceDTO.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
+            conference.getDescription()));
+        conferenceDTO.setKeywords(MultilingualContentConverter.getMultilingualContentDTO(
+            conference.getKeywords()));
         conferenceDTO.setDateFrom(conference.getDateFrom());
         conferenceDTO.setDateTo(conference.getDateTo());
         conferenceDTO.setState(
@@ -27,6 +31,7 @@ public class ConferenceConverter {
 
         conferenceDTO.setNumber(conference.getNumber());
         conferenceDTO.setFee(conference.getFee());
+        conferenceDTO.setSerialEvent(conference.getSerialEvent());
 
         return conferenceDTO;
     }

@@ -28,6 +28,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -41,6 +42,7 @@ import rs.teslaris.core.service.impl.document.JournalPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -59,6 +61,9 @@ public class JournalPublicationServiceTest {
 
     @Mock
     private JournalService journalService;
+
+    @Mock
+    private EventService eventService;
 
     @Mock
     private JournalPublicationRepository journalPublicationRepository;
@@ -93,11 +98,13 @@ public class JournalPublicationServiceTest {
     public void shouldCreateJournalPublication() {
         // Given
         var publicationDTO = new JournalPublicationDTO();
+        publicationDTO.setEventId(1);
         var document = new JournalPublication();
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
         when(journalPublicationJPAService.save(any())).thenReturn(document);
+        when(eventService.findEventById(1)).thenReturn(new Conference());
 
         // When
         var result = journalPublicationService.createJournalPublication(publicationDTO);
@@ -114,6 +121,7 @@ public class JournalPublicationServiceTest {
         // Given
         var publicationId = 1;
         var publicationDTO = new JournalPublicationDTO();
+        publicationDTO.setEventId(1);
         var publicationToUpdate = new JournalPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         publicationToUpdate.setTitle(new HashSet<>());
@@ -125,6 +133,7 @@ public class JournalPublicationServiceTest {
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
+        when(eventService.findEventById(1)).thenReturn(new Conference());
 
         // When
         journalPublicationService.editJournalPublication(publicationId, publicationDTO);

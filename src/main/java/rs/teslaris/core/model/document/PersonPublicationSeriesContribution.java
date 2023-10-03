@@ -17,10 +17,10 @@ import org.hibernate.annotations.Where;
 @Entity
 @Table(name = "person_journal_contributions")
 @Where(clause = "deleted=false")
-public class PersonJournalContribution extends PersonContribution {
+public class PersonPublicationSeriesContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)
-    private JournalContributionType contributionType;
+    private PublicationSeriesContributionType contributionType;
 
     @Column(name = "date_from")
     private LocalDate dateFrom;
@@ -29,6 +29,6 @@ public class PersonJournalContribution extends PersonContribution {
     private LocalDate dateTo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "journal_id", nullable = false)
-    private Journal journal;
+    @JoinColumn(name = "publication_series_id", nullable = false)
+    private PublicationSeries publicationSeries;
 }

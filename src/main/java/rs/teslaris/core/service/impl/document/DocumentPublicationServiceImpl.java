@@ -34,6 +34,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -61,8 +62,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private final ExpressionTransformer expressionTransformer;
 
+    private final EventService eventService;
+
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
+
 
     @Override
     protected JpaRepository<Document, Integer> getEntityRepository() {
@@ -286,6 +290,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setProofs(new HashSet<>());
         document.setFileItems(new HashSet<>());
+
+        document.setEvent(eventService.findEventById(documentDTO.getEventId()));
     }
 
     protected void clearCommonFields(Document publication) {

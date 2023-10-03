@@ -23,6 +23,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @Table(name = "monographs")
 @Where(clause = "deleted=false")
 public class Monograph extends Document {
+
     @Column(name = "monograph_type", nullable = false)
     @ColumnDefault("0")
     @Enumerated(value = EnumType.ORDINAL)
@@ -37,14 +38,15 @@ public class Monograph extends Document {
     @Column(name = "number_of_pages")
     private Integer numberOfPages;
 
-    @Column(name = "edition_title")
-    private String editionTitle;
+    @Column(name = "volume")
+    private String volume;
 
-    @Column(name = "edition_number")
-    private Integer editionNumber;
+    @Column(name = "monograph_number")
+    private Integer number;
 
-    @Column(name = "edition_issn", unique = false)
-    private String editionISSN;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "publication_series_id")
+    private PublicationSeries publicationSeries;
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<LanguageTag> languages;

@@ -30,6 +30,15 @@ public abstract class Event extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> nameAbbreviation;
 
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> description;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> keywords;
+
+    @Column(name = "serial_event")
+    private Boolean serialEvent;
+
     @Column(name = "date_from")
     private LocalDate dateFrom;
 
