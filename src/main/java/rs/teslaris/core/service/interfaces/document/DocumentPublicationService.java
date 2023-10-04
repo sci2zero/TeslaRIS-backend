@@ -4,10 +4,12 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
 public interface DocumentPublicationService extends JPAService<Document> {
@@ -26,6 +28,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId);
 
-    Page<DocumentPublicationIndex> searchDocumentPublicationsSimple(List<String> tokens,
-                                                                    Pageable pageable);
+    Page<DocumentPublicationIndex> searchDocumentPublications(SearchRequestDTO searchRequest,
+                                                              Pageable pageable,
+                                                              SearchRequestType type);
 }

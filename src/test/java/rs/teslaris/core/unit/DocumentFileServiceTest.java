@@ -9,12 +9,17 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.mock.web.MockMultipartFile;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
@@ -22,9 +27,12 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.impl.document.DocumentFileServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchRequestType;
 
 @SpringBootTest
 public class DocumentFileServiceTest {
@@ -40,6 +48,12 @@ public class DocumentFileServiceTest {
 
     @Mock
     private DocumentFileIndexRepository documentFileIndexRepository;
+
+    @Mock
+    private SearchService<DocumentFileIndex> searchService;
+
+    @Mock
+    private ExpressionTransformer expressionTransformer;
 
     @InjectMocks
     private DocumentFileServiceImpl documentFileService;
@@ -148,5 +162,43 @@ public class DocumentFileServiceTest {
                 serverFilename, documentIndex));
 
         // then (LoadingException should be thrown)
+    }
+
+    @Test
+    public void shouldFindDocumentFileWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("neka", "ријеч", "za pretragu");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentFileIndex(), new DocumentFileIndex())));
+
+        // when
+        var result =
+            documentFileService.searchDocumentFiles(new SearchRequestDTO(tokens), pageable,
+                SearchRequestType.SIMPLE);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldFindDocumentFilesWhenSearchingWithAdvancedQuery() {
+        // given
+        var tokens = List.of("tile_sr:наслов");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentFileIndex(), new DocumentFileIndex())));
+
+        // when
+        var result =
+            documentFileService.searchDocumentFiles(new SearchRequestDTO(tokens), pageable,
+                SearchRequestType.ADVANCED);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

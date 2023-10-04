@@ -32,6 +32,7 @@ public class BookSeriesServiceImpl extends JPAServiceImpl<BookSeries> implements
 
     private final PersonContributionService personContributionService;
 
+
     @Override
     protected JpaRepository<BookSeries, Integer> getEntityRepository() {
         return bookSeriesRepository;

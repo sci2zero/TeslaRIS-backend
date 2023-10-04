@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
 @Transactional
@@ -42,6 +43,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private final PublisherService publisherService;
 
+
     @Autowired
     public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository,
@@ -49,14 +51,16 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
                                   SearchService<DocumentPublicationIndex> searchService,
+                                  ExpressionTransformer expressionTransformer,
                                   EventService eventService,
                                   ProceedingJPAServiceImpl proceedingJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
-                                  JournalService journalService,
-                                  EventService eventService1, PublisherService publisherService) {
+                                  JournalService journalService, EventService eventService1,
+                                  PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService, eventService);
+            documentFileService,
+            personContributionService, searchService, expressionTransformer, eventService);
         this.proceedingJPAService = proceedingJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
@@ -64,7 +68,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.eventService = eventService1;
         this.publisherService = publisherService;
     }
-
 
     @Override
     public ProceedingsResponseDTO readProceedingsById(Integer proceedingsId) {

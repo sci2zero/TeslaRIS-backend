@@ -34,6 +34,7 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
 
     private final PersonContributionService personContributionService;
 
+
     @Override
     protected JpaRepository<Journal, Integer> getEntityRepository() {
         return journalRepository;

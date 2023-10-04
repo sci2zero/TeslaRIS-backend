@@ -29,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -58,6 +59,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @SpringBootTest
 public class PersonServiceTest {
@@ -82,6 +84,9 @@ public class PersonServiceTest {
 
     @Mock
     private SearchService<PersonIndex> searchService;
+
+    @Mock
+    private ExpressionTransformer expressionTransformer;
 
     @InjectMocks
     private PersonServiceImpl personService;
@@ -462,4 +467,20 @@ public class PersonServiceTest {
         assertEquals(result.getTotalElements(), 1L);
     }
 
+    @Test
+    public void shouldFindPersonWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("name:\"Ime Prezime\"", "employments_sr:ФТН");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new PersonIndex(), new PersonIndex())));
+
+        // when
+        var result = personService.advancedSearch(new SearchRequestDTO(tokens), pageable);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
+    }
 }

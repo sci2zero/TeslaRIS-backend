@@ -20,6 +20,7 @@ import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
 @Transactional
@@ -27,9 +28,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     implements JournalPublicationService {
 
     private final JournalPublicationJPAServiceImpl journalPublicationJPAService;
+
     private final JournalService journalService;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
 
     @Autowired
     public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
@@ -38,17 +41,18 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          DocumentFileService documentFileService,
                                          PersonContributionService personContributionService,
                                          SearchService<DocumentPublicationIndex> searchService,
+                                         ExpressionTransformer expressionTransformer,
                                          EventService eventService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService, eventService);
+            documentFileService,
+            personContributionService, searchService, expressionTransformer, eventService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
     }
-
 
     @Override
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
