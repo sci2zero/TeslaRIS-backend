@@ -9,29 +9,25 @@ import javax.xml.bind.annotation.XmlValue;
 import lombok.Getter;
 import lombok.Setter;
 
-@XmlType(name = "TResumptionToken")
+@XmlType(name = "TName")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "ResumptionToken")
+@XmlRootElement(name = "Name")
 @Getter
 @Setter
-public class ResumptionToken {
+class Name {
+
+    @XmlAttribute(name = "xml:lang")
+    private String lang;
 
     @XmlValue
     private String value;
 
-    @XmlAttribute(name = "expirationDate")
-    private String expirationDate;
 
-    @XmlAttribute(name = "cursor")
-    private String cursor;
-
-
-    public ResumptionToken() {
+    public Name() {
     }
 
-    public ResumptionToken(String value, String expirationDate, String cursor) {
+    public Name(String lang, String value) {
+        this.lang = lang;
         this.value = value;
-        this.expirationDate = expirationDate;
-        this.cursor = cursor;
     }
 }

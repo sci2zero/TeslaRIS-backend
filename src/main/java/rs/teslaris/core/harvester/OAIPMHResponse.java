@@ -1,31 +1,36 @@
 package rs.teslaris.core.harvester;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+import lombok.Getter;
+import lombok.Setter;
 
-@XmlRootElement(name = "OAI-PMH", namespace = "http://www.openarchives.org/OAI/2.0/")
+@XmlType(name = "TOAI-PMH", propOrder = {"responseDate", "request", "listRecords"})
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement(name = "OAI-PMH")
+@Getter
+@Setter
 public class OAIPMHResponse {
 
+    @XmlElement(name = "ListRecords")
     private ListRecords listRecords;
 
+    @XmlElement(name = "responseDate")
     private String responseDate;
 
+    @XmlElement(name = "request")
+    private Request request;
 
-    @XmlElement(name = "ListRecords")
-    public ListRecords getListRecords() {
-        return listRecords;
+
+    public OAIPMHResponse() {
     }
 
-    @XmlElement(name = "responseDate")
-    public String getResponseDate() {
-        return responseDate;
-    }
-
-    public void setListRecords(ListRecords listRecords) {
+    public OAIPMHResponse(ListRecords listRecords, String responseDate, Request request) {
         this.listRecords = listRecords;
-    }
-
-    public void setResponseDate(String responseDate) {
         this.responseDate = responseDate;
+        this.request = request;
     }
 }
