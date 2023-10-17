@@ -1,4 +1,4 @@
-package rs.teslaris.core.harvester.organisationunits;
+package rs.teslaris.core.harvester.common;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -13,7 +13,7 @@ import lombok.Setter;
 @XmlRootElement(name = "OAI-PMH")
 @Getter
 @Setter
-public class OAIPMHOrgUnitResponse {
+public class OAIPMHResponse {
 
     @XmlElement(name = "ListRecords")
     private ListRecords listRecords;
@@ -25,10 +25,10 @@ public class OAIPMHOrgUnitResponse {
     private Request request;
 
 
-    public OAIPMHOrgUnitResponse() {
+    public OAIPMHResponse() {
     }
 
-    public OAIPMHOrgUnitResponse(ListRecords listRecords, String responseDate, Request request) {
+    public OAIPMHResponse(ListRecords listRecords, String responseDate, Request request) {
         this.listRecords = listRecords;
         this.responseDate = responseDate;
         this.request = request;

@@ -14,7 +14,7 @@ import lombok.Setter;
 @XmlRootElement(name = "OrgUnit")
 @Getter
 @Setter
-class OrgUnit {
+public class OrgUnit {
 
     @XmlAttribute(name = "id")
     private String id;

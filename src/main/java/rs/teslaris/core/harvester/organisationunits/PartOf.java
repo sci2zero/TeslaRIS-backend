@@ -13,7 +13,7 @@ import lombok.Setter;
 @XmlRootElement(name = "PartOf")
 @Getter
 @Setter
-class PartOf {
+public class PartOf {
 
     @XmlElement(name = "OrgUnit")
     private OrgUnit orgUnit;

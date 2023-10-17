@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.harvester.OAIPMHHarvester;
+import rs.teslaris.core.harvester.common.OAIPMHDataSet;
 
 @RestController
 @RequestMapping("/api/harvest")
@@ -15,6 +16,6 @@ public class OAIPMHHarvestController {
 
     @GetMapping
     public void testHarvestForOU() {
-        oaipmhHarvester.harvest("openaire_cris_orgunits");
+        oaipmhHarvester.harvest(OAIPMHDataSet.ORGANISATION_UNITS);
     }
 }
