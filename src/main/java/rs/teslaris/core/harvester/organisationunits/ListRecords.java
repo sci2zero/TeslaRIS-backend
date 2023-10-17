@@ -1,4 +1,4 @@
-package rs.teslaris.core.harvester;
+package rs.teslaris.core.harvester.organisationunits;
 
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;

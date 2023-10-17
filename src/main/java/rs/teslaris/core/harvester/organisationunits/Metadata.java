@@ -1,4 +1,4 @@
-package rs.teslaris.core.harvester;
+package rs.teslaris.core.harvester.organisationunits;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -8,21 +8,21 @@ import javax.xml.bind.annotation.XmlType;
 import lombok.Getter;
 import lombok.Setter;
 
-@XmlType(name = "TPartOf")
+@XmlType(name = "TMetadata")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "PartOf")
+@XmlRootElement(name = "metadata")
 @Getter
 @Setter
-class PartOf {
+public class Metadata {
 
-    @XmlElement(name = "OrgUnit")
+    @XmlElement(name = "OrgUnit", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private OrgUnit orgUnit;
 
 
-    public PartOf() {
+    public Metadata() {
     }
 
-    public PartOf(OrgUnit orgUnit) {
+    public Metadata(OrgUnit orgUnit) {
         this.orgUnit = orgUnit;
     }
 }

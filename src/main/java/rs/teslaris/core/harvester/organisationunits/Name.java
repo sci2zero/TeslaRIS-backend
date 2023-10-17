@@ -1,4 +1,4 @@
-package rs.teslaris.core.harvester;
+package rs.teslaris.core.harvester.organisationunits;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -14,7 +14,7 @@ import lombok.Setter;
 @XmlRootElement(name = "Name")
 @Getter
 @Setter
-class Name {
+public class Name {
 
     @XmlAttribute(name = "xml:lang")
     private String lang;

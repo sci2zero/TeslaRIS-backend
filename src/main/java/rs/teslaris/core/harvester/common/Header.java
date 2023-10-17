@@ -1,4 +1,4 @@
-package rs.teslaris.core.harvester;
+package rs.teslaris.core.harvester.common;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -13,7 +13,7 @@ import lombok.Setter;
 @XmlRootElement(name = "header")
 @Getter
 @Setter
-class Header {
+public class Header {
 
     @XmlElement(name = "identifier")
     private String identifier;
