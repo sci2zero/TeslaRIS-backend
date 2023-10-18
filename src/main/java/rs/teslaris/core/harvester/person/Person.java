@@ -7,7 +7,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -16,6 +18,8 @@ import lombok.ToString;
 @XmlRootElement(name = "Person")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class Person {
 
@@ -36,18 +40,4 @@ public class Person {
 
     @XmlElement(name = "Affiliation")
     private Affiliation affiliation;
-
-
-    public Person() {
-    }
-
-    public Person(String id, PersonName personName, String scopusAuthorId, String gender,
-                  List<String> electronicAddresses, Affiliation affiliation) {
-        this.id = id;
-        this.personName = personName;
-        this.scopusAuthorId = scopusAuthorId;
-        this.gender = gender;
-        this.electronicAddresses = electronicAddresses;
-        this.affiliation = affiliation;
-    }
 }

@@ -7,16 +7,20 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import rs.teslaris.core.harvester.common.Name;
+import rs.teslaris.core.harvester.common.MultilingualContent;
 
 @XmlType(name = "TOrgUnit", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "OrgUnit")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class OrgUnit {
 
@@ -24,18 +28,8 @@ public class OrgUnit {
     private String id;
 
     @XmlElement(name = "Name")
-    private List<Name> name;
+    private List<MultilingualContent> multilingualContent;
 
     @XmlElement(name = "PartOf")
     private PartOf partOf;
-
-
-    public OrgUnit() {
-    }
-
-    public OrgUnit(String id, List<Name> name, PartOf partOf) {
-        this.id = id;
-        this.name = name;
-        this.partOf = partOf;
-    }
 }

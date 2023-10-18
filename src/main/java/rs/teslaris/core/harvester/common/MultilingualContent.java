@@ -6,7 +6,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -15,21 +17,14 @@ import lombok.ToString;
 @XmlRootElement(name = "Name")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
-public class Name {
+public class MultilingualContent {
 
     @XmlAttribute(name = "lang", namespace = "http://www.w3.org/XML/1998/namespace")
     private String lang;
 
     @XmlValue
     private String value;
-
-
-    public Name() {
-    }
-
-    public Name(String lang, String value) {
-        this.lang = lang;
-        this.value = value;
-    }
 }

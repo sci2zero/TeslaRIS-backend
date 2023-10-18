@@ -1,33 +1,29 @@
-package rs.teslaris.core.harvester.common;
+package rs.teslaris.core.harvester.publication;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.XmlValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-@XmlType(name = "TResumptionToken")
+@XmlType(name = "TPartOfPublication")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "ResumptionToken")
+@XmlRootElement(name = "PartOf")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class ResumptionToken {
+public class PartOf {
 
-    @XmlValue
-    private String value;
+    @XmlElement(name = "DisplayName")
+    private String displayName;
 
-    @XmlAttribute(name = "expirationDate")
-    private String expirationDate;
-
-    @XmlAttribute(name = "cursor")
-    private String cursor;
+    @XmlElement(name = "Publication", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    private Publication publication;
 }

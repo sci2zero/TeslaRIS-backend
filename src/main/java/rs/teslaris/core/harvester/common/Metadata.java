@@ -5,18 +5,23 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import rs.teslaris.core.harvester.event.Event;
 import rs.teslaris.core.harvester.organisationunit.OrgUnit;
 import rs.teslaris.core.harvester.person.Person;
+import rs.teslaris.core.harvester.publication.Publication;
 
 @XmlType(name = "TMetadata")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "metadata")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class Metadata {
 
@@ -29,10 +34,6 @@ public class Metadata {
     @XmlElement(name = "Event", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private Event event;
 
-    public Metadata() {
-    }
-
-    public Metadata(OrgUnit orgUnit) {
-        this.orgUnit = orgUnit;
-    }
+    @XmlElement(name = "Publication", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    private Publication publication;
 }

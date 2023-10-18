@@ -16,7 +16,7 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <packaging>jar</packaging>
-    <name>parent</name>
+    <multilingualContent>parent</multilingualContent>
     <description>Parent project for TeslaRIS platform.</description>
 
     <properties>

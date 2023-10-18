@@ -1,4 +1,4 @@
-package rs.teslaris.core.harvester.common;
+package rs.teslaris.core.harvester.publication;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -10,23 +10,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.harvester.person.Person;
 
-@XmlType(name = "THeader")
+@XmlType(name = "TAuthor", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "header")
+@XmlRootElement(name = "Author")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Header {
+public class Author {
 
-    @XmlElement(name = "identifier")
-    private String identifier;
+    @XmlElement(name = "DisplayName")
+    private String displayName;
 
-    @XmlElement(name = "datestamp")
-    private String datestamp;
-
-    @XmlElement(name = "setSpec")
-    private String setSpec;
+    @XmlElement(name = "Person", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    private Person person;
 }

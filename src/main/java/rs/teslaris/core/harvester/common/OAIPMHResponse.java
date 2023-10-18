@@ -5,7 +5,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -14,6 +16,8 @@ import lombok.ToString;
 @XmlRootElement(name = "OAI-PMH")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class OAIPMHResponse {
 
@@ -25,14 +29,4 @@ public class OAIPMHResponse {
 
     @XmlElement(name = "request")
     private Request request;
-
-
-    public OAIPMHResponse() {
-    }
-
-    public OAIPMHResponse(ListRecords listRecords, String responseDate, Request request) {
-        this.listRecords = listRecords;
-        this.responseDate = responseDate;
-        this.request = request;
-    }
 }

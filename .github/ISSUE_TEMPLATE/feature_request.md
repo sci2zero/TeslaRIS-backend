@@ -1,5 +1,5 @@
 ---
-name: Feature request
+multilingualContent: Feature request
 about: Suggest an idea for this project
 title: ''
 labels: ''

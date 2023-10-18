@@ -6,7 +6,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -15,6 +17,8 @@ import lombok.ToString;
 @XmlRootElement(name = "ListRecords")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class ListRecords {
 
@@ -23,13 +27,4 @@ public class ListRecords {
 
     @XmlElement(name = "resumptionToken")
     private ResumptionToken resumptionToken;
-
-
-    public ListRecords() {
-    }
-
-    public ListRecords(List<Record> records, ResumptionToken resumptionToken) {
-        this.records = records;
-        this.resumptionToken = resumptionToken;
-    }
 }

@@ -6,7 +6,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -15,6 +17,8 @@ import lombok.ToString;
 @XmlRootElement(name = "request")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class Request {
 
@@ -29,14 +33,4 @@ public class Request {
 
     @XmlValue
     private String value;
-
-    public Request() {
-    }
-
-    public Request(String verb, String set, String metadataPrefix, String value) {
-        this.verb = verb;
-        this.set = set;
-        this.metadataPrefix = metadataPrefix;
-        this.value = value;
-    }
 }

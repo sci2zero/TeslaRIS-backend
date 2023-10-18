@@ -2,27 +2,35 @@ package rs.teslaris.core.harvester.event;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import rs.teslaris.core.harvester.common.Name;
+import rs.teslaris.core.harvester.common.MultilingualContent;
 
 @XmlType(name = "TEvent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "Event")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class Event {
 
+    @XmlAttribute(name = "id")
+    private String id;
+
     @XmlElement(name = "Type")
-    private Type type;
+    private EventType eventType;
 
     @XmlElement(name = "Name")
-    private Name name;
+    private MultilingualContent multilingualContent;
 
     @XmlElement(name = "Place")
     private String place;
@@ -38,20 +46,4 @@ public class Event {
 
     @XmlElement(name = "Description")
     private String description;
-
-
-    public Event() {
-    }
-
-    public Event(Type type, Name name, String place, String country, String startDate,
-                 String endDate,
-                 String description) {
-        this.type = type;
-        this.name = name;
-        this.place = place;
-        this.country = country;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.description = description;
-    }
 }
