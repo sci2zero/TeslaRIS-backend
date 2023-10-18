@@ -16,6 +16,6 @@ public class OAIPMHHarvestController {
 
     @GetMapping
     public void testHarvestForOU() {
-        oaipmhHarvester.harvest(OAIPMHDataSet.ORGANISATION_UNITS);
+        oaipmhHarvester.harvest(OAIPMHDataSet.EVENTS);
     }
 }

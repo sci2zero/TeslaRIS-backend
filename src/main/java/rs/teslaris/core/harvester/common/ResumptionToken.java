@@ -8,12 +8,14 @@ import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @XmlType(name = "TResumptionToken")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "ResumptionToken")
 @Getter
 @Setter
+@ToString
 public class ResumptionToken {
 
     @XmlValue

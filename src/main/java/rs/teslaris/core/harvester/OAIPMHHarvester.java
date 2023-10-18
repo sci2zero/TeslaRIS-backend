@@ -40,6 +40,7 @@ public class OAIPMHHarvester {
                 var oaiPmhResponse = parseResponse(responseBody);
 
                 System.out.println(responseBody);
+                System.out.println(oaiPmhResponse);
 
                 // TODO: Save in temporary DB or DB table
                 switch (requestDataSet) {
@@ -56,14 +57,14 @@ public class OAIPMHHarvester {
                     case ORGANISATION_UNITS:
                         break;
                 }
-
-                var resumptionToken = oaiPmhResponse.getListRecords().getResumptionToken();
-                if (resumptionToken == null) {
-                    break;
-                }
-
-                endpoint =
-                    BASE_URL + "?verb=ListRecords&resumptionToken=" + resumptionToken.getValue();
+                break;
+//                var resumptionToken = oaiPmhResponse.getListRecords().getResumptionToken();
+//                if (resumptionToken == null) {
+//                    break;
+//                }
+//
+//                endpoint =
+//                    BASE_URL + "?verb=ListRecords&resumptionToken=" + resumptionToken.getValue();
             } else {
                 log.error("OAI-PMH request failed with response code: " +
                     responseEntity.getStatusCodeValue());

@@ -1,4 +1,4 @@
-package rs.teslaris.core.harvester.organisationunits;
+package rs.teslaris.core.harvester.event;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -8,26 +8,28 @@ import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
-@XmlType(name = "TName")
+@XmlType(name = "TType")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "Name")
+@XmlRootElement(name = "Type")
 @Getter
 @Setter
-public class Name {
+@ToString
+public class Type {
 
-    @XmlAttribute(name = "xml:lang")
-    private String lang;
+    @XmlAttribute(name = "scheme")
+    private String scheme;
 
     @XmlValue
     private String value;
 
 
-    public Name() {
+    public Type() {
     }
 
-    public Name(String lang, String value) {
-        this.lang = lang;
+    public Type(String scheme, String value) {
+        this.scheme = scheme;
         this.value = value;
     }
 }

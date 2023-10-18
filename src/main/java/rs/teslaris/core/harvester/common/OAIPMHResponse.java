@@ -7,12 +7,14 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @XmlType(name = "TOAI-PMH", propOrder = {"responseDate", "request", "listRecords"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "OAI-PMH")
 @Getter
 @Setter
+@ToString
 public class OAIPMHResponse {
 
     @XmlElement(name = "ListRecords")

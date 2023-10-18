@@ -7,7 +7,7 @@
         @javax.xml.bind.annotation.XmlNs(prefix = "xs", namespaceURI = "http://www.w3.org/2001/XMLSchema")}
 )
 
-package rs.teslaris.core.harvester.common;
+package rs.teslaris.core.harvester.event;
 
 import javax.xml.bind.annotation.XmlNsForm;
 import javax.xml.bind.annotation.XmlSchema;

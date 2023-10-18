@@ -10,33 +10,26 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-@XmlType(name = "TRequest")
+@XmlType(name = "TName")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "request")
+@XmlRootElement(name = "Name")
 @Getter
 @Setter
 @ToString
-public class Request {
+public class Name {
 
-    @XmlAttribute(name = "verb")
-    private String verb;
-
-    @XmlAttribute(name = "set")
-    private String set;
-
-    @XmlAttribute(name = "metadataPrefix")
-    private String metadataPrefix;
+    @XmlAttribute(name = "lang", namespace = "http://www.w3.org/XML/1998/namespace")
+    private String lang;
 
     @XmlValue
     private String value;
 
-    public Request() {
+
+    public Name() {
     }
 
-    public Request(String verb, String set, String metadataPrefix, String value) {
-        this.verb = verb;
-        this.set = set;
-        this.metadataPrefix = metadataPrefix;
+    public Name(String lang, String value) {
+        this.lang = lang;
         this.value = value;
     }
 }
