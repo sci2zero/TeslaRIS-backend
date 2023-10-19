@@ -35,6 +35,9 @@ public class Person {
     @XmlElement(name = "Gender")
     private String gender;
 
+    @XmlElement(name = "ORCID")
+    private String orcid;
+
     @XmlElement(name = "ElectronicAddress")
     private List<String> electronicAddresses;
 

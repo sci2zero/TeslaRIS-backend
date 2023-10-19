@@ -5,6 +5,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import lombok.AllArgsConstructor;
@@ -57,6 +58,7 @@ public class Publication {
     @XmlElement(name = "EndPage")
     private String endPage;
 
-    @XmlElement(name = "Authors")
+    @XmlElementWrapper(name = "Authors")
+    @XmlElement(name = "Author")
     private List<Author> authors;
 }
