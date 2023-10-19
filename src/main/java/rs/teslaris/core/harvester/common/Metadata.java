@@ -12,6 +12,7 @@ import lombok.Setter;
 import lombok.ToString;
 import rs.teslaris.core.harvester.event.Event;
 import rs.teslaris.core.harvester.organisationunit.OrgUnit;
+import rs.teslaris.core.harvester.patent.Patent;
 import rs.teslaris.core.harvester.person.Person;
 import rs.teslaris.core.harvester.publication.Publication;
 
@@ -36,4 +37,7 @@ public class Metadata {
 
     @XmlElement(name = "Publication", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private Publication publication;
+
+    @XmlElement(name = "Patent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    private Patent patent;
 }

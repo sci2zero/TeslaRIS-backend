@@ -1,6 +1,5 @@
 package rs.teslaris.core.harvester.common;
 
-import java.util.Date;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -11,23 +10,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.harvester.person.Person;
 
-@XmlType(name = "TOAI-PMH", propOrder = {"responseDate", "request", "listRecords"})
+@XmlType(name = "TPersonAttributes", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "OAI-PMH")
+@XmlRootElement(name = "PersonAttributes")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class OAIPMHResponse {
+public class PersonAttributes {
 
-    @XmlElement(name = "ListRecords")
-    private ListRecords listRecords;
+    @XmlElement(name = "DisplayName")
+    private String displayName;
 
-    @XmlElement(name = "responseDate")
-    private Date responseDate;
-
-    @XmlElement(name = "request")
-    private Request request;
+    @XmlElement(name = "Person", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    private Person person;
 }
