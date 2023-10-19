@@ -1,4 +1,4 @@
-package rs.teslaris.core.harvester.patent;
+package rs.teslaris.core.harvester.product;
 
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -15,39 +15,38 @@ import lombok.Setter;
 import lombok.ToString;
 import rs.teslaris.core.harvester.common.MultilingualContent;
 import rs.teslaris.core.harvester.common.PersonAttributes;
-import rs.teslaris.core.harvester.publication.Author;
 
-@XmlType(name = "TPatent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+@XmlType(name = "TProduct", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "Patent")
+@XmlRootElement(name = "Product")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Patent {
+public class Product {
 
     @XmlAttribute(name = "id")
     private String id;
 
 
-    @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Patent_Types")
+    @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Product_Types")
     private String type;
 
 
-    @XmlElement(name = "Title")
-    private MultilingualContent title;
+    @XmlElement(name = "Language")
+    private String language;
 
 
-    @XmlElement(name = "ApprovalDate")
-    private String approvalDate;
+    @XmlElement(name = "Name")
+    private MultilingualContent name;
 
 
-    @XmlElement(name = "PatentNumber")
-    private String patentNumber;
+    @XmlElement(name = "URL")
+    private MultilingualContent url;
 
 
-    @XmlElementWrapper(name = "Inventors")
-    @XmlElement(name = "Inventor")
-    private List<PersonAttributes> inventor;
+    @XmlElementWrapper(name = "Creators")
+    @XmlElement(name = "Creator")
+    private List<PersonAttributes> creators;
 }

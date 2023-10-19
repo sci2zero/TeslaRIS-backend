@@ -14,6 +14,7 @@ import rs.teslaris.core.harvester.event.Event;
 import rs.teslaris.core.harvester.organisationunit.OrgUnit;
 import rs.teslaris.core.harvester.patent.Patent;
 import rs.teslaris.core.harvester.person.Person;
+import rs.teslaris.core.harvester.product.Product;
 import rs.teslaris.core.harvester.publication.Publication;
 
 @XmlType(name = "TMetadata")
@@ -40,4 +41,7 @@ public class Metadata {
 
     @XmlElement(name = "Patent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private Patent patent;
+
+    @XmlElement(name = "Product", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    private Product product;
 }
