@@ -15,7 +15,6 @@ import lombok.Setter;
 import lombok.ToString;
 import rs.teslaris.core.harvester.common.MultilingualContent;
 import rs.teslaris.core.harvester.common.PersonAttributes;
-import rs.teslaris.core.harvester.publication.Author;
 
 @XmlType(name = "TPatent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)

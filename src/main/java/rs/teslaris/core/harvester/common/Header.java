@@ -1,6 +1,5 @@
 package rs.teslaris.core.harvester.common;
 
-import java.time.LocalDate;
 import java.util.Date;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

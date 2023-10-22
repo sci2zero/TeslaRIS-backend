@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import rs.teslaris.core.harvester.common.OAIPMHDataSet;
 import rs.teslaris.core.harvester.common.OAIPMHResponse;
+import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 
 @Component
 @RequiredArgsConstructor
@@ -94,7 +95,8 @@ public class OAIPMHHarvester {
                 .loadTrustMaterial(null, acceptingTrustStrategy)
                 .build();
         } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
-            throw new RuntimeException(e);
+            log.error("Rest template construction failed.");
+            throw new CantConstructRestTemplateException(e.getMessage());
         }
 
         var connectionSocketFactory =
