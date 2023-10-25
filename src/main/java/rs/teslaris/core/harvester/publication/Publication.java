@@ -1,5 +1,6 @@
 package rs.teslaris.core.harvester.publication;
 
+import java.util.Date;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -38,7 +39,7 @@ public class Publication {
     private MultilingualContent title;
 
     @XmlElement(name = "PublicationDate")
-    private String publicationDate;
+    private Date publicationDate;
 
     @XmlElement(name = "OutputFrom")
     private OutputFrom outputFrom;

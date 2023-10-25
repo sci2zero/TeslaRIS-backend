@@ -30,22 +30,17 @@ public class Patent {
     @XmlAttribute(name = "id")
     private String id;
 
-
     @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Patent_Types")
     private String type;
-
 
     @XmlElement(name = "Title")
     private MultilingualContent title;
 
-
     @XmlElement(name = "ApprovalDate")
     private Date approvalDate;
 
-
     @XmlElement(name = "PatentNumber")
     private String patentNumber;
-
 
     @XmlElementWrapper(name = "Inventors")
     @XmlElement(name = "Inventor")
