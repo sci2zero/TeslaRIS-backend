@@ -13,6 +13,7 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.TrustStrategy;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,7 @@ public class OAIPMHHarvester {
 
     private final String BASE_URL = "https://cris.uns.ac.rs/OAIHandlerOpenAIRECRIS";
 
+    private final MongoTemplate mongoTemplate;
 
     public void harvest(OAIPMHDataSet requestDataSet) {
         String endpoint = constructOAIPMHEndpoint(requestDataSet.getStringValue());
@@ -40,25 +42,31 @@ public class OAIPMHHarvester {
                 String responseBody = responseEntity.getBody();
                 var oaiPmhResponse = parseResponse(responseBody);
 
-                System.out.println(responseBody);
-                System.out.println(oaiPmhResponse);
-
-                // TODO: Save in temporary DB or DB table
-                switch (requestDataSet) {
-                    case EVENTS:
-                        break;
-                    case PATENTS:
-                        break;
-                    case PERSONS:
-                        break;
-                    case PRODUCTS:
-                        break;
-                    case PUBLICATIONS:
-                        break;
-                    case ORGANISATION_UNITS:
-                        break;
-                }
-                break;
+                var records = oaiPmhResponse.getListRecords().getRecords();
+                records.forEach(
+                    record -> {
+                        var metadata = record.getMetadata();
+                        switch (requestDataSet) {
+                            case EVENTS:
+                                mongoTemplate.save(metadata.getEvent());
+                                break;
+                            case PATENTS:
+                                mongoTemplate.save(metadata.getPatent());
+                                break;
+                            case PERSONS:
+                                mongoTemplate.save(metadata.getPerson());
+                                break;
+                            case PRODUCTS:
+                                mongoTemplate.save(metadata.getProduct());
+                                break;
+                            case PUBLICATIONS:
+                                mongoTemplate.save(metadata.getPublication());
+                                break;
+                            case ORGANISATION_UNITS:
+                                mongoTemplate.save(metadata.getOrgUnit());
+                                break;
+                        }
+                    });
 //                var resumptionToken = oaiPmhResponse.getListRecords().getResumptionToken();
 //                if (resumptionToken == null) {
 //                    break;
@@ -69,8 +77,8 @@ public class OAIPMHHarvester {
             } else {
                 log.error("OAI-PMH request failed with response code: " +
                     responseEntity.getStatusCodeValue());
-                break;
             }
+            break;
         }
     }
 

@@ -16,6 +16,6 @@ public class OAIPMHHarvestController {
 
     @GetMapping
     public void testHarvestForOU() {
-        oaipmhHarvester.harvest(OAIPMHDataSet.PRODUCTS);
+        oaipmhHarvester.harvest(OAIPMHDataSet.PERSONS);
     }
 }
