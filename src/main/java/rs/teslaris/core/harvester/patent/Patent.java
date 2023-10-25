@@ -1,5 +1,6 @@
 package rs.teslaris.core.harvester.patent;
 
+import java.util.Date;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -40,7 +41,7 @@ public class Patent {
 
 
     @XmlElement(name = "ApprovalDate")
-    private String approvalDate;
+    private Date approvalDate;
 
 
     @XmlElement(name = "PatentNumber")
