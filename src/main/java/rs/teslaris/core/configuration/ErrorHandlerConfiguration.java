@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
+import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantRegisterAdminException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
@@ -173,6 +175,21 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(MalformedJwtException.class)
     @ResponseBody
     ErrorObject handleMalformedJwtException(HttpServletRequest request, MalformedJwtException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(CantConstructRestTemplateException.class)
+    @ResponseBody
+    ErrorObject handleCantConstructRestTemplateException(HttpServletRequest request,
+                                                         CantConstructRestTemplateException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(LoadingException.class)
+    @ResponseBody
+    ErrorObject handleLoadingException(HttpServletRequest request, LoadingException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }
