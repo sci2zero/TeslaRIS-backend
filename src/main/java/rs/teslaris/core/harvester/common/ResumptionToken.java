@@ -1,5 +1,6 @@
 package rs.teslaris.core.harvester.common;
 
+import java.util.Date;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -26,7 +27,7 @@ public class ResumptionToken {
     private String value;
 
     @XmlAttribute(name = "expirationDate")
-    private String expirationDate;
+    private Date expirationDate;
 
     @XmlAttribute(name = "cursor")
     private String cursor;

@@ -40,7 +40,7 @@ public class MongoConfiguration extends AbstractMongoClientConfiguration {
 
     @NotNull
     @Override
-    public Collection getMappingBasePackages() {
+    public Collection<String> getMappingBasePackages() {
         return Collections.singleton("rs.teslaris.core.harvester");
     }
 }
