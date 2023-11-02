@@ -27,6 +27,9 @@ import rs.teslaris.core.harvester.common.PersonAttributes;
 @ToString
 public class Patent {
 
+    @XmlElement(name = "Keyword")
+    List<String> keywords;
+
     @XmlAttribute(name = "id")
     private String id;
 
@@ -41,6 +44,12 @@ public class Patent {
 
     @XmlElement(name = "PatentNumber")
     private String patentNumber;
+
+    @XmlElement(name = "Abstract")
+    private String _abstract;
+
+    @XmlElement(name = "Access")
+    private String access;
 
     @XmlElementWrapper(name = "Inventors")
     @XmlElement(name = "Inventor")

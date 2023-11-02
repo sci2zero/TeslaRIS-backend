@@ -1,6 +1,7 @@
 package rs.teslaris.core.harvester.event;
 
 import java.util.Date;
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -47,4 +48,7 @@ public class Event {
 
     @XmlElement(name = "Description")
     private String description;
+
+    @XmlElement(name = "Keyword")
+    private List<String> keywords;
 }

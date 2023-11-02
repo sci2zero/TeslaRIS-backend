@@ -26,25 +26,29 @@ import rs.teslaris.core.harvester.common.PersonAttributes;
 @ToString
 public class Product {
 
+    @XmlElement(name = "Keyword")
+    List<String> keywords;
+
     @XmlAttribute(name = "id")
     private String id;
-
 
     @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Product_Types")
     private String type;
 
-
     @XmlElement(name = "Language")
     private String language;
-
 
     @XmlElement(name = "Name")
     private MultilingualContent name;
 
-
     @XmlElement(name = "URL")
     private MultilingualContent url;
 
+    @XmlElement(name = "Description")
+    private String description;
+
+    @XmlElement(name = "Access")
+    private String access;
 
     @XmlElementWrapper(name = "Creators")
     @XmlElement(name = "Creator")
