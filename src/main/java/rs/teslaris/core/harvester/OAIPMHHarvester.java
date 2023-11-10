@@ -113,6 +113,8 @@ public class OAIPMHHarvester {
             saxParserFactory.setFeature(
                 "http://apache.org/xml/features/nonvalidating/load-external-dtd",
                 Boolean.FALSE);
+            saxParserFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl",
+                Boolean.TRUE);
             saxParserFactory.setValidating(Boolean.FALSE);
 
             var xmlReader = saxParserFactory.newSAXParser().getXMLReader();
