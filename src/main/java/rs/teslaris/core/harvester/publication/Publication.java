@@ -101,9 +101,8 @@ public class Publication {
     @XmlElement(name = "Publisher")
     private List<Publisher> publishers;
 
-    @XmlElementWrapper(name = "PublishedIn")
-    @XmlElement(name = "Publication", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
-    private Publication publication;
+    @XmlElement(name = "PublishedIn")
+    private PublishedIn publishedIn;
 
     @XmlElement(name = "PartOf")
     private PartOf partOf;
