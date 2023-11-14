@@ -35,6 +35,7 @@ import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
@@ -44,7 +45,6 @@ import rs.teslaris.core.service.impl.user.UserServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
-import rs.teslaris.core.util.exceptionhandling.exception.CantRegisterAdminException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
@@ -139,7 +139,6 @@ public class UserServiceTest {
         registrationRequest.setFirstname("John");
         registrationRequest.setLastName("Doe");
         registrationRequest.setPreferredLanguageId(1);
-        registrationRequest.setAuthorityId(2);
         registrationRequest.setPersonId(1);
         registrationRequest.setOrganisationalUnitId(1);
 
@@ -147,8 +146,9 @@ public class UserServiceTest {
         when(languageService.findOne(1)).thenReturn(language);
 
         Authority authority = new Authority();
-        authority.setName("USER");
-        when(authorityRepository.findById(2)).thenReturn(Optional.of(authority));
+        authority.setName(UserRole.RESEARCHER.toString());
+        when(authorityRepository.findByName(UserRole.RESEARCHER.toString())).thenReturn(
+            Optional.of(authority));
 
         var person = new Person();
         when(personService.findOne(1)).thenReturn(person);
@@ -182,7 +182,6 @@ public class UserServiceTest {
     public void shouldThrowNotFoundWhenAuthorityNotFound() {
         // given
         var registrationRequest = new RegistrationRequestDTO();
-        registrationRequest.setAuthorityId(2);
 
         when(authorityRepository.findById(2)).thenReturn(Optional.empty());
 
@@ -190,27 +189,6 @@ public class UserServiceTest {
         assertThrows(NotFoundException.class, () -> userService.registerUser(registrationRequest));
 
         // then (NotFoundException should be thrown)
-    }
-
-    @Test
-    public void shouldThrowCantRegisterAdminWhenTryingToRegisterAdmin() {
-        // given
-        var registrationRequest = new RegistrationRequestDTO();
-        registrationRequest.setAuthorityId(1);
-        registrationRequest.setPreferredLanguageId(1);
-
-        var adminAuthority = new Authority();
-        adminAuthority.setName("ADMIN");
-        when(authorityRepository.findById(1)).thenReturn(Optional.of(adminAuthority));
-
-        var language = new Language();
-        when(languageService.findOne(1)).thenReturn(language);
-
-        // when
-        assertThrows(CantRegisterAdminException.class,
-            () -> userService.registerUser(registrationRequest));
-
-        // then (CantRegisterAdminException should be thrown)
     }
 
     @Test

@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
-import rs.teslaris.core.util.exceptionhandling.exception.CantRegisterAdminException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
@@ -119,14 +118,6 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleTakeOfRoleNotPermittedException(HttpServletRequest request,
                                                       TakeOfRoleNotPermittedException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(CantRegisterAdminException.class)
-    @ResponseBody
-    ErrorObject handleCantRegisterAdminException(HttpServletRequest request,
-                                                 CantRegisterAdminException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 

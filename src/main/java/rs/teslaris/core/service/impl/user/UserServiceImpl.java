@@ -21,9 +21,11 @@ import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
@@ -34,7 +36,6 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.email.EmailUtil;
-import rs.teslaris.core.util.exceptionhandling.exception.CantRegisterAdminException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
@@ -202,15 +203,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             languageService.findOne(registrationRequest.getPreferredLanguageId());
 
         var authority =
-            authorityRepository.findById(registrationRequest.getAuthorityId())
-                .orElseThrow(
-                    () -> new NotFoundException("Authority with given ID does not exist."));
+            authorityRepository.findByName(UserRole.RESEARCHER.toString()).orElseThrow(
+                () -> new NotFoundException("Default authority not initialized."));
 
-        if (authority.getName().equals("ADMIN")) {
-            throw new CantRegisterAdminException("Can't register new admin.");
+        Person person = null;
+        if (registrationRequest.getPersonId() > 0) {
+            person = personService.findOne(registrationRequest.getPersonId());
         }
-
-        var person = personService.findOne(registrationRequest.getPersonId());
 
         var organisationalUnit = organisationUnitService.findOrganisationUnitById(
             registrationRequest.getOrganisationalUnitId());
