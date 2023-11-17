@@ -4,6 +4,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,11 +32,8 @@ public class RegistrationRequestDTO {
     @Positive(message = "Preferred languageID must be a positive number.")
     private Integer preferredLanguageId;
 
-    @NotNull(message = "You must provide an authority ID.")
-    @Positive(message = "Authority ID must be a positive number.")
-    private Integer authorityId;
-
     @NotNull(message = "You must provide a person ID.")
+    @PositiveOrZero(message = "Person ID cannot be a negative number.")
     private Integer personId;
 
     @NotNull(message = "You must provide an authority ID.")
