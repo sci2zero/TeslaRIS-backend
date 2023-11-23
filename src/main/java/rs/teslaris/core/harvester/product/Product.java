@@ -39,13 +39,13 @@ public class Product {
     private String language;
 
     @XmlElement(name = "Name")
-    private MultilingualContent name;
+    private List<MultilingualContent> name;
 
     @XmlElement(name = "URL")
-    private MultilingualContent url;
+    private List<MultilingualContent> url;
 
     @XmlElement(name = "Description")
-    private String description;
+    private List<MultilingualContent> description;
 
     @XmlElement(name = "Access")
     private String access;

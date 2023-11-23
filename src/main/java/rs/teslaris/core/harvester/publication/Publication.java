@@ -39,10 +39,10 @@ public class Publication {
     private String language;
 
     @XmlElement(name = "Title")
-    private MultilingualContent title;
+    private List<MultilingualContent> title;
 
     @XmlElement(name = "Subtitle")
-    private MultilingualContent subtitle;
+    private List<MultilingualContent> subtitle;
 
     @XmlElement(name = "PublicationDate")
     private Date publicationDate;

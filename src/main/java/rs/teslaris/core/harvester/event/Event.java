@@ -32,7 +32,7 @@ public class Event {
     private EventType eventType;
 
     @XmlElement(name = "Name")
-    private MultilingualContent multilingualContent;
+    private List<MultilingualContent> eventName;
 
     @XmlElement(name = "Place")
     private String place;

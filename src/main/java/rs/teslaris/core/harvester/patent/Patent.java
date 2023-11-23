@@ -37,7 +37,7 @@ public class Patent {
     private String type;
 
     @XmlElement(name = "Title")
-    private MultilingualContent title;
+    private List<MultilingualContent> title;
 
     @XmlElement(name = "ApprovalDate")
     private Date approvalDate;

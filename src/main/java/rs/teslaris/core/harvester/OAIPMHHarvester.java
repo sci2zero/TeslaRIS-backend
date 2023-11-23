@@ -35,7 +35,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTempla
 @Slf4j
 public class OAIPMHHarvester {
 
-    private final String BASE_URL = "https://cris.uns.ac.rs/OAIHandlerOpenAIRECRIS";
+    private final String BASE_URL = "https://cris.uns.ac.rs/OAIHandlerTeslaRIS";
 
     private final MongoTemplate mongoTemplate;
 

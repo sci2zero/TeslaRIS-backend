@@ -15,7 +15,7 @@ registered with init.d or systemd.
 
 You can build the maven project using command ```mvn package``` or ```mvn install```. It will create the .jar file
 inside target folder. You can then run your application by typing ```./my-application.jar``` (where my-application is
-the multilingualContent of your artifact). The directory containing the jar is used as your application’s working directory.
+the name of your artifact). The directory containing the jar is used as your application’s working directory.
 
 Alternatively, Spring Boot application can be easily started as Unix/Linux services by using either ```init.d```
 or ```systemd```. For detailed tutorial on this topic, please visit the official
