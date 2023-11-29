@@ -234,9 +234,5 @@ public class DbInitializer implements ApplicationRunner {
         bookSeries2.setTitle(Set.of(new MultiLingualContent(englishTag, "BookSeries2", 1)));
         bookSeries2.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR2", 1)));
         bookSeriesRepository.save(bookSeries2);
-
-        var harvestOaiPmhData = new Privilege("HARVEST_OAI_PMH_DATA");
-        privilegeRepository.save(harvestOaiPmhData);
-        adminAuthority.addPrivilege(harvestOaiPmhData);
     }
 }

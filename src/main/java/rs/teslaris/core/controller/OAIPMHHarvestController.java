@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import io.jsonwebtoken.MalformedJwtException;
 import javax.naming.AuthenticationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +28,7 @@ public class OAIPMHHarvestController {
                         @RequestHeader("X-API-KEY") String userApiKey)
         throws AuthenticationException {
         if (!apiKey.equals(userApiKey)) {
-            throw new AuthenticationException("Bad API key");
+            throw new MalformedJwtException("Bad API key");
         }
 
         oaipmhHarvester.harvest(dataSet);
