@@ -39,7 +39,6 @@ build/
 **/.DS_Store
 
 ### SSL ###
-### SSL ###
-/src/main/resources/*.jks
-/src/main/resources/*.p12
-/src/main/resources/*.pem
+src/main/resources/*.jks
+src/main/resources/*.p12
+src/main/resources/*.pem

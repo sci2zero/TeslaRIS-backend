@@ -69,7 +69,7 @@ public class Publication {
     private String endPage;
 
     @XmlElement(name = "URL")
-    private MultilingualContent url;
+    private List<String> url;
 
     @XmlElement(name = "DOI")
     private String doi;

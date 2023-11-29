@@ -42,7 +42,7 @@ public class Product {
     private List<MultilingualContent> name;
 
     @XmlElement(name = "URL")
-    private List<MultilingualContent> url;
+    private List<String> url;
 
     @XmlElement(name = "Description")
     private List<MultilingualContent> description;

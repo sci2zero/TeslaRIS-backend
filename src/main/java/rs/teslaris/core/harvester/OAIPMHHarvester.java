@@ -1,9 +1,14 @@
 package rs.teslaris.core.harvester;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Optional;
 import javax.net.ssl.SSLContext;
 import javax.xml.XMLConstants;
@@ -14,10 +19,13 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.sax.SAXSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHost;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -38,6 +46,19 @@ public class OAIPMHHarvester {
     private final String BASE_URL = "https://cris.uns.ac.rs/OAIHandlerTeslaRIS";
 
     private final MongoTemplate mongoTemplate;
+
+    @Value("${ssl.trust-store}")
+    private String trustStorePath;
+
+    @Value("${ssl.trust-store-password}")
+    private String trustStorePassword;
+
+    @Value("${proxy.host:}")
+    private String proxyHost;
+
+    @Value("${proxy.port:80}")
+    private Integer proxyPort;
+
 
     public void harvest(OAIPMHDataSet requestDataSet) {
         String endpoint = constructOAIPMHEndpoint(requestDataSet.getStringValue());
@@ -134,20 +155,30 @@ public class OAIPMHHarvester {
         TrustStrategy acceptingTrustStrategy = (x509Certificates, s) -> true;
 
         SSLContext sslContext;
-        try {
-            sslContext = org.apache.http.ssl.SSLContexts.custom()
-                .loadTrustMaterial(null, acceptingTrustStrategy)
+        try (InputStream truststoreInputStream = new FileInputStream(trustStorePath)) {
+            var truststore = KeyStore.getInstance(KeyStore.getDefaultType());
+            truststore.load(truststoreInputStream, trustStorePassword.toCharArray());
+
+            sslContext = SSLContexts.custom()
+                .loadTrustMaterial(truststore, acceptingTrustStrategy)
                 .build();
-        } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
-            log.error("Rest template construction failed.");
-            throw new CantConstructRestTemplateException(e.getMessage());
+        } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException |
+                 CertificateException | IOException e) {
+            log.error("Rest template construction failed. Reason:\n" + e.getMessage());
+            throw new CantConstructRestTemplateException(
+                "Unable to establish secure connection to remote host.");
         }
 
         var connectionSocketFactory =
             new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
-        var httpClient = HttpClients.custom().setSSLSocketFactory(connectionSocketFactory).build();
+        var httpClient = HttpClients.custom().setSSLSocketFactory(connectionSocketFactory);
+
+        if (!proxyHost.isEmpty()) {
+            httpClient.setProxy(new HttpHost(proxyHost, proxyPort));
+        }
+
         var requestFactory = new HttpComponentsClientHttpRequestFactory();
-        requestFactory.setHttpClient(httpClient);
+        requestFactory.setHttpClient(httpClient.build());
 
         return new RestTemplate(requestFactory);
     }

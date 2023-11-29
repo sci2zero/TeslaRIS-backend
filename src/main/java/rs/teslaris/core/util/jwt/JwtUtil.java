@@ -23,10 +23,13 @@ public class JwtUtil {
 
     public static final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS512;
     private final SecureRandom secureRandom = new SecureRandom();
+
     @Value("${jwt.token.validity}")
     public Long tokenValidity;
+
     @Value("${jwt.signing.key}")
     public String signingKey;
+
     @Value("${spring.application.name}")
     public String appName;
 
