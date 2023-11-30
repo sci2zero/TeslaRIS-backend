@@ -1,0 +1,1 @@
+# 01-init.sh must have execute permission so docker compose could execute it from postgres container
