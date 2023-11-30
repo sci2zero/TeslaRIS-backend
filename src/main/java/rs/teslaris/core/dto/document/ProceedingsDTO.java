@@ -20,8 +20,6 @@ public class ProceedingsDTO extends DocumentDTO {
 
     private List<Integer> languageTagIds;
 
-    private Integer eventId;
-
     private Integer publisherId;
 
     private Integer publicationSeriesId;

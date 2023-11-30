@@ -7,20 +7,30 @@ services:
       context: .
       dockerfile: .docker/Dockerfile
     depends_on:
-      - db
-      - elasticsearch
-      - kibana
-      - minio
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      db:
+        condition: service_started
+      kibana:
+        condition: service_started
+      mongo:
+        condition: service_started
     environment:
       - API_PORT=8081
       - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
+      - DB_PASSWORD=root
       - DB_HOST=db
       - DB_PORT=5432
+      - ES_HOST=elasticsearch
+      - ES_PORT=9200
       - MINIO_HOST=minio
       - MINIO_BUCKET=teslaris-file-items
       - MINIO_ACCESS_KEY=ROOTUSER
       - MINIO_SECRET_KEY=CHANGEME123
+      - MONGO_HOST=mongodb://mongo:27017/
+      - MONGO_DB=teslaris-db
     ports:
       - "8081:8081"
     networks:
@@ -31,7 +41,7 @@ services:
     container_name: teslaris-postgres-db
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=root
       - APP_DB_NAME=TeslaRISDB
     ports:
       - "5432:5432"
@@ -43,7 +53,9 @@ services:
     restart: always
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.4.3
+    build:
+      context: .
+      dockerfile: .docker/ElasticSearch/Dockerfile
     container_name: teslaris-elasticsearch
     environment:
       - discovery.type=single-node
@@ -53,6 +65,11 @@ services:
       - "9200:9200"
     networks:
       - teslaris-network
+    healthcheck:
+      test: curl -s http://localhost:9200 >/dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 50
     restart: always
 
   kibana:
@@ -79,6 +96,14 @@ services:
     networks:
       - teslaris-network
 
+  mongo:
+    image: mongo:7.0.2
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo-db:/data/db
+    
+
 networks:
   teslaris-network:
     name: teslaris-network
@@ -87,3 +112,4 @@ volumes:
   db:
   scripts:
   minio-data:
+  mongo-db:

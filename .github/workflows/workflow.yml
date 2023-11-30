@@ -55,6 +55,10 @@ jobs:
           MINIO_SECRET_KEY: minio-secret-key
         ports:
           - 9000:9000
+      mongo:
+        image: mongo:7.0.2
+        ports:
+          - 27017:27017
 
     steps:
       - uses: actions/checkout@v3

@@ -30,8 +30,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Value("${jwt.header.string}")
     public String headerString;
+
     @Value("${jwt.token.prefix}")
     public String tokenPrefix;
+
 
     protected JwtFilter(JwtUtil tokenUtil,
                         UserService userService) {

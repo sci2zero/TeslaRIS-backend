@@ -8,7 +8,6 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -55,11 +54,15 @@ public class SecurityConfiguration {
 
         http.authorizeRequests()
 
+            // PERMIT FETCHING OF STATIC FILES
+            .antMatchers("/css/**", "/js/**", "/img/**", "/lib/**", "/favicon.ico").permitAll()
+
             // BASIC ENDPOINT CONFIGURATION
             .antMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/register").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/basic-search").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");
@@ -68,12 +71,5 @@ public class SecurityConfiguration {
             BasicAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.debug(false)
-            .ignoring()
-            .antMatchers("/css/**", "/js/**", "/img/**", "/lib/**", "/favicon.ico");
     }
 }
