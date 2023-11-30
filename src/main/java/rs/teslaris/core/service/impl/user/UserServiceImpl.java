@@ -185,8 +185,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public void activateUserAccount(String activationTokenValue) {
         var accountActivation =
-            userAccountActivationRepository.findByActivationToken(
-                    activationTokenValue)
+            userAccountActivationRepository.findByActivationToken(activationTokenValue)
                 .orElseThrow(() -> new NotFoundException("Invalid activation token"));
 
         var userToActivate = accountActivation.getUser();
@@ -202,12 +201,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var preferredLanguage =
             languageService.findOne(registrationRequest.getPreferredLanguageId());
 
-        var authority =
-            authorityRepository.findByName(UserRole.RESEARCHER.toString()).orElseThrow(
-                () -> new NotFoundException("Default authority not initialized."));
+        var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
+            .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
         Person person = null;
-        if (registrationRequest.getPersonId() > 0) {
+        if (Objects.nonNull(registrationRequest.getPersonId())) {
             person = personService.findOne(registrationRequest.getPersonId());
         }
 
@@ -237,8 +235,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                                                 Integer userId, String fingerprint) {
         var userToUpdate = findOne(userId);
 
-        var preferredLanguage =
-            languageService.findOne(userUpdateRequest.getPreferredLanguageId());
+        var preferredLanguage = languageService.findOne(userUpdateRequest.getPreferredLanguageId());
 
         var person = personService.findOne(userUpdateRequest.getPersonId());
 

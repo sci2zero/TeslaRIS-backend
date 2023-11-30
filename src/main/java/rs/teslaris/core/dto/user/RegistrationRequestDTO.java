@@ -32,8 +32,7 @@ public class RegistrationRequestDTO {
     @Positive(message = "Preferred languageID must be a positive number.")
     private Integer preferredLanguageId;
 
-    @NotNull(message = "You must provide a person ID.")
-    @PositiveOrZero(message = "Person ID cannot be a negative number.")
+    @Positive(message = "Person ID must be a positive number.")
     private Integer personId;
 
     @NotNull(message = "You must provide an authority ID.")
