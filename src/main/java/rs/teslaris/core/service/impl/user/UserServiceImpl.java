@@ -34,6 +34,7 @@ import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -324,10 +325,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         OrganisationUnit organisationUnit = null;
         if (Objects.nonNull(person.getInvolvements())) {
             Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
+                .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
+                .filter(involvement ->
+                    involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                        involvement.getInvolvementType().equals(InvolvementType.HIRED_BY))
                 .max(Comparator.comparing(Involvement::getDateFrom));
 
-            if (latestInvolvement.isPresent() &&
-                Objects.nonNull(latestInvolvement.get().getOrganisationUnit())) {
+            if (latestInvolvement.isPresent()) {
                 organisationUnit = latestInvolvement.get().getOrganisationUnit();
             }
         }
