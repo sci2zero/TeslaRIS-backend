@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +19,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitDeleteRequest;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 
@@ -78,11 +78,12 @@ public class OrganisationUnitController {
         return OrganisationUnitConverter.toDTO(organisationUnit);
     }
 
-    @DeleteMapping("/{organisationUnitId}")
+    @PatchMapping("/delete-organisation-units")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
-        organisationUnitService.delete(organisationUnitId);
+    public void deleteOrganisationUnits(
+        @RequestBody @Valid OrganisationUnitDeleteRequest deleteRequest) {
+        deleteRequest.getOrganisationUnitIds().forEach(organisationUnitService::delete);
     }
 
 }

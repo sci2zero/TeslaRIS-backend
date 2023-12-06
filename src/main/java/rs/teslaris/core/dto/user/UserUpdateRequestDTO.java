@@ -1,7 +1,6 @@
 package rs.teslaris.core.dto.user;
 
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -24,20 +23,13 @@ public class UserUpdateRequestDTO {
     @NotNull(message = "New password cannot be null.")
     private String newPassword;
 
-    @NotBlank(message = "First name cannot be blank.")
     private String firstname;
 
-    @NotBlank(message = "Last name cannot be blank.")
     private String lastName;
 
     @NotNull(message = "You must provide a preferred language ID.")
     @Positive(message = "Preferred languageID must be a positive number.")
     private Integer preferredLanguageId;
 
-    @NotNull(message = "You must provide a person ID.")
-    private Integer personId;
-
-    @NotNull(message = "You must provide an authority ID.")
-    @Positive(message = "Organisational unit ID must be a positive number.")
     private Integer organisationalUnitId;
 }

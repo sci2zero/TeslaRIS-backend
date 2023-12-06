@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,7 @@ import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -136,11 +139,8 @@ public class UserServiceTest {
         var registrationRequest = new RegistrationRequestDTO();
         registrationRequest.setEmail("johndoe@example.com");
         registrationRequest.setPassword("password123");
-        registrationRequest.setFirstname("John");
-        registrationRequest.setLastName("Doe");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
-        registrationRequest.setOrganisationalUnitId(1);
 
         var language = new Language();
         when(languageService.findOne(1)).thenReturn(language);
@@ -151,6 +151,7 @@ public class UserServiceTest {
             Optional.of(authority));
 
         var person = new Person();
+        person.setName(new PersonName("John", "Something", "Doe", LocalDate.of(1995, 12, 3), null));
         when(personService.findOne(1)).thenReturn(person);
 
         var organisationalUnit = new OrganisationUnit();
@@ -228,35 +229,35 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldUpdateUserWhenValidInput() {
+    public void shouldUpdateResearcherUserWhenValidInput() {
         // given
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setEmail("test@example.com");
         requestDTO.setOldPassword("oldPassword");
         requestDTO.setNewPassword("newPassword");
-        requestDTO.setFirstname("John");
-        requestDTO.setLastName("Doe");
+        requestDTO.setFirstname("JOHN");
         requestDTO.setPreferredLanguageId(1);
-        requestDTO.setPersonId(2);
         requestDTO.setOrganisationalUnitId(3);
 
         var user = new User();
+        user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setEmail("oldemail@example.com");
         user.setPassword("oldPassword");
         user.setFirstname("Jane");
         user.setLastName("Doe");
         user.setCanTakeRole(false);
         user.setPreferredLanguage(new Language());
-        user.setPerson(new Person());
-        user.setOrganisationUnit(new OrganisationUnit());
+        var person = new Person();
+        user.setPerson(person);
+        var orgUnit = new OrganisationUnit();
+        orgUnit.setId(4);
+        user.setOrganisationUnit(orgUnit);
 
         var preferredLanguage = new Language();
-        var person = new Person();
         var organisationalUnit = new OrganisationUnit();
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
-        when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
@@ -267,8 +268,58 @@ public class UserServiceTest {
 
         // then
         assertEquals("test@example.com", user.getEmail());
-        assertEquals("John", user.getFirstname());
+        assertEquals("Jane", user.getFirstname());
         assertEquals("Doe", user.getLastName());
+        assertFalse(user.getCanTakeRole());
+        assertEquals(preferredLanguage, user.getPreferredLanguage());
+        assertEquals(person, user.getPerson());
+        assertNotEquals(organisationalUnit, user.getOrganisationUnit());
+        assertEquals("encodedNewPassword", user.getPassword());
+    }
+
+    @Test
+    public void shouldUpdateEmployeeUserWhenValidInput() {
+        // given
+        var requestDTO = new UserUpdateRequestDTO();
+        requestDTO.setEmail("test@example.com");
+        requestDTO.setOldPassword("oldPassword");
+        requestDTO.setNewPassword("newPassword");
+        requestDTO.setFirstname("JOHN");
+        requestDTO.setLastName("SMITH");
+        requestDTO.setPreferredLanguageId(1);
+        requestDTO.setOrganisationalUnitId(3);
+
+        var user = new User();
+        user.setAuthority(new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), null));
+        user.setEmail("oldemail@example.com");
+        user.setPassword("oldPassword");
+        user.setFirstname("Jane");
+        user.setLastName("Doe");
+        user.setCanTakeRole(false);
+        user.setPreferredLanguage(new Language());
+        var person = new Person();
+        user.setPerson(person);
+        var orgUnit = new OrganisationUnit();
+        orgUnit.setId(4);
+        user.setOrganisationUnit(orgUnit);
+
+        var preferredLanguage = new Language();
+        var organisationalUnit = new OrganisationUnit();
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(organisationalUnitService.findOne(3)).thenReturn(
+            organisationalUnit);
+        when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
+        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+
+        // when
+        userService.updateUser(requestDTO, 1, "fingerprint");
+
+        // then
+        assertEquals("test@example.com", user.getEmail());
+        assertEquals("JOHN", user.getFirstname());
+        assertEquals("SMITH", user.getLastName());
         assertFalse(user.getCanTakeRole());
         assertEquals(preferredLanguage, user.getPreferredLanguage());
         assertEquals(person, user.getPerson());
@@ -297,17 +348,15 @@ public class UserServiceTest {
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setOldPassword("wrongPassword");
         var user = new User();
+        user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setPassword("currentPassword");
         var preferredLanguage = new Language();
         requestDTO.setPreferredLanguageId(1);
-        var person = new Person();
-        requestDTO.setPersonId(2);
         var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
-        when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);

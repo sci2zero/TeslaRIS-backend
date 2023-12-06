@@ -7,6 +7,7 @@ import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
+import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.service.interfaces.JPAService;
@@ -15,6 +16,8 @@ import rs.teslaris.core.service.interfaces.JPAService;
 public interface UserService extends UserDetailsService, JPAService<User> {
 
     User loadUserById(Integer userId);
+
+    UserResponseDTO getUserProfile(Integer userId);
 
     int getUserOrganisationUnitId(Integer userId);
 
@@ -41,4 +44,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userID,
                                          String fingerprint);
+
+    void updateResearcherCurrentOrganisationUnitIfBound(Integer personId);
 }

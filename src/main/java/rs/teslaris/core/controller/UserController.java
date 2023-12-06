@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +40,12 @@ public class UserController {
 
     private final UserService userService;
 
+
+    @GetMapping
+    public UserResponseDTO getUser(@RequestHeader("Authorization") String bearerToken) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]);
+        return userService.getUserProfile(userId);
+    }
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponseDTO> authenticateUser(
@@ -85,7 +92,7 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode());
+            newUser.getPreferredLanguage().getLanguageCode(), null);
     }
 
     @PutMapping

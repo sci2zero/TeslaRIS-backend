@@ -2,8 +2,10 @@ package rs.teslaris.core.service.impl.user;
 
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +22,10 @@ import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
+import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -81,6 +86,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     public User loadUserById(Integer userID) throws UsernameNotFoundException {
         return userRepository.findById(userID)
             .orElseThrow(() -> new UsernameNotFoundException("User with this ID does not exist."));
+    }
+
+    @Override
+    @Transactional
+    public UserResponseDTO getUserProfile(Integer userId) {
+        var user = findOne(userId);
+        return new UserResponseDTO(user.getId(), user.getEmail(), user.getFirstname(),
+            user.getLastName(), user.getLocked(), user.getCanTakeRole(),
+            user.getPreferredLanguage().getLanguageCode(), user.getOrganisationUnit().getId());
     }
 
     @Override
@@ -209,13 +223,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             person = personService.findOne(registrationRequest.getPersonId());
         }
 
-        var organisationalUnit = organisationUnitService.findOrganisationUnitById(
-            registrationRequest.getOrganisationalUnitId());
+        OrganisationUnit organisationUnit = getLatestPersonInvolvement(person);
 
         var newUser =
             new User(registrationRequest.getEmail(), registrationRequest.getPassword(), "",
-                registrationRequest.getFirstname(), registrationRequest.getLastName(), true, false,
-                preferredLanguage, authority, person, organisationalUnit);
+                person.getName().getFirstname(), person.getName().getLastname(), true, false,
+                preferredLanguage, authority, person, organisationUnit);
 
         var savedUser = userRepository.save(newUser);
 
@@ -237,23 +250,23 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var preferredLanguage = languageService.findOne(userUpdateRequest.getPreferredLanguageId());
 
-        var person = personService.findOne(userUpdateRequest.getPersonId());
-
-        var organisationalUnit = organisationUnitService.findOrganisationUnitById(
-            userUpdateRequest.getOrganisationalUnitId());
+        if (userToUpdate.getAuthority().getName()
+            .equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
+            userToUpdate.setFirstname(userUpdateRequest.getFirstname());
+            userToUpdate.setLastName(userUpdateRequest.getLastName());
+            var orgUnit =
+                organisationUnitService.findOne(userUpdateRequest.getOrganisationalUnitId());
+            userToUpdate.setOrganisationUnit(orgUnit);
+        }
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
-        userToUpdate.setFirstname(userUpdateRequest.getFirstname());
-        userToUpdate.setLastName(userUpdateRequest.getLastName());
         userToUpdate.setPreferredLanguage(preferredLanguage);
-        userToUpdate.setPerson(person);
-        userToUpdate.setOrganisationUnit(organisationalUnit);
 
-        if (!userUpdateRequest.getOldPassword().equals("") &&
+        if (!userUpdateRequest.getOldPassword().isEmpty() &&
             passwordEncoder.matches(userUpdateRequest.getOldPassword(),
                 userToUpdate.getPassword())) {
             userToUpdate.setPassword(passwordEncoder.encode(userUpdateRequest.getNewPassword()));
-        } else if (!userUpdateRequest.getOldPassword().equals("")) {
+        } else if (!userUpdateRequest.getOldPassword().isEmpty()) {
             throw new WrongPasswordProvidedException("Wrong old password provided.");
         }
 
@@ -261,6 +274,34 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
         return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
             refreshTokenValue);
+    }
+
+    @Override
+    public void updateResearcherCurrentOrganisationUnitIfBound(Integer personId) {
+        var person = personService.findOne(personId);
+        var boundUser = userRepository.findForResearcher(personId);
+
+        if (boundUser.isEmpty()) {
+            return;
+        }
+
+        var userToUpdate = boundUser.get();
+        userToUpdate.setOrganisationUnit(getLatestPersonInvolvement(person));
+        userRepository.save(userToUpdate);
+    }
+
+    private OrganisationUnit getLatestPersonInvolvement(Person person) {
+        OrganisationUnit organisationUnit = null;
+        if (Objects.nonNull(person.getInvolvements())) {
+            Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
+                .max(Comparator.comparing(Involvement::getDateFrom));
+
+            if (latestInvolvement.isPresent()) {
+                organisationUnit = latestInvolvement.get().getOrganisationUnit();
+            }
+        }
+
+        return organisationUnit;
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {
