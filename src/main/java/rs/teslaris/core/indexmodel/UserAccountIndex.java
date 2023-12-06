@@ -1,5 +1,6 @@
 package rs.teslaris.core.indexmodel;
 
+import javax.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,11 +14,14 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "person")
+@Document(indexName = "user_account")
 @Setting(settingPath = "/configuration/serbian-analyzer-config.json")
 public class UserAccountIndex {
 
-    @Field(type = FieldType.Text, store = true, name = "name")
+    @Id
+    private String id;
+
+    @Field(type = FieldType.Text, store = true, name = "full_name")
     private String fullName;
 
     @Field(type = FieldType.Text, store = true, name = "email")

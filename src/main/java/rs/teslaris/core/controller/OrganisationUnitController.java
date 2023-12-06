@@ -19,7 +19,6 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
-import rs.teslaris.core.dto.institution.OrganisationUnitDeleteRequest;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 
@@ -77,13 +76,4 @@ public class OrganisationUnitController {
                 organisationUnitId);
         return OrganisationUnitConverter.toDTO(organisationUnit);
     }
-
-    @PatchMapping("/delete-organisation-units")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteOrganisationUnits(
-        @RequestBody @Valid OrganisationUnitDeleteRequest deleteRequest) {
-        deleteRequest.getOrganisationUnitIds().forEach(organisationUnitService::delete);
-    }
-
 }

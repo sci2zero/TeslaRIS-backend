@@ -1,4 +1,4 @@
-package rs.teslaris.core.dto.institution;
+package rs.teslaris.core.dto.commontypes;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -11,8 +11,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrganisationUnitDeleteRequest {
+public class DeleteRequest {
 
     @NotNull(message = "You have to provide a list of IDs.")
-    private List<Integer> organisationUnitIds;
+    private List<Integer> ids;
 }

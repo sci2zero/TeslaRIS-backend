@@ -2,6 +2,8 @@ package rs.teslaris.core.controller;
 
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
@@ -26,6 +29,7 @@ import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
+import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -45,6 +49,12 @@ public class UserController {
     public UserResponseDTO getUser(@RequestHeader("Authorization") String bearerToken) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]);
         return userService.getUserProfile(userId);
+    }
+
+    @GetMapping("/search")
+    public Page<UserAccountIndex> searchUserAccounts(
+        @RequestBody @Valid SearchRequestDTO searchRequest, Pageable pageable) {
+        return userService.searchUserAccounts(searchRequest, pageable);
     }
 
     @PostMapping("/authenticate")

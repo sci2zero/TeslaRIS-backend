@@ -131,5 +131,6 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         publication.setArticleNumber(publicationDTO.getArticleNumber());
         publication.setProceedings(
             proceedingsService.findProceedingsById(publicationDTO.getProceedingsId()));
+        publication.setDocumentDate(publication.getProceedings().getDocumentDate());
     }
 }

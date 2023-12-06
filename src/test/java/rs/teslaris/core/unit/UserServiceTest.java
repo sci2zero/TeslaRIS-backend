@@ -16,22 +16,33 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
+import rs.teslaris.core.indexmodel.UserAccountIndex;
+import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
@@ -46,6 +57,7 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.user.UserServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
@@ -62,6 +74,10 @@ public class UserServiceTest {
     private JwtUtil tokenUtil;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private UserAccountIndexRepository userAccountIndexRepository;
+    @Mock
+    private SearchService<UserAccountIndex> searchService;
     @Mock
     private LanguageService languageService;
     @Mock
@@ -154,18 +170,23 @@ public class UserServiceTest {
         person.setName(new PersonName("John", "Something", "Doe", LocalDate.of(1995, 12, 3), null));
         when(personService.findOne(1)).thenReturn(person);
 
-        var organisationalUnit = new OrganisationUnit();
         when(organisationalUnitService.findOrganisationUnitById(1)).thenReturn(
-            organisationalUnit);
+            new OrganisationUnit());
 
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, null);
+            false, language, authority, null, organisationUnit);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
             activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
 
         // when
         var savedUser = userService.registerUser(registrationRequest);
@@ -250,6 +271,8 @@ public class UserServiceTest {
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
+        orgUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
         orgUnit.setId(4);
         user.setOrganisationUnit(orgUnit);
 
@@ -262,6 +285,8 @@ public class UserServiceTest {
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
 
         // when
         userService.updateUser(requestDTO, 1, "fingerprint");
@@ -305,6 +330,8 @@ public class UserServiceTest {
 
         var preferredLanguage = new Language();
         var organisationalUnit = new OrganisationUnit();
+        organisationalUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
@@ -312,6 +339,8 @@ public class UserServiceTest {
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
 
         // when
         userService.updateUser(requestDTO, 1, "fingerprint");
@@ -507,5 +536,51 @@ public class UserServiceTest {
 
         //then
         assertFalse(result);
+    }
+
+    @Test
+    public void shouldFindUserAccountWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("ključna", "ријеч", "keyword");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new UserAccountIndex(), new UserAccountIndex())));
+
+        // when
+        var result =
+            userService.searchUserAccounts(new SearchRequestDTO(tokens), pageable);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void testUpdateResearcherCurrentOrganisationUnitIfBound() {
+        // Given
+        var personId = 123;
+        var person = new Person();
+        var orgUnit = new OrganisationUnit();
+        orgUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+        var involvement = new Involvement();
+        involvement.setOrganisationUnit(orgUnit);
+        person.setInvolvements(Set.of(involvement));
+        var userToUpdate = new User();
+        userToUpdate.setAuthority(new Authority());
+        userToUpdate.setPerson(person);
+
+        when(personService.findOne(personId)).thenReturn(person);
+        when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(userToUpdate));
+
+        // When
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+
+        // Then
+        verify(personService, times(1)).findOne(personId);
+        verify(userRepository, times(1)).findForResearcher(personId);
+        verify(userRepository, times(1)).save(userToUpdate);
+        verify(userAccountIndexRepository, times(1)).save(any());
     }
 }
