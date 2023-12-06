@@ -43,6 +43,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
@@ -565,6 +566,7 @@ public class UserServiceTest {
         orgUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
         var involvement = new Involvement();
+        involvement.setInvolvementType(InvolvementType.EMPLOYED_AT);
         involvement.setOrganisationUnit(orgUnit);
         person.setInvolvements(Set.of(involvement));
         var userToUpdate = new User();
