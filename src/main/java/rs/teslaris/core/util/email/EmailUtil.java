@@ -26,7 +26,7 @@ public class EmailUtil {
         try {
             mailSender.send(message);
         } catch (Exception e) {
-            assert true; // Maybe log network error, that the email could ot be sent?
+            assert true; // TODO: Maybe log network error, that the email could ot be sent?
         }
     }
 }
