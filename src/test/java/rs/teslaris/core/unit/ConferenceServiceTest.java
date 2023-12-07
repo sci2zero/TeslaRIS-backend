@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
@@ -35,6 +36,9 @@ public class ConferenceServiceTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private EventIndexRepository eventIndexRepository;
 
     @Mock
     private PersonContributionService personContributionService;

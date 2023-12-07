@@ -8,8 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
-import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -23,16 +25,14 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     private final ConferenceJPAServiceImpl conferenceJPAService;
 
-    private final ConferenceRepository conferenceRepository;
-
     @Autowired
     public ConferenceServiceImpl(EventRepository eventRepository,
                                  PersonContributionService personContributionService,
                                  MultilingualContentService multilingualContentService,
-                                 ConferenceJPAServiceImpl conferenceJPAService,
-                                 ConferenceRepository conferenceRepository) {
-        super(eventRepository, personContributionService, multilingualContentService);
-        this.conferenceRepository = conferenceRepository;
+                                 EventIndexRepository eventIndexRepository,
+                                 ConferenceJPAServiceImpl conferenceJPAService) {
+        super(eventRepository, personContributionService, multilingualContentService,
+            eventIndexRepository);
         this.conferenceJPAService = conferenceJPAService;
     }
 
@@ -55,11 +55,20 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public Conference createConference(ConferenceDTO conferenceDTO) {
         var conference = new Conference();
         conference.setContributions(new HashSet<>());
+        var index = new EventIndex();
+        index.setEventType(EventType.CONFERENCE);
 
         setEventCommonFields(conference, conferenceDTO);
         setConferenceRelatedFields(conference, conferenceDTO);
 
-        return conferenceJPAService.save(conference);
+        indexEventCommonFields(index, conference);
+
+        var savedConference = conferenceJPAService.save(conference);
+
+        index.setDatabaseId(savedConference.getId());
+        eventIndexRepository.save(index);
+
+        return savedConference;
     }
 
     @Override
@@ -70,6 +79,18 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         setConferenceRelatedFields(conferenceToUpdate, conferenceDTO);
 
         conferenceJPAService.save(conferenceToUpdate);
+
+        EventIndex indexToUpdate = new EventIndex();
+        var indexToUpdateOptional = eventIndexRepository.findByDatabaseId(conferenceId);
+        if (indexToUpdateOptional.isPresent()) {
+            indexToUpdate = indexToUpdateOptional.get();
+        }
+
+        clearEventIndexCommonFields(indexToUpdate);
+        indexEventCommonFields(indexToUpdate, conferenceToUpdate);
+        indexToUpdate.setDatabaseId(conferenceToUpdate.getId());
+
+        eventIndexRepository.save(indexToUpdate);
     }
 
     @Override

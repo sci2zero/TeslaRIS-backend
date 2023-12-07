@@ -241,15 +241,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        Person person = null;
-        if (Objects.nonNull(registrationRequest.getPersonId())) {
-            person = personService.findOne(registrationRequest.getPersonId());
-        }
-
+        Person person = personService.findOne(registrationRequest.getPersonId());
         OrganisationUnit organisationUnit = getLatestResearcherInvolvement(person);
 
         var newUser =
-            new User(registrationRequest.getEmail(), registrationRequest.getPassword(), "",
+            new User(registrationRequest.getEmail(), passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
                 preferredLanguage, authority, person, organisationUnit);
         var savedUser = userRepository.save(newUser);
@@ -324,6 +320,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private OrganisationUnit getLatestResearcherInvolvement(Person person) {
         OrganisationUnit organisationUnit = null;
         if (Objects.nonNull(person.getInvolvements())) {
+            // TODO: Ulazi li ovo samo u display OU ili i edukacija
             Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
                 .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
                 .filter(involvement ->
@@ -351,13 +348,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private void indexUserEmployment(UserAccountIndex index, OrganisationUnit employment) {
         var orgUnitNameSr = new StringBuilder();
         var orgUnitNameOther = new StringBuilder();
-        employment.getName().forEach((name) -> {
-            if (name.getLanguage().getLanguageTag().contains(LanguageAbbreviations.SERBIAN)) {
-                orgUnitNameSr.append(name.getContent()).append("| ");
-            } else {
-                orgUnitNameOther.append(name.getContent()).append("| ");
-            }
-        });
+        if (Objects.nonNull(employment)) {
+            employment.getName().forEach((name) -> {
+                if (name.getLanguage().getLanguageTag().contains(LanguageAbbreviations.SERBIAN)) {
+                    orgUnitNameSr.append(name.getContent()).append(" | ");
+                } else {
+                    orgUnitNameOther.append(name.getContent()).append(" | ");
+                }
+            });
+        }
 
         index.setOrganisationUnitNameSr(orgUnitNameSr.toString());
         index.setOrganisationUnitNameOther(orgUnitNameOther.toString());

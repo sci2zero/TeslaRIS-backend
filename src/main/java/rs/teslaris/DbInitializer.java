@@ -27,6 +27,7 @@ import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
@@ -173,6 +174,8 @@ public class DbInitializer implements ApplicationRunner {
         dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
+        researcherUser.setOrganisationUnit(dummyOU);
+        userRepository.save(researcherUser);
 
         var dummyJournal = new Journal();
         dummyJournal.setTitle(Set.of(new MultiLingualContent(englishTag, "Title1", 1)));
@@ -234,5 +237,9 @@ public class DbInitializer implements ApplicationRunner {
         bookSeries2.setTitle(Set.of(new MultiLingualContent(englishTag, "BookSeries2", 1)));
         bookSeries2.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR2", 1)));
         bookSeriesRepository.save(bookSeries2);
+
+        person1.setName(
+            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 31), null));
+        personRepository.save(person1);
     }
 }
