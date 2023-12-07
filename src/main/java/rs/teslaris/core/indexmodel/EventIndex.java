@@ -14,7 +14,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "conference")
+@Document(indexName = "events")
 @Setting(settingPath = "/configuration/serbian-analyzer-config.json")
 public class EventIndex {
 

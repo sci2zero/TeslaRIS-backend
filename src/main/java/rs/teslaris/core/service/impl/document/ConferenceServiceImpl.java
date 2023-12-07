@@ -15,6 +15,7 @@ import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
@@ -26,13 +27,14 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     private final ConferenceJPAServiceImpl conferenceJPAService;
 
     @Autowired
-    public ConferenceServiceImpl(EventRepository eventRepository,
+    public ConferenceServiceImpl(EventIndexRepository eventIndexRepository,
+                                 EventRepository eventRepository,
                                  PersonContributionService personContributionService,
                                  MultilingualContentService multilingualContentService,
-                                 EventIndexRepository eventIndexRepository,
+                                 SearchService<EventIndex> searchService,
                                  ConferenceJPAServiceImpl conferenceJPAService) {
-        super(eventRepository, personContributionService, multilingualContentService,
-            eventIndexRepository);
+        super(eventIndexRepository, eventRepository, personContributionService,
+            multilingualContentService, searchService);
         this.conferenceJPAService = conferenceJPAService;
     }
 

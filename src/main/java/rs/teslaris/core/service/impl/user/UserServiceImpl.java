@@ -245,7 +245,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         OrganisationUnit organisationUnit = getLatestResearcherInvolvement(person);
 
         var newUser =
-            new User(registrationRequest.getEmail(), passwordEncoder.encode(registrationRequest.getPassword()), "",
+            new User(registrationRequest.getEmail(),
+                passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
                 preferredLanguage, authority, person, organisationUnit);
         var savedUser = userRepository.save(newUser);

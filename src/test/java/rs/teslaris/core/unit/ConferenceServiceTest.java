@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -18,8 +19,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.ConferenceRepository;
@@ -27,6 +31,7 @@ import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.ConferenceServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -51,6 +56,9 @@ public class ConferenceServiceTest {
 
     @Mock
     private ConferenceJPAServiceImpl conferenceJPAService;
+
+    @Mock
+    private SearchService<EventIndex> searchService;
 
     @InjectMocks
     private ConferenceServiceImpl conferenceService;
@@ -206,5 +214,22 @@ public class ConferenceServiceTest {
             () -> conferenceService.deleteConference(conferenceId));
 
         // then (JournalInUseException should be thrown)
+    }
+
+    @Test
+    public void shouldFindConferenceWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("ključna", "ријеч", "keyword");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(List.of(new EventIndex(), new EventIndex())));
+
+        // when
+        var result =
+            conferenceService.searchEvents(tokens, pageable, EventType.CONFERENCE);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

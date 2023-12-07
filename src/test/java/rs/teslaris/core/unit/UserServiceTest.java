@@ -496,7 +496,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetUserOrganisationUnitIdNotFound() {
+    public void shouldGetUserOrganisationUnitIdNotFound() {
         // given
         when(userRepository.findByIdWithOrganisationUnit(2)).thenReturn(Optional.empty());
 
@@ -558,7 +558,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testUpdateResearcherCurrentOrganisationUnitIfBound() {
+    public void shouldUpdateResearcherCurrentOrganisationUnitIfBound() {
         // Given
         var personId = 123;
         var person = new Person();

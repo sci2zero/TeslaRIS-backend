@@ -4,7 +4,6 @@ import java.util.Optional;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.indexmodel.EventIndex;
-import rs.teslaris.core.indexmodel.UserAccountIndex;
 
 @Repository
 public interface EventIndexRepository extends ElasticsearchRepository<EventIndex, String> {

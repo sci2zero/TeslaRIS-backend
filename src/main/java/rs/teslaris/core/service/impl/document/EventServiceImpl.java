@@ -1,19 +1,30 @@
 package rs.teslaris.core.service.impl.document;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -25,14 +36,15 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 @Transactional
 public class EventServiceImpl extends JPAServiceImpl<Event> implements EventService {
 
+    protected final EventIndexRepository eventIndexRepository;
+
     private final EventRepository eventRepository;
 
     private final PersonContributionService personContributionService;
 
     private final MultilingualContentService multilingualContentService;
 
-    protected final EventIndexRepository eventIndexRepository;
-
+    private final SearchService<EventIndex> searchService;
 
     @Override
     public Event findEventById(Integer eventId) {
@@ -93,50 +105,81 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
+                                         EventType eventType) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, eventType),
+            pageable, EventIndex.class, "events");
+    }
+
+    private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.must(bq -> {
+                bq.bool(eq -> {
+                    tokens.forEach(token -> {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("name_sr").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("name_other").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("description_sr").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("description_other").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("keywords_sr").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("keywords_other").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("state_sr").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("state_other").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("place_sr").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("place_other").query(token)));
+                    });
+                    return eq;
+                });
+                return bq;
+            });
+            b.must(sb -> sb.match(
+                m -> m.field("event_type").query(eventType.name())));
+            return b;
+        })))._toQuery();
+    }
+
+    @Override
     protected JpaRepository<Event, Integer> getEntityRepository() {
         return eventRepository;
     }
 
     protected void indexEventCommonFields(EventIndex index, Event event) {
-        event.getName().forEach((name) -> {
-            if (name.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                index.setNameSr(name.getContent());
+        indexMultilingualContent(index, event, Event::getName, EventIndex::setNameSr,
+            EventIndex::setNameOther);
+        indexMultilingualContent(index, event, Event::getDescription, EventIndex::setDescriptionSr,
+            EventIndex::setDescriptionOther);
+        indexMultilingualContent(index, event, Event::getKeywords, EventIndex::setKeywordsSr,
+            EventIndex::setKeywordsOther);
+        indexMultilingualContent(index, event, Event::getState, EventIndex::setStateSr,
+            EventIndex::setStateOther);
+        indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
+            EventIndex::setPlaceOther);
+    }
+
+    private void indexMultilingualContent(EventIndex index, Event event,
+                                          Function<Event, Set<MultiLingualContent>> contentExtractor,
+                                          BiConsumer<EventIndex, String> srSetter,
+                                          BiConsumer<EventIndex, String> otherSetter) {
+        Set<MultiLingualContent> contentList = contentExtractor.apply(event);
+
+        var otherContent = new StringBuilder();
+        contentList.forEach(content -> {
+            if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
+                srSetter.accept(index, content.getContent());
             } else {
-                index.setNameOther(index.getNameOther() + name.getContent() + " | ");
+                otherContent.append(content.getContent()).append(" | ");
             }
         });
 
-        event.getDescription().forEach((description) -> {
-            if (description.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                index.setDescriptionSr(description.getContent());
-            } else {
-                index.setDescriptionOther(
-                    index.getDescriptionOther() + description.getContent() + " | ");
-            }
-        });
-
-        event.getKeywords().forEach((keywords) -> {
-            if (keywords.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                index.setKeywordsSr(keywords.getContent());
-            } else {
-                index.setKeywordsOther(index.getKeywordsOther() + keywords.getContent() + " | ");
-            }
-        });
-
-        event.getState().forEach((state) -> {
-            if (state.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                index.setStateSr(state.getContent());
-            } else {
-                index.setStateOther(index.getStateOther() + state.getContent() + " | ");
-            }
-        });
-
-        event.getPlace().forEach((place) -> {
-            if (place.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                index.setPlaceSr(place.getContent());
-            } else {
-                index.setPlaceOther(index.getPlaceOther() + place.getContent() + " | ");
-            }
-        });
+        otherSetter.accept(index, otherContent.toString());
     }
 }

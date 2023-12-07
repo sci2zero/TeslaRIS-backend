@@ -1,6 +1,8 @@
 package rs.teslaris.core.controller;
 
+import java.util.List;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,11 +15,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 
 @RestController
 @RequestMapping("/api/conference")
@@ -26,10 +32,20 @@ public class ConferenceController {
 
     private final ConferenceService conferenceService;
 
+    private final EventService eventService;
+
 
     @GetMapping
     public Page<ConferenceDTO> readAll(Pageable pageable) {
         return conferenceService.readAllConferences(pageable);
+    }
+
+    @GetMapping("/simple-search")
+    Page<EventIndex> searchConferences(
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        Pageable pageable) {
+        return eventService.searchEvents(tokens, pageable, EventType.CONFERENCE);
     }
 
     @GetMapping("/{conferenceId}")
