@@ -26,6 +26,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceCo
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
+import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 
 @ControllerAdvice
@@ -182,5 +183,13 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleLoadingException(HttpServletRequest request, LoadingException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    @ResponseBody
+    ErrorObject handleUserAlreadyExistsException(HttpServletRequest request,
+                                                 UserAlreadyExistsException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

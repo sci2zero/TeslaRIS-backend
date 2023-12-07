@@ -54,6 +54,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
+import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -235,6 +236,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     @Transactional
     public User registerUser(RegistrationRequestDTO registrationRequest) {
+        if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
+            throw new UserAlreadyExistsException(
+                "Email " + registrationRequest.getEmail() + " is already in use!");
+        }
+
         var preferredLanguage =
             languageService.findOne(registrationRequest.getPreferredLanguageId());
 

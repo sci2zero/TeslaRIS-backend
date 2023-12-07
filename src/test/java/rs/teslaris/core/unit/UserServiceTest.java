@@ -63,6 +63,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -248,6 +249,19 @@ public class UserServiceTest {
             () -> userService.activateUserAccount(activationTokenValue));
 
         // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldThrowUserAlreadyExistsExceptionWhenUserIsInTheSystem() {
+        // Given
+        var requestDTO = new RegistrationRequestDTO();
+        requestDTO.setEmail("admin@admin.com");
+        when(userRepository.findByEmail(requestDTO.getEmail())).thenReturn(Optional.of(new User()));
+
+        // When
+        assertThrows(UserAlreadyExistsException.class, () -> userService.registerUser(requestDTO));
+
+        // Then (UserAlreadyExistsException should be thrown)
     }
 
     @Test
