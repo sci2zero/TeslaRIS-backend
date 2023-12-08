@@ -27,6 +27,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 
@@ -38,13 +39,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected final EventIndexRepository eventIndexRepository;
 
+    protected final MultilingualContentService multilingualContentService;
+
     private final EventRepository eventRepository;
 
     private final PersonContributionService personContributionService;
 
-    private final MultilingualContentService multilingualContentService;
-
     private final SearchService<EventIndex> searchService;
+
+    private final EmailUtil emailUtil;
+
 
     @Override
     public Event findEventById(Integer eventId) {
@@ -181,5 +185,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         });
 
         otherSetter.accept(index, otherContent.toString());
+    }
+
+    protected void notifyAboutBasicCreation(Integer eventId) {
+        emailUtil.notifyInstitutionalEditor(eventId, "event");
     }
 }

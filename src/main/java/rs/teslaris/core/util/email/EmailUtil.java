@@ -29,4 +29,11 @@ public class EmailUtil {
             assert true; // TODO: Maybe log network error, that the email could ot be sent?
         }
     }
+
+    @Async
+    public void notifyInstitutionalEditor(Integer entityId, String entityType) {
+        // TODO: Ovo treba da se salje INSTITUTIONAL_EDITOR-u ili ADMIN-u i da bude konfiguraciono iz application.properties!
+        sendSimpleEmail("change@change.com", "New " + entityType + " added",
+            "New event is added. Check it out on <BASE_URL>/" + entityId);
+    }
 }

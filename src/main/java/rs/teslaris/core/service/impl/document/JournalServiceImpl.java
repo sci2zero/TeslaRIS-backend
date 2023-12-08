@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.BookSeriesConverter;
+import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.model.document.Journal;
@@ -17,6 +18,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -33,6 +35,8 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
     private final LanguageTagService languageTagService;
 
     private final PersonContributionService personContributionService;
+
+    private final EmailUtil emailUtil;
 
 
     @Override
@@ -66,6 +70,25 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         setCommonFields(journal, journalDTO);
 
         return journalRepository.save(journal);
+    }
+
+    @Override
+    public Journal createJournal(JournalBasicAdditionDTO journalDTO) {
+        var journal = new Journal();
+
+        journal.setLanguages(new HashSet<>());
+        journal.setContributions(new HashSet<>());
+        journal.setNameAbbreviation(new HashSet<>());
+
+        journal.setTitle(multilingualContentService.getMultilingualContent(journalDTO.getTitle()));
+        journal.setEISSN(journalDTO.getEISSN());
+        journal.setPrintISSN(journalDTO.getPrintISSN());
+
+        var savedJournal = journalRepository.save(journal);
+
+        emailUtil.notifyInstitutionalEditor(savedJournal.getId(), "journal");
+
+        return savedJournal;
     }
 
     @Override

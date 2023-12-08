@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.ConferenceConverter;
+import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
@@ -18,6 +19,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 
 @Service
@@ -28,13 +30,14 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     @Autowired
     public ConferenceServiceImpl(EventIndexRepository eventIndexRepository,
+                                 MultilingualContentService multilingualContentService,
                                  EventRepository eventRepository,
                                  PersonContributionService personContributionService,
-                                 MultilingualContentService multilingualContentService,
                                  SearchService<EventIndex> searchService,
+                                 EmailUtil emailUtil,
                                  ConferenceJPAServiceImpl conferenceJPAService) {
-        super(eventIndexRepository, eventRepository, personContributionService,
-            multilingualContentService, searchService);
+        super(eventIndexRepository, multilingualContentService, eventRepository,
+            personContributionService, searchService, emailUtil);
         this.conferenceJPAService = conferenceJPAService;
     }
 
@@ -67,6 +70,35 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         var savedConference = conferenceJPAService.save(conference);
 
+        index.setDatabaseId(savedConference.getId());
+        eventIndexRepository.save(index);
+
+        return savedConference;
+    }
+
+    @Override
+    public Conference createConference(ConferenceBasicAdditionDTO conferenceDTO) {
+        var conference = new Conference();
+        conference.setContributions(new HashSet<>());
+        var index = new EventIndex();
+        index.setEventType(EventType.CONFERENCE);
+
+        conference.setName(
+            multilingualContentService.getMultilingualContent(conferenceDTO.getName()));
+        conference.setNameAbbreviation(new HashSet<>());
+        conference.setDescription(new HashSet<>());
+        conference.setKeywords(new HashSet<>());
+        conference.setState(new HashSet<>());
+        conference.setPlace(new HashSet<>());
+        conference.setDateFrom(conferenceDTO.getDateFrom());
+        conference.setDateTo(conferenceDTO.getDateTo());
+        conference.setSerialEvent(false);
+
+        var savedConference = conferenceJPAService.save(conference);
+
+        notifyAboutBasicCreation(savedConference.getId());
+
+        indexEventCommonFields(index, conference);
         index.setDatabaseId(savedConference.getId());
         eventIndexRepository.save(index);
 

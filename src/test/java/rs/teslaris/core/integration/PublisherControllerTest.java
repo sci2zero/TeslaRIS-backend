@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 
 @SpringBootTest
@@ -42,6 +43,7 @@ public class PublisherControllerTest extends BaseTest {
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreatePublisher() throws Exception {
         String jwtToken = authenticateAndGetToken();
+
         var publisherDTO = getTestPayload();
 
         String requestBody = objectMapper.writeValueAsString(publisherDTO);
@@ -50,6 +52,26 @@ public class PublisherControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_PUBLISHER")).andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testCreatePublisherBasic() throws Exception {
+        String jwtToken = authenticateAndGetToken();
+
+        var publisherDTO = new PublisherBasicAdditionDTO();
+        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "Name", 1)));
+        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "State", 1)));
+
+        String requestBody = objectMapper.writeValueAsString(publisherDTO);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/publisher/basic")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_PUBLISHER_BASIC"))
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").isNotEmpty());
     }
 

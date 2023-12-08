@@ -21,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
@@ -33,6 +34,7 @@ import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceI
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -59,6 +61,9 @@ public class ConferenceServiceTest {
 
     @Mock
     private SearchService<EventIndex> searchService;
+
+    @Mock
+    private EmailUtil emailUtil;
 
     @InjectMocks
     private ConferenceServiceImpl conferenceService;
@@ -164,6 +169,27 @@ public class ConferenceServiceTest {
         // then
         assertNotNull(savedConference);
         verify(conferenceJPAService, times(1)).save(any());
+    }
+
+    @Test
+    public void shouldCreateConferenceBasicWhenProvidedWithValidData() {
+        // given
+        var conferenceDTO = new ConferenceBasicAdditionDTO();
+        conferenceDTO.setName(new ArrayList<>());
+        conferenceDTO.setDateFrom(LocalDate.now());
+        conferenceDTO.setDateTo(LocalDate.now());
+
+        var conference = new Conference();
+        conference.setId(1);
+        when(conferenceJPAService.save(any())).thenReturn(conference);
+
+        // when
+        var savedConference = conferenceService.createConference(conferenceDTO);
+
+        // then
+        assertNotNull(savedConference);
+        verify(conferenceJPAService, times(1)).save(any());
+        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "event");
     }
 
     @Test

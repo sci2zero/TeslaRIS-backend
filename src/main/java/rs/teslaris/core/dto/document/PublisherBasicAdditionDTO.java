@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.document;
 
+
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -13,17 +14,12 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PublisherDTO {
+public class PublisherBasicAdditionDTO {
 
     private Integer id;
 
-    @Valid
     @NotNull(message = "You have to provide publisher name.")
-    private List<MultilingualContentDTO> name;
+    private List<@Valid MultilingualContentDTO> name;
 
-    @Valid
-    private List<MultilingualContentDTO> place;
-
-    @Valid
-    private List<MultilingualContentDTO> state;
+    private List<@Valid MultilingualContentDTO> state;
 }

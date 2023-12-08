@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
@@ -58,6 +59,17 @@ public class ConferenceController {
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     @Idempotent
     public ConferenceDTO createConference(@RequestBody @Valid ConferenceDTO conferenceDTO) {
+        var newConference = conferenceService.createConference(conferenceDTO);
+        conferenceDTO.setId(newConference.getId());
+        return conferenceDTO;
+    }
+
+    @PostMapping("/basic")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
+    @Idempotent
+    public ConferenceBasicAdditionDTO createConferenceBasic(
+        @RequestBody @Valid ConferenceBasicAdditionDTO conferenceDTO) {
         var newConference = conferenceService.createConference(conferenceDTO);
         conferenceDTO.setId(newConference.getId());
         return conferenceDTO;
