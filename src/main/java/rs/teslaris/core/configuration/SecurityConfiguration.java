@@ -60,6 +60,9 @@ public class SecurityConfiguration {
             // BASIC ENDPOINT CONFIGURATION
             .antMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
+            .antMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
+            .antMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/register").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/basic-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()

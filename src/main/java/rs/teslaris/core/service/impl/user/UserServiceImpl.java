@@ -18,17 +18,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordSubmissionDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
+import rs.teslaris.core.model.user.UserPasswordResetRequest;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
+import rs.teslaris.core.repository.user.UserPasswordResetRequestRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
@@ -65,6 +69,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final EmailUtil emailUtil;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final UserPasswordResetRequestRepository userPasswordResetRequestRepository;
 
     @Override
     protected JpaRepository<User, Integer> getEntityRepository() {
@@ -261,6 +267,32 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
         return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
             refreshTokenValue);
+    }
+
+    @Override
+    @Transactional
+    public void submitForgottenPassword(ForgotPasswordSubmissionDTO forgotPasswordSubmission) {
+        var user = (User) loadUserByUsername(forgotPasswordSubmission.getUserEmail());
+
+        var resetToken = UUID.randomUUID().toString();
+        emailUtil.sendSimpleEmail(user.getEmail(), "Account activation",
+            "To reset your password, go to: <BASE_URL>" + resetToken);
+
+        userPasswordResetRequestRepository.save(new UserPasswordResetRequest(resetToken, user));
+    }
+
+    @Override
+    @Transactional
+    public void resetAccountPassword(ResetPasswordRequestDTO resetPasswordRequest) {
+        var resetRequest = userPasswordResetRequestRepository.findByPasswordResetToken(
+                resetPasswordRequest.getResetToken())
+            .orElseThrow(() -> new NotFoundException("Invalid password reset token"));
+
+        resetRequest.getUser().setPassword(passwordEncoder.encode(
+            resetPasswordRequest.getNewPassword()));
+
+        userRepository.save(resetRequest.getUser());
+        userPasswordResetRequestRepository.delete(resetRequest);
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {

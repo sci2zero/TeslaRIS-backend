@@ -20,8 +20,10 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordSubmissionDTO;
 import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
@@ -71,9 +73,22 @@ public class UserController {
         userService.deactivateUser(userId);
     }
 
-    @PostMapping("/activate-account")
+    @PatchMapping("/activate-account")
     public void activateUserAccount(@RequestBody @Valid ActivateAccountRequestDTO activateRequest) {
         userService.activateUserAccount(activateRequest.getActivationToken());
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public void submitForgottenPassword(
+        @RequestBody @Valid ForgotPasswordSubmissionDTO forgotPasswordSubmission) {
+        userService.submitForgottenPassword(forgotPasswordSubmission);
+    }
+
+    @PatchMapping("/reset-password")
+    public void resetPassword(@RequestBody @Valid ResetPasswordRequestDTO resetPasswordRequest) {
+        userService.resetAccountPassword(resetPasswordRequest);
     }
 
     @PostMapping("/register")
