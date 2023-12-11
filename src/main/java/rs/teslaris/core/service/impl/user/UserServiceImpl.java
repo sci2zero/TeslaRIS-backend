@@ -276,7 +276,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var resetToken = UUID.randomUUID().toString();
         emailUtil.sendSimpleEmail(user.getEmail(), "Account activation",
-            "To reset your password, go to: <BASE_URL>" + resetToken);
+            "To reset your password, go to: <BASE_URL>" + resetToken +
+                "\n\nThis token will last a week.");
 
         userPasswordResetRequestRepository.save(new UserPasswordResetRequest(resetToken, user));
     }
@@ -324,5 +325,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
             .forEach(userAccountActivationRepository::delete);
+    }
+
+    @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    public void cleanupLongLivedPasswordResetTokens() {
+        var activationTokens = userPasswordResetRequestRepository.findAll();
+
+        var now = new Date();
+        var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+
+        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
+            .forEach(userPasswordResetRequestRepository::delete);
     }
 }
