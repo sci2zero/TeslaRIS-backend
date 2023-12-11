@@ -31,9 +31,9 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
-import rs.teslaris.core.model.user.UserPasswordResetRequest;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
@@ -47,8 +47,8 @@ import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
-import rs.teslaris.core.repository.user.UserPasswordResetRequestRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 
@@ -86,7 +86,7 @@ public class DbInitializer implements ApplicationRunner {
 
     private final PublisherRepository publisherRepository;
 
-    private final UserPasswordResetRequestRepository userPasswordResetRequestRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
 
     @Override
@@ -239,7 +239,7 @@ public class DbInitializer implements ApplicationRunner {
         bookSeries2.setNameAbbreviation(Set.of(new MultiLingualContent(englishTag, "ABR2", 1)));
         bookSeriesRepository.save(bookSeries2);
 
-        var passwordResetRequest = new UserPasswordResetRequest("TOKEN", researcherUser);
-        userPasswordResetRequestRepository.save(passwordResetRequest);
+        var passwordResetRequest = new PasswordResetToken("TOKEN", researcherUser);
+        passwordResetTokenRepository.save(passwordResetRequest);
     }
 }

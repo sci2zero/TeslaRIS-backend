@@ -21,7 +21,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @Entity
 @Table(name = "user_password_reset_requests")
 @Where(clause = "deleted=false")
-public class UserPasswordResetRequest extends BaseEntity {
+public class PasswordResetToken extends BaseEntity {
 
     @Column(name = "password_reset_token")
     private String passwordResetToken;

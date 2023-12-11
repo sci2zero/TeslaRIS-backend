@@ -34,15 +34,15 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
-import rs.teslaris.core.model.user.UserPasswordResetRequest;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
-import rs.teslaris.core.repository.user.UserPasswordResetRequestRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.user.UserServiceImpl;
@@ -78,7 +78,7 @@ public class UserServiceTest {
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
     @Mock
-    private UserPasswordResetRequestRepository userPasswordResetRequestRepository;
+    private PasswordResetTokenRepository passwordResetTokenRepository;
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -481,8 +481,8 @@ public class UserServiceTest {
         userService.submitForgottenPassword(forgotPasswordSubmission);
 
         // Then
-        verify(userPasswordResetRequestRepository, times(1)).save(
-            any(UserPasswordResetRequest.class));
+        verify(passwordResetTokenRepository, times(1)).save(
+            any(PasswordResetToken.class));
         verify(emailUtil, times(1)).sendSimpleEmail(anyString(), anyString(), anyString());
     }
 
@@ -496,10 +496,10 @@ public class UserServiceTest {
         User user = new User();
         user.setPassword("oldPassword");
 
-        UserPasswordResetRequest resetRequest =
-            new UserPasswordResetRequest(resetPasswordRequest.getResetToken(), user);
+        PasswordResetToken resetRequest =
+            new PasswordResetToken(resetPasswordRequest.getResetToken(), user);
 
-        when(userPasswordResetRequestRepository.findByPasswordResetToken(
+        when(passwordResetTokenRepository.findByPasswordResetToken(
             resetPasswordRequest.getResetToken()))
             .thenReturn(Optional.of(resetRequest));
         when(passwordEncoder.encode(resetPasswordRequest.getNewPassword()))
@@ -511,6 +511,6 @@ public class UserServiceTest {
         // Then
         assertEquals("encodedPassword", user.getPassword());
         verify(userRepository, times(1)).save(any(User.class));
-        verify(userPasswordResetRequestRepository, times(1)).delete(resetRequest);
+        verify(passwordResetTokenRepository, times(1)).delete(resetRequest);
     }
 }

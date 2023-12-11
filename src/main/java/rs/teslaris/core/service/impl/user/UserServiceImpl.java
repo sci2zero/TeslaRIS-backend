@@ -24,15 +24,15 @@ import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
-import rs.teslaris.core.model.user.UserPasswordResetRequest;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
-import rs.teslaris.core.repository.user.UserPasswordResetRequestRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
@@ -70,7 +70,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final PasswordEncoder passwordEncoder;
 
-    private final UserPasswordResetRequestRepository userPasswordResetRequestRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Override
     protected JpaRepository<User, Integer> getEntityRepository() {
@@ -279,13 +279,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             "To reset your password, go to: <BASE_URL>" + resetToken +
                 "\n\nThis token will last a week.");
 
-        userPasswordResetRequestRepository.save(new UserPasswordResetRequest(resetToken, user));
+        passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
     }
 
     @Override
     @Transactional
     public void resetAccountPassword(ResetPasswordRequestDTO resetPasswordRequest) {
-        var resetRequest = userPasswordResetRequestRepository.findByPasswordResetToken(
+        var resetRequest = passwordResetTokenRepository.findByPasswordResetToken(
                 resetPasswordRequest.getResetToken())
             .orElseThrow(() -> new NotFoundException("Invalid password reset token"));
 
@@ -293,7 +293,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             resetPasswordRequest.getNewPassword()));
 
         userRepository.save(resetRequest.getUser());
-        userPasswordResetRequestRepository.delete(resetRequest);
+        passwordResetTokenRepository.delete(resetRequest);
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {
@@ -329,12 +329,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Scheduled(cron = "0 0 0 * * *") // every day at midnight
     public void cleanupLongLivedPasswordResetTokens() {
-        var activationTokens = userPasswordResetRequestRepository.findAll();
+        var activationTokens = passwordResetTokenRepository.findAll();
 
         var now = new Date();
         var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
         activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
-            .forEach(userPasswordResetRequestRepository::delete);
+            .forEach(passwordResetTokenRepository::delete);
     }
 }
