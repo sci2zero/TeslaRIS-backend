@@ -15,7 +15,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDto;
@@ -380,9 +379,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public Page<PersonIndex> advancedSearch(SearchRequestDTO searchRequest,
+    public Page<PersonIndex> advancedSearch(List<String> tokens,
                                             Pageable pageable) {
-        var query = expressionTransformer.parseAdvancedQuery(searchRequest.getTokens());
+        var query = expressionTransformer.parseAdvancedQuery(tokens);
         return searchService.runQuery(query, pageable, PersonIndex.class, "person");
     }
 

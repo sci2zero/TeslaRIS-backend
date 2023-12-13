@@ -4,7 +4,6 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.Document;
@@ -28,7 +27,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId);
 
-    Page<DocumentPublicationIndex> searchDocumentPublications(SearchRequestDTO searchRequest,
+    Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                               Pageable pageable,
                                                               SearchRequestType type);
 }

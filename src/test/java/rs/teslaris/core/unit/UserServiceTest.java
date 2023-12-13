@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +33,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
@@ -565,7 +565,7 @@ public class UserServiceTest {
 
         // when
         var result =
-            userService.searchUserAccounts(new SearchRequestDTO(tokens), pageable);
+            userService.searchUserAccounts(new ArrayList<>(tokens), pageable);
 
         // then
         assertEquals(result.getTotalElements(), 2L);

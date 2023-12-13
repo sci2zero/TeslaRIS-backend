@@ -114,15 +114,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         conferenceJPAService.save(conferenceToUpdate);
 
-        EventIndex indexToUpdate = new EventIndex();
-        var indexToUpdateOptional = eventIndexRepository.findByDatabaseId(conferenceId);
-        if (indexToUpdateOptional.isPresent()) {
-            indexToUpdate = indexToUpdateOptional.get();
-        }
+        var indexToUpdate =
+            eventIndexRepository.findByDatabaseId(conferenceId).orElse(new EventIndex());
+        indexToUpdate.setDatabaseId(conferenceToUpdate.getId());
 
         clearEventIndexCommonFields(indexToUpdate);
         indexEventCommonFields(indexToUpdate, conferenceToUpdate);
-        indexToUpdate.setDatabaseId(conferenceToUpdate.getId());
 
         eventIndexRepository.save(indexToUpdate);
     }

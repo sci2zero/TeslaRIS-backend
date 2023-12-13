@@ -1,11 +1,11 @@
 package rs.teslaris.core.service.interfaces.user;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
@@ -19,7 +19,7 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface UserService extends UserDetailsService, JPAService<User> {
 
-    Page<UserAccountIndex> searchUserAccounts(SearchRequestDTO searchRequest, Pageable pageable);
+    Page<UserAccountIndex> searchUserAccounts(List<String> tokens, Pageable pageable);
 
     User loadUserById(Integer userId);
 

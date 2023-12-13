@@ -23,7 +23,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
@@ -100,9 +99,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    public Page<UserAccountIndex> searchUserAccounts(SearchRequestDTO searchRequest,
-                                                     Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(searchRequest.getTokens()),
+    public Page<UserAccountIndex> searchUserAccounts(List<String> tokens, Pageable pageable) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens),
             pageable, UserAccountIndex.class, "user_account");
     }
 
@@ -370,14 +368,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     private void reindexUser(User user) {
-        UserAccountIndex index;
-        var optionalIndex = userAccountIndexRepository.findByDatabaseId(user.getId());
-        if (optionalIndex.isEmpty()) {
-            index = new UserAccountIndex();
-            index.setDatabaseId(user.getId());
-        } else {
-            index = optionalIndex.get();
-        }
+        var index = userAccountIndexRepository.findByDatabaseId(user.getId())
+            .orElse(new UserAccountIndex());
+        index.setDatabaseId(user.getId());
 
         indexCommonFields(index, user);
 
