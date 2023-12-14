@@ -4,6 +4,7 @@ import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +43,7 @@ public class JournalPublicationController {
     }
 
     @GetMapping("/my-publications/{journalId}")
+    @PreAuthorize("hasAuthority('LIST_MY_JOURNAL_PUBLICATIONS')")
     public List<DocumentPublicationIndex> findMyPublicationsInJournal(
         @PathVariable Integer journalId, @RequestHeader("Authorization") String bearerToken) {
         return journalPublicationService.findMyPublicationsInJournal(journalId,

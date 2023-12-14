@@ -137,11 +137,11 @@ public class DbInitializer implements ApplicationRunner {
         yuLanguage.setDeleted(true);
         languageRepository.save(yuLanguage);
 
-        var country = new Country("RS", new HashSet<MultiLingualContent>());
+        var country = new Country("RS", new HashSet<>());
         country = countryRepository.save(country);
 
-        var postalAddress = new PostalAddress(country, new HashSet<MultiLingualContent>(),
-            new HashSet<MultiLingualContent>());
+        var postalAddress = new PostalAddress(country, new HashSet<>(),
+            new HashSet<>());
         var personalInfo =
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Sebia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666"));
@@ -241,5 +241,10 @@ public class DbInitializer implements ApplicationRunner {
         person1.setName(
             new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 31), null));
         personRepository.save(person1);
+
+        var listMyJournalPublications = new Privilege("LIST_MY_JOURNAL_PUBLICATIONS");
+        privilegeRepository.save(listMyJournalPublications);
+        researcherAuthority.addPrivilege(listMyJournalPublications);
+        authorityRepository.save(researcherAuthority);
     }
 }
