@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.document;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -10,6 +11,8 @@ import rs.teslaris.core.model.document.JournalPublication;
 public interface JournalPublicationService {
 
     JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId);
+
+    List<DocumentPublicationIndex> findMyPublicationsInJournal(Integer journalId, Integer authorId);
 
     JournalPublication createJournalPublication(JournalPublicationDTO journalPublicationDTO);
 

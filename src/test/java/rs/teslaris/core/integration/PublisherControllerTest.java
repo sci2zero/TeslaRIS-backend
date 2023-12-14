@@ -42,7 +42,7 @@ public class PublisherControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreatePublisher() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var publisherDTO = getTestPayload();
 
@@ -58,7 +58,7 @@ public class PublisherControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreatePublisherBasic() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var publisherDTO = new PublisherBasicAdditionDTO();
         publisherDTO.setName(List.of(new MultilingualContentDTO(25, "Name", 1)));
@@ -78,7 +78,7 @@ public class PublisherControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testUpdatePublisher() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
         var publisherDTO = getTestPayload();
 
         String requestBody = objectMapper.writeValueAsString(publisherDTO);
@@ -92,7 +92,7 @@ public class PublisherControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testDeletePublisher() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/publisher/{publisherId}", 42)

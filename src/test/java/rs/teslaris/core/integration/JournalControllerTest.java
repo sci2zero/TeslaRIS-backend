@@ -75,7 +75,7 @@ public class JournalControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateJournal() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = getTestPayload();
 
@@ -92,7 +92,7 @@ public class JournalControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateJournalBasic() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = new JournalBasicAdditionDTO();
         journalDTO.setTitle(List.of(new MultilingualContentDTO(25, "Title", 1)));
@@ -114,7 +114,7 @@ public class JournalControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testUpdateJournal() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = getTestPayload();
         journalDTO.setEISSN("TEST_E_ISSN");
@@ -131,7 +131,7 @@ public class JournalControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testDeleteJournal() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/journal/{journalId}", 48)

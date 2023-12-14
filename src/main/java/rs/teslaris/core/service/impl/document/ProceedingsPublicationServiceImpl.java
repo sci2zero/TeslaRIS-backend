@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -117,7 +118,9 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     public void indexProceedingsPublication(ProceedingsPublication publication,
                                             DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
+
         index.setEventId(publication.getProceedings().getEvent().getId());
+        index.setType(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
 
         documentPublicationIndexRepository.save(index);
     }

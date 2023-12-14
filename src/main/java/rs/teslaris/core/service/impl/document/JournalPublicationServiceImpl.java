@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.List;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -7,6 +8,7 @@ import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -64,6 +66,13 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    public List<DocumentPublicationIndex> findMyPublicationsInJournal(Integer journalId,
+                                                                      Integer authorId) {
+        return documentPublicationIndexRepository.findByTypeAndJournalIdAndAuthorIds(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, authorId);
+    }
+
+    @Override
     public JournalPublication createJournalPublication(JournalPublicationDTO publicationDTO) {
         var publication = new JournalPublication();
 
@@ -116,6 +125,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         indexCommonFields(publication, index);
 
         index.setPublicationSeriesId(publication.getJournal().getId());
+        index.setType(DocumentPublicationType.JOURNAL_PUBLICATION.name());
+        index.setJournalId(publication.getJournal().getId());
 
         documentPublicationIndexRepository.save(index);
     }

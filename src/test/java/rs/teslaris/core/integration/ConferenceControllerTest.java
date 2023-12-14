@@ -78,7 +78,7 @@ public class ConferenceControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateConference() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var conferenceDTO = getTestPayload();
 
@@ -95,7 +95,7 @@ public class ConferenceControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateConferenceBasic() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var date = LocalDate.now();
         var conferenceDTO = new ConferenceBasicAdditionDTO();
@@ -116,7 +116,7 @@ public class ConferenceControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testUpdateConference() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var conferenceDTO = getTestPayload();
 
@@ -131,7 +131,7 @@ public class ConferenceControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testDeleteConference() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/conference/{conferenceId}",

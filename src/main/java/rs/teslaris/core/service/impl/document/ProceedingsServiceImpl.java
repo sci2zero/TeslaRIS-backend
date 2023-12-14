@@ -8,6 +8,7 @@ import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Proceedings;
@@ -148,6 +149,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         }
 
         index.setEventId(proceedings.getEvent().getId());
+        index.setType(DocumentPublicationType.PROCEEDINGS.name());
 
         documentPublicationIndexRepository.save(index);
     }
