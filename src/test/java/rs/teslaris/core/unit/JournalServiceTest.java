@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -20,13 +21,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.impl.document.JournalServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -45,6 +50,12 @@ public class JournalServiceTest {
 
     @Mock
     private PersonContributionService personContributionService;
+
+    @Mock
+    private JournalIndexRepository journalIndexRepository;
+
+    @Mock
+    private SearchService<JournalIndex> searchService;
 
     @InjectMocks
     private JournalServiceImpl journalService;
@@ -109,9 +120,40 @@ public class JournalServiceTest {
 
         var journal = new Journal();
         journal.setLanguages(new HashSet<>());
+        var journalIndex = new JournalIndex();
+        journalIndex.setDatabaseId(journalId);
 
         when(journalRepository.findById(journalId)).thenReturn(Optional.of(journal));
         when(journalRepository.save(any())).thenReturn(new Journal());
+        when(journalIndexRepository.findJournalIndexByDatabaseId(journalId)).thenReturn(
+            Optional.of(journalIndex));
+
+        // when
+        journalService.updateJournal(journalDTO, journalId);
+
+        // then
+        verify(journalRepository, times(1)).save(any());
+    }
+
+    @Test
+    public void shouldUpdateJournalWhenProvidedWithValidDataNonIndexed() {
+        // given
+        var journalId = 1;
+        var journalDTO = new JournalDTO();
+        journalDTO.setTitle(new ArrayList<>());
+        journalDTO.setNameAbbreviation(new ArrayList<>());
+        journalDTO.setEISSN("eISSN");
+        journalDTO.setPrintISSN("printISSN");
+        journalDTO.setContributions(new ArrayList<>());
+        journalDTO.setLanguageTagIds(new ArrayList<>());
+
+        var journal = new Journal();
+        journal.setLanguages(new HashSet<>());
+
+        when(journalRepository.findById(journalId)).thenReturn(Optional.of(journal));
+        when(journalRepository.save(any())).thenReturn(new Journal());
+        when(journalIndexRepository.findJournalIndexByDatabaseId(journalId)).thenReturn(
+            Optional.empty());
 
         // when
         journalService.updateJournal(journalDTO, journalId);
@@ -206,5 +248,21 @@ public class JournalServiceTest {
         assertNotNull(response);
         assertEquals(response.getEISSN(), journal.getEISSN());
         assertEquals(response.getPrintISSN(), journal.getPrintISSN());
+    }
+
+    @Test
+    public void shouldFindJournalWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("DEF CON", "DEFCON");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(List.of(new JournalIndex(), new JournalIndex())));
+
+        // when
+        var result = journalService.searchJournals(new ArrayList<>(tokens), pageable);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }
