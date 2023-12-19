@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -76,6 +78,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }
         return ProceedingsConverter.toDTO(proceedings);
+    }
+
+    @Override
+    public List<ProceedingsResponseDTO> readProceedingsForEventId(Integer eventId) {
+        return proceedingsRepository.findProceedingsForEventId(eventId).stream()
+            .map(ProceedingsConverter::toDTO).collect(Collectors.toList());
     }
 
     @Override

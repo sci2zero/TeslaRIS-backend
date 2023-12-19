@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.document;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -10,6 +11,8 @@ import rs.teslaris.core.model.document.Proceedings;
 public interface ProceedingsService {
 
     ProceedingsResponseDTO readProceedingsById(Integer proceedingsId);
+
+    List<ProceedingsResponseDTO> readProceedingsForEventId(Integer eventId);
 
     Proceedings findProceedingsById(Integer proceedingsId);
 

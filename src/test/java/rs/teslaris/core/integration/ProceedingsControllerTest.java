@@ -67,6 +67,16 @@ public class ProceedingsControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testReadProceedingsForEvent() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/proceedings/for-event/{publicationId}", 38)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateProceedings() throws Exception {
         String jwtToken = authenticateAndGetToken();
 
