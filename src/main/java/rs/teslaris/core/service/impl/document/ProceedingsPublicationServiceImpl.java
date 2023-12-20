@@ -1,10 +1,14 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -61,6 +65,25 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             throw new NotFoundException("Document with given id does not exist.");
         }
         return ProceedingsPublicationConverter.toDTO(publication);
+    }
+
+    @Override
+    public List<ProceedingsPublicationResponseDTO> findProceedingsForEvent(Integer eventId,
+                                                                           Integer authorId) {
+        var proceedingsPublications =
+            proceedingsPublicationRepository.findProceedingsPublicationsForEventId(eventId,
+                authorId);
+        return proceedingsPublications.stream().map(publication -> {
+            var responseDTO = new ProceedingsPublicationResponseDTO();
+
+            responseDTO.setTitle(
+                MultilingualContentConverter.getMultilingualContentDTO(publication.getTitle()));
+            responseDTO.setProceedingsTitle(MultilingualContentConverter.getMultilingualContentDTO(
+                publication.getProceedings().getTitle()));
+            responseDTO.setDocumentDate(publication.getDocumentDate());
+
+            return responseDTO;
+        }).collect(Collectors.toList());
     }
 
     @Override

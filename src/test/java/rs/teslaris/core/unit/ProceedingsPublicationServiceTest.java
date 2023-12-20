@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -212,5 +213,34 @@ public class ProceedingsPublicationServiceTest {
         verify(documentRepository).findById(eq(publicationId));
         assertNotNull(result);
         assertEquals(1, result.getContributions().size());
+    }
+
+    @Test
+    public void shouldReadProceedingsPublicationForEvent() {
+        // Given
+        var eventId = 1;
+        var authorId = 1;
+        var proceedings = new Proceedings();
+        proceedings.setTitle(new HashSet<>());
+        var publication = new ProceedingsPublication();
+        publication.setProceedings(proceedings);
+        publication.setTitle(new HashSet<>());
+        publication.setSubTitle(new HashSet<>());
+        publication.setDescription(new HashSet<>());
+        publication.setKeywords(new HashSet<>());
+        publication.setApproveStatus(ApproveStatus.APPROVED);
+        publication.setUris(new HashSet<>());
+
+        when(proceedingsPublicationRepository.findProceedingsPublicationsForEventId(
+            eventId, authorId)).thenReturn(List.of(publication));
+
+        // When
+        var result = proceedingsPublicationService.findProceedingsForEvent(eventId, authorId);
+
+        // Then
+        verify(proceedingsPublicationRepository, times(1)).findProceedingsPublicationsForEventId(
+            eventId, authorId);
+        assertNotNull(result);
+        assertEquals(1, result.size());
     }
 }
