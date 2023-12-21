@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,8 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -50,15 +53,20 @@ import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
+import rs.teslaris.core.util.search.SearchRequestType;
 
 @SpringBootTest
 public class OrganisationUnitServiceTest {
 
     @Mock
     private OrganisationUnitRepository organisationUnitRepository;
+
+    @Mock
+    private OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
     @Mock
     private MultilingualContentService multilingualContentService;
@@ -74,6 +82,9 @@ public class OrganisationUnitServiceTest {
 
     @Mock
     private OrganisationUnitsRelationJPAServiceImpl organisationUnitsRelationJPAService;
+
+    @Mock
+    private SearchService<OrganisationUnitIndex> searchService;
 
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
@@ -368,7 +379,7 @@ public class OrganisationUnitServiceTest {
             });
 
         OrganisationUnit result =
-            organisationUnitService.createOrganisationalUnit(organisationUnitDTORequest);
+            organisationUnitService.createOrganisationUnit(organisationUnitDTORequest);
 
         assertEquals(Set.of(name), result.getName());
         assertEquals(organisationUnitDTORequest.getNameAbbreviation(),
@@ -423,7 +434,7 @@ public class OrganisationUnitServiceTest {
 
         // Act
         OrganisationUnit editedOrganisationUnit =
-            organisationUnitService.editOrganisationalUnit(organisationUnitDTORequest,
+            organisationUnitService.editOrganisationUnit(organisationUnitDTORequest,
                 organisationUnitId);
 
         // Assert
@@ -498,5 +509,23 @@ public class OrganisationUnitServiceTest {
             organisationUnitService.editOrganisationalUnitApproveStatus(approveStatus,
                 organisationUnitId);
         });
+    }
+
+    @Test
+    public void shouldFindOrganisationUnitWhenSearchingWithSimpleQuery() {
+        // Given
+        var tokens = Arrays.asList("Fakultet tehnickih nauka", "FTN");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(List.of(new OrganisationUnitIndex(), new OrganisationUnitIndex())));
+
+        // When
+        var result =
+            organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
+                SearchRequestType.SIMPLE);
+
+        // Then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

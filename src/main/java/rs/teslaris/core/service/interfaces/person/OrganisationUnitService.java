@@ -9,10 +9,12 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
 public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
@@ -23,17 +25,20 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable);
 
+    Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens, Pageable pageable,
+                                                        SearchRequestType searchType);
+
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
     Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(Integer sourceId,
                                                                              Integer targetId,
                                                                              Pageable pageable);
 
-    OrganisationUnit createOrganisationalUnit(
+    OrganisationUnit createOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest);
 
-    OrganisationUnit editOrganisationalUnit(OrganisationUnitDTORequest organisationUnitDTORequest,
-                                            Integer organisationUnitId);
+    OrganisationUnit editOrganisationUnit(OrganisationUnitDTORequest organisationUnitDTORequest,
+                                          Integer organisationUnitId);
 
     OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
                                                          Integer organisationUnitId);

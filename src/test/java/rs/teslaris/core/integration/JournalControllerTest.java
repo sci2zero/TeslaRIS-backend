@@ -124,7 +124,7 @@ public class JournalControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/journal/simple-search?tokens=eISSN&tokens=content", 48)
+                        "http://localhost:8081/api/journal/simple-search?tokens=eISSN&tokens=content")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

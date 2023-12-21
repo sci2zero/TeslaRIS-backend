@@ -10,6 +10,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Service
 @RequiredArgsConstructor
@@ -31,5 +32,18 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
                 multilingualContent.getPriority()
             );
         }).collect(Collectors.toSet());
+    }
+
+    @Override
+    public void buildLanguageStrings(StringBuilder serbianBuilder,
+                                     StringBuilder otherLanguagesBuilder,
+                                     Set<MultiLingualContent> contentList) {
+        contentList.forEach(content -> {
+            if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
+                serbianBuilder.append(content.getContent()).append(" | ");
+            } else {
+                otherLanguagesBuilder.append(content.getContent()).append(" | ");
+            }
+        });
     }
 }
