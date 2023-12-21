@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -140,6 +141,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                             m -> m.field("place_sr").query(token)));
                         eq.should(sb -> sb.match(
                             m -> m.field("place_other").query(token)));
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("date_from_to").value(token)));
                     });
                     return eq;
                 });
@@ -167,6 +170,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             EventIndex::setStateOther);
         indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
             EventIndex::setPlaceOther);
+
+        var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+        index.setDateFromTo(
+            event.getDateFrom().format(formatter) + " - " + event.getDateTo().format(formatter));
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,

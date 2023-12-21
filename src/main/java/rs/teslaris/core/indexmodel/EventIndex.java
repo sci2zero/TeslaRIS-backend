@@ -51,6 +51,9 @@ public class EventIndex {
     @Field(type = FieldType.Text, name = "place_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String placeOther;
 
+    @Field(type = FieldType.Text, name = "date_from_to", store = true)
+    private String dateFromTo;
+
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 

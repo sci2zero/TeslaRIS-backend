@@ -110,12 +110,14 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         var conferenceToUpdate = findConferenceById(conferenceId);
 
         clearEventCommonFields(conferenceToUpdate);
+        setEventCommonFields(conferenceToUpdate, conferenceDTO);
         setConferenceRelatedFields(conferenceToUpdate, conferenceDTO);
 
         conferenceJPAService.save(conferenceToUpdate);
 
         var indexToUpdate =
             eventIndexRepository.findByDatabaseId(conferenceId).orElse(new EventIndex());
+        indexToUpdate.setEventType(EventType.CONFERENCE);
         indexToUpdate.setDatabaseId(conferenceToUpdate.getId());
 
         clearEventIndexCommonFields(indexToUpdate);

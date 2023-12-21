@@ -24,7 +24,6 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
-import rs.teslaris.core.service.interfaces.document.EventService;
 
 @RestController
 @RequestMapping("/api/conference")
@@ -32,8 +31,6 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 public class ConferenceController {
 
     private final ConferenceService conferenceService;
-
-    private final EventService eventService;
 
 
     @GetMapping
@@ -46,7 +43,7 @@ public class ConferenceController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
-        return eventService.searchEvents(tokens, pageable, EventType.CONFERENCE);
+        return conferenceService.searchEvents(tokens, pageable, EventType.CONFERENCE);
     }
 
     @GetMapping("/{conferenceId}")
