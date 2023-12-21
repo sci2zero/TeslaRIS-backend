@@ -36,6 +36,6 @@ public class UserAccountIndex {
     @Field(type = FieldType.Text, store = true, name = "user_role")
     private String userRole;
 
-    @Field(type = FieldType.Integer, store = true, name = "databaseId", index = false)
+    @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
 }
