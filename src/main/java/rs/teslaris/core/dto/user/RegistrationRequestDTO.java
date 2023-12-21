@@ -36,5 +36,5 @@ public class RegistrationRequestDTO {
 
     @NotNull(message = "You must provide an authority ID.")
     @Positive(message = "Organisational unit ID must be a positive number.")
-    private Integer organisationalUnitId;
+    private Integer organisationUnitId;
 }

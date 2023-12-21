@@ -209,13 +209,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             person = personService.findOne(registrationRequest.getPersonId());
         }
 
-        var organisationalUnit = organisationUnitService.findOrganisationUnitById(
-            registrationRequest.getOrganisationalUnitId());
+        var organisationUnit = organisationUnitService.findOrganisationUnitById(
+            registrationRequest.getOrganisationUnitId());
 
         var newUser =
             new User(registrationRequest.getEmail(), registrationRequest.getPassword(), "",
                 registrationRequest.getFirstname(), registrationRequest.getLastName(), true, false,
-                preferredLanguage, authority, person, organisationalUnit);
+                preferredLanguage, authority, person, organisationUnit);
 
         var savedUser = userRepository.save(newUser);
 
@@ -239,15 +239,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var person = personService.findOne(userUpdateRequest.getPersonId());
 
-        var organisationalUnit = organisationUnitService.findOrganisationUnitById(
-            userUpdateRequest.getOrganisationalUnitId());
+        var organisationUnit = organisationUnitService.findOrganisationUnitById(
+            userUpdateRequest.getOrganisationUnitId());
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
         userToUpdate.setFirstname(userUpdateRequest.getFirstname());
         userToUpdate.setLastName(userUpdateRequest.getLastName());
         userToUpdate.setPreferredLanguage(preferredLanguage);
         userToUpdate.setPerson(person);
-        userToUpdate.setOrganisationUnit(organisationalUnit);
+        userToUpdate.setOrganisationUnit(organisationUnit);
 
         if (!userUpdateRequest.getOldPassword().equals("") &&
             passwordEncoder.matches(userUpdateRequest.getOldPassword(),

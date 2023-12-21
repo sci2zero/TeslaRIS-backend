@@ -68,7 +68,7 @@ public class UserServiceTest {
     @Mock
     private PersonService personService;
     @Mock
-    private OrganisationUnitServiceImpl organisationalUnitService;
+    private OrganisationUnitServiceImpl organisationUnitService;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
@@ -140,7 +140,7 @@ public class UserServiceTest {
         registrationRequest.setLastName("Doe");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
-        registrationRequest.setOrganisationalUnitId(1);
+        registrationRequest.setOrganisationUnitId(1);
 
         var language = new Language();
         when(languageService.findOne(1)).thenReturn(language);
@@ -153,9 +153,9 @@ public class UserServiceTest {
         var person = new Person();
         when(personService.findOne(1)).thenReturn(person);
 
-        var organisationalUnit = new OrganisationUnit();
-        when(organisationalUnitService.findOrganisationUnitById(1)).thenReturn(
-            organisationalUnit);
+        var organisationUnit = new OrganisationUnit();
+        when(organisationUnitService.findOrganisationUnitById(1)).thenReturn(
+            organisationUnit);
 
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
@@ -238,7 +238,7 @@ public class UserServiceTest {
         requestDTO.setLastName("Doe");
         requestDTO.setPreferredLanguageId(1);
         requestDTO.setPersonId(2);
-        requestDTO.setOrganisationalUnitId(3);
+        requestDTO.setOrganisationUnitId(3);
 
         var user = new User();
         user.setEmail("oldemail@example.com");
@@ -252,13 +252,13 @@ public class UserServiceTest {
 
         var preferredLanguage = new Language();
         var person = new Person();
-        var organisationalUnit = new OrganisationUnit();
+        var organisationUnit = new OrganisationUnit();
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
         when(personService.findOne(2)).thenReturn(person);
-        when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
-            organisationalUnit);
+        when(organisationUnitService.findOrganisationUnitById(3)).thenReturn(
+            organisationUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
 
@@ -272,7 +272,7 @@ public class UserServiceTest {
         assertFalse(user.getCanTakeRole());
         assertEquals(preferredLanguage, user.getPreferredLanguage());
         assertEquals(person, user.getPerson());
-        assertEquals(organisationalUnit, user.getOrganisationUnit());
+        assertEquals(organisationUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
     }
 
@@ -302,14 +302,14 @@ public class UserServiceTest {
         requestDTO.setPreferredLanguageId(1);
         var person = new Person();
         requestDTO.setPersonId(2);
-        var organisationalUnit = new OrganisationUnit();
-        requestDTO.setOrganisationalUnitId(3);
+        var organisationUnit = new OrganisationUnit();
+        requestDTO.setOrganisationUnitId(3);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
         when(personService.findOne(2)).thenReturn(person);
-        when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
-            organisationalUnit);
+        when(organisationUnitService.findOrganisationUnitById(3)).thenReturn(
+            organisationUnit);
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);
 
         // when
