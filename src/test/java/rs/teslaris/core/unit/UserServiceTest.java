@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,12 +15,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,9 +36,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
+import rs.teslaris.core.indexmodel.UserAccountIndex;
+import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -43,10 +58,12 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.user.UserServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -59,6 +76,10 @@ public class UserServiceTest {
     private JwtUtil tokenUtil;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private UserAccountIndexRepository userAccountIndexRepository;
+    @Mock
+    private SearchService<UserAccountIndex> searchService;
     @Mock
     private LanguageService languageService;
     @Mock
@@ -136,11 +157,8 @@ public class UserServiceTest {
         var registrationRequest = new RegistrationRequestDTO();
         registrationRequest.setEmail("johndoe@example.com");
         registrationRequest.setPassword("password123");
-        registrationRequest.setFirstname("John");
-        registrationRequest.setLastName("Doe");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
-        registrationRequest.setOrganisationalUnitId(1);
 
         var language = new Language();
         when(languageService.findOne(1)).thenReturn(language);
@@ -151,20 +169,26 @@ public class UserServiceTest {
             Optional.of(authority));
 
         var person = new Person();
+        person.setName(new PersonName("John", "Something", "Doe", LocalDate.of(1995, 12, 3), null));
         when(personService.findOne(1)).thenReturn(person);
 
-        var organisationalUnit = new OrganisationUnit();
         when(organisationalUnitService.findOrganisationUnitById(1)).thenReturn(
-            organisationalUnit);
+            new OrganisationUnit());
 
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, null);
+            false, language, authority, null, organisationUnit);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
             activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
 
         // when
         var savedUser = userService.registerUser(registrationRequest);
@@ -228,47 +252,118 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldUpdateUserWhenValidInput() {
+    public void shouldThrowUserAlreadyExistsExceptionWhenUserIsInTheSystem() {
+        // Given
+        var requestDTO = new RegistrationRequestDTO();
+        requestDTO.setEmail("admin@admin.com");
+        when(userRepository.findByEmail(requestDTO.getEmail())).thenReturn(Optional.of(new User()));
+
+        // When
+        assertThrows(UserAlreadyExistsException.class, () -> userService.registerUser(requestDTO));
+
+        // Then (UserAlreadyExistsException should be thrown)
+    }
+
+    @Test
+    public void shouldUpdateResearcherUserWhenValidInput() {
         // given
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setEmail("test@example.com");
         requestDTO.setOldPassword("oldPassword");
         requestDTO.setNewPassword("newPassword");
-        requestDTO.setFirstname("John");
-        requestDTO.setLastName("Doe");
+        requestDTO.setFirstname("JOHN");
         requestDTO.setPreferredLanguageId(1);
-        requestDTO.setPersonId(2);
         requestDTO.setOrganisationalUnitId(3);
 
         var user = new User();
+        user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setEmail("oldemail@example.com");
         user.setPassword("oldPassword");
         user.setFirstname("Jane");
         user.setLastName("Doe");
         user.setCanTakeRole(false);
         user.setPreferredLanguage(new Language());
-        user.setPerson(new Person());
-        user.setOrganisationUnit(new OrganisationUnit());
+        var person = new Person();
+        user.setPerson(person);
+        var orgUnit = new OrganisationUnit();
+        orgUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+        orgUnit.setId(4);
+        user.setOrganisationUnit(orgUnit);
 
         var preferredLanguage = new Language();
-        var person = new Person();
         var organisationalUnit = new OrganisationUnit();
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
-        when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
 
         // when
         userService.updateUser(requestDTO, 1, "fingerprint");
 
         // then
         assertEquals("test@example.com", user.getEmail());
-        assertEquals("John", user.getFirstname());
+        assertEquals("Jane", user.getFirstname());
         assertEquals("Doe", user.getLastName());
+        assertFalse(user.getCanTakeRole());
+        assertEquals(preferredLanguage, user.getPreferredLanguage());
+        assertEquals(person, user.getPerson());
+        assertNotEquals(organisationalUnit, user.getOrganisationUnit());
+        assertEquals("encodedNewPassword", user.getPassword());
+    }
+
+    @Test
+    public void shouldUpdateEmployeeUserWhenValidInput() {
+        // given
+        var requestDTO = new UserUpdateRequestDTO();
+        requestDTO.setEmail("test@example.com");
+        requestDTO.setOldPassword("oldPassword");
+        requestDTO.setNewPassword("newPassword");
+        requestDTO.setFirstname("JOHN");
+        requestDTO.setLastName("SMITH");
+        requestDTO.setPreferredLanguageId(1);
+        requestDTO.setOrganisationalUnitId(3);
+
+        var user = new User();
+        user.setAuthority(new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), null));
+        user.setEmail("oldemail@example.com");
+        user.setPassword("oldPassword");
+        user.setFirstname("Jane");
+        user.setLastName("Doe");
+        user.setCanTakeRole(false);
+        user.setPreferredLanguage(new Language());
+        var person = new Person();
+        user.setPerson(person);
+        var orgUnit = new OrganisationUnit();
+        orgUnit.setId(4);
+        user.setOrganisationUnit(orgUnit);
+
+        var preferredLanguage = new Language();
+        var organisationalUnit = new OrganisationUnit();
+        organisationalUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(organisationalUnitService.findOne(3)).thenReturn(
+            organisationalUnit);
+        when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
+        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // when
+        userService.updateUser(requestDTO, 1, "fingerprint");
+
+        // then
+        assertEquals("test@example.com", user.getEmail());
+        assertEquals("JOHN", user.getFirstname());
+        assertEquals("SMITH", user.getLastName());
         assertFalse(user.getCanTakeRole());
         assertEquals(preferredLanguage, user.getPreferredLanguage());
         assertEquals(person, user.getPerson());
@@ -297,17 +392,15 @@ public class UserServiceTest {
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setOldPassword("wrongPassword");
         var user = new User();
+        user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setPassword("currentPassword");
         var preferredLanguage = new Language();
         requestDTO.setPreferredLanguageId(1);
-        var person = new Person();
-        requestDTO.setPersonId(2);
         var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
-        when(personService.findOne(2)).thenReturn(person);
         when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);
@@ -417,7 +510,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetUserOrganisationUnitIdNotFound() {
+    public void shouldGetUserOrganisationUnitIdNotFound() {
         // given
         when(userRepository.findByIdWithOrganisationUnit(2)).thenReturn(Optional.empty());
 
@@ -458,5 +551,52 @@ public class UserServiceTest {
 
         //then
         assertFalse(result);
+    }
+
+    @Test
+    public void shouldFindUserAccountWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("ključna", "ријеч", "keyword");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new UserAccountIndex(), new UserAccountIndex())));
+
+        // when
+        var result =
+            userService.searchUserAccounts(new ArrayList<>(tokens), pageable);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldUpdateResearcherCurrentOrganisationUnitIfBound() {
+        // Given
+        var personId = 123;
+        var person = new Person();
+        var orgUnit = new OrganisationUnit();
+        orgUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+        var involvement = new Involvement();
+        involvement.setInvolvementType(InvolvementType.EMPLOYED_AT);
+        involvement.setOrganisationUnit(orgUnit);
+        person.setInvolvements(Set.of(involvement));
+        var userToUpdate = new User();
+        userToUpdate.setAuthority(new Authority());
+        userToUpdate.setPerson(person);
+
+        when(personService.findOne(personId)).thenReturn(person);
+        when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(userToUpdate));
+
+        // When
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+
+        // Then
+        verify(personService, times(1)).findOne(personId);
+        verify(userRepository, times(1)).findForResearcher(personId);
+        verify(userRepository, times(1)).save(userToUpdate);
+        verify(userAccountIndexRepository, times(1)).save(any());
     }
 }

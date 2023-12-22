@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -33,6 +34,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     implements InvolvementService {
 
     private final PersonService personService;
+
+    private final UserService userService;
 
     private final OrganisationUnitService organisationUnitService;
 
@@ -78,6 +81,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         newEducation.setAbbreviationTitle(abbreviationTitle);
 
         personInvolved.addInvolvement(newEducation);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
 
         return involvementRepository.save(newEducation);
     }
@@ -96,6 +100,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         newMembership.setRole(role);
 
         personInvolved.addInvolvement(newMembership);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
 
         return involvementRepository.save(newMembership);
     }
@@ -112,6 +117,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         newEmployment.setRole(role);
 
         personInvolved.addInvolvement(newEmployment);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
 
         return involvementRepository.save(newEmployment);
     }
@@ -158,6 +164,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         educationToUpdate.setAbbreviationTitle(abbreviationTitle);
 
         involvementRepository.save(educationToUpdate);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(
+            educationToUpdate.getPersonInvolved().getId());
     }
 
     @Override
@@ -177,6 +185,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         membershipToUpdate.setRole(role);
 
         involvementRepository.save(membershipToUpdate);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(
+            membershipToUpdate.getPersonInvolved().getId());
     }
 
     @Override
@@ -193,18 +203,22 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         employmentToUpdate.setRole(role);
 
         involvementRepository.save(employmentToUpdate);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(
+            employmentToUpdate.getPersonInvolved().getId());
     }
 
     @Override
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findOne(involvementId);
 //        TODO: Do i need to delete those involvments or just logicaly avoid (soft delete)
+        var personId = involvementToDelete.getPersonInvolved().getId();
         involvementToDelete.getPersonInvolved().removeInvolvement(involvementToDelete);
 
         involvementToDelete.getProofs()
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
 
         delete(involvementId);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
     }
 
 

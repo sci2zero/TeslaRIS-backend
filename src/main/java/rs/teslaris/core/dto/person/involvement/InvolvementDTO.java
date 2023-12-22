@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +33,5 @@ public class InvolvementDTO {
     @Valid
     private List<MultilingualContentDTO> affiliationStatement;
 
-    @Positive(message = "Organisation unit ID must be a positive number.")
     private Integer organisationUnitId;
 }

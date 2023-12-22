@@ -18,10 +18,24 @@ public abstract class BaseTest {
     @Autowired
     protected MockMvc mockMvc;
 
-    protected String authenticateAndGetToken() throws Exception {
+    protected String authenticateAdminAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
                     .content("{\"email\": \"admin@admin.com\", \"password\": \"admin\"}")
+                    .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn()
+            .getResponse().getContentAsString();
+
+        var objectMapper = new ObjectMapper();
+        var authenticationResponseDTO =
+            objectMapper.readValue(authResponse, AuthenticationResponseDTO.class);
+
+        return authenticationResponseDTO.getToken();
+    }
+
+    protected String authenticateResearcherAndGetToken() throws Exception {
+        String authResponse = mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
+                    .content("{\"email\": \"author@author.com\", \"password\": \"author\"}")
                     .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn()
             .getResponse().getContentAsString();
 

@@ -2,6 +2,7 @@ package rs.teslaris.core.controller;
 
 import java.util.List;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,14 +13,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -35,15 +34,19 @@ public class DocumentPublicationController {
 
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
-        @RequestBody @Valid SearchRequestDTO searchRequest, Pageable pageable) {
-        return documentPublicationService.searchDocumentPublications(searchRequest, pageable,
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        Pageable pageable) {
+        return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.SIMPLE);
     }
 
     @GetMapping("/advanced-search")
     public Page<DocumentPublicationIndex> advancedSearch(
-        @RequestBody @Valid SearchRequestDTO searchRequest, Pageable pageable) {
-        return documentPublicationService.searchDocumentPublications(searchRequest, pageable,
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        Pageable pageable) {
+        return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.ADVANCED);
     }
 

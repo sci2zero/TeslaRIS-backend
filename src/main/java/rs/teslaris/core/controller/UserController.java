@@ -1,12 +1,17 @@
 package rs.teslaris.core.controller;
 
+import java.util.List;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -25,6 +31,7 @@ import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
+import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -39,6 +46,20 @@ public class UserController {
 
     private final UserService userService;
 
+
+    @GetMapping
+    public UserResponseDTO getUser(@RequestHeader("Authorization") String bearerToken) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]);
+        return userService.getUserProfile(userId);
+    }
+
+    @GetMapping("/search")
+    public Page<UserAccountIndex> searchUserAccounts(
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        Pageable pageable) {
+        return userService.searchUserAccounts(tokens, pageable);
+    }
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponseDTO> authenticateUser(
@@ -85,7 +106,7 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode());
+            newUser.getPreferredLanguage().getLanguageCode(), null);
     }
 
     @PutMapping

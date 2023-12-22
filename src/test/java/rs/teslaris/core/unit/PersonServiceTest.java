@@ -29,7 +29,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -478,7 +477,7 @@ public class PersonServiceTest {
                 List.of(new PersonIndex(), new PersonIndex())));
 
         // when
-        var result = personService.advancedSearch(new SearchRequestDTO(tokens), pageable);
+        var result = personService.advancedSearch(new ArrayList<>(tokens), pageable);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
