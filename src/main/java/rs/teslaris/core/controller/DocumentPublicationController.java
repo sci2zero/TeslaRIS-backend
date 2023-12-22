@@ -47,12 +47,6 @@ public class DocumentPublicationController {
             SearchRequestType.ADVANCED);
     }
 
-    @GetMapping("/event/{eventId}")
-    public Page<DocumentPublicationIndex> readAllProceedingsPublicationsForEvent(
-        @PathVariable Integer eventId, Pageable pageable) {
-        return documentPublicationService.findProceedingsForEvent(eventId, pageable);
-    }
-
     @PatchMapping("/{publicationId}/approval")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('APPROVE_DOCUMENT')")

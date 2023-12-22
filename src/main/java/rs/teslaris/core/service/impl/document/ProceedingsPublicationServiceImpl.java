@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
@@ -143,6 +145,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         index.setEventId(publication.getProceedings().getEvent().getId());
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId,
+                                                                  Pageable pageable) {
+        return documentPublicationIndexRepository.findByEventId(eventId, pageable);
     }
 
     private void setProceedingsPublicationRelatedFields(ProceedingsPublication publication,

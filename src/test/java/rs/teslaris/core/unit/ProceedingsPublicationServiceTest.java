@@ -23,8 +23,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -71,6 +75,9 @@ public class ProceedingsPublicationServiceTest {
 
     @Mock
     private ProceedingsPublicationRepository proceedingsPublicationRepository;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Mock
     private ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService;
@@ -243,5 +250,22 @@ public class ProceedingsPublicationServiceTest {
             eventId, authorId);
         assertNotNull(result);
         assertEquals(1, result.size());
+    }
+
+    @Test
+    public void shouldFindDocumentPublicationsForEvent() {
+        // Given
+        var eventId = 1;
+        var pageable = Pageable.ofSize(5);
+
+        when(documentPublicationIndexRepository.findByEventId(eventId, pageable)).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+
+        // When
+        var result = proceedingsPublicationService.findProceedingsForEvent(eventId, pageable);
+
+        // Then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

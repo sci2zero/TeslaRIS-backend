@@ -20,7 +20,6 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -275,24 +274,6 @@ public class DocumentPublicationServiceTest {
                 pageable, SearchRequestType.ADVANCED);
 
         // then
-        assertEquals(result.getTotalElements(), 2L);
-    }
-
-    @Test
-    public void shouldFindDocumentPublicationsForEvent() {
-        // Given
-        var eventId = 1;
-        var pageable = Pageable.ofSize(5);
-
-        when(documentPublicationIndexRepository.findByEventId(eventId, pageable)).thenReturn(
-            new PageImpl<>(
-                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
-
-        // When
-        var result =
-            documentPublicationService.findProceedingsForEvent(eventId, pageable);
-
-        // Then
         assertEquals(result.getTotalElements(), 2L);
     }
 }
