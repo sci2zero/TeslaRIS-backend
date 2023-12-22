@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.dto.user.ForgotPasswordSubmissionDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 
 @SpringBootTest
@@ -19,7 +19,7 @@ public class UserControllerTest extends BaseTest {
 
     @Test
     public void testForgotPassword() throws Exception {
-        var forgotPasswordRequest = new ForgotPasswordSubmissionDTO("author@author.com");
+        var forgotPasswordRequest = new ForgotPasswordRequestDTO("author@author.com");
         String requestBody = objectMapper.writeValueAsString(forgotPasswordRequest);
         mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/forgot-password")
@@ -31,7 +31,7 @@ public class UserControllerTest extends BaseTest {
 
     @Test
     public void testForgotPasswordUserDoesNotExist() throws Exception {
-        var forgotPasswordRequest = new ForgotPasswordSubmissionDTO("non.existing@author.com");
+        var forgotPasswordRequest = new ForgotPasswordRequestDTO("non.existing@author.com");
         String requestBody = objectMapper.writeValueAsString(forgotPasswordRequest);
         mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/forgot-password")

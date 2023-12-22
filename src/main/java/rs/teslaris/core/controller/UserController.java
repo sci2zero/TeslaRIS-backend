@@ -20,7 +20,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
-import rs.teslaris.core.dto.user.ForgotPasswordSubmissionDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
@@ -81,9 +81,9 @@ public class UserController {
     @PostMapping("/forgot-password")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
-    public void submitForgottenPassword(
-        @RequestBody @Valid ForgotPasswordSubmissionDTO forgotPasswordSubmission) {
-        userService.submitForgottenPassword(forgotPasswordSubmission);
+    public void initiatePasswordResetProcess(
+        @RequestBody @Valid ForgotPasswordRequestDTO forgotPasswordRequest) {
+        userService.initiatePasswordResetProcess(forgotPasswordRequest);
     }
 
     @PatchMapping("/reset-password")

@@ -18,7 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
-import rs.teslaris.core.dto.user.ForgotPasswordSubmissionDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
@@ -271,8 +271,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Override
     @Transactional
-    public void submitForgottenPassword(ForgotPasswordSubmissionDTO forgotPasswordSubmission) {
-        var user = (User) loadUserByUsername(forgotPasswordSubmission.getUserEmail());
+    public void initiatePasswordResetProcess(ForgotPasswordRequestDTO forgotPasswordRequest) {
+        var user = (User) loadUserByUsername(forgotPasswordRequest.getUserEmail());
 
         var resetToken = UUID.randomUUID().toString();
         emailUtil.sendSimpleEmail(user.getEmail(), "Account activation",

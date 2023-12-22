@@ -26,7 +26,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
-import rs.teslaris.core.dto.user.ForgotPasswordSubmissionDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
@@ -469,8 +469,8 @@ public class UserServiceTest {
     @Test
     public void shouldSubmitForgottenPassword() {
         // Given
-        ForgotPasswordSubmissionDTO forgotPasswordSubmission = new ForgotPasswordSubmissionDTO();
-        forgotPasswordSubmission.setUserEmail("test@example.com");
+        ForgotPasswordRequestDTO forgotPasswordRequest = new ForgotPasswordRequestDTO();
+        forgotPasswordRequest.setUserEmail("test@example.com");
 
         var user = new User();
         user.setEmail("test@example.com");
@@ -478,7 +478,7 @@ public class UserServiceTest {
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
         // When
-        userService.submitForgottenPassword(forgotPasswordSubmission);
+        userService.initiatePasswordResetProcess(forgotPasswordRequest);
 
         // Then
         verify(passwordResetTokenRepository, times(1)).save(

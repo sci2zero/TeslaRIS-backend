@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ForgotPasswordSubmissionDTO {
+public class ForgotPasswordRequestDTO {
 
     @NotBlank(message = "Account email address cannot be blank.")
     private String userEmail;
