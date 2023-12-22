@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.HashSet;
+import java.util.List;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -44,6 +45,11 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     public Page<ConferenceDTO> readAllConferences(Pageable pageable) {
         return conferenceJPAService.findAll(pageable).map(ConferenceConverter::toDTO);
+    }
+
+    @Override
+    public Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable) {
+        return searchEvents(tokens, pageable, EventType.CONFERENCE);
     }
 
     @Override

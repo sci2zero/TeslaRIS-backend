@@ -2,21 +2,29 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Conference;
@@ -24,6 +32,7 @@ import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.EventServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -38,6 +47,9 @@ public class EventServiceTest {
 
     @Mock
     private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private SearchService<EventIndex> searchService;
 
     @InjectMocks
     private EventServiceImpl eventService;
@@ -126,5 +138,22 @@ public class EventServiceTest {
         var result = eventService.hasCommonUsage(eventId);
 
         assertEquals(hasProceedings, result);
+    }
+
+    @ParameterizedTest
+    @EnumSource(EventType.class)
+    public void shouldFindConferenceWhenSearchingWithSimpleQuery(EventType eventType) {
+        // Given
+        var tokens = Arrays.asList("ključna", "ријеч", "keyword");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(List.of(new EventIndex(), new EventIndex())));
+
+        // When
+        var result = eventService.searchEvents(tokens, pageable, eventType);
+
+        // Then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

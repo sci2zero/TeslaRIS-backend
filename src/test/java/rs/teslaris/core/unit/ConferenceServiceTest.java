@@ -24,7 +24,6 @@ import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
-import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.ConferenceRepository;
@@ -227,7 +226,7 @@ public class ConferenceServiceTest {
 
     @Test
     public void shouldNotDeleteConferenceIfInUsage() {
-        // given
+        // Given
         var conferenceId = 1;
         var conferenceToDelete = new Conference();
 
@@ -235,27 +234,27 @@ public class ConferenceServiceTest {
             Optional.of(conferenceToDelete));
         when(eventRepository.hasProceedings(conferenceId)).thenReturn(true);
 
-        // when
+        // When
         assertThrows(ConferenceReferenceConstraintViolationException.class,
             () -> conferenceService.deleteConference(conferenceId));
 
-        // then (JournalInUseException should be thrown)
+        // Then (JournalInUseException should be thrown)
     }
 
     @Test
     public void shouldFindConferenceWhenSearchingWithSimpleQuery() {
-        // given
+        // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
             new PageImpl<>(List.of(new EventIndex(), new EventIndex())));
 
-        // when
+        // When
         var result =
-            conferenceService.searchEvents(tokens, pageable, EventType.CONFERENCE);
+            conferenceService.searchConferences(tokens, pageable);
 
-        // then
+        // Then
         assertEquals(result.getTotalElements(), 2L);
     }
 }

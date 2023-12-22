@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
-import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.document.Conference;
 
 @Service
@@ -15,8 +14,7 @@ public interface ConferenceService {
 
     Page<ConferenceDTO> readAllConferences(Pageable pageable);
 
-    Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
-                                  EventType eventType);
+    Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable);
 
     ConferenceDTO readConference(Integer conferenceId);
 

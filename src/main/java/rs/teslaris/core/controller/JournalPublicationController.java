@@ -42,7 +42,7 @@ public class JournalPublicationController {
         return journalPublicationService.readJournalPublicationById(publicationId);
     }
 
-    @GetMapping("/my-publications/{journalId}")
+    @GetMapping("/journal/{journalId}/my-publications")
     @PreAuthorize("hasAuthority('LIST_MY_JOURNAL_PUBLICATIONS')")
     public List<DocumentPublicationIndex> findMyPublicationsInJournal(
         @PathVariable Integer journalId, @RequestHeader("Authorization") String bearerToken) {

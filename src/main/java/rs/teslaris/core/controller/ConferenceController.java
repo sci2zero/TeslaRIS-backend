@@ -22,7 +22,6 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
-import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 
 @RestController
@@ -43,7 +42,7 @@ public class ConferenceController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
-        return conferenceService.searchEvents(tokens, pageable, EventType.CONFERENCE);
+        return conferenceService.searchConferences(tokens, pageable);
     }
 
     @GetMapping("/{conferenceId}")

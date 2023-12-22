@@ -23,7 +23,7 @@ public class JournalPublicationControllerTest extends BaseTest {
         String jwtToken = authenticateResearcherAndGetToken();
 
         mockMvc.perform(MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/journal-publication/my-publications/30")
+                    "http://localhost:8081/api/journal-publication/journal/{journalId}/my-publications", 30)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
