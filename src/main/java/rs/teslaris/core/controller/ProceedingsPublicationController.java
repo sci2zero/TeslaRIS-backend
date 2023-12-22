@@ -40,10 +40,10 @@ public class ProceedingsPublicationController {
         return proceedingsPublicationService.readProceedingsPublicationById(publicationId);
     }
 
-    @GetMapping("/for-event/{eventId}")
-    public List<ProceedingsPublicationResponseDTO> readProceedingsPublicationsForEvent(
+    @GetMapping("/event/{eventId}/my-publications")
+    public List<ProceedingsPublicationResponseDTO> readAuthorsProceedingsPublicationsForEvent(
         @PathVariable Integer eventId, @RequestHeader("Authorization") String bearerToken) {
-        return proceedingsPublicationService.findProceedingsForEvent(eventId,
+        return proceedingsPublicationService.findAuthorsProceedingsForEvent(eventId,
             userService.getPersonIdForUser(
                 tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1])));
     }

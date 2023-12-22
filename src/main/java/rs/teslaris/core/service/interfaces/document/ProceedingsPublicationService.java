@@ -12,8 +12,8 @@ public interface ProceedingsPublicationService {
 
     ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId);
 
-    List<ProceedingsPublicationResponseDTO> findProceedingsForEvent(Integer eventId,
-                                                                    Integer authorId);
+    List<ProceedingsPublicationResponseDTO> findAuthorsProceedingsForEvent(Integer eventId,
+                                                                           Integer authorId);
 
     ProceedingsPublication createProceedingsPublication(
         ProceedingsPublicationDTO proceedingsPublicationDTO);

@@ -31,4 +31,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     Page<DocumentPublicationIndex> searchDocumentPublications(SearchRequestDTO searchRequest,
                                                               Pageable pageable,
                                                               SearchRequestType type);
+
+    Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId, Pageable pageable);
 }

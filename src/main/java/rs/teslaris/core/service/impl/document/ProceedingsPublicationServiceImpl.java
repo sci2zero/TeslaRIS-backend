@@ -68,8 +68,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
-    public List<ProceedingsPublicationResponseDTO> findProceedingsForEvent(Integer eventId,
-                                                                           Integer authorId) {
+    public List<ProceedingsPublicationResponseDTO> findAuthorsProceedingsForEvent(Integer eventId,
+                                                                                  Integer authorId) {
         var proceedingsPublications =
             proceedingsPublicationRepository.findProceedingsPublicationsForEventId(eventId,
                 authorId);

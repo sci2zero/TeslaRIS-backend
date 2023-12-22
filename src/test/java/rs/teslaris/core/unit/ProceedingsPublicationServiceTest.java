@@ -235,7 +235,8 @@ public class ProceedingsPublicationServiceTest {
             eventId, authorId)).thenReturn(List.of(publication));
 
         // When
-        var result = proceedingsPublicationService.findProceedingsForEvent(eventId, authorId);
+        var result =
+            proceedingsPublicationService.findAuthorsProceedingsForEvent(eventId, authorId);
 
         // Then
         verify(proceedingsPublicationRepository, times(1)).findProceedingsPublicationsForEventId(

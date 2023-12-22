@@ -332,6 +332,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             DocumentPublicationIndex.class, "document_publication");
     }
 
+    @Override
+    public Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId,
+                                                                  Pageable pageable) {
+        return documentPublicationIndexRepository.findByEventId(eventId, pageable);
+    }
+
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
