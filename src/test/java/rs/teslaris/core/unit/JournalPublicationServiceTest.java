@@ -26,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -244,13 +245,43 @@ public class JournalPublicationServiceTest {
 
         var expectedPublications = Arrays.asList(publication1, publication2);
 
-        when(documentPublicationIndexRepository.findByTypeAndJournalIdAndAuthorIds(any(), any(),
-            any()))
+        when(documentPublicationIndexRepository.findByTypeAndJournalIdAndAuthorIds(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+            journalId, authorId))
             .thenReturn(expectedPublications);
 
         // When
         var actualPublications =
             journalPublicationService.findMyPublicationsInJournal(journalId, authorId);
+
+        // Then
+        assertEquals(expectedPublications, actualPublications);
+    }
+
+    @Test
+    public void shouldFindAllPublicationsInJournal() {
+        // Given
+        var journalId = 123;
+
+        var publication1 = new DocumentPublicationIndex();
+        publication1.setId("1");
+        publication1.setType("JOURNAL_PUBLICATION");
+        publication1.setJournalId(journalId);
+
+        var publication2 = new DocumentPublicationIndex();
+        publication2.setId("2");
+        publication2.setType("JOURNAL_PUBLICATION");
+        publication2.setJournalId(journalId);
+
+        var expectedPublications = Arrays.asList(publication1, publication2);
+
+        when(documentPublicationIndexRepository.findByTypeAndJournalId(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId))
+            .thenReturn(expectedPublications);
+
+        // When
+        var actualPublications =
+            journalPublicationService.findPublicationsInJournal(journalId);
 
         // Then
         assertEquals(expectedPublications, actualPublications);

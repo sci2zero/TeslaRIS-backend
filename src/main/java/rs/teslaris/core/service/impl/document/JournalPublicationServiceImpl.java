@@ -73,6 +73,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    public List<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId) {
+        return documentPublicationIndexRepository.findByTypeAndJournalId(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId);
+    }
+
+    @Override
     public JournalPublication createJournalPublication(JournalPublicationDTO publicationDTO) {
         var publication = new JournalPublication();
 

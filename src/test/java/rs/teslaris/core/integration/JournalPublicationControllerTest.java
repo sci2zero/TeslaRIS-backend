@@ -28,4 +28,16 @@ public class JournalPublicationControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
     }
+
+    @Test
+    @WithMockUser(username = "author@author.com", password = "author")
+    public void testFindPublicationsInJournal() throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/journal-publication/journal/{journalId}/", 30)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
 }

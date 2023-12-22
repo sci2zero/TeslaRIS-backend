@@ -51,6 +51,12 @@ public class JournalPublicationController {
                 tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1])));
     }
 
+    @GetMapping("/journal/{journalId}")
+    public List<DocumentPublicationIndex> findPublicationsInJournal(
+        @PathVariable Integer journalId, @RequestHeader("Authorization") String bearerToken) {
+        return journalPublicationService.findPublicationsInJournal(journalId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")

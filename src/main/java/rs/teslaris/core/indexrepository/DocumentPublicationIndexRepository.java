@@ -24,4 +24,11 @@ public interface DocumentPublicationIndexRepository extends
                                                                       Integer journalId,
                                                                       Integer authorId);
 
+    @Query("{\"bool\": " +
+        "{\"must\": [" +
+        "{\"term\": {\"type.keyword\": \"?0\"}}, " +
+        "{\"term\": {\"journal_id\": \"?1\"}}, " +
+        "]}}")
+    List<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId);
+
 }

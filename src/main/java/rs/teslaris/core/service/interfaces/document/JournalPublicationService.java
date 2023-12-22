@@ -14,6 +14,8 @@ public interface JournalPublicationService {
 
     List<DocumentPublicationIndex> findMyPublicationsInJournal(Integer journalId, Integer authorId);
 
+    List<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId);
+
     JournalPublication createJournalPublication(JournalPublicationDTO journalPublicationDTO);
 
     void editJournalPublication(Integer publicationId, JournalPublicationDTO publicationDTO);
