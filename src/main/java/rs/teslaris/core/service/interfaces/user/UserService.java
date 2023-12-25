@@ -8,7 +8,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
@@ -50,6 +52,10 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userID,
                                          String fingerprint);
+
+    void initiatePasswordResetProcess(ForgotPasswordRequestDTO forgotPasswordSubmission);
+
+    void resetAccountPassword(ResetPasswordRequestDTO resetPasswordRequest);
 
     void updateResearcherCurrentOrganisationUnitIfBound(Integer personId);
 }

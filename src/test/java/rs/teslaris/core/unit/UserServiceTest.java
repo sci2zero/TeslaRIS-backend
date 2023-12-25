@@ -34,7 +34,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
@@ -47,11 +49,13 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -94,6 +98,8 @@ public class UserServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    private PasswordResetTokenRepository passwordResetTokenRepository;
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -550,6 +556,54 @@ public class UserServiceTest {
 
         //then
         assertFalse(result);
+    }
+
+    @Test
+    public void shouldSubmitForgottenPassword() {
+        // Given
+        ForgotPasswordRequestDTO forgotPasswordRequest = new ForgotPasswordRequestDTO();
+        forgotPasswordRequest.setUserEmail("test@example.com");
+
+        var user = new User();
+        user.setEmail("test@example.com");
+
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+
+        // When
+        userService.initiatePasswordResetProcess(forgotPasswordRequest);
+
+        // Then
+        verify(passwordResetTokenRepository, times(1)).save(
+            any(PasswordResetToken.class));
+        verify(emailUtil, times(1)).sendSimpleEmail(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void shouldResetAccountPassword() {
+        // Given
+        var resetPasswordRequest = new ResetPasswordRequestDTO();
+        resetPasswordRequest.setResetToken(UUID.randomUUID().toString());
+        resetPasswordRequest.setNewPassword("newPassword");
+
+        User user = new User();
+        user.setPassword("oldPassword");
+
+        PasswordResetToken resetRequest =
+            new PasswordResetToken(resetPasswordRequest.getResetToken(), user);
+
+        when(passwordResetTokenRepository.findByPasswordResetToken(
+            resetPasswordRequest.getResetToken()))
+            .thenReturn(Optional.of(resetRequest));
+        when(passwordEncoder.encode(resetPasswordRequest.getNewPassword()))
+            .thenReturn("encodedPassword");
+
+        // When
+        userService.resetAccountPassword(resetPasswordRequest);
+
+        // Then
+        assertEquals("encodedPassword", user.getPassword());
+        verify(userRepository, times(1)).save(any(User.class));
+        verify(passwordResetTokenRepository, times(1)).delete(resetRequest);
     }
 
     @Test

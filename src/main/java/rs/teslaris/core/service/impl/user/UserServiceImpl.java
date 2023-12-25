@@ -25,7 +25,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
@@ -35,11 +37,13 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -83,6 +87,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final EmailUtil emailUtil;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     private final SearchService<UserAccountIndex> searchService;
 
@@ -308,6 +314,33 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
+    public void initiatePasswordResetProcess(ForgotPasswordRequestDTO forgotPasswordRequest) {
+        var user = (User) loadUserByUsername(forgotPasswordRequest.getUserEmail());
+
+        var resetToken = UUID.randomUUID().toString();
+        emailUtil.sendSimpleEmail(user.getEmail(), "Account activation",
+            "To reset your password, go to: <BASE_URL>" + resetToken +
+                "\n\nThis token will last a week.");
+
+        passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
+    }
+
+    @Override
+    @Transactional
+    public void resetAccountPassword(ResetPasswordRequestDTO resetPasswordRequest) {
+        var resetRequest = passwordResetTokenRepository.findByPasswordResetToken(
+                resetPasswordRequest.getResetToken())
+            .orElseThrow(() -> new NotFoundException("Invalid password reset token"));
+
+        resetRequest.getUser().setPassword(passwordEncoder.encode(
+            resetPasswordRequest.getNewPassword()));
+
+        userRepository.save(resetRequest.getUser());
+        passwordResetTokenRepository.delete(resetRequest);
+    }
+
+    @Override
     public void updateResearcherCurrentOrganisationUnitIfBound(Integer personId) {
         var person = personService.findOne(personId);
         var boundUser = userRepository.findForResearcher(personId);
@@ -422,5 +455,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
             .forEach(userAccountActivationRepository::delete);
+    }
+
+    @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    public void cleanupLongLivedPasswordResetTokens() {
+        var activationTokens = passwordResetTokenRepository.findAll();
+
+        var now = new Date();
+        var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+
+        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
+            .forEach(passwordResetTokenRepository::delete);
     }
 }
