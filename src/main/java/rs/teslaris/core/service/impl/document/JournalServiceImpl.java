@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.BookSeriesConverter;
+import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
@@ -23,6 +24,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -44,6 +46,8 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
     private final SearchService<JournalIndex> searchService;
 
     private final JournalIndexRepository journalIndexRepository;
+
+    private final EmailUtil emailUtil;
 
 
     @Override
@@ -88,6 +92,25 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         var savedJournal = journalRepository.save(journal);
         index.setDatabaseId(savedJournal.getId());
         journalIndexRepository.save(index);
+
+        return savedJournal;
+    }
+
+    @Override
+    public Journal createJournal(JournalBasicAdditionDTO journalDTO) {
+        var journal = new Journal();
+
+        journal.setLanguages(new HashSet<>());
+        journal.setContributions(new HashSet<>());
+        journal.setNameAbbreviation(new HashSet<>());
+
+        journal.setTitle(multilingualContentService.getMultilingualContent(journalDTO.getTitle()));
+        journal.setEISSN(journalDTO.getEISSN());
+        journal.setPrintISSN(journalDTO.getPrintISSN());
+
+        var savedJournal = journalRepository.save(journal);
+
+        emailUtil.notifyInstitutionalEditor(savedJournal.getId(), "journal");
 
         return savedJournal;
     }

@@ -22,11 +22,13 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.impl.document.PublisherServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 
@@ -38,6 +40,9 @@ public class PublisherServiceTest {
 
     @Mock
     private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private EmailUtil emailUtil;
 
     @InjectMocks
     private PublisherServiceImpl publisherService;
@@ -67,6 +72,26 @@ public class PublisherServiceTest {
         // then
         assertEquals(publisher, result);
         verify(publisherRepository, times(1)).save(any());
+    }
+
+    @Test
+    public void shouldCreatePublisherBasicWhenProvidedWithValidData() {
+        // given
+        var publisherDTO = new PublisherBasicAdditionDTO();
+        publisherDTO.setName(new ArrayList<>());
+        publisherDTO.setState(new ArrayList<>());
+        var publisher = new Publisher();
+        publisher.setId(1);
+
+        when(publisherRepository.save(any())).thenReturn(publisher);
+
+        // when
+        var result = publisherService.createPublisher(publisherDTO);
+
+        // then
+        assertEquals(publisher, result);
+        verify(publisherRepository, times(1)).save(any());
+        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "publisher");
     }
 
     @Test

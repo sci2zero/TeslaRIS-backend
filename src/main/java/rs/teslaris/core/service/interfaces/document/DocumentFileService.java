@@ -1,10 +1,10 @@
 package rs.teslaris.core.service.interfaces.document;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -27,6 +27,6 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
     void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,
                                   String serverFilename, DocumentFileIndex documentIndex);
 
-    Page<DocumentFileIndex> searchDocumentFiles(SearchRequestDTO searchRequest, Pageable pageable,
+    Page<DocumentFileIndex> searchDocumentFiles(List<String> tokens, Pageable pageable,
                                                 SearchRequestType type);
 }

@@ -78,7 +78,7 @@ public class ProceedingsControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateProceedings() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var proceedingsDTO = getTestPayload();
 
@@ -94,7 +94,7 @@ public class ProceedingsControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testUpdateProceedings() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var proceedingsDTO = getTestPayload();
 
@@ -109,7 +109,7 @@ public class ProceedingsControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testDeleteProceedings() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/proceedings/{publicationId}",

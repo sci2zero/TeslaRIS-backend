@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -56,6 +57,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolation;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.search.SearchRequestType;
 
@@ -527,5 +529,41 @@ public class OrganisationUnitServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldDeleteUnusedOU() {
+        // Given
+        int organisationUnitId = 1;
+        when(organisationUnitRepository.hasEmployees(organisationUnitId)).thenReturn(false);
+        when(organisationUnitRepository.hasThesis(organisationUnitId)).thenReturn(false);
+        when(organisationUnitRepository.hasRelation(organisationUnitId)).thenReturn(false);
+        when(organisationUnitRepository.hasInvolvement(organisationUnitId)).thenReturn(false);
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            organisationUnitId)).thenReturn(Optional.of(new OrganisationUnit()));
+
+        // When
+        assertDoesNotThrow(
+            () -> organisationUnitService.deleteOrganisationUnit(organisationUnitId));
+
+        // Then
+        verify(organisationUnitRepository, times(1)).save(any());
+    }
+
+    @Test
+    public void shouldThrowReferenceConstraintViolationWhenDeletingOUInUse() {
+        // Given
+        int organisationUnitId = 1;
+        when(organisationUnitRepository.hasEmployees(organisationUnitId)).thenReturn(true);
+
+        // When
+        var exception = assertThrows(
+            OrganisationUnitReferenceConstraintViolation.class,
+            () -> organisationUnitService.deleteOrganisationUnit(organisationUnitId)
+        );
+
+        // Then (OrganisationUnitReferenceConstraintViolation exception should be thrown)
+        assertEquals("Organisation unit is already in use.", exception.getMessage());
+        verify(organisationUnitRepository, never()).delete(any());
     }
 }

@@ -23,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
@@ -33,6 +34,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -56,6 +58,9 @@ public class JournalServiceTest {
 
     @Mock
     private SearchService<JournalIndex> searchService;
+
+    @Mock
+    private EmailUtil emailUtil;
 
     @InjectMocks
     private JournalServiceImpl journalService;
@@ -104,6 +109,27 @@ public class JournalServiceTest {
         // then
         assertNotNull(savedJournal);
         verify(journalRepository, times(1)).save(any());
+    }
+
+    @Test
+    public void shouldCreateJournalBasicWhenProvidedWithValidData() {
+        // given
+        var journalDTO = new JournalBasicAdditionDTO();
+        journalDTO.setTitle(new ArrayList<>());
+        journalDTO.setEISSN("eISSN");
+        journalDTO.setPrintISSN("printISSN");
+
+        var journal = new Journal();
+        journal.setId(1);
+        when(journalRepository.save(any())).thenReturn(journal);
+
+        // when
+        var savedJournal = journalService.createJournal(journalDTO);
+
+        // then
+        assertNotNull(savedJournal);
+        verify(journalRepository, times(1)).save(any());
+        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "journal");
     }
 
     @Test

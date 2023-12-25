@@ -1,12 +1,19 @@
 package rs.teslaris.core.service.impl.user;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,7 +27,13 @@ import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.RegistrationRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
+import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
+import rs.teslaris.core.indexmodel.UserAccountIndex;
+import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -32,6 +45,7 @@ import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -39,8 +53,10 @@ import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
+import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +65,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final JwtUtil tokenUtil;
 
     private final UserRepository userRepository;
+
+    private final UserAccountIndexRepository userAccountIndexRepository;
 
     private final AuthorityRepository authorityRepository;
 
@@ -66,6 +84,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final PasswordEncoder passwordEncoder;
 
+    private final SearchService<UserAccountIndex> searchService;
+
+
     @Override
     protected JpaRepository<User, Integer> getEntityRepository() {
         return userRepository;
@@ -77,10 +98,25 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             () -> new UsernameNotFoundException("User with this email does not exist."));
     }
 
+    @Override
+    public Page<UserAccountIndex> searchUserAccounts(List<String> tokens, Pageable pageable) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens),
+            pageable, UserAccountIndex.class, "user_account");
+    }
+
     @Deprecated(forRemoval = true)
     public User loadUserById(Integer userID) throws UsernameNotFoundException {
         return userRepository.findById(userID)
             .orElseThrow(() -> new UsernameNotFoundException("User with this ID does not exist."));
+    }
+
+    @Override
+    @Transactional
+    public UserResponseDTO getUserProfile(Integer userId) {
+        var user = findOne(userId);
+        return new UserResponseDTO(user.getId(), user.getEmail(), user.getFirstname(),
+            user.getLastName(), user.getLocked(), user.getCanTakeRole(),
+            user.getPreferredLanguage().getLanguageCode(), user.getOrganisationUnit().getId());
     }
 
     @Override
@@ -198,26 +234,32 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     @Transactional
     public User registerUser(RegistrationRequestDTO registrationRequest) {
+        if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
+            throw new UserAlreadyExistsException(
+                "Email " + registrationRequest.getEmail() + " is already in use!");
+        }
+
         var preferredLanguage =
             languageService.findOne(registrationRequest.getPreferredLanguageId());
 
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        Person person = null;
-        if (Objects.nonNull(registrationRequest.getPersonId())) {
-            person = personService.findOne(registrationRequest.getPersonId());
-        }
-
-        var organisationUnit = organisationUnitService.findOrganisationUnitById(
-            registrationRequest.getOrganisationUnitId());
+        Person person = personService.findOne(registrationRequest.getPersonId());
+        OrganisationUnit organisationUnit = getLatestResearcherInvolvement(person);
 
         var newUser =
-            new User(registrationRequest.getEmail(), registrationRequest.getPassword(), "",
-                registrationRequest.getFirstname(), registrationRequest.getLastName(), true, false,
+            new User(registrationRequest.getEmail(),
+                passwordEncoder.encode(registrationRequest.getPassword()), "",
+                person.getName().getFirstname(), person.getName().getLastname(), true, false,
                 preferredLanguage, authority, person, organisationUnit);
-
         var savedUser = userRepository.save(newUser);
+
+
+        var newUserIndex = new UserAccountIndex();
+        indexCommonFields(newUserIndex, savedUser);
+        newUserIndex.setDatabaseId(savedUser.getId());
+        userAccountIndexRepository.save(newUserIndex);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
@@ -237,30 +279,66 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var preferredLanguage = languageService.findOne(userUpdateRequest.getPreferredLanguageId());
 
-        var person = personService.findOne(userUpdateRequest.getPersonId());
-
-        var organisationUnit = organisationUnitService.findOrganisationUnitById(
-            userUpdateRequest.getOrganisationUnitId());
+        if (userToUpdate.getAuthority().getName()
+            .equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
+            userToUpdate.setFirstname(userUpdateRequest.getFirstname());
+            userToUpdate.setLastName(userUpdateRequest.getLastName());
+            var orgUnit =
+                organisationUnitService.findOne(userUpdateRequest.getOrganisationalUnitId());
+            userToUpdate.setOrganisationUnit(orgUnit);
+        }
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
-        userToUpdate.setFirstname(userUpdateRequest.getFirstname());
-        userToUpdate.setLastName(userUpdateRequest.getLastName());
         userToUpdate.setPreferredLanguage(preferredLanguage);
-        userToUpdate.setPerson(person);
-        userToUpdate.setOrganisationUnit(organisationUnit);
 
-        if (!userUpdateRequest.getOldPassword().equals("") &&
+        if (!userUpdateRequest.getOldPassword().isEmpty() &&
             passwordEncoder.matches(userUpdateRequest.getOldPassword(),
                 userToUpdate.getPassword())) {
             userToUpdate.setPassword(passwordEncoder.encode(userUpdateRequest.getNewPassword()));
-        } else if (!userUpdateRequest.getOldPassword().equals("")) {
+        } else if (!userUpdateRequest.getOldPassword().isEmpty()) {
             throw new WrongPasswordProvidedException("Wrong old password provided.");
         }
 
         userRepository.save(userToUpdate);
+        reindexUser(userToUpdate);
+
         var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
         return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
             refreshTokenValue);
+    }
+
+    @Override
+    public void updateResearcherCurrentOrganisationUnitIfBound(Integer personId) {
+        var person = personService.findOne(personId);
+        var boundUser = userRepository.findForResearcher(personId);
+
+        if (boundUser.isEmpty()) {
+            return;
+        }
+
+        var userToUpdate = boundUser.get();
+        userToUpdate.setOrganisationUnit(getLatestResearcherInvolvement(person));
+        userRepository.save(userToUpdate);
+        reindexUser(userToUpdate);
+    }
+
+    private OrganisationUnit getLatestResearcherInvolvement(Person person) {
+        OrganisationUnit organisationUnit = null;
+        if (Objects.nonNull(person.getInvolvements())) {
+            // TODO: Ulazi li ovo samo u display OU ili i edukacija
+            Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
+                .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
+                .filter(involvement ->
+                    involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                        involvement.getInvolvementType().equals(InvolvementType.HIRED_BY))
+                .max(Comparator.comparing(Involvement::getDateFrom));
+
+            if (latestInvolvement.isPresent()) {
+                organisationUnit = latestInvolvement.get().getOrganisationUnit();
+            }
+        }
+
+        return organisationUnit;
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {
@@ -270,6 +348,58 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         refreshTokenRepository.save(new RefreshToken(hashedRefreshToken, user));
 
         return refreshTokenValue;
+    }
+
+    private void indexUserEmployment(UserAccountIndex index, OrganisationUnit employment) {
+        var orgUnitNameSr = new StringBuilder();
+        var orgUnitNameOther = new StringBuilder();
+        if (Objects.nonNull(employment)) {
+            employment.getName().forEach((name) -> {
+                if (name.getLanguage().getLanguageTag().contains(LanguageAbbreviations.SERBIAN)) {
+                    orgUnitNameSr.append(name.getContent()).append(" | ");
+                } else {
+                    orgUnitNameOther.append(name.getContent()).append(" | ");
+                }
+            });
+        }
+
+        index.setOrganisationUnitNameSr(orgUnitNameSr.toString());
+        index.setOrganisationUnitNameOther(orgUnitNameOther.toString());
+    }
+
+    private void reindexUser(User user) {
+        var index = userAccountIndexRepository.findByDatabaseId(user.getId())
+            .orElse(new UserAccountIndex());
+        index.setDatabaseId(user.getId());
+
+        indexCommonFields(index, user);
+
+        userAccountIndexRepository.save(index);
+    }
+
+    private void indexCommonFields(UserAccountIndex index, User user) {
+        index.setFullName(user.getFirstname() + " " + user.getLastName());
+        index.setEmail(user.getEmail());
+        index.setUserRole(user.getAuthority().getName());
+        indexUserEmployment(index, user.getOrganisationUnit());
+    }
+
+    private Query buildSimpleSearchQuery(List<String> tokens) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            tokens.forEach(token -> {
+                b.should(sb -> sb.match(
+                    m -> m.field("full_name").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("email").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("org_unit_name_sr").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("org_unit_name_other").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("user_role").query(token)));
+            });
+            return b;
+        })))._toQuery();
     }
 
     @Scheduled(cron = "0 */5 * ? * *") // every five minutes

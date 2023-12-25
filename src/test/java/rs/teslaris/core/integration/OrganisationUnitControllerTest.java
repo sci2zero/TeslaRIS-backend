@@ -17,7 +17,7 @@ public class OrganisationUnitControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "author@author.com", password = "author")
     public void testSearchOrganisationUnitsSimple() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateResearcherAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
@@ -31,7 +31,7 @@ public class OrganisationUnitControllerTest extends BaseTest {
     @WithMockUser(username = "author@author.com", password = "author")
     @ValueSource(strings = {"AND", "OR", "NOT"})
     public void testSearchOrganisationUnitsAdvanced(String operator) throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateResearcherAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(

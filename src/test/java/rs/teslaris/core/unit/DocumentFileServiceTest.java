@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +20,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.mock.web.MockMultipartFile;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
@@ -176,7 +176,7 @@ public class DocumentFileServiceTest {
 
         // when
         var result =
-            documentFileService.searchDocumentFiles(new SearchRequestDTO(tokens), pageable,
+            documentFileService.searchDocumentFiles(new ArrayList<>(tokens), pageable,
                 SearchRequestType.SIMPLE);
 
         // then
@@ -195,7 +195,7 @@ public class DocumentFileServiceTest {
 
         // when
         var result =
-            documentFileService.searchDocumentFiles(new SearchRequestDTO(tokens), pageable,
+            documentFileService.searchDocumentFiles(new ArrayList<>(tokens), pageable,
                 SearchRequestType.ADVANCED);
 
         // then

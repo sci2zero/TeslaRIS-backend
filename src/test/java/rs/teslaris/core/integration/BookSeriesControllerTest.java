@@ -73,7 +73,7 @@ public class BookSeriesControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateBookSeries() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var bookSeriesDTO = getTestPayload();
 
@@ -91,7 +91,7 @@ public class BookSeriesControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testUpdateBookSeries() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var bookSeriesDTO = getTestPayload();
         bookSeriesDTO.setEISSN("TEST_E_ISSN");
@@ -108,7 +108,7 @@ public class BookSeriesControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testDeleteBookSeries() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/book-series/{bookSeriesId}",

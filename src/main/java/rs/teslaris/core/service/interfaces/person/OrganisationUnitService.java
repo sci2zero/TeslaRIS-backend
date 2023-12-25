@@ -43,7 +43,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
                                                          Integer organisationUnitId);
 
-    void deleteOrganisationalUnit(Integer organisationUnitId);
+    void deleteOrganisationUnit(Integer organisationUnitId);
 
     OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO organisationUnitsRelation);

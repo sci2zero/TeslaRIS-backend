@@ -12,6 +12,7 @@ import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -142,7 +143,9 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     public void indexProceedingsPublication(ProceedingsPublication publication,
                                             DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
+
         index.setEventId(publication.getProceedings().getEvent().getId());
+        index.setType(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
 
         documentPublicationIndexRepository.save(index);
     }
@@ -150,7 +153,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Override
     public Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId,
                                                                   Pageable pageable) {
-        return documentPublicationIndexRepository.findByEventId(eventId, pageable);
+        return documentPublicationIndexRepository.findByTypeAndEventId(
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable);
     }
 
     private void setProceedingsPublicationRelatedFields(ProceedingsPublication publication,
@@ -162,5 +166,6 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         publication.setArticleNumber(publicationDTO.getArticleNumber());
         publication.setProceedings(
             proceedingsService.findProceedingsById(publicationDTO.getProceedingsId()));
+        publication.setDocumentDate(publication.getProceedings().getDocumentDate());
     }
 }

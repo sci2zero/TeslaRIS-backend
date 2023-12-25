@@ -28,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -258,7 +259,8 @@ public class ProceedingsPublicationServiceTest {
         var eventId = 1;
         var pageable = Pageable.ofSize(5);
 
-        when(documentPublicationIndexRepository.findByEventId(eventId, pageable)).thenReturn(
+        when(documentPublicationIndexRepository.findByTypeAndEventId(
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable)).thenReturn(
             new PageImpl<>(
                 List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
 

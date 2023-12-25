@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
@@ -22,6 +23,8 @@ public interface JournalService extends JPAService<Journal> {
     Journal findJournalById(Integer journalId);
 
     Journal createJournal(JournalDTO journalDTO);
+
+    Journal createJournal(JournalBasicAdditionDTO journalDTO);
 
     void updateJournal(JournalDTO journalDTO, Integer journalId);
 

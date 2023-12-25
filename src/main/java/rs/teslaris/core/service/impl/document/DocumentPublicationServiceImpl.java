@@ -19,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -318,17 +317,17 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public Page<DocumentPublicationIndex> searchDocumentPublications(SearchRequestDTO searchRequest,
+    public Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                                      Pageable pageable,
                                                                      SearchRequestType type) {
         if (type.equals(SearchRequestType.SIMPLE)) {
-            return searchService.runQuery(buildSimpleSearchQuery(searchRequest.getTokens()),
+            return searchService.runQuery(buildSimpleSearchQuery(tokens),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
 
         return searchService.runQuery(
-            expressionTransformer.parseAdvancedQuery(searchRequest.getTokens()), pageable,
+            expressionTransformer.parseAdvancedQuery(tokens), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
