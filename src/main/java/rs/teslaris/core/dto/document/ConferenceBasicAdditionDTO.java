@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.document;
 
+import java.time.LocalDate;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -13,17 +14,16 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PublisherDTO {
+public class ConferenceBasicAdditionDTO {
 
     private Integer id;
 
     @Valid
-    @NotNull(message = "You have to provide publisher name.")
+    @NotNull(message = "You have to provide conference name.")
     private List<MultilingualContentDTO> name;
 
-    @Valid
-    private List<MultilingualContentDTO> place;
+    @NotNull(message = "You have to provide at least a year when this conference took place.")
+    private LocalDate dateFrom;
 
-    @Valid
-    private List<MultilingualContentDTO> state;
+    private LocalDate dateTo;
 }

@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
@@ -58,6 +59,9 @@ public class InvolvementServiceTest {
 
     @Mock
     private DocumentFileService documentFileService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private InvolvementServiceImpl involvementService;
@@ -193,6 +197,7 @@ public class InvolvementServiceTest {
         education.setThesisTitle(new HashSet<>(Set.of(mc1)));
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
+        education.setPersonInvolved(new Person());
         var educationDTO = new EducationDTO();
         var mc2 = new MultilingualContentDTO(1, "bbb", 1);
         educationDTO.setAffiliationStatement(List.of(mc2));
@@ -221,6 +226,7 @@ public class InvolvementServiceTest {
         membership.setProofs(new HashSet<>());
         membership.setContributionDescription(new HashSet<>(Set.of(mc1)));
         membership.setRole(new HashSet<>(Set.of(mc1)));
+        membership.setPersonInvolved(new Person());
         var membershipDTO = new MembershipDTO();
         var mc2 = new MultilingualContentDTO(1, "bbb", 1);
         membershipDTO.setAffiliationStatement(List.of(mc2));
@@ -247,6 +253,7 @@ public class InvolvementServiceTest {
         employment.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
         employment.setProofs(new HashSet<>());
         employment.setRole(new HashSet<>(Set.of(mc1)));
+        employment.setPersonInvolved(new Person());
         var employmentDTO = new EmploymentDTO();
         employmentDTO.setEmploymentPosition(EmploymentPosition.ASSISTANT);
         var mc2 = new MultilingualContentDTO(1, "bbb", 1);
@@ -254,7 +261,7 @@ public class InvolvementServiceTest {
         employmentDTO.setRole(List.of(mc2));
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(employment));
-        when(involvementRepository.save(any())).thenReturn(new Employment());
+        when(involvementRepository.save(any())).thenReturn(employment);
 
         // when
         involvementService.updateEmployment(1, employmentDTO);

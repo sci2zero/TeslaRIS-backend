@@ -19,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
@@ -170,16 +169,16 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
-    public Page<DocumentFileIndex> searchDocumentFiles(SearchRequestDTO searchRequest,
+    public Page<DocumentFileIndex> searchDocumentFiles(List<String> tokens,
                                                        Pageable pageable, SearchRequestType type) {
         if (type.equals(SearchRequestType.SIMPLE)) {
-            return searchService.runQuery(buildSimpleSearchQuery(searchRequest.getTokens()),
+            return searchService.runQuery(buildSimpleSearchQuery(tokens),
                 pageable,
                 DocumentFileIndex.class, "document_file");
         }
 
         return searchService.runQuery(
-            expressionTransformer.parseAdvancedQuery(searchRequest.getTokens()), pageable,
+            expressionTransformer.parseAdvancedQuery(tokens), pageable,
             DocumentFileIndex.class, "document_file");
     }
 

@@ -17,4 +17,17 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     @Query(value = "select ou from  OrganisationUnit ou left join fetch ou.keyword left join fetch ou.name left join fetch ou.researchAreas", countQuery = "select count(ou) from OrganisationUnit ou")
     Page<OrganisationUnit> findAllWithLangData(Pageable pageable);
 
+    @Query("select count(t) > 0 from Thesis t join t.organisationUnit ou where ou.id = :organisationUnitId")
+    boolean hasThesis(Integer organisationUnitId);
+
+    @Query("select count(i) > 0 from Involvement i join i.organisationUnit ou where ou.id = :organisationUnitId")
+    boolean hasInvolvement(Integer organisationUnitId);
+
+    @Query("select count(our) > 0 from OrganisationUnitsRelation our " +
+        "join our.sourceOrganisationUnit sou join our.targetOrganisationUnit tou " +
+        "where sou.id = :organisationUnitId or tou.id = :organisationUnitId")
+    boolean hasRelation(Integer organisationUnitId);
+
+    @Query("select count(u) > 0 from User u join u.organisationUnit ou where ou.id = :organisationUnitId")
+    boolean hasEmployees(Integer organisationUnitId);
 }

@@ -33,6 +33,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolation;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 
 @Service
@@ -188,8 +189,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    @Deprecated(forRemoval = true)
-    public void deleteOrganisationalUnit(Integer organisationUnitId) {
+    public void deleteOrganisationUnit(Integer organisationUnitId) {
+        if (organisationUnitRepository.hasEmployees(organisationUnitId) ||
+            organisationUnitRepository.hasThesis(organisationUnitId) ||
+            organisationUnitRepository.hasRelation(organisationUnitId) ||
+            organisationUnitRepository.hasInvolvement(organisationUnitId)) {
+            throw new OrganisationUnitReferenceConstraintViolation(
+                "Organisation unit is already in use.");
+        }
+
         this.delete(organisationUnitId);
     }
 

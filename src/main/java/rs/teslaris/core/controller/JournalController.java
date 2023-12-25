@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -42,8 +43,19 @@ public class JournalController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     @Idempotent
     public JournalDTO createJournal(@RequestBody @Valid JournalDTO journalDTO) {
-        var createdJournal = journalService.createJournal(journalDTO);
-        journalDTO.setId(createdJournal.getId());
+        var savedJournal = journalService.createJournal(journalDTO);
+        journalDTO.setId(savedJournal.getId());
+        return journalDTO;
+    }
+
+    @PostMapping("/basic")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
+    @Idempotent
+    public JournalBasicAdditionDTO createJournal(
+        @RequestBody @Valid JournalBasicAdditionDTO journalDTO) {
+        var savedJournal = journalService.createJournal(journalDTO);
+        journalDTO.setId(savedJournal.getId());
         return journalDTO;
     }
 

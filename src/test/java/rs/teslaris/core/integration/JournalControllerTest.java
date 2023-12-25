@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
@@ -74,7 +75,7 @@ public class JournalControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateJournal() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = getTestPayload();
 
@@ -90,8 +91,30 @@ public class JournalControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testCreateJournalBasic() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var journalDTO = new JournalBasicAdditionDTO();
+        journalDTO.setTitle(List.of(new MultilingualContentDTO(25, "Title", 1)));
+        journalDTO.setEISSN("eISSN1");
+        journalDTO.setPrintISSN("printISSN1");
+
+        String requestBody = objectMapper.writeValueAsString(journalDTO);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/journal/basic")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_JOURNAL_BASIC"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.printISSN").value("printISSN1"))
+            .andExpect(jsonPath("$.eissn").value("eISSN1"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testUpdateJournal() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = getTestPayload();
         journalDTO.setEISSN("TEST_E_ISSN");
@@ -108,7 +131,7 @@ public class JournalControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testDeleteJournal() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/journal/{journalId}", 48)

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -24,6 +25,9 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -74,6 +78,9 @@ public class JournalPublicationServiceTest {
     @Mock
     private JournalPublicationJPAServiceImpl journalPublicationJPAService;
 
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     @InjectMocks
     private JournalPublicationServiceImpl journalPublicationService;
 
@@ -91,7 +98,7 @@ public class JournalPublicationServiceTest {
 
     @BeforeEach
     public void setUp() {
-        ReflectionTestUtils.setField(journalPublicationService, "documentApprovedByDefault", false);
+        ReflectionTestUtils.setField(journalPublicationService, "documentApprovedByDefault", true);
     }
 
     @Test
@@ -99,7 +106,17 @@ public class JournalPublicationServiceTest {
         // Given
         var publicationDTO = new JournalPublicationDTO();
         publicationDTO.setEventId(1);
+        var journal = new Journal();
+        journal.setId(1);
         var document = new JournalPublication();
+        document.setJournal(journal);
+        document.setContributors(new HashSet<>());
+        document.setTitle(new HashSet<>());
+        document.setSubTitle(new HashSet<>());
+        document.setDescription(new HashSet<>());
+        document.setKeywords(new HashSet<>());
+        document.setFileItems(new HashSet<>());
+        document.setDocumentDate("2023");
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -206,5 +223,67 @@ public class JournalPublicationServiceTest {
         verify(documentRepository).findById(eq(publicationId));
         assertNotNull(result);
         assertEquals(1, result.getContributions().size());
+    }
+
+    @Test
+    public void shouldFindMyPublicationsInJournal() {
+        // Given
+        var journalId = 123;
+        var authorId = 456;
+
+        var publication1 = new DocumentPublicationIndex();
+        publication1.setId("1");
+        publication1.setType("JOURNAL_PUBLICATION");
+        publication1.setJournalId(journalId);
+        publication1.getAuthorIds().add(authorId);
+
+        var publication2 = new DocumentPublicationIndex();
+        publication2.setId("2");
+        publication2.setType("JOURNAL_PUBLICATION");
+        publication2.setJournalId(journalId);
+        publication2.getAuthorIds().add(authorId);
+
+        var expectedPublications = Arrays.asList(publication1, publication2);
+
+        when(documentPublicationIndexRepository.findByTypeAndJournalIdAndAuthorIds(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+            journalId, authorId))
+            .thenReturn(expectedPublications);
+
+        // When
+        var actualPublications =
+            journalPublicationService.findMyPublicationsInJournal(journalId, authorId);
+
+        // Then
+        assertEquals(expectedPublications, actualPublications);
+    }
+
+    @Test
+    public void shouldFindAllPublicationsInJournal() {
+        // Given
+        var journalId = 123;
+
+        var publication1 = new DocumentPublicationIndex();
+        publication1.setId("1");
+        publication1.setType("JOURNAL_PUBLICATION");
+        publication1.setJournalId(journalId);
+
+        var publication2 = new DocumentPublicationIndex();
+        publication2.setId("2");
+        publication2.setType("JOURNAL_PUBLICATION");
+        publication2.setJournalId(journalId);
+
+        var expectedPublications = Arrays.asList(publication1, publication2);
+
+        when(documentPublicationIndexRepository.findByTypeAndJournalId(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId))
+            .thenReturn(expectedPublications);
+
+        // When
+        var actualPublications =
+            journalPublicationService.findPublicationsInJournal(journalId);
+
+        // Then
+        assertEquals(expectedPublications, actualPublications);
     }
 }

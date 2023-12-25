@@ -24,4 +24,6 @@ public class UserResponseDTO {
     private Boolean canTakeRole;
 
     private String preferredLanguage;
+
+    private Integer organisationUnitId;
 }

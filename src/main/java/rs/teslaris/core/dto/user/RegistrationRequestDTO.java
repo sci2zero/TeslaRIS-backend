@@ -21,20 +21,10 @@ public class RegistrationRequestDTO {
     @NotBlank(message = "Password cannot be blank.")
     private String password;
 
-    @NotBlank(message = "First name cannot be blank.")
-    private String firstname;
-
-    @NotBlank(message = "Last name cannot be blank.")
-    private String lastName;
-
     @NotNull(message = "You must provide a preferred language ID.")
     @Positive(message = "Preferred languageID must be a positive number.")
     private Integer preferredLanguageId;
 
     @Positive(message = "Person ID must be a positive number.")
     private Integer personId;
-
-    @NotNull(message = "You must provide an authority ID.")
-    @Positive(message = "Organisational unit ID must be a positive number.")
-    private Integer organisationalUnitId;
 }

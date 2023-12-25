@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 
@@ -36,6 +37,17 @@ public class PublisherController {
     @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
     @Idempotent
     public PublisherDTO createPublisher(@RequestBody @Valid PublisherDTO publisherDTO) {
+        var newPublisher = publisherService.createPublisher(publisherDTO);
+        publisherDTO.setId(newPublisher.getId());
+        return publisherDTO;
+    }
+
+    @PostMapping("/basic")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
+    @Idempotent
+    public PublisherBasicAdditionDTO createPublisher(
+        @RequestBody @Valid PublisherBasicAdditionDTO publisherDTO) {
         var newPublisher = publisherService.createPublisher(publisherDTO);
         publisherDTO.setId(newPublisher.getId());
         return publisherDTO;

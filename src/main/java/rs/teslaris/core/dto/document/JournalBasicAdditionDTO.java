@@ -13,17 +13,15 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PublisherDTO {
+public class JournalBasicAdditionDTO {
 
     private Integer id;
 
     @Valid
-    @NotNull(message = "You have to provide publisher name.")
-    private List<MultilingualContentDTO> name;
+    @NotNull(message = "You have to provide journal title.")
+    private List<MultilingualContentDTO> title;
 
-    @Valid
-    private List<MultilingualContentDTO> place;
+    private String eISSN;
 
-    @Valid
-    private List<MultilingualContentDTO> state;
+    private String printISSN;
 }

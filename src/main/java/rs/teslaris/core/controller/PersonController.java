@@ -2,6 +2,7 @@ package rs.teslaris.core.controller;
 
 import java.util.List;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.commontypes.SearchRequestDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDto;
@@ -48,10 +48,11 @@ public class PersonController {
     }
 
     @GetMapping("/simple-search")
-    public Page<PersonIndex> simpleSearch(@RequestBody @Valid
-                                          SearchRequestDTO searchRequest,
-                                          Pageable pageable) {
-        return personService.findPeopleByNameAndEmployment(searchRequest.getTokens(),
+    public Page<PersonIndex> simpleSearch(
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        Pageable pageable) {
+        return personService.findPeopleByNameAndEmployment(tokens,
             pageable);
     }
 
@@ -63,9 +64,10 @@ public class PersonController {
 
     @GetMapping("/advanced-search")
     public Page<PersonIndex> advancedSearch(
-        @RequestBody @Valid SearchRequestDTO searchRequest,
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
-        return personService.advancedSearch(searchRequest, pageable);
+        return personService.advancedSearch(tokens, pageable);
     }
 
     @PostMapping("/basic")

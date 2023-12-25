@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
@@ -77,7 +78,7 @@ public class ConferenceControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreateConference() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var conferenceDTO = getTestPayload();
 
@@ -93,8 +94,29 @@ public class ConferenceControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testCreateConferenceBasic() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var date = LocalDate.now();
+        var conferenceDTO = new ConferenceBasicAdditionDTO();
+        conferenceDTO.setName(List.of(new MultilingualContentDTO(25, "Name", 1)));
+        conferenceDTO.setDateFrom(date);
+        conferenceDTO.setDateTo(date);
+
+        String requestBody = objectMapper.writeValueAsString(conferenceDTO);
+        mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/conference/basic")
+                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_CONFERENCE_BASIC"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.dateFrom").value(date.toString()))
+            .andExpect(jsonPath("$.dateTo").value(date.toString()));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testUpdateConference() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         var conferenceDTO = getTestPayload();
 
@@ -109,7 +131,7 @@ public class ConferenceControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testDeleteConference() throws Exception {
-        String jwtToken = authenticateAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/conference/{conferenceId}",
