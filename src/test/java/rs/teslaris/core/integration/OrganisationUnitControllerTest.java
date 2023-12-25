@@ -15,9 +15,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 public class OrganisationUnitControllerTest extends BaseTest {
 
     @Test
-    @WithMockUser(username = "author@author.com", password = "author")
+    @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testSearchOrganisationUnitsSimple() throws Exception {
-        String jwtToken = authenticateResearcherAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
@@ -28,10 +28,10 @@ public class OrganisationUnitControllerTest extends BaseTest {
     }
 
     @ParameterizedTest
-    @WithMockUser(username = "author@author.com", password = "author")
+    @WithMockUser(username = "admin@admin.com", password = "admin")
     @ValueSource(strings = {"AND", "OR", "NOT"})
     public void testSearchOrganisationUnitsAdvanced(String operator) throws Exception {
-        String jwtToken = authenticateResearcherAndGetToken();
+        String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
