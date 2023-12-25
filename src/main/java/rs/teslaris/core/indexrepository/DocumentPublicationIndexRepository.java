@@ -3,6 +3,8 @@ package rs.teslaris.core.indexrepository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -14,9 +16,12 @@ public interface DocumentPublicationIndexRepository extends
 
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseId(Integer databaseId);
 
+    Page<DocumentPublicationIndex> findByTypeAndEventId(String type, Integer eventId,
+                                                        Pageable pageable);
+
     @Query("{\"bool\": " +
         "{\"must\": [" +
-        "{\"term\": {\"type.keyword\": \"?0\"}}, " +
+        "{\"term\": {\"type\": \"?0\"}}, " +
         "{\"term\": {\"journal_id\": \"?1\"}}, " +
         "{\"terms\": {\"author_ids\": [\"?2\"]}}" +
         "]}}")
@@ -26,9 +31,8 @@ public interface DocumentPublicationIndexRepository extends
 
     @Query("{\"bool\": " +
         "{\"must\": [" +
-        "{\"term\": {\"type.keyword\": \"?0\"}}, " +
+        "{\"term\": {\"type\": \"?0\"}}, " +
         "{\"term\": {\"journal_id\": \"?1\"}}, " +
         "]}}")
     List<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId);
-
 }

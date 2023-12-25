@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,11 @@ public class ProceedingsController {
     @GetMapping("/{publicationId}")
     public ProceedingsResponseDTO readProceedings(@PathVariable Integer publicationId) {
         return proceedingsService.readProceedingsById(publicationId);
+    }
+
+    @GetMapping("/for-event/{eventId}")
+    public List<ProceedingsResponseDTO> readProceedingsForEvent(@PathVariable Integer eventId) {
+        return proceedingsService.readProceedingsForEventId(eventId);
     }
 
     @PostMapping

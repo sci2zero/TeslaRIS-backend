@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -22,8 +23,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -70,6 +76,9 @@ public class ProceedingsPublicationServiceTest {
 
     @Mock
     private ProceedingsPublicationRepository proceedingsPublicationRepository;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Mock
     private ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService;
@@ -212,5 +221,53 @@ public class ProceedingsPublicationServiceTest {
         verify(documentRepository).findById(eq(publicationId));
         assertNotNull(result);
         assertEquals(1, result.getContributions().size());
+    }
+
+    @Test
+    public void shouldReadProceedingsPublicationForEvent() {
+        // Given
+        var eventId = 1;
+        var authorId = 1;
+        var proceedings = new Proceedings();
+        proceedings.setTitle(new HashSet<>());
+        var publication = new ProceedingsPublication();
+        publication.setProceedings(proceedings);
+        publication.setTitle(new HashSet<>());
+        publication.setSubTitle(new HashSet<>());
+        publication.setDescription(new HashSet<>());
+        publication.setKeywords(new HashSet<>());
+        publication.setApproveStatus(ApproveStatus.APPROVED);
+        publication.setUris(new HashSet<>());
+
+        when(proceedingsPublicationRepository.findProceedingsPublicationsForEventId(
+            eventId, authorId)).thenReturn(List.of(publication));
+
+        // When
+        var result =
+            proceedingsPublicationService.findAuthorsProceedingsForEvent(eventId, authorId);
+
+        // Then
+        verify(proceedingsPublicationRepository, times(1)).findProceedingsPublicationsForEventId(
+            eventId, authorId);
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    public void shouldFindDocumentPublicationsForEvent() {
+        // Given
+        var eventId = 1;
+        var pageable = Pageable.ofSize(5);
+
+        when(documentPublicationIndexRepository.findByTypeAndEventId(
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable)).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+
+        // When
+        var result = proceedingsPublicationService.findProceedingsForEvent(eventId, pageable);
+
+        // Then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

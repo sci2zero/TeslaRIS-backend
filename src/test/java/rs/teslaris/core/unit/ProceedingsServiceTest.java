@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,7 +83,7 @@ public class ProceedingsServiceTest {
     }
 
     @Test
-    public void shouldReturnLanguageWhenProceedingsExists() {
+    public void shouldReturnProceedingsWhenProceedingsExists() {
         // given
         var expectedProceedings = new Proceedings();
 
@@ -104,6 +105,32 @@ public class ProceedingsServiceTest {
         assertThrows(NotFoundException.class, () -> proceedingsService.findProceedingsById(1));
 
         // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldReturnProceedingsForEvent() {
+        // given
+        var event = new Conference();
+        event.setName(new HashSet<>());
+        var document = new Proceedings();
+        document.setDocumentDate("MOCK DATE");
+        document.setFileItems(new HashSet<>());
+        document.setEvent(event);
+        document.setLanguages(new HashSet<>());
+        document.setTitle(new HashSet<>());
+        document.setSubTitle(new HashSet<>());
+        document.setDescription(new HashSet<>());
+        document.setKeywords(new HashSet<>());
+        document.setContributors(new HashSet<>());
+        document.setUris(new HashSet<>());
+
+        when(proceedingsRepository.findProceedingsForEventId(1)).thenReturn(List.of(document));
+
+        // when
+        var actualProceedings = proceedingsService.readProceedingsForEventId(1);
+
+        // then
+        assertEquals(1, actualProceedings.size());
     }
 
     @Test

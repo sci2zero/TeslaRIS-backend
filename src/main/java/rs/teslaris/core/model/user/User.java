@@ -64,7 +64,7 @@ public class User extends BaseEntity implements UserDetails {
     private Person person;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "organisational_unit_id")
+    @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 
     @Override

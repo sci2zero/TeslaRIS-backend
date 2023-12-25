@@ -1,10 +1,16 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -62,6 +68,25 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             throw new NotFoundException("Document with given id does not exist.");
         }
         return ProceedingsPublicationConverter.toDTO(publication);
+    }
+
+    @Override
+    public List<ProceedingsPublicationResponseDTO> findAuthorsProceedingsForEvent(Integer eventId,
+                                                                                  Integer authorId) {
+        var proceedingsPublications =
+            proceedingsPublicationRepository.findProceedingsPublicationsForEventId(eventId,
+                authorId);
+        return proceedingsPublications.stream().map(publication -> {
+            var responseDTO = new ProceedingsPublicationResponseDTO();
+
+            responseDTO.setTitle(
+                MultilingualContentConverter.getMultilingualContentDTO(publication.getTitle()));
+            responseDTO.setProceedingsTitle(MultilingualContentConverter.getMultilingualContentDTO(
+                publication.getProceedings().getTitle()));
+            responseDTO.setDocumentDate(publication.getDocumentDate());
+
+            return responseDTO;
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -123,6 +148,13 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         index.setType(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId,
+                                                                  Pageable pageable) {
+        return documentPublicationIndexRepository.findByTypeAndEventId(
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable);
     }
 
     private void setProceedingsPublicationRelatedFields(ProceedingsPublication publication,

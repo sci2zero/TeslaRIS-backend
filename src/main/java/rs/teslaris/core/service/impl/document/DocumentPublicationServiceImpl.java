@@ -120,15 +120,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         if (isProof) {
             Set<DocumentFile> proofs = document.getProofs();
-            proofs.stream().forEach(p -> {
-                p.setDeleted(true);
-            });
+            proofs.forEach(p -> p.setDeleted(true));
             documentFileService.saveAll(proofs);
         } else {
             Set<DocumentFile> fileItems = document.getFileItems();
-            fileItems.stream().forEach(p -> {
-                p.setDeleted(true);
-            });
+            fileItems.forEach(p -> p.setDeleted(true));
             documentFileService.saveAll(fileItems);
         }
         documentRepository.save(document);

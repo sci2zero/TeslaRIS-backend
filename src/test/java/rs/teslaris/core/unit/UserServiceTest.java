@@ -89,7 +89,7 @@ public class UserServiceTest {
     @Mock
     private PersonService personService;
     @Mock
-    private OrganisationUnitServiceImpl organisationalUnitService;
+    private OrganisationUnitServiceImpl organisationUnitService;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
@@ -171,8 +171,7 @@ public class UserServiceTest {
         var person = new Person();
         person.setName(new PersonName("John", "Something", "Doe", LocalDate.of(1995, 12, 3), null));
         when(personService.findOne(1)).thenReturn(person);
-
-        when(organisationalUnitService.findOrganisationUnitById(1)).thenReturn(
+        when(organisationUnitService.findOrganisationUnitById(1)).thenReturn(
             new OrganisationUnit());
 
         var organisationUnit = new OrganisationUnit();
@@ -296,7 +295,7 @@ public class UserServiceTest {
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
-        when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
+        when(organisationUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
@@ -350,7 +349,7 @@ public class UserServiceTest {
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
-        when(organisationalUnitService.findOne(3)).thenReturn(
+        when(organisationUnitService.findOne(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
@@ -401,7 +400,7 @@ public class UserServiceTest {
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
-        when(organisationalUnitService.findOrganisationUnitById(3)).thenReturn(
+        when(organisationUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);
 

@@ -16,6 +16,7 @@ import lombok.Setter;
 @Embeddable
 @EqualsAndHashCode
 public class GeoLocation {
+
     @Column(name = "longitude", nullable = false)
     private Double longitude;
 

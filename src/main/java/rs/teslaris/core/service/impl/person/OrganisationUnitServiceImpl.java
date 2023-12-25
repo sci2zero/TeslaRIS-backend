@@ -1,8 +1,13 @@
 package rs.teslaris.core.service.impl.person;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,8 +24,10 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
@@ -30,11 +37,14 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolation;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
+import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
 @RequiredArgsConstructor
@@ -43,20 +53,29 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     implements OrganisationUnitService {
 
     private final OrganisationUnitsRelationJPAServiceImpl organisationUnitsRelationJPAService;
+
     private final OrganisationUnitRepository organisationUnitRepository;
+
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
     private final MultilingualContentService multilingualContentService;
 
     private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
     private final ResearchAreaService researchAreaService;
+
     private final DocumentFileService documentFileService;
+
+    private final SearchService<OrganisationUnitIndex> searchService;
+
+    private final ExpressionTransformer expressionTransformer;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
 
     @Value("${organisation_unit.approved_by_default}")
     private Boolean organisationUnitApprovedByDefault;
+
 
     @Override
     protected JpaRepository<OrganisationUnit, Integer> getEntityRepository() {
@@ -83,6 +102,42 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    public Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens,
+                                                               Pageable pageable,
+                                                               SearchRequestType type) {
+        if (type.equals(SearchRequestType.SIMPLE)) {
+            return searchService.runQuery(buildSimpleSearchQuery(tokens),
+                pageable,
+                OrganisationUnitIndex.class, "organisation-unit");
+        }
+
+        return searchService.runQuery(
+            expressionTransformer.parseAdvancedQuery(tokens), pageable,
+            OrganisationUnitIndex.class, "organisation-unit");
+    }
+
+    private Query buildSimpleSearchQuery(List<String> tokens) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            tokens.forEach(token -> {
+                b.should(sb -> sb.match(
+                    m -> m.field("name_sr").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("name_other").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("keywords_sr").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("keywords_other").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("research_areas_sr").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("research_areas_other")
+                        .query(token)));
+            });
+            return b;
+        })))._toQuery();
+    }
+
+    @Override
     public OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id) {
         return organisationUnitsRelationJPAService.findOne(id);
     }
@@ -100,24 +155,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    public OrganisationUnit createOrganisationalUnit(
+    public OrganisationUnit createOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest) {
         OrganisationUnit organisationUnit = new OrganisationUnit();
-        organisationUnit.setName(
-            multilingualContentService.getMultilingualContent(organisationUnitDTORequest.getName())
-        );
-        organisationUnit.setNameAbbreviation(organisationUnitDTORequest.getNameAbbreviation());
-        organisationUnit.setKeyword(
-            multilingualContentService.getMultilingualContent(
-                organisationUnitDTORequest.getKeyword())
-        );
+        OrganisationUnitIndex organisationUnitIndex = new OrganisationUnitIndex();
 
-        List<ResearchArea> researchAreas = researchAreaService.getResearchAreasByIds(
-            organisationUnitDTORequest.getResearchAreasId());
-        organisationUnit.setResearchAreas(new HashSet<>(researchAreas));
-
-        organisationUnit.setLocation(
-            GeoLocationConverter.fromDTO(organisationUnitDTORequest.getLocation()));
+        setCommonOUFields(organisationUnit, organisationUnitDTORequest);
+        indexCommonFields(organisationUnit, organisationUnitIndex);
 
         if (organisationUnitApprovedByDefault) {
             organisationUnit.setApproveStatus(ApproveStatus.APPROVED);
@@ -125,48 +169,91 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnit.setApproveStatus(ApproveStatus.REQUESTED);
         }
 
-        organisationUnit.setContact(
-            ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
+        var savedOU = this.save(organisationUnit);
+        organisationUnitIndex.setDatabaseId(savedOU.getId());
+        organisationUnitIndexRepository.save(organisationUnitIndex);
 
-        organisationUnit = this.save(organisationUnit);
-
-
-        return organisationUnit;
+        return savedOU;
     }
 
     @Override
-    public OrganisationUnit editOrganisationalUnit(
+    public OrganisationUnit editOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest, Integer organisationUnitId) {
 
-        OrganisationUnit organisationUnit = getReferenceToOrganisationUnitById(organisationUnitId);
+        var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
+        var indexToUpdate = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                organisationUnitId)
+            .orElse(new OrganisationUnitIndex());
+        indexToUpdate.setDatabaseId(organisationUnitId);
 
-        organisationUnit.getName().clear();
+        organisationUnitToUpdate.getName().clear();
+        organisationUnitToUpdate.getKeyword().clear();
+        organisationUnitToUpdate.getResearchAreas().clear();
+
+        setCommonOUFields(organisationUnitToUpdate, organisationUnitDTORequest);
+
+        organisationUnitToUpdate = this.save(organisationUnitToUpdate);
+        return organisationUnitToUpdate;
+    }
+
+    private void setCommonOUFields(OrganisationUnit organisationUnit,
+                                   OrganisationUnitDTORequest organisationUnitDTO) {
         organisationUnit.setName(
-            multilingualContentService.getMultilingualContent(organisationUnitDTORequest.getName())
+            multilingualContentService.getMultilingualContent(organisationUnitDTO.getName())
         );
-
-        organisationUnit.setNameAbbreviation(organisationUnitDTORequest.getNameAbbreviation());
-
-        organisationUnit.getKeyword().clear();
+        organisationUnit.setNameAbbreviation(organisationUnitDTO.getNameAbbreviation());
         organisationUnit.setKeyword(
             multilingualContentService.getMultilingualContent(
-                organisationUnitDTORequest.getKeyword())
+                organisationUnitDTO.getKeyword())
         );
 
-        organisationUnit.getResearchAreas().clear();
-        List<ResearchArea> researchAreas = researchAreaService.getResearchAreasByIds(
-            organisationUnitDTORequest.getResearchAreasId());
+        var researchAreas = researchAreaService.getResearchAreasByIds(
+            organisationUnitDTO.getResearchAreasId());
         organisationUnit.setResearchAreas(new HashSet<>(researchAreas));
 
         organisationUnit.setLocation(
-            GeoLocationConverter.fromDTO(organisationUnitDTORequest.getLocation()));
+            GeoLocationConverter.fromDTO(organisationUnitDTO.getLocation()));
+
 
         organisationUnit.setContact(
-            ContactConverter.fromDTO(organisationUnitDTORequest.getContact()));
+            ContactConverter.fromDTO(organisationUnitDTO.getContact()));
+    }
 
-        organisationUnit = this.save(organisationUnit);
+    private void indexCommonFields(OrganisationUnit organisationUnit, OrganisationUnitIndex index) {
+        indexMultilingualContent(index, organisationUnit, OrganisationUnit::getName,
+            OrganisationUnitIndex::setNameSr,
+            OrganisationUnitIndex::setNameOther);
+        indexMultilingualContent(index, organisationUnit, OrganisationUnit::getKeyword,
+            OrganisationUnitIndex::setKeywordsSr,
+            OrganisationUnitIndex::setKeywordsOther);
 
-        return organisationUnit;
+        var researchAreaSrContent = new StringBuilder();
+        var researchAreaOtherContent = new StringBuilder();
+
+        organisationUnit.getResearchAreas().forEach(
+            researchArea -> multilingualContentService.buildLanguageStrings(researchAreaSrContent,
+                researchAreaOtherContent,
+                researchArea.getName()));
+
+        index.setResearchAreasSr(researchAreaSrContent.toString());
+        index.setResearchAreasOther(researchAreaOtherContent.toString());
+    }
+
+    private void indexMultilingualContent(OrganisationUnitIndex index,
+                                          OrganisationUnit organisationUnit,
+                                          Function<OrganisationUnit, Set<MultiLingualContent>> contentExtractor,
+                                          BiConsumer<OrganisationUnitIndex, String> srSetter,
+                                          BiConsumer<OrganisationUnitIndex, String> otherSetter) {
+        Set<MultiLingualContent> contentList = contentExtractor.apply(organisationUnit);
+
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList);
+
+        srSetter.accept(index,
+            srContent.append(organisationUnit.getNameAbbreviation()).append(" | ").toString());
+        otherSetter.accept(index, otherContent.toString());
     }
 
     @Override
@@ -210,7 +297,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         var newRelation = new OrganisationUnitsRelation();
-        setCommonFields(newRelation, relationDTO);
+        setCommonOURelationFields(newRelation, relationDTO);
 
         if (relationApprovedByDefault) {
             newRelation.setApproveStatus(ApproveStatus.APPROVED);
@@ -229,7 +316,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         relationToUpdate.getSourceAffiliationStatement().clear();
         relationToUpdate.getTargetAffiliationStatement().clear();
 
-        setCommonFields(relationToUpdate, relationDTO);
+        setCommonOURelationFields(relationToUpdate, relationDTO);
 
         organisationUnitsRelationJPAService.save(relationToUpdate);
     }
@@ -249,8 +336,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnitsRelationJPAService.save(relationToApprove);
     }
 
-    private void setCommonFields(OrganisationUnitsRelation relation,
-                                 OrganisationUnitsRelationDTO relationDTO) {
+    private void setCommonOURelationFields(OrganisationUnitsRelation relation,
+                                           OrganisationUnitsRelationDTO relationDTO) {
         relation.setSourceAffiliationStatement(multilingualContentService.getMultilingualContent(
             relationDTO.getSourceAffiliationStatement()));
         relation.setTargetAffiliationStatement(multilingualContentService.getMultilingualContent(

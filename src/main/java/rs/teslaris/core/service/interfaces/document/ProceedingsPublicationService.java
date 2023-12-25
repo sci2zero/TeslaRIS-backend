@@ -1,7 +1,11 @@
 package rs.teslaris.core.service.interfaces.document;
 
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 
@@ -9,6 +13,9 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 public interface ProceedingsPublicationService {
 
     ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId);
+
+    List<ProceedingsPublicationResponseDTO> findAuthorsProceedingsForEvent(Integer eventId,
+                                                                           Integer authorId);
 
     ProceedingsPublication createProceedingsPublication(
         ProceedingsPublicationDTO proceedingsPublicationDTO);
@@ -20,4 +27,6 @@ public interface ProceedingsPublicationService {
 
     void indexProceedingsPublication(ProceedingsPublication publication,
                                      DocumentPublicationIndex index);
+
+    Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId, Pageable pageable);
 }
