@@ -65,6 +65,10 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/register").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/basic-search").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()
             .anyRequest().fullyAuthenticated();
 

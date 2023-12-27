@@ -64,6 +64,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final PersonNameService personNameService;
 
+
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
 
@@ -362,6 +363,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     public Page<PersonIndex> findAllIndex(Pageable pageable) {
         return personIndexRepository.findAll(pageable);
+    }
+
+    @Override
+    public Long getResearcherCount() {
+        return personIndexRepository.count();
     }
 
     @Override

@@ -275,4 +275,19 @@ public class DocumentPublicationServiceTest {
         // then
         assertEquals(result.getTotalElements(), 2L);
     }
+
+    @Test
+    public void shouldGetDocumentPublicationCount() {
+        // Given
+        var expectedCount = 42L;
+        when(documentPublicationIndexRepository.count()).thenReturn(expectedCount);
+
+        // When
+        long actualCount = documentPublicationService.getPublicationCount();
+
+        // Then
+        assertEquals(expectedCount, actualCount);
+        verify(documentPublicationIndexRepository, times(1)).count();
+    }
+
 }

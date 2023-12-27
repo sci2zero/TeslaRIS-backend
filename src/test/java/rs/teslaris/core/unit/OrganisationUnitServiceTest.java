@@ -566,4 +566,18 @@ public class OrganisationUnitServiceTest {
         assertEquals("Organisation unit is already in use.", exception.getMessage());
         verify(organisationUnitRepository, never()).delete(any());
     }
+
+    @Test
+    public void shouldGetOUCount() {
+        // Given
+        var expectedCount = 42L;
+        when(organisationUnitIndexRepository.count()).thenReturn(expectedCount);
+
+        // When
+        long actualCount = organisationUnitService.getOrganisationUnitsCount();
+
+        // Then
+        assertEquals(expectedCount, actualCount);
+        verify(organisationUnitIndexRepository, times(1)).count();
+    }
 }

@@ -18,6 +18,8 @@ public interface PersonService extends JPAService<Person> {
 
     Page<PersonIndex> findAllIndex(Pageable pageable);
 
+    Long getResearcherCount();
+
     Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable);
 
     Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,

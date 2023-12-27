@@ -23,6 +23,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnit getReferenceToOrganisationUnitById(Integer id);
 
+    Long getOrganisationUnitsCount();
+
     Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable);
 
     Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens, Pageable pageable,

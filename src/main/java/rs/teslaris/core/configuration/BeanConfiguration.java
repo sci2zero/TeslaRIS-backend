@@ -47,7 +47,8 @@ public class BeanConfiguration {
             @Override
             public void addCorsMappings(@NotNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                    .allowedOrigins("http://127.0.0.1:5173", "http://localhost:5173", "http://0.0.0.0:5173")
+                    .allowedOrigins("http://127.0.0.1:5173", "http://localhost:5173",
+                        "http://0.0.0.0:5173")
                     .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH");
             }
         };

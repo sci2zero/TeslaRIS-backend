@@ -80,6 +80,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    public Long getPublicationCount() {
+        return documentPublicationIndexRepository.count();
+    }
+
+    @Override
     public void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved) {
         var documentToUpdate = findOne(documentId);
 

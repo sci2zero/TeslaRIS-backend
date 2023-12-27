@@ -42,6 +42,11 @@ public class PersonController {
         return personService.findAllIndex(pageable);
     }
 
+    @GetMapping("/count")
+    public Long countAll(Pageable pageable) {
+        return personService.getResearcherCount();
+    }
+
     @GetMapping("/{personId}")
     public PersonResponseDto readPersonWithBasicInfo(@PathVariable Integer personId) {
         return personService.readPersonWithBasicInfo(personId);

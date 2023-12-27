@@ -50,6 +50,11 @@ public class DocumentPublicationController {
             SearchRequestType.ADVANCED);
     }
 
+    @GetMapping("/count")
+    public Long countAll() {
+        return documentPublicationService.getPublicationCount();
+    }
+
     @PatchMapping("/{publicationId}/approval")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('APPROVE_DOCUMENT')")

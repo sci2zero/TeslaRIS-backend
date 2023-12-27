@@ -482,4 +482,18 @@ public class PersonServiceTest {
         // then
         assertEquals(result.getTotalElements(), 2L);
     }
+
+    @Test
+    public void shouldGetResearcherCount() {
+        // Given
+        var expectedCount = 42L;
+        when(personIndexRepository.count()).thenReturn(expectedCount);
+
+        // When
+        long actualCount = personService.getResearcherCount();
+
+        // Then
+        assertEquals(expectedCount, actualCount);
+        verify(personIndexRepository, times(1)).count();
+    }
 }

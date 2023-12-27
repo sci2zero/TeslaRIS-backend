@@ -40,6 +40,11 @@ public class OrganisationUnitController {
         return organisationUnitService.findOrganisationUnits(pageable);
     }
 
+    @GetMapping("/count")
+    public Long countAll() {
+        return organisationUnitService.getOrganisationUnitsCount();
+    }
+
     @GetMapping("/{organisationUnitId}")
     public OrganisationUnitDTO getOrganisationUnit(@PathVariable Integer organisationUnitId) {
         return OrganisationUnitConverter.toDTO(

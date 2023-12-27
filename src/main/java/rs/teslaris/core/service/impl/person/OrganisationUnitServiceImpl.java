@@ -155,6 +155,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    public Long getOrganisationUnitsCount() {
+        return organisationUnitIndexRepository.count();
+    }
+
+    @Override
     public OrganisationUnit createOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest) {
         OrganisationUnit organisationUnit = new OrganisationUnit();
