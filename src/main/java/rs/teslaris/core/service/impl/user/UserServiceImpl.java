@@ -120,9 +120,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public UserResponseDTO getUserProfile(Integer userId) {
         var user = findOne(userId);
+        var organisationUnitId =
+            Objects.nonNull(user.getOrganisationUnit()) ? user.getOrganisationUnit().getId() : -1;
         return new UserResponseDTO(user.getId(), user.getEmail(), user.getFirstname(),
             user.getLastName(), user.getLocked(), user.getCanTakeRole(),
-            user.getPreferredLanguage().getLanguageCode(), user.getOrganisationUnit().getId());
+            user.getPreferredLanguage().getLanguageCode(), organisationUnitId);
     }
 
     @Override
