@@ -223,6 +223,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         userToDeactivate.setLocked(!userToDeactivate.getLocked());
         userRepository.save(userToDeactivate);
+
+        var index = userAccountIndexRepository.findByDatabaseId(userId);
+        if (index.isPresent()) {
+            index.get().setActive(userToDeactivate.getLocked());
+            userAccountIndexRepository.save(index.get());
+        }
     }
 
     @Override
@@ -415,6 +421,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private void indexCommonFields(UserAccountIndex index, User user) {
         index.setFullName(user.getFirstname() + " " + user.getLastName());
         index.setEmail(user.getEmail());
+        index.setEmailSortable(user.getEmail());
         index.setUserRole(user.getAuthority().getName());
         indexUserEmployment(index, user.getOrganisationUnit());
     }
@@ -422,8 +429,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
-                b.should(sb -> sb.match(
-                    m -> m.field("full_name").query(token)));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("full_name").value(token)));
                 b.should(sb -> sb.match(
                     m -> m.field("email").query(token)));
                 b.should(sb -> sb.match(
