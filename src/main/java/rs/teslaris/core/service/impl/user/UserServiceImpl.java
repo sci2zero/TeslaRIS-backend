@@ -226,7 +226,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var index = userAccountIndexRepository.findByDatabaseId(userId);
         if (index.isPresent()) {
-            index.get().setActive(userToDeactivate.getLocked());
+            index.get().setActive(!userToDeactivate.getLocked());
             userAccountIndexRepository.save(index.get());
         }
     }
@@ -243,6 +243,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         userRepository.save(userToActivate);
         userAccountActivationRepository.delete(accountActivation);
+
+        var index = userAccountIndexRepository.findByDatabaseId(userToActivate.getId());
+        if (index.isPresent()) {
+            index.get().setActive(!userToActivate.getLocked());
+            userAccountIndexRepository.save(index.get());
+        }
     }
 
     @Override
@@ -423,6 +429,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         index.setEmail(user.getEmail());
         index.setEmailSortable(user.getEmail());
         index.setUserRole(user.getAuthority().getName());
+        index.setActive(!user.getLocked());
         indexUserEmployment(index, user.getOrganisationUnit());
     }
 
@@ -444,7 +451,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         })))._toQuery();
     }
 
-    @Scheduled(cron = "0 */5 * ? * *") // every five minutes
+    @Scheduled(cron = "0 */10 * ? * *") // every ten minutes
     public void cleanupLongLivedRefreshTokens() {
         var refreshTokens = refreshTokenRepository.findAll();
 

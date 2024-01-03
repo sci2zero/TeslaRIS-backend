@@ -286,6 +286,7 @@ public class UserServiceTest {
         user.setPassword("oldPassword");
         user.setFirstname("Jane");
         user.setLastName("Doe");
+        user.setLocked(false);
         user.setCanTakeRole(false);
         user.setPreferredLanguage(new Language());
         var person = new Person();
@@ -341,6 +342,7 @@ public class UserServiceTest {
         user.setFirstname("Jane");
         user.setLastName("Doe");
         user.setCanTakeRole(false);
+        user.setLocked(false);
         user.setPreferredLanguage(new Language());
         var person = new Person();
         user.setPerson(person);
@@ -639,6 +641,7 @@ public class UserServiceTest {
         var userToUpdate = new User();
         userToUpdate.setAuthority(new Authority());
         userToUpdate.setPerson(person);
+        userToUpdate.setLocked(false);
 
         when(personService.findOne(personId)).thenReturn(person);
         when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(userToUpdate));
