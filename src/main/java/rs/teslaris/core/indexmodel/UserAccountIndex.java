@@ -21,8 +21,11 @@ public class UserAccountIndex {
     @Id
     private String id;
 
-    @Field(type = FieldType.Text, store = true, name = "full_name")
+    @Field(type = FieldType.Text, store = true, name = "full_name", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String fullName;
+
+    @Field(type = FieldType.Keyword, store = true, name = "full_name_sortable")
+    private String fullNameSortable;
 
     @Field(type = FieldType.Text, store = true, name = "email")
     private String email;
@@ -35,6 +38,9 @@ public class UserAccountIndex {
 
     @Field(type = FieldType.Text, store = true, name = "org_unit_name_other", analyzer = "english", searchAnalyzer = "english")
     private String organisationUnitNameOther;
+
+    @Field(type = FieldType.Keyword, store = true, name = "org_unit_name_sortable")
+    private String organisationUnitNameSortable;
 
     @Field(type = FieldType.Keyword, store = true, name = "user_role")
     private String userRole;

@@ -427,11 +427,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private void indexCommonFields(UserAccountIndex index, User user) {
         index.setFullName(user.getFirstname() + " " + user.getLastName());
+        index.setFullNameSortable(index.getFullName());
         index.setEmail(user.getEmail());
         index.setEmailSortable(user.getEmail());
         index.setUserRole(user.getAuthority().getName());
         index.setActive(!user.getLocked());
         indexUserEmployment(index, user.getOrganisationUnit());
+        index.setOrganisationUnitNameSortable(
+            index.getOrganisationUnitNameSr() + index.getOrganisationUnitNameOther());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
