@@ -36,11 +36,14 @@ public class UserAccountIndex {
     @Field(type = FieldType.Text, store = true, name = "org_unit_name_sr", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String organisationUnitNameSr;
 
+    @Field(type = FieldType.Keyword, store = true, name = "org_unit_name_sortable_sr")
+    private String organisationUnitNameSortableSr;
+
     @Field(type = FieldType.Text, store = true, name = "org_unit_name_other", analyzer = "english", searchAnalyzer = "english")
     private String organisationUnitNameOther;
 
-    @Field(type = FieldType.Keyword, store = true, name = "org_unit_name_sortable")
-    private String organisationUnitNameSortable;
+    @Field(type = FieldType.Keyword, store = true, name = "org_unit_name_sortable_other")
+    private String organisationUnitNameSortableOther;
 
     @Field(type = FieldType.Keyword, store = true, name = "user_role")
     private String userRole;

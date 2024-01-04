@@ -433,8 +433,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         index.setUserRole(user.getAuthority().getName());
         index.setActive(!user.getLocked());
         indexUserEmployment(index, user.getOrganisationUnit());
-        index.setOrganisationUnitNameSortable(
-            index.getOrganisationUnitNameSr() + index.getOrganisationUnitNameOther());
+        index.setOrganisationUnitNameSortableSr(index.getOrganisationUnitNameSr());
+        index.setOrganisationUnitNameSortableOther(index.getOrganisationUnitNameOther());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
