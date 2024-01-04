@@ -170,6 +170,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public AuthenticationResponseDTO refreshToken(String refreshTokenValue, String fingerprint) {
         var hashedRefreshToken =
             Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();

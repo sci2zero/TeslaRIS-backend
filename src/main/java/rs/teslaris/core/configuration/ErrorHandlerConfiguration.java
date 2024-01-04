@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
+import org.hibernate.StaleStateException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -190,6 +191,13 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleUserAlreadyExistsException(HttpServletRequest request,
                                                  UserAlreadyExistsException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(StaleStateException.class)
+    @ResponseBody
+    ErrorObject handleStaleStateException(HttpServletRequest request, StaleStateException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

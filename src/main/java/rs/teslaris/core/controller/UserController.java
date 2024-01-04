@@ -76,6 +76,7 @@ public class UserController {
     }
 
     @PostMapping("/refresh-token")
+    @Idempotent
     public ResponseEntity<AuthenticationResponseDTO> refreshToken(
         @RequestBody @Valid RefreshTokenRequestDTO refreshTokenRequest) {
         var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
