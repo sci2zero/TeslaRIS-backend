@@ -45,6 +45,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferen
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -228,6 +229,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getName,
             OrganisationUnitIndex::setNameSr,
             OrganisationUnitIndex::setNameOther);
+        index.setNameSr(index.getNameSr() + organisationUnit.getNameAbbreviation());
+        index.setNameSrSortable(index.getNameSr());
+        index.setNameOtherSortable(index.getNameOther());
+
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getKeyword,
             OrganisationUnitIndex::setKeywordsSr,
             OrganisationUnitIndex::setKeywordsOther);
@@ -240,8 +245,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 researchAreaOtherContent,
                 researchArea.getName()));
 
-        index.setResearchAreasSr(researchAreaSrContent.toString());
-        index.setResearchAreasOther(researchAreaOtherContent.toString());
+        StringUtil.removeTrailingPipeDelimiter(researchAreaSrContent, researchAreaOtherContent);
+        index.setResearchAreasSr(
+            researchAreaSrContent.length() > 0 ? researchAreaSrContent.toString() :
+                researchAreaOtherContent.toString());
+        index.setResearchAreasOther(
+            researchAreaOtherContent.length() > 0 ? researchAreaOtherContent.toString() :
+                researchAreaSrContent.toString());
     }
 
     private void indexMultilingualContent(OrganisationUnitIndex index,
@@ -256,9 +266,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList);
 
+        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
         srSetter.accept(index,
-            srContent.append(organisationUnit.getNameAbbreviation()).append(" | ").toString());
-        otherSetter.accept(index, otherContent.toString());
+            srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+        otherSetter.accept(index,
+            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
     }
 
     @Override

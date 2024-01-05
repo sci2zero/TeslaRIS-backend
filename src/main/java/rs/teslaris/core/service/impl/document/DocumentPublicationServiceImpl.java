@@ -39,6 +39,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Primary
@@ -156,6 +157,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setDatabaseId(document.getId());
         index.setYear(parseYear(document.getDocumentDate()));
         indexTitle(document, index);
+        index.setTitleSrSortable(index.getTitleSr());
+        index.setTitleOtherSortable(index.getTitleOther());
         indexDescription(document, index);
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
@@ -216,40 +219,67 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private void indexTitle(Document document, DocumentPublicationIndex index) {
+        var contentSr = new StringBuilder();
+        var contentOther = new StringBuilder();
+
         document.getTitle().forEach(mc -> {
             if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                index.setTitleSr(mc.getContent());
+                contentSr.append(mc.getContent()).append(" | ");
             } else {
-                index.setTitleOther(mc.getContent());
+                contentOther.append(mc.getContent()).append(" | ");
             }
         });
+
         document.getSubTitle().forEach(mc -> {
             if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                index.setTitleSr(index.getTitleSr() + " " + mc.getContent());
+                contentSr.append(mc.getContent()).append(" | ");
             } else {
-                index.setTitleOther(index.getTitleOther() + " " + mc.getContent());
+                contentOther.append(mc.getContent()).append(" | ");
             }
         });
+
+        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        index.setTitleSr(contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+        index.setTitleOther(
+            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
     }
 
     private void indexDescription(Document document, DocumentPublicationIndex index) {
+        var contentSr = new StringBuilder();
+        var contentOther = new StringBuilder();
+
         document.getDescription().forEach(mc -> {
             if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                index.setDescriptionSr(mc.getContent());
+                contentSr.append(mc.getContent()).append(" | ");
             } else {
-                index.setDescriptionOther(mc.getContent());
+                contentOther.append(mc.getContent()).append(" | ");
             }
         });
+
+        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        index.setDescriptionSr(
+            contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+        index.setDescriptionOther(
+            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
     }
 
     private void indexKeywords(Document document, DocumentPublicationIndex index) {
+        var contentSr = new StringBuilder();
+        var contentOther = new StringBuilder();
+
         document.getKeywords().forEach(mc -> {
             if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                index.setKeywordsSr(mc.getContent());
+                contentSr.append(mc.getContent()).append(" | ");
             } else {
-                index.setKeywordsOther(mc.getContent());
+                contentOther.append(mc.getContent()).append(" | ");
             }
         });
+
+        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        index.setKeywordsSr(
+            contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+        index.setKeywordsOther(
+            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
     }
 
     private int parseYear(String dateString) {

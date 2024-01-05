@@ -43,6 +43,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -326,8 +327,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setName(
             savedPerson.getName().getFirstname() + " " + savedPerson.getName().getOtherName() +
                 " " + savedPerson.getName().getLastname());
+        personIndex.setNameSortable(personIndex.getName());
+
         personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
+        personIndex.setBirthdateSortable(personIndex.getBirthdate());
+
         personIndex.setDatabaseId(savedPerson.getId());
+        personIndex.setOrcid(savedPerson.getOrcid());
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
@@ -338,8 +344,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setEmploymentInstitutionsId(
             employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
 
-        var employments_sr = new StringBuilder();
-        var employments_other = new StringBuilder();
+        var employmentsSr = new StringBuilder();
+        var employmentsOther = new StringBuilder();
         for (var organisationUnit : employmentInstitutions) {
             var institutionName_sr = new StringBuilder();
             var institutionName_other = new StringBuilder();
@@ -352,12 +358,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 .filter(mc -> !mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
                 .forEach(mc -> institutionName_other.append(mc.getContent()).append(" | "));
-            employments_sr.append(institutionName_sr)
+            employmentsSr.append(institutionName_sr)
                 .append(organisationUnit.getNameAbbreviation());
-            employments_other.append(institutionName_other);
+            employmentsOther.append(institutionName_other);
         }
-        personIndex.setEmploymentsSr(employments_sr.toString());
-        personIndex.setEmployments(employments_other.toString());
+
+        StringUtil.removeTrailingPipeDelimiter(employmentsSr, employmentsOther);
+        personIndex.setEmploymentsSr(
+            employmentsSr.length() > 0 ? employmentsSr.toString() : employmentsOther.toString());
+        personIndex.setEmploymentsSrSortable(personIndex.getEmploymentsSr());
+        personIndex.setEmploymentsOther(
+            employmentsOther.length() > 0 ? employmentsOther.toString() :
+                employmentsSr.toString());
+        personIndex.setEmploymentsOtherSortable(personIndex.getEmploymentsOther());
     }
 
     @Override
@@ -396,9 +409,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             .must(mb -> mb.bool(b -> {
                     tokens.forEach(
                         token -> {
-                            b.should(sb -> sb.match(m -> m.field("name").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments_srp").query(token)));
+                            b.should(sb -> sb.wildcard(m -> m.field("name").value(token)));
+                            b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
+                            b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
                         });
                     return b;
                 }

@@ -61,6 +61,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsExcept
 import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -411,8 +412,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             });
         }
 
-        index.setOrganisationUnitNameSr(orgUnitNameSr.toString());
-        index.setOrganisationUnitNameOther(orgUnitNameOther.toString());
+        StringUtil.removeTrailingPipeDelimiter(orgUnitNameSr, orgUnitNameOther);
+        index.setOrganisationUnitNameSr(
+            orgUnitNameSr.length() > 0 ? orgUnitNameSr.toString() : orgUnitNameOther.toString());
+        index.setOrganisationUnitNameOther(
+            orgUnitNameOther.length() > 0 ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
     }
 
     private void reindexUser(User user) {

@@ -28,6 +28,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -180,8 +181,12 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
             }
         });
 
-        index.setTitleSr(srContent.toString());
-        index.setTitleOther(otherContent.toString());
+        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
+        index.setTitleSr(srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+        index.setTitleSrSortable(index.getTitleSr());
+        index.setTitleOther(
+            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+        index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(journal.getEISSN());
         index.setPrintISSN(journal.getPrintISSN());
     }

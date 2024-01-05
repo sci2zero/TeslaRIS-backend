@@ -31,6 +31,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Primary
@@ -174,6 +175,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
         index.setDateFromTo(
             event.getDateFrom().format(formatter) + " - " + event.getDateTo().format(formatter));
+        index.setDateSortable(event.getDateFrom());
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,
@@ -182,16 +184,21 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                           BiConsumer<EventIndex, String> otherSetter) {
         Set<MultiLingualContent> contentList = contentExtractor.apply(event);
 
+        var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
         contentList.forEach(content -> {
             if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                srSetter.accept(index, content.getContent());
+                srContent.append(content.getContent()).append(" | ");
             } else {
                 otherContent.append(content.getContent()).append(" | ");
             }
         });
 
-        otherSetter.accept(index, otherContent.toString());
+        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
+        srSetter.accept(index,
+            srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+        otherSetter.accept(index,
+            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
     }
 
     protected void notifyAboutBasicCreation(Integer eventId) {

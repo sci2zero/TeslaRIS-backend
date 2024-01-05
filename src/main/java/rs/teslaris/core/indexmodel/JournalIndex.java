@@ -24,8 +24,14 @@ public class JournalIndex {
     @Field(type = FieldType.Text, store = true, name = "title_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String titleSr;
 
+    @Field(type = FieldType.Keyword, store = true, name = "title_sr_sortable")
+    private String titleSrSortable;
+
     @Field(type = FieldType.Text, store = true, name = "title_other", analyzer = "english", searchAnalyzer = "english")
     private String titleOther;
+
+    @Field(type = FieldType.Keyword, store = true, name = "title_other_sortable")
+    private String titleOtherSortable;
 
     @Field(type = FieldType.Text, store = true, name = "e_issn")
     private String eISSN;
