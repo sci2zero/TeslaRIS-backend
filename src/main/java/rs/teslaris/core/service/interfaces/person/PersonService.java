@@ -46,4 +46,6 @@ public interface PersonService extends JPAService<Person> {
     void updatePersonalInfo(PersonalInfoDTO personalInfo, Integer personId);
 
     void approvePerson(Integer personId, Boolean approved);
+
+    void deletePerson(Integer personId);
 }

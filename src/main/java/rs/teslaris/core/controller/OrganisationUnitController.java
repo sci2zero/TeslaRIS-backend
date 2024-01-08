@@ -75,9 +75,7 @@ public class OrganisationUnitController {
     @Idempotent
     public OrganisationUnitDTO createOrganisationUnit(
         @RequestBody @Valid OrganisationUnitDTORequest organisationUnitDTORequest) {
-        var organisationUnit =
-            organisationUnitService.createOrganisationUnit(organisationUnitDTORequest);
-        return OrganisationUnitConverter.toDTO(organisationUnit);
+        return organisationUnitService.createOrganisationUnit(organisationUnitDTORequest);
     }
 
 

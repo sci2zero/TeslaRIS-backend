@@ -198,7 +198,7 @@ public class DbInitializer implements ApplicationRunner {
 
         var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
-            null, null);
+            new HashSet<>(), null);
         researchAreaRepository.save(researchArea1);
 
         var conferenceEvent1 = new Conference();
@@ -246,12 +246,28 @@ public class DbInitializer implements ApplicationRunner {
         passwordResetTokenRepository.save(passwordResetRequest);
 
         person1.setName(
-            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         personRepository.save(person1);
 
         var listMyJournalPublications = new Privilege("LIST_MY_JOURNAL_PUBLICATIONS");
-        privilegeRepository.save(listMyJournalPublications);
+        var deletePerson = new Privilege("DELETE_PERSON");
+        privilegeRepository.saveAll(List.of(listMyJournalPublications, deletePerson));
+
         researcherAuthority.addPrivilege(listMyJournalPublications);
         authorityRepository.save(researcherAuthority);
+        adminAuthority.addPrivilege(deletePerson);
+        authorityRepository.save(adminAuthority);
+
+        var person2 = new Person();
+        var postalAddress2 = new PostalAddress(country, new HashSet<>(),
+            new HashSet<>());
+        var personalInfo2 =
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Sebia", Sex.MALE, postalAddress2,
+                new Contact("mark@ftn.uns.ac.com", "021555769"));
+        person2.setApproveStatus(ApproveStatus.APPROVED);
+        person2.setPersonalInfo(personalInfo2);
+        person1.setName(
+            new PersonName("Marko", "Janko", "Markovic", LocalDate.of(2000, 1, 31), null));
+        personRepository.save(person2);
     }
 }

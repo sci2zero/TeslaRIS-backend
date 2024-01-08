@@ -41,6 +41,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.StringUtil;
@@ -127,13 +128,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
             new PostalAddress(), personalContact);
 
-        var employmentInstitution =
-            organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
-
-        var currentEmployment = new Employment(null, null, defaultApproveStatus, new HashSet<>(),
-            InvolvementType.EMPLOYED_AT, new HashSet<>(), null, employmentInstitution,
-            personDTO.getEmploymentPosition(), new HashSet<>());
-
         var newPerson = new Person();
         newPerson.setName(personName);
         newPerson.setPersonalInfo(personalInfo);
@@ -141,7 +135,17 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         newPerson.setMnid(personDTO.getMnid());
         newPerson.setOrcid(personDTO.getOrcid());
         newPerson.setScopusAuthorId(personDTO.getScopusAuthorId());
-        newPerson.addInvolvement(currentEmployment);
+
+        if (Objects.nonNull(personDTO.getOrganisationUnitId())) {
+            var employmentInstitution =
+                organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
+            var currentEmployment =
+                new Employment(null, null, defaultApproveStatus, new HashSet<>(),
+                    InvolvementType.EMPLOYED_AT, new HashSet<>(), null, employmentInstitution,
+                    personDTO.getEmploymentPosition(), new HashSet<>());
+            newPerson.addInvolvement(currentEmployment);
+        }
+
         newPerson.setApproveStatus(defaultApproveStatus);
 
         var savedPerson = this.save(newPerson);
@@ -274,6 +278,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
     }
 
+    @Override
+    public void deletePerson(Integer personId) {
+        if (personRepository.hasInvolvement(personId) || // TODO: should we keep this
+            personRepository.hasContribution(personId) ||
+            personRepository.isBoundToUser(personId)) {
+            throw new PersonReferenceConstraintViolationException(
+                "This person is allready in use.");
+        }
+
+        delete(personId);
+        var index = personIndexRepository.findByDatabaseId(personId);
+        index.ifPresent(personIndexRepository::delete);
+    }
+
     @Transactional
     private void setPersonStreetAndNumberInfo(Person personToUpdate,
                                               PersonalInfo personalInfoToUpdate,
@@ -337,6 +355,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
+        if (!Objects.nonNull(savedPerson.getInvolvements())) {
+            return;
+        }
+
         var employmentInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> i.getInvolvementType() == InvolvementType.EMPLOYED_AT)
             .map(Involvement::getOrganisationUnit).collect(Collectors.toList());

@@ -120,8 +120,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
-                b.should(sb -> sb.match(
-                    m -> m.field("name_sr").query(token)));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("name_sr").value(token)));
                 b.should(sb -> sb.match(
                     m -> m.field("name_other").query(token)));
                 b.should(sb -> sb.match(
@@ -161,7 +161,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    public OrganisationUnit createOrganisationUnit(
+    public OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest) {
         OrganisationUnit organisationUnit = new OrganisationUnit();
         OrganisationUnitIndex organisationUnitIndex = new OrganisationUnitIndex();
@@ -179,7 +179,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnitIndex.setDatabaseId(savedOU.getId());
         organisationUnitIndexRepository.save(organisationUnitIndex);
 
-        return savedOU;
+        return OrganisationUnitConverter.toDTO(organisationUnit);
     }
 
     @Override
@@ -229,7 +229,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getName,
             OrganisationUnitIndex::setNameSr,
             OrganisationUnitIndex::setNameOther);
-        index.setNameSr(index.getNameSr() + organisationUnit.getNameAbbreviation());
+        index.setNameSr(index.getNameSr() + " " + organisationUnit.getNameAbbreviation());
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());
 

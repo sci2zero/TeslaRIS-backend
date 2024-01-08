@@ -36,7 +36,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                                              Integer targetId,
                                                                              Pageable pageable);
 
-    OrganisationUnit createOrganisationUnit(
+    OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest);
 
     OrganisationUnit editOrganisationUnit(OrganisationUnitDTORequest organisationUnitDTORequest,

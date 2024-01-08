@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -58,6 +61,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @SpringBootTest
@@ -495,5 +499,50 @@ public class PersonServiceTest {
         // Then
         assertEquals(expectedCount, actualCount);
         verify(personIndexRepository, times(1)).count();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "1, true, false, false",
+        "2, false, true, false",
+        "3, false, false, true",
+    })
+    void shouldThrowReferenceConstraintViolationExceptionWhenPersonIsUsed(Integer personId,
+                                                                          boolean hasInvolvement,
+                                                                          boolean hasProjectContribution,
+                                                                          boolean isBoundToUser) {
+        // Given
+        when(personRepository.hasInvolvement(personId)).thenReturn(hasInvolvement);
+        when(personRepository.hasContribution(personId)).thenReturn(hasProjectContribution);
+        when(personRepository.isBoundToUser(personId)).thenReturn(isBoundToUser);
+
+        // When
+        assertThrows(PersonReferenceConstraintViolationException.class,
+            () -> personService.deletePerson(personId));
+
+        // Then (PersonReferenceConstraintViolationException should be thrown)
+        verify(personRepository, never()).findById(personId);
+        verify(personRepository, never()).save(any());
+        verify(personIndexRepository, never()).delete(any());
+    }
+
+    @Test
+    void shouldDeleteUnusedPerson() {
+        // Given
+        var personId = 5;
+        when(personRepository.hasInvolvement(personId)).thenReturn(false);
+        when(personRepository.hasContribution(personId)).thenReturn(false);
+        when(personRepository.isBoundToUser(personId)).thenReturn(false);
+        when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
+        when(personIndexRepository.findByDatabaseId(personId)).thenReturn(
+            Optional.of(new PersonIndex()));
+
+        // When
+        personService.deletePerson(personId);
+
+        // Then
+        verify(personRepository, times(1)).findById(personId);
+        verify(personRepository, times(1)).save(any());
+        verify(personIndexRepository, times(1)).delete(any());
     }
 }

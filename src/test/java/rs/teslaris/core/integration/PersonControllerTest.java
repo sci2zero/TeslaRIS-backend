@@ -5,7 +5,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @SpringBootTest
@@ -21,5 +23,17 @@ public class PersonControllerTest extends BaseTest {
 
         var result = resultActions.andReturn();
         assertTrue(Long.parseLong(result.getResponse().getContentAsString()) >= 0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testDeletePerson() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/person/{personId}",
+                        61).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 }

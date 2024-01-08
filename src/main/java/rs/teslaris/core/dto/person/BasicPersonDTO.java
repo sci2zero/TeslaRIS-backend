@@ -44,7 +44,6 @@ public class BasicPersonDTO {
     private String scopusAuthorId;
 
     @Positive(message = "Organisation unit id must be a positive number.")
-    @NotNull(message = "You have to provide a organisation unit ID.")
     private Integer organisationUnitId;
 
     @NotNull(message = "You must provide a person employment position.")
