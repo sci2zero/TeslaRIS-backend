@@ -280,8 +280,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     public void deletePerson(Integer personId) {
-        if (personRepository.hasInvolvement(personId) || // TODO: should we keep this
-            personRepository.hasContribution(personId) ||
+        if (personRepository.hasContribution(personId) ||
             personRepository.isBoundToUser(personId)) {
             throw new PersonReferenceConstraintViolationException(
                 "This person is allready in use.");

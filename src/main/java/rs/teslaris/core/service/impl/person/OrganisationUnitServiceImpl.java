@@ -303,6 +303,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         this.delete(organisationUnitId);
+        var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            organisationUnitId);
+        index.ifPresent(organisationUnitIndexRepository::delete);
     }
 
     @Override

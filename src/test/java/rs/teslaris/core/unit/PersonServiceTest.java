@@ -503,16 +503,14 @@ public class PersonServiceTest {
 
     @ParameterizedTest
     @CsvSource({
-        "1, true, false, false",
-        "2, false, true, false",
-        "3, false, false, true",
+        "1, true, true",
+        "2, true, false",
+        "3, false, true",
     })
     void shouldThrowReferenceConstraintViolationExceptionWhenPersonIsUsed(Integer personId,
-                                                                          boolean hasInvolvement,
                                                                           boolean hasProjectContribution,
                                                                           boolean isBoundToUser) {
         // Given
-        when(personRepository.hasInvolvement(personId)).thenReturn(hasInvolvement);
         when(personRepository.hasContribution(personId)).thenReturn(hasProjectContribution);
         when(personRepository.isBoundToUser(personId)).thenReturn(isBoundToUser);
 
@@ -530,7 +528,6 @@ public class PersonServiceTest {
     void shouldDeleteUnusedPerson() {
         // Given
         var personId = 5;
-        when(personRepository.hasInvolvement(personId)).thenReturn(false);
         when(personRepository.hasContribution(personId)).thenReturn(false);
         when(personRepository.isBoundToUser(personId)).thenReturn(false);
         when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
