@@ -163,12 +163,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     protected void indexEventCommonFields(EventIndex index, Event event) {
         indexMultilingualContent(index, event, Event::getName, EventIndex::setNameSr,
             EventIndex::setNameOther);
+        index.setNameSrSortable(index.getNameSr());
+        index.setNameOtherSortable(index.getNameOther());
         indexMultilingualContent(index, event, Event::getDescription, EventIndex::setDescriptionSr,
             EventIndex::setDescriptionOther);
         indexMultilingualContent(index, event, Event::getKeywords, EventIndex::setKeywordsSr,
             EventIndex::setKeywordsOther);
         indexMultilingualContent(index, event, Event::getState, EventIndex::setStateSr,
             EventIndex::setStateOther);
+        index.setStateSrSortable(index.getStateSr());
+        index.setStateOtherSortable(index.getStateOther());
         indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
             EventIndex::setPlaceOther);
 

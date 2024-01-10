@@ -141,6 +141,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         }
 
         this.conferenceJPAService.delete(conferenceId);
+
+        var index = eventIndexRepository.findByDatabaseId(conferenceId);
+        index.ifPresent(eventIndexRepository::delete);
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
