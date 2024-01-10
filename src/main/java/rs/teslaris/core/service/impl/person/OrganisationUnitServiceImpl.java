@@ -121,9 +121,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("name_sr").value(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("name_other").query(token)));
+                    m -> m.field("name_sr").value(token).caseInsensitive(true)));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("name_other").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("keywords_sr").query(token)));
                 b.should(sb -> sb.match(
@@ -131,8 +131,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 b.should(sb -> sb.match(
                     m -> m.field("research_areas_sr").query(token)));
                 b.should(sb -> sb.match(
-                    m -> m.field("research_areas_other")
-                        .query(token)));
+                    m -> m.field("research_areas_other").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("orcid").query(token)));
             });
             return b;
         })))._toQuery();

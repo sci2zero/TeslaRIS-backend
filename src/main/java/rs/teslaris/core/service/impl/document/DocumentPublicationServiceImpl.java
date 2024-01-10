@@ -121,8 +121,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Transactional
     public void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof) {
         var document = findOne(documentId);
-        // TODO: Check if i can change to findOne
-        var documentFile = documentFileService.findDocumentFileById(documentFileId);
+        var documentFile = documentFileService.findOne(documentFileId);
 
         if (isProof) {
             Set<DocumentFile> proofs = document.getProofs();
@@ -135,13 +134,24 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
         documentRepository.save(document);
 
-        // TODO: Check if calling this method is neccesseary
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
 
         if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
+    }
+
+    @Override
+    public void deleteDocumentPublication(Integer documentId) {
+        var document = findOne(documentId);
+        documentRepository.delete(document);
+
+        var index =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
+        index.ifPresent(documentPublicationIndexRepository::delete);
+
+        // TODO: should we delete all document file indexes as well
     }
 
     @Override
@@ -159,6 +169,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         indexTitle(document, index);
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOtherSortable(index.getTitleOther());
+        index.setDoi(document.getDoi());
         indexDescription(document, index);
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
@@ -369,10 +380,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
-                b.should(sb -> sb.match(
-                    m -> m.field("title_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("title_other").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("title_sr").value(token).caseInsensitive(true)));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("title_other").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("description_sr").fuzziness(Fuzziness.ONE.asString())
                         .query(token)));
@@ -400,6 +411,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     m -> m.field("advisorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
                 b.should(sb -> sb.match(
                     m -> m.field("type").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("doi").query(token)));
             });
             return b;
         })))._toQuery();

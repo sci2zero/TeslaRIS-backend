@@ -23,6 +23,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof);
 
+    void deleteDocumentPublication(Integer documentId);
+
     List<Integer> getContributorIds(Integer publicationId);
 
     void indexCommonFields(Document document, DocumentPublicationIndex index);

@@ -81,7 +81,7 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "year", store = true)
     private Integer year;
 
-    @Field(type = FieldType.Text, name = "type", store = true)
+    @Field(type = FieldType.Keyword, name = "type", store = true)
     private String type;
 
     @Field(type = FieldType.Integer, name = "publication_series_id", store = true)
@@ -98,4 +98,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Integer, name = "database_id", store = true)
     private Integer databaseId;
+
+    @Field(type = FieldType.Keyword, store = true, name = "doi")
+    private String doi;
 }

@@ -445,7 +445,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("full_name").value(token)));
+                    m -> m.field("full_name").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("email").query(token)));
                 b.should(sb -> sb.match(

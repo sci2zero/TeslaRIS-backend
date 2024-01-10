@@ -66,10 +66,12 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.POST, "/api/user/register").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/language").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()
             .anyRequest().fullyAuthenticated();
 

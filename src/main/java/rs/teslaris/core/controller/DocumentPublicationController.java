@@ -80,4 +80,11 @@ public class DocumentPublicationController {
                             @PathVariable Integer documentFileId, @RequestParam Boolean isProof) {
         documentPublicationService.deleteDocumentFile(publicationId, documentFileId, isProof);
     }
+
+    @DeleteMapping("/{publicationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PublicationEditCheck
+    void deleteDocumentPublication(@PathVariable Integer publicationId) {
+        documentPublicationService.deleteDocumentPublication(publicationId);
+    }
 }

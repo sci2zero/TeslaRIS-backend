@@ -1,18 +1,20 @@
 package rs.teslaris.core.dto.commontypes;
 
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeleteRequest {
+@ToString
+public class LanguageResponseDTO {
 
-    @NotNull(message = "You have to provide a list of IDs.")
-    private List<Integer> ids;
+    private String languageCode;
+
+    private List<MultilingualContentDTO> name;
 }
