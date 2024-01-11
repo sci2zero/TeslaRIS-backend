@@ -1,6 +1,8 @@
 package rs.teslaris.core.controller;
 
+import java.util.List;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,11 +15,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.indexmodel.PublisherIndex;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 
 @RestController
@@ -30,6 +34,15 @@ public class PublisherController {
     @GetMapping
     public Page<PublisherDTO> readAll(Pageable pageable) {
         return publisherService.readAllPublishers(pageable);
+    }
+
+    @GetMapping("/simple-search")
+    public Page<PublisherIndex> searchPublishers(
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        Pageable pageable
+    ) {
+        return publisherService.searchPublishers(tokens, pageable);
     }
 
     @PostMapping

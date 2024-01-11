@@ -41,6 +41,19 @@ public class PublisherControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testSearchPublishers() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/publisher/simple-search?tokens=name&tokens=place")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testCreatePublisher() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 

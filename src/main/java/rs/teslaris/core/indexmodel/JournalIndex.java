@@ -33,10 +33,10 @@ public class JournalIndex {
     @Field(type = FieldType.Keyword, store = true, name = "title_other_sortable")
     private String titleOtherSortable;
 
-    @Field(type = FieldType.Text, store = true, name = "e_issn")
+    @Field(type = FieldType.Keyword, store = true, name = "e_issn")
     private String eISSN;
 
-    @Field(type = FieldType.Text, store = true, name = "print_issn")
+    @Field(type = FieldType.Keyword, store = true, name = "print_issn")
     private String printISSN;
 
     @Field(type = FieldType.Integer, store = true, name = "databaseId")

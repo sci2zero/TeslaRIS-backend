@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -21,19 +22,26 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.indexmodel.PublisherIndex;
+import rs.teslaris.core.indexrepository.PublisherIndexRepository;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.impl.document.PublisherServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 
 @SpringBootTest
 public class PublisherServiceTest {
+
+    @Mock
+    PublisherIndexRepository publisherIndexRepository;
 
     @Mock
     private PublisherRepository publisherRepository;
@@ -44,8 +52,12 @@ public class PublisherServiceTest {
     @Mock
     private EmailUtil emailUtil;
 
+    @Mock
+    private SearchService<PublisherIndex> searchService;
+
     @InjectMocks
     private PublisherServiceImpl publisherService;
+
 
     private static Stream<Arguments> argumentSources() {
         return Stream.of(Arguments.of(true, false, false, false, false),
@@ -91,6 +103,7 @@ public class PublisherServiceTest {
         // then
         assertEquals(publisher, result);
         verify(publisherRepository, times(1)).save(any());
+        verify(publisherIndexRepository, times(1)).save(any());
         verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "publisher");
     }
 
@@ -110,6 +123,7 @@ public class PublisherServiceTest {
 
         // then
         verify(publisherRepository, times(1)).save(any());
+        verify(publisherIndexRepository, times(1)).save(any());
     }
 
     @Test
@@ -138,9 +152,9 @@ public class PublisherServiceTest {
 
     @Test
     public void shouldDeletePublisherWhenUnused() {
-        // given
-        Integer publisherId = 1;
-        Publisher publisher = new Publisher();
+        // Given
+        var publisherId = 1;
+        var publisher = new Publisher();
         publisher.setId(publisherId);
 
         when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(publisher));
@@ -149,12 +163,15 @@ public class PublisherServiceTest {
         when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedSoftware(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedThesis(publisherId)).thenReturn(false);
+        when(publisherIndexRepository.findByDatabaseId(publisherId)).thenReturn(
+            Optional.of(new PublisherIndex()));
 
-        // when
+        // When
         publisherService.deletePublisher(publisherId);
 
-        // then
+        // Then
         verify(publisherRepository).save(publisher);
+        verify(publisherIndexRepository, times(1)).delete(any());
         verify(publisherRepository, never()).delete(publisher);
     }
 
@@ -207,5 +224,22 @@ public class PublisherServiceTest {
         // then
         assertEquals(2, response.getTotalElements());
         assertEquals(1, response.getTotalPages());
+    }
+
+    @Test
+    public void shouldFindPublishersWhenSearchingWithSimpleQuery() {
+        // Given
+        var tokens = Arrays.asList("ključna", "ријеч", "keyword");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new PublisherIndex(), new PublisherIndex())));
+
+        // When
+        var result = publisherService.searchPublishers(new ArrayList<>(tokens), pageable);
+
+        // Then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

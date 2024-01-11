@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -141,6 +142,8 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         }
 
         this.delete(journalId);
+        var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
+        index.ifPresent(journalIndexRepository::delete);
     }
 
     private void setCommonFields(Journal journal, JournalDTO journalDTO) {
@@ -152,8 +155,10 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         journal.setEISSN(journalDTO.getEISSN());
         journal.setPrintISSN(journalDTO.getPrintISSN());
 
-        personContributionService.setPersonPublicationSeriesContributionsForJournal(journal,
-            journalDTO);
+        if (Objects.nonNull(journalDTO.getContributions())) {
+            personContributionService.setPersonPublicationSeriesContributionsForJournal(journal,
+                journalDTO);
+        }
 
         journalDTO.getLanguageTagIds().forEach(languageTagId -> {
             journal.getLanguages()
@@ -194,10 +199,10 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
-                b.should(sb -> sb.match(
-                    m -> m.field("title_sr").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("title_other").query(token)));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("title_sr").value(token).caseInsensitive(true)));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("title_other").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("e_issn").query(token)));
                 b.should(sb -> sb.match(
