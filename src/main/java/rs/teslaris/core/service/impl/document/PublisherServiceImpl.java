@@ -70,8 +70,11 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         var publisher = new Publisher();
 
         setCommonFields(publisher, publisherDTO);
+        var savedPublisher = this.save(publisher);
 
-        return this.save(publisher);
+        reindexPublisher(savedPublisher);
+
+        return savedPublisher;
     }
 
     @Override

@@ -69,19 +69,23 @@ public class PublisherServiceTest {
 
     @Test
     public void shouldCreatePublisherWhenProvidedWithValidData() {
-        // given
+        // Given
         var publisherDTO = new PublisherDTO();
         publisherDTO.setName(new ArrayList<>());
         publisherDTO.setPlace(new ArrayList<>());
         publisherDTO.setState(new ArrayList<>());
+
         var publisher = new Publisher();
+        publisher.setName(new HashSet<>());
+        publisher.setPlace(new HashSet<>());
+        publisher.setState(new HashSet<>());
 
         when(publisherRepository.save(any())).thenReturn(publisher);
 
-        // when
+        // When
         var result = publisherService.createPublisher(publisherDTO);
 
-        // then
+        // Then
         assertEquals(publisher, result);
         verify(publisherRepository, times(1)).save(any());
     }
