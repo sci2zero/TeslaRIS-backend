@@ -36,6 +36,7 @@ import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
 @RequestMapping("/api/user")
@@ -60,6 +61,7 @@ public class UserController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return userService.searchUserAccounts(tokens, pageable);
     }
 

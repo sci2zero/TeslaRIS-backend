@@ -28,6 +28,7 @@ import rs.teslaris.core.dto.person.PersonResponseDto;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Validated
 @RestController
@@ -58,6 +59,7 @@ public class PersonController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return personService.findPeopleByNameAndEmployment(tokens,
             pageable);
     }

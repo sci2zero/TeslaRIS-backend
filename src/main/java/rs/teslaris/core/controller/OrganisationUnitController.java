@@ -27,6 +27,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
 @RequestMapping("/api/organisation-unit")
@@ -56,6 +57,7 @@ public class OrganisationUnitController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
             SearchRequestType.SIMPLE);
     }

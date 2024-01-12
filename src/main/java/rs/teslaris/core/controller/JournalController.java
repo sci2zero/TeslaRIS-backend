@@ -24,6 +24,7 @@ import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
 @RequestMapping("/api/journal")
@@ -42,6 +43,7 @@ public class JournalController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return journalService.searchJournals(tokens, pageable);
     }
 

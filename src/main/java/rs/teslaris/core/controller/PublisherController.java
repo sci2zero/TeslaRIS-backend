@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.indexmodel.PublisherIndex;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
 @RequestMapping("/api/publisher")
@@ -42,6 +43,7 @@ public class PublisherController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable
     ) {
+        StringUtil.sanitizeTokens(tokens);
         return publisherService.searchPublishers(tokens, pageable);
     }
 

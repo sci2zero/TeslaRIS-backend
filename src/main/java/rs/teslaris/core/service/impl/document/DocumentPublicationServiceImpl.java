@@ -390,11 +390,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 b.should(sb -> sb.match(
                     m -> m.field("description_other").fuzziness(Fuzziness.ONE.asString())
                         .query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("keywords_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("keywords_other").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("keywords_sr").value("*" + token + "*")));
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("keywords_other").value("*" + token + "*")));
                 b.should(sb -> sb.match(
                     m -> m.field("full_text_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
                 b.should(sb -> sb.match(

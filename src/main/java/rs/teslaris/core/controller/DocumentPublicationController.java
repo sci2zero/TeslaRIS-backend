@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
 @RequestMapping("/api/document")
@@ -37,6 +38,7 @@ public class DocumentPublicationController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.SIMPLE);
     }
