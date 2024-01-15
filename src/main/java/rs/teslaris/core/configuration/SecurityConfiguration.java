@@ -63,7 +63,7 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
             .antMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
             .antMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/user/register").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/user/register-researcher").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()

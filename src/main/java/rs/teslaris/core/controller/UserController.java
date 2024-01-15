@@ -26,9 +26,10 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
-import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
@@ -115,16 +116,30 @@ public class UserController {
         userService.resetAccountPassword(resetPasswordRequest);
     }
 
-    @PostMapping("/register")
+    @PostMapping("/register-researcher")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
-    public UserResponseDTO registerUser(
-        @RequestBody @Valid RegistrationRequestDTO registrationRequest) {
-        var newUser = userService.registerUser(registrationRequest);
+    public UserResponseDTO registerResearcher(
+        @RequestBody @Valid ResearcherRegistrationRequestDTO registrationRequest) {
+        var newUser = userService.registerResearcher(registrationRequest);
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
             newUser.getPreferredLanguage().getLanguageCode(), null);
+    }
+
+    @PostMapping("/register-institution-admin")
+    @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public UserResponseDTO registerEmployee(
+        @RequestBody @Valid EmployeeRegistrationRequestDTO registrationRequest) {
+        var newUser = userService.registerInstitutionAdmin(registrationRequest);
+
+        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
+            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
+            newUser.getPreferredLanguage().getLanguageCode(),
+            registrationRequest.getOrganisationUnitId());
     }
 
     @PutMapping

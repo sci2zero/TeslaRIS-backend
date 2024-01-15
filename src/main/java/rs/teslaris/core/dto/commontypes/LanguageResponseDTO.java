@@ -14,6 +14,8 @@ import lombok.ToString;
 @ToString
 public class LanguageResponseDTO {
 
+    private Integer id;
+
     private String languageCode;
 
     private List<MultilingualContentDTO> name;

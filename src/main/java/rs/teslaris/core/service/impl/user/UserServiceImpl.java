@@ -25,8 +25,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
-import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
@@ -53,6 +54,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.PasswordUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -255,7 +257,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Override
     @Transactional
-    public User registerUser(RegistrationRequestDTO registrationRequest) {
+    public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
         if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
             throw new UserAlreadyExistsException(
                 "Email " + registrationRequest.getEmail() + " is already in use!");
@@ -267,8 +269,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        Person person = personService.findOne(registrationRequest.getPersonId());
-        OrganisationUnit organisationUnit = getLatestResearcherInvolvement(person);
+        var person = personService.findOne(registrationRequest.getPersonId());
+        var organisationUnit = getLatestResearcherInvolvement(person);
 
         var newUser =
             new User(registrationRequest.getEmail(),
@@ -277,11 +279,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 preferredLanguage, authority, person, organisationUnit);
         var savedUser = userRepository.save(newUser);
 
-
-        var newUserIndex = new UserAccountIndex();
-        indexCommonFields(newUserIndex, savedUser);
-        newUserIndex.setDatabaseId(savedUser.getId());
-        userAccountIndexRepository.save(newUserIndex);
+        reindexUser(savedUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
@@ -289,6 +287,46 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         // Email message should be localised and customized
         emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
             "Your activation code is: " + activationToken.getActivationToken());
+
+        return savedUser;
+    }
+
+    @Override
+    public User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest) {
+        if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
+            throw new UserAlreadyExistsException(
+                "Email " + registrationRequest.getEmail() + " is already in use!");
+        }
+
+        var preferredLanguage =
+            languageService.findOne(registrationRequest.getPreferredLanguageId());
+
+        var authority = authorityRepository.findByName(UserRole.INSTITUTIONAL_EDITOR.toString())
+            .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
+
+        var organisationUnit =
+            organisationUnitService.findOne(registrationRequest.getOrganisationUnitId());
+
+        var generatedPassword =
+            PasswordUtil.generatePassword(12 + (int) (Math.random() * ((18 - 12) + 1)));
+
+        var newUser =
+            new User(registrationRequest.getEmail(),
+                passwordEncoder.encode(new String(generatedPassword)),
+                registrationRequest.getNote(),
+                registrationRequest.getName(), registrationRequest.getSurname(), true, false,
+                preferredLanguage, authority, null, organisationUnit);
+        var savedUser = userRepository.save(newUser);
+
+        reindexUser(savedUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        userAccountActivationRepository.save(activationToken);
+
+        // Email message should be localised and customized
+        emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
+            "Your activation code is: " + activationToken.getActivationToken() +
+                "\n\nYour password is: " + new String(generatedPassword));
 
         return savedUser;
     }

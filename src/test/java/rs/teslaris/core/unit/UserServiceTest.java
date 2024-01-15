@@ -34,8 +34,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
+import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
-import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
@@ -158,9 +159,9 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldRegisterUserWithValidData() {
+    public void shouldRegisterResearcherWithValidData() {
         // given
-        var registrationRequest = new RegistrationRequestDTO();
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
         registrationRequest.setEmail("johndoe@example.com");
         registrationRequest.setPassword("password123");
         registrationRequest.setPreferredLanguageId(1);
@@ -196,7 +197,7 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         // when
-        var savedUser = userService.registerUser(registrationRequest);
+        var savedUser = userService.registerResearcher(registrationRequest);
 
         // then
         assertNotNull(savedUser);
@@ -208,14 +209,61 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldRegisterEmployeeWithValidData() {
+        // Given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("johndoe@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(1);
+
+        var language = new Language();
+        when(languageService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.INSTITUTIONAL_EDITOR.toString());
+        when(authorityRepository.findByName(UserRole.INSTITUTIONAL_EDITOR.toString())).thenReturn(
+            Optional.of(authority));
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+
+        User newUser = new User("johndoe@example.com", "password123", "",
+            "John", "Doe", true,
+            false, language, authority, null, organisationUnit);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerInstitutionAdmin(registrationRequest);
+
+        // Then
+        assertNotNull(savedUser);
+        assertEquals("johndoe@example.com", savedUser.getEmail());
+        assertEquals("John", savedUser.getFirstname());
+        assertEquals("Doe", savedUser.getLastName());
+        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(authority, savedUser.getAuthority());
+    }
+
+    @Test
     public void shouldThrowNotFoundWhenAuthorityNotFound() {
         // given
-        var registrationRequest = new RegistrationRequestDTO();
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
 
         when(authorityRepository.findById(2)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> userService.registerUser(registrationRequest));
+        assertThrows(NotFoundException.class,
+            () -> userService.registerResearcher(registrationRequest));
 
         // then (NotFoundException should be thrown)
     }
@@ -259,12 +307,13 @@ public class UserServiceTest {
     @Test
     public void shouldThrowUserAlreadyExistsExceptionWhenUserIsInTheSystem() {
         // Given
-        var requestDTO = new RegistrationRequestDTO();
+        var requestDTO = new ResearcherRegistrationRequestDTO();
         requestDTO.setEmail("admin@admin.com");
         when(userRepository.findByEmail(requestDTO.getEmail())).thenReturn(Optional.of(new User()));
 
         // When
-        assertThrows(UserAlreadyExistsException.class, () -> userService.registerUser(requestDTO));
+        assertThrows(UserAlreadyExistsException.class,
+            () -> userService.registerResearcher(requestDTO));
 
         // Then (UserAlreadyExistsException should be thrown)
     }

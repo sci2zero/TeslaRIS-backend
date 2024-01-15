@@ -21,6 +21,7 @@ public class LanguageController {
     public List<LanguageResponseDTO> getAllLanguages() {
         var allLanguages = languageService.findAll();
         return allLanguages.stream().map(language -> new LanguageResponseDTO(
+            language.getId(),
             language.getLanguageCode(),
             MultilingualContentConverter.getMultilingualContentDTO(language.getName()))).collect(
             Collectors.toList());

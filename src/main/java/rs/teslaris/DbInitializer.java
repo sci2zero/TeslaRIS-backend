@@ -128,16 +128,15 @@ public class DbInitializer implements ApplicationRunner {
         authorityRepository.save(researcherAuthority);
 
         var serbianLanguage = new Language();
-        serbianLanguage.setLanguageCode("RS");
+        serbianLanguage.setLanguageCode(LanguageAbbreviations.SERBIAN);
         languageRepository.save(serbianLanguage);
 
         var englishLanguage = new Language();
-        englishLanguage.setLanguageCode("EN");
+        englishLanguage.setLanguageCode(LanguageAbbreviations.ENGLISH);
         languageRepository.save(englishLanguage);
 
-
         var yuLanguage = new Language();
-        yuLanguage.setLanguageCode("YU");
+        yuLanguage.setLanguageCode(LanguageAbbreviations.CROATIAN);
         yuLanguage.setDeleted(true);
         languageRepository.save(yuLanguage);
 
@@ -147,7 +146,7 @@ public class DbInitializer implements ApplicationRunner {
         var postalAddress = new PostalAddress(country, new HashSet<>(),
             new HashSet<>());
         var personalInfo =
-            new PersonalInfo(LocalDate.of(2000, 1, 25), "Sebia", Sex.MALE, postalAddress,
+            new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666"));
         var person1 = new Person();
         person1.setApproveStatus(ApproveStatus.APPROVED);
@@ -269,5 +268,15 @@ public class DbInitializer implements ApplicationRunner {
         person1.setName(
             new PersonName("Marko", "Janko", "Markovic", LocalDate.of(2000, 1, 31), null));
         personRepository.save(person2);
+
+        var registerEmployee = new Privilege("REGISTER_EMPLOYEE");
+        privilegeRepository.save(registerEmployee);
+        adminAuthority.addPrivilege(registerEmployee);
+        authorityRepository.save(adminAuthority);
+
+        var institutionalEditorAuthority =
+            new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
+                List.of(new Privilege[] {updateProfile})));
+        authorityRepository.save(institutionalEditorAuthority);
     }
 }
