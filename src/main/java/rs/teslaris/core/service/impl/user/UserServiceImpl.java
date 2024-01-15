@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -328,6 +329,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             "Your activation code is: " + activationToken.getActivationToken() +
                 "\n\nYour password is: " + new String(generatedPassword));
 
+        Arrays.fill(generatedPassword, '\0');
         return savedUser;
     }
 
