@@ -34,4 +34,11 @@ public class PasswordUtil {
             array[i] = a;
         }
     }
+
+    public static boolean validatePasswordStrength(String password) {
+        return password.length() >= 8 &&
+            password.matches(".*[0-9].*") &&
+            password.matches(".*[a-z].*") &&
+            password.matches(".*[A-Z].*");
+    }
 }

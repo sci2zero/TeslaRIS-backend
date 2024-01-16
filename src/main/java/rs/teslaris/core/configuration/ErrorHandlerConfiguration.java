@@ -22,13 +22,13 @@ import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstra
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
-import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 
 @ControllerAdvice
 public class ErrorHandlerConfiguration {
@@ -126,10 +126,10 @@ public class ErrorHandlerConfiguration {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(WrongPasswordProvidedException.class)
+    @ExceptionHandler(PasswordException.class)
     @ResponseBody
     ErrorObject handleWrongPasswordProvidedException(HttpServletRequest request,
-                                                     WrongPasswordProvidedException ex) {
+                                                     PasswordException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 

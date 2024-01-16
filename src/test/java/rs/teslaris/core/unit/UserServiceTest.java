@@ -68,8 +68,8 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
-import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @SpringBootTest
@@ -163,7 +163,7 @@ public class UserServiceTest {
         // given
         var registrationRequest = new ResearcherRegistrationRequestDTO();
         registrationRequest.setEmail("johndoe@example.com");
-        registrationRequest.setPassword("password123");
+        registrationRequest.setPassword("Password123");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
 
@@ -184,7 +184,7 @@ public class UserServiceTest {
         var organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
-        User newUser = new User("johndoe@example.com", "password123", "",
+        var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
             false, language, authority, null, organisationUnit);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
@@ -255,9 +255,10 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowNotFoundWhenAuthorityNotFound() {
+    public void shouldThrowNotFoundExceptionWhenAuthorityNotFound() {
         // given
         var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setPassword("Password123");
 
         when(authorityRepository.findById(2)).thenReturn(Optional.empty());
 
@@ -266,6 +267,21 @@ public class UserServiceTest {
             () -> userService.registerResearcher(registrationRequest));
 
         // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldThrowPasswordExceptionWhenPasswordIsWeak() {
+        // given
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setPassword("weak_password");
+
+        when(authorityRepository.findById(2)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(PasswordException.class,
+            () -> userService.registerResearcher(registrationRequest));
+
+        // then (PasswordException should be thrown)
     }
 
     @Test
@@ -324,7 +340,7 @@ public class UserServiceTest {
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setEmail("test@example.com");
         requestDTO.setOldPassword("oldPassword");
-        requestDTO.setNewPassword("newPassword");
+        requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
         requestDTO.setPreferredLanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
@@ -354,7 +370,7 @@ public class UserServiceTest {
         when(organisationUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
-        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -378,7 +394,7 @@ public class UserServiceTest {
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setEmail("test@example.com");
         requestDTO.setOldPassword("oldPassword");
-        requestDTO.setNewPassword("newPassword");
+        requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
         requestDTO.setLastName("SMITH");
         requestDTO.setPreferredLanguageId(1);
@@ -409,7 +425,7 @@ public class UserServiceTest {
         when(organisationUnitService.findOne(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
-        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -462,7 +478,7 @@ public class UserServiceTest {
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);
 
         // when
-        assertThrows(WrongPasswordProvidedException.class,
+        assertThrows(PasswordException.class,
             () -> userService.updateUser(requestDTO, 1, "fingerprint"));
 
         // then (WrongPasswordProvidedException should be thrown)

@@ -59,9 +59,9 @@ import rs.teslaris.core.util.PasswordUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
-import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
@@ -259,13 +259,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     @Transactional
     public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
-        if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
-            throw new UserAlreadyExistsException(
-                "Email " + registrationRequest.getEmail() + " is already in use!");
-        }
-
-        var preferredLanguage =
-            languageService.findOne(registrationRequest.getPreferredLanguageId());
+        validateEmailUniqueness(registrationRequest.getEmail());
+        validatePasswordStrength(registrationRequest.getPassword());
 
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
@@ -277,7 +272,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new User(registrationRequest.getEmail(),
                 passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
-                preferredLanguage, authority, person, organisationUnit);
+                languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
+                person, organisationUnit);
         var savedUser = userRepository.save(newUser);
 
         reindexUser(savedUser);
@@ -294,13 +290,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Override
     public User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest) {
-        if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
-            throw new UserAlreadyExistsException(
-                "Email " + registrationRequest.getEmail() + " is already in use!");
-        }
-
-        var preferredLanguage =
-            languageService.findOne(registrationRequest.getPreferredLanguageId());
+        validateEmailUniqueness(registrationRequest.getEmail());
 
         var authority = authorityRepository.findByName(UserRole.INSTITUTIONAL_EDITOR.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
@@ -316,7 +306,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 passwordEncoder.encode(new String(generatedPassword)),
                 registrationRequest.getNote(),
                 registrationRequest.getName(), registrationRequest.getSurname(), true, false,
-                preferredLanguage, authority, null, organisationUnit);
+                languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
+                null, organisationUnit);
         var savedUser = userRepository.save(newUser);
 
         reindexUser(savedUser);
@@ -331,6 +322,19 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         Arrays.fill(generatedPassword, '\0');
         return savedUser;
+    }
+
+    private void validateEmailUniqueness(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new UserAlreadyExistsException("Email " + email + " is already in use!");
+        }
+    }
+
+    private void validatePasswordStrength(String password) {
+        if (!PasswordUtil.validatePasswordStrength(password)) {
+            throw new PasswordException(
+                "Weak password, use at least 8 characters, one upper and one lower case, and a number.");
+        }
     }
 
     @Override
@@ -351,14 +355,21 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
+        // TODO: Maybe add email verification?
         userToUpdate.setPreferredLanguage(preferredLanguage);
 
         if (!userUpdateRequest.getOldPassword().isEmpty() &&
             passwordEncoder.matches(userUpdateRequest.getOldPassword(),
                 userToUpdate.getPassword())) {
+
+            if (!PasswordUtil.validatePasswordStrength(userUpdateRequest.getNewPassword())) {
+                throw new PasswordException(
+                    "Weak password, use at least 8 characters, one upper and one lower case and a number.");
+            }
+
             userToUpdate.setPassword(passwordEncoder.encode(userUpdateRequest.getNewPassword()));
         } else if (!userUpdateRequest.getOldPassword().isEmpty()) {
-            throw new WrongPasswordProvidedException("Wrong old password provided.");
+            throw new PasswordException("Wrong old password provided.");
         }
 
         userRepository.save(userToUpdate);
