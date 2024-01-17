@@ -29,7 +29,7 @@ public class BookSeriesControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private BookSeriesDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
 
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(dummyMC);

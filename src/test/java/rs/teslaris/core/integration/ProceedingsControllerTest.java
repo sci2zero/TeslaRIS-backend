@@ -30,7 +30,7 @@ public class ProceedingsControllerTest extends BaseTest {
 
 
     private ProceedingsDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
 
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setTitle(dummyMC);

@@ -31,7 +31,7 @@ public class JournalControllerTest extends BaseTest {
 
 
     private JournalDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
 
         var journalDTO = new JournalDTO();
         journalDTO.setTitle(dummyMC);
@@ -95,7 +95,7 @@ public class JournalControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = new JournalBasicAdditionDTO();
-        journalDTO.setTitle(List.of(new MultilingualContentDTO(25, "Title", 1)));
+        journalDTO.setTitle(List.of(new MultilingualContentDTO(25, "EN", "Title", 1)));
         journalDTO.setEISSN("eISSN1");
         journalDTO.setPrintISSN("printISSN1");
 

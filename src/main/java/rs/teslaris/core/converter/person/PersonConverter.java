@@ -47,6 +47,7 @@ public class PersonConverter {
         for (var streetAndNumber : postalAddress.getStreetAndNumber()) {
             streetAndNumberContent.add(
                 new MultilingualContentDTO(streetAndNumber.getLanguage().getId(),
+                    streetAndNumber.getLanguage().getLanguageTag(),
                     streetAndNumber.getContent(),
                     streetAndNumber.getPriority()));
         }
@@ -54,6 +55,7 @@ public class PersonConverter {
         for (var city : postalAddress.getCity()) {
             cityContent.add(
                 new MultilingualContentDTO(city.getLanguage().getId(),
+                    city.getLanguage().getLanguageTag(),
                     city.getContent(),
                     city.getPriority()));
         }
@@ -78,7 +80,9 @@ public class PersonConverter {
         var biographyDTO = new ArrayList<MultilingualContentDTO>();
 
         biography.forEach(bio -> biographyDTO.add(
-            new MultilingualContentDTO(bio.getLanguage().getId(), bio.getContent(),
+            new MultilingualContentDTO(bio.getLanguage().getId(),
+                bio.getLanguage().getLanguageTag(),
+                bio.getContent(),
                 bio.getPriority())));
 
         return biographyDTO;
@@ -89,7 +93,9 @@ public class PersonConverter {
         var keywordDTO = new ArrayList<MultilingualContentDTO>();
 
         keyword.forEach(keyw -> keywordDTO.add(
-            new MultilingualContentDTO(keyw.getLanguage().getId(), keyw.getContent(),
+            new MultilingualContentDTO(keyw.getLanguage().getId(),
+                keyw.getLanguage().getLanguageTag(),
+                keyw.getContent(),
                 keyw.getPriority())));
 
         return keywordDTO;

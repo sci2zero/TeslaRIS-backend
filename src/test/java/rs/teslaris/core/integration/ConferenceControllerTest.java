@@ -30,7 +30,7 @@ public class ConferenceControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private ConferenceDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
 
         var conferenceDTO = new ConferenceDTO();
         conferenceDTO.setName(dummyMC);
@@ -99,7 +99,7 @@ public class ConferenceControllerTest extends BaseTest {
 
         var date = LocalDate.now();
         var conferenceDTO = new ConferenceBasicAdditionDTO();
-        conferenceDTO.setName(List.of(new MultilingualContentDTO(25, "Name", 1)));
+        conferenceDTO.setName(List.of(new MultilingualContentDTO(25, "EN", "Name", 1)));
         conferenceDTO.setDateFrom(date);
         conferenceDTO.setDateTo(date);
 

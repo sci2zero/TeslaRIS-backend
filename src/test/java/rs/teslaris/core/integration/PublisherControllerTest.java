@@ -24,9 +24,9 @@ public class PublisherControllerTest extends BaseTest {
 
     private PublisherDTO getTestPayload() {
         var publisherDTO = new PublisherDTO();
-        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "Name", 1)));
-        publisherDTO.setPlace(List.of(new MultilingualContentDTO(25, "Place", 1)));
-        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "State", 1)));
+        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "EN", "Name", 1)));
+        publisherDTO.setPlace(List.of(new MultilingualContentDTO(25, "EN", "Place", 1)));
+        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "EN", "State", 1)));
         return publisherDTO;
     }
 
@@ -74,8 +74,8 @@ public class PublisherControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var publisherDTO = new PublisherBasicAdditionDTO();
-        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "Name", 1)));
-        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "State", 1)));
+        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "EN", "Name", 1)));
+        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "EN", "State", 1)));
 
         String requestBody = objectMapper.writeValueAsString(publisherDTO);
         mockMvc.perform(

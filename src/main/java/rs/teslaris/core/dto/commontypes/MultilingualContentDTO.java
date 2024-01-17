@@ -18,6 +18,8 @@ public class MultilingualContentDTO {
     @Positive(message = "Language tag ID must be a positive number.")
     private Integer languageTagId;
 
+    private String languageTag;
+
     @NotBlank(message = "You have to provide content.")
     private String content;
 

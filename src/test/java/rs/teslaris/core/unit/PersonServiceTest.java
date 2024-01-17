@@ -216,8 +216,8 @@ public class PersonServiceTest {
         // given
         var person = new Person();
         person.setBiography(new HashSet<>());
-        var bio1 = new MultilingualContentDTO(1, "English content", 1);
-        var bio2 = new MultilingualContentDTO(2, "Contenu français", 2);
+        var bio1 = new MultilingualContentDTO(1, "EN", "English content", 1);
+        var bio2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var bioList = Arrays.asList(bio1, bio2);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
@@ -236,8 +236,8 @@ public class PersonServiceTest {
         // given
         var person = new Person();
         person.setBiography(new HashSet<>());
-        var keyword1 = new MultilingualContentDTO(1, "English content", 1);
-        var keyword2 = new MultilingualContentDTO(2, "Contenu français", 2);
+        var keyword1 = new MultilingualContentDTO(1, "EN", "English content", 1);
+        var keyword2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var keywordList = Arrays.asList(keyword1, keyword2);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));

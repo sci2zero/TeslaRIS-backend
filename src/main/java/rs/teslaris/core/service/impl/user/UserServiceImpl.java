@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
@@ -35,6 +37,7 @@ import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -126,9 +129,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var user = findOne(userId);
         var organisationUnitId =
             Objects.nonNull(user.getOrganisationUnit()) ? user.getOrganisationUnit().getId() : -1;
+        var organisationUnitName =
+            Objects.nonNull(user.getOrganisationUnit()) ? user.getOrganisationUnit().getName() :
+                new HashSet<MultiLingualContent>();
         return new UserResponseDTO(user.getId(), user.getEmail(), user.getFirstname(),
             user.getLastName(), user.getLocked(), user.getCanTakeRole(),
-            user.getPreferredLanguage().getLanguageCode(), organisationUnitId);
+            user.getPreferredLanguage().getLanguageCode(), organisationUnitId,
+            MultilingualContentConverter.getMultilingualContentDTO(organisationUnitName));
     }
 
     @Override
@@ -363,13 +370,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 userToUpdate.getPassword())) {
 
             if (!PasswordUtil.validatePasswordStrength(userUpdateRequest.getNewPassword())) {
-                throw new PasswordException(
-                    "Weak password, use at least 8 characters, one upper and one lower case and a number.");
+                throw new PasswordException("weakPasswordError");
             }
 
             userToUpdate.setPassword(passwordEncoder.encode(userUpdateRequest.getNewPassword()));
         } else if (!userUpdateRequest.getOldPassword().isEmpty()) {
-            throw new PasswordException("Wrong old password provided.");
+            throw new PasswordException("wrongOldPasswordError");
         }
 
         userRepository.save(userToUpdate);

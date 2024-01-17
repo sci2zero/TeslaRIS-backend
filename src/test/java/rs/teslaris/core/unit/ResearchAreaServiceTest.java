@@ -77,8 +77,9 @@ public class ResearchAreaServiceTest {
     void shouldCreateResearchAreaWhenProvidedWithValidData() {
         // given
         var researchAreaDTO = new ResearchAreaDTO();
-        researchAreaDTO.setName(List.of(new MultilingualContentDTO(1, "name", 1)));
-        researchAreaDTO.setDescription(List.of(new MultilingualContentDTO(1, "description", 1)));
+        researchAreaDTO.setName(List.of(new MultilingualContentDTO(1, "EN", "name", 1)));
+        researchAreaDTO.setDescription(
+            List.of(new MultilingualContentDTO(1, "EN", "description", 1)));
         researchAreaDTO.setSuperResearchAreaId(1);
 
         var nameMultilingualContent = Set.of(new MultiLingualContent());
@@ -116,8 +117,9 @@ public class ResearchAreaServiceTest {
     void shouldEditResearchAreaWhenProvidedWithValidData() {
         // given
         var researchAreaDTO = new ResearchAreaDTO();
-        researchAreaDTO.setName(List.of(new MultilingualContentDTO(1, "name", 1)));
-        researchAreaDTO.setDescription(List.of(new MultilingualContentDTO(1, "description", 1)));
+        researchAreaDTO.setName(List.of(new MultilingualContentDTO(1, "EN", "name", 1)));
+        researchAreaDTO.setDescription(
+            List.of(new MultilingualContentDTO(1, "EN", "description", 1)));
         researchAreaDTO.setSuperResearchAreaId(1);
 
         var nameMultilingualContent = Set.of(new MultiLingualContent());
