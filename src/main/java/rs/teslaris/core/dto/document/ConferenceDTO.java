@@ -12,8 +12,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ConferenceDTO extends EventDTO {
 
-    private Integer id;
-
     private String number;
 
     private String fee;

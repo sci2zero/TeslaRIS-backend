@@ -16,6 +16,8 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @AllArgsConstructor
 public class EventDTO {
 
+    private Integer id;
+
     @NotNull(message = "You have to provide name.")
     private List<MultilingualContentDTO> name;
 
