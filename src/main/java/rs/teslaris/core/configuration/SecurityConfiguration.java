@@ -70,6 +70,7 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/language").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/language/tags").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()

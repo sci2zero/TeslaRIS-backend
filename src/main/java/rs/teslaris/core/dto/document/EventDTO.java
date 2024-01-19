@@ -30,10 +30,13 @@ public class EventDTO {
     @NotNull(message = "You have to provide keywords.")
     private List<MultilingualContentDTO> keywords;
 
+    @NotNull(message = "You have to provide serial event information.")
     private Boolean serialEvent;
 
+    @NotNull(message = "You have to provide start date.")
     private LocalDate dateFrom;
 
+    @NotNull(message = "You have to provide end date.")
     private LocalDate dateTo;
 
     @NotNull(message = "You have to provide state.")

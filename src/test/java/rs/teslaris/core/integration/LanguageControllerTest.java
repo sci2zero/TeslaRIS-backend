@@ -20,4 +20,12 @@ public class LanguageControllerTest extends BaseTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))));
     }
+
+    @Test
+    public void testGetAllTags() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("http://localhost:8081/api/language/tags")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))));
+    }
 }
