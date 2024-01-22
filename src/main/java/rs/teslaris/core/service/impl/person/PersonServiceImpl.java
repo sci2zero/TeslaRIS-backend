@@ -113,7 +113,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return false;
     }
 
-
     @Override
     @Transactional
     public Person createPersonWithBasicInfo(BasicPersonDTO personDTO) {
@@ -346,7 +345,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 " " + savedPerson.getName().getLastname());
         personIndex.setNameSortable(personIndex.getName());
 
-        personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
+        if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
+            personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
+        }
         personIndex.setBirthdateSortable(personIndex.getBirthdate());
 
         personIndex.setDatabaseId(savedPerson.getId());

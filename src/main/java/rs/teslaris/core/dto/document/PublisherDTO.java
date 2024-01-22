@@ -21,9 +21,9 @@ public class PublisherDTO {
     @NotNull(message = "You have to provide publisher name.")
     private List<MultilingualContentDTO> name;
 
-    @Valid
+    @NotNull(message = "You have to provide publisher place.")
     private List<MultilingualContentDTO> place;
 
-    @Valid
+    @NotNull(message = "You have to provide publisher state.")
     private List<MultilingualContentDTO> state;
 }
