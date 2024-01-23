@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -433,6 +434,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         token -> {
                             b.should(sb -> sb.wildcard(
                                 m -> m.field("name").value(token).caseInsensitive(true)));
+                            b.should(sb -> sb.match(m -> m.field("name").query(token).fuzziness(
+                                Fuzziness.ONE.asString())));
                             b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
                         });

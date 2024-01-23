@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -503,6 +504,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             tokens.forEach(token -> {
                 b.should(sb -> sb.wildcard(
                     m -> m.field("full_name").value(token).caseInsensitive(true)));
+                b.should(sb -> sb.match(
+                    m -> m.field("full_name").query(token).fuzziness(Fuzziness.ONE.asString())));
                 b.should(sb -> sb.match(
                     m -> m.field("email").query(token)));
                 b.should(sb -> sb.match(

@@ -297,6 +297,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         DateTimeFormatter[] formatters =
             {DateTimeFormatter.ofPattern("yyyy"), DateTimeFormatter.ofPattern("dd-MM-yyyy"),
                 DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+                DateTimeFormatter.ofPattern("MM/dd/yyyy"),
                 DateTimeFormatter.ofPattern("dd.MM.yyyy"),
                 DateTimeFormatter.ofPattern("dd.MM.yyyy.")};
 
@@ -382,6 +383,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             tokens.forEach(token -> {
                 b.should(sb -> sb.wildcard(
                     m -> m.field("title_sr").value(token).caseInsensitive(true)));
+                b.should(sb -> sb.match(
+                    m -> m.field("title_sr").query(token).fuzziness(Fuzziness.ONE.asString())));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("title_other").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(

@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -122,8 +123,15 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("name_sr").value("*" + token + "*")
+                                .caseInsensitive(true)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("name_sr").query(token)));
+                            m -> m.field("name_sr").query(token)
+                                .fuzziness(Fuzziness.ONE.asString())));
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("name_other").value("*" + token + "*")
+                                .caseInsensitive(true)));
                         eq.should(sb -> sb.match(
                             m -> m.field("name_other").query(token)));
                         eq.should(sb -> sb.match(

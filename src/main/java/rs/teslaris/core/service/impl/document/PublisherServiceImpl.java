@@ -9,6 +9,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -184,9 +185,11 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("name_sr").value(token).caseInsensitive(true)));
+                    m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
+                b.should(sb -> sb.match(
+                    m -> m.field("name_sr").query(token).fuzziness(Fuzziness.ONE.asString())));
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("name_other").value(token).caseInsensitive(true)));
+                    m -> m.field("name_other").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("place_sr").query(token)));
                 b.should(sb -> sb.match(

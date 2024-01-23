@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -200,9 +201,11 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("title_sr").value(token).caseInsensitive(true)));
+                    m -> m.field("title_sr").value("*" + token + "*").caseInsensitive(true)));
+                b.should(sb -> sb.match(
+                    m -> m.field("title_sr").query(token).fuzziness(Fuzziness.ONE.asString())));
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("title_other").value(token).caseInsensitive(true)));
+                    m -> m.field("title_other").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("e_issn").query(token)));
                 b.should(sb -> sb.match(
