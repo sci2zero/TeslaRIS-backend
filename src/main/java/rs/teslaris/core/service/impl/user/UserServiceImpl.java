@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -55,6 +54,7 @@ import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -67,7 +67,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -99,6 +98,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     private final SearchService<UserAccountIndex> searchService;
+
+    private final MultilingualContentService multilingualContentService;
 
 
     @Override
@@ -461,13 +462,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var orgUnitNameSr = new StringBuilder();
         var orgUnitNameOther = new StringBuilder();
         if (Objects.nonNull(employment)) {
-            employment.getName().forEach((name) -> {
-                if (name.getLanguage().getLanguageTag().contains(LanguageAbbreviations.SERBIAN)) {
-                    orgUnitNameSr.append(name.getContent()).append(" | ");
-                } else {
-                    orgUnitNameOther.append(name.getContent()).append(" | ");
-                }
-            });
+            multilingualContentService.buildLanguageStrings(orgUnitNameSr, orgUnitNameOther,
+                employment.getName());
         }
 
         StringUtil.removeTrailingPipeDelimiter(orgUnitNameSr, orgUnitNameOther);
@@ -505,7 +501,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 b.should(sb -> sb.wildcard(
                     m -> m.field("full_name").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("full_name").query(token).fuzziness(Fuzziness.ONE.asString())));
+                    m -> m.field("full_name").query(token)));
                 b.should(sb -> sb.match(
                     m -> m.field("email").query(token)));
                 b.should(sb -> sb.match(

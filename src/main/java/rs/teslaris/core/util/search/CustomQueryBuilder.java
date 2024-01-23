@@ -24,7 +24,6 @@ public class CustomQueryBuilder {
                 return MatchQuery.of(m -> m
                     .field(field)
                     .query(value)
-                    .fuzziness(fuzzinessLevel)
                 )._toQuery();
             case fuzzy:
                 return FuzzyQuery.of(m -> m

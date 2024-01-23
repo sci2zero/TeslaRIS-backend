@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,7 +28,6 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -171,21 +169,10 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
 
-        journal.getTitle().forEach(content -> {
-            if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                srContent.append(content.getContent()).append(" | ");
-            } else {
-                otherContent.append(content.getContent()).append(" | ");
-            }
-        });
-
-        journal.getNameAbbreviation().forEach(content -> {
-            if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                srContent.append(content.getContent()).append(" | ");
-            } else {
-                otherContent.append(content.getContent()).append(" | ");
-            }
-        });
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            journal.getTitle());
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            journal.getNameAbbreviation());
 
         StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
         index.setTitleSr(srContent.length() > 0 ? srContent.toString() : otherContent.toString());
@@ -203,7 +190,7 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
                 b.should(sb -> sb.wildcard(
                     m -> m.field("title_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("title_sr").query(token).fuzziness(Fuzziness.ONE.asString())));
+                    m -> m.field("title_sr").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("title_other").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(

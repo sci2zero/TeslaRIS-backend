@@ -278,5 +278,8 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
                 List.of(new Privilege[] {updateProfile})));
         authorityRepository.save(institutionalEditorAuthority);
+
+        var hungarianTag = new LanguageTag(LanguageAbbreviations.HUNGARIAN, "Magyar");
+        languageTagRepository.save(hungarianTag);
     }
 }

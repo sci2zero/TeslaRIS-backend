@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -36,7 +35,6 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
@@ -233,21 +231,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentSr = new StringBuilder();
         var contentOther = new StringBuilder();
 
-        document.getTitle().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                contentSr.append(mc.getContent()).append(" | ");
-            } else {
-                contentOther.append(mc.getContent()).append(" | ");
-            }
-        });
-
-        document.getSubTitle().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                contentSr.append(mc.getContent()).append(" | ");
-            } else {
-                contentOther.append(mc.getContent()).append(" | ");
-            }
-        });
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            document.getTitle());
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            document.getSubTitle());
 
         StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
         index.setTitleSr(contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
@@ -259,13 +246,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentSr = new StringBuilder();
         var contentOther = new StringBuilder();
 
-        document.getDescription().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                contentSr.append(mc.getContent()).append(" | ");
-            } else {
-                contentOther.append(mc.getContent()).append(" | ");
-            }
-        });
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            document.getDescription());
 
         StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
         index.setDescriptionSr(
@@ -278,13 +260,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentSr = new StringBuilder();
         var contentOther = new StringBuilder();
 
-        document.getKeywords().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                contentSr.append(mc.getContent()).append(" | ");
-            } else {
-                contentOther.append(mc.getContent()).append(" | ");
-            }
-        });
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            document.getKeywords());
 
         StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
         index.setKeywordsSr(
@@ -384,35 +361,31 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 b.should(sb -> sb.wildcard(
                     m -> m.field("title_sr").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("title_sr").query(token).fuzziness(Fuzziness.ONE.asString())));
+                    m -> m.field("title_sr").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("title_other").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("description_sr").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
+                    m -> m.field("description_sr").query(token)));
                 b.should(sb -> sb.match(
-                    m -> m.field("description_other").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
+                    m -> m.field("description_other").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("keywords_sr").value("*" + token + "*")));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("keywords_other").value("*" + token + "*")));
                 b.should(sb -> sb.match(
-                    m -> m.field("full_text_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                    m -> m.field("full_text_sr").query(token)));
                 b.should(sb -> sb.match(
-                    m -> m.field("full_text_other").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
+                    m -> m.field("full_text_other").query(token)));
                 b.should(sb -> sb.match(
-                    m -> m.field("authorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                    m -> m.field("authorNames").query(token)));
                 b.should(sb -> sb.match(
-                    m -> m.field("editorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                    m -> m.field("editorNames").query(token)));
                 b.should(sb -> sb.match(
-                    m -> m.field("reviewerNames").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
+                    m -> m.field("reviewerNames").query(token)));
                 b.should(sb -> sb.match(
-                    m -> m.field("advisorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                    m -> m.field("advisorNames").query(token)));
                 b.should(sb -> sb.match(
-                    m -> m.field("type").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                    m -> m.field("type").query(token)));
                 b.should(sb -> sb.match(
                     m -> m.field("doi").query(token)));
             });

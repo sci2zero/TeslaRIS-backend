@@ -10,7 +10,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -121,11 +120,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
-                System.out.println(token);
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("name_sr").query(token).fuzziness(Fuzziness.ONE.asString())));
+                    m -> m.field("name_sr").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_other").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.wildcard(

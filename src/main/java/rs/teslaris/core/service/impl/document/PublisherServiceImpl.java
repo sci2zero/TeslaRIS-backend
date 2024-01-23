@@ -9,7 +9,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,7 +27,6 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -166,13 +164,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
-        contentList.forEach(content -> {
-            if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                srContent.append(content.getContent()).append(" | ");
-            } else {
-                otherContent.append(content.getContent()).append(" | ");
-            }
-        });
+        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList);
 
         StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
         srSetter.accept(index,
@@ -187,7 +179,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("name_sr").query(token).fuzziness(Fuzziness.ONE.asString())));
+                    m -> m.field("name_sr").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_other").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(

@@ -42,7 +42,11 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
             if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
                 serbianBuilder.append(content.getContent()).append(" | ");
             } else {
-                otherLanguagesBuilder.append(content.getContent()).append(" | ");
+                if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH)) {
+                    otherLanguagesBuilder.insert(0, " | ").insert(0, content.getContent());
+                } else {
+                    otherLanguagesBuilder.append(content.getContent()).append(" | ");
+                }
             }
         });
     }

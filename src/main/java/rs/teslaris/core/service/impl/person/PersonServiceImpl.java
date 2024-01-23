@@ -370,20 +370,26 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var employmentsSr = new StringBuilder();
         var employmentsOther = new StringBuilder();
         for (var organisationUnit : employmentInstitutions) {
-            var institutionName_sr = new StringBuilder();
-            var institutionName_other = new StringBuilder();
+            var institutionNameSr = new StringBuilder();
+            var institutionNameOther = new StringBuilder();
 
             organisationUnit.getName().stream()
                 .filter(mc -> mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
-                .forEach(mc -> institutionName_sr.append(mc.getContent()).append(" | "));
+                .forEach(mc -> institutionNameSr.append(mc.getContent()).append(" | "));
             organisationUnit.getName().stream()
                 .filter(mc -> !mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
-                .forEach(mc -> institutionName_other.append(mc.getContent()).append(" | "));
-            employmentsSr.append(institutionName_sr)
+                .forEach(mc -> {
+                    if (mc.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH)) {
+                        institutionNameOther.insert(0, " | ").insert(0, mc.getContent());
+                    } else {
+                        institutionNameOther.append(mc.getContent()).append(" | ");
+                    }
+                });
+            employmentsSr.append(institutionNameSr)
                 .append(organisationUnit.getNameAbbreviation());
-            employmentsOther.append(institutionName_other);
+            employmentsOther.append(institutionNameOther);
         }
 
         StringUtil.removeTrailingPipeDelimiter(employmentsSr, employmentsOther);
