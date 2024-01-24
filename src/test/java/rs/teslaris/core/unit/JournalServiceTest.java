@@ -96,7 +96,7 @@ public class JournalServiceTest {
         var journalDTO = new JournalDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEISSN("eISSN");
+        journalDTO.setEissn("eISSN");
         journalDTO.setPrintISSN("printISSN");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
@@ -139,7 +139,7 @@ public class JournalServiceTest {
         var journalDTO = new JournalDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEISSN("eISSN");
+        journalDTO.setEissn("eISSN");
         journalDTO.setPrintISSN("printISSN");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
@@ -168,7 +168,7 @@ public class JournalServiceTest {
         var journalDTO = new JournalDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEISSN("eISSN");
+        journalDTO.setEissn("eISSN");
         journalDTO.setPrintISSN("printISSN");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
@@ -272,7 +272,7 @@ public class JournalServiceTest {
 
         // then
         assertNotNull(response);
-        assertEquals(response.getEISSN(), journal.getEISSN());
+        assertEquals(response.getEissn(), journal.getEISSN());
         assertEquals(response.getPrintISSN(), journal.getPrintISSN());
     }
 

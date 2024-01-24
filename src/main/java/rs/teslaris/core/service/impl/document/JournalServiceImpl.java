@@ -151,7 +151,7 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         journal.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(journalDTO.getNameAbbreviation()));
 
-        journal.setEISSN(journalDTO.getEISSN());
+        journal.setEISSN(journalDTO.getEissn());
         journal.setPrintISSN(journalDTO.getPrintISSN());
 
         if (Objects.nonNull(journalDTO.getContributions())) {

@@ -36,7 +36,7 @@ public class JournalControllerTest extends BaseTest {
         var journalDTO = new JournalDTO();
         journalDTO.setTitle(dummyMC);
         journalDTO.setNameAbbreviation(dummyMC);
-        journalDTO.setEISSN("eISSN");
+        journalDTO.setEissn("eISSN");
         journalDTO.setPrintISSN("printISSN");
 
         var contribution =
@@ -117,7 +117,7 @@ public class JournalControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = getTestPayload();
-        journalDTO.setEISSN("TEST_E_ISSN");
+        journalDTO.setEissn("TEST_E_ISSN");
         journalDTO.setPrintISSN("TEST_PRINT_ISSN");
 
         String requestBody = objectMapper.writeValueAsString(journalDTO);

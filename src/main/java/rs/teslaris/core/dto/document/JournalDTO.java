@@ -17,7 +17,7 @@ public class JournalDTO {
 
     private List<MultilingualContentDTO> title;
 
-    private String eISSN;
+    private String eissn;
 
     private String printISSN;
 
