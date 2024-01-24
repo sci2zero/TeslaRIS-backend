@@ -17,13 +17,13 @@ import lombok.Setter;
 @EqualsAndHashCode
 public class GeoLocation {
 
-    @Column(name = "longitude", nullable = false)
+    @Column(name = "longitude")
     private Double longitude;
 
-    @Column(name = "latitude", nullable = false)
+    @Column(name = "latitude")
     private Double latitude;
 
-    @Column(name = "precision_in_meters", nullable = false)
-    private int precisionInMeters;
+    @Column(name = "address")
+    private String address;
 
 }

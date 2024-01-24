@@ -174,7 +174,7 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
-        dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
+        dummyOU.setLocation(new GeoLocation(100.00, 100.00, "NOWHERE"));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
@@ -191,7 +191,7 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(englishTag, "Faculty of Sciences", 1),
             new MultiLingualContent(serbianTag, "Prirodno matematicki fakultet", 2)})));
         dummyOU2.setApproveStatus(ApproveStatus.APPROVED);
-        dummyOU2.setLocation(new GeoLocation(120.00, 120.00, 100));
+        dummyOU2.setLocation(new GeoLocation(120.00, 120.00, "NOWHERE"));
         dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
         organisationUnitRepository.save(dummyOU2);
 

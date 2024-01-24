@@ -362,7 +362,7 @@ public class OrganisationUnitServiceTest {
         organisationUnitDTORequest.setName(new ArrayList<>());
         organisationUnitDTORequest.setKeyword(new ArrayList<>());
         organisationUnitDTORequest.setResearchAreasId(List.of(1));
-        organisationUnitDTORequest.setLocation(new GeoLocationDTO(1.0, 2.0, 3));
+        organisationUnitDTORequest.setLocation(new GeoLocationDTO(1.0, 2.0, "NOWHERE"));
         organisationUnitDTORequest.setContact(new ContactDTO("a", "b"));
 
         when(
@@ -409,7 +409,7 @@ public class OrganisationUnitServiceTest {
         organisationUnitDTORequest.setName(List.of(new MultilingualContentDTO()));
         organisationUnitDTORequest.setKeyword(List.of(new MultilingualContentDTO()));
         organisationUnitDTORequest.setResearchAreasId(List.of(1));
-        organisationUnitDTORequest.setLocation(new GeoLocationDTO(10.0, 20.0, 30));
+        organisationUnitDTORequest.setLocation(new GeoLocationDTO(10.0, 20.0, "NOWHERE"));
         organisationUnitDTORequest.setContact(new ContactDTO("b", "b"));
 
         OrganisationUnit organisationUnit = new OrganisationUnit();
@@ -419,7 +419,7 @@ public class OrganisationUnitServiceTest {
             Stream.of(new MultiLingualContent()).collect(Collectors.toSet()));
         organisationUnit.setResearchAreas(
             Stream.of(new ResearchArea()).collect(Collectors.toSet()));
-        organisationUnit.setLocation(new GeoLocation(1.0, 2.0, 3));
+        organisationUnit.setLocation(new GeoLocation(1.0, 2.0, "NOWHERE"));
         organisationUnit.setContact(new Contact("a", "a"));
 
         organisationUnit.getName().clear();

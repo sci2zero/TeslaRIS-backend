@@ -14,5 +14,5 @@ public class GeoLocationDTO {
 
     private Double latitude;
 
-    private int precisionInMeters;
+    private String address;
 }

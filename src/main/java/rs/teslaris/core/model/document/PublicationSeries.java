@@ -28,16 +28,16 @@ public abstract class PublicationSeries extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title;
 
-    @Column(name = "e_issn", unique = true)
+    @Column(name = "e_issn")
     private String eISSN;
 
-    @Column(name = "print_issn", unique = true)
+    @Column(name = "print_issn")
     private String printISSN;
 
     @OneToMany(mappedBy = "publicationSeries", fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<PersonPublicationSeriesContribution> contributions;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     private Set<LanguageTag> languages;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

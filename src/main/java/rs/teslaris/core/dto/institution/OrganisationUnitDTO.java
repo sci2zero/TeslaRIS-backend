@@ -10,13 +10,13 @@ import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrganisationUnitDTO {
+
     private List<MultilingualContentDTO> name;
 
     private String nameAbbreviation;
@@ -26,8 +26,6 @@ public class OrganisationUnitDTO {
     private List<ResearchAreaDTO> researchAreas;
 
     private GeoLocationDTO location;
-
-    private ApproveStatus approveStatus;
 
     private ContactDTO contact;
 }
