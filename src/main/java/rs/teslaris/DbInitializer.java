@@ -255,6 +255,7 @@ public class DbInitializer implements ApplicationRunner {
         researcherAuthority.addPrivilege(listMyJournalPublications);
         authorityRepository.save(researcherAuthority);
         adminAuthority.addPrivilege(deletePerson);
+        adminAuthority.addPrivilege(listMyJournalPublications);
         authorityRepository.save(adminAuthority);
 
         var person2 = new Person();
