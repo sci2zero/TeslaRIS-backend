@@ -310,7 +310,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setProofs(new HashSet<>());
         document.setFileItems(new HashSet<>());
 
-        document.setEvent(eventService.findEventById(documentDTO.getEventId()));
+        if (Objects.nonNull(documentDTO.getEventId())) {
+            document.setEvent(eventService.findEventById(documentDTO.getEventId()));
+        }
     }
 
     protected void clearCommonFields(Document publication) {

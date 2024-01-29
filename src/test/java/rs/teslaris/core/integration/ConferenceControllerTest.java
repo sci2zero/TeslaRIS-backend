@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +17,6 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
-import rs.teslaris.core.dto.person.ContactDTO;
-import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.EventContributionType;
 
 @SpringBootTest
@@ -48,11 +44,8 @@ public class ConferenceControllerTest extends BaseTest {
         var contribution =
             new PersonEventContributionDTO(EventContributionType.ORGANIZATION_BOARD_CHAIR);
         contribution.setOrderNumber(1);
-        contribution.setInstitutionIds(new ArrayList<>());
-        contribution.setPersonName(new PersonNameDTO());
-        contribution.setContact(new ContactDTO());
+        contribution.setPersonId(22);
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
         conferenceDTO.setContributions(List.of(contribution));
 

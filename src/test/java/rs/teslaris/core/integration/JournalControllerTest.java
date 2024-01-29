@@ -18,9 +18,6 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
-import rs.teslaris.core.dto.person.ContactDTO;
-import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 @SpringBootTest
@@ -44,11 +41,8 @@ public class JournalControllerTest extends BaseTest {
                 PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER,
                 LocalDate.now(), LocalDate.now());
         contribution.setOrderNumber(1);
-        contribution.setInstitutionIds(new ArrayList<>());
-        contribution.setPersonName(new PersonNameDTO());
-        contribution.setContact(new ContactDTO());
+        contribution.setPersonId(22);
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
         journalDTO.setContributions(List.of(contribution));
         journalDTO.setLanguageTagIds(new ArrayList<>());

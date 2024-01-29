@@ -5,12 +5,10 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +37,6 @@ import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.model.person.Involvement;
-import rs.teslaris.core.model.person.InvolvementType;
-import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -275,7 +270,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
         var person = personService.findOne(registrationRequest.getPersonId());
-        var organisationUnit = getLatestResearcherInvolvement(person);
+        var organisationUnit = personService.getLatestResearcherInvolvement(person);
 
         var newUser =
             new User(registrationRequest.getEmail(),
@@ -425,28 +420,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         var userToUpdate = boundUser.get();
-        userToUpdate.setOrganisationUnit(getLatestResearcherInvolvement(person));
+        userToUpdate.setOrganisationUnit(personService.getLatestResearcherInvolvement(person));
         userRepository.save(userToUpdate);
         reindexUser(userToUpdate);
-    }
-
-    private OrganisationUnit getLatestResearcherInvolvement(Person person) {
-        OrganisationUnit organisationUnit = null;
-        if (Objects.nonNull(person.getInvolvements())) {
-            // TODO: Ulazi li ovo samo u display OU ili i edukacija
-            Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
-                .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
-                .filter(involvement ->
-                    involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                        involvement.getInvolvementType().equals(InvolvementType.HIRED_BY))
-                .max(Comparator.comparing(Involvement::getDateFrom));
-
-            if (latestInvolvement.isPresent()) {
-                organisationUnit = latestInvolvement.get().getOrganisationUnit();
-            }
-        }
-
-        return organisationUnit;
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {

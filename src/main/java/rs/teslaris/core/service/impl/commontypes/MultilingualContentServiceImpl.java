@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,6 +33,18 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
                 multilingualContent.getPriority()
             );
         }).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<MultiLingualContent> deepCopy(Set<MultiLingualContent> content) {
+        var returnContent = new HashSet<MultiLingualContent>();
+        content.forEach(mc -> {
+            var copiedContent =
+                new MultiLingualContent(mc.getLanguage(), mc.getContent(), mc.getPriority());
+            returnContent.add(copiedContent);
+        });
+
+        return returnContent;
     }
 
     @Override

@@ -2,9 +2,11 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -289,6 +292,24 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         delete(personId);
         var index = personIndexRepository.findByDatabaseId(personId);
         index.ifPresent(personIndexRepository::delete);
+    }
+
+    public OrganisationUnit getLatestResearcherInvolvement(Person person) {
+        OrganisationUnit organisationUnit = null;
+        if (Objects.nonNull(person.getInvolvements())) {
+            // TODO: Ulazi li ovo samo u display OU ili i edukacija
+            Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
+                .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
+                .filter(involvement ->
+                    involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                        involvement.getInvolvementType().equals(InvolvementType.HIRED_BY))
+                .max(Comparator.comparing(Involvement::getDateFrom));
+
+            if (latestInvolvement.isPresent()) {
+                organisationUnit = latestInvolvement.get().getOrganisationUnit();
+            }
+        }
+        return organisationUnit;
     }
 
     @Transactional

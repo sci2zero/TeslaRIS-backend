@@ -17,9 +17,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
-import rs.teslaris.core.dto.person.ContactDTO;
-import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 
 @SpringBootTest
@@ -43,11 +40,8 @@ public class ProceedingsControllerTest extends BaseTest {
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
         contribution.setOrderNumber(1);
-        contribution.setInstitutionIds(new ArrayList<>());
-        contribution.setPersonName(new PersonNameDTO());
-        contribution.setContact(new ContactDTO());
+        contribution.setPersonId(22);
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
         proceedingsDTO.setContributions(List.of(contribution));
         proceedingsDTO.setUris(new HashSet<>());

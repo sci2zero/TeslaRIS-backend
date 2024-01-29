@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -47,5 +48,6 @@ public class DocumentDTO {
 
     private String scopusId;
 
+    @Positive(message = "Event Id must be a positive number.")
     private Integer eventId;
 }

@@ -13,13 +13,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
-import rs.teslaris.core.dto.person.ContactDTO;
-import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PostalAddressDTO;
-import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonalInfo;
+import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.service.impl.person.PersonContributionServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -58,6 +58,13 @@ public class PersonContributionServiceTest {
         document.setContributors(new HashSet<>());
         var documentDTO = new DocumentDTO();
 
+        var contributor = new Person();
+        contributor.setName(new PersonName());
+        var personalInfo = new PersonalInfo();
+        personalInfo.setPostalAddress(new PostalAddress(null, new HashSet<>(), new HashSet<>()));
+        personalInfo.setContact(new Contact("email", "phone number"));
+        contributor.setPersonalInfo(personalInfo);
+
         var contributionDTO1 = new PersonDocumentContributionDTO();
         contributionDTO1.setContributionType(DocumentContributionType.AUTHOR);
         contributionDTO1.setIsMainContributor(true);
@@ -65,40 +72,12 @@ public class PersonContributionServiceTest {
         contributionDTO1.setContributionDescription(new ArrayList<>());
         contributionDTO1.setOrderNumber(1);
         contributionDTO1.setPersonId(1);
-        contributionDTO1.setPersonName(new PersonNameDTO());
-        contributionDTO1.setContact(new ContactDTO());
-        contributionDTO1.setPostalAddress(
-            new PostalAddressDTO(null, new ArrayList<>(), new ArrayList<>()));
-        contributionDTO1.setContact(new ContactDTO(null, "phone"));
-
-        var institutionIds1 = new ArrayList<Integer>();
-        institutionIds1.add(1);
-        institutionIds1.add(2);
-        contributionDTO1.setInstitutionIds(institutionIds1);
-
-        var contributionDTO2 = new PersonDocumentContributionDTO();
-        contributionDTO2.setContributionType(DocumentContributionType.AUTHOR);
-        contributionDTO2.setIsMainContributor(false);
-        contributionDTO2.setIsCorrespondingContributor(true);
-        contributionDTO2.setContributionDescription(new ArrayList<>());
-        contributionDTO2.setOrderNumber(2);
-        contributionDTO2.setPersonName(new PersonNameDTO());
-        contributionDTO2.setPostalAddress(
-            new PostalAddressDTO(1, new ArrayList<>(), new ArrayList<>()));
-        contributionDTO2.setContact(new ContactDTO("email", null));
-
-        var institutionIds2 = new ArrayList<Integer>();
-        institutionIds2.add(3);
-        institutionIds2.add(4);
-        contributionDTO2.setInstitutionIds(institutionIds2);
 
         var contributionsDTO = new ArrayList<PersonDocumentContributionDTO>();
         contributionsDTO.add(contributionDTO1);
-        contributionsDTO.add(contributionDTO2);
         documentDTO.setContributions(contributionsDTO);
 
-        when(personService.findOne(1)).thenReturn(new Person());
-        when(countryService.findOne(1)).thenReturn(new Country());
+        when(personService.findOne(1)).thenReturn(contributor);
 
         // When
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
