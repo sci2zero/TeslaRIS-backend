@@ -135,7 +135,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
 //        TODO: Should we delete files if we have soft delete
 //        deleteProofsAndFileItems(proceedingsToDelete);
-//        deleteProofsAndFileItems(proceedingsToDelete);
         proceedingJPAService.delete(proceedingsId);
 
         if (proceedingsToDelete.getApproveStatus().equals(ApproveStatus.APPROVED)) {
