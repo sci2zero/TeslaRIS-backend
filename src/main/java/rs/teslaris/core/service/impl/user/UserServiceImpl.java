@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.user;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import com.google.common.cache.Cache;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import java.util.Objects;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -95,6 +97,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final SearchService<UserAccountIndex> searchService;
 
     private final MultilingualContentService multilingualContentService;
+
+    private final Cache<String, Byte> passwordResetRequestCacheStore;
+
+    @Value("${client.address}")
+    private String clientAppAddress;
 
 
     @Override
@@ -386,14 +393,28 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     @Transactional
     public void initiatePasswordResetProcess(ForgotPasswordRequestDTO forgotPasswordRequest) {
-        var user = (User) loadUserByUsername(forgotPasswordRequest.getUserEmail());
+        String userEmail = forgotPasswordRequest.getUserEmail();
 
-        var resetToken = UUID.randomUUID().toString();
-        emailUtil.sendSimpleEmail(user.getEmail(), "Account activation",
-            "To reset your password, go to: <BASE_URL>" + resetToken +
-                "\n\nThis token will last a week.");
+        if (passwordResetRequestCacheStore.getIfPresent(userEmail) != null) {
+            return;
+        }
 
-        passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
+        passwordResetRequestCacheStore.put(userEmail, (byte) 1);
+
+        try {
+            var user = (User) loadUserByUsername(userEmail);
+            var resetToken = UUID.randomUUID().toString();
+            String resetLink =
+                clientAppAddress + user.getPreferredLanguage().getLanguageCode().toLowerCase() +
+                    "/reset-password/" + resetToken;
+            String emailSubject = "Account Password Reset";
+            String emailBody =
+                String.format("To reset your password, go to: %s\n\nThis token will last a week.",
+                    resetLink);
+            emailUtil.sendSimpleEmail(user.getEmail(), emailSubject, emailBody);
+            passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
+        } catch (UsernameNotFoundException ignored) {
+        }
     }
 
     @Override

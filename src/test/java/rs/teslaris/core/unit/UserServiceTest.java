@@ -15,9 +15,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.cache.Cache;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -78,32 +80,49 @@ public class UserServiceTest {
 
     @Mock
     private EmailUtil emailUtil;
+
     @Mock
     private JwtUtil tokenUtil;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private UserAccountIndexRepository userAccountIndexRepository;
+
     @Mock
     private SearchService<UserAccountIndex> searchService;
+
     @Mock
     private LanguageService languageService;
+
     @Mock
     private AuthorityRepository authorityRepository;
+
     @Mock
     private UserAccountActivationRepository userAccountActivationRepository;
+
     @Mock
     private PersonService personService;
+
     @Mock
     private OrganisationUnitServiceImpl organisationUnitService;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+
     @Mock
     private PasswordResetTokenRepository passwordResetTokenRepository;
+
     @Mock
     private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private Cache<String, Byte> passwordResetRequestCacheStore;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -636,6 +655,7 @@ public class UserServiceTest {
 
         var user = new User();
         user.setEmail("test@example.com");
+        user.setPreferredLanguage(new Language("SR", new HashSet<>()));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 

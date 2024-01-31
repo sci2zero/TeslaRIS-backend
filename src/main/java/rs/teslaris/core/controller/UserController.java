@@ -112,6 +112,7 @@ public class UserController {
     }
 
     @PatchMapping("/reset-password")
+    @Idempotent
     public void resetPassword(@RequestBody @Valid ResetPasswordRequestDTO resetPasswordRequest) {
         userService.resetAccountPassword(resetPasswordRequest);
     }

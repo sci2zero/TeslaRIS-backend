@@ -42,6 +42,14 @@ public class BeanConfiguration {
     }
 
     @Bean
+    public Cache<String, Byte> passwordResetRequestCacheStore() {
+        return CacheBuilder.newBuilder()
+            .maximumSize(10000)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .build();
+    }
+
+    @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
