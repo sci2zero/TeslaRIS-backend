@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.util.search.StringUtil;
@@ -56,7 +56,7 @@ public class JournalController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     @Idempotent
-    public JournalDTO createJournal(@RequestBody @Valid JournalDTO journalDTO) {
+    public PublicationSeriesDTO createJournal(@RequestBody @Valid PublicationSeriesDTO journalDTO) {
         var savedJournal = journalService.createJournal(journalDTO);
         journalDTO.setId(savedJournal.getId());
         return journalDTO;
@@ -76,7 +76,7 @@ public class JournalController {
     @PutMapping("/{journalId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
-    public void updateJournal(@RequestBody @Valid JournalDTO journalDTO,
+    public void updateJournal(@RequestBody @Valid PublicationSeriesDTO journalDTO,
                               @PathVariable Integer journalId) {
         journalService.updateJournal(journalDTO, journalId);
     }

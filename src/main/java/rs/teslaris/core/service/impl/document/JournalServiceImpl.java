@@ -6,20 +6,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import javax.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.BookSeriesConverter;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
-import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.repository.document.PublicationSeriesRepository;
+import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -27,38 +27,41 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
-import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
-public class JournalServiceImpl extends JPAServiceImpl<Journal>
-    implements JournalService {
+public class JournalServiceImpl extends PublicationSeriesServiceImpl implements JournalService {
 
-    private final JournalRepository journalRepository;
-
-    private final MultilingualContentService multilingualContentService;
-
-    private final LanguageTagService languageTagService;
-
-    private final PersonContributionService personContributionService;
+    private final JournalJPAServiceImpl journalJPAService;
 
     private final SearchService<JournalIndex> searchService;
 
     private final JournalIndexRepository journalIndexRepository;
 
-    private final EmailUtil emailUtil;
+    private final JournalRepository journalRepository;
 
 
-    @Override
-    protected JpaRepository<Journal, Integer> getEntityRepository() {
-        return journalRepository;
+    @Autowired
+    public JournalServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
+                              MultilingualContentService multilingualContentService,
+                              LanguageTagService languageTagService,
+                              PersonContributionService personContributionService,
+                              EmailUtil emailUtil, JournalJPAServiceImpl journalJPAService,
+                              SearchService<JournalIndex> searchService,
+                              JournalIndexRepository journalIndexRepository,
+                              JournalRepository journalRepository) {
+        super(publicationSeriesRepository, multilingualContentService, languageTagService,
+            personContributionService, emailUtil);
+        this.journalJPAService = journalJPAService;
+        this.searchService = searchService;
+        this.journalIndexRepository = journalIndexRepository;
+        this.journalRepository = journalRepository;
     }
 
     @Override
     public Page<JournalResponseDTO> readAllJournals(Pageable pageable) {
-        return journalRepository.findAll(pageable).map(BookSeriesConverter::toDTO);
+        return journalJPAService.findAll(pageable).map(BookSeriesConverter::toDTO);
     }
 
     @Override
@@ -69,28 +72,26 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
 
     @Override
     public JournalResponseDTO readJournal(Integer journalId) {
-        return BookSeriesConverter.toDTO(findOne(journalId));
+        return BookSeriesConverter.toDTO(journalJPAService.findOne(journalId));
     }
 
     @Override
-    @Deprecated(forRemoval = true)
     public Journal findJournalById(Integer journalId) {
-        return journalRepository.findById(journalId)
-            .orElseThrow(
-                () -> new NotFoundException("PublicationSeries with given id does not exist."));
+        return journalJPAService.findOne(journalId);
     }
 
     @Override
-    public Journal createJournal(JournalDTO journalDTO) {
+    public Journal createJournal(PublicationSeriesDTO journalDTO) {
         var journal = new Journal();
         journal.setLanguages(new HashSet<>());
 
         var index = new JournalIndex();
 
-        setCommonFields(journal, journalDTO);
+        setPublicationSeriesCommonFields(journal, journalDTO);
+        setJournalRelatedFields(journal, journalDTO);
         indexCommonFields(journal, index);
 
-        var savedJournal = journalRepository.save(journal);
+        var savedJournal = journalJPAService.save(journal);
         index.setDatabaseId(savedJournal.getId());
         journalIndexRepository.save(index);
 
@@ -109,7 +110,7 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
         journal.setEISSN(journalDTO.getEISSN());
         journal.setPrintISSN(journalDTO.getPrintISSN());
 
-        var savedJournal = journalRepository.save(journal);
+        var savedJournal = journalJPAService.save(journal);
 
         emailUtil.notifyInstitutionalEditor(savedJournal.getId(), "journal");
 
@@ -117,52 +118,40 @@ public class JournalServiceImpl extends JPAServiceImpl<Journal>
     }
 
     @Override
-    public void updateJournal(JournalDTO journalDTO, Integer journalId) {
-        var journalToUpdate = findOne(journalId);
+    public void updateJournal(PublicationSeriesDTO journalDTO, Integer journalId) {
+        var journalToUpdate = journalJPAService.findOne(journalId);
         journalToUpdate.getLanguages().clear();
 
         var indexToUpdate = journalIndexRepository.findJournalIndexByDatabaseId(journalId)
             .orElse(new JournalIndex());
         indexToUpdate.setDatabaseId(journalId);
 
-        setCommonFields(journalToUpdate, journalDTO);
+        setPublicationSeriesCommonFields(journalToUpdate, journalDTO);
+        setJournalRelatedFields(journalToUpdate, journalDTO);
         indexCommonFields(journalToUpdate, indexToUpdate);
 
-        journalRepository.save(journalToUpdate);
+        journalJPAService.save(journalToUpdate);
         journalIndexRepository.save(indexToUpdate);
     }
 
     @Override
     public void deleteJournal(Integer journalId) {
         if (journalRepository.hasPublication(journalId) ||
-            journalRepository.hasProceedings(journalId)) {
+            publicationSeriesRepository.hasProceedings(journalId)) {
             throw new JournalReferenceConstraintViolationException(
                 "PublicationSeries with given ID is allready in use.");
         }
 
-        this.delete(journalId);
+        journalJPAService.delete(journalId);
         var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
         index.ifPresent(journalIndexRepository::delete);
     }
 
-    private void setCommonFields(Journal journal, JournalDTO journalDTO) {
-        journal.setTitle(
-            multilingualContentService.getMultilingualContent(journalDTO.getTitle()));
-        journal.setNameAbbreviation(
-            multilingualContentService.getMultilingualContent(journalDTO.getNameAbbreviation()));
-
-        journal.setEISSN(journalDTO.getEissn());
-        journal.setPrintISSN(journalDTO.getPrintISSN());
-
+    private void setJournalRelatedFields(Journal journal, PublicationSeriesDTO journalDTO) {
         if (Objects.nonNull(journalDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForJournal(journal,
                 journalDTO);
         }
-
-        journalDTO.getLanguageTagIds().forEach(languageTagId -> {
-            journal.getLanguages()
-                .add(languageTagService.findLanguageTagById(languageTagId));
-        });
     }
 
     private void indexCommonFields(Journal journal, JournalIndex index) {

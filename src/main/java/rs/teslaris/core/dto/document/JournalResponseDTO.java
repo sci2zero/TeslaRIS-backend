@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class JournalResponseDTO extends JournalDTO {
+public class JournalResponseDTO extends PublicationSeriesDTO {
 
     private List<String> languageTagNames;
 }

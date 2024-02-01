@@ -147,6 +147,6 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setVolume(publicationDTO.getVolume());
         publication.setIssue(publicationDTO.getIssue());
 
-        publication.setJournal(journalService.findOne(publicationDTO.getJournalId()));
+        publication.setJournal(journalService.findJournalById(publicationDTO.getJournalId()));
     }
 }

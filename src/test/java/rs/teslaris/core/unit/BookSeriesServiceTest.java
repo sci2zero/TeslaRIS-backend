@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -18,13 +18,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
+import rs.teslaris.core.indexmodel.BookSeriesIndex;
+import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
+import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.BookSeriesServiceImpl;
+import rs.teslaris.core.service.impl.document.cruddelegate.BookSeriesJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -36,6 +42,9 @@ public class BookSeriesServiceTest {
     private BookSeriesRepository bookSeriesRepository;
 
     @Mock
+    private BookSeriesJPAServiceImpl bookSeriesJPAService;
+
+    @Mock
     private MultilingualContentService multilingualContentService;
 
     @Mock
@@ -43,6 +52,15 @@ public class BookSeriesServiceTest {
 
     @Mock
     private PersonContributionService personContributionService;
+
+    @Mock
+    private SearchService<BookSeriesIndex> searchService;
+
+    @Mock
+    private BookSeriesIndexRepository bookSeriesIndexRepository;
+
+    @Mock
+    private PublicationSeriesRepository publicationSeriesRepository;
 
     @InjectMocks
     private BookSeriesServiceImpl bookSeriesService;
@@ -52,10 +70,10 @@ public class BookSeriesServiceTest {
     public void shouldReturnBookSeriesWhenItExists() {
         // given
         var expected = new BookSeries();
-        when(bookSeriesRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(publicationSeriesRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var result = bookSeriesService.findOne(1);
+        var result = bookSeriesService.findPublicationSeriesById(1);
 
         // then
         assertEquals(expected, result);
@@ -78,19 +96,25 @@ public class BookSeriesServiceTest {
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(new ArrayList<>());
         bookSeriesDTO.setNameAbbreviation(new ArrayList<>());
-        bookSeriesDTO.setEISSN("eISSN");
+        bookSeriesDTO.setEissn("eISSN");
         bookSeriesDTO.setPrintISSN("printISSN");
         bookSeriesDTO.setContributions(new ArrayList<>());
         bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
 
-        when(bookSeriesRepository.save(any())).thenReturn(new BookSeries());
+        var bookSeriesIndex = new BookSeriesIndex();
+        bookSeriesIndex.setDatabaseId(1);
+
+        when(bookSeriesJPAService.save(any())).thenReturn(new BookSeries());
+        when(bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(
+            bookSeriesIndex.getDatabaseId())).thenReturn(
+            Optional.of(bookSeriesIndex));
 
         // when
         var savedBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO);
 
         // then
         assertNotNull(savedBookSeries);
-        verify(bookSeriesRepository, times(1)).save(any());
+        verify(bookSeriesJPAService, times(1)).save(any());
     }
 
     @Test
@@ -100,7 +124,7 @@ public class BookSeriesServiceTest {
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(new ArrayList<>());
         bookSeriesDTO.setNameAbbreviation(new ArrayList<>());
-        bookSeriesDTO.setEISSN("eISSN");
+        bookSeriesDTO.setEissn("eISSN");
         bookSeriesDTO.setPrintISSN("printISSN");
         bookSeriesDTO.setContributions(new ArrayList<>());
         bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
@@ -108,14 +132,16 @@ public class BookSeriesServiceTest {
         var bookSeries = new BookSeries();
         bookSeries.setLanguages(new HashSet<>());
 
-        when(bookSeriesRepository.findById(bookSeriesId)).thenReturn(Optional.of(bookSeries));
-        when(bookSeriesRepository.save(any())).thenReturn(new BookSeries());
+        when(bookSeriesJPAService.findOne(bookSeriesId)).thenReturn(bookSeries);
+        when(bookSeriesJPAService.save(any())).thenReturn(new BookSeries());
+        when(bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)).thenReturn(
+            Optional.empty());
 
         // when
         bookSeriesService.updateBookSeries(bookSeriesDTO, bookSeriesId);
 
         // then
-        verify(bookSeriesRepository, times(1)).save(any());
+        verify(bookSeriesJPAService, times(1)).save(any());
     }
 
     @Test
@@ -124,16 +150,14 @@ public class BookSeriesServiceTest {
         var bookSeriesId = 1;
         var bookSeriesToDelete = new BookSeries();
 
-        when(bookSeriesRepository.findById(bookSeriesId)).thenReturn(
-            Optional.of(bookSeriesToDelete));
-        when(bookSeriesRepository.hasProceedings(bookSeriesId)).thenReturn(false);
+        when(bookSeriesJPAService.findOne(bookSeriesId)).thenReturn(bookSeriesToDelete);
+        when(publicationSeriesRepository.hasProceedings(bookSeriesId)).thenReturn(false);
 
         // when
         bookSeriesService.deleteBookSeries(bookSeriesId);
 
         // then
-        verify(bookSeriesRepository, times(1)).save(bookSeriesToDelete);
-        verify(bookSeriesRepository, never()).delete(any());
+        verify(bookSeriesJPAService, times(1)).delete(any());
     }
 
     @Test
@@ -142,9 +166,8 @@ public class BookSeriesServiceTest {
         var bookSeriesId = 1;
         var bookSeriesToDelete = new BookSeries();
 
-        when(bookSeriesRepository.findById(bookSeriesId)).thenReturn(
-            Optional.of(bookSeriesToDelete));
-        when(bookSeriesRepository.hasProceedings(bookSeriesId)).thenReturn(true);
+        when(bookSeriesJPAService.findOne(bookSeriesId)).thenReturn(bookSeriesToDelete);
+        when(publicationSeriesRepository.hasProceedings(bookSeriesId)).thenReturn(true);
 
         // when
         assertThrows(BookSeriesReferenceConstraintViolationException.class,
@@ -172,7 +195,7 @@ public class BookSeriesServiceTest {
         bookSeries2.setContributions(new HashSet<>());
         bookSeries2.setLanguages(new HashSet<>());
 
-        when(bookSeriesRepository.findAll(pageable)).thenReturn(
+        when(bookSeriesJPAService.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(bookSeries1, bookSeries2)));
 
         // when
@@ -194,14 +217,30 @@ public class BookSeriesServiceTest {
         bookSeries.setContributions(new HashSet<>());
         bookSeries.setLanguages(new HashSet<>());
 
-        when(bookSeriesRepository.findById(bookSeriesId)).thenReturn(Optional.of(bookSeries));
+        when(bookSeriesJPAService.findOne(bookSeriesId)).thenReturn(bookSeries);
 
         // when
         var response = bookSeriesService.readBookSeries(bookSeriesId);
 
         // then
         assertNotNull(response);
-        assertEquals(response.getEISSN(), bookSeries.getEISSN());
+        assertEquals(response.getEissn(), bookSeries.getEISSN());
         assertEquals(response.getPrintISSN(), bookSeries.getPrintISSN());
+    }
+
+    @Test
+    public void shouldFindBookSeriesWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("DEF CON", "DEFCON");
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(List.of(new BookSeriesIndex(), new BookSeriesIndex())));
+
+        // when
+        var result = bookSeriesService.searchBookSeries(new ArrayList<>(tokens), pageable);
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

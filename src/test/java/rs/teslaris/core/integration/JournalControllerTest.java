@@ -16,8 +16,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 @SpringBootTest
@@ -27,10 +27,10 @@ public class JournalControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
 
-    private JournalDTO getTestPayload() {
+    private PublicationSeriesDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
 
-        var journalDTO = new JournalDTO();
+        var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(dummyMC);
         journalDTO.setNameAbbreviation(dummyMC);
         journalDTO.setEissn("eISSN");

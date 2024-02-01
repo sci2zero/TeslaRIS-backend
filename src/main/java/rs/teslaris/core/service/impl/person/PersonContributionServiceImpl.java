@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
@@ -67,7 +67,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     @Override
     public void setPersonPublicationSeriesContributionsForJournal(
         PublicationSeries publicationSeries,
-        JournalDTO journalDTO) {
+        PublicationSeriesDTO journalDTO) {
         if (publicationSeries.getContributions() != null) {
             publicationSeries.getContributions().clear();
         } else {

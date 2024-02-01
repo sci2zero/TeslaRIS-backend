@@ -31,7 +31,7 @@ public class BookSeriesControllerTest extends BaseTest {
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(dummyMC);
         bookSeriesDTO.setNameAbbreviation(dummyMC);
-        bookSeriesDTO.setEISSN("eISSN");
+        bookSeriesDTO.setEissn("eISSN");
         bookSeriesDTO.setPrintISSN("printISSN");
 
         var contribution =
@@ -88,7 +88,7 @@ public class BookSeriesControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var bookSeriesDTO = getTestPayload();
-        bookSeriesDTO.setEISSN("TEST_E_ISSN");
+        bookSeriesDTO.setEissn("TEST_E_ISSN");
         bookSeriesDTO.setPrintISSN("TEST_PRINT_ISSN");
 
         String requestBody = objectMapper.writeValueAsString(bookSeriesDTO);
@@ -110,5 +110,18 @@ public class BookSeriesControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testSearchJournals() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/book-series/simple-search?tokens=eISSN&tokens=content")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 }

@@ -42,7 +42,7 @@ public class BookSeriesConverter {
         responseDTO.setId(bookSeries.getId());
         responseDTO.setTitle(
             MultilingualContentConverter.getMultilingualContentDTO(bookSeries.getTitle()));
-        responseDTO.setEISSN(bookSeries.getEISSN());
+        responseDTO.setEissn(bookSeries.getEISSN());
         responseDTO.setPrintISSN(bookSeries.getPrintISSN());
         responseDTO.setNameAbbreviation(
             MultilingualContentConverter.getMultilingualContentDTO(
