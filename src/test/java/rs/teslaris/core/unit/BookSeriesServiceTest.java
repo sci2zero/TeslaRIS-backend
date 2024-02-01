@@ -152,12 +152,15 @@ public class BookSeriesServiceTest {
 
         when(bookSeriesJPAService.findOne(bookSeriesId)).thenReturn(bookSeriesToDelete);
         when(publicationSeriesRepository.hasProceedings(bookSeriesId)).thenReturn(false);
+        when(bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)).thenReturn(
+            Optional.of(new BookSeriesIndex()));
 
         // when
         bookSeriesService.deleteBookSeries(bookSeriesId);
 
         // then
         verify(bookSeriesJPAService, times(1)).delete(any());
+        verify(bookSeriesIndexRepository, times(1)).delete(any());
     }
 
     @Test

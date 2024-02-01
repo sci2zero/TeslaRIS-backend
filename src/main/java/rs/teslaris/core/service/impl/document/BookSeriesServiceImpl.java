@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -104,11 +105,16 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         }
 
         bookSeriesJPAService.delete(bookSeriesId);
+        bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)
+            .ifPresent(bookSeriesIndexRepository::delete);
     }
 
     private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {
-        personContributionService.setPersonPublicationSeriesContributionsForBookSeries(bookSeries,
-            bookSeriesDTO);
+        if (Objects.nonNull(bookSeriesDTO.getContributions())) {
+            personContributionService.setPersonPublicationSeriesContributionsForBookSeries(
+                bookSeries,
+                bookSeriesDTO);
+        }
     }
 
     private void indexBookSeries(BookSeries bookSeries) {
