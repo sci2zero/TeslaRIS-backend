@@ -58,21 +58,42 @@ public class SecurityConfiguration {
             .antMatchers("/css/**", "/js/**", "/img/**", "/lib/**", "/favicon.ico").permitAll()
 
             // BASIC ENDPOINT CONFIGURATION
+
+            // USER
             .antMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
             .antMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
             .antMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
             .antMatchers(HttpMethod.POST, "/api/user/register-researcher").permitAll()
+
+            // PERSON
             .antMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+
+            // ORGANISATION UNIT
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
+
+            // LANGUAGE
             .antMatchers(HttpMethod.GET, "/api/language").permitAll()
             .antMatchers(HttpMethod.GET, "/api/language/tags").permitAll()
+
+            // DOCUMENT
             .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
+
+            // PROCEEDINGS
+            .antMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()
+
+            // PUBLICATION
+            .antMatchers(HttpMethod.GET,
+                "/api/journal-publication/journal/{journalId}/my-publications").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/proceedings-publication/event/{eventId}/my-publications").permitAll()
+
+            // HARVESTER
             .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()
             .anyRequest().fullyAuthenticated();
 
