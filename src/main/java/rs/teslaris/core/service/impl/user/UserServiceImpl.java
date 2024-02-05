@@ -24,6 +24,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
@@ -37,6 +40,8 @@ import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -266,7 +271,21 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        var person = personService.findOne(registrationRequest.getPersonId());
+        Person person = null;
+        if (registrationRequest.getPersonId() != null) {
+            person = personService.findOne(registrationRequest.getPersonId());
+        } else {
+
+            BasicPersonDTO basicPersonDTO = new BasicPersonDTO();
+            PersonNameDTO personNameDTO = new PersonNameDTO();
+            personNameDTO.setFirstname(registrationRequest.getFirstName());
+            personNameDTO.setLastname(registrationRequest.getLastName());
+            personNameDTO.setOtherName("");
+            basicPersonDTO.setPersonName(personNameDTO);
+            basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
+
+            person = personService.createPersonWithBasicInfo(basicPersonDTO);
+        }
         var organisationUnit = personService.getLatestResearcherInvolvement(person);
 
         var newUser =
