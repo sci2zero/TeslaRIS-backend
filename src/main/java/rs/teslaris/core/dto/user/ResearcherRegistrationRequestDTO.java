@@ -27,4 +27,10 @@ public class ResearcherRegistrationRequestDTO {
 
     @Positive(message = "Person ID must be a positive number.")
     private Integer personId;
+
+    private String firstName;
+    private String lastName;
+
+    @Positive(message = "Organisation Unit ID must be a positive number.")
+    private Integer organisationUnitId;
 }
