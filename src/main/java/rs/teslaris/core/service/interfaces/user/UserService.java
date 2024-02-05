@@ -61,4 +61,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     void resetAccountPassword(ResetPasswordRequestDTO resetPasswordRequest);
 
     void updateResearcherCurrentOrganisationUnitIfBound(Integer personId);
+
+    UserResponseDTO getUserFromPerson(Integer personId);
 }

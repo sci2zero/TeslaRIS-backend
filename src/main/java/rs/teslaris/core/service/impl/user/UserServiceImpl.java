@@ -446,6 +446,24 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         reindexUser(userToUpdate);
     }
 
+    @Override
+    public UserResponseDTO getUserFromPerson(Integer personId) {
+        var boundUser = userRepository.findForResearcher(personId)
+            .orElseThrow(() -> new NotFoundException("personNotBound"));
+
+        var personOrganisationUnit = boundUser.getOrganisationUnit();
+
+        return new UserResponseDTO(boundUser.getId(), boundUser.getEmail(),
+            boundUser.getFirstname(),
+            boundUser.getLastName(), boundUser.getLocked(), boundUser.getCanTakeRole(),
+            boundUser.getPreferredLanguage().getLanguageCode(),
+            Objects.nonNull(personOrganisationUnit) ? boundUser.getOrganisationUnit().getId() :
+                null,
+            MultilingualContentConverter.getMultilingualContentDTO(
+                Objects.nonNull(personOrganisationUnit) ? personOrganisationUnit.getName() :
+                    new HashSet<>()));
+    }
+
     private String createAndSaveRefreshTokenForUser(User user) {
         var refreshTokenValue = UUID.randomUUID().toString();
         var hashedRefreshToken =
