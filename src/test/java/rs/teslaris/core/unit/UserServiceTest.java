@@ -743,4 +743,33 @@ public class UserServiceTest {
         verify(userRepository, times(1)).save(userToUpdate);
         verify(userAccountIndexRepository, times(1)).save(any());
     }
+
+    @Test
+    void shouldGetUserFromPersonWhenExistingPerson() {
+        // Given
+        var personId = 1;
+        var user = new User();
+        user.setPreferredLanguage(new Language());
+
+        when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(user));
+
+        // When
+        var result = userService.getUserFromPerson(personId);
+
+        // Then
+        assertNotNull(result);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenNonExistingPerson() {
+        // Given
+        Integer personId = 1;
+
+        when(userRepository.findForResearcher(personId)).thenReturn(Optional.empty());
+
+        // When
+        assertThrows(NotFoundException.class, () -> userService.getUserFromPerson(personId));
+
+        // Then (NotFoundException should be thrown)
+    }
 }

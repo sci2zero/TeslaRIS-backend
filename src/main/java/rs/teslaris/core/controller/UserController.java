@@ -177,6 +177,11 @@ public class UserController {
         userService.allowTakingRoleOfAccount(bearerToken);
     }
 
+    @GetMapping("/person/{personId}")
+    public UserResponseDTO getUserFromPerson(@PathVariable("personId") Integer personId) {
+        return userService.getUserFromPerson(personId);
+    }
+
     private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {
         var headers = new HttpHeaders();
         headers.add("Set-Cookie",

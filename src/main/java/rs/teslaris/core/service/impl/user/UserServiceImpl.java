@@ -7,7 +7,6 @@ import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -25,9 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.dto.person.BasicPersonDTO;
-import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
@@ -39,10 +36,7 @@ import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -135,15 +129,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public UserResponseDTO getUserProfile(Integer userId) {
         var user = findOne(userId);
-        var organisationUnitId =
-            Objects.nonNull(user.getOrganisationUnit()) ? user.getOrganisationUnit().getId() : -1;
-        var organisationUnitName =
-            Objects.nonNull(user.getOrganisationUnit()) ? user.getOrganisationUnit().getName() :
-                new HashSet<MultiLingualContent>();
-        return new UserResponseDTO(user.getId(), user.getEmail(), user.getFirstname(),
-            user.getLastName(), user.getLocked(), user.getCanTakeRole(),
-            user.getPreferredLanguage().getLanguageCode(), organisationUnitId,
-            MultilingualContentConverter.getMultilingualContentDTO(organisationUnitName));
+        return UserConverter.toUserResponseDTO(user);
     }
 
     @Override
@@ -280,20 +266,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        Person person = null;
-        if (registrationRequest.getPersonId() != null) {
-            person = personService.findOne(registrationRequest.getPersonId());
-        } else {
-
-            BasicPersonDTO basicPersonDTO = new BasicPersonDTO();
-            PersonNameDTO personNameDTO = new PersonNameDTO();
-            personNameDTO.setFirstname(registrationRequest.getFirstName());
-            personNameDTO.setLastname(registrationRequest.getLastName());
-            basicPersonDTO.setPersonName(personNameDTO);
-            basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
-
-            person = personService.createPersonWithBasicInfo(basicPersonDTO);
-        }
+        var person = personService.findOne(registrationRequest.getPersonId());
         var organisationUnit = personService.getLatestResearcherInvolvement(person);
 
         var newUser =
@@ -461,6 +434,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         userToUpdate.setOrganisationUnit(personService.getLatestResearcherInvolvement(person));
         userRepository.save(userToUpdate);
         reindexUser(userToUpdate);
+    }
+
+    @Override
+    @Transactional
+    public UserResponseDTO getUserFromPerson(Integer personId) {
+        var boundUser = userRepository.findForResearcher(personId)
+            .orElseThrow(() -> new NotFoundException("personNotBound"));
+
+        return UserConverter.toUserResponseDTO(boundUser);
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {
