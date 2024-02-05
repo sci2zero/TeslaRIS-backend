@@ -100,8 +100,7 @@ public class SecurityConfiguration {
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");
 
-        http.addFilterBefore(jwtTokenFilter,
-            BasicAuthenticationFilter.class);
+        http.addFilterBefore(jwtTokenFilter, BasicAuthenticationFilter.class);
 
         return http.build();
     }

@@ -17,6 +17,8 @@ import rs.teslaris.core.dto.person.ContactDTO;
 @AllArgsConstructor
 public class OrganisationUnitDTO {
 
+    private Integer id;
+
     private List<MultilingualContentDTO> name;
 
     private String nameAbbreviation;
