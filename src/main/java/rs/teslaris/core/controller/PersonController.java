@@ -24,7 +24,7 @@ import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -50,7 +50,7 @@ public class PersonController {
     }
 
     @GetMapping("/{personId}")
-    public PersonResponseDto readPersonWithBasicInfo(@PathVariable Integer personId) {
+    public PersonResponseDTO readPersonWithBasicInfo(@PathVariable Integer personId) {
         return personService.readPersonWithBasicInfo(personId);
     }
 

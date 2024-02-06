@@ -35,7 +35,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -129,7 +129,7 @@ public class PersonServiceTest {
     public void shouldReadPersonWhenPersonIsApproved() {
         // given
         var expectedPerson = new Person();
-        var expectedResponse = new PersonResponseDto();
+        var expectedResponse = new PersonResponseDTO();
 
         when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
 

@@ -37,5 +37,4 @@ public class PersonalInfoDTO {
     private String orcid;
 
     private String scopusAuthorId;
-
 }

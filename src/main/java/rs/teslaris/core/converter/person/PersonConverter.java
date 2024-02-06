@@ -1,11 +1,12 @@
 package rs.teslaris.core.converter.person;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Set;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -15,14 +16,14 @@ import rs.teslaris.core.model.person.PostalAddress;
 
 public class PersonConverter {
 
-    public static PersonResponseDto toDTO(Person person) {
+    public static PersonResponseDTO toDTO(Person person) {
         var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
 
         var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
 
-        return new PersonResponseDto(
+        return new PersonResponseDTO(
             new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
                 person.getName().getDateTo()), otherNames,
@@ -39,7 +40,9 @@ public class PersonConverter {
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
         var postalAddressDto = new PostalAddressDTO();
-        postalAddressDto.setCountryId(postalAddress.getCountry().getId());
+        if (Objects.nonNull(postalAddress.getCountry())) {
+            postalAddressDto.setCountryId(postalAddress.getCountry().getId());
+        }
 
         var streetAndNumberContent = new ArrayList<MultilingualContentDTO>();
         var cityContent = new ArrayList<MultilingualContentDTO>();

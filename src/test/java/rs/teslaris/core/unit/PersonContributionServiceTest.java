@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.person.Contact;
@@ -72,6 +73,8 @@ public class PersonContributionServiceTest {
         contributionDTO1.setContributionDescription(new ArrayList<>());
         contributionDTO1.setOrderNumber(1);
         contributionDTO1.setPersonId(1);
+        contributionDTO1.setPersonName(
+            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
 
         var contributionsDTO = new ArrayList<PersonDocumentContributionDTO>();
         contributionsDTO.add(contributionDTO1);

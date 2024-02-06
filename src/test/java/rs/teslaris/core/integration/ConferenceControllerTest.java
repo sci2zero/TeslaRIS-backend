@@ -17,6 +17,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.EventContributionType;
 
 @SpringBootTest
@@ -47,6 +48,8 @@ public class ConferenceControllerTest extends BaseTest {
         contribution.setPersonId(22);
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
+        contribution.setPersonName(
+            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
         conferenceDTO.setContributions(List.of(contribution));
 
         return conferenceDTO;

@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 @SpringBootTest
@@ -42,6 +43,8 @@ public class BookSeriesControllerTest extends BaseTest {
         contribution.setPersonId(22);
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
+        contribution.setPersonName(
+            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
         bookSeriesDTO.setContributions(List.of(contribution));
         bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
 

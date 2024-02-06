@@ -123,11 +123,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     private void setAffiliationStatement(PersonContribution contribution,
                                          PersonContributionDTO contributionDTO,
                                          Person contributor) {
-        var personName = new PersonName(contributor.getName().getFirstname(),
-            contributor.getName().getOtherName(),
-            contributor.getName().getLastname(),
-            contributor.getName().getDateFrom(),
-            contributor.getName().getDateTo());
+        var personName = getPersonName(contributionDTO, contributor);
 
         var contact = new Contact(contributor.getPersonalInfo().getContact().getContactEmail(),
             contributor.getPersonalInfo().getContact().getPhoneNumber());
@@ -141,6 +137,24 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                 multilingualContentService.deepCopy(
                     contributor.getPersonalInfo().getPostalAddress().getCity())),
             contact));
+    }
+
+    private PersonName getPersonName(PersonContributionDTO contributionDTO,
+                                     Person contributor) {
+        var personName = new PersonName(contributionDTO.getPersonName().getFirstname(),
+            contributionDTO.getPersonName().getOtherName(),
+            contributionDTO.getPersonName().getLastname(),
+            contributionDTO.getPersonName().getDateFrom(),
+            contributionDTO.getPersonName().getDateTo());
+        if (personName.getFirstname().isEmpty() && personName.getOtherName().isEmpty() &&
+            personName.getLastname().isEmpty()) {
+            personName = new PersonName(contributor.getName().getFirstname(),
+                contributor.getName().getOtherName(),
+                contributor.getName().getLastname(),
+                contributor.getName().getDateFrom(),
+                contributor.getName().getDateTo());
+        }
+        return personName;
     }
 
     private void setPersonContributionCommonFields(PersonContribution contribution,
