@@ -2,9 +2,10 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -272,17 +273,22 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private int parseYear(String dateString) {
-        DateTimeFormatter[] formatters =
-            {DateTimeFormatter.ofPattern("yyyy"), DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-                DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-                DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-                DateTimeFormatter.ofPattern("dd.MM.yyyy"),
-                DateTimeFormatter.ofPattern("dd.MM.yyyy.")};
+        DateTimeFormatter[] formatters = {
+            DateTimeFormatter.ofPattern("yyyy"), // Year only
+            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
+            DateTimeFormatter.ofPattern("dd.MM.yyyy"),
+            DateTimeFormatter.ofPattern("dd.MM.yyyy.")
+        };
 
         for (var formatter : formatters) {
             try {
-                var date = LocalDate.parse(dateString, formatter);
-                return date.getYear();
+                TemporalAccessor parsed = formatter.parse(dateString);
+
+                if (parsed.isSupported(ChronoField.YEAR)) {
+                    return parsed.get(ChronoField.YEAR);
+                }
             } catch (DateTimeParseException e) {
                 // Parsing failed, try the next formatter
             }
