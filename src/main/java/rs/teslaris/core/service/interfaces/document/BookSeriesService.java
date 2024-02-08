@@ -23,4 +23,6 @@ public interface BookSeriesService {
     void updateBookSeries(BookSeriesDTO bookSeriesDTO, Integer bookSeriesId);
 
     void deleteBookSeries(Integer bookSeriesId);
+
+    void reindexBookSeries();
 }

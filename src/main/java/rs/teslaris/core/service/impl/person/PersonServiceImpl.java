@@ -8,14 +8,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -155,7 +156,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         newPerson.setId(savedPerson.getId());
 
         if (savedPerson.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexPerson(savedPerson, 0);
+            indexPerson(savedPerson, savedPerson.getId());
         }
 
         return newPerson;
@@ -277,7 +278,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var approvedPerson = this.save(personToBeApproved);
 
         if (approve) {
-            indexPerson(approvedPerson, 0);
+            indexPerson(approvedPerson, approvedPerson.getId());
         }
     }
 
@@ -310,6 +311,25 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             }
         }
         return organisationUnit;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexPersons() {
+        personIndexRepository.deleteAll();
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((person) -> indexPerson(person, person.getId()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 
     @Transactional
@@ -351,14 +371,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
-        PersonIndex personIndex;
-        if (personDatabaseId > 0) {
-            personIndex = personIndexRepository.findByDatabaseId(personDatabaseId).orElseThrow(
-                () -> new NotFoundException("Person index with given database ID does not exist."));
-        } else {
-            personIndex = new PersonIndex();
-        }
-        return personIndex;
+        return personIndexRepository.findByDatabaseId(personDatabaseId).orElse(new PersonIndex());
     }
 
     private void setPersonIndexProperties(PersonIndex personIndex, Person savedPerson) {

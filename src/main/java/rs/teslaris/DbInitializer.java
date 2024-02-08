@@ -6,12 +6,12 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
@@ -202,6 +202,8 @@ public class DbInitializer implements ApplicationRunner {
 
         var conferenceEvent1 = new Conference();
         conferenceEvent1.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija", 1)));
+        conferenceEvent1.setDateFrom(LocalDate.of(2021, 3, 6));
+        conferenceEvent1.setDateTo(LocalDate.of(2021, 3, 10));
         conferenceRepository.save(conferenceEvent1);
 
         var proceedings1 = new Proceedings();
@@ -224,6 +226,8 @@ public class DbInitializer implements ApplicationRunner {
 
         var conferenceEvent2 = new Conference();
         conferenceEvent2.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija2", 1)));
+        conferenceEvent2.setDateFrom(LocalDate.of(2020, 6, 13));
+        conferenceEvent2.setDateTo(LocalDate.of(2020, 6, 19));
         conferenceRepository.save(conferenceEvent2);
 
         var journal2 = new Journal();
@@ -266,7 +270,7 @@ public class DbInitializer implements ApplicationRunner {
                 new Contact("mark@ftn.uns.ac.com", "021555769"));
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
-        person1.setName(
+        person2.setName(
             new PersonName("Marko", "Janko", "Markovic", LocalDate.of(2000, 1, 31), null));
         personRepository.save(person2);
 
@@ -282,5 +286,10 @@ public class DbInitializer implements ApplicationRunner {
 
         var hungarianTag = new LanguageTag(LanguageAbbreviations.HUNGARIAN, "Magyar");
         languageTagRepository.save(hungarianTag);
+
+        var reindexPrivilege = new Privilege("REINDEX_DATABASE");
+        privilegeRepository.save(reindexPrivilege);
+        adminAuthority.addPrivilege(reindexPrivilege);
+        authorityRepository.save(adminAuthority);
     }
 }

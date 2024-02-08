@@ -28,4 +28,6 @@ public interface JournalService {
     void updateJournal(PublicationSeriesDTO journalDTO, Integer journalId);
 
     void deleteJournal(Integer journalId);
+
+    void reindexJournals();
 }

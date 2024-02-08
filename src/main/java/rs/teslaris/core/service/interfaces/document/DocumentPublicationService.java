@@ -34,4 +34,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                               Pageable pageable,
                                                               SearchRequestType type);
+
+    void deleteIndexes();
 }

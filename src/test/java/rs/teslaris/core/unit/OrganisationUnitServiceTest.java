@@ -423,7 +423,8 @@ public class OrganisationUnitServiceTest {
         organisationUnit.setContact(new Contact("a", "a"));
 
         organisationUnit.getName().clear();
-        Integer organisationUnitId = 1;
+        organisationUnit.setApproveStatus(ApproveStatus.APPROVED);
+        var organisationUnitId = 1;
 
 //        OrganisationUnit organisationUnit = new OrganisationUnit();
 

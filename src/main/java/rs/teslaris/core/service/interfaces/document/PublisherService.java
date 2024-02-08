@@ -25,4 +25,6 @@ public interface PublisherService {
     void updatePublisher(PublisherDTO publisherDTO, Integer publisherId);
 
     void deletePublisher(Integer publisherId);
+
+    void reindexPublishers();
 }

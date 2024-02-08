@@ -25,8 +25,7 @@ public interface ProceedingsPublicationService {
 
     void deleteProceedingsPublication(Integer proceedingsPublicationId);
 
-    void indexProceedingsPublication(ProceedingsPublication publication,
-                                     DocumentPublicationIndex index);
-
     Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId, Pageable pageable);
+
+    void reindexProceedingsPublications();
 }

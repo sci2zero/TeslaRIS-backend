@@ -5,11 +5,12 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.BookSeriesConverter;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
@@ -85,15 +86,12 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         var journal = new Journal();
         journal.setLanguages(new HashSet<>());
 
-        var index = new JournalIndex();
-
         setPublicationSeriesCommonFields(journal, journalDTO);
         setJournalRelatedFields(journal, journalDTO);
-        indexCommonFields(journal, index);
 
         var savedJournal = journalJPAService.save(journal);
-        index.setDatabaseId(savedJournal.getId());
-        journalIndexRepository.save(index);
+
+        indexJournal(journal, new JournalIndex());
 
         return savedJournal;
     }
@@ -111,6 +109,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         journal.setPrintISSN(journalDTO.getPrintISSN());
 
         var savedJournal = journalJPAService.save(journal);
+        indexJournal(journal,
+            journalIndexRepository.findJournalIndexByDatabaseId(journal.getId())
+                .orElse(new JournalIndex()));
 
         emailUtil.notifyInstitutionalEditor(savedJournal.getId(), "journal");
 
@@ -122,16 +123,14 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         var journalToUpdate = journalJPAService.findOne(journalId);
         journalToUpdate.getLanguages().clear();
 
-        var indexToUpdate = journalIndexRepository.findJournalIndexByDatabaseId(journalId)
-            .orElse(new JournalIndex());
-        indexToUpdate.setDatabaseId(journalId);
-
         setPublicationSeriesCommonFields(journalToUpdate, journalDTO);
         setJournalRelatedFields(journalToUpdate, journalDTO);
-        indexCommonFields(journalToUpdate, indexToUpdate);
+
+        var indexToUpdate = journalIndexRepository.findJournalIndexByDatabaseId(journalId)
+            .orElse(new JournalIndex());
+        indexJournal(journalToUpdate, indexToUpdate);
 
         journalJPAService.save(journalToUpdate);
-        journalIndexRepository.save(indexToUpdate);
     }
 
     @Override
@@ -147,11 +146,38 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         index.ifPresent(journalIndexRepository::delete);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexJournals() {
+        journalIndexRepository.deleteAll();
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<Journal> chunk =
+                journalJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((journal) -> indexJournal(journal, new JournalIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+    }
+
     private void setJournalRelatedFields(Journal journal, PublicationSeriesDTO journalDTO) {
         if (Objects.nonNull(journalDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForJournal(journal,
                 journalDTO);
         }
+    }
+
+    private void indexJournal(Journal journal, JournalIndex index) {
+        index.setDatabaseId(journal.getId());
+
+        indexCommonFields(journal, index);
+        journalIndexRepository.save(index);
     }
 
     private void indexCommonFields(Journal journal, JournalIndex index) {

@@ -160,7 +160,11 @@ public class ConferenceServiceTest {
         conferenceDTO.setDateTo(LocalDate.now());
         conferenceDTO.setContributions(new ArrayList<>());
 
-        when(conferenceJPAService.save(any())).thenReturn(new Conference());
+        var conference = new Conference();
+        conference.setDateFrom(LocalDate.now());
+        conference.setDateTo(LocalDate.now());
+
+        when(conferenceJPAService.save(any())).thenReturn(conference);
 
         // when
         var savedConference = conferenceService.createConference(conferenceDTO);
@@ -180,6 +184,9 @@ public class ConferenceServiceTest {
 
         var conference = new Conference();
         conference.setId(1);
+        conference.setDateFrom(LocalDate.now());
+        conference.setDateTo(LocalDate.now());
+
         when(conferenceJPAService.save(any())).thenReturn(conference);
 
         // when

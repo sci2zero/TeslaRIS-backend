@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -214,9 +214,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId) {
+        var fallbackDocument = new DocumentPublicationIndex();
+        fallbackDocument.setDatabaseId(documentId);
         return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            documentId).orElseThrow(() -> new NotFoundException(
-            "Document publication index with given ID does not exist."));
+            documentId).orElse(fallbackDocument);
     }
 
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
@@ -362,6 +363,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return searchService.runQuery(
             expressionTransformer.parseAdvancedQuery(tokens), pageable,
             DocumentPublicationIndex.class, "document_publication");
+    }
+
+    @Override
+    public void deleteIndexes() {
+        documentPublicationIndexRepository.deleteAll();
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {

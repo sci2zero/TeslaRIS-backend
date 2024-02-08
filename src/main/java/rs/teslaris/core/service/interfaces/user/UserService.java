@@ -63,4 +63,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     void updateResearcherCurrentOrganisationUnitIfBound(Integer personId);
 
     UserResponseDTO getUserFromPerson(Integer personId);
+
+    void reindexUsers();
 }

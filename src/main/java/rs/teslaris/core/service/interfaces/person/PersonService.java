@@ -51,4 +51,6 @@ public interface PersonService extends JPAService<Person> {
     void deletePerson(Integer personId);
 
     OrganisationUnit getLatestResearcherInvolvement(Person person);
+
+    void reindexPersons();
 }

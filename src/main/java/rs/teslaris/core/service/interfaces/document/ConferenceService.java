@@ -27,4 +27,6 @@ public interface ConferenceService {
     void updateConference(ConferenceDTO conferenceDTO, Integer conferenceId);
 
     void deleteConference(Integer conferenceId);
+
+    void reindexConferences();
 }

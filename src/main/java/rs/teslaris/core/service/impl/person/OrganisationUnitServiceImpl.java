@@ -8,13 +8,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
@@ -167,10 +168,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest) {
         OrganisationUnit organisationUnit = new OrganisationUnit();
-        OrganisationUnitIndex organisationUnitIndex = new OrganisationUnitIndex();
 
         setCommonOUFields(organisationUnit, organisationUnitDTORequest);
-        indexCommonFields(organisationUnit, organisationUnitIndex);
 
         if (organisationUnitApprovedByDefault) {
             organisationUnit.setApproveStatus(ApproveStatus.APPROVED);
@@ -179,21 +178,18 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         var savedOU = this.save(organisationUnit);
-        organisationUnitIndex.setDatabaseId(savedOU.getId());
-        organisationUnitIndexRepository.save(organisationUnitIndex);
 
-        return OrganisationUnitConverter.toDTO(organisationUnit);
+        if (organisationUnit.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexOrganisationUnit(organisationUnit, new OrganisationUnitIndex());
+        }
+
+        return OrganisationUnitConverter.toDTO(savedOU);
     }
 
     @Override
     public OrganisationUnit editOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest, Integer organisationUnitId) {
-
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
-        var indexToUpdate = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                organisationUnitId)
-            .orElse(new OrganisationUnitIndex());
-        indexToUpdate.setDatabaseId(organisationUnitId);
 
         organisationUnitToUpdate.getName().clear();
         organisationUnitToUpdate.getKeyword().clear();
@@ -202,6 +198,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         setCommonOUFields(organisationUnitToUpdate, organisationUnitDTORequest);
 
         organisationUnitToUpdate = this.save(organisationUnitToUpdate);
+
+        if (organisationUnitToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                organisationUnitId).orElse(new OrganisationUnitIndex());
+            indexOrganisationUnit(organisationUnitToUpdate, index);
+        }
+
         return organisationUnitToUpdate;
     }
 
@@ -226,6 +229,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
+    }
+
+    private void indexOrganisationUnit(OrganisationUnit organisationUnit,
+                                       OrganisationUnitIndex index) {
+        index.setDatabaseId(organisationUnit.getId());
+
+        indexCommonFields(organisationUnit, index);
+        organisationUnitIndexRepository.save(index);
     }
 
     private void indexCommonFields(OrganisationUnit organisationUnit, OrganisationUnitIndex index) {
@@ -415,5 +426,26 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
         return false;
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexOrganisationUnits() {
+        organisationUnitIndexRepository.deleteAll();
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<OrganisationUnit> chunk =
+                findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((organisationUnit) -> indexOrganisationUnit(organisationUnit,
+                new OrganisationUnitIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 }
