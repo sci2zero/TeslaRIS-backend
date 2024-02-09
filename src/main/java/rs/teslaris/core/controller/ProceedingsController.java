@@ -39,7 +39,6 @@ public class ProceedingsController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PublicationEditCheck("CREATE")
     @Idempotent
     public ProceedingsDTO createProceedings(@RequestBody @Valid ProceedingsDTO proceedings) {
         var savedProceedings = proceedingsService.createProceedings(proceedings);
