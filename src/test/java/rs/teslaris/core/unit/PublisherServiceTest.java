@@ -3,6 +3,7 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -245,5 +246,37 @@ public class PublisherServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexPublishers() {
+        // Given
+        var publisher1 = new Publisher();
+        publisher1.setName(new HashSet<>());
+        publisher1.setPlace(new HashSet<>());
+        publisher1.setState(new HashSet<>());
+        var publisher2 = new Publisher();
+        publisher2.setName(new HashSet<>());
+        publisher2.setPlace(new HashSet<>());
+        publisher2.setState(new HashSet<>());
+        var publisher3 = new Publisher();
+        publisher3.setName(new HashSet<>());
+        publisher3.setPlace(new HashSet<>());
+        publisher3.setState(new HashSet<>());
+        var publishers = Arrays.asList(publisher1, publisher2, publisher3);
+        var page1 =
+            new PageImpl<>(publishers.subList(0, 2), PageRequest.of(0, 10), publishers.size());
+        var page2 =
+            new PageImpl<>(publishers.subList(2, 3), PageRequest.of(1, 10), publishers.size());
+
+        when(publisherRepository.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        publisherService.reindexPublishers();
+
+        // Then
+        verify(publisherIndexRepository, times(1)).deleteAll();
+        verify(publisherRepository, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(publisherIndexRepository, atLeastOnce()).save(any(PublisherIndex.class));
     }
 }

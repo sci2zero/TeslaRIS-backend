@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -245,5 +246,34 @@ public class BookSeriesServiceTest {
 
         // then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexBookSeries() {
+        // Given
+        var bookSeries1 = new BookSeries();
+        bookSeries1.setTitle(new HashSet<>());
+        bookSeries1.setNameAbbreviation(new HashSet<>());
+        var bookSeries2 = new BookSeries();
+        bookSeries2.setTitle(new HashSet<>());
+        bookSeries2.setNameAbbreviation(new HashSet<>());
+        var bookSeries3 = new BookSeries();
+        bookSeries3.setTitle(new HashSet<>());
+        bookSeries3.setNameAbbreviation(new HashSet<>());
+        var bookSeries = Arrays.asList(bookSeries1, bookSeries2, bookSeries3);
+        var page1 =
+            new PageImpl<>(bookSeries.subList(0, 2), PageRequest.of(0, 10), bookSeries.size());
+        var page2 =
+            new PageImpl<>(bookSeries.subList(2, 3), PageRequest.of(1, 10), bookSeries.size());
+
+        when(bookSeriesJPAService.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        bookSeriesService.reindexBookSeries();
+
+        // Then
+        verify(bookSeriesIndexRepository, times(1)).deleteAll();
+        verify(bookSeriesJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(bookSeriesIndexRepository, atLeastOnce()).save(any(BookSeriesIndex.class));
     }
 }

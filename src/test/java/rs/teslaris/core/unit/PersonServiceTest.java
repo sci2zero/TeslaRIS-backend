@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -541,5 +542,32 @@ public class PersonServiceTest {
         verify(personRepository, times(1)).findById(personId);
         verify(personRepository, times(1)).save(any());
         verify(personIndexRepository, times(1)).delete(any());
+    }
+
+    @Test
+    public void shouldReindexPersons() {
+        // Given
+        var person1 = new Person();
+        person1.setName(new PersonName());
+        person1.setPersonalInfo(new PersonalInfo());
+        var person2 = new Person();
+        person2.setName(new PersonName());
+        person2.setPersonalInfo(new PersonalInfo());
+        var person3 = new Person();
+        person3.setName(new PersonName());
+        person3.setPersonalInfo(new PersonalInfo());
+        var persons = Arrays.asList(person1, person2, person3);
+        var page1 = new PageImpl<>(persons.subList(0, 2), PageRequest.of(0, 10), persons.size());
+        var page2 = new PageImpl<>(persons.subList(2, 3), PageRequest.of(1, 10), persons.size());
+
+        when(personRepository.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        personService.reindexPersons();
+
+        // Then
+        verify(personIndexRepository, times(1)).deleteAll();
+        verify(personRepository, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(personIndexRepository, atLeastOnce()).save(any(PersonIndex.class));
     }
 }

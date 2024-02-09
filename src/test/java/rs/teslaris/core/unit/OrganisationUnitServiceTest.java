@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -580,5 +581,38 @@ public class OrganisationUnitServiceTest {
         // Then
         assertEquals(expectedCount, actualCount);
         verify(organisationUnitIndexRepository, times(1)).count();
+    }
+
+    @Test
+    public void shouldReindexOrganisationUnits() {
+        // Given
+        var ou1 = new OrganisationUnit();
+        ou1.setName(new HashSet<>());
+        ou1.setKeyword(new HashSet<>());
+        ou1.setResearchAreas(new HashSet<>());
+        var ou2 = new OrganisationUnit();
+        ou2.setName(new HashSet<>());
+        ou2.setKeyword(new HashSet<>());
+        ou2.setResearchAreas(new HashSet<>());
+        var ou3 = new OrganisationUnit();
+        ou3.setName(new HashSet<>());
+        ou3.setKeyword(new HashSet<>());
+        ou3.setResearchAreas(new HashSet<>());
+        var organisationUnits = Arrays.asList(ou1, ou2, ou3);
+        var page1 = new PageImpl<>(organisationUnits.subList(0, 2), PageRequest.of(0, 10),
+            organisationUnits.size());
+        var page2 = new PageImpl<>(organisationUnits.subList(2, 3), PageRequest.of(1, 10),
+            organisationUnits.size());
+
+        when(organisationUnitRepository.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        organisationUnitService.reindexOrganisationUnits();
+
+        // Then
+        verify(organisationUnitIndexRepository, times(1)).deleteAll();
+        verify(organisationUnitRepository, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(organisationUnitIndexRepository, atLeastOnce()).save(
+            any(OrganisationUnitIndex.class));
     }
 }

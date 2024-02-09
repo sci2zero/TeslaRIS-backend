@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -284,5 +285,32 @@ public class JournalServiceTest {
 
         // then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexJournals() {
+        // Given
+        var journal1 = new Journal();
+        journal1.setTitle(new HashSet<>());
+        journal1.setNameAbbreviation(new HashSet<>());
+        var journal2 = new Journal();
+        journal2.setTitle(new HashSet<>());
+        journal2.setNameAbbreviation(new HashSet<>());
+        var journal3 = new Journal();
+        journal3.setTitle(new HashSet<>());
+        journal3.setNameAbbreviation(new HashSet<>());
+        var journals = Arrays.asList(journal1, journal2, journal3);
+        var page1 = new PageImpl<>(journals.subList(0, 2), PageRequest.of(0, 10), journals.size());
+        var page2 = new PageImpl<>(journals.subList(2, 3), PageRequest.of(1, 10), journals.size());
+
+        when(journalJPAService.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        journalService.reindexJournals();
+
+        // Then
+        verify(journalIndexRepository, times(1)).deleteAll();
+        verify(journalJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(journalIndexRepository, atLeastOnce()).save(any(JournalIndex.class));
     }
 }

@@ -325,4 +325,15 @@ public class DocumentPublicationServiceTest {
         verify(documentRepository, times(1)).delete(any());
         verify(documentPublicationIndexRepository, never()).delete(any());
     }
+
+    @Test
+    public void shouldDeleteIndexes() {
+        // Given: No need for any specific arrangement
+
+        // When
+        documentPublicationService.deleteIndexes();
+
+        // Then
+        verify(documentPublicationIndexRepository, times(1)).deleteAll();
+    }
 }

@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,6 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -269,5 +272,34 @@ public class ProceedingsPublicationServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexProceedingsPublications() {
+        // Given
+        var proceedingsPublication = new ProceedingsPublication();
+        proceedingsPublication.setDocumentDate("2024");
+        proceedingsPublication.setTitle(new HashSet<>());
+        proceedingsPublication.setDescription(new HashSet<>());
+        proceedingsPublication.setKeywords(new HashSet<>());
+        proceedingsPublication.setFileItems(new HashSet<>());
+        proceedingsPublication.setContributors(new HashSet<>());
+        var proceedings = new Proceedings();
+        proceedings.setEvent(new Conference());
+        proceedingsPublication.setProceedings(proceedings);
+        var peroceedingsPublications = List.of(proceedingsPublication);
+        var page1 = new PageImpl<>(peroceedingsPublications.subList(0, 1), PageRequest.of(0, 10),
+            peroceedingsPublications.size());
+
+        when(proceedingPublicationJPAService.findAll(any(PageRequest.class))).thenReturn(page1);
+
+        // When
+        proceedingsPublicationService.reindexProceedingsPublications();
+
+        // Then
+        verify(documentPublicationIndexRepository, never()).deleteAll();
+        verify(proceedingPublicationJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(documentPublicationIndexRepository, atLeastOnce()).save(
+            any(DocumentPublicationIndex.class));
     }
 }

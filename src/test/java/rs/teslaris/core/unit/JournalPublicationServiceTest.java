@@ -5,12 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -23,6 +26,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -285,5 +290,32 @@ public class JournalPublicationServiceTest {
 
         // Then
         assertEquals(expectedPublications, actualPublications);
+    }
+
+    @Test
+    public void shouldReindexJournalPublications() {
+        // Given
+        var journalPublication = new JournalPublication();
+        journalPublication.setDocumentDate("2024");
+        journalPublication.setTitle(new HashSet<>());
+        journalPublication.setDescription(new HashSet<>());
+        journalPublication.setKeywords(new HashSet<>());
+        journalPublication.setFileItems(new HashSet<>());
+        journalPublication.setContributors(new HashSet<>());
+        journalPublication.setJournal(new Journal());
+        var journalPublications = List.of(journalPublication);
+        var page1 = new PageImpl<>(journalPublications.subList(0, 1), PageRequest.of(0, 10),
+            journalPublications.size());
+
+        when(journalPublicationJPAService.findAll(any(PageRequest.class))).thenReturn(page1);
+
+        // When
+        journalPublicationService.reindexJournalPublications();
+
+        // Then
+        verify(documentPublicationIndexRepository, never()).deleteAll();
+        verify(journalPublicationJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(documentPublicationIndexRepository, atLeastOnce()).save(
+            any(DocumentPublicationIndex.class));
     }
 }

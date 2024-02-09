@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -763,7 +764,7 @@ public class UserServiceTest {
     @Test
     void shouldThrowNotFoundExceptionWhenNonExistingPerson() {
         // Given
-        Integer personId = 1;
+        var personId = 1;
 
         when(userRepository.findForResearcher(personId)).thenReturn(Optional.empty());
 
@@ -771,5 +772,32 @@ public class UserServiceTest {
         assertThrows(NotFoundException.class, () -> userService.getUserFromPerson(personId));
 
         // Then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldReindexUsers() {
+        // Given
+        var user1 = new User();
+        user1.setAuthority(new Authority("ADMIN", new HashSet<>()));
+        user1.setLocked(false);
+        var user2 = new User();
+        user2.setAuthority(new Authority("RESEARCHER", new HashSet<>()));
+        user2.setLocked(false);
+        var user3 = new User();
+        user3.setAuthority(new Authority("INSTITUTIONAL_EDITOR", new HashSet<>()));
+        user3.setLocked(false);
+        var users = Arrays.asList(user1, user2, user3);
+        var page1 = new PageImpl<>(users.subList(0, 2), PageRequest.of(0, 10), users.size());
+        var page2 = new PageImpl<>(users.subList(2, 3), PageRequest.of(1, 10), users.size());
+
+        when(userRepository.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        userService.reindexUsers();
+
+        // Then
+        verify(userAccountIndexRepository, times(1)).deleteAll();
+        verify(userRepository, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(userAccountIndexRepository, atLeastOnce()).save(any(UserAccountIndex.class));
     }
 }
