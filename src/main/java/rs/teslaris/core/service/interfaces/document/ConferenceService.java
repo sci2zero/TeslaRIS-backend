@@ -20,7 +20,7 @@ public interface ConferenceService {
 
     Conference findConferenceById(Integer conferenceId);
 
-    Conference createConference(ConferenceDTO conferenceDTO);
+    Conference createConference(ConferenceDTO conferenceDTO, Boolean index);
 
     Conference createConference(ConferenceBasicAdditionDTO conferenceDTO);
 

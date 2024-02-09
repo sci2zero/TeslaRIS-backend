@@ -82,7 +82,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
-    public Journal createJournal(PublicationSeriesDTO journalDTO) {
+    public Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index) {
         var journal = new Journal();
         journal.setLanguages(new HashSet<>());
 
@@ -91,7 +91,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
         var savedJournal = journalJPAService.save(journal);
 
-        indexJournal(journal, new JournalIndex());
+        if (index) {
+            indexJournal(journal, new JournalIndex());
+        }
 
         return savedJournal;
     }

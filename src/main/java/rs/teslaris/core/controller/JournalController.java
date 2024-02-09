@@ -57,7 +57,7 @@ public class JournalController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     @Idempotent
     public PublicationSeriesDTO createJournal(@RequestBody @Valid PublicationSeriesDTO journalDTO) {
-        var savedJournal = journalService.createJournal(journalDTO);
+        var savedJournal = journalService.createJournal(journalDTO, true);
         journalDTO.setId(savedJournal.getId());
         return journalDTO;
     }

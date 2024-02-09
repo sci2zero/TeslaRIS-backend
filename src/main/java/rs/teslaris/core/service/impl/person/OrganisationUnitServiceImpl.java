@@ -166,7 +166,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnitDTO createOrganisationUnit(
-        OrganisationUnitDTORequest organisationUnitDTORequest) {
+        OrganisationUnitDTORequest organisationUnitDTORequest, Boolean index) {
         OrganisationUnit organisationUnit = new OrganisationUnit();
 
         setCommonOUFields(organisationUnit, organisationUnitDTORequest);
@@ -179,7 +179,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         var savedOU = this.save(organisationUnit);
 
-        if (organisationUnit.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (organisationUnit.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
             indexOrganisationUnit(organisationUnit, new OrganisationUnitIndex());
         }
 
@@ -391,7 +391,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public void addRelationProofs(List<DocumentFileDTO> proofs, Integer relationId) {
         var relation = findOrganisationUnitsRelationById(relationId);
         proofs.forEach(proof -> {
-            var documentFile = documentFileService.saveNewDocument(proof, true);
+            var documentFile = documentFileService.saveNewDocument(proof, false);
             relation.getProofs().add(documentFile);
             organisationUnitsRelationJPAService.save(relation);
         });

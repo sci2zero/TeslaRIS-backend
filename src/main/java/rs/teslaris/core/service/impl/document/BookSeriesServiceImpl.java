@@ -73,7 +73,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
-    public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO) {
+    public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index) {
         var bookSeries = new BookSeries();
         bookSeries.setLanguages(new HashSet<>());
 
@@ -81,7 +81,9 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         setBookSeriesFields(bookSeries, bookSeriesDTO);
 
         var newBookSeries = bookSeriesJPAService.save(bookSeries);
-        indexBookSeries(newBookSeries, new BookSeriesIndex());
+        if (index) {
+            indexBookSeries(newBookSeries, new BookSeriesIndex());
+        }
 
         return newBookSeries;
     }

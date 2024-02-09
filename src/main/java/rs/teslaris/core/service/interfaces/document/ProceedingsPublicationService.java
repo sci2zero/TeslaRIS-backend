@@ -18,7 +18,7 @@ public interface ProceedingsPublicationService {
                                                                            Integer authorId);
 
     ProceedingsPublication createProceedingsPublication(
-        ProceedingsPublicationDTO proceedingsPublicationDTO);
+        ProceedingsPublicationDTO proceedingsPublicationDTO, Boolean index);
 
     void editProceedingsPublication(Integer publicationId,
                                     ProceedingsPublicationDTO publicationDTO);

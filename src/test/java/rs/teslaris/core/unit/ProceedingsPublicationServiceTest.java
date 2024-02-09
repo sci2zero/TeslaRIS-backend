@@ -122,7 +122,8 @@ public class ProceedingsPublicationServiceTest {
             new Conference());
 
         // When
-        var result = proceedingsPublicationService.createProceedingsPublication(publicationDTO);
+        var result =
+            proceedingsPublicationService.createProceedingsPublication(publicationDTO, true);
 
         // Then
         verify(multilingualContentService, times(4)).getMultilingualContent(any());

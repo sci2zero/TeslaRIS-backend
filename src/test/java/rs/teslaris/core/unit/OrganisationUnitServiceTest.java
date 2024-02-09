@@ -383,7 +383,7 @@ public class OrganisationUnitServiceTest {
             });
 
         var result =
-            organisationUnitService.createOrganisationUnit(organisationUnitDTORequest);
+            organisationUnitService.createOrganisationUnit(organisationUnitDTORequest, true);
 
 //        assertEquals(Set.of(name), result.getName());
 //        assertEquals(organisationUnitDTORequest.getNameAbbreviation(),

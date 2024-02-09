@@ -57,7 +57,7 @@ public class ConferenceController {
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     @Idempotent
     public ConferenceDTO createConference(@RequestBody @Valid ConferenceDTO conferenceDTO) {
-        var newConference = conferenceService.createConference(conferenceDTO);
+        var newConference = conferenceService.createConference(conferenceDTO, true);
         conferenceDTO.setId(newConference.getId());
         return conferenceDTO;
     }

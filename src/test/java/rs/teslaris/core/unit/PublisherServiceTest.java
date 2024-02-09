@@ -84,7 +84,7 @@ public class PublisherServiceTest {
         when(publisherRepository.save(any())).thenReturn(publisher);
 
         // When
-        var result = publisherService.createPublisher(publisherDTO);
+        var result = publisherService.createPublisher(publisherDTO, true);
 
         // Then
         assertEquals(publisher, result);

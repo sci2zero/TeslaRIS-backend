@@ -111,7 +111,7 @@ public class BookSeriesServiceTest {
             Optional.of(bookSeriesIndex));
 
         // when
-        var savedBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO);
+        var savedBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO, true);
 
         // then
         assertNotNull(savedBookSeries);

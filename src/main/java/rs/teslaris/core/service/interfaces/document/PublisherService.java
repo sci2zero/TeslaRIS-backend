@@ -18,7 +18,7 @@ public interface PublisherService {
 
     Page<PublisherIndex> searchPublishers(List<String> tokens, Pageable pageable);
 
-    Publisher createPublisher(PublisherDTO publisherDTO);
+    Publisher createPublisher(PublisherDTO publisherDTO, Boolean index);
 
     Publisher createPublisher(PublisherBasicAdditionDTO publisherDTO);
 

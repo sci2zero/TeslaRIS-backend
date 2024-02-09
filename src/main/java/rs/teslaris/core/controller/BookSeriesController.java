@@ -56,7 +56,7 @@ public class BookSeriesController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     @Idempotent
     public BookSeriesDTO createBookSeries(@RequestBody @Valid BookSeriesDTO bookSeriesDTO) {
-        var createdBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO);
+        var createdBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO, true);
         bookSeriesDTO.setId(createdBookSeries.getId());
         return bookSeriesDTO;
     }

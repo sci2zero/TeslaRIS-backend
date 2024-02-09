@@ -92,7 +92,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Override
     public ProceedingsPublication createProceedingsPublication(
-        ProceedingsPublicationDTO proceedingsPublicationDTO) {
+        ProceedingsPublicationDTO proceedingsPublicationDTO, Boolean index) {
         var publication = new ProceedingsPublication();
 
         setCommonFields(publication, proceedingsPublicationDTO);
@@ -103,7 +103,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         var savedPublication = proceedingPublicationJPAService.save(publication);
 
-        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
         }
 

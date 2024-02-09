@@ -100,7 +100,7 @@ public class JournalServiceTest {
         when(journalJPAService.save(any())).thenReturn(new Journal());
 
         // when
-        var savedJournal = journalService.createJournal(journalDTO);
+        var savedJournal = journalService.createJournal(journalDTO, true);
 
         // then
         assertNotNull(savedJournal);

@@ -80,7 +80,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
-    public JournalPublication createJournalPublication(JournalPublicationDTO publicationDTO) {
+    public JournalPublication createJournalPublication(JournalPublicationDTO publicationDTO,
+                                                       Boolean index) {
         var publication = new JournalPublication();
 
         setCommonFields(publication, publicationDTO);
@@ -91,7 +92,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         var savedPublication = journalPublicationJPAService.save(publication);
 
-        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
         }
 

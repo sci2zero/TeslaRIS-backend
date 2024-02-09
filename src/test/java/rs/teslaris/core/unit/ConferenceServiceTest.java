@@ -168,7 +168,7 @@ public class ConferenceServiceTest {
         when(conferenceJPAService.save(any())).thenReturn(conference);
 
         // when
-        var savedConference = conferenceService.createConference(conferenceDTO);
+        var savedConference = conferenceService.createConference(conferenceDTO, true);
 
         // then
         assertNotNull(savedConference);

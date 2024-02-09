@@ -64,7 +64,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
-    public Conference createConference(ConferenceDTO conferenceDTO) {
+    public Conference createConference(ConferenceDTO conferenceDTO, Boolean index) {
         var conference = new Conference();
         conference.setContributions(new HashSet<>());
 
@@ -73,7 +73,10 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         var savedConference = conferenceJPAService.save(conference);
 
-        indexConference(savedConference, new EventIndex());
+        if (index) {
+            indexConference(savedConference, new EventIndex());
+        }
+
         return savedConference;
     }
 

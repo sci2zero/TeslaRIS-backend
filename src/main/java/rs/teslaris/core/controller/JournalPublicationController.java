@@ -64,7 +64,7 @@ public class JournalPublicationController {
     public JournalPublicationDTO createJournalPublication(
         @RequestBody @Valid JournalPublicationDTO journalPublication) {
         var savedJournalPublication =
-            journalPublicationService.createJournalPublication(journalPublication);
+            journalPublicationService.createJournalPublication(journalPublication, true);
         journalPublication.setId(savedJournalPublication.getId());
         return journalPublication;
     }

@@ -129,7 +129,7 @@ public class JournalPublicationServiceTest {
         when(eventService.findEventById(1)).thenReturn(new Conference());
 
         // When
-        var result = journalPublicationService.createJournalPublication(publicationDTO);
+        var result = journalPublicationService.createJournalPublication(publicationDTO, true);
 
         // Then
         verify(multilingualContentService, times(4)).getMultilingualContent(any());

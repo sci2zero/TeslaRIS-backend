@@ -52,7 +52,7 @@ public class PublisherController {
     @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
     @Idempotent
     public PublisherDTO createPublisher(@RequestBody @Valid PublisherDTO publisherDTO) {
-        var newPublisher = publisherService.createPublisher(publisherDTO);
+        var newPublisher = publisherService.createPublisher(publisherDTO, true);
         publisherDTO.setId(newPublisher.getId());
         return publisherDTO;
     }

@@ -126,7 +126,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public void addInvolvementProofs(List<DocumentFileDTO> proofs, Integer involvementId) {
         var involvement = findOne(involvementId);
         proofs.forEach(proof -> {
-            var documentFile = documentFileService.saveNewDocument(proof, true);
+            var documentFile = documentFileService.saveNewDocument(proof, false);
             involvement.getProofs().add(documentFile);
             involvementRepository.save(involvement);
         });
