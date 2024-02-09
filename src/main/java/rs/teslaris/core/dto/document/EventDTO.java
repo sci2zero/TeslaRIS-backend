@@ -2,7 +2,6 @@ package rs.teslaris.core.dto.document;
 
 import java.time.LocalDate;
 import java.util.List;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,6 +44,6 @@ public class EventDTO {
     @NotNull(message = "You have to provide place.")
     private List<MultilingualContentDTO> place;
 
-    @Valid
+    @NotNull(message = "You have to provide contribution list.")
     private List<PersonEventContributionDTO> contributions;
 }
