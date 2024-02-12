@@ -14,6 +14,8 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     @Query("select ou from  OrganisationUnit ou left join fetch ou.keyword left join fetch ou.name left join fetch ou.researchAreas where ou.id = :id")
     Optional<OrganisationUnit> findByIdWithLangDataAndResearchArea(Integer id);
 
+    Optional<OrganisationUnit> findOrganisationUnitByOldId(Integer oldId);
+
     @Query(value = "select ou from  OrganisationUnit ou left join fetch ou.keyword left join fetch ou.name left join fetch ou.researchAreas", countQuery = "select count(ou) from OrganisationUnit ou")
     Page<OrganisationUnit> findAllWithLangData(Pageable pageable);
 

@@ -66,7 +66,7 @@ public class Person extends BaseEntity {
     private String scopusAuthorId;
 
     @Column(name = "cris_uns_id")
-    private int oldId;
+    private Integer oldId;
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas;

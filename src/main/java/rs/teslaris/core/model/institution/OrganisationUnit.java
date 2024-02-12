@@ -48,6 +48,9 @@ public class OrganisationUnit extends BaseEntity {
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
 
+    @Column(name = "cris_uns_id")
+    private Integer oldId;
+
     @Embedded
     private Contact contact;
 }

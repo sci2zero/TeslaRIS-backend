@@ -1,10 +1,14 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -34,23 +38,79 @@ public class ReindexServiceImpl implements ReindexService {
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final DocumentFileService documentFileService;
+
     private final JournalPublicationService journalPublicationService;
 
     private final ProceedingsPublicationService proceedingsPublicationService;
 
 
     @Override
-    public void reindexDatabase() {
-        userService.reindexUsers();
-        publisherService.reindexPublishers();
-        personService.reindexPersons();
-        organisationUnitService.reindexOrganisationUnits();
-        journalService.reindexJournals();
-        bookSeriesService.reindexBookSeries();
-        conferenceService.reindexConferences();
+    public void reindexDatabase(List<IndexType> indexesToRepopulate) {
+        var threadPool = new ArrayList<Thread>();
 
-        documentPublicationService.deleteIndexes();
-        journalPublicationService.reindexJournalPublications();
-        proceedingsPublicationService.reindexProceedingsPublications();
+        if (indexesToRepopulate.contains(IndexType.USER_ACCOUNT)) {
+            var userThread = new Thread(userService::reindexUsers);
+            userThread.start();
+            threadPool.add(userThread);
+        }
+
+        if (indexesToRepopulate.contains(IndexType.JOURNAL)) {
+            var journalThread = new Thread(journalService::reindexJournals);
+            journalThread.start();
+            threadPool.add(journalThread);
+        }
+
+        if (indexesToRepopulate.contains(IndexType.PUBLISHER)) {
+            var publisherThread = new Thread(publisherService::reindexPublishers);
+            publisherThread.start();
+            threadPool.add(publisherThread);
+        }
+
+        if (indexesToRepopulate.contains(IndexType.PERSON)) {
+            var personThread = new Thread(personService::reindexPersons);
+            personThread.start();
+            threadPool.add(personThread);
+        }
+
+        if (indexesToRepopulate.contains(IndexType.ORGANISATION_UNIT)) {
+            var organisationUnitThread = new Thread(
+                organisationUnitService::reindexOrganisationUnits);
+            organisationUnitThread.start();
+            threadPool.add(organisationUnitThread);
+        }
+
+        if (indexesToRepopulate.contains(IndexType.BOOK_SERIES)) {
+            var bookSeriesThread = new Thread(bookSeriesService::reindexBookSeries);
+            bookSeriesThread.start();
+            threadPool.add(bookSeriesThread);
+        }
+
+        if (indexesToRepopulate.contains(IndexType.EVENT)) {
+            var conferenceThread = new Thread(conferenceService::reindexConferences);
+            conferenceThread.start();
+            threadPool.add(conferenceThread);
+        }
+
+        if (indexesToRepopulate.contains(IndexType.PUBLICATION)) {
+            var reindexPublicationsThread = new Thread(() -> {
+                documentFileService.deleteIndexes();
+                documentPublicationService.deleteIndexes();
+
+                journalPublicationService.reindexJournalPublications();
+                proceedingsPublicationService.reindexProceedingsPublications();
+            });
+
+            reindexPublicationsThread.start();
+            threadPool.add(reindexPublicationsThread);
+        }
+
+        try {
+            for (Thread thread : threadPool) {
+                thread.join();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace(); // TODO: should be logged
+        }
     }
 }

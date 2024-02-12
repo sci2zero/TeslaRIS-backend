@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
@@ -88,6 +89,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Nullable
+    public Person findPersonByOldId(Integer oldId) {
+        return personRepository.findPersonByOldId(oldId).orElse(null);
+    }
+
+    @Override
     @Transactional
     public PersonResponseDTO readPersonWithBasicInfo(Integer id) {
         var person = personRepository.findApprovedPersonById(id)
@@ -112,7 +119,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 organisationUnitId, personOrganisationUnitId)) {
                 return true;
             }
-
         }
 
         return false;
@@ -120,7 +126,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
-    public Person createPersonWithBasicInfo(BasicPersonDTO personDTO) {
+    public Person createPersonWithBasicInfo(BasicPersonDTO personDTO, Boolean index) {
         var defaultApproveStatus =
             approvedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED;
 
@@ -140,6 +146,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         newPerson.setOrcid(personDTO.getOrcid());
         newPerson.setScopusAuthorId(personDTO.getScopusAuthorId());
 
+        newPerson.setOldId(personDTO.getOldId());
+
         if (Objects.nonNull(personDTO.getOrganisationUnitId())) {
             var employmentInstitution =
                 organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
@@ -155,7 +163,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var savedPerson = this.save(newPerson);
         newPerson.setId(savedPerson.getId());
 
-        if (savedPerson.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (savedPerson.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
             indexPerson(savedPerson, savedPerson.getId());
         }
 
@@ -360,7 +368,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         });
     }
 
-    private void indexPerson(Person savedPerson, Integer personDatabaseId) {
+    @Override
+    public void indexPerson(Person savedPerson, Integer personDatabaseId) {
         var personIndex = getPersonIndexForId(personDatabaseId);
 
         setPersonIndexProperties(personIndex, savedPerson);
@@ -375,9 +384,15 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexProperties(PersonIndex personIndex, Person savedPerson) {
-        personIndex.setName(
-            savedPerson.getName().getFirstname() + " " + savedPerson.getName().getOtherName() +
-                " " + savedPerson.getName().getLastname());
+        if (Objects.nonNull(savedPerson.getName().getOtherName())) {
+            personIndex.setName(
+                savedPerson.getName().getFirstname() + " " + savedPerson.getName().getOtherName() +
+                    " " + savedPerson.getName().getLastname());
+        } else {
+            personIndex.setName(
+                savedPerson.getName().getFirstname() + " " + savedPerson.getName().getLastname());
+        }
+
         personIndex.setNameSortable(personIndex.getName());
 
         if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
@@ -395,7 +410,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         var employmentInstitutions = savedPerson.getInvolvements().stream()
-            .filter(i -> i.getInvolvementType() == InvolvementType.EMPLOYED_AT)
+            .filter(i -> i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                i.getInvolvementType().equals(InvolvementType.HIRED_BY))
             .map(Involvement::getOrganisationUnit).collect(Collectors.toList());
 
         personIndex.setEmploymentInstitutionsId(

@@ -182,6 +182,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             DocumentFileIndex.class, "document_file");
     }
 
+    @Override
+    public void deleteIndexes() {
+        documentFileIndexRepository.deleteAll();
+    }
+
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {

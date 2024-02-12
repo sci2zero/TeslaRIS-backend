@@ -190,7 +190,7 @@ public class PersonServiceTest {
         when(personRepository.save(any(Person.class))).thenReturn(person);
 
         // then
-        var result = personService.createPersonWithBasicInfo(personDTO);
+        var result = personService.createPersonWithBasicInfo(personDTO, true);
         assertNotNull(result);
         assertEquals("John", result.getName().getFirstname());
         assertEquals("Doe", result.getName().getLastname());

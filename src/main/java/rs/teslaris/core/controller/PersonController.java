@@ -82,7 +82,7 @@ public class PersonController {
     @PreAuthorize("hasAuthority('REGISTER_PERSON')")
     @Idempotent
     public BasicPersonDTO createPersonWithBasicInfo(@RequestBody @Valid BasicPersonDTO person) {
-        var createdPerson = personService.createPersonWithBasicInfo(person);
+        var createdPerson = personService.createPersonWithBasicInfo(person, true);
         person.setId(createdPerson.getId());
         return person;
     }

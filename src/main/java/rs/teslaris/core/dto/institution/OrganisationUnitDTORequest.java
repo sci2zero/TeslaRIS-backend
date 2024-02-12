@@ -20,6 +20,7 @@ public class OrganisationUnitDTORequest {
     @NotNull(message = "You have to provide organisation name.")
     private List<MultilingualContentDTO> name;
 
+    @NotNull(message = "You have to provide name abbreviation.")
     private String nameAbbreviation;
 
     @NotNull(message = "You have to provide organisation keywords.")
@@ -31,4 +32,6 @@ public class OrganisationUnitDTORequest {
     private GeoLocationDTO location;
 
     private ContactDTO contact;
+
+    private Integer oldId;
 }

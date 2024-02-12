@@ -96,6 +96,7 @@ public class SecurityConfiguration {
 
             // HARVESTER
             .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/harvest/load").permitAll()
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");

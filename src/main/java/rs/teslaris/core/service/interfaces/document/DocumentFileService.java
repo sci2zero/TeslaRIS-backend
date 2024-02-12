@@ -29,4 +29,6 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
 
     Page<DocumentFileIndex> searchDocumentFiles(List<String> tokens, Pageable pageable,
                                                 SearchRequestType type);
+
+    void deleteIndexes();
 }

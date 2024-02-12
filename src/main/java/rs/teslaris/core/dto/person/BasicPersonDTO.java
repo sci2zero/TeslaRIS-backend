@@ -19,6 +19,8 @@ public class BasicPersonDTO {
 
     private Integer id;
 
+    private Integer oldId;
+
     @Valid
     private PersonNameDTO personName;
 

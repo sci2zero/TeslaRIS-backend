@@ -1,7 +1,6 @@
 package rs.teslaris.core.controller;
 
 import io.jsonwebtoken.MalformedJwtException;
-import javax.naming.AuthenticationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,12 +24,22 @@ public class OAIPMHHarvestController {
 
     @GetMapping
     public void harvest(@RequestParam("dataSet") OAIPMHDataSet dataSet,
-                        @RequestHeader("X-API-KEY") String userApiKey)
-        throws AuthenticationException {
+                        @RequestHeader("X-API-KEY") String userApiKey) {
         if (!apiKey.equals(userApiKey)) {
             throw new MalformedJwtException("Bad API key");
         }
 
         oaipmhHarvester.harvest(dataSet);
+    }
+
+    @GetMapping("/load")
+    public void load(@RequestParam("dataSet") OAIPMHDataSet dataSet,
+                     @RequestParam("performIndex") Boolean performIndex,
+                     @RequestHeader("X-API-KEY") String userApiKey) {
+        if (!apiKey.equals(userApiKey)) {
+            throw new MalformedJwtException("Bad API key");
+        }
+
+        oaipmhHarvester.loadRecords(dataSet, performIndex);
     }
 }

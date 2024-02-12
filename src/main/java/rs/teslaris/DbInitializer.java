@@ -291,5 +291,19 @@ public class DbInitializer implements ApplicationRunner {
         privilegeRepository.save(reindexPrivilege);
         adminAuthority.addPrivilege(reindexPrivilege);
         authorityRepository.save(adminAuthority);
+
+        var germanTag = new LanguageTag(LanguageAbbreviations.GERMAN, "Deutsch");
+        languageTagRepository.save(germanTag);
+
+        var germanLanguage = new Language();
+        germanLanguage.setLanguageCode(LanguageAbbreviations.GERMAN);
+        languageRepository.save(germanLanguage);
+
+        var frenchTag = new LanguageTag(LanguageAbbreviations.FRENCH, "Français");
+        languageTagRepository.save(frenchTag);
+
+        var frenchLanguage = new Language();
+        frenchLanguage.setLanguageCode(LanguageAbbreviations.FRENCH);
+        languageRepository.save(frenchLanguage);
     }
 }

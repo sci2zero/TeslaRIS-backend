@@ -283,7 +283,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             basicPersonDTO.setPersonName(personNameDTO);
             basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
 
-            person = personService.createPersonWithBasicInfo(basicPersonDTO);
+            person = personService.createPersonWithBasicInfo(basicPersonDTO, true);
         }
         var organisationUnit = personService.getLatestResearcherInvolvement(person);
 

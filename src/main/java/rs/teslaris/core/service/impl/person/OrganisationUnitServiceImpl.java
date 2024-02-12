@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -87,6 +88,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     public OrganisationUnit findOrganisationUnitById(Integer id) {
         return findOne(id);
+    }
+
+    @Override
+    @Nullable
+    public OrganisationUnit findOrganisationUnitByOldId(Integer oldId) {
+        return organisationUnitRepository.findOrganisationUnitByOldId(oldId).orElse(null);
     }
 
     @Override
@@ -218,6 +225,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             multilingualContentService.getMultilingualContent(
                 organisationUnitDTO.getKeyword())
         );
+
+        organisationUnit.setOldId(organisationUnitDTO.getOldId());
 
         var researchAreas = researchAreaService.getResearchAreasByIds(
             organisationUnitDTO.getResearchAreasId());

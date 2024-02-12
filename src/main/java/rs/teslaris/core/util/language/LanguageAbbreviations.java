@@ -13,4 +13,8 @@ public class LanguageAbbreviations {
     public static String CROATIAN = "HR";
 
     public static String HUNGARIAN = "HU";
+
+    public static String GERMAN = "GE";
+
+    public static String FRENCH = "FR";
 }

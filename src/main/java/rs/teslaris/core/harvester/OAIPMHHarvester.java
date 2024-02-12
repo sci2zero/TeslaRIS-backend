@@ -9,6 +9,8 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.net.ssl.SSLContext;
 import javax.xml.XMLConstants;
@@ -26,19 +28,31 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import rs.teslaris.core.harvester.common.OAIPMHDataSet;
 import rs.teslaris.core.harvester.common.OAIPMHResponse;
 import rs.teslaris.core.harvester.common.ResumptionToken;
+import rs.teslaris.core.harvester.converter.institution.OrganisationUnitConverter;
+import rs.teslaris.core.harvester.converter.person.PersonConverter;
+import rs.teslaris.core.harvester.organisationunit.OrgUnit;
+import rs.teslaris.core.harvester.person.Person;
+import rs.teslaris.core.harvester.utility.CreatorMethod;
+import rs.teslaris.core.harvester.utility.OAIPMHParseUtility;
+import rs.teslaris.core.harvester.utility.RecordConverter;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class OAIPMHHarvester {
@@ -46,6 +60,17 @@ public class OAIPMHHarvester {
     private final String BASE_URL = "https://cris.uns.ac.rs/OAIHandlerTeslaRIS";
 
     private final MongoTemplate mongoTemplate;
+
+    private final OrganisationUnitConverter organisationUnitConverter;
+
+    private final PersonConverter personConverter;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final PersonService personService;
+
+    private final InvolvementService involvementService;
+
 
     @Value("${ssl.trust-store}")
     private String trustStorePath;
@@ -90,6 +115,87 @@ public class OAIPMHHarvester {
         }
     }
 
+    public void loadRecords(OAIPMHDataSet requestDataSet, boolean performIndex) {
+        int batchSize = 10;
+        int page = 0;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            var pageable = PageRequest.of(page, batchSize);
+            var query = new Query().with(pageable);
+
+            switch (requestDataSet) {
+                case ORGANISATION_UNITS:
+                    hasNextPage = loadBatch(OrgUnit.class, organisationUnitConverter,
+                        organisationUnitService::createOrganisationUnit, query, performIndex,
+                        batchSize);
+                    break;
+                case PERSONS:
+                    hasNextPage = loadBatch(Person.class, personConverter,
+                        personService::createPersonWithBasicInfo, query, performIndex, batchSize);
+                    break;
+            }
+
+            page++;
+        }
+
+        handleDataRelations(requestDataSet);
+    }
+
+    private <T, D, R> boolean loadBatch(Class<T> entityClass, RecordConverter<T, D> converter,
+                                        CreatorMethod<D, R> creatorMethod, Query query,
+                                        boolean performIndex, int batchSize) {
+        List<T> batch = mongoTemplate.find(query, entityClass);
+        batch.forEach(record -> {
+            D creationDTO = converter.toDTO(record);
+            creatorMethod.apply(creationDTO, performIndex);
+        });
+        return batch.size() == batchSize;
+    }
+
+    private void handleDataRelations(OAIPMHDataSet requestDataSet) {
+        int batchSize = 10;
+        int page = 0;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            var pageable = PageRequest.of(page, batchSize);
+            var query = new Query().with(pageable);
+
+            switch (requestDataSet) {
+                case ORGANISATION_UNITS:
+                    List<OrgUnit> orgUnitBatch = mongoTemplate.find(query, OrgUnit.class);
+                    orgUnitBatch.forEach((orgUnit) -> {
+                        var creationDTO = organisationUnitConverter.toRelationDTO(orgUnit);
+                        creationDTO.ifPresent(
+                            organisationUnitService::createOrganisationUnitsRelation);
+                    });
+                    page++;
+                    hasNextPage = orgUnitBatch.size() == batchSize;
+                    break;
+                case PERSONS:
+                    List<Person> personBatch = mongoTemplate.find(query, Person.class);
+                    personBatch.forEach((person) -> {
+                        var savedPerson = personService.findPersonByOldId(
+                            OAIPMHParseUtility.parseBISISID(person.getId()));
+                        if (!Objects.nonNull(person.getAffiliation()) &&
+                            Objects.nonNull(savedPerson)) {
+                            return;
+                        }
+                        person.getAffiliation().getOrgUnits().forEach(((affiliation) -> {
+                            var creationDTO =
+                                personConverter.toPersonEmployment(affiliation);
+                            creationDTO.ifPresent(employmentDTO -> involvementService.addEmployment(
+                                savedPerson.getId(), employmentDTO));
+                        }));
+                    });
+                    page++;
+                    hasNextPage = personBatch.size() == batchSize;
+                    break;
+            }
+        }
+    }
+
     private Optional<ResumptionToken> handleOAIPMHResponse(OAIPMHDataSet requestDataSet,
                                                            OAIPMHResponse oaiPmhResponse) {
         var records = oaiPmhResponse.getListRecords().getRecords();
@@ -121,6 +227,8 @@ public class OAIPMHHarvester {
         if (resumptionToken == null) {
             return Optional.empty();
         }
+
+        // TODO: stopping conditions are not deterministic!
 
         return Optional.of(resumptionToken);
     }

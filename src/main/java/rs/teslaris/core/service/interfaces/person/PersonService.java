@@ -30,11 +30,13 @@ public interface PersonService extends JPAService<Person> {
 
     Person findPersonById(Integer id);
 
+    Person findPersonByOldId(Integer id);
+
     PersonResponseDTO readPersonWithBasicInfo(Integer id);
 
     boolean isPersonEmployedInOrganisationUnit(Integer personId, Integer organisationUnitId);
 
-    Person createPersonWithBasicInfo(BasicPersonDTO personDTO);
+    Person createPersonWithBasicInfo(BasicPersonDTO personDTO, Boolean index);
 
     void setPersonBiography(List<MultilingualContentDTO> biography, Integer personId);
 
@@ -53,4 +55,6 @@ public interface PersonService extends JPAService<Person> {
     OrganisationUnit getLatestResearcherInvolvement(Person person);
 
     void reindexPersons();
+
+    void indexPerson(Person savedPerson, Integer personDatabaseId);
 }

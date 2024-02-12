@@ -118,6 +118,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         personInvolved.addInvolvement(newEmployment);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+        personService.indexPerson(personInvolved, personInvolved.getId());
 
         return involvementRepository.save(newEmployment);
     }
