@@ -12,7 +12,7 @@ import rs.teslaris.core.importer.OAIPMHHarvester;
 import rs.teslaris.core.importer.common.OAIPMHDataSet;
 
 @RestController
-@RequestMapping("/api/harvest")
+@RequestMapping("/api/import")
 @RequiredArgsConstructor
 public class OAIPMHHarvestController {
 
@@ -22,7 +22,7 @@ public class OAIPMHHarvestController {
     private String apiKey;
 
 
-    @GetMapping
+    @GetMapping("/harvest")
     public void harvest(@RequestParam("dataSet") OAIPMHDataSet dataSet,
                         @RequestHeader("X-API-KEY") String userApiKey) {
         if (!apiKey.equals(userApiKey)) {
