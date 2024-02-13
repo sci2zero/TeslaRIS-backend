@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.commontypes;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
@@ -20,6 +21,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReindexServiceImpl implements ReindexService {
 
     private final UserService userService;
@@ -110,7 +112,7 @@ public class ReindexServiceImpl implements ReindexService {
                 thread.join();
             }
         } catch (InterruptedException e) {
-            e.printStackTrace(); // TODO: should be logged
+            log.error("Thread interrupted while waiting for reindexing to complete", e);
         }
     }
 }

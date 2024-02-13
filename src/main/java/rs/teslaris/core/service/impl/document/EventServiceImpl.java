@@ -72,6 +72,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.setDateFrom(eventDTO.getDateFrom());
         event.setDateTo(eventDTO.getDateTo());
         event.setSerialEvent(eventDTO.getSerialEvent());
+        event.setOldId(eventDTO.getOldId());
 
         if (Objects.nonNull(eventDTO.getContributions())) {
             personContributionService.setPersonEventContributionForEvent(event, eventDTO);

@@ -54,6 +54,9 @@ public abstract class Event extends BaseEntity {
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<PersonEventContribution> contributions;
 
+    @Column(name = "cris_uns_id")
+    private Integer oldId;
+
 
     public void addContribution(PersonEventContribution contribution) {
         contributions.add(contribution);

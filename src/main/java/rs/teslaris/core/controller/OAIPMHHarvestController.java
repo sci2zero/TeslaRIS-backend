@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.core.harvester.OAIPMHHarvester;
-import rs.teslaris.core.harvester.common.OAIPMHDataSet;
+import rs.teslaris.core.importer.OAIPMHHarvester;
+import rs.teslaris.core.importer.common.OAIPMHDataSet;
 
 @RestController
 @RequestMapping("/api/harvest")

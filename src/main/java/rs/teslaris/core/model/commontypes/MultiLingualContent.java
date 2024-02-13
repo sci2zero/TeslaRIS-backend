@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Where;
+import org.hibernate.validator.constraints.Length;
 
 @Getter
 @Setter
@@ -28,6 +29,7 @@ public class MultiLingualContent extends BaseEntity {
     @JoinColumn(name = "language_tag_id", nullable = false)
     private LanguageTag language;
 
+    @Length(max = 5120)
     @Column(name = "content", nullable = false)
     private String content;
 

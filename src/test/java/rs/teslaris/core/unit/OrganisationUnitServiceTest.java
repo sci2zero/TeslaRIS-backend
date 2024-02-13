@@ -3,6 +3,7 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -614,5 +615,36 @@ public class OrganisationUnitServiceTest {
         verify(organisationUnitRepository, atLeastOnce()).findAll(any(PageRequest.class));
         verify(organisationUnitIndexRepository, atLeastOnce()).save(
             any(OrganisationUnitIndex.class));
+    }
+
+    @Test
+    void shouldFindOrganisationUnitByOldId() {
+        // Given
+        var oldId = 123;
+        var expectedUnit = new OrganisationUnit();
+        when(organisationUnitRepository.findOrganisationUnitByOldId(oldId)).thenReturn(
+            Optional.of(expectedUnit));
+
+        // When
+        var actualUnit = organisationUnitService.findOrganisationUnitByOldId(oldId);
+
+        // Then
+        assertEquals(expectedUnit, actualUnit);
+        verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldId(oldId);
+    }
+
+    @Test
+    void shouldReturnNullWhenOldIdDoesNotExist() {
+        // Given
+        Integer oldId = 123;
+        when(organisationUnitRepository.findOrganisationUnitByOldId(oldId)).thenReturn(
+            Optional.empty());
+
+        // When
+        var actualUnit = organisationUnitService.findOrganisationUnitByOldId(oldId);
+
+        // Then
+        assertNull(actualUnit);
+        verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldId(oldId);
     }
 }

@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -569,5 +570,34 @@ public class PersonServiceTest {
         verify(personIndexRepository, times(1)).deleteAll();
         verify(personRepository, atLeastOnce()).findAll(any(PageRequest.class));
         verify(personIndexRepository, atLeastOnce()).save(any(PersonIndex.class));
+    }
+
+    @Test
+    void shouldFindPersonByOldId() {
+        // Given
+        var oldId = 123;
+        var expectedPerson = new Person();
+        when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.of(expectedPerson));
+
+        // When
+        var actualPerson = personService.findPersonByOldId(oldId);
+
+        // Then
+        assertEquals(expectedPerson, actualPerson);
+        verify(personRepository, times(1)).findPersonByOldId(oldId);
+    }
+
+    @Test
+    void findPersonByOldId_OldIdDoesNotExist_ReturnNull() {
+        // Given
+        var oldId = 123;
+        when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.empty());
+
+        // When
+        var actualPerson = personService.findPersonByOldId(oldId);
+
+        // Then
+        assertNull(actualPerson);
+        verify(personRepository, times(1)).findPersonByOldId(oldId);
     }
 }

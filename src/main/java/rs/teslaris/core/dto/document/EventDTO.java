@@ -17,6 +17,8 @@ public class EventDTO {
 
     private Integer id;
 
+    private Integer oldId;
+
     @NotNull(message = "You have to provide name.")
     private List<MultilingualContentDTO> name;
 

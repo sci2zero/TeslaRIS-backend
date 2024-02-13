@@ -305,5 +305,12 @@ public class DbInitializer implements ApplicationRunner {
         var frenchLanguage = new Language();
         frenchLanguage.setLanguageCode(LanguageAbbreviations.FRENCH);
         languageRepository.save(frenchLanguage);
+
+        var spanishTag = new LanguageTag(LanguageAbbreviations.SPANISH, "Español");
+        languageTagRepository.save(spanishTag);
+
+        var spanishLanguage = new Language();
+        spanishLanguage.setLanguageCode(LanguageAbbreviations.SPANISH);
+        languageRepository.save(spanishLanguage);
     }
 }
