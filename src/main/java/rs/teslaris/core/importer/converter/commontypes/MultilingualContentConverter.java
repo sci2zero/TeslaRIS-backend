@@ -27,6 +27,10 @@ public class MultilingualContentConverter {
             var dto = new MultilingualContentDTO();
             var languageTagValue = mc.getLang().trim().toUpperCase();
 
+            if (languageTagValue.isEmpty()) {
+                languageTagValue = LanguageAbbreviations.ENGLISH;
+            }
+
             if (languageTagValue.equals(LanguageAbbreviations.CROATIAN)) {
                 languageTagValue = LanguageAbbreviations.SERBIAN;
             }

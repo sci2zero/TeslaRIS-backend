@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -155,5 +156,34 @@ public class EventServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    void shouldFindEventByOldId() {
+        // Given
+        var oldId = 123;
+        var expected = new Conference();
+        when(eventRepository.findEventByOldId(oldId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = eventService.findEventByOldId(oldId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(eventRepository, times(1)).findEventByOldId(oldId);
+    }
+
+    @Test
+    void shouldReturnNullWhenOldIdDoesNotExist() {
+        // Given
+        var oldId = 123;
+        when(eventRepository.findEventByOldId(oldId)).thenReturn(Optional.empty());
+
+        // When
+        var actual = eventService.findEventByOldId(oldId);
+
+        // Then
+        assertNull(actual);
+        verify(eventRepository, times(1)).findEventByOldId(oldId);
     }
 }

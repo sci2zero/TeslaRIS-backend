@@ -71,6 +71,10 @@ public abstract class Document extends BaseEntity {
     @JoinColumn(name = "event_id")
     private Event event;
 
+    @Column(name = "cris_uns_id")
+    private Integer oldId;
+
+
     public void addDocumentContribution(PersonDocumentContribution contribution) {
         contribution.setDocument(this);
         contributors.add(contribution);

@@ -256,18 +256,21 @@ public class OrganisationUnitServiceTest {
         relationDTO.setSourceOrganisationUnitId(1);
         relationDTO.setTargetOrganisationUnitId(2);
 
-        var newRelation = Mockito.mock(OrganisationUnitsRelation.class);
-        when(organisationUnitsRelationJPAService.save(
-            any(OrganisationUnitsRelation.class))).thenReturn(newRelation);
+        var organisationUnitsRelation = new OrganisationUnitsRelation();
+        organisationUnitsRelation.setSourceOrganisationUnit(new OrganisationUnit());
+
         when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
+        when(organisationUnitsRelationJPAService.save(any())).thenReturn(organisationUnitsRelation);
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            any())).thenReturn(Optional.empty());
 
         // when
         var result = organisationUnitService.createOrganisationUnitsRelation(relationDTO);
 
         // then
         assertNotNull(result);
-        assertEquals(newRelation, result);
+        assertEquals(organisationUnitsRelation, result);
         verify(organisationUnitsRelationJPAService).save(any(OrganisationUnitsRelation.class));
     }
 

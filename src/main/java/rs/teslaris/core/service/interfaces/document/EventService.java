@@ -14,6 +14,8 @@ public interface EventService {
 
     Event findEventById(Integer eventId);
 
+    Event findEventByOldId(Integer eventId);
+
     void setEventCommonFields(Event event, EventDTO eventDTO);
 
     void clearEventCommonFields(Event event);

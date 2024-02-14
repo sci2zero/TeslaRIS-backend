@@ -588,7 +588,7 @@ public class PersonServiceTest {
     }
 
     @Test
-    void findPersonByOldId_OldIdDoesNotExist_ReturnNull() {
+    void shouldReturnNullWhenOldIdDoesNotExist() {
         // Given
         var oldId = 123;
         when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.empty());

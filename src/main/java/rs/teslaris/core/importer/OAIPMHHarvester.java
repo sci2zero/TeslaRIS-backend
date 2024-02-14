@@ -43,13 +43,18 @@ import rs.teslaris.core.importer.common.ResumptionToken;
 import rs.teslaris.core.importer.converter.event.EventConverter;
 import rs.teslaris.core.importer.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.importer.converter.person.PersonConverter;
+import rs.teslaris.core.importer.converter.publication.JournalPublicationConverter;
+import rs.teslaris.core.importer.converter.publication.ProceedingsPublicationConverter;
 import rs.teslaris.core.importer.event.Event;
 import rs.teslaris.core.importer.organisationunit.OrgUnit;
 import rs.teslaris.core.importer.person.Person;
+import rs.teslaris.core.importer.publication.Publication;
 import rs.teslaris.core.importer.utility.CreatorMethod;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -77,6 +82,14 @@ public class OAIPMHHarvester {
     private final InvolvementService involvementService;
 
     private final ConferenceService conferenceService;
+
+    private final JournalPublicationService journalPublicationService;
+
+    private final JournalPublicationConverter journalPublicationConverter;
+
+    private final ProceedingsPublicationService proceedingsPublicationService;
+
+    private final ProceedingsPublicationConverter proceedingsPublicationConverter;
 
     @Value("${ssl.trust-store}")
     private String trustStorePath;
@@ -143,6 +156,27 @@ public class OAIPMHHarvester {
                 case EVENTS:
                     hasNextPage = loadBatch(Event.class, eventConverter,
                         conferenceService::createConference, query, performIndex, batchSize);
+                    break;
+                case PUBLICATIONS:
+                    List<Publication> batch = mongoTemplate.find(query, Publication.class);
+                    batch.forEach(record -> {
+                        if (record.getType()
+                            .endsWith("c_2df8fbb1")) { // COAR type: research article
+                            var creationDTO = journalPublicationConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                journalPublicationService.createJournalPublication(creationDTO,
+                                    performIndex);
+                            }
+                        } else if (record.getType()
+                            .endsWith("c_5794")) { // COAR type: conference paper
+                            var creationDTO = proceedingsPublicationConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                proceedingsPublicationService.createProceedingsPublication(
+                                    creationDTO,
+                                    performIndex);
+                            }
+                        }
+                    });
                     break;
             }
 

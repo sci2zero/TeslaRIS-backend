@@ -1,6 +1,7 @@
 package rs.teslaris.core.repository.person;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,11 +15,17 @@ public interface OrganisationUnitsRelationRepository
     extends JpaRepository<OrganisationUnitsRelation, Integer> {
 
     @Query("select our from OrganisationUnitsRelation our" +
-        " where our.sourceOrganisationUnit.id = :sourceId " +
-        " and our.targetOrganisationUnit.id = :targetId " + "and our.approveStatus = 1")
+        " where our.sourceOrganisationUnit.id = :sourceId" +
+        " and our.targetOrganisationUnit.id = :targetId" +
+        " and our.approveStatus = 1")
     Page<OrganisationUnitsRelation> getRelationsForOrganisationUnits(Pageable pageable,
                                                                      Integer sourceId,
                                                                      Integer targetId);
+
+    @Query("select our from OrganisationUnitsRelation our" +
+        " where our.sourceOrganisationUnit.id = :sourceId" +
+        " and our.approveStatus = 1 and our.relationType = 0")
+    Optional<OrganisationUnitsRelation> getSuperOU(Integer sourceId);
 
     List<OrganisationUnitsRelation> findBySourceOrganisationUnit(Integer sourceOrganisationId);
 

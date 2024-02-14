@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -55,6 +56,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     public Event findEventById(Integer eventId) {
         return eventRepository.findById(eventId)
             .orElseThrow(() -> new NotFoundException("Event with given ID does not exist."));
+    }
+
+    @Override
+    @Nullable
+    public Event findEventByOldId(Integer eventId) {
+        return eventRepository.findEventByOldId(eventId).orElse(null);
     }
 
     @Override
