@@ -155,7 +155,7 @@ public class ProceedingsServiceTest {
         when(proceedingJPAService.save(any())).thenReturn(document);
 
         // When
-        var result = proceedingsService.createProceedings(proceedingsDTO);
+        var result = proceedingsService.createProceedings(proceedingsDTO, true);
 
         // Then
         verify(multilingualContentService, times(4)).getMultilingualContent(any());

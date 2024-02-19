@@ -405,7 +405,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
-        if (!Objects.nonNull(savedPerson.getInvolvements())) {
+        if (Objects.isNull(savedPerson.getInvolvements())) {
             return;
         }
 

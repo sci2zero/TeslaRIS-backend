@@ -44,6 +44,10 @@ public abstract class PublicationSeries extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> nameAbbreviation;
 
+    @Column(name = "cris_uns_id")
+    private Integer oldId;
+
+
     public void addContribution(PersonPublicationSeriesContribution contribution) {
         contributions.add(contribution);
         contribution.setPublicationSeries(this);

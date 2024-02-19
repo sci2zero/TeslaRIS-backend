@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.person;
 
 import java.util.HashSet;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -125,8 +126,11 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                                          Person contributor) {
         var personName = getPersonName(contributionDTO, contributor);
 
-        var contact = new Contact(contributor.getPersonalInfo().getContact().getContactEmail(),
-            contributor.getPersonalInfo().getContact().getPhoneNumber());
+        Contact contact = null;
+        if (Objects.nonNull(contributor.getPersonalInfo().getContact())) {
+            contact = new Contact(contributor.getPersonalInfo().getContact().getContactEmail(),
+                contributor.getPersonalInfo().getContact().getPhoneNumber());
+        }
 
         contribution.setAffiliationStatement(new AffiliationStatement(
             multilingualContentService.getMultilingualContent(

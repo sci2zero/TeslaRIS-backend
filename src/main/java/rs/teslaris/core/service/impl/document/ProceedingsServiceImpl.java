@@ -93,7 +93,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
-    public Proceedings createProceedings(ProceedingsDTO proceedingsDTO) {
+    public Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index) {
         var proceedings = new Proceedings();
         proceedings.setLanguages(new HashSet<>());
 
@@ -104,7 +104,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         var savedProceedings = proceedingJPAService.save(proceedings);
 
-        if (proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (proceedings.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
             indexProceedings(savedProceedings, new DocumentPublicationIndex());
         }
 

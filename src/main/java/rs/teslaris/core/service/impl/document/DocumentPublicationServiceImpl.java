@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -78,6 +79,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public Document findDocumentById(Integer documentId) {
         return documentRepository.findById(documentId)
             .orElseThrow(() -> new NotFoundException("Document with given id does not exist."));
+    }
+
+    @Override
+    @Nullable
+    public Document findDocumentByOldId(Integer documentId) {
+        return documentRepository.findDocumentByOldId(documentId).orElse(null);
     }
 
     @Override

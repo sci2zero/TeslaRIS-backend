@@ -59,7 +59,7 @@ public class PersonConverter implements RecordConverter<Person, BasicPersonDTO> 
         var organisationUnit = organisationUnitService.findOrganisationUnitByOldId(
             OAIPMHParseUtility.parseBISISID(affiliation.getId()));
 
-        if (!Objects.nonNull(organisationUnit)) {
+        if (Objects.isNull(organisationUnit)) {
             return Optional.empty();
         }
 

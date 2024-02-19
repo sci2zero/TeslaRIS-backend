@@ -16,6 +16,8 @@ public class PublicationSeriesDTO {
 
     private Integer id;
 
+    private Integer oldId;
+
     @NotNull(message = "You have to provide title.")
     private List<MultilingualContentDTO> title;
 

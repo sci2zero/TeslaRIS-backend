@@ -23,6 +23,10 @@ public class MultilingualContentConverter {
     public List<MultilingualContentDTO> toDTO(List<MultilingualContent> multilingualContent) {
         var result = new ArrayList<MultilingualContentDTO>();
 
+        if (Objects.isNull(multilingualContent)) {
+            return result;
+        }
+
         multilingualContent.forEach((mc) -> {
             var dto = new MultilingualContentDTO();
             var languageTagValue = mc.getLang().trim().toUpperCase();
@@ -36,7 +40,7 @@ public class MultilingualContentConverter {
             }
 
             var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
-            if (!Objects.nonNull(languageTag.getId())) {
+            if (Objects.isNull(languageTag.getId())) {
                 return;
             }
             dto.setLanguageTagId(languageTag.getId());
@@ -52,7 +56,7 @@ public class MultilingualContentConverter {
 
     public List<MultilingualContentDTO> toDTO(String content) {
         var result = new ArrayList<MultilingualContentDTO>();
-        if (!Objects.nonNull(content) || content.trim().isEmpty()) {
+        if (Objects.isNull(content) || content.trim().isEmpty()) {
             return result;
         }
 
@@ -69,7 +73,7 @@ public class MultilingualContentConverter {
 
         var dto = new MultilingualContentDTO();
         var languageTag = languageTagService.findLanguageTagByValue(contentLanguageDetected);
-        if (!Objects.nonNull(languageTag.getId())) {
+        if (Objects.isNull(languageTag.getId())) {
             return result;
         }
 

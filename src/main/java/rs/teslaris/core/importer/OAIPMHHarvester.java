@@ -43,7 +43,9 @@ import rs.teslaris.core.importer.common.ResumptionToken;
 import rs.teslaris.core.importer.converter.event.EventConverter;
 import rs.teslaris.core.importer.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.importer.converter.person.PersonConverter;
+import rs.teslaris.core.importer.converter.publication.JournalConverter;
 import rs.teslaris.core.importer.converter.publication.JournalPublicationConverter;
+import rs.teslaris.core.importer.converter.publication.ProceedingsConverter;
 import rs.teslaris.core.importer.converter.publication.ProceedingsPublicationConverter;
 import rs.teslaris.core.importer.event.Event;
 import rs.teslaris.core.importer.organisationunit.OrgUnit;
@@ -54,7 +56,9 @@ import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -90,6 +94,14 @@ public class OAIPMHHarvester {
     private final ProceedingsPublicationService proceedingsPublicationService;
 
     private final ProceedingsPublicationConverter proceedingsPublicationConverter;
+
+    private final ProceedingsConverter proceedingsConverter;
+
+    private final JournalConverter journalConverter;
+
+    private final JournalService journalService;
+
+    private final ProceedingsService proceedingsService;
 
     @Value("${ssl.trust-store}")
     private String trustStorePath;
@@ -158,32 +170,29 @@ public class OAIPMHHarvester {
                         conferenceService::createConference, query, performIndex, batchSize);
                     break;
                 case PUBLICATIONS:
-                    List<Publication> batch = mongoTemplate.find(query, Publication.class);
+                    var batch = mongoTemplate.find(query, Publication.class);
                     batch.forEach(record -> {
                         if (record.getType()
-                            .endsWith("c_2df8fbb1")) { // COAR type: research article
-                            var creationDTO = journalPublicationConverter.toDTO(record);
+                            .endsWith("c_f744")) { // COAR type: conference proceedings
+                            var creationDTO = proceedingsConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                journalPublicationService.createJournalPublication(creationDTO,
-                                    performIndex);
+                                proceedingsService.createProceedings(creationDTO, performIndex);
                             }
-                        } else if (record.getType()
-                            .endsWith("c_5794")) { // COAR type: conference paper
-                            var creationDTO = proceedingsPublicationConverter.toDTO(record);
+                        } else if (record.getType().endsWith("c_0640")) { // COAR type: journal
+                            var creationDTO = journalConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                proceedingsPublicationService.createProceedingsPublication(
-                                    creationDTO,
-                                    performIndex);
+                                journalService.createJournal(creationDTO, performIndex);
                             }
                         }
+                        // TODO: what is conference output (c_c94f) ???
                     });
+                    hasNextPage = batch.size() == batchSize;
                     break;
             }
-
             page++;
         }
 
-        handleDataRelations(requestDataSet);
+        handleDataRelations(requestDataSet, performIndex);
     }
 
     private <T, D, R> boolean loadBatch(Class<T> entityClass, RecordConverter<T, D> converter,
@@ -197,7 +206,7 @@ public class OAIPMHHarvester {
         return batch.size() == batchSize;
     }
 
-    private void handleDataRelations(OAIPMHDataSet requestDataSet) {
+    private void handleDataRelations(OAIPMHDataSet requestDataSet, boolean performIndex) {
         int batchSize = 10;
         int page = 0;
         boolean hasNextPage = true;
@@ -222,7 +231,7 @@ public class OAIPMHHarvester {
                     personBatch.forEach((person) -> {
                         var savedPerson = personService.findPersonByOldId(
                             OAIPMHParseUtility.parseBISISID(person.getId()));
-                        if (!Objects.nonNull(person.getAffiliation()) &&
+                        if (Objects.isNull(person.getAffiliation()) &&
                             Objects.nonNull(savedPerson)) {
                             return;
                         }
@@ -235,6 +244,29 @@ public class OAIPMHHarvester {
                     });
                     page++;
                     hasNextPage = personBatch.size() == batchSize;
+                    break;
+                case PUBLICATIONS:
+                    var publicationBatch = mongoTemplate.find(query, Publication.class);
+                    publicationBatch.forEach(record -> {
+                        if (record.getType()
+                            .endsWith("c_2df8fbb1")) { // COAR type: research article
+                            var creationDTO = journalPublicationConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                journalPublicationService.createJournalPublication(creationDTO,
+                                    performIndex);
+                            }
+                        } else if (record.getType()
+                            .endsWith("c_5794")) { // COAR type: conference paper
+                            var creationDTO = proceedingsPublicationConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                proceedingsPublicationService.createProceedingsPublication(
+                                    creationDTO,
+                                    performIndex);
+                            }
+                        }
+                    });
+                    page++;
+                    hasNextPage = publicationBatch.size() == batchSize;
                     break;
                 default:
                     hasNextPage = false;

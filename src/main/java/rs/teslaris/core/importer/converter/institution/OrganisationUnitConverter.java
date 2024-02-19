@@ -44,7 +44,7 @@ public class OrganisationUnitConverter
     }
 
     public Optional<OrganisationUnitsRelationDTO> toRelationDTO(OrgUnit sourceOU) {
-        if (!Objects.nonNull(sourceOU.getPartOf())) {
+        if (Objects.isNull(sourceOU.getPartOf())) {
             return Optional.empty();
         }
 
@@ -56,7 +56,7 @@ public class OrganisationUnitConverter
         var target = organisationUnitService.findOrganisationUnitByOldId(
             OAIPMHParseUtility.parseBISISID(sourceOU.getPartOf().getOrgUnit().getId()));
 
-        if (!Objects.nonNull(target)) {
+        if (Objects.isNull(target)) {
             return Optional.empty();
         }
 

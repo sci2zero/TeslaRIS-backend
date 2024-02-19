@@ -82,6 +82,11 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public Journal findJournalByOldId(Integer journalId) {
+        return journalRepository.findJournalByOldId(journalId).orElse(null);
+    }
+
+    @Override
     public Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index) {
         var journal = new Journal();
         journal.setLanguages(new HashSet<>());

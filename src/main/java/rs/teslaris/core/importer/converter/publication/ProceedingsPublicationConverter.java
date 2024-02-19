@@ -1,55 +1,59 @@
 package rs.teslaris.core.importer.converter.publication;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Objects;
-import joptsimple.internal.Strings;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.importer.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.importer.publication.Publication;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
-import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Component
-@RequiredArgsConstructor
-public class ProceedingsPublicationConverter implements
+public class ProceedingsPublicationConverter extends DocumentConverter implements
     RecordConverter<Publication, ProceedingsPublicationDTO> {
 
     private final MultilingualContentConverter multilingualContentConverter;
 
-    private final EventService eventService;
+    private final DocumentPublicationService documentPublicationService;
+
+
+    @Autowired
+    public ProceedingsPublicationConverter(
+        MultilingualContentConverter multilingualContentConverter,
+        PersonService personService, MultilingualContentConverter multilingualContentConverter1,
+        DocumentPublicationService documentPublicationService) {
+        super(multilingualContentConverter, personService);
+        this.multilingualContentConverter = multilingualContentConverter1;
+        this.documentPublicationService = documentPublicationService;
+    }
 
     @Override
     public ProceedingsPublicationDTO toDTO(Publication record) {
         var dto = new ProceedingsPublicationDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
 
-        dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
-        dto.setSubTitle(multilingualContentConverter.toDTO(record.getSubtitle()));
-        dto.setDocumentDate(record.getPublicationDate().toString());
+        // TODO: is this ok?
+        dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+
+        setCommonFields(record, dto);
+
         dto.setArticleNumber(record.getNumber());
         dto.setStartPage(record.getStartPage());
         dto.setEndPage(record.getEndPage());
-        dto.setKeywords(
-            multilingualContentConverter.toDTO(Strings.join(record.getKeywords(), ", ")));
-        dto.setUris(new HashSet<>(record.getUrl()));
-        dto.setDoi(record.getDoi());
-        dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
 
-        var event = eventService.findEventByOldId(
-            OAIPMHParseUtility.parseBISISID(record.getOutputFrom().getEvent().getId()));
-        if (!Objects.nonNull(event)) {
+        var proceedings = documentPublicationService.findDocumentByOldId(
+            OAIPMHParseUtility.parseBISISID(record.getPartOf().getPublication().getId()));
+        if (Objects.isNull(proceedings)) {
+            System.out.println(
+                "No saved proceedings with id: " + record.getPartOf().getPublication().getId());
             return null;
         }
-        dto.setEventId(event.getId());
-
-        var contributions = new ArrayList<PersonDocumentContributionDTO>();
-        // TODO: finish contributions
-        dto.setContributions(contributions);
+        dto.setProceedingsId(proceedings.getId());
+        dto.setEventId(proceedings.getEvent().getId());
 
         return dto;
     }
