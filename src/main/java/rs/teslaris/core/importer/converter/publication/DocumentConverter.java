@@ -7,6 +7,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import joptsimple.internal.Strings;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -20,6 +21,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public abstract class DocumentConverter {
 
     protected final MultilingualContentConverter multilingualContentConverter;
@@ -92,7 +94,7 @@ public abstract class DocumentConverter {
         var person = personService.findPersonByOldId(
             OAIPMHParseUtility.parseBISISID(contributor.getPerson().getId()));
         if (Objects.isNull(person)) {
-            System.out.println("No saved person with id: " + contributor.getPerson().getId());
+            log.warn("No saved person with id: " + contributor.getPerson().getId());
             return null;
         }
         contribution.setPersonId(person.getId());

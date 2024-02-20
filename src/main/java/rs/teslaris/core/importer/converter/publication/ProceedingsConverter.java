@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.importer.converter.commontypes.MultilingualContentConverter;
@@ -17,6 +18,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ProceedingsConverter implements RecordConverter<Publication, ProceedingsDTO> {
 
     private final MultilingualContentConverter multilingualContentConverter;
@@ -50,8 +52,7 @@ public class ProceedingsConverter implements RecordConverter<Publication, Procee
         if (Objects.nonNull(event)) {
             dto.setEventId(event.getId());
         } else {
-            System.out.println(
-                "No saved event with id: " + record.getOutputFrom().getEvent().getId());
+            log.warn("No saved event with id: " + record.getOutputFrom().getEvent().getId());
             return null;
         }
 

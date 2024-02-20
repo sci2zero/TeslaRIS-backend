@@ -1,6 +1,7 @@
 package rs.teslaris.core.importer.converter.publication;
 
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -13,6 +14,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Component
+@Slf4j
 public class ProceedingsPublicationConverter extends DocumentConverter implements
     RecordConverter<Publication, ProceedingsPublicationDTO> {
 
@@ -48,7 +50,7 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         var proceedings = documentPublicationService.findDocumentByOldId(
             OAIPMHParseUtility.parseBISISID(record.getPartOf().getPublication().getId()));
         if (Objects.isNull(proceedings)) {
-            System.out.println(
+            log.warn(
                 "No saved proceedings with id: " + record.getPartOf().getPublication().getId());
             return null;
         }

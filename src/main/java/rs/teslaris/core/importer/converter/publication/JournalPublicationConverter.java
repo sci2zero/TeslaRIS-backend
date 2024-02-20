@@ -1,6 +1,7 @@
 package rs.teslaris.core.importer.converter.publication;
 
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
@@ -12,6 +13,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Component
+@Slf4j
 public class JournalPublicationConverter extends DocumentConverter
     implements RecordConverter<Publication, JournalPublicationDTO> {
 
@@ -41,7 +43,7 @@ public class JournalPublicationConverter extends DocumentConverter
         var journal = journalService.findJournalByOldId(
             OAIPMHParseUtility.parseBISISID(record.getPublishedIn().getPublication().getId()));
         if (Objects.isNull(journal)) {
-            System.out.println(
+            log.warn(
                 "No saved journal with id: " + record.getPublishedIn().getPublication().getId());
             return null;
         }
