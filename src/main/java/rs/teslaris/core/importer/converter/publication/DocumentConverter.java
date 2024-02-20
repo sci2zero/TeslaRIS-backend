@@ -2,7 +2,9 @@ package rs.teslaris.core.importer.converter.publication;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import joptsimple.internal.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -10,6 +12,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.importer.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.importer.publication.Contributor;
 import rs.teslaris.core.importer.publication.Publication;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -47,41 +50,60 @@ public abstract class DocumentConverter {
         dto.setDoi(record.getDoi());
         dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
 
-        setAuthorInformation(record, dto);
+        setContributionInformation(record, dto);
     }
 
-    private void setAuthorInformation(Publication record, DocumentDTO dto) {
+    private void setContributionInformation(Publication record, DocumentDTO dto) {
         var contributions = new ArrayList<PersonDocumentContributionDTO>();
 
-        var authors = record.getAuthors();
-        for (int i = 0; i < authors.size(); i++) {
-            var author = authors.get(i);
+        addContributors(record.getAuthors(), DocumentContributionType.AUTHOR, contributions);
+        addContributors(record.getEditors(), DocumentContributionType.EDITOR, contributions);
 
-            var contribution = new PersonDocumentContributionDTO();
-            contribution.setContributionType(DocumentContributionType.AUTHOR);
-
-            contribution.setContributionDescription(new ArrayList<>());
-            contribution.setDisplayAffiliationStatement(new ArrayList<>());
-
-            var person = personService.findPersonByOldId(
-                OAIPMHParseUtility.parseBISISID(author.getPerson().getId()));
-            if (Objects.isNull(person)) {
-                System.out.println("No saved person with id: " + author.getPerson().getId());
-                continue;
-            }
-            contribution.setPersonId(person.getId());
-
-            if (Objects.nonNull(author.getDisplayName())) {
-                contribution.setPersonName(
-                    new PersonNameDTO(author.getDisplayName(), "", "", null, null));
-            }
-
-            if (i == 0) {
-                contribution.setIsMainContributor(true);
-            }
-
-            contributions.add(contribution);
-        }
         dto.setContributions(contributions);
+    }
+
+    private <T extends Contributor> void addContributors(List<T> contributors,
+                                                         DocumentContributionType contributionType,
+                                                         List<PersonDocumentContributionDTO> contributions) {
+        if (Objects.isNull(contributors)) {
+            return;
+        }
+
+        for (int i = 0; i < contributors.size(); i++) {
+            var contributor = contributors.get(i);
+            var contribution = createContribution(contributor, contributionType, i);
+            if (Objects.nonNull(contribution)) {
+                contribution.setIsMainContributor(i == 0);
+                contribution.setIsCorrespondingContributor(false);
+                contributions.add(contribution);
+            }
+        }
+    }
+
+    @Nullable
+    private <T extends Contributor> PersonDocumentContributionDTO createContribution(T contributor,
+                                                                                     DocumentContributionType contributionType,
+                                                                                     int orderNumber) {
+        var contribution = new PersonDocumentContributionDTO();
+        contribution.setContributionType(contributionType);
+        contribution.setContributionDescription(new ArrayList<>());
+        contribution.setDisplayAffiliationStatement(new ArrayList<>());
+
+        var person = personService.findPersonByOldId(
+            OAIPMHParseUtility.parseBISISID(contributor.getPerson().getId()));
+        if (Objects.isNull(person)) {
+            System.out.println("No saved person with id: " + contributor.getPerson().getId());
+            return null;
+        }
+        contribution.setPersonId(person.getId());
+
+        if (Objects.nonNull(contributor.getDisplayName())) {
+            contribution.setPersonName(
+                new PersonNameDTO(contributor.getDisplayName(), "", "", null, null));
+        }
+
+        contribution.setOrderNumber(orderNumber);
+
+        return contribution;
     }
 }

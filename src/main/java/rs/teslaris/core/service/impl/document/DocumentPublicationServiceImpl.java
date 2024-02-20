@@ -187,33 +187,38 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             var contributorDisplayName =
                 contribution.getAffiliationStatement().getDisplayPersonName();
             var contributorName =
-                Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
-                    Objects.toString(contributorDisplayName.getLastname(), "");
+                (Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
+                    Objects.toString(contributorDisplayName.getOtherName(), "") + " " +
+                    Objects.toString(contributorDisplayName.getLastname(), "")).trim();
 
             switch (contribution.getContributionType()) {
                 case AUTHOR:
                     if (personExists) {
                         index.getAuthorIds().add(contribution.getPerson().getId());
                     }
-                    index.setAuthorNames(index.getAuthorNames() + ", " + contributorName);
+                    index.setAuthorNames(StringUtil.removeLeadingColonSpace(
+                        index.getAuthorNames() + "; " + contributorName));
                     break;
                 case EDITOR:
                     if (personExists) {
                         index.getEditorIds().add(contribution.getPerson().getId());
                     }
-                    index.setEditorNames(index.getEditorNames() + ", " + contributorName);
+                    index.setEditorNames(StringUtil.removeLeadingColonSpace(
+                        index.getEditorNames() + "; " + contributorName));
                     break;
                 case ADVISOR:
                     if (personExists) {
                         index.getAdvisorIds().add(contribution.getPerson().getId());
                     }
-                    index.setAdvisorNames(index.getAdvisorNames() + ", " + contributorName);
+                    index.setAdvisorNames(StringUtil.removeLeadingColonSpace(
+                        index.getAdvisorNames() + "; " + contributorName));
                     break;
                 case REVIEWER:
                     if (personExists) {
                         index.getReviewerIds().add(contribution.getPerson().getId());
                     }
-                    index.setReviewerNames(index.getReviewerNames() + ", " + contributorName);
+                    index.setReviewerNames(StringUtil.removeLeadingColonSpace(
+                        index.getReviewerNames() + "; " + contributorName));
                     break;
             }
         });

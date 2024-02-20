@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -189,5 +191,33 @@ public class ProceedingsServiceTest {
         verify(proceedingJPAService).findOne(eq(proceedingsId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             eq(proceedingsToUpdate), eq(proceedingsDTO));
+    }
+
+    @Test
+    public void shouldReturnProceedingsWhenOldIdExists() {
+        // Given
+        var proceedingsId = 123;
+        var expected = new Proceedings();
+        when(documentRepository.findDocumentByOldId(proceedingsId)).thenReturn(
+            Optional.of(expected));
+
+        // When
+        var actual = proceedingsService.findDocumentByOldId(proceedingsId);
+
+        // Then
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldReturnNullWhenProceedingsDoesNotExist() {
+        // Given
+        var proceedingsId = 123;
+        when(documentRepository.findDocumentByOldId(proceedingsId)).thenReturn(Optional.empty());
+
+        // When
+        var actual = proceedingsService.findDocumentByOldId(proceedingsId);
+
+        // Then
+        assertNull(actual);
     }
 }

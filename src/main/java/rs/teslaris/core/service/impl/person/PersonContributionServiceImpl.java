@@ -57,8 +57,8 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             setPersonContributionCommonFields(contribution, contributionDTO);
 
             contribution.setContributionType(contributionDTO.getContributionType());
-            contribution.setMainContributor(contributionDTO.getIsMainContributor());
-            contribution.setCorrespondingContributor(
+            contribution.setIsMainContributor(contributionDTO.getIsMainContributor());
+            contribution.setIsCorrespondingContributor(
                 contributionDTO.getIsCorrespondingContributor());
 
             document.addDocumentContribution(contribution);
@@ -174,6 +174,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         // TODO: Moze li ovo ovako?
         contribution.getInstitutions()
             .add(personService.getLatestResearcherInvolvement(contributor));
+
 
         contribution.setOrderNumber(contributionDTO.getOrderNumber());
         contribution.setApproveStatus(

@@ -48,7 +48,7 @@ public class PersonContribution extends BaseEntity {
     private Set<OrganisationUnit> institutions;
 
     @Column(name = "order_number", nullable = false)
-    private int orderNumber;
+    private Integer orderNumber;
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;

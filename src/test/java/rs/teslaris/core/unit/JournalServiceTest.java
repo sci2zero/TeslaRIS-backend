@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -312,5 +313,33 @@ public class JournalServiceTest {
         verify(journalIndexRepository, times(1)).deleteAll();
         verify(journalJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(journalIndexRepository, atLeastOnce()).save(any(JournalIndex.class));
+    }
+
+    @Test
+    public void shouldReturnJournalWhenOldIdExists() {
+        // Given
+        var journalId = 123;
+        var expectedJournal = new Journal();
+        when(journalRepository.findJournalByOldId(journalId)).thenReturn(
+            Optional.of(expectedJournal));
+
+        // When
+        var actualJournal = journalService.findJournalByOldId(journalId);
+
+        // Then
+        assertEquals(expectedJournal, actualJournal);
+    }
+
+    @Test
+    public void shouldReturnNullWhenJournalDoesNotExist() {
+        // Given
+        var journalId = 123;
+        when(journalRepository.findJournalByOldId(journalId)).thenReturn(Optional.empty());
+
+        // When
+        var actualJournal = journalService.findJournalByOldId(journalId);
+
+        // Then
+        assertNull(actualJournal);
     }
 }

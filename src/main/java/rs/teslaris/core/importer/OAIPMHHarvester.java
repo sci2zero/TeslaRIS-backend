@@ -30,6 +30,7 @@ import org.apache.http.ssl.TrustStrategy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -170,7 +171,11 @@ public class OAIPMHHarvester {
                         conferenceService::createConference, query, performIndex, batchSize);
                     break;
                 case PUBLICATIONS:
-                    var batch = mongoTemplate.find(query, Publication.class);
+                    var criteria = new Criteria().orOperator(
+                        Criteria.where("type").regex("c_f744$"),
+                        Criteria.where("type").regex("c_0640$")
+                    );
+                    var batch = mongoTemplate.find(query.addCriteria(criteria), Publication.class);
                     batch.forEach(record -> {
                         if (record.getType()
                             .endsWith("c_f744")) { // COAR type: conference proceedings
@@ -246,7 +251,12 @@ public class OAIPMHHarvester {
                     hasNextPage = personBatch.size() == batchSize;
                     break;
                 case PUBLICATIONS:
-                    var publicationBatch = mongoTemplate.find(query, Publication.class);
+                    var criteria = new Criteria().orOperator(
+                        Criteria.where("type").regex("c_2df8fbb1$"),
+                        Criteria.where("type").regex("c_5794$")
+                    );
+                    var publicationBatch =
+                        mongoTemplate.find(query.addCriteria(criteria), Publication.class);
                     publicationBatch.forEach(record -> {
                         if (record.getType()
                             .endsWith("c_2df8fbb1")) { // COAR type: research article

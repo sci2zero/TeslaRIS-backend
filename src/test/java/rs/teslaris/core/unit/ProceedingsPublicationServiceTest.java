@@ -199,8 +199,8 @@ public class ProceedingsPublicationServiceTest {
         contribution.setContributionDescription(new HashSet<>());
         contribution.setInstitutions(new HashSet<>());
         contribution.setContributionType(type);
-        contribution.setMainContributor(isMainAuthor);
-        contribution.setCorrespondingContributor(isCorrespondingAuthor);
+        contribution.setIsMainContributor(isMainAuthor);
+        contribution.setIsCorrespondingContributor(isCorrespondingAuthor);
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         var affiliationStatement = new AffiliationStatement();
         affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());

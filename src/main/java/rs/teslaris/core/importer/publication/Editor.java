@@ -20,7 +20,7 @@ import rs.teslaris.core.importer.person.Person;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Editor {
+public class Editor implements Contributor {
 
     @XmlElement(name = "DisplayName")
     private String displayName;
