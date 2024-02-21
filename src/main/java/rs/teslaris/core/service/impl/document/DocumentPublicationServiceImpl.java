@@ -222,6 +222,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     break;
             }
         });
+        index.setAuthorNamesSortable(index.getAuthorNames());
     }
 
     @Override

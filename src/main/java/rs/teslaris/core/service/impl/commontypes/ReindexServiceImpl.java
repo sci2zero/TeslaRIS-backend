@@ -9,12 +9,15 @@ import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -45,6 +48,12 @@ public class ReindexServiceImpl implements ReindexService {
     private final JournalPublicationService journalPublicationService;
 
     private final ProceedingsPublicationService proceedingsPublicationService;
+
+    private final PatentService patentService;
+
+    private final SoftwareService softwareService;
+
+    private final DatasetService datasetService;
 
 
     @Override
@@ -101,6 +110,9 @@ public class ReindexServiceImpl implements ReindexService {
 
                 journalPublicationService.reindexJournalPublications();
                 proceedingsPublicationService.reindexProceedingsPublications();
+                patentService.reindexPatents();
+                softwareService.reindexSoftware();
+                datasetService.reindexDatasets();
             });
 
             reindexPublicationsThread.start();
