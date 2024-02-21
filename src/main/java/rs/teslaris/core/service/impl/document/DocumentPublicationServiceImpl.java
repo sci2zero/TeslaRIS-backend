@@ -389,35 +389,35 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
-                        b.should(sb -> sb.wildcard(
+                        eq.should(sb -> sb.wildcard(
                             m -> m.field("title_sr").value(token).caseInsensitive(true)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("title_sr").query(token)));
-                        b.should(sb -> sb.wildcard(
+                        eq.should(sb -> sb.wildcard(
                             m -> m.field("title_other").value(token).caseInsensitive(true)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("description_sr").query(token)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("description_other").query(token)));
-                        b.should(sb -> sb.wildcard(
+                        eq.should(sb -> sb.wildcard(
                             m -> m.field("keywords_sr").value("*" + token + "*")));
-                        b.should(sb -> sb.wildcard(
+                        eq.should(sb -> sb.wildcard(
                             m -> m.field("keywords_other").value("*" + token + "*")));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("full_text_sr").query(token)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("full_text_other").query(token)));
-                        b.should(sb -> sb.match(
-                            m -> m.field("authorNames").query(token)));
-                        b.should(sb -> sb.match(
-                            m -> m.field("editorNames").query(token)));
-                        b.should(sb -> sb.match(
-                            m -> m.field("reviewerNames").query(token)));
-                        b.should(sb -> sb.match(
-                            m -> m.field("advisorNames").query(token)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
+                            m -> m.field("author_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("editor_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("reviewer_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("advisor_names").query(token)));
+                        eq.should(sb -> sb.match(
                             m -> m.field("type").query(token)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("doi").query(token)));
                     });
                     return eq;
