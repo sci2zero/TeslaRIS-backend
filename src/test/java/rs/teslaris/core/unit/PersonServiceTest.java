@@ -180,6 +180,7 @@ public class PersonServiceTest {
 
         var person = new Person();
         person.setName(new PersonName());
+        person.setOtherNames(new HashSet<>());
         person.setInvolvements(new HashSet<>());
         person.setPersonalInfo(personalInfo);
         person.setApproveStatus(ApproveStatus.APPROVED);
@@ -380,6 +381,7 @@ public class PersonServiceTest {
         personToUpdate.setName(new PersonName());
         personToUpdate.setInvolvements(new HashSet<>());
         personToUpdate.setApproveStatus(ApproveStatus.APPROVED);
+        personToUpdate.setOtherNames(new HashSet<>());
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
         when(countryService.findOne(anyInt())).thenReturn(new Country());
@@ -551,12 +553,15 @@ public class PersonServiceTest {
         var person1 = new Person();
         person1.setName(new PersonName());
         person1.setPersonalInfo(new PersonalInfo());
+        person1.setOtherNames(new HashSet<>());
         var person2 = new Person();
         person2.setName(new PersonName());
+        person2.setOtherNames(new HashSet<>());
         person2.setPersonalInfo(new PersonalInfo());
         var person3 = new Person();
         person3.setName(new PersonName());
         person3.setPersonalInfo(new PersonalInfo());
+        person3.setOtherNames(new HashSet<>());
         var persons = Arrays.asList(person1, person2, person3);
         var page1 = new PageImpl<>(persons.subList(0, 2), PageRequest.of(0, 10), persons.size());
         var page2 = new PageImpl<>(persons.subList(2, 3), PageRequest.of(1, 10), persons.size());
