@@ -9,7 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.importer.OAIPMHHarvester;
-import rs.teslaris.core.importer.common.OAIPMHDataSet;
+import rs.teslaris.core.importer.utility.OAIPMHDataSet;
+import rs.teslaris.core.importer.utility.OAIPMHSource;
 
 @RestController
 @RequestMapping("/api/import")
@@ -24,12 +25,13 @@ public class OAIPMHHarvestController {
 
     @GetMapping("/harvest")
     public void harvest(@RequestParam("dataSet") OAIPMHDataSet dataSet,
+                        @RequestParam("source") OAIPMHSource source,
                         @RequestHeader("X-API-KEY") String userApiKey) {
         if (!apiKey.equals(userApiKey)) {
             throw new MalformedJwtException("Bad API key");
         }
 
-        oaipmhHarvester.harvest(dataSet);
+        oaipmhHarvester.harvest(dataSet, source);
     }
 
     @GetMapping("/load")

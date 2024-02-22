@@ -38,7 +38,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import rs.teslaris.core.importer.common.OAIPMHDataSet;
 import rs.teslaris.core.importer.common.OAIPMHResponse;
 import rs.teslaris.core.importer.common.ResumptionToken;
 import rs.teslaris.core.importer.converter.event.EventConverter;
@@ -57,7 +56,9 @@ import rs.teslaris.core.importer.person.Person;
 import rs.teslaris.core.importer.product.Product;
 import rs.teslaris.core.importer.publication.Publication;
 import rs.teslaris.core.importer.utility.CreatorMethod;
+import rs.teslaris.core.importer.utility.OAIPMHDataSet;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
+import rs.teslaris.core.importer.utility.OAIPMHSource;
 import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -75,8 +76,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTempla
 @RequiredArgsConstructor
 @Slf4j
 public class OAIPMHHarvester {
-
-    private final String BASE_URL = "https://cris.uns.ac.rs/OAIHandlerTeslaRIS";
 
     private final MongoTemplate mongoTemplate;
 
@@ -131,8 +130,9 @@ public class OAIPMHHarvester {
     private Integer proxyPort;
 
 
-    public void harvest(OAIPMHDataSet requestDataSet) {
-        String endpoint = constructOAIPMHEndpoint(requestDataSet.getStringValue());
+    public void harvest(OAIPMHDataSet requestDataSet, OAIPMHSource source) {
+        String endpoint =
+            constructOAIPMHEndpoint(requestDataSet.getStringValue(), source.getStringValue());
         var restTemplate = constructRestTemplate();
 
         while (true) {
@@ -151,9 +151,8 @@ public class OAIPMHHarvester {
                     break;
                 }
 
-                endpoint =
-                    BASE_URL + "?verb=ListRecords&resumptionToken=" +
-                        optionalResumptionToken.get().getValue();
+                endpoint = source.getStringValue() + "?verb=ListRecords&resumptionToken=" +
+                    optionalResumptionToken.get().getValue();
             } else {
                 log.error("OAI-PMH request failed with response code: " +
                     responseEntity.getStatusCodeValue());
@@ -408,7 +407,7 @@ public class OAIPMHHarvester {
         return new RestTemplate(requestFactory);
     }
 
-    private String constructOAIPMHEndpoint(String set) {
-        return BASE_URL + "?verb=ListRecords&set=" + set + "&metadataPrefix=oai_cerif_openaire";
+    private String constructOAIPMHEndpoint(String set, String base) {
+        return base + "?verb=ListRecords&set=" + set + "&metadataPrefix=oai_cerif_openaire";
     }
 }

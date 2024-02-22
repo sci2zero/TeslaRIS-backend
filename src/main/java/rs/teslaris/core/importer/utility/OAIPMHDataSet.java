@@ -1,4 +1,4 @@
-package rs.teslaris.core.importer.common;
+package rs.teslaris.core.importer.utility;
 
 public enum OAIPMHDataSet {
 
@@ -17,6 +17,5 @@ public enum OAIPMHDataSet {
 
     public String getStringValue() {
         return value;
-
     }
 }
