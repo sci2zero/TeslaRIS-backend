@@ -1,6 +1,5 @@
 package rs.teslaris.core.service.impl.document;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +94,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Override
     public Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index) {
         var proceedings = new Proceedings();
-        proceedings.setLanguages(new HashSet<>());
 
         setCommonFields(proceedings, proceedingsDTO);
         setProceedingsRelatedFields(proceedings, proceedingsDTO);

@@ -99,12 +99,6 @@ public class SoftwareServiceTest {
         software.setId(1);
         software.setInternalNumber("123");
         var document = new Software();
-        document.setContributors(new HashSet<>());
-        document.setTitle(new HashSet<>());
-        document.setSubTitle(new HashSet<>());
-        document.setDescription(new HashSet<>());
-        document.setKeywords(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         document.setDocumentDate("2023");
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
@@ -129,12 +123,6 @@ public class SoftwareServiceTest {
         softwareDTO.setDocumentDate("2024");
         var softwareToUpdate = new Software();
         softwareToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        softwareToUpdate.setTitle(new HashSet<>());
-        softwareToUpdate.setSubTitle(new HashSet<>());
-        softwareToUpdate.setDescription(new HashSet<>());
-        softwareToUpdate.setKeywords(new HashSet<>());
-        softwareToUpdate.setContributors(new HashSet<>());
-        softwareToUpdate.setUris(new HashSet<>());
         softwareToUpdate.setDocumentDate("2023");
 
         when(softwareJPAService.findOne(softwareId)).thenReturn(softwareToUpdate);
@@ -155,29 +143,20 @@ public class SoftwareServiceTest {
         // Given
         var softwareId = 1;
         var software = new Software();
-        software.setTitle(new HashSet<>());
-        software.setSubTitle(new HashSet<>());
-        software.setDescription(new HashSet<>());
-        software.setKeywords(new HashSet<>());
         software.setApproveStatus(ApproveStatus.APPROVED);
 
         var contribution = new PersonDocumentContribution();
-        contribution.setContributionDescription(new HashSet<>());
-        contribution.setInstitutions(new HashSet<>());
         contribution.setContributionType(type);
         contribution.setIsMainContributor(isMainAuthor);
         contribution.setIsCorrespondingContributor(isCorrespondingAuthor);
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         var affiliationStatement = new AffiliationStatement();
-        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
             new PostalAddress(country, new HashSet<>(), new HashSet<>()));
         contribution.setAffiliationStatement(affiliationStatement);
         software.setContributors(Set.of(contribution));
-
-        software.setUris(new HashSet<>());
 
         when(softwareJPAService.findOne(softwareId)).thenReturn(software);
 
@@ -195,11 +174,6 @@ public class SoftwareServiceTest {
         // Given
         var software = new Software();
         software.setDocumentDate("2024");
-        software.setTitle(new HashSet<>());
-        software.setDescription(new HashSet<>());
-        software.setKeywords(new HashSet<>());
-        software.setFileItems(new HashSet<>());
-        software.setContributors(new HashSet<>());
         var softwares = List.of(software);
         var page1 = new PageImpl<>(softwares.subList(0, 1), PageRequest.of(0, 10),
             softwares.size());

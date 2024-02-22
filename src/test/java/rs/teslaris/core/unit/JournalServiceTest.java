@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -142,7 +141,6 @@ public class JournalServiceTest {
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
         var journal = new Journal();
-        journal.setLanguages(new HashSet<>());
         var journalIndex = new JournalIndex();
         journalIndex.setDatabaseId(journalId);
 
@@ -171,7 +169,6 @@ public class JournalServiceTest {
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
         var journal = new Journal();
-        journal.setLanguages(new HashSet<>());
 
         when(journalJPAService.findOne(journalId)).thenReturn(journal);
         when(journalJPAService.save(any())).thenReturn(new Journal());
@@ -225,19 +222,11 @@ public class JournalServiceTest {
         // given
         var pageable = Pageable.ofSize(5);
         var journal1 = new Journal();
-        journal1.setTitle(new HashSet<>());
-        journal1.setNameAbbreviation(new HashSet<>());
         journal1.setEISSN("eISSN1");
         journal1.setPrintISSN("printISSN1");
-        journal1.setContributions(new HashSet<>());
-        journal1.setLanguages(new HashSet<>());
         var journal2 = new Journal();
-        journal2.setTitle(new HashSet<>());
-        journal2.setNameAbbreviation(new HashSet<>());
         journal2.setEISSN("eISSN2");
         journal2.setPrintISSN("printISSN2");
-        journal2.setContributions(new HashSet<>());
-        journal2.setLanguages(new HashSet<>());
 
         when(journalJPAService.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(journal1, journal2)));
@@ -254,12 +243,8 @@ public class JournalServiceTest {
         // given
         var journalId = 1;
         var journal = new Journal();
-        journal.setTitle(new HashSet<>());
-        journal.setNameAbbreviation(new HashSet<>());
         journal.setEISSN("eISSN1");
         journal.setPrintISSN("printISSN1");
-        journal.setContributions(new HashSet<>());
-        journal.setLanguages(new HashSet<>());
 
         when(journalJPAService.findOne(journalId)).thenReturn(journal);
 
@@ -292,14 +277,8 @@ public class JournalServiceTest {
     public void shouldReindexJournals() {
         // Given
         var journal1 = new Journal();
-        journal1.setTitle(new HashSet<>());
-        journal1.setNameAbbreviation(new HashSet<>());
         var journal2 = new Journal();
-        journal2.setTitle(new HashSet<>());
-        journal2.setNameAbbreviation(new HashSet<>());
         var journal3 = new Journal();
-        journal3.setTitle(new HashSet<>());
-        journal3.setNameAbbreviation(new HashSet<>());
         var journals = Arrays.asList(journal1, journal2, journal3);
         var page1 = new PageImpl<>(journals.subList(0, 2), PageRequest.of(0, 10), journals.size());
         var page2 = new PageImpl<>(journals.subList(2, 3), PageRequest.of(1, 10), journals.size());

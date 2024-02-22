@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import rs.teslaris.core.importer.common.MultilingualContent;
+import rs.teslaris.core.importer.common.PersonAttributes;
 
 @XmlType(name = "TPublication", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -91,11 +92,11 @@ public class Publication {
 
     @XmlElementWrapper(name = "Authors")
     @XmlElement(name = "Author")
-    private List<Author> authors;
+    private List<PersonAttributes> authors;
 
     @XmlElementWrapper(name = "Editors")
     @XmlElement(name = "Editor")
-    private List<Editor> editors;
+    private List<PersonAttributes> editors;
 
     @XmlElementWrapper(name = "Publishers")
     @XmlElement(name = "Publisher")

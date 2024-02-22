@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.commontypes;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -25,10 +26,10 @@ import org.hibernate.annotations.Where;
 public class ResearchArea extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "super_research_area_id")

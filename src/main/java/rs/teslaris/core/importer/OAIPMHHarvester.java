@@ -46,11 +46,15 @@ import rs.teslaris.core.importer.converter.institution.OrganisationUnitConverter
 import rs.teslaris.core.importer.converter.person.PersonConverter;
 import rs.teslaris.core.importer.converter.publication.JournalConverter;
 import rs.teslaris.core.importer.converter.publication.JournalPublicationConverter;
+import rs.teslaris.core.importer.converter.publication.PatentConverter;
 import rs.teslaris.core.importer.converter.publication.ProceedingsConverter;
 import rs.teslaris.core.importer.converter.publication.ProceedingsPublicationConverter;
+import rs.teslaris.core.importer.converter.publication.ProductConverter;
 import rs.teslaris.core.importer.event.Event;
 import rs.teslaris.core.importer.organisationunit.OrgUnit;
+import rs.teslaris.core.importer.patent.Patent;
 import rs.teslaris.core.importer.person.Person;
+import rs.teslaris.core.importer.product.Product;
 import rs.teslaris.core.importer.publication.Publication;
 import rs.teslaris.core.importer.utility.CreatorMethod;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
@@ -58,8 +62,10 @@ import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -103,6 +109,14 @@ public class OAIPMHHarvester {
     private final JournalService journalService;
 
     private final ProceedingsService proceedingsService;
+
+    private final PatentConverter patentConverter;
+
+    private final PatentService patentService;
+
+    private final SoftwareService softwareService;
+
+    private final ProductConverter productConverter;
 
     @Value("${ssl.trust-store}")
     private String trustStorePath;
@@ -192,6 +206,14 @@ public class OAIPMHHarvester {
                         // TODO: what is conference output (c_c94f) ???
                     });
                     hasNextPage = batch.size() == batchSize;
+                    break;
+                case PATENTS:
+                    hasNextPage = loadBatch(Patent.class, patentConverter,
+                        patentService::createPatent, query, performIndex, batchSize);
+                    break;
+                case PRODUCTS:
+                    hasNextPage = loadBatch(Product.class, productConverter,
+                        softwareService::createSoftware, query, performIndex, batchSize);
                     break;
             }
             page++;

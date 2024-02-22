@@ -24,10 +24,10 @@ public class DatasetController {
 
     private final DatasetService datasetService;
 
-    @GetMapping("/{datasetId}")
+    @GetMapping("/{publicationId}")
     public DatasetDTO readDataset(
-        @PathVariable Integer datasetId) {
-        return datasetService.readDatasetById(datasetId);
+        @PathVariable Integer publicationId) {
+        return datasetService.readDatasetById(publicationId);
     }
 
     @PostMapping
@@ -40,18 +40,18 @@ public class DatasetController {
         return dataset;
     }
 
-    @PutMapping("/{datasetId}")
+    @PutMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void editDataset(@PathVariable Integer datasetId,
+    public void editDataset(@PathVariable Integer publicationId,
                             @RequestBody @Valid DatasetDTO dataset) {
-        datasetService.editDataset(datasetId, dataset);
+        datasetService.editDataset(publicationId, dataset);
     }
 
-    @DeleteMapping("/{datasetId}")
+    @DeleteMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void deleteDataset(@PathVariable Integer datasetId) {
-        datasetService.deleteDataset(datasetId);
+    public void deleteDataset(@PathVariable Integer publicationId) {
+        datasetService.deleteDataset(publicationId);
     }
 }

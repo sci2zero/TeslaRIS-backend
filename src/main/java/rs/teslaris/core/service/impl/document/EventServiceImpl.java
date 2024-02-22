@@ -3,7 +3,6 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -83,8 +82,6 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
         if (Objects.nonNull(eventDTO.getContributions())) {
             personContributionService.setPersonEventContributionForEvent(event, eventDTO);
-        } else {
-            event.setContributions(new HashSet<>());
         }
     }
 

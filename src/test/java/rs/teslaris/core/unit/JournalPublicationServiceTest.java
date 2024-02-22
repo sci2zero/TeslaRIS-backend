@@ -115,12 +115,6 @@ public class JournalPublicationServiceTest {
         journal.setId(1);
         var document = new JournalPublication();
         document.setJournal(journal);
-        document.setContributors(new HashSet<>());
-        document.setTitle(new HashSet<>());
-        document.setSubTitle(new HashSet<>());
-        document.setDescription(new HashSet<>());
-        document.setKeywords(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         document.setDocumentDate("2023");
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
@@ -146,12 +140,6 @@ public class JournalPublicationServiceTest {
         publicationDTO.setEventId(1);
         var publicationToUpdate = new JournalPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        publicationToUpdate.setTitle(new HashSet<>());
-        publicationToUpdate.setSubTitle(new HashSet<>());
-        publicationToUpdate.setDescription(new HashSet<>());
-        publicationToUpdate.setKeywords(new HashSet<>());
-        publicationToUpdate.setContributors(new HashSet<>());
-        publicationToUpdate.setUris(new HashSet<>());
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
@@ -191,21 +179,14 @@ public class JournalPublicationServiceTest {
         // Given
         var publicationId = 1;
         var publication = new JournalPublication();
-        publication.setTitle(new HashSet<>());
-        publication.setSubTitle(new HashSet<>());
-        publication.setDescription(new HashSet<>());
-        publication.setKeywords(new HashSet<>());
         publication.setApproveStatus(ApproveStatus.APPROVED);
 
         var contribution = new PersonDocumentContribution();
-        contribution.setContributionDescription(new HashSet<>());
-        contribution.setInstitutions(new HashSet<>());
         contribution.setContributionType(type);
         contribution.setIsMainContributor(isMainAuthor);
         contribution.setIsCorrespondingContributor(isCorrespondingAuthor);
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         var affiliationStatement = new AffiliationStatement();
-        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
@@ -213,9 +194,7 @@ public class JournalPublicationServiceTest {
         contribution.setAffiliationStatement(affiliationStatement);
         publication.setContributors(Set.of(contribution));
 
-        publication.setUris(new HashSet<>());
         var journal = new Journal();
-        journal.setTitle(new HashSet<>());
         publication.setJournal(journal);
 
         when(documentRepository.findById(publicationId)).thenReturn(
@@ -297,11 +276,6 @@ public class JournalPublicationServiceTest {
         // Given
         var journalPublication = new JournalPublication();
         journalPublication.setDocumentDate("2024");
-        journalPublication.setTitle(new HashSet<>());
-        journalPublication.setDescription(new HashSet<>());
-        journalPublication.setKeywords(new HashSet<>());
-        journalPublication.setFileItems(new HashSet<>());
-        journalPublication.setContributors(new HashSet<>());
         journalPublication.setJournal(new Journal());
         var journalPublications = List.of(journalPublication);
         var page1 = new PageImpl<>(journalPublications.subList(0, 1), PageRequest.of(0, 10),

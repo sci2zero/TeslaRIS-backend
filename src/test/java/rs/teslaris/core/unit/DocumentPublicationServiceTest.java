@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,8 +106,6 @@ public class DocumentPublicationServiceTest {
         var documentFileId = 1;
         var isProof = true;
         var document = new JournalPublication();
-        document.setProofs(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         document.setApproveStatus(ApproveStatus.REQUESTED);
         var documentFile = new DocumentFile();
 
@@ -132,7 +129,6 @@ public class DocumentPublicationServiceTest {
         var isProof = false;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
-        document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
@@ -156,8 +152,6 @@ public class DocumentPublicationServiceTest {
         var isProof = true;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
-        document.setProofs(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
@@ -182,7 +176,6 @@ public class DocumentPublicationServiceTest {
         var isProof = false;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
-        document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
         documentFile.setId(1);
 

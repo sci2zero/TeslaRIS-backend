@@ -6,7 +6,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -328,9 +327,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setDocumentDate(documentDTO.getDocumentDate());
         document.setDoi(documentDTO.getDoi());
         document.setScopusId(documentDTO.getScopusId());
-
-        document.setProofs(new HashSet<>());
-        document.setFileItems(new HashSet<>());
 
         if (Objects.nonNull(documentDTO.getEventId())) {
             document.setEvent(eventService.findEventById(documentDTO.getEventId()));

@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -106,19 +105,12 @@ public class EventServiceTest {
         var dummyMC = new MultiLingualContent(new LanguageTag(), "Content", 1);
 
         var conference = new Conference();
-        conference.setName(new HashSet<>());
         conference.getName().add(dummyMC);
-        conference.setDescription(new HashSet<>());
         conference.getDescription().add(dummyMC);
-        conference.setKeywords(new HashSet<>());
         conference.getKeywords().add(dummyMC);
-        conference.setNameAbbreviation(new HashSet<>());
         conference.getNameAbbreviation().add(dummyMC);
-        conference.setState(new HashSet<>());
         conference.getState().add(dummyMC);
-        conference.setPlace(new HashSet<>());
         conference.getPlace().add(dummyMC);
-        conference.setContributions(new HashSet<>());
         conference.getContributions().add(new PersonEventContribution());
 
         eventService.clearEventCommonFields(conference);

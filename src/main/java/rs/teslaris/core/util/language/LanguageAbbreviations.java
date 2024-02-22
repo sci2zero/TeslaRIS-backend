@@ -19,4 +19,6 @@ public class LanguageAbbreviations {
     public static String FRENCH = "FR";
 
     public static String SPANISH = "SP";
+
+    public static String RUSSIAN = "RU";
 }

@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -82,8 +81,6 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Override
     public Publisher createPublisher(PublisherBasicAdditionDTO publisherDTO) {
         var publisher = new Publisher();
-
-        publisher.setPlace(new HashSet<>());
 
         publisher.setName(
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));

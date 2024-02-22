@@ -143,9 +143,6 @@ public class OrganisationUnitServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setNameAbbreviation("ID1");
-        organisationUnit.setResearchAreas(new HashSet<>());
-        organisationUnit.setKeyword(new HashSet<>());
-        organisationUnit.setName(new HashSet<>());
         organisationUnit.setLocation(new GeoLocation());
         organisationUnit.setContact(new Contact());
         Page<OrganisationUnit>
@@ -196,13 +193,9 @@ public class OrganisationUnitServiceTest {
         var pageable = Mockito.mock(Pageable.class);
 
         var ou = new OrganisationUnit();
-        ou.setName(new HashSet<>());
         var relation = new OrganisationUnitsRelation();
-        relation.setSourceAffiliationStatement(new HashSet<>());
-        relation.setTargetAffiliationStatement(new HashSet<>());
         relation.setSourceOrganisationUnit(ou);
         relation.setTargetOrganisationUnit(ou);
-        relation.setProofs(new HashSet<>());
         var relations = new ArrayList<OrganisationUnitsRelation>();
         relations.add(relation);
         var page = new PageImpl<>(relations);
@@ -295,8 +288,6 @@ public class OrganisationUnitServiceTest {
         var relationId = 1;
 
         var relation = new OrganisationUnitsRelation();
-        relation.setSourceAffiliationStatement(new HashSet<>());
-        relation.setTargetAffiliationStatement(new HashSet<>());
 
         when(organisationUnitsRelationJPAService.findOne(relationId)).thenReturn(relation);
         when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
@@ -313,7 +304,6 @@ public class OrganisationUnitServiceTest {
     public void shouldAddInvolvementProofWhenInvolvementExists() {
         // given
         var relation = new OrganisationUnitsRelation();
-        relation.setProofs(new HashSet<>());
 
         when(organisationUnitsRelationJPAService.findOne(1)).thenReturn(relation);
         when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
@@ -360,8 +350,6 @@ public class OrganisationUnitServiceTest {
 
         ResearchArea researchArea = new ResearchArea();
         researchArea.setId(1);
-        researchArea.setName(new HashSet<>());
-        researchArea.setDescription(new HashSet<>());
         List<ResearchArea> researchAreas = List.of(researchArea);
 
         organisationUnitDTORequest.setName(new ArrayList<>());
@@ -591,17 +579,8 @@ public class OrganisationUnitServiceTest {
     public void shouldReindexOrganisationUnits() {
         // Given
         var ou1 = new OrganisationUnit();
-        ou1.setName(new HashSet<>());
-        ou1.setKeyword(new HashSet<>());
-        ou1.setResearchAreas(new HashSet<>());
         var ou2 = new OrganisationUnit();
-        ou2.setName(new HashSet<>());
-        ou2.setKeyword(new HashSet<>());
-        ou2.setResearchAreas(new HashSet<>());
         var ou3 = new OrganisationUnit();
-        ou3.setName(new HashSet<>());
-        ou3.setKeyword(new HashSet<>());
-        ou3.setResearchAreas(new HashSet<>());
         var organisationUnits = Arrays.asList(ou1, ou2, ou3);
         var page1 = new PageImpl<>(organisationUnits.subList(0, 2), PageRequest.of(0, 10),
             organisationUnits.size());

@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.project;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -25,7 +26,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public class Currency extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name = new HashSet<>();
 
     @Column(name = "symbol", nullable = false)
     private String symbol;

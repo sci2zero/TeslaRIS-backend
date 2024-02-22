@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.person;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -27,13 +28,13 @@ import rs.teslaris.core.model.document.DocumentFile;
 public class Prize extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> title;
+    private Set<MultiLingualContent> title = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<DocumentFile> proofs;
+    private Set<DocumentFile> proofs = new HashSet<>();
 
     @Column(name = "date")
     private LocalDate date;

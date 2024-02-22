@@ -1,6 +1,5 @@
 package rs.teslaris.core.service.impl.person;
 
-import java.util.HashSet;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +50,6 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     @Override
     public void setPersonDocumentContributionsForDocument(Document document,
                                                           DocumentDTO documentDTO) {
-        document.setContributors(new HashSet<>());
         documentDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonDocumentContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
@@ -69,11 +67,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     public void setPersonPublicationSeriesContributionsForJournal(
         PublicationSeries publicationSeries,
         PublicationSeriesDTO journalDTO) {
-        if (publicationSeries.getContributions() != null) {
-            publicationSeries.getContributions().clear();
-        } else {
-            publicationSeries.setContributions(new HashSet<>());
-        }
+        publicationSeries.getContributions().clear();
 
         journalDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonPublicationSeriesContribution();
@@ -91,11 +85,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     public void setPersonPublicationSeriesContributionsForBookSeries(
         PublicationSeries publicationSeries,
         BookSeriesDTO bookSeriesDTO) {
-        if (publicationSeries.getContributions() != null) {
-            publicationSeries.getContributions().clear();
-        } else {
-            publicationSeries.setContributions(new HashSet<>());
-        }
+        publicationSeries.getContributions().clear();
 
         bookSeriesDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonPublicationSeriesContribution();
@@ -170,7 +160,6 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getContributionDescription()));
 
         setAffiliationStatement(contribution, contributionDTO, contributor);
-        contribution.setInstitutions(new HashSet<>());
         // TODO: Moze li ovo ovako?
         contribution.getInstitutions()
             .add(personService.getLatestResearcherInvolvement(contributor));

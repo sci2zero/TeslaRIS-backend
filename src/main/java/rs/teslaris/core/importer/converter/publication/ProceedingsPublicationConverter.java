@@ -11,14 +11,11 @@ import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
-import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Component
 @Slf4j
 public class ProceedingsPublicationConverter extends DocumentConverter implements
     RecordConverter<Publication, ProceedingsPublicationDTO> {
-
-    private final MultilingualContentConverter multilingualContentConverter;
 
     private final DocumentPublicationService documentPublicationService;
 
@@ -26,10 +23,9 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
     @Autowired
     public ProceedingsPublicationConverter(
         MultilingualContentConverter multilingualContentConverter,
-        PersonService personService, MultilingualContentConverter multilingualContentConverter1,
+        PersonContributionConverter personContributionConverter,
         DocumentPublicationService documentPublicationService) {
-        super(multilingualContentConverter, personService);
-        this.multilingualContentConverter = multilingualContentConverter1;
+        super(multilingualContentConverter, personContributionConverter);
         this.documentPublicationService = documentPublicationService;
     }
 

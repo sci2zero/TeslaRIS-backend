@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.document;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -27,7 +28,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public abstract class PublicationSeries extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> title;
+    private Set<MultiLingualContent> title = new HashSet<>();
 
     @Column(name = "e_issn")
     private String eISSN;
@@ -36,13 +37,13 @@ public abstract class PublicationSeries extends BaseEntity {
     private String printISSN;
 
     @OneToMany(mappedBy = "publicationSeries", fetch = FetchType.LAZY, orphanRemoval = true)
-    private Set<PersonPublicationSeriesContribution> contributions;
+    private Set<PersonPublicationSeriesContribution> contributions = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    private Set<LanguageTag> languages;
+    private Set<LanguageTag> languages = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> nameAbbreviation;
+    private Set<MultiLingualContent> nameAbbreviation = new HashSet<>();
 
     @Column(name = "cris_uns_id")
     private Integer oldId;

@@ -24,10 +24,10 @@ public class PatentController {
 
     private final PatentService patentService;
 
-    @GetMapping("/{patentId}")
+    @GetMapping("/{publicationId}")
     public PatentDTO readPatent(
-        @PathVariable Integer patentId) {
-        return patentService.readPatentById(patentId);
+        @PathVariable Integer publicationId) {
+        return patentService.readPatentById(publicationId);
     }
 
     @PostMapping
@@ -40,17 +40,18 @@ public class PatentController {
         return patent;
     }
 
-    @PutMapping("/{patentId}")
+    @PutMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void editPatent(@PathVariable Integer patentId, @RequestBody @Valid PatentDTO patent) {
-        patentService.editPatent(patentId, patent);
+    public void editPatent(@PathVariable Integer publicationId,
+                           @RequestBody @Valid PatentDTO patent) {
+        patentService.editPatent(publicationId, patent);
     }
 
-    @DeleteMapping("/{patentId}")
+    @DeleteMapping("/{publicationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void deletePatent(@PathVariable Integer patentId) {
-        patentService.deletePatent(patentId);
+    public void deletePatent(@PathVariable Integer publicationId) {
+        patentService.deletePatent(publicationId);
     }
 }

@@ -99,12 +99,6 @@ public class PatentServiceTest {
         patent.setId(1);
         patent.setNumber("123");
         var document = new Patent();
-        document.setContributors(new HashSet<>());
-        document.setTitle(new HashSet<>());
-        document.setSubTitle(new HashSet<>());
-        document.setDescription(new HashSet<>());
-        document.setKeywords(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         document.setDocumentDate("2023");
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
@@ -129,12 +123,6 @@ public class PatentServiceTest {
         patentDTO.setDocumentDate("2024");
         var patentToUpdate = new Patent();
         patentToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        patentToUpdate.setTitle(new HashSet<>());
-        patentToUpdate.setSubTitle(new HashSet<>());
-        patentToUpdate.setDescription(new HashSet<>());
-        patentToUpdate.setKeywords(new HashSet<>());
-        patentToUpdate.setContributors(new HashSet<>());
-        patentToUpdate.setUris(new HashSet<>());
         patentToUpdate.setDocumentDate("2023");
 
         when(patentJPAService.findOne(patentId)).thenReturn(patentToUpdate);
@@ -155,29 +143,20 @@ public class PatentServiceTest {
         // Given
         var patentId = 1;
         var patent = new Patent();
-        patent.setTitle(new HashSet<>());
-        patent.setSubTitle(new HashSet<>());
-        patent.setDescription(new HashSet<>());
-        patent.setKeywords(new HashSet<>());
         patent.setApproveStatus(ApproveStatus.APPROVED);
 
         var contribution = new PersonDocumentContribution();
-        contribution.setContributionDescription(new HashSet<>());
-        contribution.setInstitutions(new HashSet<>());
         contribution.setContributionType(type);
         contribution.setIsMainContributor(isMainAuthor);
         contribution.setIsCorrespondingContributor(isCorrespondingAuthor);
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         var affiliationStatement = new AffiliationStatement();
-        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
             new PostalAddress(country, new HashSet<>(), new HashSet<>()));
         contribution.setAffiliationStatement(affiliationStatement);
         patent.setContributors(Set.of(contribution));
-
-        patent.setUris(new HashSet<>());
 
         when(patentJPAService.findOne(patentId)).thenReturn(patent);
 
@@ -195,11 +174,6 @@ public class PatentServiceTest {
         // Given
         var patent = new Patent();
         patent.setDocumentDate("2024");
-        patent.setTitle(new HashSet<>());
-        patent.setDescription(new HashSet<>());
-        patent.setKeywords(new HashSet<>());
-        patent.setFileItems(new HashSet<>());
-        patent.setContributors(new HashSet<>());
         var patents = List.of(patent);
         var page1 = new PageImpl<>(patents.subList(0, 1), PageRequest.of(0, 10),
             patents.size());

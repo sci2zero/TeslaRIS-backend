@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.person;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -31,7 +32,7 @@ public class Employment extends Involvement {
     private EmploymentPosition employmentPosition;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> role;
+    private Set<MultiLingualContent> role = new HashSet<>();
 
     public Employment(LocalDate dateFrom,
                       LocalDate dateTo,

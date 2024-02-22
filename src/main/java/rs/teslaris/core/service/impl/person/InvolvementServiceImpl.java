@@ -1,6 +1,5 @@
 package rs.teslaris.core.service.impl.person;
 
-import java.util.HashSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -234,7 +233,6 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvement.setDateFrom(commonFields.getDateFrom());
         involvement.setDateTo(commonFields.getDateTo());
         involvement.setApproveStatus(ApproveStatus.APPROVED);
-        involvement.setProofs(new HashSet<>());
         involvement.setInvolvementType(commonFields.getInvolvementType());
         involvement.setAffiliationStatement(affiliationStatements);
         involvement.setOrganisationUnit(organisationUnit);

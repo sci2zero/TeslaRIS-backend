@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.document;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -32,31 +33,31 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public abstract class Document extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> title;
+    private Set<MultiLingualContent> title = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> subTitle;
+    private Set<MultiLingualContent> subTitle = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<PersonDocumentContribution> contributors;
+    private Set<PersonDocumentContribution> contributors = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> uris;
+    private Set<String> uris = new HashSet<>();
 
     @Column(name = "document_date")
     private String documentDate;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<DocumentFile> fileItems;
+    private Set<DocumentFile> fileItems = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<DocumentFile> proofs;
+    private Set<DocumentFile> proofs = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> keywords;
+    private Set<MultiLingualContent> keywords = new HashSet<>();
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;

@@ -99,12 +99,6 @@ public class DatasetServiceTest {
         dataset.setId(1);
         dataset.setInternalNumber("123");
         var document = new Dataset();
-        document.setContributors(new HashSet<>());
-        document.setTitle(new HashSet<>());
-        document.setSubTitle(new HashSet<>());
-        document.setDescription(new HashSet<>());
-        document.setKeywords(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         document.setDocumentDate("2023");
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
@@ -129,12 +123,6 @@ public class DatasetServiceTest {
         datasetDTO.setDocumentDate("2024");
         var datasetToUpdate = new Dataset();
         datasetToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        datasetToUpdate.setTitle(new HashSet<>());
-        datasetToUpdate.setSubTitle(new HashSet<>());
-        datasetToUpdate.setDescription(new HashSet<>());
-        datasetToUpdate.setKeywords(new HashSet<>());
-        datasetToUpdate.setContributors(new HashSet<>());
-        datasetToUpdate.setUris(new HashSet<>());
         datasetToUpdate.setDocumentDate("2023");
 
         when(datasetJPAService.findOne(datasetId)).thenReturn(datasetToUpdate);
@@ -155,29 +143,20 @@ public class DatasetServiceTest {
         // Given
         var datasetId = 1;
         var dataset = new Dataset();
-        dataset.setTitle(new HashSet<>());
-        dataset.setSubTitle(new HashSet<>());
-        dataset.setDescription(new HashSet<>());
-        dataset.setKeywords(new HashSet<>());
         dataset.setApproveStatus(ApproveStatus.APPROVED);
 
         var contribution = new PersonDocumentContribution();
-        contribution.setContributionDescription(new HashSet<>());
-        contribution.setInstitutions(new HashSet<>());
         contribution.setContributionType(type);
         contribution.setIsMainContributor(isMainAuthor);
         contribution.setIsCorrespondingContributor(isCorrespondingAuthor);
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         var affiliationStatement = new AffiliationStatement();
-        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
             new PostalAddress(country, new HashSet<>(), new HashSet<>()));
         contribution.setAffiliationStatement(affiliationStatement);
         dataset.setContributors(Set.of(contribution));
-
-        dataset.setUris(new HashSet<>());
 
         when(datasetJPAService.findOne(datasetId)).thenReturn(dataset);
 
@@ -195,11 +174,6 @@ public class DatasetServiceTest {
         // Given
         var dataset = new Dataset();
         dataset.setDocumentDate("2024");
-        dataset.setTitle(new HashSet<>());
-        dataset.setDescription(new HashSet<>());
-        dataset.setKeywords(new HashSet<>());
-        dataset.setFileItems(new HashSet<>());
-        dataset.setContributors(new HashSet<>());
         var datasets = List.of(dataset);
         var page1 = new PageImpl<>(datasets.subList(0, 1), PageRequest.of(0, 10),
             datasets.size());

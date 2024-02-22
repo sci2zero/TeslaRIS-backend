@@ -10,7 +10,6 @@ import rs.teslaris.core.importer.publication.Publication;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.service.interfaces.document.JournalService;
-import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Component
 @Slf4j
@@ -22,8 +21,9 @@ public class JournalPublicationConverter extends DocumentConverter
 
     @Autowired
     public JournalPublicationConverter(MultilingualContentConverter multilingualContentConverter,
-                                       PersonService personService, JournalService journalService) {
-        super(multilingualContentConverter, personService);
+                                       PersonContributionConverter personContributionConverter,
+                                       JournalService journalService) {
+        super(multilingualContentConverter, personContributionConverter);
         this.journalService = journalService;
     }
 

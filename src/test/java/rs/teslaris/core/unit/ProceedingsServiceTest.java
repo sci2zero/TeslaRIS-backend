@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -113,18 +112,9 @@ public class ProceedingsServiceTest {
     public void shouldReturnProceedingsForEvent() {
         // given
         var event = new Conference();
-        event.setName(new HashSet<>());
         var document = new Proceedings();
         document.setDocumentDate("MOCK DATE");
-        document.setFileItems(new HashSet<>());
         document.setEvent(event);
-        document.setLanguages(new HashSet<>());
-        document.setTitle(new HashSet<>());
-        document.setSubTitle(new HashSet<>());
-        document.setDescription(new HashSet<>());
-        document.setKeywords(new HashSet<>());
-        document.setContributors(new HashSet<>());
-        document.setUris(new HashSet<>());
 
         when(proceedingsRepository.findProceedingsForEventId(1)).thenReturn(List.of(document));
 
@@ -142,15 +132,7 @@ public class ProceedingsServiceTest {
         proceedingsDTO.setLanguageTagIds(new ArrayList<>());
         var document = new Proceedings();
         document.setDocumentDate("MOCK DATE");
-        document.setFileItems(new HashSet<>());
         document.setEvent(new Conference());
-        document.setLanguages(new HashSet<>());
-        document.setTitle(new HashSet<>());
-        document.setSubTitle(new HashSet<>());
-        document.setDescription(new HashSet<>());
-        document.setKeywords(new HashSet<>());
-        document.setContributors(new HashSet<>());
-        document.setUris(new HashSet<>());
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -174,13 +156,6 @@ public class ProceedingsServiceTest {
         proceedingsDTO.setLanguageTagIds(new ArrayList<>());
         var proceedingsToUpdate = new Proceedings();
         proceedingsToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        proceedingsToUpdate.setLanguages(new HashSet<>());
-        proceedingsToUpdate.setTitle(new HashSet<>());
-        proceedingsToUpdate.setSubTitle(new HashSet<>());
-        proceedingsToUpdate.setDescription(new HashSet<>());
-        proceedingsToUpdate.setKeywords(new HashSet<>());
-        proceedingsToUpdate.setContributors(new HashSet<>());
-        proceedingsToUpdate.setUris(new HashSet<>());
 
         when(proceedingJPAService.findOne(proceedingsId)).thenReturn(proceedingsToUpdate);
 

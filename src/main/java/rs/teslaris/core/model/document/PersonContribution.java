@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.document;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -38,14 +39,14 @@ public class PersonContribution extends BaseEntity {
     private Person person;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> contributionDescription;
+    private Set<MultiLingualContent> contributionDescription = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "affiliation_statement_id")
     private AffiliationStatement affiliationStatement;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    private Set<OrganisationUnit> institutions;
+    private Set<OrganisationUnit> institutions = new HashSet<>();
 
     @Column(name = "order_number", nullable = false)
     private Integer orderNumber;

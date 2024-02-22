@@ -4,5 +4,5 @@ public enum DocumentContributionType {
     AUTHOR,
     EDITOR,
     REVIEWER,
-    ADVISOR,
+    ADVISOR
 }

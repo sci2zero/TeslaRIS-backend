@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.person;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
@@ -26,8 +27,8 @@ public class PostalAddress {
     private Country country;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MultiLingualContent> streetAndNumber;
+    private Set<MultiLingualContent> streetAndNumber = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MultiLingualContent> city;
+    private Set<MultiLingualContent> city = new HashSet<>();
 }

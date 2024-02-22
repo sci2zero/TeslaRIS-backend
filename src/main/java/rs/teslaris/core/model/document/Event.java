@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.document;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -25,16 +26,16 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public abstract class Event extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> nameAbbreviation;
+    private Set<MultiLingualContent> nameAbbreviation = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> keywords;
+    private Set<MultiLingualContent> keywords = new HashSet<>();
 
     @Column(name = "serial_event")
     private Boolean serialEvent;
@@ -46,13 +47,13 @@ public abstract class Event extends BaseEntity {
     private LocalDate dateTo;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> state;
+    private Set<MultiLingualContent> state = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> place;
+    private Set<MultiLingualContent> place = new HashSet<>();
 
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, orphanRemoval = true)
-    private Set<PersonEventContribution> contributions;
+    private Set<PersonEventContribution> contributions = new HashSet<>();
 
     @Column(name = "cris_uns_id")
     private Integer oldId;

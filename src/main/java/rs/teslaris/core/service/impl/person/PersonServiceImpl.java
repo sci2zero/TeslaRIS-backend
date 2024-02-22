@@ -140,7 +140,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var newPerson = new Person();
         newPerson.setName(personName);
-        newPerson.setOtherNames(new HashSet<>());
         newPerson.setPersonalInfo(personalInfo);
         newPerson.setApvnt(personDTO.getApvnt());
         newPerson.setMnid(personDTO.getMnid());

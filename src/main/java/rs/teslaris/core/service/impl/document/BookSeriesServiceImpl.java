@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +74,6 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Override
     public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index) {
         var bookSeries = new BookSeries();
-        bookSeries.setLanguages(new HashSet<>());
 
         setPublicationSeriesCommonFields(bookSeries, bookSeriesDTO);
         setBookSeriesFields(bookSeries, bookSeriesDTO);

@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.document;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
@@ -30,7 +31,7 @@ import rs.teslaris.core.model.person.PostalAddress;
 public class AffiliationStatement extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> displayAffiliationStatement;
+    private Set<MultiLingualContent> displayAffiliationStatement = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "display_person_name_id")

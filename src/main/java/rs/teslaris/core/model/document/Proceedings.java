@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.document;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -30,7 +31,7 @@ public class Proceedings extends Document {
     private Integer numberOfPages;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    private Set<LanguageTag> languages;
+    private Set<LanguageTag> languages = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
