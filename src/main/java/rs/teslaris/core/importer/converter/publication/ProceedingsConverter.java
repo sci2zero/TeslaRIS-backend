@@ -1,11 +1,9 @@
 package rs.teslaris.core.importer.converter.publication;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.importer.converter.commontypes.MultilingualContentConverter;
@@ -17,28 +15,32 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
-public class ProceedingsConverter implements RecordConverter<Publication, ProceedingsDTO> {
-
-    private final MultilingualContentConverter multilingualContentConverter;
+public class ProceedingsConverter extends DocumentConverter
+    implements RecordConverter<Publication, ProceedingsDTO> {
 
     private final EventService eventService;
 
     private final LanguageTagService languageTagService;
 
 
+    @Autowired
+    public ProceedingsConverter(MultilingualContentConverter multilingualContentConverter,
+                                PersonContributionConverter personContributionConverter,
+                                EventService eventService, LanguageTagService languageTagService) {
+        super(multilingualContentConverter, personContributionConverter);
+        this.eventService = eventService;
+        this.languageTagService = languageTagService;
+    }
+
     @Override
     public ProceedingsDTO toDTO(Publication record) {
         var dto = new ProceedingsDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
 
-        dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
-        dto.setSubTitle(multilingualContentConverter.toDTO(record.getSubtitle()));
-        dto.setDocumentDate(record.getPublicationDate().toString());
+        setCommonFields(record, dto);
 
         dto.setEISBN(record.getIsbn());
-        dto.setUris(new HashSet<>(record.getUrl()));
 
         var languageTagValue = record.getLanguage().trim().toUpperCase();
         if (languageTagValue.isEmpty()) {
@@ -56,16 +58,11 @@ public class ProceedingsConverter implements RecordConverter<Publication, Procee
             return null;
         }
 
-
         if (dto.getTitle().isEmpty()) {
             dto.setTitle(
                 rs.teslaris.core.converter.commontypes.MultilingualContentConverter.getMultilingualContentDTO(
                     event.getName()));
         }
-
-        dto.setContributions(new ArrayList<>());
-        dto.setDescription(new ArrayList<>());
-        dto.setKeywords(new ArrayList<>());
 
         return dto;
     }
