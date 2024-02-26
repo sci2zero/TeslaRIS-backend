@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -98,17 +97,7 @@ public class ConferenceServiceTest {
         // given
         var pageable = Pageable.ofSize(5);
         var conference1 = new Conference();
-        conference1.setName(new HashSet<>());
-        conference1.setNameAbbreviation(new HashSet<>());
-        conference1.setState(new HashSet<>());
-        conference1.setPlace(new HashSet<>());
-        conference1.setContributions(new HashSet<>());
         var conference2 = new Conference();
-        conference2.setName(new HashSet<>());
-        conference2.setNameAbbreviation(new HashSet<>());
-        conference2.setState(new HashSet<>());
-        conference2.setPlace(new HashSet<>());
-        conference2.setContributions(new HashSet<>());
 
         when(conferenceJPAService.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(conference1, conference2)));
@@ -118,13 +107,6 @@ public class ConferenceServiceTest {
     public void shouldReadConferenceWhenExists() {
         // given
         var conference1 = new Conference();
-        conference1.setName(new HashSet<>());
-        conference1.setNameAbbreviation(new HashSet<>());
-        conference1.setState(new HashSet<>());
-        conference1.setPlace(new HashSet<>());
-        conference1.setDescription(new HashSet<>());
-        conference1.setKeywords(new HashSet<>());
-        conference1.setContributions(new HashSet<>());
         conference1.setFee("fee");
         conference1.setNumber("number");
 
@@ -203,13 +185,6 @@ public class ConferenceServiceTest {
     public void shouldUpdateConferenceWhenProvidedWithValidData() {
         // given
         var conference1 = new Conference();
-        conference1.setName(new HashSet<>());
-        conference1.setNameAbbreviation(new HashSet<>());
-        conference1.setDescription(new HashSet<>());
-        conference1.setKeywords(new HashSet<>());
-        conference1.setState(new HashSet<>());
-        conference1.setPlace(new HashSet<>());
-        conference1.setContributions(new HashSet<>());
 
         var conferenceDTO = new ConferenceDTO();
         conferenceDTO.setName(new ArrayList<>());
@@ -270,27 +245,12 @@ public class ConferenceServiceTest {
     public void shouldReindexConferences() {
         // Given
         var conference1 = new Conference();
-        conference1.setName(new HashSet<>());
-        conference1.setDescription(new HashSet<>());
-        conference1.setKeywords(new HashSet<>());
-        conference1.setState(new HashSet<>());
-        conference1.setPlace(new HashSet<>());
         conference1.setDateFrom(LocalDate.now());
         conference1.setDateTo(LocalDate.now());
         var conference2 = new Conference();
-        conference2.setName(new HashSet<>());
-        conference2.setDescription(new HashSet<>());
-        conference2.setKeywords(new HashSet<>());
-        conference2.setState(new HashSet<>());
-        conference2.setPlace(new HashSet<>());
         conference2.setDateFrom(LocalDate.now());
         conference2.setDateTo(LocalDate.now());
         var conference3 = new Conference();
-        conference3.setName(new HashSet<>());
-        conference3.setDescription(new HashSet<>());
-        conference3.setKeywords(new HashSet<>());
-        conference3.setState(new HashSet<>());
-        conference3.setPlace(new HashSet<>());
         conference3.setDateFrom(LocalDate.now());
         conference3.setDateTo(LocalDate.now());
         var conferences = Arrays.asList(conference1, conference2, conference3);

@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -10,7 +11,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -105,19 +105,12 @@ public class EventServiceTest {
         var dummyMC = new MultiLingualContent(new LanguageTag(), "Content", 1);
 
         var conference = new Conference();
-        conference.setName(new HashSet<>());
         conference.getName().add(dummyMC);
-        conference.setDescription(new HashSet<>());
         conference.getDescription().add(dummyMC);
-        conference.setKeywords(new HashSet<>());
         conference.getKeywords().add(dummyMC);
-        conference.setNameAbbreviation(new HashSet<>());
         conference.getNameAbbreviation().add(dummyMC);
-        conference.setState(new HashSet<>());
         conference.getState().add(dummyMC);
-        conference.setPlace(new HashSet<>());
         conference.getPlace().add(dummyMC);
-        conference.setContributions(new HashSet<>());
         conference.getContributions().add(new PersonEventContribution());
 
         eventService.clearEventCommonFields(conference);
@@ -155,5 +148,34 @@ public class EventServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    void shouldFindEventByOldId() {
+        // Given
+        var oldId = 123;
+        var expected = new Conference();
+        when(eventRepository.findEventByOldId(oldId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = eventService.findEventByOldId(oldId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(eventRepository, times(1)).findEventByOldId(oldId);
+    }
+
+    @Test
+    void shouldReturnNullWhenOldIdDoesNotExist() {
+        // Given
+        var oldId = 123;
+        when(eventRepository.findEventByOldId(oldId)).thenReturn(Optional.empty());
+
+        // When
+        var actual = eventService.findEventByOldId(oldId);
+
+        // Then
+        assertNull(actual);
+        verify(eventRepository, times(1)).findEventByOldId(oldId);
     }
 }

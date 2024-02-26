@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.institution;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -31,16 +32,16 @@ import rs.teslaris.core.model.person.Contact;
 public class OrganisationUnit extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name = new HashSet<>();
 
     @Column(name = "name_abbreviation", nullable = false)
     private String nameAbbreviation;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> keyword;
+    private Set<MultiLingualContent> keyword = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
-    private Set<ResearchArea> researchAreas;
+    private Set<ResearchArea> researchAreas = new HashSet<>();
 
     @Embedded
     private GeoLocation location;

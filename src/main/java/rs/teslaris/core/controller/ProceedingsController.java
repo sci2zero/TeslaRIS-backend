@@ -41,7 +41,7 @@ public class ProceedingsController {
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public ProceedingsDTO createProceedings(@RequestBody @Valid ProceedingsDTO proceedings) {
-        var savedProceedings = proceedingsService.createProceedings(proceedings);
+        var savedProceedings = proceedingsService.createProceedings(proceedings, true);
         proceedings.setId(savedProceedings.getId());
         return proceedings;
     }

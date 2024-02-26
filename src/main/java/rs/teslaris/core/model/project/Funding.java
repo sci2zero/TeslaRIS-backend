@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.project;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -37,13 +38,13 @@ public class Funding extends BaseEntity {
     private DocumentFile agreement;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> fundingCall;
+    private Set<MultiLingualContent> fundingCall = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> fundingProgram;
+    private Set<MultiLingualContent> fundingProgram = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> fundingAgency;
+    private Set<MultiLingualContent> fundingAgency = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grant_id")

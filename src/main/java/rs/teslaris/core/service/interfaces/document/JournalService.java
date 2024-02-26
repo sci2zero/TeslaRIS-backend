@@ -21,6 +21,8 @@ public interface JournalService {
 
     Journal findJournalById(Integer journalId);
 
+    Journal findJournalByOldId(Integer journalId);
+
     Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index);
 
     Journal createJournal(JournalBasicAdditionDTO journalDTO);

@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -77,9 +76,6 @@ public class PublisherServiceTest {
         publisherDTO.setState(new ArrayList<>());
 
         var publisher = new Publisher();
-        publisher.setName(new HashSet<>());
-        publisher.setPlace(new HashSet<>());
-        publisher.setState(new HashSet<>());
 
         when(publisherRepository.save(any())).thenReturn(publisher);
 
@@ -212,13 +208,7 @@ public class PublisherServiceTest {
         // given
         var pageable = Pageable.ofSize(5);
         var publisher1 = new Publisher();
-        publisher1.setName(new HashSet<>());
-        publisher1.setPlace(new HashSet<>());
-        publisher1.setState(new HashSet<>());
         var publisher2 = new Publisher();
-        publisher2.setName(new HashSet<>());
-        publisher2.setPlace(new HashSet<>());
-        publisher2.setState(new HashSet<>());
 
         when(publisherRepository.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(publisher1, publisher2)));
@@ -252,17 +242,8 @@ public class PublisherServiceTest {
     public void shouldReindexPublishers() {
         // Given
         var publisher1 = new Publisher();
-        publisher1.setName(new HashSet<>());
-        publisher1.setPlace(new HashSet<>());
-        publisher1.setState(new HashSet<>());
         var publisher2 = new Publisher();
-        publisher2.setName(new HashSet<>());
-        publisher2.setPlace(new HashSet<>());
-        publisher2.setState(new HashSet<>());
         var publisher3 = new Publisher();
-        publisher3.setName(new HashSet<>());
-        publisher3.setPlace(new HashSet<>());
-        publisher3.setState(new HashSet<>());
         var publishers = Arrays.asList(publisher1, publisher2, publisher3);
         var page1 =
             new PageImpl<>(publishers.subList(0, 2), PageRequest.of(0, 10), publishers.size());

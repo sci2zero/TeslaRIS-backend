@@ -95,9 +95,9 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.GET,
                 "/api/proceedings-publication/event/{eventId}/my-publications").permitAll()
 
-            // HARVESTER
-            .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/harvest/load").permitAll()
+            // IMPORTER
+            .antMatchers(HttpMethod.GET, "/api/import/harvest").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/import/load").permitAll()
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");

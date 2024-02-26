@@ -141,12 +141,6 @@ public class ProceedingsPublicationServiceTest {
         publicationDTO.setEventId(1);
         var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        publicationToUpdate.setTitle(new HashSet<>());
-        publicationToUpdate.setSubTitle(new HashSet<>());
-        publicationToUpdate.setDescription(new HashSet<>());
-        publicationToUpdate.setKeywords(new HashSet<>());
-        publicationToUpdate.setContributors(new HashSet<>());
-        publicationToUpdate.setUris(new HashSet<>());
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
@@ -189,21 +183,14 @@ public class ProceedingsPublicationServiceTest {
         // Given
         var publicationId = 1;
         var publication = new ProceedingsPublication();
-        publication.setTitle(new HashSet<>());
-        publication.setSubTitle(new HashSet<>());
-        publication.setDescription(new HashSet<>());
-        publication.setKeywords(new HashSet<>());
         publication.setApproveStatus(ApproveStatus.APPROVED);
 
         var contribution = new PersonDocumentContribution();
-        contribution.setContributionDescription(new HashSet<>());
-        contribution.setInstitutions(new HashSet<>());
         contribution.setContributionType(type);
-        contribution.setMainContributor(isMainAuthor);
-        contribution.setCorrespondingContributor(isCorrespondingAuthor);
+        contribution.setIsMainContributor(isMainAuthor);
+        contribution.setIsCorrespondingContributor(isCorrespondingAuthor);
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         var affiliationStatement = new AffiliationStatement();
-        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
@@ -211,7 +198,6 @@ public class ProceedingsPublicationServiceTest {
         contribution.setAffiliationStatement(affiliationStatement);
         publication.setContributors(Set.of(contribution));
 
-        publication.setUris(new HashSet<>());
         var proceedings = new Proceedings();
         proceedings.setId(1);
         publication.setProceedings(proceedings);
@@ -233,15 +219,9 @@ public class ProceedingsPublicationServiceTest {
         var eventId = 1;
         var authorId = 1;
         var proceedings = new Proceedings();
-        proceedings.setTitle(new HashSet<>());
         var publication = new ProceedingsPublication();
         publication.setProceedings(proceedings);
-        publication.setTitle(new HashSet<>());
-        publication.setSubTitle(new HashSet<>());
-        publication.setDescription(new HashSet<>());
-        publication.setKeywords(new HashSet<>());
         publication.setApproveStatus(ApproveStatus.APPROVED);
-        publication.setUris(new HashSet<>());
 
         when(proceedingsPublicationRepository.findProceedingsPublicationsForEventId(
             eventId, authorId)).thenReturn(List.of(publication));
@@ -280,11 +260,6 @@ public class ProceedingsPublicationServiceTest {
         // Given
         var proceedingsPublication = new ProceedingsPublication();
         proceedingsPublication.setDocumentDate("2024");
-        proceedingsPublication.setTitle(new HashSet<>());
-        proceedingsPublication.setDescription(new HashSet<>());
-        proceedingsPublication.setKeywords(new HashSet<>());
-        proceedingsPublication.setFileItems(new HashSet<>());
-        proceedingsPublication.setContributors(new HashSet<>());
         var proceedings = new Proceedings();
         proceedings.setEvent(new Conference());
         proceedingsPublication.setProceedings(proceedings);

@@ -52,6 +52,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
             multilingualContentService.getMultilingualContent(
                 publicationSeriesDTO.getNameAbbreviation()));
 
+        publicationSeries.setOldId(publicationSeriesDTO.getOldId());
         publicationSeries.setEISSN(publicationSeriesDTO.getEissn());
         publicationSeries.setPrintISSN(publicationSeriesDTO.getPrintISSN());
 

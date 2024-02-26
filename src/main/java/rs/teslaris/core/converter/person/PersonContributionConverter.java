@@ -24,8 +24,8 @@ public class PersonContributionConverter {
                 setCommonFields(contribution, c);
 
                 contribution.setContributionType(c.getContributionType());
-                contribution.setIsMainContributor(c.isMainContributor());
-                contribution.setIsCorrespondingContributor(c.isCorrespondingContributor());
+                contribution.setIsMainContributor(c.getIsMainContributor());
+                contribution.setIsCorrespondingContributor(c.getIsCorrespondingContributor());
 
                 contributionDTOs.add(contribution);
             });

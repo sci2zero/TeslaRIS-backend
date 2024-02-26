@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.person;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -43,13 +44,13 @@ public class Involvement extends BaseEntity {
     private ApproveStatus approveStatus;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<DocumentFile> proofs;
+    private Set<DocumentFile> proofs = new HashSet<>();
 
     @Column(name = "involvement_type", nullable = false)
     private InvolvementType involvementType;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> affiliationStatement;
+    private Set<MultiLingualContent> affiliationStatement = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", nullable = false)

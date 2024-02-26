@@ -1,6 +1,5 @@
 package rs.teslaris.core.service.impl.document;
 
-import java.util.HashSet;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -66,7 +65,6 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     public Conference createConference(ConferenceDTO conferenceDTO, Boolean index) {
         var conference = new Conference();
-        conference.setContributions(new HashSet<>());
 
         setEventCommonFields(conference, conferenceDTO);
         setConferenceRelatedFields(conference, conferenceDTO);
@@ -83,15 +81,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     public Conference createConference(ConferenceBasicAdditionDTO conferenceDTO) {
         var conference = new Conference();
-        conference.setContributions(new HashSet<>());
 
         conference.setName(
             multilingualContentService.getMultilingualContent(conferenceDTO.getName()));
-        conference.setNameAbbreviation(new HashSet<>());
-        conference.setDescription(new HashSet<>());
-        conference.setKeywords(new HashSet<>());
-        conference.setState(new HashSet<>());
-        conference.setPlace(new HashSet<>());
         conference.setDateFrom(conferenceDTO.getDateFrom());
         conference.setDateTo(conferenceDTO.getDateTo());
         conference.setSerialEvent(false);

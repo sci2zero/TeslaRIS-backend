@@ -3,23 +3,28 @@ package rs.teslaris.core.service.impl.commontypes;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReindexServiceImpl implements ReindexService {
 
     private final UserService userService;
@@ -43,6 +48,12 @@ public class ReindexServiceImpl implements ReindexService {
     private final JournalPublicationService journalPublicationService;
 
     private final ProceedingsPublicationService proceedingsPublicationService;
+
+    private final PatentService patentService;
+
+    private final SoftwareService softwareService;
+
+    private final DatasetService datasetService;
 
 
     @Override
@@ -99,6 +110,9 @@ public class ReindexServiceImpl implements ReindexService {
 
                 journalPublicationService.reindexJournalPublications();
                 proceedingsPublicationService.reindexProceedingsPublications();
+                patentService.reindexPatents();
+                softwareService.reindexSoftware();
+                datasetService.reindexDatasets();
             });
 
             reindexPublicationsThread.start();
@@ -110,7 +124,7 @@ public class ReindexServiceImpl implements ReindexService {
                 thread.join();
             }
         } catch (InterruptedException e) {
-            e.printStackTrace(); // TODO: should be logged
+            log.error("Thread interrupted while waiting for reindexing to complete", e);
         }
     }
 }

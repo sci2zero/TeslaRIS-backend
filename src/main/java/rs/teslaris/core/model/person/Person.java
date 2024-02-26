@@ -34,7 +34,7 @@ public class Person extends BaseEntity {
     private PersonName name;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<PersonName> otherNames;
+    private Set<PersonName> otherNames = new HashSet<>();
 
     @Embedded
     private PersonalInfo personalInfo;
@@ -44,19 +44,19 @@ public class Person extends BaseEntity {
     private User user;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<Involvement> involvements;
+    private Set<Involvement> involvements = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<ExpertiseOrSkill> expertisesAndSkills;
+    private Set<ExpertiseOrSkill> expertisesAndSkills = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<Prize> prizes;
+    private Set<Prize> prizes = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MultiLingualContent> biography;
+    private Set<MultiLingualContent> biography = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MultiLingualContent> keyword;
+    private Set<MultiLingualContent> keyword = new HashSet<>();
 
     @Column(name = "apvnt")
     private String apvnt;

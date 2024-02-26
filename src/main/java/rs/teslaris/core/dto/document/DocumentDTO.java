@@ -19,6 +19,8 @@ public class DocumentDTO {
 
     private Integer id;
 
+    private Integer oldId;
+
     @Valid
     @NotNull(message = "You have to provide a title.")
     private List<MultilingualContentDTO> title;

@@ -21,9 +21,12 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.Publisher;
+import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
@@ -42,9 +45,12 @@ import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
+import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
+import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
@@ -88,6 +94,12 @@ public class DbInitializer implements ApplicationRunner {
     private final PublisherRepository publisherRepository;
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+
+    private final PatentRepository patentRepository;
+
+    private final SoftwareRepository softwareRepository;
+
+    private final DatasetRepository datasetRepository;
 
 
     @Override
@@ -305,5 +317,34 @@ public class DbInitializer implements ApplicationRunner {
         var frenchLanguage = new Language();
         frenchLanguage.setLanguageCode(LanguageAbbreviations.FRENCH);
         languageRepository.save(frenchLanguage);
+
+        var spanishTag = new LanguageTag(LanguageAbbreviations.SPANISH, "Español");
+        languageTagRepository.save(spanishTag);
+
+        var spanishLanguage = new Language();
+        spanishLanguage.setLanguageCode(LanguageAbbreviations.SPANISH);
+        languageRepository.save(spanishLanguage);
+
+        var russianTag = new LanguageTag(LanguageAbbreviations.RUSSIAN, "Русский");
+        languageTagRepository.save(russianTag);
+
+        var russianLanguage = new Language();
+        russianLanguage.setLanguageCode(LanguageAbbreviations.RUSSIAN);
+        languageRepository.save(russianLanguage);
+
+        var software = new Software();
+        software.setTitle(Set.of(new MultiLingualContent(englishTag, "TeslaRIS", 1)));
+        software.setApproveStatus(ApproveStatus.APPROVED);
+        softwareRepository.save(software);
+
+        var patent = new Patent();
+        patent.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Patent", 1)));
+        patent.setApproveStatus(ApproveStatus.APPROVED);
+        patentRepository.save(patent);
+
+        var dataset = new Dataset();
+        dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));
+        dataset.setApproveStatus(ApproveStatus.APPROVED);
+        datasetRepository.save(dataset);
     }
 }

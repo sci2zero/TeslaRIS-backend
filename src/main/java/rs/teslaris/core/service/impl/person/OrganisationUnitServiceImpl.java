@@ -134,6 +134,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     m -> m.field("name_sr").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_other").value("*" + token + "*").caseInsensitive(true)));
+                b.should(sb -> sb.match(
+                    m -> m.field("super_ou_name_sr").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("super_ou_name_other").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("keywords_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.wildcard(
@@ -275,6 +279,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.setResearchAreasOther(
             researchAreaOtherContent.length() > 0 ? researchAreaOtherContent.toString() :
                 researchAreaSrContent.toString());
+
+        indexBelongsToSuperOURelation(organisationUnit, index);
+    }
+
+    private void indexBelongsToSuperOURelation(OrganisationUnit organisationUnit,
+                                               OrganisationUnitIndex index) {
+        var belongsToRelation =
+            organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
+        belongsToRelation.ifPresent(organisationUnitsRelation -> indexMultilingualContent(index,
+            organisationUnitsRelation.getTargetOrganisationUnit(),
+            OrganisationUnit::getName,
+            OrganisationUnitIndex::setSuperOUNameSr,
+            OrganisationUnitIndex::setSuperOUNameOther));
     }
 
     private void indexMultilingualContent(OrganisationUnitIndex index,
@@ -348,7 +365,17 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             newRelation.setApproveStatus(ApproveStatus.REQUESTED);
         }
 
-        return organisationUnitsRelationJPAService.save(newRelation);
+        var savedRelation = organisationUnitsRelationJPAService.save(newRelation);
+
+        var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            savedRelation.getSourceOrganisationUnit().getId());
+        index.ifPresent(organisationUnitIndex -> {
+            indexBelongsToSuperOURelation(savedRelation.getSourceOrganisationUnit(),
+                organisationUnitIndex);
+            organisationUnitIndexRepository.save(organisationUnitIndex);
+        });
+
+        return savedRelation;
     }
 
     @Override

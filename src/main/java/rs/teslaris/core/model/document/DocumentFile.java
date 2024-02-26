@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.document;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -31,7 +32,7 @@ public class DocumentFile extends BaseEntity {
     private String serverFilename;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @Column(name = "mime_type", nullable = false)
     private String mimeType;

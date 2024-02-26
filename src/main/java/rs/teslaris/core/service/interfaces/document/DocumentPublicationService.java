@@ -15,6 +15,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     Document findDocumentById(Integer documentId);
 
+    Document findDocumentByOldId(Integer documentId);
+
     Long getPublicationCount();
 
     void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved);

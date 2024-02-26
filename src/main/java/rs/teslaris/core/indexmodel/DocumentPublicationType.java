@@ -4,5 +4,8 @@ public enum DocumentPublicationType {
     JOURNAL_PUBLICATION,
     PROCEEDINGS,
     PROCEEDINGS_PUBLICATION,
-    MONOGRAPH
+    MONOGRAPH,
+    PATENT,
+    SOFTWARE,
+    DATASET
 }

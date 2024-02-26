@@ -402,6 +402,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 savedPerson.getName().getFirstname() + " " + savedPerson.getName().getLastname());
         }
 
+        savedPerson.getOtherNames().forEach((otherName) -> {
+            var fullName = Objects.requireNonNullElse(otherName.getFirstname(), "") + " " +
+                Objects.requireNonNullElse(otherName.getOtherName(), "") + " " +
+                Objects.requireNonNullElse(otherName.getLastname(), "");
+            personIndex.setName(personIndex.getName() + "; " + fullName);
+        });
+
         personIndex.setNameSortable(personIndex.getName());
 
         if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
@@ -414,7 +421,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
-        if (!Objects.nonNull(savedPerson.getInvolvements())) {
+        if (Objects.isNull(savedPerson.getInvolvements())) {
             return;
         }
 

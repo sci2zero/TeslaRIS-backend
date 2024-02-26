@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.person;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -27,13 +28,13 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 public class Education extends Involvement {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> thesisTitle;
+    private Set<MultiLingualContent> thesisTitle = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> title;
+    private Set<MultiLingualContent> title = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> abbreviationTitle;
+    private Set<MultiLingualContent> abbreviationTitle = new HashSet<>();
 
     public Education(LocalDate dateFrom,
                      LocalDate dateTo,

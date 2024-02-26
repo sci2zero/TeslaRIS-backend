@@ -123,7 +123,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         var publicationToDelete = (JournalPublication) findOne(journalPublicationId);
 
         deleteProofsAndFileItems(publicationToDelete);
-        delete(journalPublicationId);
+
+        journalPublicationJPAService.delete(journalPublicationId);
         this.delete(journalPublicationId);
     }
 

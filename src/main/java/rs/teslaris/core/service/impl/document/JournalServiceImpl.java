@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,9 +81,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public Journal findJournalByOldId(Integer journalId) {
+        return journalRepository.findJournalByOldId(journalId).orElse(null);
+    }
+
+    @Override
     public Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index) {
         var journal = new Journal();
-        journal.setLanguages(new HashSet<>());
 
         setPublicationSeriesCommonFields(journal, journalDTO);
         setJournalRelatedFields(journal, journalDTO);
@@ -101,10 +104,6 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     @Override
     public Journal createJournal(JournalBasicAdditionDTO journalDTO) {
         var journal = new Journal();
-
-        journal.setLanguages(new HashSet<>());
-        journal.setContributions(new HashSet<>());
-        journal.setNameAbbreviation(new HashSet<>());
 
         journal.setTitle(multilingualContentService.getMultilingualContent(journalDTO.getTitle()));
         journal.setEISSN(journalDTO.getEISSN());
