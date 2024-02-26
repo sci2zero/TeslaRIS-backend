@@ -140,8 +140,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getPersonName().getLastname(),
             contributionDTO.getPersonName().getDateFrom(),
             contributionDTO.getPersonName().getDateTo());
-        if (personName.getFirstname().isEmpty() && personName.getOtherName().isEmpty() &&
-            personName.getLastname().isEmpty()) {
+        if (personName.getFirstname().isEmpty() && personName.getLastname().isEmpty()) {
             personName = new PersonName(contributor.getName().getFirstname(),
                 contributor.getName().getOtherName(),
                 contributor.getName().getLastname(),
