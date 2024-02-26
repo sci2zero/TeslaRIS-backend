@@ -7,8 +7,10 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
+import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -102,5 +104,34 @@ public class PersonConverter {
                 keyw.getPriority())));
 
         return keywordDTO;
+    }
+
+
+    public static PersonUserResponseDTO toDTOWithUser(Person person) {
+        var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
+        var biography = getPersonBiographyDTO(person.getBiography());
+        var keyword = getPersonKeywordDTO(person.getKeyword());
+
+        var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
+
+        UserResponseDTO userDTO = null;
+        if (person.getUser() != null) {
+            userDTO = UserConverter.toUserResponseDTO(person.getUser());
+        }
+
+        return new PersonUserResponseDTO(
+            new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
+                person.getName().getLastname(), person.getName().getDateFrom(),
+                person.getName().getDateTo()), otherNames,
+            new PersonalInfoDTO(person.getPersonalInfo()
+                .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
+                person.getPersonalInfo()
+                    .getSex(), postalAddress,
+                new ContactDTO(person.getPersonalInfo().getContact().getContactEmail(),
+                    person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
+                person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
+            keyword,
+            person.getApproveStatus(),
+            userDTO);
     }
 }

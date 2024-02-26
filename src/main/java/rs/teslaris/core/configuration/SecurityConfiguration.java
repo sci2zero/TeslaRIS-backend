@@ -72,6 +72,7 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/{personId}/person-user").permitAll()
 
             // ORGANISATION UNIT
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()

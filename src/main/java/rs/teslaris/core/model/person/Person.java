@@ -19,6 +19,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.user.User;
 
 @Getter
 @Setter
@@ -37,6 +38,10 @@ public class Person extends BaseEntity {
 
     @Embedded
     private PersonalInfo personalInfo;
+
+
+    @OneToOne(mappedBy = "person")
+    private User user;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Involvement> involvements;

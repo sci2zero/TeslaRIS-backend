@@ -23,4 +23,6 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     @Query("select count(u) > 0 from User u join u.person p where p.id = :personId")
     boolean isBoundToUser(Integer personId);
 
+    @Query("select p from Person p left join p.user pu where p.id = :id and p.approveStatus = 1")
+    Optional<Person> findApprovedPersonByIdWithUser(Integer id);
 }
