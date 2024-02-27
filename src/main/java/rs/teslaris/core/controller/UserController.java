@@ -133,7 +133,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
-    public UserResponseDTO registerEmployee(
+    public UserResponseDTO registerInstitutionAdmin(
         @RequestBody @Valid EmployeeRegistrationRequestDTO registrationRequest) {
         var newUser = userService.registerInstitutionAdmin(registrationRequest);
 
