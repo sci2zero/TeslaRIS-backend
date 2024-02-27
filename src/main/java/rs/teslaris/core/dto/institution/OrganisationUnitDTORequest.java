@@ -15,7 +15,7 @@ import rs.teslaris.core.dto.person.ContactDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrganisationUnitDTORequest {
+public class OrganisationUnitRequestDTO {
 
     @NotNull(message = "You have to provide organisation name.")
     private List<MultilingualContentDTO> name;
