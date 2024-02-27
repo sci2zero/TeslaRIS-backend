@@ -97,6 +97,7 @@ public class SecurityConfiguration {
             // IMPORTER
             .antMatchers(HttpMethod.GET, "/api/import/harvest").permitAll()
             .antMatchers(HttpMethod.GET, "/api/import/load").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/import/load-wizard/**").permitAll()
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");
