@@ -34,8 +34,11 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         var dto = new ProceedingsPublicationDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
 
-        // TODO: is this ok?
-        dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+        if (record.getType().endsWith("c_5794")) {
+            dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+        } else {
+            dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_ABSTRACT_ARTICLE);
+        }
 
         setCommonFields(record, dto);
 

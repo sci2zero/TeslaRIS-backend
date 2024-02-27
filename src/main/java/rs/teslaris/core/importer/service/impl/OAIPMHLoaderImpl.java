@@ -177,7 +177,6 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 journalService.createJournal(creationDTO, performIndex);
                             }
                         }
-                        // TODO: what is conference output (c_c94f) ???
                     });
                     hasNextPage = batch.size() == batchSize;
                     break;
@@ -249,7 +248,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                 case PUBLICATIONS:
                     var criteria = new Criteria().orOperator(
                         Criteria.where("type").regex("c_2df8fbb1$"),
-                        Criteria.where("type").regex("c_5794$")
+                        Criteria.where("type").regex("c_5794$"),
+                        Criteria.where("type").regex("c_c94f$")
                     );
                     var publicationBatch =
                         mongoTemplate.find(query.addCriteria(criteria), Publication.class);
@@ -263,6 +263,14 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             }
                         } else if (record.getType()
                             .endsWith("c_5794")) { // COAR type: conference paper
+                            var creationDTO = proceedingsPublicationConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                proceedingsPublicationService.createProceedingsPublication(
+                                    creationDTO,
+                                    performIndex);
+                            }
+                        } else if (record.getType()
+                            .endsWith("c_0640")) { // COAR type: conference output
                             var creationDTO = proceedingsPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 proceedingsPublicationService.createProceedingsPublication(
