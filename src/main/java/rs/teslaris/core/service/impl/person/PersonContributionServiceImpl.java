@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.person;
 
 import java.util.HashSet;
+import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -166,10 +167,18 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getContributionDescription()));
 
         setAffiliationStatement(contribution, contributionDTO, contributor);
+
         contribution.setInstitutions(new HashSet<>());
-        // TODO: Moze li ovo ovako?
-        contribution.getInstitutions()
-            .add(personService.getLatestResearcherInvolvement(contributor));
+        if (Objects.isNull(contributionDTO.getInstitutionIds()) ||
+            contributionDTO.getInstitutionIds().isEmpty()) {
+            contribution.getInstitutions()
+                .add(personService.getLatestResearcherInvolvement(contributor));
+        } else {
+            contributionDTO.getInstitutionIds().forEach(institutionId -> {
+                var organisationUnit = organisationUnitService.findOne(institutionId);
+                contribution.getInstitutions().add(organisationUnit);
+            });
+        }
 
         contribution.setOrderNumber(contributionDTO.getOrderNumber());
         contribution.setApproveStatus(

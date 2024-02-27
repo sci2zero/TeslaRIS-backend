@@ -21,7 +21,7 @@ import rs.teslaris.core.converter.institution.RelationConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
@@ -165,7 +165,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnitDTO createOrganisationUnit(
-        OrganisationUnitDTORequest organisationUnitDTORequest) {
+        OrganisationUnitRequestDTO organisationUnitDTORequest) {
         OrganisationUnit organisationUnit = new OrganisationUnit();
         OrganisationUnitIndex organisationUnitIndex = new OrganisationUnitIndex();
 
@@ -187,7 +187,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnit editOrganisationUnit(
-        OrganisationUnitDTORequest organisationUnitDTORequest, Integer organisationUnitId) {
+        OrganisationUnitRequestDTO organisationUnitDTORequest, Integer organisationUnitId) {
 
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
         var indexToUpdate = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
@@ -206,7 +206,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     private void setCommonOUFields(OrganisationUnit organisationUnit,
-                                   OrganisationUnitDTORequest organisationUnitDTO) {
+                                   OrganisationUnitRequestDTO organisationUnitDTO) {
         organisationUnit.setName(
             multilingualContentService.getMultilingualContent(organisationUnitDTO.getName())
         );

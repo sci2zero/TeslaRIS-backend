@@ -297,12 +297,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public OrganisationUnit getLatestResearcherInvolvement(Person person) {
         OrganisationUnit organisationUnit = null;
         if (Objects.nonNull(person.getInvolvements())) {
-            // TODO: Ulazi li ovo samo u display OU ili i edukacija
             Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
                 .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
                 .filter(involvement ->
                     involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                        involvement.getInvolvementType().equals(InvolvementType.HIRED_BY))
+                        involvement.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
+                        involvement.getInvolvementType().equals(InvolvementType.MEMBER_OF))
                 .max(Comparator.comparing(Involvement::getDateFrom));
 
             if (latestInvolvement.isPresent()) {

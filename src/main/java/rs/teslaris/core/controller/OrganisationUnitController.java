@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -76,7 +76,7 @@ public class OrganisationUnitController {
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @Idempotent
     public OrganisationUnitDTO createOrganisationUnit(
-        @RequestBody @Valid OrganisationUnitDTORequest organisationUnitDTORequest) {
+        @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitDTORequest) {
         return organisationUnitService.createOrganisationUnit(organisationUnitDTORequest);
     }
 
@@ -85,7 +85,7 @@ public class OrganisationUnitController {
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.OK)
     public OrganisationUnitDTO updateOrganisationUnit(
-        @RequestBody @Valid OrganisationUnitDTORequest organisationUnitDTORequest,
+        @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitDTORequest,
         @PathVariable Integer organisationUnitId) {
         var organisationUnit =
             organisationUnitService.editOrganisationUnit(organisationUnitDTORequest,
