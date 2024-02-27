@@ -62,7 +62,7 @@ public class Person extends BaseEntity {
     @Column(name = "orcid")
     private String orcid;
 
-    @Column(name = "acopus_author_id")
+    @Column(name = "scopus_author_id")
     private String scopusAuthorId;
 
     @Column(name = "cris_uns_id")
