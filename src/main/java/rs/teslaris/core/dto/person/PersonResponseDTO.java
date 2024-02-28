@@ -14,6 +14,8 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 @AllArgsConstructor
 public class PersonResponseDTO {
 
+    Integer id;
+
     PersonNameDTO personName;
 
     List<PersonNameDTO> personOtherNames;

@@ -71,7 +71,10 @@ public class SecurityConfiguration {
             // PERSON
             .antMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
+
+            // COUNTRY
+            .antMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
 
             // ORGANISATION UNIT
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
@@ -84,6 +87,7 @@ public class SecurityConfiguration {
             // DOCUMENT
             .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/document/for-researcher/{personId}").permitAll()
 
             // PROCEEDINGS
             .antMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()
