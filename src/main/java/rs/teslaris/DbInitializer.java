@@ -370,6 +370,8 @@ public class DbInitializer implements ApplicationRunner {
         person1.getBiography()
             .add(new MultiLingualContent(englishTag, "Lorem ipsum dolor sit amet.", 1));
         person1.getBiography().add(new MultiLingualContent(serbianTag, "Srpska biografija.", 2));
+        person1.getKeyword().add(new MultiLingualContent(englishTag,
+            "Machine Learning, Cybersecurity, Reverse Engineering, Web Security", 1));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
