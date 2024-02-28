@@ -1,5 +1,6 @@
 package rs.teslaris.core.indexmodel;
 
+import java.time.LocalDate;
 import javax.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,8 +25,14 @@ public class EventIndex {
     @Field(type = FieldType.Text, name = "name_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String nameSr;
 
+    @Field(type = FieldType.Keyword, store = true, name = "name_sr_sortable")
+    private String nameSrSortable;
+
     @Field(type = FieldType.Text, name = "name_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String nameOther;
+
+    @Field(type = FieldType.Keyword, store = true, name = "name_other_sortable")
+    private String nameOtherSortable;
 
     @Field(type = FieldType.Text, name = "description_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String descriptionSr;
@@ -42,8 +49,14 @@ public class EventIndex {
     @Field(type = FieldType.Text, name = "state_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String stateSr;
 
+    @Field(type = FieldType.Keyword, store = true, name = "state_sr_sortable")
+    private String stateSrSortable;
+
     @Field(type = FieldType.Text, name = "state_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String stateOther;
+
+    @Field(type = FieldType.Keyword, store = true, name = "state_other_sortable")
+    private String stateOtherSortable;
 
     @Field(type = FieldType.Text, name = "place_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String placeSr;
@@ -53,6 +66,9 @@ public class EventIndex {
 
     @Field(type = FieldType.Text, name = "date_from_to", store = true)
     private String dateFromTo;
+
+    @Field(type = FieldType.Date, store = true, name = "date_sortable")
+    private LocalDate dateSortable;
 
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;

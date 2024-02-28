@@ -2,12 +2,15 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,13 +20,14 @@ import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -41,8 +45,10 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -64,6 +70,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final PersonNameService personNameService;
 
+
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
 
@@ -81,7 +88,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
-    public PersonResponseDto readPersonWithBasicInfo(Integer id) {
+    public PersonResponseDTO readPersonWithBasicInfo(Integer id) {
         var person = personRepository.findApprovedPersonById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
         return PersonConverter.toDTO(person);
@@ -110,7 +117,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return false;
     }
 
-
     @Override
     @Transactional
     public Person createPersonWithBasicInfo(BasicPersonDTO personDTO) {
@@ -123,14 +129,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var personalContact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
         var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
-            new PostalAddress(), personalContact);
-
-        var employmentInstitution =
-            organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
-
-        var currentEmployment = new Employment(null, null, defaultApproveStatus, new HashSet<>(),
-            InvolvementType.EMPLOYED_AT, new HashSet<>(), null, employmentInstitution,
-            personDTO.getEmploymentPosition(), new HashSet<>());
+            new PostalAddress(null, new HashSet<>(), new HashSet<>()), personalContact);
 
         var newPerson = new Person();
         newPerson.setName(personName);
@@ -139,7 +138,17 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         newPerson.setMnid(personDTO.getMnid());
         newPerson.setOrcid(personDTO.getOrcid());
         newPerson.setScopusAuthorId(personDTO.getScopusAuthorId());
-        newPerson.addInvolvement(currentEmployment);
+
+        if (Objects.nonNull(personDTO.getOrganisationUnitId())) {
+            var employmentInstitution =
+                organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
+            var currentEmployment =
+                new Employment(null, null, defaultApproveStatus, new HashSet<>(),
+                    InvolvementType.EMPLOYED_AT, new HashSet<>(), null, employmentInstitution,
+                    personDTO.getEmploymentPosition(), new HashSet<>());
+            newPerson.addInvolvement(currentEmployment);
+        }
+
         newPerson.setApproveStatus(defaultApproveStatus);
 
         var savedPerson = this.save(newPerson);
@@ -272,6 +281,37 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
     }
 
+    @Override
+    public void deletePerson(Integer personId) {
+        if (personRepository.hasContribution(personId) ||
+            personRepository.isBoundToUser(personId)) {
+            throw new PersonReferenceConstraintViolationException(
+                "This person is allready in use.");
+        }
+
+        delete(personId);
+        var index = personIndexRepository.findByDatabaseId(personId);
+        index.ifPresent(personIndexRepository::delete);
+    }
+
+    public OrganisationUnit getLatestResearcherInvolvement(Person person) {
+        OrganisationUnit organisationUnit = null;
+        if (Objects.nonNull(person.getInvolvements())) {
+            Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
+                .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
+                .filter(involvement ->
+                    involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                        involvement.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
+                        involvement.getInvolvementType().equals(InvolvementType.MEMBER_OF))
+                .max(Comparator.comparing(Involvement::getDateFrom));
+
+            if (latestInvolvement.isPresent()) {
+                organisationUnit = latestInvolvement.get().getOrganisationUnit();
+            }
+        }
+        return organisationUnit;
+    }
+
     @Transactional
     private void setPersonStreetAndNumberInfo(Person personToUpdate,
                                               PersonalInfo personalInfoToUpdate,
@@ -325,11 +365,22 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setName(
             savedPerson.getName().getFirstname() + " " + savedPerson.getName().getOtherName() +
                 " " + savedPerson.getName().getLastname());
-        personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
+        personIndex.setNameSortable(personIndex.getName());
+
+        if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
+            personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
+        }
+        personIndex.setBirthdateSortable(personIndex.getBirthdate());
+
         personIndex.setDatabaseId(savedPerson.getId());
+        personIndex.setOrcid(savedPerson.getOrcid());
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
+        if (!Objects.nonNull(savedPerson.getInvolvements())) {
+            return;
+        }
+
         var employmentInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> i.getInvolvementType() == InvolvementType.EMPLOYED_AT)
             .map(Involvement::getOrganisationUnit).collect(Collectors.toList());
@@ -337,31 +388,49 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setEmploymentInstitutionsId(
             employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
 
-        var employments_sr = new StringBuilder();
-        var employments_other = new StringBuilder();
+        var employmentsSr = new StringBuilder();
+        var employmentsOther = new StringBuilder();
         for (var organisationUnit : employmentInstitutions) {
-            var institutionName_sr = new StringBuilder();
-            var institutionName_other = new StringBuilder();
+            var institutionNameSr = new StringBuilder();
+            var institutionNameOther = new StringBuilder();
 
             organisationUnit.getName().stream()
                 .filter(mc -> mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
-                .forEach(mc -> institutionName_sr.append(mc.getContent()).append(" | "));
+                .forEach(mc -> institutionNameSr.append(mc.getContent()).append(" | "));
             organisationUnit.getName().stream()
                 .filter(mc -> !mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
-                .forEach(mc -> institutionName_other.append(mc.getContent()).append(" | "));
-            employments_sr.append(institutionName_sr)
+                .forEach(mc -> {
+                    if (mc.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH)) {
+                        institutionNameOther.insert(0, " | ").insert(0, mc.getContent());
+                    } else {
+                        institutionNameOther.append(mc.getContent()).append(" | ");
+                    }
+                });
+            employmentsSr.append(institutionNameSr)
                 .append(organisationUnit.getNameAbbreviation());
-            employments_other.append(institutionName_other);
+            employmentsOther.append(institutionNameOther);
         }
-        personIndex.setEmploymentsSr(employments_sr.toString());
-        personIndex.setEmployments(employments_other.toString());
+
+        StringUtil.removeTrailingPipeDelimiter(employmentsSr, employmentsOther);
+        personIndex.setEmploymentsSr(
+            employmentsSr.length() > 0 ? employmentsSr.toString() : employmentsOther.toString());
+        personIndex.setEmploymentsSrSortable(personIndex.getEmploymentsSr());
+        personIndex.setEmploymentsOther(
+            employmentsOther.length() > 0 ? employmentsOther.toString() :
+                employmentsSr.toString());
+        personIndex.setEmploymentsOtherSortable(personIndex.getEmploymentsOther());
     }
 
     @Override
     public Page<PersonIndex> findAllIndex(Pageable pageable) {
         return personIndexRepository.findAll(pageable);
+    }
+
+    @Override
+    public Long getResearcherCount() {
+        return personIndexRepository.count();
     }
 
     @Override
@@ -390,9 +459,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             .must(mb -> mb.bool(b -> {
                     tokens.forEach(
                         token -> {
-                            b.should(sb -> sb.match(m -> m.field("name").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments_srp").query(token)));
+                            b.should(sb -> sb.wildcard(
+                                m -> m.field("name").value(token).caseInsensitive(true)));
+                            b.should(sb -> sb.match(m -> m.field("name").query(token).fuzziness(
+                                Fuzziness.ONE.asString())));
+                            b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
+                            b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
                         });
                     return b;
                 }

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,22 +23,26 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.JournalServiceImpl;
+import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
-import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
 public class JournalServiceTest {
+
+    @Mock
+    private JournalJPAServiceImpl journalJPAService;
 
     @Mock
     private JournalRepository journalRepository;
@@ -62,6 +65,9 @@ public class JournalServiceTest {
     @Mock
     private EmailUtil emailUtil;
 
+    @Mock
+    private PublicationSeriesRepository publicationSeriesRepository;
+
     @InjectMocks
     private JournalServiceImpl journalService;
 
@@ -70,45 +76,34 @@ public class JournalServiceTest {
     public void shouldReturnJournalWhenItExists() {
         // given
         var expected = new Journal();
-        when(journalRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(journalJPAService.findOne(1)).thenReturn(expected);
 
         // when
-        var result = journalService.findOne(1);
+        var result = journalService.findJournalById(1);
 
         // then
         assertEquals(expected, result);
     }
 
     @Test
-    public void shouldThrowNotFoundExceptionWhenJournalDoesNotExist() {
-        // given
-        when(journalRepository.findById(1)).thenReturn(Optional.empty());
-
-        // when
-        assertThrows(NotFoundException.class, () -> journalService.findOne(1));
-
-        // then (NotFoundException should be thrown)
-    }
-
-    @Test
     public void shouldCreateJournalWhenProvidedWithValidData() {
         // given
-        var journalDTO = new JournalDTO();
+        var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEISSN("eISSN");
+        journalDTO.setEissn("eISSN");
         journalDTO.setPrintISSN("printISSN");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
-        when(journalRepository.save(any())).thenReturn(new Journal());
+        when(journalJPAService.save(any())).thenReturn(new Journal());
 
         // when
         var savedJournal = journalService.createJournal(journalDTO);
 
         // then
         assertNotNull(savedJournal);
-        verify(journalRepository, times(1)).save(any());
+        verify(journalJPAService, times(1)).save(any());
     }
 
     @Test
@@ -121,14 +116,14 @@ public class JournalServiceTest {
 
         var journal = new Journal();
         journal.setId(1);
-        when(journalRepository.save(any())).thenReturn(journal);
+        when(journalJPAService.save(any())).thenReturn(journal);
 
         // when
         var savedJournal = journalService.createJournal(journalDTO);
 
         // then
         assertNotNull(savedJournal);
-        verify(journalRepository, times(1)).save(any());
+        verify(journalJPAService, times(1)).save(any());
         verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "journal");
     }
 
@@ -136,10 +131,10 @@ public class JournalServiceTest {
     public void shouldUpdateJournalWhenProvidedWithValidData() {
         // given
         var journalId = 1;
-        var journalDTO = new JournalDTO();
+        var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEISSN("eISSN");
+        journalDTO.setEissn("eISSN");
         journalDTO.setPrintISSN("printISSN");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
@@ -149,8 +144,8 @@ public class JournalServiceTest {
         var journalIndex = new JournalIndex();
         journalIndex.setDatabaseId(journalId);
 
-        when(journalRepository.findById(journalId)).thenReturn(Optional.of(journal));
-        when(journalRepository.save(any())).thenReturn(new Journal());
+        when(journalJPAService.findOne(journalId)).thenReturn(journal);
+        when(journalJPAService.save(any())).thenReturn(new Journal());
         when(journalIndexRepository.findJournalIndexByDatabaseId(journalId)).thenReturn(
             Optional.of(journalIndex));
 
@@ -158,17 +153,17 @@ public class JournalServiceTest {
         journalService.updateJournal(journalDTO, journalId);
 
         // then
-        verify(journalRepository, times(1)).save(any());
+        verify(journalJPAService, times(1)).save(any());
     }
 
     @Test
     public void shouldUpdateJournalWhenProvidedWithValidDataNonIndexed() {
         // given
         var journalId = 1;
-        var journalDTO = new JournalDTO();
+        var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEISSN("eISSN");
+        journalDTO.setEissn("eISSN");
         journalDTO.setPrintISSN("printISSN");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
@@ -176,8 +171,8 @@ public class JournalServiceTest {
         var journal = new Journal();
         journal.setLanguages(new HashSet<>());
 
-        when(journalRepository.findById(journalId)).thenReturn(Optional.of(journal));
-        when(journalRepository.save(any())).thenReturn(new Journal());
+        when(journalJPAService.findOne(journalId)).thenReturn(journal);
+        when(journalJPAService.save(any())).thenReturn(new Journal());
         when(journalIndexRepository.findJournalIndexByDatabaseId(journalId)).thenReturn(
             Optional.empty());
 
@@ -185,7 +180,7 @@ public class JournalServiceTest {
         journalService.updateJournal(journalDTO, journalId);
 
         // then
-        verify(journalRepository, times(1)).save(any());
+        verify(journalJPAService, times(1)).save(any());
     }
 
     @Test
@@ -194,16 +189,15 @@ public class JournalServiceTest {
         var journalId = 1;
         var journalToDelete = new Journal();
 
-        when(journalRepository.findById(journalId)).thenReturn(Optional.of(journalToDelete));
+        when(journalJPAService.findOne(journalId)).thenReturn(journalToDelete);
         when(journalRepository.hasPublication(journalId)).thenReturn(false);
-        when(journalRepository.hasProceedings(journalId)).thenReturn(false);
+        when(publicationSeriesRepository.hasProceedings(journalId)).thenReturn(false);
 
         // when
         journalService.deleteJournal(journalId);
 
         // then
-        verify(journalRepository, times(1)).save(journalToDelete);
-        verify(journalRepository, never()).delete(any());
+        verify(journalJPAService, times(1)).delete(any());
     }
 
     @ParameterizedTest
@@ -213,9 +207,9 @@ public class JournalServiceTest {
         var journalId = 1;
         var journalToDelete = new Journal();
 
-        when(journalRepository.findById(journalId)).thenReturn(Optional.of(journalToDelete));
+        when(journalJPAService.findOne(journalId)).thenReturn(journalToDelete);
         when(journalRepository.hasPublication(journalId)).thenReturn(hasPublication);
-        when(journalRepository.hasProceedings(journalId)).thenReturn(hasProceedings);
+        when(publicationSeriesRepository.hasProceedings(journalId)).thenReturn(hasProceedings);
 
         // when
         assertThrows(JournalReferenceConstraintViolationException.class,
@@ -243,7 +237,7 @@ public class JournalServiceTest {
         journal2.setContributions(new HashSet<>());
         journal2.setLanguages(new HashSet<>());
 
-        when(journalRepository.findAll(pageable)).thenReturn(
+        when(journalJPAService.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(journal1, journal2)));
 
         // when
@@ -265,14 +259,14 @@ public class JournalServiceTest {
         journal.setContributions(new HashSet<>());
         journal.setLanguages(new HashSet<>());
 
-        when(journalRepository.findById(journalId)).thenReturn(Optional.of(journal));
+        when(journalJPAService.findOne(journalId)).thenReturn(journal);
 
         // when
         var response = journalService.readJournal(journalId);
 
         // then
         assertNotNull(response);
-        assertEquals(response.getEISSN(), journal.getEISSN());
+        assertEquals(response.getEissn(), journal.getEISSN());
         assertEquals(response.getPrintISSN(), journal.getPrintISSN());
     }
 

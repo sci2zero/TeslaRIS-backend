@@ -53,16 +53,16 @@ public class Person extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MultiLingualContent> keyword;
 
-    @Column(name = "apvnt", unique = true)
+    @Column(name = "apvnt")
     private String apvnt;
 
-    @Column(name = "mnid", unique = true)
+    @Column(name = "mnid")
     private String mnid;
 
-    @Column(name = "orcid", unique = true)
+    @Column(name = "orcid")
     private String orcid;
 
-    @Column(name = "acopus_author_id", unique = true)
+    @Column(name = "scopus_author_id")
     private String scopusAuthorId;
 
     @Column(name = "cris_uns_id")

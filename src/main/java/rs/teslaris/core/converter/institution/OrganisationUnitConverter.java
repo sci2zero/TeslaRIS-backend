@@ -11,6 +11,8 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 public class OrganisationUnitConverter {
     public static OrganisationUnitDTO toDTO(OrganisationUnit organisationUnit) {
         var dto = new OrganisationUnitDTO();
+        dto.setId(organisationUnit.getId());
+
         dto.setName(MultilingualContentConverter.getMultilingualContentDTO(
             organisationUnit.getName()));
 
@@ -24,7 +26,6 @@ public class OrganisationUnitConverter {
         );
 
         dto.setLocation(GeoLocationConverter.toDTO(organisationUnit.getLocation()));
-        dto.setApproveStatus(organisationUnit.getApproveStatus());
         dto.setContact(ContactConverter.toDTO(organisationUnit.getContact()));
 
         return dto;

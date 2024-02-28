@@ -24,9 +24,9 @@ public class PublisherControllerTest extends BaseTest {
 
     private PublisherDTO getTestPayload() {
         var publisherDTO = new PublisherDTO();
-        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "Name", 1)));
-        publisherDTO.setPlace(List.of(new MultilingualContentDTO(25, "Place", 1)));
-        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "State", 1)));
+        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "EN", "Name", 1)));
+        publisherDTO.setPlace(List.of(new MultilingualContentDTO(25, "EN", "Place", 1)));
+        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "EN", "State", 1)));
         return publisherDTO;
     }
 
@@ -36,6 +36,19 @@ public class PublisherControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.get("http://localhost:8081/api/publisher")
                     .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testSearchPublishers() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/publisher/simple-search?tokens=name&tokens=place")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
     }
 
@@ -61,8 +74,8 @@ public class PublisherControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var publisherDTO = new PublisherBasicAdditionDTO();
-        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "Name", 1)));
-        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "State", 1)));
+        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "EN", "Name", 1)));
+        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "EN", "State", 1)));
 
         String requestBody = objectMapper.writeValueAsString(publisherDTO);
         mockMvc.perform(

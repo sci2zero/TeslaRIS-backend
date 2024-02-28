@@ -2,9 +2,10 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -12,7 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
@@ -36,9 +37,9 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Primary
@@ -80,6 +81,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    public Long getPublicationCount() {
+        return documentPublicationIndexRepository.count();
+    }
+
+    @Override
     public void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved) {
         var documentToUpdate = findOne(documentId);
 
@@ -115,8 +121,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Transactional
     public void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof) {
         var document = findOne(documentId);
-        // TODO: Check if i can change to findOne
-        var documentFile = documentFileService.findDocumentFileById(documentFileId);
+        var documentFile = documentFileService.findOne(documentFileId);
 
         if (isProof) {
             Set<DocumentFile> proofs = document.getProofs();
@@ -129,13 +134,24 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
         documentRepository.save(document);
 
-        // TODO: Check if calling this method is neccesseary
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
 
         if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
+    }
+
+    @Override
+    public void deleteDocumentPublication(Integer documentId) {
+        var document = findOne(documentId);
+        documentRepository.delete(document);
+
+        var index =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
+        index.ifPresent(documentPublicationIndexRepository::delete);
+
+        // TODO: should we delete all document file indexes as well
     }
 
     @Override
@@ -151,6 +167,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setDatabaseId(document.getId());
         index.setYear(parseYear(document.getDocumentDate()));
         indexTitle(document, index);
+        index.setTitleSrSortable(index.getTitleSr());
+        index.setTitleOtherSortable(index.getTitleOther());
+        index.setDoi(document.getDoi());
         indexDescription(document, index);
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
@@ -211,53 +230,65 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private void indexTitle(Document document, DocumentPublicationIndex index) {
-        document.getTitle().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                index.setTitleSr(mc.getContent());
-            } else {
-                index.setTitleOther(mc.getContent());
-            }
-        });
-        document.getSubTitle().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                index.setTitleSr(index.getTitleSr() + " " + mc.getContent());
-            } else {
-                index.setTitleOther(index.getTitleOther() + " " + mc.getContent());
-            }
-        });
+        var contentSr = new StringBuilder();
+        var contentOther = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            document.getTitle());
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            document.getSubTitle());
+
+        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        index.setTitleSr(contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+        index.setTitleOther(
+            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
     }
 
     private void indexDescription(Document document, DocumentPublicationIndex index) {
-        document.getDescription().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                index.setDescriptionSr(mc.getContent());
-            } else {
-                index.setDescriptionOther(mc.getContent());
-            }
-        });
+        var contentSr = new StringBuilder();
+        var contentOther = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            document.getDescription());
+
+        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        index.setDescriptionSr(
+            contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+        index.setDescriptionOther(
+            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
     }
 
     private void indexKeywords(Document document, DocumentPublicationIndex index) {
-        document.getKeywords().forEach(mc -> {
-            if (mc.getLanguage().getLanguageTag().startsWith(LanguageAbbreviations.SERBIAN)) {
-                index.setKeywordsSr(mc.getContent());
-            } else {
-                index.setKeywordsOther(mc.getContent());
-            }
-        });
+        var contentSr = new StringBuilder();
+        var contentOther = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            document.getKeywords());
+
+        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        index.setKeywordsSr(
+            contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+        index.setKeywordsOther(
+            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
     }
 
     private int parseYear(String dateString) {
-        DateTimeFormatter[] formatters =
-            {DateTimeFormatter.ofPattern("yyyy"), DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-                DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-                DateTimeFormatter.ofPattern("dd.MM.yyyy"),
-                DateTimeFormatter.ofPattern("dd.MM.yyyy.")};
+        DateTimeFormatter[] formatters = {
+            DateTimeFormatter.ofPattern("yyyy"), // Year only
+            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
+            DateTimeFormatter.ofPattern("dd.MM.yyyy"),
+            DateTimeFormatter.ofPattern("dd.MM.yyyy.")
+        };
 
         for (var formatter : formatters) {
             try {
-                var date = LocalDate.parse(dateString, formatter);
-                return date.getYear();
+                TemporalAccessor parsed = formatter.parse(dateString);
+
+                if (parsed.isSupported(ChronoField.YEAR)) {
+                    return parsed.get(ChronoField.YEAR);
+                }
             } catch (DateTimeParseException e) {
                 // Parsing failed, try the next formatter
             }
@@ -286,7 +317,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setProofs(new HashSet<>());
         document.setFileItems(new HashSet<>());
 
-        document.setEvent(eventService.findEventById(documentDTO.getEventId()));
+        if (Objects.nonNull(documentDTO.getEventId())) {
+            document.setEvent(eventService.findEventById(documentDTO.getEventId()));
+        }
     }
 
     protected void clearCommonFields(Document publication) {
@@ -333,39 +366,46 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            tokens.forEach(token -> {
-                b.should(sb -> sb.match(
-                    m -> m.field("title_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("title_other").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("description_sr").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("description_other").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("keywords_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("keywords_other").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("full_text_sr").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("full_text_other").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("authorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("editorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("reviewerNames").fuzziness(Fuzziness.ONE.asString())
-                        .query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("advisorNames").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("type").fuzziness(Fuzziness.ONE.asString()).query(token)));
+            b.must(bq -> {
+                bq.bool(eq -> {
+                    tokens.forEach(token -> {
+                        b.should(sb -> sb.wildcard(
+                            m -> m.field("title_sr").value(token).caseInsensitive(true)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("title_sr").query(token)));
+                        b.should(sb -> sb.wildcard(
+                            m -> m.field("title_other").value(token).caseInsensitive(true)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("description_sr").query(token)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("description_other").query(token)));
+                        b.should(sb -> sb.wildcard(
+                            m -> m.field("keywords_sr").value("*" + token + "*")));
+                        b.should(sb -> sb.wildcard(
+                            m -> m.field("keywords_other").value("*" + token + "*")));
+                        b.should(sb -> sb.match(
+                            m -> m.field("full_text_sr").query(token)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("full_text_other").query(token)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("authorNames").query(token)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("editorNames").query(token)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("reviewerNames").query(token)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("advisorNames").query(token)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("type").query(token)));
+                        b.should(sb -> sb.match(
+                            m -> m.field("doi").query(token)));
+                    });
+                    return eq;
+                });
+                return bq;
             });
+            b.mustNot(sb -> sb.match(
+                m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
             return b;
         })))._toQuery();
     }

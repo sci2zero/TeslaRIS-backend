@@ -8,6 +8,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -43,7 +44,7 @@ public class PersonContribution extends BaseEntity {
     @JoinColumn(name = "affiliation_statement_id")
     private AffiliationStatement affiliationStatement;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     private Set<OrganisationUnit> institutions;
 
     @Column(name = "order_number", nullable = false)

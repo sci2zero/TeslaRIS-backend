@@ -8,7 +8,7 @@ public class GeoLocationConverter {
         var geoLocation = new GeoLocation();
         geoLocation.setLongitude(geoLocationDTO.getLongitude());
         geoLocation.setLatitude(geoLocationDTO.getLatitude());
-        geoLocation.setPrecisionInMeters(geoLocationDTO.getPrecisionInMeters());
+        geoLocation.setAddress(geoLocationDTO.getAddress());
 
         return geoLocation;
     }
@@ -17,7 +17,7 @@ public class GeoLocationConverter {
         var geoLocationDTO = new GeoLocationDTO();
         geoLocationDTO.setLongitude(geoLocation.getLongitude());
         geoLocationDTO.setLatitude(geoLocation.getLatitude());
-        geoLocationDTO.setPrecisionInMeters(geoLocation.getPrecisionInMeters());
+        geoLocationDTO.setAddress(geoLocation.getAddress());
 
         return geoLocationDTO;
     }

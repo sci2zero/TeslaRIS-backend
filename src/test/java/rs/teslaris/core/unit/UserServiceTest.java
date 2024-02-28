@@ -15,9 +15,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.cache.Cache;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -34,8 +36,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
+import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
-import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
@@ -62,13 +65,14 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.user.UserServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
-import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @SpringBootTest
@@ -76,30 +80,49 @@ public class UserServiceTest {
 
     @Mock
     private EmailUtil emailUtil;
+
     @Mock
     private JwtUtil tokenUtil;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private UserAccountIndexRepository userAccountIndexRepository;
+
     @Mock
     private SearchService<UserAccountIndex> searchService;
+
     @Mock
     private LanguageService languageService;
+
     @Mock
     private AuthorityRepository authorityRepository;
+
     @Mock
     private UserAccountActivationRepository userAccountActivationRepository;
+
     @Mock
     private PersonService personService;
+
     @Mock
     private OrganisationUnitServiceImpl organisationUnitService;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+
     @Mock
     private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Mock
+    private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private Cache<String, Byte> passwordResetRequestCacheStore;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -158,11 +181,11 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldRegisterUserWithValidData() {
+    public void shouldRegisterResearcherWithValidData() {
         // given
-        var registrationRequest = new RegistrationRequestDTO();
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
         registrationRequest.setEmail("johndoe@example.com");
-        registrationRequest.setPassword("password123");
+        registrationRequest.setPassword("Password123");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
 
@@ -183,7 +206,7 @@ public class UserServiceTest {
         var organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
-        User newUser = new User("johndoe@example.com", "password123", "",
+        var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
             false, language, authority, null, organisationUnit);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
@@ -196,7 +219,7 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         // when
-        var savedUser = userService.registerUser(registrationRequest);
+        var savedUser = userService.registerResearcher(registrationRequest);
 
         // then
         assertNotNull(savedUser);
@@ -208,16 +231,79 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowNotFoundWhenAuthorityNotFound() {
+    public void shouldRegisterEmployeeWithValidData() {
+        // Given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("johndoe@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(1);
+
+        var language = new Language();
+        when(languageService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.INSTITUTIONAL_EDITOR.toString());
+        when(authorityRepository.findByName(UserRole.INSTITUTIONAL_EDITOR.toString())).thenReturn(
+            Optional.of(authority));
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+
+        User newUser = new User("johndoe@example.com", "password123", "",
+            "John", "Doe", true,
+            false, language, authority, null, organisationUnit);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerInstitutionAdmin(registrationRequest);
+
+        // Then
+        assertNotNull(savedUser);
+        assertEquals("johndoe@example.com", savedUser.getEmail());
+        assertEquals("John", savedUser.getFirstname());
+        assertEquals("Doe", savedUser.getLastName());
+        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(authority, savedUser.getAuthority());
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenAuthorityNotFound() {
         // given
-        var registrationRequest = new RegistrationRequestDTO();
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setPassword("Password123");
 
         when(authorityRepository.findById(2)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> userService.registerUser(registrationRequest));
+        assertThrows(NotFoundException.class,
+            () -> userService.registerResearcher(registrationRequest));
 
         // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldThrowPasswordExceptionWhenPasswordIsWeak() {
+        // given
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setPassword("weak_password");
+
+        when(authorityRepository.findById(2)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(PasswordException.class,
+            () -> userService.registerResearcher(registrationRequest));
+
+        // then (PasswordException should be thrown)
     }
 
     @Test
@@ -259,12 +345,13 @@ public class UserServiceTest {
     @Test
     public void shouldThrowUserAlreadyExistsExceptionWhenUserIsInTheSystem() {
         // Given
-        var requestDTO = new RegistrationRequestDTO();
+        var requestDTO = new ResearcherRegistrationRequestDTO();
         requestDTO.setEmail("admin@admin.com");
         when(userRepository.findByEmail(requestDTO.getEmail())).thenReturn(Optional.of(new User()));
 
         // When
-        assertThrows(UserAlreadyExistsException.class, () -> userService.registerUser(requestDTO));
+        assertThrows(UserAlreadyExistsException.class,
+            () -> userService.registerResearcher(requestDTO));
 
         // Then (UserAlreadyExistsException should be thrown)
     }
@@ -275,7 +362,7 @@ public class UserServiceTest {
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setEmail("test@example.com");
         requestDTO.setOldPassword("oldPassword");
-        requestDTO.setNewPassword("newPassword");
+        requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
         requestDTO.setPreferredLanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
@@ -286,6 +373,7 @@ public class UserServiceTest {
         user.setPassword("oldPassword");
         user.setFirstname("Jane");
         user.setLastName("Doe");
+        user.setLocked(false);
         user.setCanTakeRole(false);
         user.setPreferredLanguage(new Language());
         var person = new Person();
@@ -304,7 +392,7 @@ public class UserServiceTest {
         when(organisationUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
-        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -328,7 +416,7 @@ public class UserServiceTest {
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setEmail("test@example.com");
         requestDTO.setOldPassword("oldPassword");
-        requestDTO.setNewPassword("newPassword");
+        requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
         requestDTO.setLastName("SMITH");
         requestDTO.setPreferredLanguageId(1);
@@ -341,6 +429,7 @@ public class UserServiceTest {
         user.setFirstname("Jane");
         user.setLastName("Doe");
         user.setCanTakeRole(false);
+        user.setLocked(false);
         user.setPreferredLanguage(new Language());
         var person = new Person();
         user.setPerson(person);
@@ -358,7 +447,7 @@ public class UserServiceTest {
         when(organisationUnitService.findOne(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
-        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -411,7 +500,7 @@ public class UserServiceTest {
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);
 
         // when
-        assertThrows(WrongPasswordProvidedException.class,
+        assertThrows(PasswordException.class,
             () -> userService.updateUser(requestDTO, 1, "fingerprint"));
 
         // then (WrongPasswordProvidedException should be thrown)
@@ -566,6 +655,7 @@ public class UserServiceTest {
 
         var user = new User();
         user.setEmail("test@example.com");
+        user.setPreferredLanguage(new Language("SR", new HashSet<>()));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
@@ -639,6 +729,7 @@ public class UserServiceTest {
         var userToUpdate = new User();
         userToUpdate.setAuthority(new Authority());
         userToUpdate.setPerson(person);
+        userToUpdate.setLocked(false);
 
         when(personService.findOne(personId)).thenReturn(person);
         when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(userToUpdate));
@@ -651,5 +742,34 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findForResearcher(personId);
         verify(userRepository, times(1)).save(userToUpdate);
         verify(userAccountIndexRepository, times(1)).save(any());
+    }
+
+    @Test
+    void shouldGetUserFromPersonWhenExistingPerson() {
+        // Given
+        var personId = 1;
+        var user = new User();
+        user.setPreferredLanguage(new Language());
+
+        when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(user));
+
+        // When
+        var result = userService.getUserFromPerson(personId);
+
+        // Then
+        assertNotNull(result);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenNonExistingPerson() {
+        // Given
+        Integer personId = 1;
+
+        when(userRepository.findForResearcher(personId)).thenReturn(Optional.empty());
+
+        // When
+        assertThrows(NotFoundException.class, () -> userService.getUserFromPerson(personId));
+
+        // Then (NotFoundException should be thrown)
     }
 }

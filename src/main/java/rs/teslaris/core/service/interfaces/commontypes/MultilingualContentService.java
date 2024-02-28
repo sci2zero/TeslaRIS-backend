@@ -12,6 +12,8 @@ public interface MultilingualContentService {
     Set<MultiLingualContent> getMultilingualContent(
         List<MultilingualContentDTO> multilingualContent);
 
+    Set<MultiLingualContent> deepCopy(Set<MultiLingualContent> content);
+
     void buildLanguageStrings(StringBuilder serbianBuilder,
                               StringBuilder otherLanguagesBuilder,
                               Set<MultiLingualContent> contentList);

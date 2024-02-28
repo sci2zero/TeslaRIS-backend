@@ -129,7 +129,7 @@ public class InvolvementServiceTest {
         // given
         var person = new Person();
         var educationDTO = new EducationDTO();
-        var mc = new MultilingualContentDTO(1, "aaa", 1);
+        var mc = new MultilingualContentDTO(1, "EN", "aaa", 1);
         educationDTO.setAffiliationStatement(List.of(mc));
         educationDTO.setThesisTitle(List.of(mc));
         educationDTO.setTitle(List.of(mc));
@@ -151,7 +151,7 @@ public class InvolvementServiceTest {
         // given
         var person = new Person();
         var membershipDTO = new MembershipDTO();
-        var mc = new MultilingualContentDTO(1, "aaa", 1);
+        var mc = new MultilingualContentDTO(1, "EN", "aaa", 1);
         membershipDTO.setAffiliationStatement(List.of(mc));
         membershipDTO.setRole(List.of(mc));
         membershipDTO.setContributionDescription(List.of(mc));
@@ -172,7 +172,7 @@ public class InvolvementServiceTest {
         // given
         var person = new Person();
         var employmentDTO = new EmploymentDTO();
-        var mc = new MultilingualContentDTO(1, "aaa", 1);
+        var mc = new MultilingualContentDTO(1, "EN", "aaa", 1);
         employmentDTO.setAffiliationStatement(List.of(mc));
         employmentDTO.setRole(List.of(mc));
 
@@ -199,7 +199,7 @@ public class InvolvementServiceTest {
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
         education.setPersonInvolved(new Person());
         var educationDTO = new EducationDTO();
-        var mc2 = new MultilingualContentDTO(1, "bbb", 1);
+        var mc2 = new MultilingualContentDTO(1, "EN", "bbb", 1);
         educationDTO.setAffiliationStatement(List.of(mc2));
         educationDTO.setThesisTitle(List.of(mc2));
         educationDTO.setTitle(List.of(mc2));
@@ -228,7 +228,7 @@ public class InvolvementServiceTest {
         membership.setRole(new HashSet<>(Set.of(mc1)));
         membership.setPersonInvolved(new Person());
         var membershipDTO = new MembershipDTO();
-        var mc2 = new MultilingualContentDTO(1, "bbb", 1);
+        var mc2 = new MultilingualContentDTO(1, "EN", "bbb", 1);
         membershipDTO.setAffiliationStatement(List.of(mc2));
         membershipDTO.setRole(List.of(mc2));
         membershipDTO.setContributionDescription(List.of(mc2));
@@ -256,7 +256,7 @@ public class InvolvementServiceTest {
         employment.setPersonInvolved(new Person());
         var employmentDTO = new EmploymentDTO();
         employmentDTO.setEmploymentPosition(EmploymentPosition.ASSISTANT);
-        var mc2 = new MultilingualContentDTO(1, "bbb", 1);
+        var mc2 = new MultilingualContentDTO(1, "EN", "bbb", 1);
         employmentDTO.setAffiliationStatement(List.of(mc2));
         employmentDTO.setRole(List.of(mc2));
 

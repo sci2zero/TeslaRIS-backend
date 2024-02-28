@@ -18,7 +18,7 @@ import org.hibernate.annotations.Where;
 @Where(clause = "deleted=false")
 public class LanguageTag extends BaseEntity {
 
-    @Column(name = "language_tag", nullable = false, unique = true)
+    @Column(name = "language_tag", nullable = false)
     private String languageTag;
 
     @Column(name = "display", nullable = false)

@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.person;
 
 import java.util.HashSet;
+import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,8 +9,8 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
@@ -20,6 +21,7 @@ import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
@@ -66,7 +68,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     @Override
     public void setPersonPublicationSeriesContributionsForJournal(
         PublicationSeries publicationSeries,
-        JournalDTO journalDTO) {
+        PublicationSeriesDTO journalDTO) {
         if (publicationSeries.getContributions() != null) {
             publicationSeries.getContributions().clear();
         } else {
@@ -120,42 +122,63 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     }
 
     private void setAffiliationStatement(PersonContribution contribution,
-                                         PersonContributionDTO contributionDTO) {
+                                         PersonContributionDTO contributionDTO,
+                                         Person contributor) {
+        var personName = getPersonName(contributionDTO, contributor);
+
+        var contact = new Contact(contributor.getPersonalInfo().getContact().getContactEmail(),
+            contributor.getPersonalInfo().getContact().getPhoneNumber());
+
+        contribution.setAffiliationStatement(new AffiliationStatement(
+            multilingualContentService.getMultilingualContent(
+                contributionDTO.getDisplayAffiliationStatement()), personName,
+            new PostalAddress(contributor.getPersonalInfo().getPostalAddress().getCountry(),
+                multilingualContentService.deepCopy(
+                    contributor.getPersonalInfo().getPostalAddress().getStreetAndNumber()),
+                multilingualContentService.deepCopy(
+                    contributor.getPersonalInfo().getPostalAddress().getCity())),
+            contact));
+    }
+
+    private PersonName getPersonName(PersonContributionDTO contributionDTO,
+                                     Person contributor) {
         var personName = new PersonName(contributionDTO.getPersonName().getFirstname(),
             contributionDTO.getPersonName().getOtherName(),
             contributionDTO.getPersonName().getLastname(),
             contributionDTO.getPersonName().getDateFrom(),
             contributionDTO.getPersonName().getDateTo());
-
-        var countryId = contributionDTO.getPostalAddress().getCountryId();
-        var postalAddress =
-            new PostalAddress(countryId != null ? countryService.findOne(countryId) : null,
-                multilingualContentService.getMultilingualContent(
-                    contributionDTO.getPostalAddress().getStreetAndNumber()),
-                multilingualContentService.getMultilingualContent(
-                    contributionDTO.getPostalAddress().getCity()));
-
-        var contact = new Contact(contributionDTO.getContact().getContactEmail(),
-            contributionDTO.getContact().getPhoneNumber());
-
-        contribution.setAffiliationStatement(new AffiliationStatement(
-            multilingualContentService.getMultilingualContent(
-                contributionDTO.getDisplayAffiliationStatement()), personName, postalAddress,
-            contact));
+        if (personName.getFirstname().isEmpty() && personName.getOtherName().isEmpty() &&
+            personName.getLastname().isEmpty()) {
+            personName = new PersonName(contributor.getName().getFirstname(),
+                contributor.getName().getOtherName(),
+                contributor.getName().getLastname(),
+                contributor.getName().getDateFrom(),
+                contributor.getName().getDateTo());
+        }
+        return personName;
     }
 
     private void setPersonContributionCommonFields(PersonContribution contribution,
                                                    PersonContributionDTO contributionDTO) {
-        if (contributionDTO.getPersonId() != null) {
-            contribution.setPerson(personService.findOne(contributionDTO.getPersonId()));
-        }
+        var contributor = personService.findOne(contributionDTO.getPersonId());
+        contribution.setPerson(contributor);
+
         contribution.setContributionDescription(multilingualContentService.getMultilingualContent(
             contributionDTO.getContributionDescription()));
-        setAffiliationStatement(contribution, contributionDTO);
+
+        setAffiliationStatement(contribution, contributionDTO, contributor);
 
         contribution.setInstitutions(new HashSet<>());
-        contributionDTO.getInstitutionIds().forEach(institutionId -> contribution.getInstitutions()
-            .add(organisationUnitService.findOne(institutionId)));
+        if (Objects.isNull(contributionDTO.getInstitutionIds()) ||
+            contributionDTO.getInstitutionIds().isEmpty()) {
+            contribution.getInstitutions()
+                .add(personService.getLatestResearcherInvolvement(contributor));
+        } else {
+            contributionDTO.getInstitutionIds().forEach(institutionId -> {
+                var organisationUnit = organisationUnitService.findOne(institutionId);
+                contribution.getInstitutions().add(organisationUnit);
+            });
+        }
 
         contribution.setOrderNumber(contributionDTO.getOrderNumber());
         contribution.setApproveStatus(

@@ -17,9 +17,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
-import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 
 @SpringBootTest
@@ -30,25 +28,24 @@ public class ProceedingsControllerTest extends BaseTest {
 
 
     private ProceedingsDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
 
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setTitle(dummyMC);
         proceedingsDTO.setSubTitle(dummyMC);
         proceedingsDTO.setDescription(dummyMC);
         proceedingsDTO.setKeywords(dummyMC);
-        proceedingsDTO.setDocumentDate("MOCK_DATE");
+        proceedingsDTO.setDocumentDate("31.01.2000.");
         proceedingsDTO.setEventId(38);
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
         contribution.setOrderNumber(1);
-        contribution.setInstitutionIds(new ArrayList<>());
-        contribution.setPersonName(new PersonNameDTO());
-        contribution.setContact(new ContactDTO());
+        contribution.setPersonId(22);
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
+        contribution.setPersonName(
+            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
         proceedingsDTO.setContributions(List.of(contribution));
         proceedingsDTO.setUris(new HashSet<>());
         proceedingsDTO.setLanguageTagIds(new ArrayList<>());
@@ -88,7 +85,7 @@ public class ProceedingsControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_PROCEEDINGS"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("MOCK_DATE"));
+            .andExpect(jsonPath("$.documentDate").value("31.01.2000."));
     }
 
     @Test

@@ -16,13 +16,13 @@ import lombok.Setter;
 @Embeddable
 public class PersonalInfo {
 
-    @Column(name = "birth_date", nullable = false)
+    @Column(name = "birth_date")
     private LocalDate localBirthDate;
 
     @Column(name = "place_of_birth")
     private String placeOfBrith;
 
-    @Column(name = "sex", nullable = false)
+    @Column(name = "sex")
     private Sex sex;
 
     @Embedded

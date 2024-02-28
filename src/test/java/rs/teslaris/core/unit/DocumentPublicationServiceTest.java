@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -112,7 +113,7 @@ public class DocumentPublicationServiceTest {
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
-        when(documentFileService.findDocumentFileById(documentFileId)).thenReturn(documentFile);
+        when(documentFileService.findOne(documentFileId)).thenReturn(documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
@@ -120,8 +121,7 @@ public class DocumentPublicationServiceTest {
         documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
 
         // Then
-//        verify(documentRepository, times(1)).save(document);
-//        verify(documentFileService, times(1)).deleteDocumentFile(documentFile.getServerFilename());
+        verify(documentRepository, times(1)).save(document);
     }
 
     @Test
@@ -136,7 +136,7 @@ public class DocumentPublicationServiceTest {
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
-        when(documentFileService.findDocumentFileById(documentFileId)).thenReturn(documentFile);
+        when(documentFileService.findOne(documentFileId)).thenReturn(documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
@@ -144,8 +144,7 @@ public class DocumentPublicationServiceTest {
         documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
 
         // Then
-//        verify(documentRepository, times(1)).save(document);
-//        verify(documentFileService, times(1)).deleteDocumentFile(documentFile.getServerFilename());
+        verify(documentRepository, times(1)).save(document);
     }
 
     @Test
@@ -260,7 +259,7 @@ public class DocumentPublicationServiceTest {
     @Test
     public void shouldFindDocumentPublicationsWhenSearchingWithAdvancedQuery() {
         // given
-        var tokens = Arrays.asList("keyword_sr:ključna ријеч");
+        var tokens = List.of("keyword_sr:ključna ријеч");
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
@@ -274,5 +273,56 @@ public class DocumentPublicationServiceTest {
 
         // then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldGetDocumentPublicationCount() {
+        // Given
+        var expectedCount = 42L;
+        when(documentPublicationIndexRepository.count()).thenReturn(expectedCount);
+
+        // When
+        long actualCount = documentPublicationService.getPublicationCount();
+
+        // Then
+        assertEquals(expectedCount, actualCount);
+        verify(documentPublicationIndexRepository, times(1)).count();
+    }
+
+    @Test
+    public void testDeleteDocumentPublication() {
+        // Given
+        var documentId = 1;
+        when(documentRepository.findById(documentId)).thenReturn(
+            Optional.of(new JournalPublication()));
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(new DocumentPublicationIndex()));
+
+        // When
+        documentPublicationService.deleteDocumentPublication(documentId);
+
+        // Then
+        verify(documentRepository, times(1)).delete(any());
+        verify(documentPublicationIndexRepository, times(1)).delete(any());
+    }
+
+    @Test
+    public void shouldNotRemoveDocumentPublicationIndexWhenNotIndexed() {
+        // Given
+        var documentId = 1;
+
+        when(documentRepository.findById(documentId)).thenReturn(
+            Optional.of(new JournalPublication()));
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // When
+        documentPublicationService.deleteDocumentPublication(documentId);
+
+        // Then
+        verify(documentRepository, times(1)).delete(any());
+        verify(documentPublicationIndexRepository, never()).delete(any());
     }
 }

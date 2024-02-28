@@ -1,11 +1,12 @@
 package rs.teslaris.core.converter.person;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Set;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -15,14 +16,14 @@ import rs.teslaris.core.model.person.PostalAddress;
 
 public class PersonConverter {
 
-    public static PersonResponseDto toDTO(Person person) {
+    public static PersonResponseDTO toDTO(Person person) {
         var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
 
         var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
 
-        return new PersonResponseDto(
+        return new PersonResponseDTO(
             new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
                 person.getName().getDateTo()), otherNames,
@@ -39,7 +40,9 @@ public class PersonConverter {
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
         var postalAddressDto = new PostalAddressDTO();
-        postalAddressDto.setCountryId(postalAddress.getCountry().getId());
+        if (Objects.nonNull(postalAddress.getCountry())) {
+            postalAddressDto.setCountryId(postalAddress.getCountry().getId());
+        }
 
         var streetAndNumberContent = new ArrayList<MultilingualContentDTO>();
         var cityContent = new ArrayList<MultilingualContentDTO>();
@@ -47,6 +50,7 @@ public class PersonConverter {
         for (var streetAndNumber : postalAddress.getStreetAndNumber()) {
             streetAndNumberContent.add(
                 new MultilingualContentDTO(streetAndNumber.getLanguage().getId(),
+                    streetAndNumber.getLanguage().getLanguageTag(),
                     streetAndNumber.getContent(),
                     streetAndNumber.getPriority()));
         }
@@ -54,6 +58,7 @@ public class PersonConverter {
         for (var city : postalAddress.getCity()) {
             cityContent.add(
                 new MultilingualContentDTO(city.getLanguage().getId(),
+                    city.getLanguage().getLanguageTag(),
                     city.getContent(),
                     city.getPriority()));
         }
@@ -78,7 +83,9 @@ public class PersonConverter {
         var biographyDTO = new ArrayList<MultilingualContentDTO>();
 
         biography.forEach(bio -> biographyDTO.add(
-            new MultilingualContentDTO(bio.getLanguage().getId(), bio.getContent(),
+            new MultilingualContentDTO(bio.getLanguage().getId(),
+                bio.getLanguage().getLanguageTag(),
+                bio.getContent(),
                 bio.getPriority())));
 
         return biographyDTO;
@@ -89,7 +96,9 @@ public class PersonConverter {
         var keywordDTO = new ArrayList<MultilingualContentDTO>();
 
         keyword.forEach(keyw -> keywordDTO.add(
-            new MultilingualContentDTO(keyw.getLanguage().getId(), keyw.getContent(),
+            new MultilingualContentDTO(keyw.getLanguage().getId(),
+                keyw.getLanguage().getLanguageTag(),
+                keyw.getContent(),
                 keyw.getPriority())));
 
         return keywordDTO;

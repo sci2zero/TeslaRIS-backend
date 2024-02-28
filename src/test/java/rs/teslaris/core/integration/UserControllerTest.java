@@ -38,7 +38,7 @@ public class UserControllerTest extends BaseTest {
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Idempotency-Key", "MOCK_KEY_USER_2"))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isCreated()); // No information disclosure
     }
 
     @Test
@@ -48,7 +48,8 @@ public class UserControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.patch("http://localhost:8081/api/user/reset-password")
                     .content(requestBody)
-                    .contentType(MediaType.APPLICATION_JSON))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Idempotency-Key", "MOCK_KEY_USER_3"))
             .andExpect(status().isOk());
     }
 
@@ -59,7 +60,8 @@ public class UserControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.patch("http://localhost:8081/api/user/reset-password")
                     .content(requestBody)
-                    .contentType(MediaType.APPLICATION_JSON))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Idempotency-Key", "MOCK_KEY_USER_4"))
             .andExpect(status().isNotFound());
     }
 }

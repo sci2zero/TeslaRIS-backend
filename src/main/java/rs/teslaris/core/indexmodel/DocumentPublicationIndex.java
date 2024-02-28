@@ -27,8 +27,14 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Text, name = "title_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String titleSr;
 
+    @Field(type = FieldType.Keyword, store = true, name = "title_sr_sortable")
+    private String titleSrSortable;
+
     @Field(type = FieldType.Text, name = "title_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String titleOther;
+
+    @Field(type = FieldType.Keyword, store = true, name = "title_other_sortable")
+    private String titleOtherSortable;
 
     @Field(type = FieldType.Text, name = "description_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String descriptionSr;
@@ -36,10 +42,10 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Text, name = "description_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String descriptionOther;
 
-    @Field(type = FieldType.Text, name = "keywords_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Keyword, name = "keywords_sr", store = true)
     private String keywordsSr;
 
-    @Field(type = FieldType.Text, name = "keywords_other", store = true, analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Keyword, name = "keywords_other", store = true)
     private String keywordsOther;
 
     @Field(type = FieldType.Text, name = "full_text_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
@@ -75,7 +81,7 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "year", store = true)
     private Integer year;
 
-    @Field(type = FieldType.Text, name = "type", store = true)
+    @Field(type = FieldType.Keyword, name = "type", store = true)
     private String type;
 
     @Field(type = FieldType.Integer, name = "publication_series_id", store = true)
@@ -92,4 +98,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Integer, name = "database_id", store = true)
     private Integer databaseId;
+
+    @Field(type = FieldType.Keyword, store = true, name = "doi")
+    private String doi;
 }

@@ -7,9 +7,10 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.JPAService;
 
@@ -17,6 +18,8 @@ import rs.teslaris.core.service.interfaces.JPAService;
 public interface PersonService extends JPAService<Person> {
 
     Page<PersonIndex> findAllIndex(Pageable pageable);
+
+    Long getResearcherCount();
 
     Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable);
 
@@ -27,7 +30,7 @@ public interface PersonService extends JPAService<Person> {
 
     Person findPersonById(Integer id);
 
-    PersonResponseDto readPersonWithBasicInfo(Integer id);
+    PersonResponseDTO readPersonWithBasicInfo(Integer id);
 
     boolean isPersonEmployedInOrganisationUnit(Integer personId, Integer organisationUnitId);
 
@@ -44,4 +47,8 @@ public interface PersonService extends JPAService<Person> {
     void updatePersonalInfo(PersonalInfoDTO personalInfo, Integer personId);
 
     void approvePerson(Integer personId, Boolean approved);
+
+    void deletePerson(Integer personId);
+
+    OrganisationUnit getLatestResearcherInvolvement(Person person);
 }

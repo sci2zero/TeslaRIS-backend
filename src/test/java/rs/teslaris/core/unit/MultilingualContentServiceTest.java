@@ -29,7 +29,7 @@ public class MultilingualContentServiceTest {
     @Test
     public void shouldGetMultilingualContentSetWhenProvidedWithValidData() {
         var multilingualContentDTO =
-            new ArrayList<>(List.of(new MultilingualContentDTO(1, "aaa", 1)));
+            new ArrayList<>(List.of(new MultilingualContentDTO(1, "EN", "aaa", 1)));
 
         var languageTag = new LanguageTag();
         when(languageTagService.findOne(1)).thenReturn(languageTag);

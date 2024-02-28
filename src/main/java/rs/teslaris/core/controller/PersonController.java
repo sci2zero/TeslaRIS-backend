@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,10 +24,11 @@ import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Validated
 @RestController
@@ -42,8 +44,13 @@ public class PersonController {
         return personService.findAllIndex(pageable);
     }
 
+    @GetMapping("/count")
+    public Long countAll(Pageable pageable) {
+        return personService.getResearcherCount();
+    }
+
     @GetMapping("/{personId}")
-    public PersonResponseDto readPersonWithBasicInfo(@PathVariable Integer personId) {
+    public PersonResponseDTO readPersonWithBasicInfo(@PathVariable Integer personId) {
         return personService.readPersonWithBasicInfo(personId);
     }
 
@@ -52,6 +59,7 @@ public class PersonController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return personService.findPeopleByNameAndEmployment(tokens,
             pageable);
     }
@@ -133,4 +141,10 @@ public class PersonController {
         personService.approvePerson(personId, approve);
     }
 
+    @DeleteMapping("/{personId}")
+    @PreAuthorize("hasAuthority('DELETE_PERSON')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePerson(@PathVariable Integer personId) {
+        personService.deletePerson(personId);
+    }
 }

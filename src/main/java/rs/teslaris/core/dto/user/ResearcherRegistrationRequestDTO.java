@@ -13,7 +13,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegistrationRequestDTO {
+public class ResearcherRegistrationRequestDTO {
 
     @Email(message = "Email must be valid.")
     private String email;
@@ -27,4 +27,10 @@ public class RegistrationRequestDTO {
 
     @Positive(message = "Person ID must be a positive number.")
     private Integer personId;
+
+    private String firstName;
+    private String lastName;
+
+    @Positive(message = "Organisation Unit ID must be a positive number.")
+    private Integer organisationUnitId;
 }

@@ -22,14 +22,23 @@ public class PersonIndex {
     @Id
     private String id;
 
-    @Field(type = FieldType.Text, store = true, name = "name")
+    @Field(type = FieldType.Text, store = true, name = "name", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String name;
+
+    @Field(type = FieldType.Keyword, store = true, name = "name_sortable")
+    private String nameSortable;
 
     @Field(type = FieldType.Text, store = true, name = "employments_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String employmentsSr;
 
-    @Field(type = FieldType.Text, store = true, name = "employments", analyzer = "english", searchAnalyzer = "english")
-    private String employments;
+    @Field(type = FieldType.Keyword, store = true, name = "employments_sr_sortable")
+    private String employmentsSrSortable;
+
+    @Field(type = FieldType.Text, store = true, name = "employments_other", analyzer = "english", searchAnalyzer = "english")
+    private String employmentsOther;
+
+    @Field(type = FieldType.Keyword, store = true, name = "employments_other_sortable")
+    private String employmentsOtherSortable;
 
     @Field(type = FieldType.Integer, name = "employmentInstitutionsId", store = true)
     private List<Integer> employmentInstitutionsId;
@@ -37,7 +46,13 @@ public class PersonIndex {
     @Field(type = FieldType.Text, store = true, name = "birthdate", index = false)
     private String birthdate;
 
+    @Field(type = FieldType.Keyword, store = true, name = "birthdate_sortable")
+    private String birthdateSortable;
+
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
+
+    @Field(type = FieldType.Keyword, store = true, name = "orcid")
+    private String orcid;
 
 }

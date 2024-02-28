@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.Getter;
@@ -28,16 +29,16 @@ public abstract class PublicationSeries extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title;
 
-    @Column(name = "e_issn", unique = true)
+    @Column(name = "e_issn")
     private String eISSN;
 
-    @Column(name = "print_issn", unique = true)
+    @Column(name = "print_issn")
     private String printISSN;
 
     @OneToMany(mappedBy = "publicationSeries", fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<PersonPublicationSeriesContribution> contributions;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     private Set<LanguageTag> languages;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

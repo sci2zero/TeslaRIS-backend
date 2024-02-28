@@ -24,20 +24,32 @@ public class OrganisationUnitIndex {
     @Field(type = FieldType.Text, store = true, name = "name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String nameSr;
 
+    @Field(type = FieldType.Keyword, store = true, name = "name_sr_sortable")
+    private String nameSrSortable;
+
     @Field(type = FieldType.Text, store = true, name = "name_other", analyzer = "english", searchAnalyzer = "english")
     private String nameOther;
 
-    @Field(type = FieldType.Text, store = true, name = "keywords_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Keyword, store = true, name = "name_other_sortable")
+    private String nameOtherSortable;
+
+    @Field(type = FieldType.Keyword, store = true, name = "keywords_sr")
     private String keywordsSr;
 
-    @Field(type = FieldType.Text, store = true, name = "keywords_other", analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Keyword, store = true, name = "keywords_other")
     private String keywordsOther;
 
     @Field(type = FieldType.Text, store = true, name = "research_areas_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String researchAreasSr;
 
+    @Field(type = FieldType.Keyword, store = true, name = "research_areas_sr_sortable")
+    private String researchAreasSrSortable;
+
     @Field(type = FieldType.Text, store = true, name = "research_areas_other", analyzer = "english", searchAnalyzer = "english")
     private String researchAreasOther;
+
+    @Field(type = FieldType.Keyword, store = true, name = "research_areas_other_sortable")
+    private String researchAreasOtherSortable;
 
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;

@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
 @RequestMapping("/api/document")
@@ -37,6 +38,7 @@ public class DocumentPublicationController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.SIMPLE);
     }
@@ -48,6 +50,11 @@ public class DocumentPublicationController {
         Pageable pageable) {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.ADVANCED);
+    }
+
+    @GetMapping("/count")
+    public Long countAll() {
+        return documentPublicationService.getPublicationCount();
     }
 
     @PatchMapping("/{publicationId}/approval")
@@ -74,5 +81,12 @@ public class DocumentPublicationController {
     void deleteDocumentFile(@PathVariable Integer publicationId,
                             @PathVariable Integer documentFileId, @RequestParam Boolean isProof) {
         documentPublicationService.deleteDocumentFile(publicationId, documentFileId, isProof);
+    }
+
+    @DeleteMapping("/{publicationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PublicationEditCheck
+    void deleteDocumentPublication(@PathVariable Integer publicationId) {
+        documentPublicationService.deleteDocumentPublication(publicationId);
     }
 }

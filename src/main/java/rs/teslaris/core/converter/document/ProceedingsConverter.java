@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.document;
 
+import java.util.ArrayList;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.model.document.Proceedings;
@@ -23,6 +24,7 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         proceedingsResponseDTO.setPublicationSeriesIssue(proceedings.getPublicationSeriesIssue());
         proceedingsResponseDTO.setPublicationSeriesVolume(proceedings.getPublicationSeriesVolume());
 
+        proceedingsResponseDTO.setLanguageTagIds(new ArrayList<>());
         setLanguageInfo(proceedings, proceedingsResponseDTO);
         setPublicationSeriesInfo(proceedings, proceedingsResponseDTO);
         setEventInfo(proceedings, proceedingsResponseDTO);

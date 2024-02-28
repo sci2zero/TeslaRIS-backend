@@ -12,4 +12,13 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     @Query("select p from Person p where p.id = :id and p.approveStatus = 1")
     Optional<Person> findApprovedPersonById(Integer id);
 
+    @Query("select count(i) > 0 from Involvement i join i.personInvolved p where p.id = :personId")
+    boolean hasInvolvement(Integer personId);
+
+    @Query("select count(pc) > 0 from PersonContribution pc join pc.person p where p.id = :personId")
+    boolean hasContribution(Integer personId);
+
+    @Query("select count(u) > 0 from User u join u.person p where p.id = :personId")
+    boolean isBoundToUser(Integer personId);
+
 }

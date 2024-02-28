@@ -1,5 +1,6 @@
 package rs.teslaris.core.integration;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,18 @@ public class OrganisationUnitControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testCountAll() throws Exception {
+        var resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/organisation-unit/count")
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+
+        var result = resultActions.andReturn();
+        assertTrue(Long.parseLong(result.getResponse().getContentAsString()) >= 0);
     }
 
     @ParameterizedTest

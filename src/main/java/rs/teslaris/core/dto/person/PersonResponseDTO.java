@@ -12,7 +12,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PersonResponseDto {
+public class PersonResponseDTO {
 
     PersonNameDTO personName;
 

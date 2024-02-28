@@ -5,19 +5,19 @@
         "type": "custom",
         "tokenizer": "icu_tokenizer",
         "filter": [
-          "icu_folding",
           "lowercase",
           "serbian_stop",
-          "serbian_stemmer"
+          "serbian_stemmer",
+          "icu_folding"
         ]
       },
       "serbian_simple": {
         "type": "custom",
         "tokenizer": "standard",
         "filter": [
+          "lowercase",
           "serbian_cyrillic_to_latinic",
-          "icu_folding",
-          "lowercase"
+          "icu_folding"
         ]
       }
     },

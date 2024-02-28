@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -32,7 +35,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDto;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -58,6 +61,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @SpringBootTest
@@ -125,7 +129,7 @@ public class PersonServiceTest {
     public void shouldReadPersonWhenPersonIsApproved() {
         // given
         var expectedPerson = new Person();
-        var expectedResponse = new PersonResponseDto();
+        var expectedResponse = new PersonResponseDTO();
 
         when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
 
@@ -212,8 +216,8 @@ public class PersonServiceTest {
         // given
         var person = new Person();
         person.setBiography(new HashSet<>());
-        var bio1 = new MultilingualContentDTO(1, "English content", 1);
-        var bio2 = new MultilingualContentDTO(2, "Contenu français", 2);
+        var bio1 = new MultilingualContentDTO(1, "EN", "English content", 1);
+        var bio2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var bioList = Arrays.asList(bio1, bio2);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
@@ -232,8 +236,8 @@ public class PersonServiceTest {
         // given
         var person = new Person();
         person.setBiography(new HashSet<>());
-        var keyword1 = new MultilingualContentDTO(1, "English content", 1);
-        var keyword2 = new MultilingualContentDTO(2, "Contenu français", 2);
+        var keyword1 = new MultilingualContentDTO(1, "EN", "English content", 1);
+        var keyword2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var keywordList = Arrays.asList(keyword1, keyword2);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
@@ -481,5 +485,61 @@ public class PersonServiceTest {
 
         // then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldGetResearcherCount() {
+        // Given
+        var expectedCount = 42L;
+        when(personIndexRepository.count()).thenReturn(expectedCount);
+
+        // When
+        long actualCount = personService.getResearcherCount();
+
+        // Then
+        assertEquals(expectedCount, actualCount);
+        verify(personIndexRepository, times(1)).count();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "1, true, true",
+        "2, true, false",
+        "3, false, true",
+    })
+    void shouldThrowReferenceConstraintViolationExceptionWhenPersonIsUsed(Integer personId,
+                                                                          boolean hasProjectContribution,
+                                                                          boolean isBoundToUser) {
+        // Given
+        when(personRepository.hasContribution(personId)).thenReturn(hasProjectContribution);
+        when(personRepository.isBoundToUser(personId)).thenReturn(isBoundToUser);
+
+        // When
+        assertThrows(PersonReferenceConstraintViolationException.class,
+            () -> personService.deletePerson(personId));
+
+        // Then (PersonReferenceConstraintViolationException should be thrown)
+        verify(personRepository, never()).findById(personId);
+        verify(personRepository, never()).save(any());
+        verify(personIndexRepository, never()).delete(any());
+    }
+
+    @Test
+    void shouldDeleteUnusedPerson() {
+        // Given
+        var personId = 5;
+        when(personRepository.hasContribution(personId)).thenReturn(false);
+        when(personRepository.isBoundToUser(personId)).thenReturn(false);
+        when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
+        when(personIndexRepository.findByDatabaseId(personId)).thenReturn(
+            Optional.of(new PersonIndex()));
+
+        // When
+        personService.deletePerson(personId);
+
+        // Then
+        verify(personRepository, times(1)).findById(personId);
+        verify(personRepository, times(1)).save(any());
+        verify(personIndexRepository, times(1)).delete(any());
     }
 }

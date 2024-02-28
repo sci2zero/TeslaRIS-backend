@@ -15,7 +15,7 @@ public class BookSeriesConverter {
         responseDTO.setId(journal.getId());
         responseDTO.setTitle(
             MultilingualContentConverter.getMultilingualContentDTO(journal.getTitle()));
-        responseDTO.setEISSN(journal.getEISSN());
+        responseDTO.setEissn(journal.getEISSN());
         responseDTO.setPrintISSN(journal.getPrintISSN());
         responseDTO.setNameAbbreviation(
             MultilingualContentConverter.getMultilingualContentDTO(
@@ -42,7 +42,7 @@ public class BookSeriesConverter {
         responseDTO.setId(bookSeries.getId());
         responseDTO.setTitle(
             MultilingualContentConverter.getMultilingualContentDTO(bookSeries.getTitle()));
-        responseDTO.setEISSN(bookSeries.getEISSN());
+        responseDTO.setEissn(bookSeries.getEISSN());
         responseDTO.setPrintISSN(bookSeries.getPrintISSN());
         responseDTO.setNameAbbreviation(
             MultilingualContentConverter.getMultilingualContentDTO(

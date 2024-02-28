@@ -10,4 +10,6 @@ public interface OrganisationUnitIndexRepository
     extends ElasticsearchRepository<OrganisationUnitIndex, String> {
 
     Optional<OrganisationUnitIndex> findOrganisationUnitIndexByDatabaseId(Integer databaseId);
+
+    long count();
 }

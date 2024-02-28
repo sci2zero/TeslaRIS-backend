@@ -128,16 +128,15 @@ public class DbInitializer implements ApplicationRunner {
         authorityRepository.save(researcherAuthority);
 
         var serbianLanguage = new Language();
-        serbianLanguage.setLanguageCode("RS");
+        serbianLanguage.setLanguageCode(LanguageAbbreviations.SERBIAN);
         languageRepository.save(serbianLanguage);
 
         var englishLanguage = new Language();
-        englishLanguage.setLanguageCode("EN");
+        englishLanguage.setLanguageCode(LanguageAbbreviations.ENGLISH);
         languageRepository.save(englishLanguage);
 
-
         var yuLanguage = new Language();
-        yuLanguage.setLanguageCode("YU");
+        yuLanguage.setLanguageCode(LanguageAbbreviations.CROATIAN);
         yuLanguage.setDeleted(true);
         languageRepository.save(yuLanguage);
 
@@ -147,7 +146,7 @@ public class DbInitializer implements ApplicationRunner {
         var postalAddress = new PostalAddress(country, new HashSet<>(),
             new HashSet<>());
         var personalInfo =
-            new PersonalInfo(LocalDate.of(2000, 1, 25), "Sebia", Sex.MALE, postalAddress,
+            new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666"));
         var person1 = new Person();
         person1.setApproveStatus(ApproveStatus.APPROVED);
@@ -175,7 +174,7 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
-        dummyOU.setLocation(new GeoLocation(100.00, 100.00, 100));
+        dummyOU.setLocation(new GeoLocation(100.00, 100.00, "NOWHERE"));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
@@ -192,13 +191,13 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(englishTag, "Faculty of Sciences", 1),
             new MultiLingualContent(serbianTag, "Prirodno matematicki fakultet", 2)})));
         dummyOU2.setApproveStatus(ApproveStatus.APPROVED);
-        dummyOU2.setLocation(new GeoLocation(120.00, 120.00, 100));
+        dummyOU2.setLocation(new GeoLocation(120.00, 120.00, "NOWHERE"));
         dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
         organisationUnitRepository.save(dummyOU2);
 
         var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
-            null, null);
+            new HashSet<>(), null);
         researchAreaRepository.save(researchArea1);
 
         var conferenceEvent1 = new Conference();
@@ -246,12 +245,42 @@ public class DbInitializer implements ApplicationRunner {
         passwordResetTokenRepository.save(passwordResetRequest);
 
         person1.setName(
-            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         personRepository.save(person1);
 
         var listMyJournalPublications = new Privilege("LIST_MY_JOURNAL_PUBLICATIONS");
-        privilegeRepository.save(listMyJournalPublications);
+        var deletePerson = new Privilege("DELETE_PERSON");
+        privilegeRepository.saveAll(List.of(listMyJournalPublications, deletePerson));
+
         researcherAuthority.addPrivilege(listMyJournalPublications);
         authorityRepository.save(researcherAuthority);
+        adminAuthority.addPrivilege(deletePerson);
+        adminAuthority.addPrivilege(listMyJournalPublications);
+        authorityRepository.save(adminAuthority);
+
+        var person2 = new Person();
+        var postalAddress2 = new PostalAddress(country, new HashSet<>(),
+            new HashSet<>());
+        var personalInfo2 =
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Sebia", Sex.MALE, postalAddress2,
+                new Contact("mark@ftn.uns.ac.com", "021555769"));
+        person2.setApproveStatus(ApproveStatus.APPROVED);
+        person2.setPersonalInfo(personalInfo2);
+        person1.setName(
+            new PersonName("Marko", "Janko", "Markovic", LocalDate.of(2000, 1, 31), null));
+        personRepository.save(person2);
+
+        var registerEmployee = new Privilege("REGISTER_EMPLOYEE");
+        privilegeRepository.save(registerEmployee);
+        adminAuthority.addPrivilege(registerEmployee);
+        authorityRepository.save(adminAuthority);
+
+        var institutionalEditorAuthority =
+            new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
+                List.of(new Privilege[] {updateProfile})));
+        authorityRepository.save(institutionalEditorAuthority);
+
+        var hungarianTag = new LanguageTag(LanguageAbbreviations.HUNGARIAN, "Magyar");
+        languageTagRepository.save(hungarianTag);
     }
 }

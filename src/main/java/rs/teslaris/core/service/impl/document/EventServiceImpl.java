@@ -30,7 +30,7 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Primary
@@ -121,8 +121,14 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("name_sr").value("*" + token + "*")
+                                .caseInsensitive(true)));
                         eq.should(sb -> sb.match(
                             m -> m.field("name_sr").query(token)));
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("name_other").value("*" + token + "*")
+                                .caseInsensitive(true)));
                         eq.should(sb -> sb.match(
                             m -> m.field("name_other").query(token)));
                         eq.should(sb -> sb.match(
@@ -162,18 +168,23 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     protected void indexEventCommonFields(EventIndex index, Event event) {
         indexMultilingualContent(index, event, Event::getName, EventIndex::setNameSr,
             EventIndex::setNameOther);
+        index.setNameSrSortable(index.getNameSr());
+        index.setNameOtherSortable(index.getNameOther());
         indexMultilingualContent(index, event, Event::getDescription, EventIndex::setDescriptionSr,
             EventIndex::setDescriptionOther);
         indexMultilingualContent(index, event, Event::getKeywords, EventIndex::setKeywordsSr,
             EventIndex::setKeywordsOther);
         indexMultilingualContent(index, event, Event::getState, EventIndex::setStateSr,
             EventIndex::setStateOther);
+        index.setStateSrSortable(index.getStateSr());
+        index.setStateOtherSortable(index.getStateOther());
         indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
             EventIndex::setPlaceOther);
 
         var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
         index.setDateFromTo(
             event.getDateFrom().format(formatter) + " - " + event.getDateTo().format(formatter));
+        index.setDateSortable(event.getDateFrom());
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,
@@ -182,16 +193,15 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                           BiConsumer<EventIndex, String> otherSetter) {
         Set<MultiLingualContent> contentList = contentExtractor.apply(event);
 
+        var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
-        contentList.forEach(content -> {
-            if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                srSetter.accept(index, content.getContent());
-            } else {
-                otherContent.append(content.getContent()).append(" | ");
-            }
-        });
+        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList);
 
-        otherSetter.accept(index, otherContent.toString());
+        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
+        srSetter.accept(index,
+            srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+        otherSetter.accept(index,
+            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
     }
 
     protected void notifyAboutBasicCreation(Integer eventId) {

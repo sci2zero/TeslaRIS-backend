@@ -11,4 +11,6 @@ public class LanguageAbbreviations {
     public static String ENGLISH = "EN";
 
     public static String CROATIAN = "HR";
+
+    public static String HUNGARIAN = "HU";
 }

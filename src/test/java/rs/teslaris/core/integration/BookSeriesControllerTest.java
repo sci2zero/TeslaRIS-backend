@@ -17,9 +17,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
-import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 @SpringBootTest
@@ -29,12 +27,12 @@ public class BookSeriesControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private BookSeriesDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
 
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(dummyMC);
         bookSeriesDTO.setNameAbbreviation(dummyMC);
-        bookSeriesDTO.setEISSN("eISSN");
+        bookSeriesDTO.setEissn("eISSN");
         bookSeriesDTO.setPrintISSN("printISSN");
 
         var contribution =
@@ -42,12 +40,11 @@ public class BookSeriesControllerTest extends BaseTest {
                 PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER,
                 LocalDate.now(), LocalDate.now());
         contribution.setOrderNumber(1);
-        contribution.setInstitutionIds(new ArrayList<>());
-        contribution.setPersonName(new PersonNameDTO());
-        contribution.setContact(new ContactDTO());
+        contribution.setPersonId(22);
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
+        contribution.setPersonName(
+            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
         bookSeriesDTO.setContributions(List.of(contribution));
         bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
 
@@ -94,7 +91,7 @@ public class BookSeriesControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var bookSeriesDTO = getTestPayload();
-        bookSeriesDTO.setEISSN("TEST_E_ISSN");
+        bookSeriesDTO.setEissn("TEST_E_ISSN");
         bookSeriesDTO.setPrintISSN("TEST_PRINT_ISSN");
 
         String requestBody = objectMapper.writeValueAsString(bookSeriesDTO);
@@ -116,5 +113,18 @@ public class BookSeriesControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@admin.com", password = "admin")
+    public void testSearchJournals() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/book-series/simple-search?tokens=eISSN&tokens=content")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 }

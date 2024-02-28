@@ -27,7 +27,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Where(clause = "deleted=false")
 public class Employment extends Involvement {
 
-    @Column(name = "employment_position", nullable = false)
+    @Column(name = "employment_position")
     private EmploymentPosition employmentPosition;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

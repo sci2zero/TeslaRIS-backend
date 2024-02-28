@@ -24,8 +24,8 @@ public class SearchServiceImplES<T> implements SearchService<T> {
 
         var searchQuery = searchQueryBuilder.build();
 
-        var searchHits = elasticsearchTemplate.search(searchQuery, clazz,
-            IndexCoordinates.of(indexName));
+        var searchHits =
+            elasticsearchTemplate.search(searchQuery, clazz, IndexCoordinates.of(indexName));
 
         var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
 

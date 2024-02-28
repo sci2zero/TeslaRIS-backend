@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
@@ -23,6 +23,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnit getReferenceToOrganisationUnitById(Integer id);
 
+    Long getOrganisationUnitsCount();
+
     Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable);
 
     Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens, Pageable pageable,
@@ -34,10 +36,10 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                                              Integer targetId,
                                                                              Pageable pageable);
 
-    OrganisationUnit createOrganisationUnit(
-        OrganisationUnitDTORequest organisationUnitDTORequest);
+    OrganisationUnitDTO createOrganisationUnit(
+        OrganisationUnitRequestDTO organisationUnitDTORequest);
 
-    OrganisationUnit editOrganisationUnit(OrganisationUnitDTORequest organisationUnitDTORequest,
+    OrganisationUnit editOrganisationUnit(OrganisationUnitRequestDTO organisationUnitDTORequest,
                                           Integer organisationUnitId);
 
     OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,

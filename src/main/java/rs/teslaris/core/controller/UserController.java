@@ -26,9 +26,10 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
-import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
@@ -36,6 +37,7 @@ import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
 @RequestMapping("/api/user")
@@ -60,6 +62,7 @@ public class UserController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return userService.searchUserAccounts(tokens, pageable);
     }
 
@@ -76,6 +79,7 @@ public class UserController {
     }
 
     @PostMapping("/refresh-token")
+    @Idempotent
     public ResponseEntity<AuthenticationResponseDTO> refreshToken(
         @RequestBody @Valid RefreshTokenRequestDTO refreshTokenRequest) {
         var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
@@ -108,20 +112,35 @@ public class UserController {
     }
 
     @PatchMapping("/reset-password")
+    @Idempotent
     public void resetPassword(@RequestBody @Valid ResetPasswordRequestDTO resetPasswordRequest) {
         userService.resetAccountPassword(resetPasswordRequest);
     }
 
-    @PostMapping("/register")
+    @PostMapping("/register-researcher")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
-    public UserResponseDTO registerUser(
-        @RequestBody @Valid RegistrationRequestDTO registrationRequest) {
-        var newUser = userService.registerUser(registrationRequest);
+    public UserResponseDTO registerResearcher(
+        @RequestBody @Valid ResearcherRegistrationRequestDTO registrationRequest) {
+        var newUser = userService.registerResearcher(registrationRequest);
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(), null);
+            newUser.getPreferredLanguage().getLanguageCode(), null, null);
+    }
+
+    @PostMapping("/register-institution-admin")
+    @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public UserResponseDTO registerInstitutionAdmin(
+        @RequestBody @Valid EmployeeRegistrationRequestDTO registrationRequest) {
+        var newUser = userService.registerInstitutionAdmin(registrationRequest);
+
+        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
+            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
+            newUser.getPreferredLanguage().getLanguageCode(),
+            registrationRequest.getOrganisationUnitId(), null);
     }
 
     @PutMapping
@@ -156,6 +175,11 @@ public class UserController {
     @PreAuthorize("hasAuthority('ALLOW_ACCOUNT_TAKEOVER')")
     public void allowTakingRoleOfAccount(@RequestHeader("Authorization") String bearerToken) {
         userService.allowTakingRoleOfAccount(bearerToken);
+    }
+
+    @GetMapping("/person/{personId}")
+    public UserResponseDTO getUserFromPerson(@PathVariable("personId") Integer personId) {
+        return userService.getUserFromPerson(personId);
     }
 
     private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {

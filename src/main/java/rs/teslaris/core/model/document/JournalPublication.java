@@ -17,7 +17,7 @@ import org.hibernate.annotations.Where;
 @Where(clause = "deleted=false")
 public class JournalPublication extends Document {
 
-    @Column(name = "journal_publication_type", nullable = false)
+    @Column(name = "journal_publication_type")
     private JournalPublicationType journalPublicationType;
 
     @Column(name = "start_page")

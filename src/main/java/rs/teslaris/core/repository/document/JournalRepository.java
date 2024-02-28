@@ -10,7 +10,4 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
 
     @Query("select count(p) > 0 from JournalPublication p join p.journal j where j.id = :journalId")
     boolean hasPublication(Integer journalId);
-
-    @Query("select count(p) > 0 from Proceedings p join p.publicationSeries j where j.id = :publicationSeriesId")
-    boolean hasProceedings(Integer publicationSeriesId);
 }

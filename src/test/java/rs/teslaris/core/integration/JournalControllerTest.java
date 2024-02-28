@@ -16,11 +16,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
-import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 @SpringBootTest
@@ -30,13 +28,13 @@ public class JournalControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
 
-    private JournalDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "Content", 1));
+    private PublicationSeriesDTO getTestPayload() {
+        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
 
-        var journalDTO = new JournalDTO();
+        var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(dummyMC);
         journalDTO.setNameAbbreviation(dummyMC);
-        journalDTO.setEISSN("eISSN");
+        journalDTO.setEissn("eISSN");
         journalDTO.setPrintISSN("printISSN");
 
         var contribution =
@@ -44,12 +42,11 @@ public class JournalControllerTest extends BaseTest {
                 PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER,
                 LocalDate.now(), LocalDate.now());
         contribution.setOrderNumber(1);
-        contribution.setInstitutionIds(new ArrayList<>());
-        contribution.setPersonName(new PersonNameDTO());
-        contribution.setContact(new ContactDTO());
+        contribution.setPersonId(22);
         contribution.setContributionDescription(dummyMC);
-        contribution.setPostalAddress(new PostalAddressDTO(21, dummyMC, dummyMC));
         contribution.setDisplayAffiliationStatement(dummyMC);
+        contribution.setPersonName(
+            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
         journalDTO.setContributions(List.of(contribution));
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
@@ -95,7 +92,7 @@ public class JournalControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = new JournalBasicAdditionDTO();
-        journalDTO.setTitle(List.of(new MultilingualContentDTO(25, "Title", 1)));
+        journalDTO.setTitle(List.of(new MultilingualContentDTO(25, "EN", "Title", 1)));
         journalDTO.setEISSN("eISSN1");
         journalDTO.setPrintISSN("printISSN1");
 
@@ -117,7 +114,7 @@ public class JournalControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = getTestPayload();
-        journalDTO.setEISSN("TEST_E_ISSN");
+        journalDTO.setEissn("TEST_E_ISSN");
         journalDTO.setPrintISSN("TEST_PRINT_ISSN");
 
         String requestBody = objectMapper.writeValueAsString(journalDTO);

@@ -13,6 +13,7 @@ public class MultilingualContentConverter {
         return multilingualContent.stream().map(mc ->
             new MultilingualContentDTO(
                 mc.getLanguage().getId(),
+                mc.getLanguage().getLanguageTag(),
                 mc.getContent(),
                 mc.getPriority()
             )).collect(Collectors.toList());

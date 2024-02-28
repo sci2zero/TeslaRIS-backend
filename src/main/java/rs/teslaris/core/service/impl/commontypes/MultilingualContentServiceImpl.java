@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,6 +36,18 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
     }
 
     @Override
+    public Set<MultiLingualContent> deepCopy(Set<MultiLingualContent> content) {
+        var returnContent = new HashSet<MultiLingualContent>();
+        content.forEach(mc -> {
+            var copiedContent =
+                new MultiLingualContent(mc.getLanguage(), mc.getContent(), mc.getPriority());
+            returnContent.add(copiedContent);
+        });
+
+        return returnContent;
+    }
+
+    @Override
     public void buildLanguageStrings(StringBuilder serbianBuilder,
                                      StringBuilder otherLanguagesBuilder,
                                      Set<MultiLingualContent> contentList) {
@@ -42,7 +55,11 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
             if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
                 serbianBuilder.append(content.getContent()).append(" | ");
             } else {
-                otherLanguagesBuilder.append(content.getContent()).append(" | ");
+                if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH)) {
+                    otherLanguagesBuilder.insert(0, " | ").insert(0, content.getContent());
+                } else {
+                    otherLanguagesBuilder.append(content.getContent()).append(" | ");
+                }
             }
         });
     }

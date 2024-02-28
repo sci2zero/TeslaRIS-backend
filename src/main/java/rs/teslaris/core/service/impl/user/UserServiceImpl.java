@@ -2,16 +2,17 @@ package rs.teslaris.core.service.impl.user;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import com.google.common.cache.Cache;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,10 +24,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.person.UserConverter;
+import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
-import rs.teslaris.core.dto.user.RegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
@@ -34,8 +39,6 @@ import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.model.person.Involvement;
-import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
@@ -49,18 +52,20 @@ import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.PasswordUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
-import rs.teslaris.core.util.exceptionhandling.exception.WrongPasswordProvidedException;
 import rs.teslaris.core.util.jwt.JwtUtil;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -92,6 +97,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final SearchService<UserAccountIndex> searchService;
 
+    private final MultilingualContentService multilingualContentService;
+
+    private final Cache<String, Byte> passwordResetRequestCacheStore;
+
+    @Value("${client.address}")
+    private String clientAppAddress;
+
 
     @Override
     protected JpaRepository<User, Integer> getEntityRepository() {
@@ -120,9 +132,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public UserResponseDTO getUserProfile(Integer userId) {
         var user = findOne(userId);
-        return new UserResponseDTO(user.getId(), user.getEmail(), user.getFirstname(),
-            user.getLastName(), user.getLocked(), user.getCanTakeRole(),
-            user.getPreferredLanguage().getLanguageCode(), user.getOrganisationUnit().getId());
+        return UserConverter.toUserResponseDTO(user);
     }
 
     @Override
@@ -168,6 +178,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public AuthenticationResponseDTO refreshToken(String refreshTokenValue, String fingerprint) {
         var hashedRefreshToken =
             Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();
@@ -221,6 +232,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         userToDeactivate.setLocked(!userToDeactivate.getLocked());
         userRepository.save(userToDeactivate);
+
+        var index = userAccountIndexRepository.findByDatabaseId(userId);
+        if (index.isPresent()) {
+            index.get().setActive(!userToDeactivate.getLocked());
+            userAccountIndexRepository.save(index.get());
+        }
     }
 
     @Override
@@ -235,37 +252,49 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         userRepository.save(userToActivate);
         userAccountActivationRepository.delete(accountActivation);
+
+        var index = userAccountIndexRepository.findByDatabaseId(userToActivate.getId());
+        if (index.isPresent()) {
+            index.get().setActive(!userToActivate.getLocked());
+            userAccountIndexRepository.save(index.get());
+        }
     }
 
     @Override
     @Transactional
-    public User registerUser(RegistrationRequestDTO registrationRequest) {
-        if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
-            throw new UserAlreadyExistsException(
-                "Email " + registrationRequest.getEmail() + " is already in use!");
-        }
-
-        var preferredLanguage =
-            languageService.findOne(registrationRequest.getPreferredLanguageId());
+    public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
+        validateEmailUniqueness(registrationRequest.getEmail());
+        validatePasswordStrength(registrationRequest.getPassword());
 
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        Person person = personService.findOne(registrationRequest.getPersonId());
-        OrganisationUnit organisationUnit = getLatestResearcherInvolvement(person);
+        Person person = null;
+        if (registrationRequest.getPersonId() != null) {
+            person = personService.findOne(registrationRequest.getPersonId());
+        } else {
+
+            BasicPersonDTO basicPersonDTO = new BasicPersonDTO();
+            PersonNameDTO personNameDTO = new PersonNameDTO();
+            personNameDTO.setFirstname(registrationRequest.getFirstName());
+            personNameDTO.setLastname(registrationRequest.getLastName());
+            personNameDTO.setOtherName("");
+            basicPersonDTO.setPersonName(personNameDTO);
+            basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
+
+            person = personService.createPersonWithBasicInfo(basicPersonDTO);
+        }
+        var organisationUnit = personService.getLatestResearcherInvolvement(person);
 
         var newUser =
             new User(registrationRequest.getEmail(),
                 passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
-                preferredLanguage, authority, person, organisationUnit);
+                languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
+                person, organisationUnit);
         var savedUser = userRepository.save(newUser);
 
-
-        var newUserIndex = new UserAccountIndex();
-        indexCommonFields(newUserIndex, savedUser);
-        newUserIndex.setDatabaseId(savedUser.getId());
-        userAccountIndexRepository.save(newUserIndex);
+        reindexUser(savedUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
@@ -275,6 +304,55 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             "Your activation code is: " + activationToken.getActivationToken());
 
         return savedUser;
+    }
+
+    @Override
+    public User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest) {
+        validateEmailUniqueness(registrationRequest.getEmail());
+
+        var authority = authorityRepository.findByName(UserRole.INSTITUTIONAL_EDITOR.toString())
+            .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
+
+        var organisationUnit =
+            organisationUnitService.findOne(registrationRequest.getOrganisationUnitId());
+
+        var generatedPassword =
+            PasswordUtil.generatePassword(12 + (int) (Math.random() * ((18 - 12) + 1)));
+
+        var newUser =
+            new User(registrationRequest.getEmail(),
+                passwordEncoder.encode(new String(generatedPassword)),
+                registrationRequest.getNote(),
+                registrationRequest.getName(), registrationRequest.getSurname(), true, false,
+                languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
+                null, organisationUnit);
+        var savedUser = userRepository.save(newUser);
+
+        reindexUser(savedUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        userAccountActivationRepository.save(activationToken);
+
+        // Email message should be localised and customized
+        emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
+            "Your activation code is: " + activationToken.getActivationToken() +
+                "\n\nYour password is: " + new String(generatedPassword));
+
+        Arrays.fill(generatedPassword, '\0');
+        return savedUser;
+    }
+
+    private void validateEmailUniqueness(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new UserAlreadyExistsException("Email " + email + " is already in use!");
+        }
+    }
+
+    private void validatePasswordStrength(String password) {
+        if (!PasswordUtil.validatePasswordStrength(password)) {
+            throw new PasswordException(
+                "Weak password, use at least 8 characters, one upper and one lower case, and a number.");
+        }
     }
 
     @Override
@@ -300,9 +378,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         if (!userUpdateRequest.getOldPassword().isEmpty() &&
             passwordEncoder.matches(userUpdateRequest.getOldPassword(),
                 userToUpdate.getPassword())) {
+
+            if (!PasswordUtil.validatePasswordStrength(userUpdateRequest.getNewPassword())) {
+                throw new PasswordException("weakPasswordError");
+            }
+
             userToUpdate.setPassword(passwordEncoder.encode(userUpdateRequest.getNewPassword()));
         } else if (!userUpdateRequest.getOldPassword().isEmpty()) {
-            throw new WrongPasswordProvidedException("Wrong old password provided.");
+            throw new PasswordException("wrongOldPasswordError");
         }
 
         userRepository.save(userToUpdate);
@@ -316,14 +399,28 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     @Transactional
     public void initiatePasswordResetProcess(ForgotPasswordRequestDTO forgotPasswordRequest) {
-        var user = (User) loadUserByUsername(forgotPasswordRequest.getUserEmail());
+        String userEmail = forgotPasswordRequest.getUserEmail();
 
-        var resetToken = UUID.randomUUID().toString();
-        emailUtil.sendSimpleEmail(user.getEmail(), "Account activation",
-            "To reset your password, go to: <BASE_URL>" + resetToken +
-                "\n\nThis token will last a week.");
+        if (passwordResetRequestCacheStore.getIfPresent(userEmail) != null) {
+            return;
+        }
 
-        passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
+        passwordResetRequestCacheStore.put(userEmail, (byte) 1);
+
+        try {
+            var user = (User) loadUserByUsername(userEmail);
+            var resetToken = UUID.randomUUID().toString();
+            String resetLink =
+                clientAppAddress + user.getPreferredLanguage().getLanguageCode().toLowerCase() +
+                    "/reset-password/" + resetToken;
+            String emailSubject = "Account Password Reset";
+            String emailBody =
+                String.format("To reset your password, go to: %s\n\nThis token will last a week.",
+                    resetLink);
+            emailUtil.sendSimpleEmail(user.getEmail(), emailSubject, emailBody);
+            passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
+        } catch (UsernameNotFoundException ignored) {
+        }
     }
 
     @Override
@@ -350,28 +447,18 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         var userToUpdate = boundUser.get();
-        userToUpdate.setOrganisationUnit(getLatestResearcherInvolvement(person));
+        userToUpdate.setOrganisationUnit(personService.getLatestResearcherInvolvement(person));
         userRepository.save(userToUpdate);
         reindexUser(userToUpdate);
     }
 
-    private OrganisationUnit getLatestResearcherInvolvement(Person person) {
-        OrganisationUnit organisationUnit = null;
-        if (Objects.nonNull(person.getInvolvements())) {
-            // TODO: Ulazi li ovo samo u display OU ili i edukacija
-            Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
-                .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
-                .filter(involvement ->
-                    involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                        involvement.getInvolvementType().equals(InvolvementType.HIRED_BY))
-                .max(Comparator.comparing(Involvement::getDateFrom));
+    @Override
+    @Transactional
+    public UserResponseDTO getUserFromPerson(Integer personId) {
+        var boundUser = userRepository.findForResearcher(personId)
+            .orElseThrow(() -> new NotFoundException("personNotBound"));
 
-            if (latestInvolvement.isPresent()) {
-                organisationUnit = latestInvolvement.get().getOrganisationUnit();
-            }
-        }
-
-        return organisationUnit;
+        return UserConverter.toUserResponseDTO(boundUser);
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {
@@ -387,17 +474,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var orgUnitNameSr = new StringBuilder();
         var orgUnitNameOther = new StringBuilder();
         if (Objects.nonNull(employment)) {
-            employment.getName().forEach((name) -> {
-                if (name.getLanguage().getLanguageTag().contains(LanguageAbbreviations.SERBIAN)) {
-                    orgUnitNameSr.append(name.getContent()).append(" | ");
-                } else {
-                    orgUnitNameOther.append(name.getContent()).append(" | ");
-                }
-            });
+            multilingualContentService.buildLanguageStrings(orgUnitNameSr, orgUnitNameOther,
+                employment.getName());
         }
 
-        index.setOrganisationUnitNameSr(orgUnitNameSr.toString());
-        index.setOrganisationUnitNameOther(orgUnitNameOther.toString());
+        StringUtil.removeTrailingPipeDelimiter(orgUnitNameSr, orgUnitNameOther);
+        index.setOrganisationUnitNameSr(
+            orgUnitNameSr.length() > 0 ? orgUnitNameSr.toString() : orgUnitNameOther.toString());
+        index.setOrganisationUnitNameOther(
+            orgUnitNameOther.length() > 0 ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
     }
 
     private void reindexUser(User user) {
@@ -412,14 +497,21 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private void indexCommonFields(UserAccountIndex index, User user) {
         index.setFullName(user.getFirstname() + " " + user.getLastName());
+        index.setFullNameSortable(index.getFullName());
         index.setEmail(user.getEmail());
+        index.setEmailSortable(user.getEmail());
         index.setUserRole(user.getAuthority().getName());
+        index.setActive(!user.getLocked());
         indexUserEmployment(index, user.getOrganisationUnit());
+        index.setOrganisationUnitNameSortableSr(index.getOrganisationUnitNameSr());
+        index.setOrganisationUnitNameSortableOther(index.getOrganisationUnitNameOther());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
+                b.should(sb -> sb.wildcard(
+                    m -> m.field("full_name").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("full_name").query(token)));
                 b.should(sb -> sb.match(
@@ -435,7 +527,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         })))._toQuery();
     }
 
-    @Scheduled(cron = "0 */5 * ? * *") // every five minutes
+    @Scheduled(cron = "0 */10 * ? * *") // every ten minutes
     public void cleanupLongLivedRefreshTokens() {
         var refreshTokens = refreshTokenRepository.findAll();
 
