@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -60,7 +59,8 @@ public class DocumentPublicationController {
     }
 
     @GetMapping("/for-researcher/{personId}")
-    public Page<DocumentPublicationIndex> findResearcherPublications(@PathVariable Integer personId, Pageable pageable) {
+    public Page<DocumentPublicationIndex> findResearcherPublications(@PathVariable Integer personId,
+                                                                     Pageable pageable) {
         return documentPublicationService.findResearcherPublications(personId, pageable);
     }
 

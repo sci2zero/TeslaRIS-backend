@@ -87,7 +87,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId, Pageable pageable) {
+    public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
+                                                                     Pageable pageable) {
         return documentPublicationIndexRepository.findByAuthorIds(authorId, pageable);
     }
 
