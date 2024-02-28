@@ -22,6 +22,8 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -31,6 +33,10 @@ import rs.teslaris.core.util.search.StringUtil;
 public class DocumentPublicationController {
 
     private final DocumentPublicationService documentPublicationService;
+
+    private final JwtUtil tokenUtil;
+
+    private final UserService userService;
 
 
     @GetMapping("/simple-search")
@@ -50,6 +56,12 @@ public class DocumentPublicationController {
         Pageable pageable) {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.ADVANCED);
+    }
+
+    @GetMapping("/for-researcher/{personId}")
+    public Page<DocumentPublicationIndex> findResearcherPublications(@PathVariable Integer personId,
+                                                                     Pageable pageable) {
+        return documentPublicationService.findResearcherPublications(personId, pageable);
     }
 
     @GetMapping("/count")

@@ -87,6 +87,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
+                                                                     Pageable pageable) {
+        return documentPublicationIndexRepository.findByAuthorIds(authorId, pageable);
+    }
+
+    @Override
     public Long getPublicationCount() {
         return documentPublicationIndexRepository.count();
     }
@@ -286,6 +292,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private int parseYear(String dateString) {
+        if (Objects.isNull(dateString)) {
+            return -1;
+        }
+
         DateTimeFormatter[] formatters = {
             DateTimeFormatter.ofPattern("yyyy"), // Year only
             DateTimeFormatter.ofPattern("dd-MM-yyyy"),

@@ -26,6 +26,7 @@ public class PersonConverter {
         var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
 
         return new PersonResponseDTO(
+            person.getId(),
             new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
                 person.getName().getDateTo()), otherNames,

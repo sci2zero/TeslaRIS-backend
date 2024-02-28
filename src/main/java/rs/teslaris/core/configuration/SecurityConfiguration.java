@@ -71,7 +71,10 @@ public class SecurityConfiguration {
             // PERSON
             .antMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
+
+            // COUNTRY
+            .antMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/{personId}/person-user").permitAll()
 
             // ORGANISATION UNIT
@@ -85,6 +88,7 @@ public class SecurityConfiguration {
             // DOCUMENT
             .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/document/for-researcher/{personId}").permitAll()
 
             // PROCEEDINGS
             .antMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()
@@ -98,6 +102,7 @@ public class SecurityConfiguration {
             // IMPORTER
             .antMatchers(HttpMethod.GET, "/api/import/harvest").permitAll()
             .antMatchers(HttpMethod.GET, "/api/import/load").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/import/load-wizard/**").permitAll()
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");

@@ -19,11 +19,14 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.Software;
@@ -48,6 +51,7 @@ import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.document.SoftwareRepository;
@@ -100,6 +104,8 @@ public class DbInitializer implements ApplicationRunner {
     private final SoftwareRepository softwareRepository;
 
     private final DatasetRepository datasetRepository;
+
+    private final PersonContributionRepository personContributionRepository;
 
 
     @Override
@@ -345,6 +351,30 @@ public class DbInitializer implements ApplicationRunner {
         var dataset = new Dataset();
         dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));
         dataset.setApproveStatus(ApproveStatus.APPROVED);
+
+        var datasetContribution = new PersonDocumentContribution();
+        datasetContribution.setPerson(person1);
+        datasetContribution.setContributionType(DocumentContributionType.AUTHOR);
+        datasetContribution.setIsMainContributor(true);
+        datasetContribution.setIsCorrespondingContributor(false);
+        datasetContribution.setOrderNumber(1);
+        datasetContribution.setDocument(dataset);
+        datasetContribution.setApproveStatus(ApproveStatus.APPROVED);
+        datasetContribution.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), new PersonName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        dataset.setContributors(Set.of(datasetContribution));
         datasetRepository.save(dataset);
+
+        person1.getBiography()
+            .add(new MultiLingualContent(englishTag, "Lorem ipsum dolor sit amet.", 1));
+        person1.getBiography().add(new MultiLingualContent(serbianTag, "Srpska biografija.", 2));
+        person1.getKeyword().add(new MultiLingualContent(englishTag,
+            "Machine Learning, Cybersecurity, Reverse Engineering, Web Security", 1));
+        personRepository.save(person1);
+
+        country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
+        countryRepository.save(country);
     }
 }
