@@ -24,14 +24,20 @@ import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.Publisher;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.ExpertiseOrSkill;
+import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
@@ -169,6 +175,8 @@ public class DbInitializer implements ApplicationRunner {
         var person1 = new Person();
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);
+        person1.setOrcid("0000-0002-1825-0097");
+        person1.setScopusAuthorId("7006095048");
         personRepository.save(person1);
 
         var adminUser =
@@ -372,6 +380,22 @@ public class DbInitializer implements ApplicationRunner {
         person1.getBiography().add(new MultiLingualContent(serbianTag, "Srpska biografija.", 2));
         person1.getKeyword().add(new MultiLingualContent(englishTag,
             "Machine Learning, Cybersecurity, Reverse Engineering, Web Security", 1));
+        person1.addInvolvement(
+            new Involvement(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
+                new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null, dummyOU));
+        person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
+            Set.of(new MultiLingualContent(englishTag, "Cybersecurity", 1)),
+            Set.of(new MultiLingualContent(englishTag,
+                "Proficiency in web exploitation and reverse engineering.", 1)),
+            Set.of(new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate", "FAKE",
+                new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
+                License.APACHE))));
+        person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
+            Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
+            Set.of(new MultiLingualContent(englishTag,
+                "Contributing to VIVO, Vitro and TeslaRIS current research information systems.",
+                1)),
+            new HashSet<>()));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));

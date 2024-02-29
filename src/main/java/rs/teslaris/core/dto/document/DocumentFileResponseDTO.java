@@ -26,4 +26,6 @@ public class DocumentFileResponseDTO {
     private ResourceType resourceType;
 
     private License license;
+
+    private Long sizeInMb;
 }

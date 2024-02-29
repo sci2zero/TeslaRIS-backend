@@ -3,8 +3,11 @@ package rs.teslaris.core.converter.person;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.ExpertiseOrSkillResponseDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
@@ -25,6 +28,38 @@ public class PersonConverter {
 
         var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
 
+        var employmentIds = new ArrayList<Integer>();
+        var educationIds = new ArrayList<Integer>();
+        var membershipIds = new ArrayList<Integer>();
+        person.getInvolvements().forEach(involvement -> {
+            switch (involvement.getInvolvementType()) {
+                case HIRED_BY:
+                case EMPLOYED_AT:
+                    employmentIds.add(involvement.getId());
+                    break;
+                case MEMBER_OF:
+                    membershipIds.add(involvement.getId());
+                    break;
+                default:
+                    educationIds.add(involvement.getId());
+            }
+        });
+
+        var expertisesOrSkills = new ArrayList<ExpertiseOrSkillResponseDTO>();
+        person.getExpertisesAndSkills().forEach(expertiseOrSkill -> {
+            var dto = new ExpertiseOrSkillResponseDTO();
+            dto.setName(
+                MultilingualContentConverter.getMultilingualContentDTO(expertiseOrSkill.getName()));
+            dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
+                expertiseOrSkill.getDescription()));
+            dto.setDocumentFiles(new ArrayList<>());
+
+            expertiseOrSkill.getProofs().forEach(proof -> {
+                dto.getDocumentFiles().add(DocumentFileConverter.toDTO(proof));
+            });
+            expertisesOrSkills.add(dto);
+        });
+
         return new PersonResponseDTO(
             person.getId(),
             new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
@@ -37,8 +72,8 @@ public class PersonConverter {
                 new ContactDTO(person.getPersonalInfo().getContact().getContactEmail(),
                     person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
                 person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
-            keyword,
-            person.getApproveStatus());
+            keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
+            expertisesOrSkills);
     }
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {

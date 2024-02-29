@@ -27,4 +27,12 @@ public class PersonResponseDTO {
     List<MultilingualContentDTO> keyword;
 
     ApproveStatus approveStatus;
+
+    List<Integer> employmentIds;
+
+    List<Integer> educationIds;
+
+    List<Integer> membershipIds;
+
+    List<ExpertiseOrSkillResponseDTO> expertisesOrSkills;
 }
