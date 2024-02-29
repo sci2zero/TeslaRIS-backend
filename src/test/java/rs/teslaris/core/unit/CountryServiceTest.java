@@ -50,4 +50,30 @@ public class CountryServiceTest {
 
         // then (NotFoundException should be thrown)
     }
+
+    @Test
+    public void shouldReadCountryWhenCountryExists() {
+        // given
+        var expectedCountry = new Country();
+        expectedCountry.setCode("MNE");
+
+        when(countryRepository.findById(1)).thenReturn(Optional.of(expectedCountry));
+
+        // when
+        var actualCountry = countryService.readCountryById(1);
+
+        // then
+        assertEquals(expectedCountry.getCode(), actualCountry.getCode());
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenReadCountryDoesNotExist() {
+        // given
+        when(countryRepository.findById(1)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class, () -> countryService.readCountryById(1));
+
+        // then (NotFoundException should be thrown)
+    }
 }

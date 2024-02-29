@@ -466,6 +466,15 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             employmentsOther.length() > 0 ? employmentsOther.toString() :
                 employmentsSr.toString());
         personIndex.setEmploymentsOtherSortable(personIndex.getEmploymentsOther());
+        setPersonIndexKeywords(personIndex, savedPerson);
+    }
+
+    private void setPersonIndexKeywords(PersonIndex personIndex, Person savedPerson) {
+        var keywordsBuilder = new StringBuilder();
+        savedPerson.getKeyword().forEach(multiLingualContent -> {
+            keywordsBuilder.append(multiLingualContent.getContent()).append(", ");
+        });
+        personIndex.setKeywords(keywordsBuilder.toString());
     }
 
     @Override
@@ -510,6 +519,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                                 Fuzziness.ONE.asString())));
                             b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
+                            b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
+                            b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
                         });
                     return b;
                 }

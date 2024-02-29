@@ -35,4 +35,6 @@ public class PersonResponseDTO {
     List<Integer> membershipIds;
 
     List<ExpertiseOrSkillResponseDTO> expertisesOrSkills;
+
+    List<PrizeResponseDTO> prizes;
 }

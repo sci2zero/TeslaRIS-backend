@@ -31,6 +31,4 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
     public CountryDTO readCountryById(Integer countryId) {
         return CountryConverter.toDTO(this.findOne(countryId));
     }
-
-
 }

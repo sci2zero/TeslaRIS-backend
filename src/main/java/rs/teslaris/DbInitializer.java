@@ -42,6 +42,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.PasswordResetToken;
@@ -292,7 +293,7 @@ public class DbInitializer implements ApplicationRunner {
         var postalAddress2 = new PostalAddress(country, new HashSet<>(),
             new HashSet<>());
         var personalInfo2 =
-            new PersonalInfo(LocalDate.of(2000, 1, 31), "Sebia", Sex.MALE, postalAddress2,
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress2,
                 new Contact("mark@ftn.uns.ac.com", "021555769"));
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
@@ -387,7 +388,7 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(englishTag, "Cybersecurity", 1)),
             Set.of(new MultiLingualContent(englishTag,
                 "Proficiency in web exploitation and reverse engineering.", 1)),
-            Set.of(new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate", "FAKE",
+            Set.of(new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate", "FAKE1",
                 new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
                 License.APACHE))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
@@ -396,6 +397,16 @@ public class DbInitializer implements ApplicationRunner {
                 "Contributing to VIVO, Vitro and TeslaRIS current research information systems.",
                 1)),
             new HashSet<>()));
+        person1.getPrizes().add(new Prize(
+            Set.of(
+                new MultiLingualContent(englishTag, "Serbian Cybersecurity Challenge - 1st place",
+                    1)),
+            Set.of(new MultiLingualContent(englishTag,
+                "1st place on a national cybersecurity competition finals. The competition is conducted in 5-man teams.",
+                1)),
+            Set.of(new DocumentFile("1st place certificate", "FAKE2",
+                new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
+                License.APACHE)), LocalDate.of(2023, 4, 17)));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));

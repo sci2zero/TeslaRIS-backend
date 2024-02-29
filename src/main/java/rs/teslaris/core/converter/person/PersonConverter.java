@@ -13,6 +13,7 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
+import rs.teslaris.core.dto.person.PrizeResponseDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Person;
@@ -31,34 +32,13 @@ public class PersonConverter {
         var employmentIds = new ArrayList<Integer>();
         var educationIds = new ArrayList<Integer>();
         var membershipIds = new ArrayList<Integer>();
-        person.getInvolvements().forEach(involvement -> {
-            switch (involvement.getInvolvementType()) {
-                case HIRED_BY:
-                case EMPLOYED_AT:
-                    employmentIds.add(involvement.getId());
-                    break;
-                case MEMBER_OF:
-                    membershipIds.add(involvement.getId());
-                    break;
-                default:
-                    educationIds.add(involvement.getId());
-            }
-        });
+        setPersonInvolvementIds(person, employmentIds, educationIds, membershipIds);
 
         var expertisesOrSkills = new ArrayList<ExpertiseOrSkillResponseDTO>();
-        person.getExpertisesAndSkills().forEach(expertiseOrSkill -> {
-            var dto = new ExpertiseOrSkillResponseDTO();
-            dto.setName(
-                MultilingualContentConverter.getMultilingualContentDTO(expertiseOrSkill.getName()));
-            dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
-                expertiseOrSkill.getDescription()));
-            dto.setDocumentFiles(new ArrayList<>());
+        setExpertisesAndSkills(person, expertisesOrSkills);
 
-            expertiseOrSkill.getProofs().forEach(proof -> {
-                dto.getDocumentFiles().add(DocumentFileConverter.toDTO(proof));
-            });
-            expertisesOrSkills.add(dto);
-        });
+        var prizes = new ArrayList<PrizeResponseDTO>();
+        setPrizes(person, prizes);
 
         return new PersonResponseDTO(
             person.getId(),
@@ -73,7 +53,7 @@ public class PersonConverter {
                     person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
                 person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
-            expertisesOrSkills);
+            expertisesOrSkills, prizes);
     }
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
@@ -142,6 +122,57 @@ public class PersonConverter {
         return keywordDTO;
     }
 
+    private static void setPersonInvolvementIds(Person person, ArrayList<Integer> employmentIds,
+                                                ArrayList<Integer> educationIds,
+                                                ArrayList<Integer> membershipIds) {
+        person.getInvolvements().forEach(involvement -> {
+            switch (involvement.getInvolvementType()) {
+                case HIRED_BY:
+                case EMPLOYED_AT:
+                    employmentIds.add(involvement.getId());
+                    break;
+                case MEMBER_OF:
+                    membershipIds.add(involvement.getId());
+                    break;
+                default:
+                    educationIds.add(involvement.getId());
+            }
+        });
+    }
+
+    private static void setExpertisesAndSkills(Person person,
+                                               ArrayList<ExpertiseOrSkillResponseDTO> expertisesOrSkills) {
+        person.getExpertisesAndSkills().forEach(expertiseOrSkill -> {
+            var dto = new ExpertiseOrSkillResponseDTO();
+            dto.setName(
+                MultilingualContentConverter.getMultilingualContentDTO(expertiseOrSkill.getName()));
+            dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
+                expertiseOrSkill.getDescription()));
+
+            dto.setDocumentFiles(new ArrayList<>());
+            expertiseOrSkill.getProofs().forEach(proof -> {
+                dto.getDocumentFiles().add(DocumentFileConverter.toDTO(proof));
+            });
+            expertisesOrSkills.add(dto);
+        });
+    }
+
+    private static void setPrizes(Person person, ArrayList<PrizeResponseDTO> prizes) {
+        person.getPrizes().forEach(prize -> {
+            var dto = new PrizeResponseDTO();
+            dto.setTitle(
+                MultilingualContentConverter.getMultilingualContentDTO(prize.getTitle()));
+            dto.setDescription(
+                MultilingualContentConverter.getMultilingualContentDTO(prize.getDescription()));
+            dto.setDate(prize.getDate());
+
+            dto.setProofs(new ArrayList<>());
+            prize.getProofs().forEach(proof -> {
+                dto.getProofs().add(DocumentFileConverter.toDTO(proof));
+            });
+            prizes.add(dto);
+        });
+    }
 
     public static PersonUserResponseDTO toDTOWithUser(Person person) {
         var otherNames = getPersonOtherNamesDTO(person.getOtherNames());

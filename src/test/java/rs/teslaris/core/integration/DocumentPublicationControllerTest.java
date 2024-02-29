@@ -22,4 +22,11 @@ public class DocumentPublicationControllerTest extends BaseTest {
         var result = resultActions.andReturn();
         assertTrue(Long.parseLong(result.getResponse().getContentAsString()) >= 0);
     }
+
+    @Test
+    public void testGetAllPublicationsForUser() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                "http://localhost:8081/api/document/for-researcher/{personId}", 22)
+            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
 }
