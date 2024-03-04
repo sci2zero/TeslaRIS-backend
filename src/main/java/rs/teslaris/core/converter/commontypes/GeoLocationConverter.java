@@ -15,10 +15,11 @@ public class GeoLocationConverter {
 
     public static GeoLocationDTO toDTO(GeoLocation geoLocation) {
         var geoLocationDTO = new GeoLocationDTO();
-        geoLocationDTO.setLongitude(geoLocation.getLongitude());
-        geoLocationDTO.setLatitude(geoLocation.getLatitude());
-        geoLocationDTO.setAddress(geoLocation.getAddress());
-
+        if (geoLocation != null) {
+            geoLocationDTO.setLongitude(geoLocation.getLongitude());
+            geoLocationDTO.setLatitude(geoLocation.getLatitude());
+            geoLocationDTO.setAddress(geoLocation.getAddress());
+        }
         return geoLocationDTO;
     }
 }
