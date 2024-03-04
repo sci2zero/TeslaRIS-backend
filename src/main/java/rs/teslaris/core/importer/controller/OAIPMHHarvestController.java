@@ -1,10 +1,7 @@
 package rs.teslaris.core.importer.controller;
 
-import io.jsonwebtoken.MalformedJwtException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,47 +20,26 @@ public class OAIPMHHarvestController {
 
     private final OAIPMHLoader oaipmhLoader;
 
-    @Value("${harvester.api-key}")
-    private String apiKey;
-
 
     @GetMapping("/harvest")
     public void harvest(@RequestParam("dataSet") OAIPMHDataSet dataSet,
-                        @RequestParam("source") OAIPMHSource source,
-                        @RequestHeader("X-API-KEY") String userApiKey) {
-        if (!apiKey.equals(userApiKey)) {
-            throw new MalformedJwtException("Bad API key");
-        }
-
+                        @RequestParam("source") OAIPMHSource source) {
         oaipmhHarvester.harvest(dataSet, source);
     }
 
     @GetMapping("/load")
     public void loadAuto(@RequestParam("dataSet") OAIPMHDataSet dataSet,
-                         @RequestParam("performIndex") Boolean performIndex,
-                         @RequestHeader("X-API-KEY") String userApiKey) {
-        if (!apiKey.equals(userApiKey)) {
-            throw new MalformedJwtException("Bad API key");
-        }
-
+                         @RequestParam("performIndex") Boolean performIndex) {
         oaipmhLoader.loadRecordsAuto(dataSet, performIndex);
     }
 
     @GetMapping("/load-wizard/persons")
-    public BasicPersonDTO loadPersonsWizard(@RequestHeader("X-API-KEY") String userApiKey) {
-        if (!apiKey.equals(userApiKey)) {
-            throw new MalformedJwtException("Bad API key");
-        }
-
+    public BasicPersonDTO loadPersonsWizard() {
         return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.PERSONS);
     }
 
     @GetMapping("/load-wizard/events")
-    public BasicPersonDTO loadEventsWizard(@RequestHeader("X-API-KEY") String userApiKey) {
-        if (!apiKey.equals(userApiKey)) {
-            throw new MalformedJwtException("Bad API key");
-        }
-
+    public BasicPersonDTO loadEventsWizard() {
         return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.EVENTS);
     }
 }
