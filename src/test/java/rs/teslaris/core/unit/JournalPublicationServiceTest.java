@@ -257,15 +257,16 @@ public class JournalPublicationServiceTest {
         publication2.setType("JOURNAL_PUBLICATION");
         publication2.setJournalId(journalId);
 
-        var expectedPublications = Arrays.asList(publication1, publication2);
+        var expectedPublications = new PageImpl<>(Arrays.asList(publication1, publication2));
+        var pageable = PageRequest.of(0, 10);
 
         when(documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId))
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable))
             .thenReturn(expectedPublications);
 
         // When
         var actualPublications =
-            journalPublicationService.findPublicationsInJournal(journalId);
+            journalPublicationService.findPublicationsInJournal(journalId, pageable);
 
         // Then
         assertEquals(expectedPublications, actualPublications);

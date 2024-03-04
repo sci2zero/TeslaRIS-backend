@@ -78,6 +78,8 @@ public class InvolvementConverter {
         dto.setInvolvementType(involvement.getInvolvementType());
         dto.setAffiliationStatement(affiliationStatements);
         dto.setOrganisationUnitId(involvement.getOrganisationUnit().getId());
+        dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
+            involvement.getOrganisationUnit().getName()));
     }
 
     public static <R extends InvolvementDTO, T extends Involvement> R toDTO(T cast) {

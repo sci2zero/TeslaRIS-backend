@@ -49,8 +49,11 @@ public class PersonConverter {
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo()
                     .getSex(), postalAddress,
-                new ContactDTO(person.getPersonalInfo().getContact().getContactEmail(),
-                    person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
+                new ContactDTO(Objects.nonNull(person.getPersonalInfo().getContact()) ?
+                    person.getPersonalInfo().getContact().getContactEmail() : null,
+                    Objects.nonNull(person.getPersonalInfo().getContact()) ?
+                        person.getPersonalInfo().getContact().getPhoneNumber() : null),
+                person.getApvnt(),
                 person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
             expertisesOrSkills, prizes);

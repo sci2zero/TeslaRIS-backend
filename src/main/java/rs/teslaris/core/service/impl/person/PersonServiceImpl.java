@@ -448,14 +448,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     .startsWith(LanguageAbbreviations.SERBIAN))
                 .forEach(mc -> {
                     if (mc.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH)) {
-                        institutionNameOther.insert(0, " | ").insert(0, mc.getContent());
+                        institutionNameOther.insert(0, mc.getContent());
                     } else {
-                        institutionNameOther.append(mc.getContent()).append(" | ");
+                        institutionNameOther.append(mc.getContent());
                     }
                 });
-            employmentsSr.append(institutionNameSr)
-                .append(organisationUnit.getNameAbbreviation());
-            employmentsOther.append(institutionNameOther);
+
+            employmentsSr.append(
+                    institutionNameSr.toString().isEmpty() ? institutionNameOther : institutionNameSr)
+                .append(organisationUnit.getNameAbbreviation()).append("; ");
+            employmentsOther.append(institutionNameOther.toString().isEmpty() ?
+                institutionNameSr.delete(institutionNameSr.length() - 3,
+                    institutionNameSr.length()) :
+                institutionNameOther).append("; ");
         }
 
         StringUtil.removeTrailingPipeDelimiter(employmentsSr, employmentsOther);
