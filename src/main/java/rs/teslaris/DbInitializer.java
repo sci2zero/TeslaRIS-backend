@@ -24,18 +24,28 @@ import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.Publisher;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.Education;
+import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.EmploymentPosition;
+import rs.teslaris.core.model.person.ExpertiseOrSkill;
+import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.PasswordResetToken;
@@ -169,6 +179,8 @@ public class DbInitializer implements ApplicationRunner {
         var person1 = new Person();
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);
+        person1.setOrcid("0000-0002-1825-0097");
+        person1.setScopusAuthorId("7006095048");
         personRepository.save(person1);
 
         var adminUser =
@@ -284,7 +296,7 @@ public class DbInitializer implements ApplicationRunner {
         var postalAddress2 = new PostalAddress(country, new HashSet<>(),
             new HashSet<>());
         var personalInfo2 =
-            new PersonalInfo(LocalDate.of(2000, 1, 31), "Sebia", Sex.MALE, postalAddress2,
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress2,
                 new Contact("mark@ftn.uns.ac.com", "021555769"));
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
@@ -367,11 +379,69 @@ public class DbInitializer implements ApplicationRunner {
         dataset.setContributors(Set.of(datasetContribution));
         datasetRepository.save(dataset);
 
+        var sci2zero = new OrganisationUnit();
+        sci2zero.setNameAbbreviation("Sci2zero");
+        sci2zero.setName(new HashSet<>(List.of(new MultiLingualContent[] {
+            new MultiLingualContent(serbianTag, "Science 2.0 Alliance", 1)})));
+        sci2zero.setApproveStatus(ApproveStatus.APPROVED);
+        sci2zero.setContact(new Contact("info@sci2zero.com", "021555666"));
+        organisationUnitRepository.save(sci2zero);
+
         person1.getBiography()
             .add(new MultiLingualContent(englishTag, "Lorem ipsum dolor sit amet.", 1));
         person1.getBiography().add(new MultiLingualContent(serbianTag, "Srpska biografija.", 2));
         person1.getKeyword().add(new MultiLingualContent(englishTag,
             "Machine Learning, Cybersecurity, Reverse Engineering, Web Security", 1));
+        person1.addInvolvement(
+            new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
+                new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null, dummyOU,
+                EmploymentPosition.TEACHING_ASSISTANT, Set.of(new MultiLingualContent(englishTag,
+                "Courses: Digital Documents Management, Secure Software Development", 1))));
+        person1.addInvolvement(
+            new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
+                new HashSet<>(), InvolvementType.HIRED_BY, new HashSet<>(), null, sci2zero,
+                EmploymentPosition.COLLABORATOR, Set.of(new MultiLingualContent(englishTag,
+                "TeslaRIS - reingeneering of CRIS at the university of Novi Sad.", 1))));
+        person1.addInvolvement(
+            new Membership(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
+                new HashSet<>(), InvolvementType.MEMBER_OF, new HashSet<>(), null, sci2zero,
+                Set.of(new MultiLingualContent(englishTag,
+                    "I just wanted to be around cool kids...", 1)),
+                Set.of(new MultiLingualContent(englishTag,
+                    "Gold member", 1))));
+        person1.addInvolvement(
+            new Education(LocalDate.of(2018, 10, 1), LocalDate.of(2023, 9, 1),
+                ApproveStatus.APPROVED,
+                new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null, dummyOU,
+                Set.of(new MultiLingualContent(englishTag, "Reverse Image Search System", 1),
+                    new MultiLingualContent(englishTag, "Sistem za reverznu pretragu slika", 1)),
+                Set.of(new MultiLingualContent(englishTag, "Master in Software", 1),
+                    new MultiLingualContent(englishTag, "Master inženjer softvera", 1)),
+                Set.of(new MultiLingualContent(englishTag, "Msc", 1))));
+        person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
+            Set.of(new MultiLingualContent(englishTag, "Cybersecurity", 1)),
+            Set.of(new MultiLingualContent(englishTag,
+                "Proficiency in web exploitation and reverse engineering.", 1)),
+            Set.of(
+                new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate.pdf", "1111.pdf",
+                    new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
+                    License.APACHE))));
+        person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
+            Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
+            Set.of(new MultiLingualContent(englishTag,
+                "Contributing to VIVO, Vitro and TeslaRIS current research information systems.",
+                1)),
+            new HashSet<>()));
+        person1.getPrizes().add(new Prize(
+            Set.of(
+                new MultiLingualContent(englishTag, "Serbian Cybersecurity Challenge - 1st place",
+                    1)),
+            Set.of(new MultiLingualContent(englishTag,
+                "1st place on a national cybersecurity competition finals. The competition is conducted in 5-man teams.",
+                1)),
+            Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
+                new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
+                License.APACHE)), LocalDate.of(2023, 4, 17)));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));

@@ -2,7 +2,9 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
@@ -74,9 +76,10 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
-    public List<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId) {
+    public Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
+                                                                    Pageable pageable) {
         return documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId);
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
     }
 
     @Override

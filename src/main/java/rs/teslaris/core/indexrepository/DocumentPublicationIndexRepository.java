@@ -42,5 +42,6 @@ public interface DocumentPublicationIndexRepository extends
         "{\"term\": {\"type\": \"?0\"}}, " +
         "{\"term\": {\"journal_id\": \"?1\"}}, " +
         "]}}")
-    List<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId);
+    Page<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId,
+                                                          Pageable pageable);
 }

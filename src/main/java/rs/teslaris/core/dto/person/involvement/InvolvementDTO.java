@@ -34,4 +34,7 @@ public class InvolvementDTO {
     private List<MultilingualContentDTO> affiliationStatement;
 
     private Integer organisationUnitId;
+
+    // Only for responses
+    private List<MultilingualContentDTO> organisationUnitName;
 }

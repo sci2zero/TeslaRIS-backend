@@ -57,6 +57,6 @@ public class Involvement extends BaseEntity {
     private Person personInvolved;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organisation_unit_id", nullable = true)
+    @JoinColumn(name = "organisation_unit_id", nullable = false)
     private OrganisationUnit organisationUnit;
 }

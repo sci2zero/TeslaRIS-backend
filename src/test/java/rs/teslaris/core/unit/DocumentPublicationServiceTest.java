@@ -3,6 +3,7 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
@@ -328,5 +330,23 @@ public class DocumentPublicationServiceTest {
 
         // Then
         verify(documentPublicationIndexRepository, times(1)).deleteAll();
+    }
+
+    @Test
+    public void shouldFindResearcherPublications() {
+        // given
+        var authorId = 123;
+        var pageable = PageRequest.of(0, 10);
+        var expectedPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
+        when(documentPublicationIndexRepository.findByAuthorIds(anyInt(),
+            any(Pageable.class))).thenReturn(expectedPage);
+
+        // when
+        var resultPage =
+            documentPublicationService.findResearcherPublications(authorId, pageable);
+
+        // then
+        assertEquals(expectedPage, resultPage);
+        verify(documentPublicationIndexRepository).findByAuthorIds(authorId, pageable);
     }
 }

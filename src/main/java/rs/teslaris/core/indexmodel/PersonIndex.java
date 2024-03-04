@@ -55,4 +55,6 @@ public class PersonIndex {
     @Field(type = FieldType.Keyword, store = true, name = "orcid")
     private String orcid;
 
+    @Field(type = FieldType.Text, store = true, name = "keywords")
+    private String keywords;
 }

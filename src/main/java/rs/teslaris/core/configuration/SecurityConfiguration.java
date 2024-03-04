@@ -99,10 +99,18 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.GET,
                 "/api/proceedings-publication/event/{eventId}/my-publications").permitAll()
 
-            // IMPORTER
-            .antMatchers(HttpMethod.GET, "/api/import/harvest").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/import/load").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/import/load-wizard/**").permitAll()
+            // INVOLVEMENT
+            .antMatchers(HttpMethod.GET,
+                "/api/involvement/employment/{employmentId}").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/involvement/education/{educationId}").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/involvement/membership/{membershipId}").permitAll()
+
+            // FILE
+            .antMatchers(HttpMethod.GET,
+                "/api/file/{serverFilename}").permitAll()
+
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");
