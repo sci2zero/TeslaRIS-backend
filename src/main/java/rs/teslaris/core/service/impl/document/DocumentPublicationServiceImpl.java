@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -28,6 +29,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -186,47 +188,53 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
 
-        document.getContributors().forEach(contribution -> {
-            var personExists = contribution.getPerson() != null;
+        document.getContributors()
+            .stream().sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
+            .forEach(contribution -> {
+                var personExists = Objects.nonNull(contribution.getPerson());
 
-            var contributorDisplayName =
-                contribution.getAffiliationStatement().getDisplayPersonName();
-            var contributorName =
-                (Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
-                    Objects.toString(contributorDisplayName.getOtherName(), "") + " " +
-                    Objects.toString(contributorDisplayName.getLastname(), "")).trim();
+                var contributorDisplayName =
+                    contribution.getAffiliationStatement().getDisplayPersonName();
+                var contributorName =
+                    (Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
+                        Objects.toString(contributorDisplayName.getOtherName(), "") + " " +
+                        Objects.toString(contributorDisplayName.getLastname(), "")).trim();
 
-            switch (contribution.getContributionType()) {
-                case AUTHOR:
-                    if (personExists) {
-                        index.getAuthorIds().add(contribution.getPerson().getId());
-                    }
-                    index.setAuthorNames(StringUtil.removeLeadingColonSpace(
-                        index.getAuthorNames() + "; " + contributorName));
-                    break;
-                case EDITOR:
-                    if (personExists) {
-                        index.getEditorIds().add(contribution.getPerson().getId());
-                    }
-                    index.setEditorNames(StringUtil.removeLeadingColonSpace(
-                        index.getEditorNames() + "; " + contributorName));
-                    break;
-                case ADVISOR:
-                    if (personExists) {
-                        index.getAdvisorIds().add(contribution.getPerson().getId());
-                    }
-                    index.setAdvisorNames(StringUtil.removeLeadingColonSpace(
-                        index.getAdvisorNames() + "; " + contributorName));
-                    break;
-                case REVIEWER:
-                    if (personExists) {
-                        index.getReviewerIds().add(contribution.getPerson().getId());
-                    }
-                    index.setReviewerNames(StringUtil.removeLeadingColonSpace(
-                        index.getReviewerNames() + "; " + contributorName));
-                    break;
-            }
-        });
+                switch (contribution.getContributionType()) {
+                    case AUTHOR:
+                        if (contribution.getOrderNumber() == 1) {
+                            contributorName += "*";
+                        }
+
+                        if (personExists) {
+                            index.getAuthorIds().add(contribution.getPerson().getId());
+                        }
+                        index.setAuthorNames(StringUtil.removeLeadingColonSpace(
+                            index.getAuthorNames() + "; " + contributorName));
+                        break;
+                    case EDITOR:
+                        if (personExists) {
+                            index.getEditorIds().add(contribution.getPerson().getId());
+                        }
+                        index.setEditorNames(StringUtil.removeLeadingColonSpace(
+                            index.getEditorNames() + "; " + contributorName));
+                        break;
+                    case ADVISOR:
+                        if (personExists) {
+                            index.getAdvisorIds().add(contribution.getPerson().getId());
+                        }
+                        index.setAdvisorNames(StringUtil.removeLeadingColonSpace(
+                            index.getAdvisorNames() + "; " + contributorName));
+                        break;
+                    case REVIEWER:
+                        if (personExists) {
+                            index.getReviewerIds().add(contribution.getPerson().getId());
+                        }
+                        index.setReviewerNames(StringUtil.removeLeadingColonSpace(
+                            index.getReviewerNames() + "; " + contributorName));
+                        break;
+                }
+            });
         index.setAuthorNamesSortable(index.getAuthorNames());
     }
 

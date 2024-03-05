@@ -134,7 +134,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     private void indexDataset(Dataset dataset, DocumentPublicationIndex index) {
         indexCommonFields(dataset, index);
 
-        index.setType(DocumentPublicationType.SOFTWARE.name());
+        index.setType(DocumentPublicationType.DATASET.name());
 
         documentPublicationIndexRepository.save(index);
     }

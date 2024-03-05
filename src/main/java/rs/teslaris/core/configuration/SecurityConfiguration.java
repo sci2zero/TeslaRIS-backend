@@ -79,6 +79,7 @@ public class SecurityConfiguration {
 
             // ORGANISATION UNIT
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/organisation-unit/{organisationUnitId}").permitAll()
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
 
             // LANGUAGE

@@ -204,7 +204,7 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
-        dummyOU.setLocation(new GeoLocation(100.00, 100.00, "NOWHERE"));
+        dummyOU.setLocation(new GeoLocation(19.850885, 45.245688, "NOWHERE"));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
@@ -221,7 +221,7 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(englishTag, "Faculty of Sciences", 1),
             new MultiLingualContent(serbianTag, "Prirodno matematicki fakultet", 2)})));
         dummyOU2.setApproveStatus(ApproveStatus.APPROVED);
-        dummyOU2.setLocation(new GeoLocation(120.00, 120.00, "NOWHERE"));
+        dummyOU2.setLocation(new GeoLocation(19.8502021, 45.2454147, "NOWHERE"));
         dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
         organisationUnitRepository.save(dummyOU2);
 
@@ -446,5 +446,9 @@ public class DbInitializer implements ApplicationRunner {
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
         countryRepository.save(country);
+
+        datasetContribution.getAffiliationStatement().setDisplayPersonName(
+            new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null));
+        personContributionRepository.save(datasetContribution);
     }
 }
