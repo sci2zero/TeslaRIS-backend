@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -163,6 +164,22 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         Integer sourceId, Integer targetId, Pageable pageable) {
         return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(pageable,
             sourceId, targetId).map(RelationConverter::toResponseDTO);
+    }
+
+    @Override
+    public List<OrganisationUnitDTO> getOrganisationUnitsRelationsChain(
+        Integer leafId) {
+        var chain = new ArrayList<OrganisationUnitDTO>();
+        chain.add(OrganisationUnitConverter.toDTO(findOne(leafId)));
+
+        var currentOU = organisationUnitsRelationRepository.getSuperOU(leafId);
+        while (currentOU.isPresent()) {
+            chain.add(OrganisationUnitConverter.toDTO(currentOU.get().getTargetOrganisationUnit()));
+            currentOU = organisationUnitsRelationRepository.getSuperOU(
+                currentOU.get().getTargetOrganisationUnit().getId());
+        }
+
+        return chain;
     }
 
     @Override

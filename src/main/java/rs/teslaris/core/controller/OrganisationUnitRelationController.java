@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -36,6 +37,12 @@ public class OrganisationUnitRelationController {
     public Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
         @PathVariable Integer sourceId, @PathVariable Integer targetId, Pageable pageable) {
         return organisationUnitService.getOrganisationUnitsRelations(sourceId, targetId, pageable);
+    }
+
+    @GetMapping("/{leafId}")
+    public List<OrganisationUnitDTO> getOrganisationUnitsRelationsChain(
+        @PathVariable Integer leafId) {
+        return organisationUnitService.getOrganisationUnitsRelationsChain(leafId);
     }
 
     @PostMapping

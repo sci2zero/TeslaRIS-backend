@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -49,6 +50,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
@@ -628,5 +630,35 @@ public class OrganisationUnitServiceTest {
         // Then
         assertNull(actualUnit);
         verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldId(oldId);
+    }
+
+    @Test
+    void testGetOrganisationUnitsRelationsChain() {
+        // Given
+        var leafUnit = new OrganisationUnit();
+        leafUnit.setId(1);
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            leafUnit.getId())).thenReturn(Optional.of(leafUnit));
+
+        var middleUnit = new OrganisationUnit();
+        middleUnit.setId(2);
+        when(organisationUnitsRelationRepository.getSuperOU(1)).thenReturn(Optional.of(
+            new OrganisationUnitsRelation(new HashSet<>(), new HashSet<>(),
+                OrganisationUnitRelationType.BELONGS_TO, null, null, ApproveStatus.APPROVED,
+                new HashSet<>(), leafUnit, middleUnit)));
+
+        var rootUnit = new OrganisationUnit();
+        rootUnit.setId(3);
+        when(organisationUnitsRelationRepository.getSuperOU(2)).thenReturn(Optional.of(
+            new OrganisationUnitsRelation(new HashSet<>(), new HashSet<>(),
+                OrganisationUnitRelationType.BELONGS_TO, null, null, ApproveStatus.APPROVED,
+                new HashSet<>(), middleUnit, rootUnit)));
+
+        // When
+        var result = organisationUnitService.getOrganisationUnitsRelationsChain(leafUnit.getId());
+
+        // Then
+        assertEquals(3, result.size());
+        verify(organisationUnitsRelationRepository, times(3)).getSuperOU(anyInt());
     }
 }

@@ -38,6 +38,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                                              Integer targetId,
                                                                              Pageable pageable);
 
+    List<OrganisationUnitDTO> getOrganisationUnitsRelationsChain(Integer leafId);
+
     OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest, Boolean index);
 
