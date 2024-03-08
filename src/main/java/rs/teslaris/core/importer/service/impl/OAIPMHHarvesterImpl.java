@@ -61,7 +61,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
     private Integer proxyPort;
 
 
-    public void harvest(OAIPMHDataSet requestDataSet, OAIPMHSource source) {
+    public void harvest(OAIPMHDataSet requestDataSet, OAIPMHSource source, Integer userId) {
         String endpoint =
             constructOAIPMHEndpoint(requestDataSet.getStringValue(), source.getStringValue());
         var restTemplate = constructRestTemplate();
@@ -77,7 +77,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                 }
 
                 var optionalResumptionToken =
-                    handleOAIPMHResponse(requestDataSet, optionalOaiPmhResponse.get());
+                    handleOAIPMHResponse(requestDataSet, optionalOaiPmhResponse.get(), userId);
                 if (optionalResumptionToken.isEmpty()) {
                     break;
                 }
@@ -92,7 +92,8 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
     }
 
     private Optional<ResumptionToken> handleOAIPMHResponse(OAIPMHDataSet requestDataSet,
-                                                           OAIPMHResponse oaiPmhResponse) {
+                                                           OAIPMHResponse oaiPmhResponse,
+                                                           Integer userId) {
         if (oaiPmhResponse.getListRecords() == null) {
             return Optional.empty();
         }
@@ -107,21 +108,27 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                 var metadata = record.getMetadata();
                 switch (requestDataSet) {
                     case EVENTS:
+                        metadata.getEvent().setImportUserId(userId);
                         mongoTemplate.save(metadata.getEvent());
                         break;
                     case PATENTS:
+                        metadata.getPatent().setImportUserId(userId);
                         mongoTemplate.save(metadata.getPatent());
                         break;
                     case PERSONS:
+                        metadata.getPerson().setImportUserId(userId);
                         mongoTemplate.save(metadata.getPerson());
                         break;
                     case PRODUCTS:
+                        metadata.getEvent().setImportUserId(userId);
                         mongoTemplate.save(metadata.getProduct());
                         break;
                     case PUBLICATIONS:
+                        metadata.getPublication().setImportUserId(userId);
                         mongoTemplate.save(metadata.getPublication());
                         break;
                     case ORGANISATION_UNITS:
+                        metadata.getOrgUnit().setImportUserId(userId);
                         mongoTemplate.save(metadata.getOrgUnit());
                         break;
                 }

@@ -20,6 +20,7 @@ import rs.teslaris.core.importer.model.converter.publication.ProceedingsPublicat
 import rs.teslaris.core.importer.model.converter.publication.ProductConverter;
 import rs.teslaris.core.importer.model.event.Event;
 import rs.teslaris.core.importer.model.organisationunit.OrgUnit;
+import rs.teslaris.core.importer.model.organisationunit.OrgUnitRelation;
 import rs.teslaris.core.importer.model.patent.Patent;
 import rs.teslaris.core.importer.model.person.Person;
 import rs.teslaris.core.importer.model.product.Product;
@@ -86,10 +87,11 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     private final ProductConverter productConverter;
 
 
-    public <R> R loadRecordsWizard(OAIPMHDataSet requestDataSet) {
+    public <R> R loadRecordsWizard(OAIPMHDataSet requestDataSet, Integer userId) {
         Query query = new Query();
+        query.addCriteria(Criteria.where("importUserId").is(userId));
 
-        var progressReport = getProgressReport(requestDataSet);
+        var progressReport = getProgressReport(requestDataSet, userId);
         if (progressReport != null) {
             query.addCriteria(Criteria.where("_id").gt(progressReport.getLastLoadedId()));
         } else {
@@ -101,15 +103,34 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
             case PERSONS:
                 var person = mongoTemplate.findOne(query, Person.class);
                 if (Objects.nonNull(person)) {
-                    updateProgressReport(requestDataSet, person.getId());
+                    updateProgressReport(requestDataSet, person.getId(), userId);
                     return (R) personConverter.toDTO(person);
                 }
                 break;
             case EVENTS:
                 var event = mongoTemplate.findOne(query, Event.class);
                 if (Objects.nonNull(event)) {
-                    updateProgressReport(requestDataSet, event.getId());
+                    updateProgressReport(requestDataSet, event.getId(), userId);
                     return (R) eventConverter.toDTO(event);
+                }
+                break;
+            case PATENTS:
+                var patent = mongoTemplate.findOne(query, Patent.class);
+                if (Objects.nonNull(patent)) {
+                    updateProgressReport(requestDataSet, patent.getId(), userId);
+                    return (R) patentConverter.toDTO(patent);
+                }
+                break;
+            case ORGANISATION_UNITS:
+                var orgUnit = mongoTemplate.findOne(query, OrgUnit.class);
+                if (Objects.nonNull(orgUnit)) {
+                    updateProgressReport(requestDataSet, orgUnit.getId(), userId);
+                    var dto = organisationUnitConverter.toWizardDTO(orgUnit);
+                    if (Objects.nonNull(dto.getSuperOrganisationUnitId())) {
+                        mongoTemplate.save(
+                            new OrgUnitRelation(dto.getOldId(), dto.getSuperOrganisationUnitId()));
+                    }
+                    return (R) dto;
                 }
                 break;
         }
@@ -118,24 +139,26 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     }
 
     @Nullable
-    private ProgressReport getProgressReport(OAIPMHDataSet requestDataSet) {
+    private ProgressReport getProgressReport(OAIPMHDataSet requestDataSet, Integer userId) {
         Query query = new Query();
-        query.addCriteria(
-            Criteria.where("dataset").is(requestDataSet.name()));
+        query.addCriteria(Criteria.where("dataset").is(requestDataSet.name()))
+            .addCriteria(Criteria.where("userId").is(userId));
         return mongoTemplate.findOne(query, ProgressReport.class);
     }
 
-    private void updateProgressReport(OAIPMHDataSet requestDataSet, String lastLoadedId) {
+    private void updateProgressReport(OAIPMHDataSet requestDataSet, String lastLoadedId,
+                                      Integer userId) {
         Query deleteQuery = new Query();
-        deleteQuery.addCriteria(
-            Criteria.where("dataset").is(requestDataSet));
+        deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet))
+            .addCriteria(Criteria.where("userId").is(userId));
         mongoTemplate.remove(deleteQuery, ProgressReport.class);
 
-        mongoTemplate.save(new ProgressReport(lastLoadedId, requestDataSet));
+        mongoTemplate.save(new ProgressReport(lastLoadedId, userId, requestDataSet));
     }
 
     @Override
-    public void loadRecordsAuto(OAIPMHDataSet requestDataSet, boolean performIndex) {
+    public void loadRecordsAuto(OAIPMHDataSet requestDataSet, boolean performIndex,
+                                Integer userId) {
         int batchSize = 10;
         int page = 0;
         boolean hasNextPage = true;

@@ -53,4 +53,6 @@ public class Product {
     @XmlElementWrapper(name = "Creators")
     @XmlElement(name = "Creator")
     private List<PersonAttributes> creators;
+
+    private Integer importUserId;
 }

@@ -5,5 +5,5 @@ import rs.teslaris.core.importer.utility.OAIPMHSource;
 
 public interface OAIPMHHarvester {
 
-    void harvest(OAIPMHDataSet requestDataSet, OAIPMHSource source);
+    void harvest(OAIPMHDataSet requestDataSet, OAIPMHSource source, Integer userId);
 }

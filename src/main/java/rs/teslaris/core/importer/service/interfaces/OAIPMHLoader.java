@@ -6,7 +6,7 @@ import rs.teslaris.core.importer.utility.OAIPMHDataSet;
 @Service
 public interface OAIPMHLoader {
 
-    void loadRecordsAuto(OAIPMHDataSet requestDataSet, boolean performIndex);
+    void loadRecordsAuto(OAIPMHDataSet requestDataSet, boolean performIndex, Integer userId);
 
-    <R> R loadRecordsWizard(OAIPMHDataSet requestDataSet);
+    <R> R loadRecordsWizard(OAIPMHDataSet requestDataSet, Integer userId);
 }

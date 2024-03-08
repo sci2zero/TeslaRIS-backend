@@ -1,4 +1,4 @@
-package rs.teslaris.core.importer.utility;
+package rs.teslaris.core.importer.model.organisationunit;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,11 +11,9 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class ProgressReport {
+public class OrgUnitRelation {
 
-    private String lastLoadedId;
+    private Integer sourceId;
 
-    private Integer userId;
-
-    private OAIPMHDataSet dataset;
+    private Integer targetId;
 }

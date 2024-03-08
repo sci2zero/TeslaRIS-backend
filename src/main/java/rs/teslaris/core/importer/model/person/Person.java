@@ -43,4 +43,6 @@ public class Person {
 
     @XmlElement(name = "Affiliation")
     private Affiliation affiliation;
+
+    private Integer importUserId;
 }

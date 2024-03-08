@@ -32,4 +32,6 @@ public class OrgUnit {
 
     @XmlElement(name = "PartOf")
     private PartOf partOf;
+
+    private Integer importUserId;
 }

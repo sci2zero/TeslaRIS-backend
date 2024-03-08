@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.importer.model.converter.commontypes.MultilingualContentConverter;
@@ -40,6 +41,29 @@ public class OrganisationUnitConverter
         dto.setLocation(new GeoLocationDTO());
         dto.setContact(new ContactDTO());
 
+        return dto;
+    }
+
+    public OrganisationUnitWizardDTO toWizardDTO(OrgUnit organisationUnit) {
+        var dto = new OrganisationUnitWizardDTO();
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(organisationUnit.getId()));
+
+        dto.setName(multilingualContentConverter.toDTO(organisationUnit.getMultilingualContent()));
+
+        dto.setNameAbbreviation("");
+
+        dto.setKeyword(new ArrayList<>());
+        dto.setResearchAreasId(new ArrayList<>());
+
+        dto.setLocation(new GeoLocationDTO());
+        dto.setContact(new ContactDTO());
+
+        if (Objects.nonNull(organisationUnit.getPartOf())) {
+            dto.setSuperOrganisationUnitId(
+                OAIPMHParseUtility.parseBISISID(organisationUnit.getPartOf().getOrgUnit().getId()));
+            dto.setSuperOrganisationUnitName(multilingualContentConverter.toDTO(
+                organisationUnit.getPartOf().getOrgUnit().getMultilingualContent()));
+        }
         return dto;
     }
 
