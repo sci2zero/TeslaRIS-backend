@@ -91,9 +91,13 @@ public class SecurityConfiguration {
             .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/for-researcher/{personId}").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/document/for-publisher/{publisherId}").permitAll()
 
             // PROCEEDINGS
             .antMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()
+
+            // PUBLISHERS
+            .antMatchers(HttpMethod.GET, "/api/publisher/{publisherId}").permitAll()
 
             // PUBLICATION
             .antMatchers(HttpMethod.GET,

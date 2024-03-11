@@ -44,4 +44,10 @@ public interface DocumentPublicationIndexRepository extends
         "]}}")
     Page<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId,
                                                           Pageable pageable);
+
+    @Query("{\"bool\": " +
+        "{\"must\": [" +
+        "{\"term\": {\"publisher_id\": \"?0\"}}, " +
+        "]}}")
+    Page<DocumentPublicationIndex> findByPublisherId(Integer publisherId, Pageable pageable);
 }

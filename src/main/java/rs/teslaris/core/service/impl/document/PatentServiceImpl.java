@@ -137,6 +137,9 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         indexCommonFields(patent, index);
 
         index.setType(DocumentPublicationType.PATENT.name());
+        if (Objects.nonNull(patent.getPublisher())) {
+            index.setPublisherId(patent.getPublisher().getId());
+        }
 
         documentPublicationIndexRepository.save(index);
     }

@@ -95,6 +95,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    public Page<DocumentPublicationIndex> findPublicationsForPublisher(Integer publisherId,
+                                                                       Pageable pageable) {
+        return documentPublicationIndexRepository.findByPublisherId(publisherId, pageable);
+    }
+
+    @Override
     public Long getPublicationCount() {
         return documentPublicationIndexRepository.count();
     }

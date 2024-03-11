@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.document.PublisherConverter;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.indexmodel.PublisherIndex;
@@ -51,6 +52,11 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             MultilingualContentConverter.getMultilingualContentDTO(p.getName()),
             MultilingualContentConverter.getMultilingualContentDTO(p.getPlace()),
             MultilingualContentConverter.getMultilingualContentDTO(p.getState())));
+    }
+
+    @Override
+    public PublisherDTO readPublisherById(Integer publisherId) {
+        return PublisherConverter.toDTO(findPublisherById(publisherId));
     }
 
     @Override

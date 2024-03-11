@@ -260,4 +260,17 @@ public class PublisherServiceTest {
         verify(publisherRepository, atLeastOnce()).findAll(any(PageRequest.class));
         verify(publisherIndexRepository, atLeastOnce()).save(any(PublisherIndex.class));
     }
+
+    @Test
+    public void shouldReadPublisherWhenItExists() {
+        // given
+        var expected = new PublisherDTO();
+        when(publisherRepository.findById(1)).thenReturn(Optional.of(new Publisher()));
+
+        // when
+        var result = publisherService.readPublisherById(1);
+
+        // then
+        assertEquals(expected.getId(), result.getId());
+    }
 }

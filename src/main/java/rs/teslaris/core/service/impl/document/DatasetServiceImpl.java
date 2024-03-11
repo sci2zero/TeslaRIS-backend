@@ -135,6 +135,9 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         indexCommonFields(dataset, index);
 
         index.setType(DocumentPublicationType.DATASET.name());
+        if (Objects.nonNull(dataset.getPublisher())) {
+            index.setPublisherId(dataset.getPublisher().getId());
+        }
 
         documentPublicationIndexRepository.save(index);
     }

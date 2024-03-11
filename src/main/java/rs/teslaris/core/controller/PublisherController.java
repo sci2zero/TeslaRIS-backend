@@ -37,6 +37,11 @@ public class PublisherController {
         return publisherService.readAllPublishers(pageable);
     }
 
+    @GetMapping("/{publisherId}")
+    public PublisherDTO readPublisher(@PathVariable Integer publisherId) {
+        return publisherService.readPublisherById(publisherId);
+    }
+
     @GetMapping("/simple-search")
     public Page<PublisherIndex> searchPublishers(
         @RequestParam("tokens")

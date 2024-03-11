@@ -14,6 +14,8 @@ public interface PublisherService {
 
     Page<PublisherDTO> readAllPublishers(Pageable pageable);
 
+    PublisherDTO readPublisherById(Integer publisherId);
+
     Publisher findPublisherById(Integer publisherId);
 
     Page<PublisherIndex> searchPublishers(List<String> tokens, Pageable pageable);

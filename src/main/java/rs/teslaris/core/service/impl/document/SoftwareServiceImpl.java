@@ -135,6 +135,9 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         indexCommonFields(software, index);
 
         index.setType(DocumentPublicationType.SOFTWARE.name());
+        if (Objects.nonNull(software.getPublisher())) {
+            index.setPublisherId(software.getPublisher().getId());
+        }
 
         documentPublicationIndexRepository.save(index);
     }

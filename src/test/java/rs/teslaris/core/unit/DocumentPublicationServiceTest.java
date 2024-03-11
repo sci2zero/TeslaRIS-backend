@@ -349,4 +349,19 @@ public class DocumentPublicationServiceTest {
         assertEquals(expectedPage, resultPage);
         verify(documentPublicationIndexRepository).findByAuthorIds(authorId, pageable);
     }
+
+    @Test
+    public void shouldReadDocumentForPublisherWhenItExists() {
+        // given
+        var expected = new DocumentPublicationIndex();
+        var pageable = Pageable.ofSize(5);
+        when(documentPublicationIndexRepository.findByPublisherId(1, pageable)).thenReturn(
+            new PageImpl<>(List.of(expected)));
+
+        // when
+        var result = documentPublicationService.findPublicationsForPublisher(1, pageable);
+
+        // then
+        assertEquals(1, result.getTotalElements());
+    }
 }
