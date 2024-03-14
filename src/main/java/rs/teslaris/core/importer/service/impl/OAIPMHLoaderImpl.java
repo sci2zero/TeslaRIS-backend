@@ -1,5 +1,7 @@
 package rs.teslaris.core.importer.service.impl;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -9,6 +11,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.core.importer.model.converter.event.EventConverter;
 import rs.teslaris.core.importer.model.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.importer.model.converter.person.PersonConverter;
@@ -87,6 +90,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     private final ProductConverter productConverter;
 
 
+    @SuppressWarnings("unchecked")
     public <R> R loadRecordsWizard(OAIPMHDataSet requestDataSet, Integer userId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("importUserId").is(userId));
@@ -101,26 +105,34 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
         switch (requestDataSet) {
             case PERSONS:
-                var person = mongoTemplate.findOne(query, Person.class);
-                if (Objects.nonNull(person)) {
-                    updateProgressReport(requestDataSet, person.getId(), userId);
-                    return (R) personConverter.toDTO(person);
-                }
-                break;
+                return (R) findAndConvertEntity(Person.class, personConverter,
+                    OAIPMHDataSet.PERSONS, query, userId);
             case EVENTS:
-                var event = mongoTemplate.findOne(query, Event.class);
-                if (Objects.nonNull(event)) {
-                    updateProgressReport(requestDataSet, event.getId(), userId);
-                    return (R) eventConverter.toDTO(event);
-                }
-                break;
+                return (R) findAndConvertEntity(Event.class, eventConverter, OAIPMHDataSet.EVENTS,
+                    query, userId);
             case PATENTS:
-                var patent = mongoTemplate.findOne(query, Patent.class);
-                if (Objects.nonNull(patent)) {
-                    updateProgressReport(requestDataSet, patent.getId(), userId);
-                    return (R) patentConverter.toDTO(patent);
-                }
-                break;
+                return (R) findAndConvertEntity(Patent.class, patentConverter,
+                    OAIPMHDataSet.PATENTS, query, userId);
+            case PRODUCTS:
+                return (R) findAndConvertEntity(Product.class, productConverter,
+                    OAIPMHDataSet.PRODUCTS, query, userId);
+            case CONFERENCE_PROCEEDINGS:
+                query.addCriteria(Criteria.where("type").regex("c_f744$"));
+                return (R) findAndConvertEntity(Publication.class, proceedingsConverter,
+                    OAIPMHDataSet.PUBLICATIONS, query, userId);
+            case JOURNALS:
+                query.addCriteria(Criteria.where("type").regex("c_0640"));
+                return (R) findAndConvertEntity(Publication.class, journalConverter,
+                    OAIPMHDataSet.PUBLICATIONS, query, userId);
+            case RESEARCH_ARTICLES:
+                query.addCriteria(Criteria.where("type").regex("c_2df8fbb1"));
+                return (R) findAndConvertEntity(Publication.class, journalPublicationConverter,
+                    OAIPMHDataSet.PUBLICATIONS, query, userId);
+            case CONFERENCE_PUBLICATIONS:
+                query.addCriteria(Criteria.where("type").regex("c_5794"));
+                query.addCriteria(Criteria.where("type").regex("c_0640"));
+                return (R) findAndConvertEntity(Publication.class, proceedingsPublicationConverter,
+                    OAIPMHDataSet.PUBLICATIONS, query, userId);
             case ORGANISATION_UNITS:
                 var orgUnit = mongoTemplate.findOne(query, OrgUnit.class);
                 if (Objects.nonNull(orgUnit)) {
@@ -135,6 +147,79 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                 break;
         }
 
+        return null;
+    }
+
+    @Override
+    public RemainingRecordsCountResponseDTO countRemainingDocumentsForLoading(Integer userId) {
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("userId").is(userId));
+        var progressReports = mongoTemplate.find(query, ProgressReport.class);
+
+        var countResponse = new RemainingRecordsCountResponseDTO();
+        progressReports.forEach(progressReport -> {
+            var countQuery = new Query();
+            countQuery.addCriteria(Criteria.where("_id").gt(progressReport.getLastLoadedId()));
+            switch (progressReport.getDataset()) {
+                case PATENTS:
+                    countResponse.setPatentCount(mongoTemplate.count(countQuery, Patent.class));
+                    break;
+                case PERSONS:
+                    countResponse.setPersonCount(mongoTemplate.count(countQuery, Person.class));
+                    break;
+                case EVENTS:
+                    countResponse.setEventCount(mongoTemplate.count(countQuery, Event.class));
+                    break;
+                case PRODUCTS:
+                    countResponse.setProductCount(mongoTemplate.count(countQuery, Product.class));
+                    break;
+                case ORGANISATION_UNITS:
+                    countResponse.setOuCount(
+                        mongoTemplate.count(countQuery, OrgUnit.class));
+                    break;
+                case RESEARCH_ARTICLES:
+                    countResponse.setResearchArticleCount(
+                        mongoTemplate.count(countQuery, Publication.class));
+                    break;
+                case CONFERENCE_PUBLICATIONS:
+                    countResponse.setProceedingsPublicationCount(
+                        mongoTemplate.count(countQuery, Publication.class));
+                    break;
+                case JOURNALS:
+                    countResponse.setJournalCount(
+                        mongoTemplate.count(countQuery, Publication.class));
+                    break;
+                case CONFERENCE_PROCEEDINGS:
+                    countResponse.setProceedingsCount(
+                        mongoTemplate.count(countQuery, Publication.class));
+                    break;
+            }
+        });
+
+        return countResponse;
+    }
+
+    @Nullable
+    private <T, D> D findAndConvertEntity(Class<T> entityClass, RecordConverter<T, D> converter,
+                                          OAIPMHDataSet requestDataSet, Query query,
+                                          Integer userId) {
+        var entity = mongoTemplate.findOne(query, entityClass);
+
+        if (Objects.nonNull(entity)) {
+            Method getIdMethod;
+            try {
+                getIdMethod = entityClass.getMethod("getId");
+            } catch (NoSuchMethodException e) {
+                return null;
+            }
+            try {
+                updateProgressReport(requestDataSet, (String) getIdMethod.invoke(entity), userId);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                return null;
+            }
+            return converter.toDTO(entity);
+        }
         return null;
     }
 

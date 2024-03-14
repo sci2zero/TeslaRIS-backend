@@ -28,6 +28,8 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,7 @@ import rs.teslaris.core.importer.model.common.ResumptionToken;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.core.importer.utility.OAIPMHDataSet;
 import rs.teslaris.core.importer.utility.OAIPMHSource;
+import rs.teslaris.core.importer.utility.ProgressReport;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 
 @Service
@@ -61,10 +64,13 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
     private Integer proxyPort;
 
 
+    @Override
     public void harvest(OAIPMHDataSet requestDataSet, OAIPMHSource source, Integer userId) {
         String endpoint =
             constructOAIPMHEndpoint(requestDataSet.getStringValue(), source.getStringValue());
         var restTemplate = constructRestTemplate();
+
+        resetProgressReport(requestDataSet, userId);
 
         while (true) {
             ResponseEntity<String> responseEntity =
@@ -89,6 +95,14 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                     responseEntity.getStatusCodeValue());
             }
         }
+    }
+
+    private void resetProgressReport(OAIPMHDataSet requestDataSet, Integer userId) {
+        Query deleteQuery = new Query();
+        deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet))
+            .addCriteria(Criteria.where("userId").is(userId));
+        mongoTemplate.remove(deleteQuery, ProgressReport.class);
+        mongoTemplate.save(new ProgressReport("", userId, requestDataSet));
     }
 
     private Optional<ResumptionToken> handleOAIPMHResponse(OAIPMHDataSet requestDataSet,
@@ -120,7 +134,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                         mongoTemplate.save(metadata.getPerson());
                         break;
                     case PRODUCTS:
-                        metadata.getEvent().setImportUserId(userId);
+                        metadata.getProduct().setImportUserId(userId);
                         mongoTemplate.save(metadata.getProduct());
                         break;
                     case PUBLICATIONS:
