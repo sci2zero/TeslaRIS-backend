@@ -44,5 +44,7 @@ public class Person {
     @XmlElement(name = "Affiliation")
     private Affiliation affiliation;
 
-    private Integer importUserId;
+    private List<Integer> importUserId;
+
+    private Boolean loaded;
 }

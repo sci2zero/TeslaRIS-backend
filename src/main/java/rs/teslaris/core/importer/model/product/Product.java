@@ -54,5 +54,7 @@ public class Product {
     @XmlElement(name = "Creator")
     private List<PersonAttributes> creators;
 
-    private Integer importUserId;
+    private List<Integer> importUserId;
+
+    private Boolean loaded;
 }

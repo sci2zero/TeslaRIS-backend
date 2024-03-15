@@ -52,5 +52,7 @@ public class Event {
     @XmlElement(name = "Keyword")
     private List<String> keywords;
 
-    private Integer importUserId;
+    private List<Integer> importUserId;
+
+    private Boolean loaded;
 }

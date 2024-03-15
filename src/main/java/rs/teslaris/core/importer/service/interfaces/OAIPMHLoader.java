@@ -11,5 +11,11 @@ public interface OAIPMHLoader {
 
     <R> R loadRecordsWizard(OAIPMHDataSet requestDataSet, Integer userId);
 
+    <R> R loadSkippedRecordsWizard(OAIPMHDataSet requestDataSet, Integer userId);
+
+    void skipRecord(OAIPMHDataSet requestDataSet, Integer userId);
+
+    void markRecordAsLoaded(OAIPMHDataSet requestDataSet, Integer userId);
+
     RemainingRecordsCountResponseDTO countRemainingDocumentsForLoading(Integer userId);
 }

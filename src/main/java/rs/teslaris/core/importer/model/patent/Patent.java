@@ -55,5 +55,7 @@ public class Patent {
     @XmlElement(name = "Inventor")
     private List<PersonAttributes> inventor;
 
-    private Integer importUserId;
+    private List<Integer> importUserId;
+
+    private Boolean loaded;
 }

@@ -33,6 +33,7 @@ import rs.teslaris.core.importer.utility.CreatorMethod;
 import rs.teslaris.core.importer.utility.OAIPMHDataSet;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.ProgressReport;
+import rs.teslaris.core.importer.utility.ProgressReportUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -90,16 +91,18 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     private final ProductConverter productConverter;
 
 
+    @Override
     @SuppressWarnings("unchecked")
     public <R> R loadRecordsWizard(OAIPMHDataSet requestDataSet, Integer userId) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("importUserId").is(userId));
+        query.addCriteria(Criteria.where("importUserId").in(userId));
+        query.addCriteria(Criteria.where("loaded").is(false));
 
         var progressReport = getProgressReport(requestDataSet, userId);
         if (progressReport != null) {
-            query.addCriteria(Criteria.where("_id").gt(progressReport.getLastLoadedId()));
+            query.addCriteria(Criteria.where("_id").gte(progressReport.getLastLoadedId()));
         } else {
-            query.addCriteria(Criteria.where("_id").gt(""));
+            query.addCriteria(Criteria.where("_id").gte(""));
         }
         query.limit(1);
 
@@ -151,51 +154,78 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     }
 
     @Override
-    public RemainingRecordsCountResponseDTO countRemainingDocumentsForLoading(Integer userId) {
+    public <R> R loadSkippedRecordsWizard(OAIPMHDataSet requestDataSet, Integer userId) {
+        ProgressReportUtility.resetProgressReport(requestDataSet, userId, mongoTemplate);
+        return loadRecordsWizard(requestDataSet, userId);
+    }
 
-        Query query = new Query();
-        query.addCriteria(Criteria.where("userId").is(userId));
-        var progressReports = mongoTemplate.find(query, ProgressReport.class);
+    @Override
+    public void skipRecord(OAIPMHDataSet requestDataSet, Integer userId) {
+        var entityClass = OAIPMHDataSet.getClassForValue(requestDataSet.getStringValue());
 
-        var countResponse = new RemainingRecordsCountResponseDTO();
-        progressReports.forEach(progressReport -> {
-            var countQuery = new Query();
-            countQuery.addCriteria(Criteria.where("_id").gt(progressReport.getLastLoadedId()));
-            switch (progressReport.getDataset()) {
-                case PATENTS:
-                    countResponse.setPatentCount(mongoTemplate.count(countQuery, Patent.class));
-                    break;
-                case PERSONS:
-                    countResponse.setPersonCount(mongoTemplate.count(countQuery, Person.class));
-                    break;
-                case EVENTS:
-                    countResponse.setEventCount(mongoTemplate.count(countQuery, Event.class));
-                    break;
-                case PRODUCTS:
-                    countResponse.setProductCount(mongoTemplate.count(countQuery, Product.class));
-                    break;
-                case ORGANISATION_UNITS:
-                    countResponse.setOuCount(
-                        mongoTemplate.count(countQuery, OrgUnit.class));
-                    break;
-                case RESEARCH_ARTICLES:
-                    countResponse.setResearchArticleCount(
-                        mongoTemplate.count(countQuery, Publication.class));
-                    break;
-                case CONFERENCE_PUBLICATIONS:
-                    countResponse.setProceedingsPublicationCount(
-                        mongoTemplate.count(countQuery, Publication.class));
-                    break;
-                case JOURNALS:
-                    countResponse.setJournalCount(
-                        mongoTemplate.count(countQuery, Publication.class));
-                    break;
-                case CONFERENCE_PROCEEDINGS:
-                    countResponse.setProceedingsCount(
-                        mongoTemplate.count(countQuery, Publication.class));
-                    break;
+        var progressReport = getProgressReport(requestDataSet, userId);
+        Query nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("importUserId").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("_id").gt(progressReport.getLastLoadedId()));
+
+        var nextRecord = mongoTemplate.findOne(nextRecordQuery, entityClass);
+        if (Objects.nonNull(nextRecord)) {
+            Method getIdMethod;
+            try {
+                getIdMethod = entityClass.getMethod("getId");
+                progressReport.setLastLoadedId((String) getIdMethod.invoke(nextRecord));
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                return;
             }
-        });
+        } else {
+            progressReport.setLastLoadedId("");
+        }
+
+        ProgressReportUtility.deleteProgressReport(requestDataSet, userId, mongoTemplate);
+        mongoTemplate.save(progressReport);
+    }
+
+    @Override
+    public void markRecordAsLoaded(OAIPMHDataSet requestDataSet, Integer userId) {
+        var progressReport = getProgressReport(requestDataSet, userId);
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(progressReport.getLastLoadedId()));
+        query.addCriteria(Criteria.where("importUserId").in(userId));
+
+        var entityClass = OAIPMHDataSet.getClassForValue(requestDataSet.getStringValue());
+        var record = mongoTemplate.findOne(query, entityClass);
+
+        if (Objects.nonNull(record)) {
+            Method setLoadedMethod;
+            try {
+                setLoadedMethod = entityClass.getMethod("setLoaded", Boolean.class);
+                setLoadedMethod.invoke(record, true);
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                return;
+            }
+            mongoTemplate.save(record);
+        }
+    }
+
+    @Override
+    public RemainingRecordsCountResponseDTO countRemainingDocumentsForLoading(Integer userId) {
+        var countResponse = new RemainingRecordsCountResponseDTO();
+
+        var countQuery = new Query();
+        countQuery.addCriteria(Criteria.where("loaded").is(false));
+        countQuery.addCriteria(Criteria.where("importUserId").in(userId));
+
+        countResponse.setPatentCount(mongoTemplate.count(countQuery, Patent.class));
+        countResponse.setPersonCount(mongoTemplate.count(countQuery, Person.class));
+        countResponse.setEventCount(mongoTemplate.count(countQuery, Event.class));
+        countResponse.setProductCount(mongoTemplate.count(countQuery, Product.class));
+        countResponse.setOuCount(mongoTemplate.count(countQuery, OrgUnit.class));
+        countResponse.setResearchArticleCount(mongoTemplate.count(countQuery, Publication.class));
+        countResponse.setProceedingsPublicationCount(
+            mongoTemplate.count(countQuery, Publication.class));
+        countResponse.setJournalCount(mongoTemplate.count(countQuery, Publication.class));
+        countResponse.setProceedingsCount(mongoTemplate.count(countQuery, Publication.class));
 
         return countResponse;
     }
@@ -215,6 +245,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
             }
             try {
                 updateProgressReport(requestDataSet, (String) getIdMethod.invoke(entity), userId);
+
+                mongoTemplate.save(entity);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 return null;
             }

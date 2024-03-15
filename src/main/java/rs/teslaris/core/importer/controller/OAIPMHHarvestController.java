@@ -1,19 +1,13 @@
 package rs.teslaris.core.importer.controller;
 
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.core.dto.document.ConferenceDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
-import rs.teslaris.core.dto.document.JournalPublicationDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
-import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
-import rs.teslaris.core.dto.document.SoftwareDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
-import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHLoader;
@@ -49,60 +43,17 @@ public class OAIPMHHarvestController {
             tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
     }
 
-    @GetMapping("/load-wizard/persons")
-    public BasicPersonDTO loadPersonsWizard(@RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.PERSONS,
+    @PatchMapping("/skip")
+    public void skipRecord(@RequestHeader("Authorization") String bearerToken,
+                           @RequestParam("dataSet") OAIPMHDataSet dataSet) {
+        oaipmhLoader.skipRecord(dataSet,
             tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
     }
 
-    @GetMapping("/load-wizard/events")
-    public ConferenceDTO loadEventsWizard(@RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.EVENTS,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
-    }
-
-    @GetMapping("/load-wizard/patents")
-    public PatentDTO loadPatentsWizard(@RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.PATENTS,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
-    }
-
-    @GetMapping("/load-wizard/products")
-    public SoftwareDTO loadProductsWizard(@RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.PRODUCTS,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
-    }
-
-    @GetMapping("/load-wizard/journals")
-    public JournalDTO loadJournalsWizard(@RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.JOURNALS,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
-    }
-
-    @GetMapping("/load-wizard/proceedings")
-    public JournalDTO loadProceedingsWizard(@RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.CONFERENCE_PROCEEDINGS,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
-    }
-
-    @GetMapping("/load-wizard/proceedings-publications")
-    public ProceedingsPublicationDTO loadProceedingsPublicationsWizard(
-        @RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.CONFERENCE_PUBLICATIONS,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
-    }
-
-    @GetMapping("/load-wizard/journal-publications")
-    public JournalPublicationDTO loadJournalPublicationsWizard(
-        @RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.RESEARCH_ARTICLES,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
-    }
-
-    @GetMapping("/load-wizard/organisation-units")
-    public OrganisationUnitWizardDTO loadOrganisationUnitsWizard(
-        @RequestHeader("Authorization") String bearerToken) {
-        return oaipmhLoader.loadRecordsWizard(OAIPMHDataSet.ORGANISATION_UNITS,
+    @PatchMapping("/mark-as-loaded")
+    public void markRecordAsLoaded(@RequestHeader("Authorization") String bearerToken,
+                                   @RequestParam("dataSet") OAIPMHDataSet dataSet) {
+        oaipmhLoader.markRecordAsLoaded(dataSet,
             tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
     }
 
@@ -111,5 +62,20 @@ public class OAIPMHHarvestController {
         @RequestHeader("Authorization") String bearerToken) {
         return oaipmhLoader.countRemainingDocumentsForLoading(
             tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+    }
+
+    @GetMapping("/load-wizard")
+    @SuppressWarnings("unchecked")
+    private <R> R loadUsingWizard(@RequestParam("dataSet") OAIPMHDataSet dataSet,
+                                  @RequestHeader("Authorization") String bearerToken) {
+        var returnDto = oaipmhLoader.loadRecordsWizard(dataSet,
+            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+
+        if (Objects.isNull(returnDto)) {
+            return oaipmhLoader.loadSkippedRecordsWizard(dataSet,
+                tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+        }
+
+        return (R) returnDto;
     }
 }

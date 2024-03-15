@@ -108,5 +108,7 @@ public class Publication {
     @XmlElement(name = "PartOf")
     private PartOf partOf;
 
-    private Integer importUserId;
+    private List<Integer> importUserId;
+
+    private Boolean loaded;
 }
