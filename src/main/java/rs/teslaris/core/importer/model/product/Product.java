@@ -28,9 +28,9 @@ public class Product {
 
     @XmlElement(name = "Keyword")
     List<String> keywords;
-
-    @XmlAttribute(name = "id")
     private String id;
+    @XmlAttribute(name = "id")
+    private String oldId;
 
     @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Product_Types")
     private String type;

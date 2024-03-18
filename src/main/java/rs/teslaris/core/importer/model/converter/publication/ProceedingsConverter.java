@@ -36,7 +36,7 @@ public class ProceedingsConverter extends DocumentConverter
     @Override
     public ProceedingsDTO toDTO(Publication record) {
         var dto = new ProceedingsDTO();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         setCommonFields(record, dto);
 
@@ -50,11 +50,11 @@ public class ProceedingsConverter extends DocumentConverter
         dto.setLanguageTagIds(List.of(languageTag.getId()));
 
         var event = eventService.findEventByOldId(
-            OAIPMHParseUtility.parseBISISID(record.getOutputFrom().getEvent().getId()));
+            OAIPMHParseUtility.parseBISISID(record.getOutputFrom().getEvent().getOldId()));
         if (Objects.nonNull(event)) {
             dto.setEventId(event.getId());
         } else {
-            log.warn("No saved event with id: " + record.getOutputFrom().getEvent().getId());
+            log.warn("No saved event with id: " + record.getOutputFrom().getEvent().getOldId());
             return null;
         }
 

@@ -23,8 +23,10 @@ import lombok.ToString;
 @ToString
 public class Person {
 
-    @XmlAttribute(name = "id")
     private String id;
+
+    @XmlAttribute(name = "id")
+    private String oldId;
 
     @XmlElement(name = "PersonName")
     private PersonName personName;

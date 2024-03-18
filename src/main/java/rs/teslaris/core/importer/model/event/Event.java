@@ -25,8 +25,10 @@ import rs.teslaris.core.importer.model.common.MultilingualContent;
 @ToString
 public class Event {
 
-    @XmlAttribute(name = "id")
     private String id;
+
+    @XmlAttribute(name = "id")
+    private String oldId;
 
     @XmlElement(name = "Type")
     private EventType eventType;

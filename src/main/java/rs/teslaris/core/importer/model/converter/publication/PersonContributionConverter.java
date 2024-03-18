@@ -50,9 +50,9 @@ public class PersonContributionConverter {
         contribution.setDisplayAffiliationStatement(new ArrayList<>());
 
         var person = personService.findPersonByOldId(
-            OAIPMHParseUtility.parseBISISID(contributor.getPerson().getId()));
+            OAIPMHParseUtility.parseBISISID(contributor.getPerson().getOldId()));
         if (Objects.isNull(person)) {
-            log.warn("No saved person with id: " + contributor.getPerson().getId());
+            log.warn("No saved person with id: " + contributor.getPerson().getOldId());
             return null;
         }
         contribution.setPersonId(person.getId());

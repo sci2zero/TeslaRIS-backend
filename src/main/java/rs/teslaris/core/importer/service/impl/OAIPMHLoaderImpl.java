@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
 import rs.teslaris.core.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.core.importer.model.converter.event.EventConverter;
 import rs.teslaris.core.importer.model.converter.institution.OrganisationUnitConverter;
@@ -100,9 +101,9 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
         var progressReport = getProgressReport(requestDataSet, userId);
         if (progressReport != null) {
-            query.addCriteria(Criteria.where("_id").gte(progressReport.getLastLoadedId()));
+            query.addCriteria(Criteria.where("oldId").gte(progressReport.getLastLoadedId()));
         } else {
-            query.addCriteria(Criteria.where("_id").gte(""));
+            query.addCriteria(Criteria.where("oldId").gte(""));
         }
         query.limit(1);
 
@@ -137,17 +138,15 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                 return (R) findAndConvertEntity(Publication.class, proceedingsPublicationConverter,
                     OAIPMHDataSet.PUBLICATIONS, query, userId);
             case ORGANISATION_UNITS:
-                var orgUnit = mongoTemplate.findOne(query, OrgUnit.class);
-                if (Objects.nonNull(orgUnit)) {
-                    updateProgressReport(requestDataSet, orgUnit.getId(), userId);
-                    var dto = organisationUnitConverter.toWizardDTO(orgUnit);
-                    if (Objects.nonNull(dto.getSuperOrganisationUnitId())) {
-                        mongoTemplate.save(
-                            new OrgUnitRelation(dto.getOldId(), dto.getSuperOrganisationUnitId()));
-                    }
-                    return (R) dto;
+                var orgUnit = (OrganisationUnitWizardDTO) findAndConvertEntity(OrgUnit.class,
+                    organisationUnitConverter, OAIPMHDataSet.ORGANISATION_UNITS, query, userId);
+                if (Objects.nonNull(orgUnit) &&
+                    Objects.nonNull(orgUnit.getSuperOrganisationUnitId())) {
+                    mongoTemplate.save(
+                        new OrgUnitRelation(orgUnit.getOldId(),
+                            orgUnit.getSuperOrganisationUnitId()));
                 }
-                break;
+                return (R) orgUnit;
         }
 
         return null;
@@ -167,13 +166,13 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
         Query nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("importUserId").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("_id").gt(progressReport.getLastLoadedId()));
+        nextRecordQuery.addCriteria(Criteria.where("oldId").gt(progressReport.getLastLoadedId()));
 
         var nextRecord = mongoTemplate.findOne(nextRecordQuery, entityClass);
         if (Objects.nonNull(nextRecord)) {
             Method getIdMethod;
             try {
-                getIdMethod = entityClass.getMethod("getId");
+                getIdMethod = entityClass.getMethod("getOldId");
                 progressReport.setLastLoadedId((String) getIdMethod.invoke(nextRecord));
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 return;
@@ -190,7 +189,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     public void markRecordAsLoaded(OAIPMHDataSet requestDataSet, Integer userId) {
         var progressReport = getProgressReport(requestDataSet, userId);
         Query query = new Query();
-        query.addCriteria(Criteria.where("_id").is(progressReport.getLastLoadedId()));
+        query.addCriteria(Criteria.where("oldId").is(progressReport.getLastLoadedId()));
         query.addCriteria(Criteria.where("importUserId").in(userId));
 
         var entityClass = OAIPMHDataSet.getClassForValue(requestDataSet.getStringValue());
@@ -239,14 +238,12 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
         if (Objects.nonNull(entity)) {
             Method getIdMethod;
             try {
-                getIdMethod = entityClass.getMethod("getId");
+                getIdMethod = entityClass.getMethod("getOldId");
             } catch (NoSuchMethodException e) {
                 return null;
             }
             try {
                 updateProgressReport(requestDataSet, (String) getIdMethod.invoke(entity), userId);
-
-                mongoTemplate.save(entity);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 return null;
             }
@@ -370,7 +367,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     List<Person> personBatch = mongoTemplate.find(query, Person.class);
                     personBatch.forEach((person) -> {
                         var savedPerson = personService.findPersonByOldId(
-                            OAIPMHParseUtility.parseBISISID(person.getId()));
+                            OAIPMHParseUtility.parseBISISID(person.getOldId()));
                         if (Objects.isNull(person.getAffiliation()) &&
                             Objects.nonNull(savedPerson)) {
                             return;

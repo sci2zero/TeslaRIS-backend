@@ -23,7 +23,7 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
     @Override
     public SoftwareDTO toDTO(Product record) {
         var dto = new SoftwareDTO();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         dto.setTitle(multilingualContentConverter.toDTO(record.getName()));
         dto.setUris(new HashSet<>(record.getUrl()));

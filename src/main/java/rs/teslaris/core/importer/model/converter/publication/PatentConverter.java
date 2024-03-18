@@ -24,7 +24,7 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
     @Override
     public PatentDTO toDTO(Patent record) {
         var dto = new PatentDTO();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
         dto.setNumber(record.getPatentNumber());

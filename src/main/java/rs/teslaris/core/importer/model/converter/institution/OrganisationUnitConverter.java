@@ -27,26 +27,9 @@ public class OrganisationUnitConverter
     private final OrganisationUnitService organisationUnitService;
 
 
-    public OrganisationUnitDTORequest toDTO(OrgUnit organisationUnit) {
-        var dto = new OrganisationUnitDTORequest();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(organisationUnit.getId()));
-
-        dto.setName(multilingualContentConverter.toDTO(organisationUnit.getMultilingualContent()));
-
-        dto.setNameAbbreviation("");
-
-        dto.setKeyword(new ArrayList<>());
-        dto.setResearchAreasId(new ArrayList<>());
-
-        dto.setLocation(new GeoLocationDTO());
-        dto.setContact(new ContactDTO());
-
-        return dto;
-    }
-
-    public OrganisationUnitWizardDTO toWizardDTO(OrgUnit organisationUnit) {
+    public OrganisationUnitWizardDTO toDTO(OrgUnit organisationUnit) {
         var dto = new OrganisationUnitWizardDTO();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(organisationUnit.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(organisationUnit.getOldId()));
 
         dto.setName(multilingualContentConverter.toDTO(organisationUnit.getMultilingualContent()));
 
@@ -60,7 +43,8 @@ public class OrganisationUnitConverter
 
         if (Objects.nonNull(organisationUnit.getPartOf())) {
             dto.setSuperOrganisationUnitId(
-                OAIPMHParseUtility.parseBISISID(organisationUnit.getPartOf().getOrgUnit().getId()));
+                OAIPMHParseUtility.parseBISISID(
+                    organisationUnit.getPartOf().getOrgUnit().getOldId()));
             dto.setSuperOrganisationUnitName(multilingualContentConverter.toDTO(
                 organisationUnit.getPartOf().getOrgUnit().getMultilingualContent()));
         }
@@ -76,9 +60,9 @@ public class OrganisationUnitConverter
         dto.setRelationType(OrganisationUnitRelationType.BELONGS_TO);
 
         var source = organisationUnitService.findOrganisationUnitByOldId(
-            OAIPMHParseUtility.parseBISISID(sourceOU.getId()));
+            OAIPMHParseUtility.parseBISISID(sourceOU.getOldId()));
         var target = organisationUnitService.findOrganisationUnitByOldId(
-            OAIPMHParseUtility.parseBISISID(sourceOU.getPartOf().getOrgUnit().getId()));
+            OAIPMHParseUtility.parseBISISID(sourceOU.getPartOf().getOrgUnit().getOldId()));
 
         if (Objects.isNull(target)) {
             return Optional.empty();

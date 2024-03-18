@@ -32,7 +32,7 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
     @Override
     public ProceedingsPublicationDTO toDTO(Publication record) {
         var dto = new ProceedingsPublicationDTO();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         if (record.getType().endsWith("c_5794")) {
             dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
@@ -47,10 +47,10 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         dto.setEndPage(record.getEndPage());
 
         var proceedings = documentPublicationService.findDocumentByOldId(
-            OAIPMHParseUtility.parseBISISID(record.getPartOf().getPublication().getId()));
+            OAIPMHParseUtility.parseBISISID(record.getPartOf().getPublication().getOldId()));
         if (Objects.isNull(proceedings)) {
             log.warn(
-                "No saved proceedings with id: " + record.getPartOf().getPublication().getId());
+                "No saved proceedings with id: " + record.getPartOf().getPublication().getOldId());
             return null;
         }
         dto.setProceedingsId(proceedings.getId());

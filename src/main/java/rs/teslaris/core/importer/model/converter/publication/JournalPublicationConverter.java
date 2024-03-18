@@ -30,7 +30,7 @@ public class JournalPublicationConverter extends DocumentConverter
     @Override
     public JournalPublicationDTO toDTO(Publication record) {
         var dto = new JournalPublicationDTO();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         setCommonFields(record, dto);
 
@@ -41,10 +41,10 @@ public class JournalPublicationConverter extends DocumentConverter
         dto.setEndPage(record.getEndPage());
 
         var journal = journalService.findJournalByOldId(
-            OAIPMHParseUtility.parseBISISID(record.getPublishedIn().getPublication().getId()));
+            OAIPMHParseUtility.parseBISISID(record.getPublishedIn().getPublication().getOldId()));
         if (Objects.isNull(journal)) {
             log.warn(
-                "No saved journal with id: " + record.getPublishedIn().getPublication().getId());
+                "No saved journal with id: " + record.getPublishedIn().getPublication().getOldId());
             return null;
         }
         dto.setJournalId(journal.getId());

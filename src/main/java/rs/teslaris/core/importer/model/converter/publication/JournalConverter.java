@@ -24,7 +24,7 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
     @Override
     public JournalDTO toDTO(Publication record) {
         var dto = new JournalDTO();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
         dto.setEissn(record.getIssn());

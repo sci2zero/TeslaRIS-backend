@@ -26,7 +26,7 @@ public class PersonConverter implements RecordConverter<Person, BasicPersonDTO> 
     public BasicPersonDTO toDTO(Person person) {
         var dto = new BasicPersonDTO();
 
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(person.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(person.getOldId()));
 
         var personName = new PersonNameDTO();
         personName.setFirstname(person.getPersonName().getFirstNames());
@@ -57,7 +57,7 @@ public class PersonConverter implements RecordConverter<Person, BasicPersonDTO> 
         dto.setAffiliationStatement(new ArrayList<>());
 
         var organisationUnit = organisationUnitService.findOrganisationUnitByOldId(
-            OAIPMHParseUtility.parseBISISID(affiliation.getId()));
+            OAIPMHParseUtility.parseBISISID(affiliation.getOldId()));
 
         if (Objects.isNull(organisationUnit)) {
             return Optional.empty();

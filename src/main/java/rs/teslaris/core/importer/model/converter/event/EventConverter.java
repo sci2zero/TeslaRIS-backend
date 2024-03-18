@@ -25,7 +25,7 @@ public class EventConverter implements RecordConverter<Event, ConferenceDTO> {
         }
 
         var dto = new ConferenceDTO();
-        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getId()));
+        dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         dto.setName(multilingualContentConverter.toDTO(record.getEventName()));
         dto.setPlace(multilingualContentConverter.toDTO(record.getPlace()));
