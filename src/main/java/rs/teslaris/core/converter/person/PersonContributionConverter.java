@@ -1,6 +1,7 @@
 package rs.teslaris.core.converter.person;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Set;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
@@ -74,6 +75,10 @@ public class PersonContributionConverter {
                 contribution.getAffiliationStatement().getDisplayAffiliationStatement()));
 
         contributionDTO.setOrderNumber(contribution.getOrderNumber());
+
+        if (Objects.nonNull(contribution.getPerson())) {
+            contributionDTO.setPersonId(contribution.getPerson().getId());
+        }
 
         contributionDTO.setInstitutionIds(new ArrayList<>());
         contribution.getInstitutions()
