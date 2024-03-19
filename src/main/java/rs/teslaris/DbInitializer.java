@@ -352,8 +352,8 @@ public class DbInitializer implements ApplicationRunner {
 
         var software = new Software();
         software.setTitle(Set.of(new MultiLingualContent(englishTag, "TeslaRIS", 1)));
+        software.setInternalNumber("123456");
         software.setApproveStatus(ApproveStatus.APPROVED);
-        softwareRepository.save(software);
 
         var patent = new Patent();
         patent.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Patent", 1)));
@@ -450,5 +450,23 @@ public class DbInitializer implements ApplicationRunner {
         datasetContribution.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null));
         personContributionRepository.save(datasetContribution);
+
+        var softwareContribution = new PersonDocumentContribution();
+        softwareContribution.setPerson(person1);
+        softwareContribution.setContributionType(DocumentContributionType.AUTHOR);
+        softwareContribution.setIsMainContributor(true);
+        softwareContribution.setIsCorrespondingContributor(false);
+        softwareContribution.setOrderNumber(1);
+        softwareContribution.setDocument(dataset);
+        softwareContribution.setApproveStatus(ApproveStatus.APPROVED);
+        softwareContribution.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), new PersonName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+        softwareContribution.getAffiliationStatement().setDisplayPersonName(
+            new PersonName("Ivan", "", "M.", LocalDate.of(2000, 1, 31), null));
+        personContributionRepository.save(softwareContribution);
+
+        software.addDocumentContribution(softwareContribution);
+        softwareRepository.save(software);
     }
 }

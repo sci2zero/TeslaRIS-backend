@@ -57,7 +57,7 @@ public class PatentControllerTest extends BaseTest {
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testReadPatent() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/patent/{patentId}", 77)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/patent/{patentId}", 75)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
@@ -86,7 +86,7 @@ public class PatentControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(patentDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/patent/{patentId}", 77)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/patent/{patentId}", 75)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -100,7 +100,7 @@ public class PatentControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/patent/{patentId}",
-                        77).contentType(MediaType.APPLICATION_JSON)
+                        75).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

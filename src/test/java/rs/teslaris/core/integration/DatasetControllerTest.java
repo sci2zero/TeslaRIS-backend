@@ -57,7 +57,7 @@ public class DatasetControllerTest extends BaseTest {
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testReadDataset() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/dataset/{datasetId}", 79)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/dataset/{datasetId}", 77)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
@@ -86,7 +86,7 @@ public class DatasetControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(datasetDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/dataset/{datasetId}", 79)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/dataset/{datasetId}", 77)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -100,7 +100,7 @@ public class DatasetControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/dataset/{datasetId}",
-                        79).contentType(MediaType.APPLICATION_JSON)
+                        77).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
