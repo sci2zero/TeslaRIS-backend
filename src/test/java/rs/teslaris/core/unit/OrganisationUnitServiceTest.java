@@ -658,7 +658,7 @@ public class OrganisationUnitServiceTest {
         var result = organisationUnitService.getOrganisationUnitsRelationsChain(leafUnit.getId());
 
         // Then
-        assertEquals(3, result.size());
+        assertEquals(3, result.getNodes().size());
         verify(organisationUnitsRelationRepository, times(3)).getSuperOU(anyInt());
     }
 }

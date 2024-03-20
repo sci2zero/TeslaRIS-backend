@@ -468,5 +468,18 @@ public class DbInitializer implements ApplicationRunner {
 
         software.addDocumentContribution(softwareContribution);
         softwareRepository.save(software);
+
+        var researchArea2 = new ResearchArea(new HashSet<>(Set.of(
+            new MultiLingualContent(serbianTag, "Softversko inzenjerstvo", 2))),
+            new HashSet<>(), researchArea1);
+        researchAreaRepository.save(researchArea2);
+
+        var researchArea3 = new ResearchArea(new HashSet<>(Set.of(
+            new MultiLingualContent(serbianTag, "Cybersecurity", 2))),
+            new HashSet<>(), researchArea2);
+        researchAreaRepository.save(researchArea3);
+
+        dummyOU.getResearchAreas().add(researchArea3);
+        organisationUnitRepository.save(dummyOU);
     }
 }

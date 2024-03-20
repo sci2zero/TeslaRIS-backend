@@ -27,6 +27,11 @@ public interface OrganisationUnitsRelationRepository
         " and our.approveStatus = 1 and our.relationType = 0")
     Optional<OrganisationUnitsRelation> getSuperOU(Integer sourceId);
 
+    @Query("select our from OrganisationUnitsRelation our" +
+        " where our.sourceOrganisationUnit.id = :sourceId" +
+        " and our.approveStatus = 1 and our.relationType = 1")
+    List<OrganisationUnitsRelation> getSuperOUsMemberOf(Integer sourceId);
+
     List<OrganisationUnitsRelation> findBySourceOrganisationUnit(Integer sourceOrganisationId);
 
     List<OrganisationUnitsRelation> findBySourceOrganisationUnitAndRelationType(

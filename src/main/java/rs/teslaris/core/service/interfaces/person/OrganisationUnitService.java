@@ -9,6 +9,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
+import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -38,7 +39,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                                              Integer targetId,
                                                                              Pageable pageable);
 
-    List<OrganisationUnitDTO> getOrganisationUnitsRelationsChain(Integer leafId);
+    RelationGraphDataDTO getOrganisationUnitsRelationsChain(Integer leafId);
 
     OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitDTORequest organisationUnitDTORequest, Boolean index);

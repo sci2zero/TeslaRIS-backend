@@ -25,8 +25,10 @@ import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitGraphRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
+import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -167,19 +169,37 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    public List<OrganisationUnitDTO> getOrganisationUnitsRelationsChain(
+    public RelationGraphDataDTO getOrganisationUnitsRelationsChain(
         Integer leafId) {
-        var chain = new ArrayList<OrganisationUnitDTO>();
-        chain.add(OrganisationUnitConverter.toDTO(findOne(leafId)));
+        var nodes = new ArrayList<OrganisationUnitDTO>();
+        var links = new ArrayList<OrganisationUnitGraphRelationDTO>();
+        nodes.add(OrganisationUnitConverter.toDTO(findOne(leafId)));
 
-        var currentOU = organisationUnitsRelationRepository.getSuperOU(leafId);
-        while (currentOU.isPresent()) {
-            chain.add(OrganisationUnitConverter.toDTO(currentOU.get().getTargetOrganisationUnit()));
-            currentOU = organisationUnitsRelationRepository.getSuperOU(
-                currentOU.get().getTargetOrganisationUnit().getId());
+        var currentBelongsToRelation = organisationUnitsRelationRepository.getSuperOU(leafId);
+        while (currentBelongsToRelation.isPresent()) {
+            links.add(new OrganisationUnitGraphRelationDTO(
+                currentBelongsToRelation.get().getSourceOrganisationUnit().getId(),
+                currentBelongsToRelation.get().getTargetOrganisationUnit().getId(),
+                OrganisationUnitRelationType.BELONGS_TO));
+
+            organisationUnitsRelationRepository.getSuperOUsMemberOf(
+                    currentBelongsToRelation.get().getSourceOrganisationUnit().getId())
+                .forEach((relation -> {
+                    links.add(new OrganisationUnitGraphRelationDTO(
+                        relation.getSourceOrganisationUnit().getId(),
+                        relation.getTargetOrganisationUnit().getId(),
+                        OrganisationUnitRelationType.MEMBER_OF));
+                    nodes.add(
+                        OrganisationUnitConverter.toDTO(relation.getTargetOrganisationUnit()));
+                }));
+
+            nodes.add(OrganisationUnitConverter.toDTO(
+                currentBelongsToRelation.get().getTargetOrganisationUnit()));
+            currentBelongsToRelation = organisationUnitsRelationRepository.getSuperOU(
+                currentBelongsToRelation.get().getTargetOrganisationUnit().getId());
         }
 
-        return chain;
+        return new RelationGraphDataDTO(nodes, links);
     }
 
     @Override
