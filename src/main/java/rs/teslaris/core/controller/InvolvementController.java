@@ -1,6 +1,5 @@
 package rs.teslaris.core.controller;
 
-import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +21,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
@@ -87,13 +87,13 @@ public class InvolvementController {
     }
 
     @PatchMapping(value = "/{involvementId}/{personId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @PersonEditCheck
     @Idempotent
-    public void addInvolvementProofs(@ModelAttribute @Valid DocumentFileDTO proof,
-                                     @PathVariable Integer involvementId) {
-        involvementService.addInvolvementProofs(List.of(proof), involvementId);
+    public DocumentFileResponseDTO addInvolvementProofs(
+        @ModelAttribute @Valid DocumentFileDTO proof,
+        @PathVariable Integer involvementId) {
+        return involvementService.addInvolvementProof(proof, involvementId);
     }
 
     @DeleteMapping("/{involvementId}/{personId}/{proofId}")

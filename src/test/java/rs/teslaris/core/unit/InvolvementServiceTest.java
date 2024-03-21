@@ -301,14 +301,13 @@ public class InvolvementServiceTest {
         var involvement = new Involvement();
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
-        when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
+        when(documentFileService.saveNewDocument(any(), eq(false))).thenReturn(new DocumentFile());
 
         // when
-        involvementService.addInvolvementProofs(
-            List.of(new DocumentFileDTO(), new DocumentFileDTO()), 1);
+        involvementService.addInvolvementProof(new DocumentFileDTO(), 1);
 
         //then
-        verify(involvementRepository, times(2)).save(involvement);
+        verify(involvementRepository, times(1)).save(involvement);
     }
 
     @Test

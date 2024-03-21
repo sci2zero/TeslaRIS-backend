@@ -77,8 +77,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     private void setCommonFields(DocumentFile documentFile, DocumentFileDTO documentFileDTO) {
         documentFile.setFilename(documentFileDTO.getFile().getOriginalFilename());
-        documentFile.setDescription(
-            multilingualContentService.getMultilingualContent(documentFileDTO.getDescription()));
+
+        if (Objects.nonNull(documentFileDTO.getDescription())) {
+            documentFile.setDescription(
+                multilingualContentService.getMultilingualContent(
+                    documentFileDTO.getDescription()));
+        }
 
         documentFile.setMimeType(detectMimeType(documentFileDTO.getFile()));
         documentFile.setFileSize(documentFileDTO.getFile().getSize());

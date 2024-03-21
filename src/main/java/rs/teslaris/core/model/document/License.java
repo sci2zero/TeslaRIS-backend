@@ -4,4 +4,5 @@ public enum License {
     BSD,
     CREATIVE_COMMONS,
     APACHE,
+    OPEN_ACCESS
 }

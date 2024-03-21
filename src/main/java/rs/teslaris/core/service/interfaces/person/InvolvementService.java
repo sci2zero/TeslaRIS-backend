@@ -1,8 +1,8 @@
 package rs.teslaris.core.service.interfaces.person;
 
-import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
@@ -25,7 +25,7 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     Employment addEmployment(Integer personId, EmploymentDTO employment);
 
-    void addInvolvementProofs(List<DocumentFileDTO> proofs, Integer involvementId);
+    DocumentFileResponseDTO addInvolvementProof(DocumentFileDTO proof, Integer involvementId);
 
     void deleteProof(Integer proofId, Integer involvementId);
 
