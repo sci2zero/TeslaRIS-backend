@@ -90,10 +90,21 @@ public class InvolvementController {
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @PersonEditCheck
     @Idempotent
-    public DocumentFileResponseDTO addInvolvementProofs(
+    public DocumentFileResponseDTO addInvolvementProof(
         @ModelAttribute @Valid DocumentFileDTO proof,
         @PathVariable Integer involvementId) {
         return involvementService.addInvolvementProof(proof, involvementId);
+    }
+
+    @PatchMapping(value = "/{involvementId}/{personId}/{proofId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
+    @Idempotent
+    public DocumentFileResponseDTO updateInvolvementProof(
+        @ModelAttribute @Valid DocumentFileDTO proof,
+        @PathVariable Integer involvementId,
+        @PathVariable Integer proofId) {
+        return involvementService.updateProof(proofId, involvementId, proof);
     }
 
     @DeleteMapping("/{involvementId}/{personId}/{proofId}")

@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Where;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
@@ -45,4 +46,7 @@ public class DocumentFile extends BaseEntity {
 
     @Column(name = "license")
     private License license;
+
+    @Column(name = "approve_status", nullable = false)
+    private ApproveStatus approveStatus;
 }

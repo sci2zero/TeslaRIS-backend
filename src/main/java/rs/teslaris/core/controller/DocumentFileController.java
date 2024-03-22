@@ -52,6 +52,6 @@ public class DocumentFileController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_DOCUMENT_PROOFS')")
     void editDocumentFile(@RequestBody @Valid DocumentFileDTO documentFile) {
-        documentFileService.editDocumentFile(documentFile);
+        documentFileService.editDocumentFile(documentFile, true);
     }
 }

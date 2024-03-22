@@ -150,6 +150,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     @Override
+    public DocumentFileResponseDTO updateProof(Integer proofId, Integer involvementId,
+                                               DocumentFileDTO updatedProof) {
+        return documentFileService.editDocumentFile(updatedProof, false);
+    }
+
+    @Override
     public void updateEducation(Integer involvementId, EducationDTO education) {
         var educationToUpdate = (Education) findOne(involvementId);
 

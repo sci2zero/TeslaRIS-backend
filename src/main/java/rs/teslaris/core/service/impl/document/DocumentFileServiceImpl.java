@@ -13,15 +13,19 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -56,6 +60,10 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     private final ExpressionTransformer expressionTransformer;
 
+    @Value("${document_file.approved_by_default}")
+    private Boolean documentFileApprovedByDefault;
+
+
     @Override
     protected JpaRepository<DocumentFile, Integer> getEntityRepository() {
         return documentFileRepository;
@@ -76,7 +84,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     private void setCommonFields(DocumentFile documentFile, DocumentFileDTO documentFileDTO) {
-        documentFile.setFilename(documentFileDTO.getFile().getOriginalFilename());
+        if (documentFileDTO.getFile().getSize() > 0) {
+            documentFile.setFilename(documentFileDTO.getFile().getOriginalFilename());
+            documentFile.setMimeType(detectMimeType(documentFileDTO.getFile()));
+            documentFile.setFileSize(
+                Math.floorDiv(documentFileDTO.getFile().getSize(), (1024 * 1024)));
+        }
 
         if (Objects.nonNull(documentFileDTO.getDescription())) {
             documentFile.setDescription(
@@ -84,8 +97,6 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                     documentFileDTO.getDescription()));
         }
 
-        documentFile.setMimeType(detectMimeType(documentFileDTO.getFile()));
-        documentFile.setFileSize(documentFileDTO.getFile().getSize());
         documentFile.setResourceType(documentFileDTO.getResourceType());
         documentFile.setLicense(documentFileDTO.getLicense());
     }
@@ -100,6 +111,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             fileService.store(documentFile.getFile(), UUID.randomUUID().toString());
         newDocumentFile.setServerFilename(serverFilename);
 
+        newDocumentFile.setApproveStatus(
+            documentFileApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
         newDocumentFile = save(newDocumentFile);
 
         if (index) {
@@ -111,18 +124,24 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
-    public void editDocumentFile(DocumentFileDTO documentFile) {
+    public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index) {
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
 
         setCommonFields(documentFileToEdit, documentFile);
 
-        fileService.store(documentFile.getFile(), documentFileToEdit.getServerFilename());
-        documentFileRepository.save(documentFileToEdit);
+        if (documentFile.getFile().getSize() > 0) {
+            var serverFilename =
+                fileService.store(documentFile.getFile(), documentFileToEdit.getServerFilename());
+            documentFileToEdit.setServerFilename(serverFilename);
 
-        var documentIndexToUpdate = findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
-
-        parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
-            documentFileToEdit.getServerFilename(), documentIndexToUpdate);
+            if (index) {
+                var documentIndexToUpdate =
+                    findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
+                parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
+                    documentFileToEdit.getServerFilename(), documentIndexToUpdate);
+            }
+        }
+        return DocumentFileConverter.toDTO(documentFileRepository.save(documentFileToEdit));
     }
 
     @Override

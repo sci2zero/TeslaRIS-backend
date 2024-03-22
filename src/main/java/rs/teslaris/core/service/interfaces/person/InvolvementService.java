@@ -29,6 +29,9 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     void deleteProof(Integer proofId, Integer involvementId);
 
+    DocumentFileResponseDTO updateProof(Integer proofId, Integer involvementId,
+                                        DocumentFileDTO updatedProof);
+
     void updateEducation(Integer involvementId, EducationDTO education);
 
     void updateMembership(Integer involvementId, MembershipDTO membership);

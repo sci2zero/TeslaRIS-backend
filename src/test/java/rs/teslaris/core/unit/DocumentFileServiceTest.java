@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
@@ -57,6 +59,12 @@ public class DocumentFileServiceTest {
 
     @InjectMocks
     private DocumentFileServiceImpl documentFileService;
+
+
+    @BeforeEach
+    public void setUp() {
+        ReflectionTestUtils.setField(documentFileService, "documentFileApprovedByDefault", true);
+    }
 
     @Test
     public void shouldReturnDocumentFileWhenValidIdIsProvided() {
@@ -117,9 +125,10 @@ public class DocumentFileServiceTest {
         when(fileService.store(any(), eq("UUID"))).thenReturn("UUID.pdf");
         when(documentFileIndexRepository.findDocumentFileIndexByDatabaseId(any())).thenReturn(
             Optional.of(docIndex));
+        when(documentFileRepository.save(any())).thenReturn(new DocumentFile());
 
         // when
-        documentFileService.editDocumentFile(dto);
+        documentFileService.editDocumentFile(dto, false);
 
         // then
         verify(documentFileRepository, times(1)).save(any());
