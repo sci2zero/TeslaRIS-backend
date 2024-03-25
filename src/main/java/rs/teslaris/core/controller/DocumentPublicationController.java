@@ -40,6 +40,12 @@ public class DocumentPublicationController {
     private final UserService userService;
 
 
+    @GetMapping("/{publicationId}/can-edit")
+    @PublicationEditCheck
+    public boolean canEditDocumentPublication() {
+        return true;
+    }
+
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
         @RequestParam("tokens")
