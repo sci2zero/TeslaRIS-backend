@@ -9,7 +9,6 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +19,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
-import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -118,43 +117,35 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public void addDocumentFile(Integer documentId, List<DocumentFileDTO> documentFiles,
-                                Boolean isProof) {
+    public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
+                                                   Boolean isProof) {
         var document = findOne(documentId);
-        documentFiles.forEach(file -> {
-            var documentFile = documentFileService.saveNewDocument(file, !isProof);
-            if (isProof) {
-                document.getProofs().add(documentFile);
-            } else {
-                document.getFileItems().add(documentFile);
-            }
-            documentRepository.save(document);
-        });
+        var documentFile = documentFileService.saveNewDocument(file, !isProof);
+        if (isProof) {
+            document.getProofs().add(documentFile);
+        } else {
+            document.getFileItems().add(documentFile);
+        }
+        documentRepository.save(document);
 
         if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
+
+        return DocumentFileConverter.toDTO(documentFile);
     }
 
     @Override
     @Transactional
-    public void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof) {
+    public void deleteDocumentFile(Integer documentId, Integer documentFileId) {
         var document = findOne(documentId);
         var documentFile = documentFileService.findOne(documentFileId);
 
-        if (isProof) {
-            Set<DocumentFile> proofs = document.getProofs();
-            proofs.forEach(p -> p.setDeleted(true));
-            documentFileService.saveAll(proofs);
-        } else {
-            Set<DocumentFile> fileItems = document.getFileItems();
-            fileItems.forEach(p -> p.setDeleted(true));
-            documentFileService.saveAll(fileItems);
-        }
-        documentRepository.save(document);
-
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+
+        var isProof =
+            document.getProofs().stream().anyMatch((proof) -> proof.getId().equals(documentFileId));
 
         if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
             indexDocumentFilesContent(document,
@@ -176,7 +167,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public List<Integer> getContributorIds(Integer publicationId) {
-        return findOne(publicationId).getContributors().stream().map(BaseEntity::getId)
+        return findOne(publicationId).getContributors().stream().map(contribution -> {
+                if (Objects.nonNull(contribution.getPerson())) {
+                    return contribution.getPerson().getId();
+                }
+                return -1;
+            })
             .filter(Objects::nonNull).collect(Collectors.toList());
     }
 

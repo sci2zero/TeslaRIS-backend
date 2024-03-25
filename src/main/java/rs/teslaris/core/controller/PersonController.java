@@ -40,6 +40,13 @@ public class PersonController {
     private final PersonService personService;
 
 
+    @GetMapping("/{personId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
+    public boolean canEditPerson() {
+        return true;
+    }
+
     @GetMapping
     public Page<PersonIndex> findAll(Pageable pageable) {
         return personService.findAllIndex(pageable);

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -85,21 +86,20 @@ public class DocumentPublicationController {
     }
 
     @PatchMapping("/{publicationId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
     @Idempotent
-    void addDocumentFile(@PathVariable Integer publicationId,
-                         @ModelAttribute @Valid DocumentFileDTO documentFile,
-                         @RequestParam Boolean isProof) {
-        documentPublicationService.addDocumentFile(publicationId, List.of(documentFile), isProof);
+    DocumentFileResponseDTO addDocumentFile(@PathVariable Integer publicationId,
+                                            @ModelAttribute @Valid DocumentFileDTO documentFile,
+                                            @RequestParam Boolean isProof) {
+        return documentPublicationService.addDocumentFile(publicationId, documentFile, isProof);
     }
 
     @DeleteMapping("/{publicationId}/{documentFileId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
     void deleteDocumentFile(@PathVariable Integer publicationId,
-                            @PathVariable Integer documentFileId, @RequestParam Boolean isProof) {
-        documentPublicationService.deleteDocumentFile(publicationId, documentFileId, isProof);
+                            @PathVariable Integer documentFileId) {
+        documentPublicationService.deleteDocumentFile(publicationId, documentFileId);
     }
 
     @DeleteMapping("/{publicationId}")

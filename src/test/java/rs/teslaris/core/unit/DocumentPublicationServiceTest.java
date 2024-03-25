@@ -117,10 +117,10 @@ public class DocumentPublicationServiceTest {
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
-        documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
+        documentPublicationService.deleteDocumentFile(documentId, documentFileId);
 
         // Then
-        verify(documentRepository, times(1)).save(document);
+        verify(documentFileService, times(1)).deleteDocumentFile(any());
     }
 
     @Test
@@ -139,18 +139,16 @@ public class DocumentPublicationServiceTest {
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
-        documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
+        documentPublicationService.deleteDocumentFile(documentId, documentFileId);
 
         // Then
-        verify(documentRepository, times(1)).save(document);
+        verify(documentFileService, times(1)).deleteDocumentFile(any());
     }
 
     @Test
     public void shouldAddDocumentFileWithProof() {
         // Given
         var documentId = 1;
-        var documentFiles = new ArrayList<DocumentFileDTO>();
-        documentFiles.add(new DocumentFileDTO());
         var isProof = true;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
@@ -163,7 +161,7 @@ public class DocumentPublicationServiceTest {
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
-        documentPublicationService.addDocumentFile(documentId, documentFiles, isProof);
+        documentPublicationService.addDocumentFile(documentId, new DocumentFileDTO(), isProof);
 
         // Then
         verify(documentRepository, times(1)).save(document);
@@ -173,8 +171,6 @@ public class DocumentPublicationServiceTest {
     public void shouldAddDocumentFileWithFileItem() {
         // Given
         var documentId = 1;
-        var documentFiles = new ArrayList<DocumentFileDTO>();
-        documentFiles.add(new DocumentFileDTO());
         var isProof = false;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
@@ -182,7 +178,8 @@ public class DocumentPublicationServiceTest {
         documentFile.setId(1);
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
-        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
+        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class),
+            eq(!isProof))).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -190,7 +187,7 @@ public class DocumentPublicationServiceTest {
             new DocumentFileIndex());
 
         // When
-        documentPublicationService.addDocumentFile(documentId, documentFiles, isProof);
+        documentPublicationService.addDocumentFile(documentId, new DocumentFileDTO(), isProof);
 
         // Then
         verify(documentRepository, times(1)).save(document);

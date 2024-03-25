@@ -30,5 +30,13 @@ public class DocumentPublicationConverter {
         if (Objects.nonNull(publication.getEvent())) {
             publicationDTO.setEventId(publication.getEvent().getId());
         }
+
+        publication.getFileItems().forEach(fileItem -> {
+            publicationDTO.getFileItems().add(DocumentFileConverter.toDTO(fileItem));
+        });
+
+        publication.getProofs().forEach(proof -> {
+            publicationDTO.getProofs().add(DocumentFileConverter.toDTO(proof));
+        });
     }
 }

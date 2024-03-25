@@ -135,10 +135,15 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             documentFileToEdit.setServerFilename(serverFilename);
 
             if (index) {
-                var documentIndexToUpdate =
-                    findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
-                parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
-                    documentFileToEdit.getServerFilename(), documentIndexToUpdate);
+                try {
+                    var documentIndexToUpdate =
+                        findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
+                    parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
+                        documentFileToEdit.getServerFilename(), documentIndexToUpdate);
+                } catch (NotFoundException e) {
+                    return DocumentFileConverter.toDTO(
+                        documentFileRepository.save(documentFileToEdit));
+                }
             }
         }
         return DocumentFileConverter.toDTO(documentFileRepository.save(documentFileToEdit));
