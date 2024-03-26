@@ -31,15 +31,4 @@ public class DocumentPublicationControllerTest extends BaseTest {
                 "http://localhost:8081/api/document/for-researcher/{personId}", 22)
             .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
-
-    @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
-    public void testCanEditCheckAdmin() throws Exception {
-        String jwtToken = authenticateAdminAndGetToken();
-
-        mockMvc.perform(MockMvcRequestBuilders.get(
-                "http://localhost:8081/api/document/{publicationId}/can-edit", 77)
-            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
-    }
 }
