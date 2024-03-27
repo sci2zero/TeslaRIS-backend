@@ -39,7 +39,6 @@ public class Person extends BaseEntity {
     @Embedded
     private PersonalInfo personalInfo;
 
-
     @OneToOne(mappedBy = "person")
     private User user;
 

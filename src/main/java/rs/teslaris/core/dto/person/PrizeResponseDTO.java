@@ -13,13 +13,18 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PrizeResponseDTO {
+public class PrizeResponseDTO extends PrizeDTO {
 
-    private List<MultilingualContentDTO> title;
-
-    private List<MultilingualContentDTO> description;
+    private Integer id;
 
     private List<DocumentFileResponseDTO> proofs;
 
-    private LocalDate date;
+    public PrizeResponseDTO(List<MultilingualContentDTO> title,
+                            List<MultilingualContentDTO> description,
+                            LocalDate date, Integer id,
+                            List<DocumentFileResponseDTO> proofs) {
+        super(title, description, date);
+        this.id = id;
+        this.proofs = proofs;
+    }
 }

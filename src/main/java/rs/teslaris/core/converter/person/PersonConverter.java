@@ -147,14 +147,15 @@ public class PersonConverter {
                                                ArrayList<ExpertiseOrSkillResponseDTO> expertisesOrSkills) {
         person.getExpertisesAndSkills().forEach(expertiseOrSkill -> {
             var dto = new ExpertiseOrSkillResponseDTO();
+            dto.setId(expertiseOrSkill.getId());
             dto.setName(
                 MultilingualContentConverter.getMultilingualContentDTO(expertiseOrSkill.getName()));
             dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
                 expertiseOrSkill.getDescription()));
 
-            dto.setDocumentFiles(new ArrayList<>());
+            dto.setProofs(new ArrayList<>());
             expertiseOrSkill.getProofs().forEach(proof -> {
-                dto.getDocumentFiles().add(DocumentFileConverter.toDTO(proof));
+                dto.getProofs().add(DocumentFileConverter.toDTO(proof));
             });
             expertisesOrSkills.add(dto);
         });
@@ -163,6 +164,7 @@ public class PersonConverter {
     private static void setPrizes(Person person, ArrayList<PrizeResponseDTO> prizes) {
         person.getPrizes().forEach(prize -> {
             var dto = new PrizeResponseDTO();
+            dto.setId(prize.getId());
             dto.setTitle(
                 MultilingualContentConverter.getMultilingualContentDTO(prize.getTitle()));
             dto.setDescription(

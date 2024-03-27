@@ -12,11 +12,15 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExpertiseOrSkillResponseDTO {
+public class ExpertiseOrSkillResponseDTO extends ExpertiseOrSkillDTO {
 
-    private List<MultilingualContentDTO> name;
+    private List<DocumentFileResponseDTO> proofs;
 
-    private List<MultilingualContentDTO> description;
-
-    private List<DocumentFileResponseDTO> documentFiles;
+    public ExpertiseOrSkillResponseDTO(Integer id,
+                                       List<MultilingualContentDTO> name,
+                                       List<MultilingualContentDTO> description,
+                                       List<DocumentFileResponseDTO> proofs) {
+        super(id, name, description);
+        this.proofs = proofs;
+    }
 }
