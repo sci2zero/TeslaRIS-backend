@@ -13,7 +13,8 @@ public interface ExpertiseOrSkillService extends JPAService<ExpertiseOrSkill> {
 
     ExpertiseOrSkillResponseDTO addExpertiseOrSkill(Integer personId, ExpertiseOrSkillDTO dto);
 
-    ExpertiseOrSkillResponseDTO updateExpertiseOrSkill(Integer expertiseOrSkillId, ExpertiseOrSkillDTO dto);
+    ExpertiseOrSkillResponseDTO updateExpertiseOrSkill(Integer expertiseOrSkillId,
+                                                       ExpertiseOrSkillDTO dto);
 
     void deleteExpertiseOrSkill(Integer expertiseOrSkillId, Integer personId);
 

@@ -14,6 +14,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,6 +34,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
@@ -115,7 +117,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             documentFileApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
         newDocumentFile = save(newDocumentFile);
 
-        if (index) {
+        if (index && newDocumentFile.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(), serverFilename,
                 new DocumentFileIndex());
         }
@@ -134,7 +136,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 fileService.store(documentFile.getFile(), documentFileToEdit.getServerFilename());
             documentFileToEdit.setServerFilename(serverFilename);
 
-            if (index) {
+            if (index && documentFileToEdit.getApproveStatus().equals(ApproveStatus.APPROVED)) {
                 try {
                     var documentIndexToUpdate =
                         findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
@@ -154,6 +156,21 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var documentToDelete = documentFileRepository.getReferenceByServerFilename(serverFilename);
         fileService.delete(serverFilename);
         delete(documentToDelete.getId());
+    }
+
+    @Override
+    public void changeApproveStatus(Integer documentFileId, Boolean approved) throws IOException {
+        var documentFile = findOne(documentFileId);
+        documentFile.setApproveStatus(approved ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
+        save(documentFile);
+
+        var fileResource = fileService.loadAsResource(documentFile.getServerFilename());
+
+        parseAndIndexPdfDocument(documentFile,
+            new ResourceMultipartFile(documentFile.getServerFilename(), documentFile.getFilename(),
+                documentFile.getMimeType(),
+                new ByteArrayResource(fileResource.getInputStream().readAllBytes())),
+            documentFile.getServerFilename(), new DocumentFileIndex());
     }
 
     private String detectMimeType(MultipartFile file) {

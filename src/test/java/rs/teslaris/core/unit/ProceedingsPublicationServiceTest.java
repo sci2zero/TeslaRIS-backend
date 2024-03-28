@@ -184,6 +184,7 @@ public class ProceedingsPublicationServiceTest {
         var publicationId = 1;
         var publication = new ProceedingsPublication();
         publication.setApproveStatus(ApproveStatus.APPROVED);
+        publication.setEvent(new Conference());
 
         var contribution = new PersonDocumentContribution();
         contribution.setContributionType(type);

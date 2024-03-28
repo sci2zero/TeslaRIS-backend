@@ -54,7 +54,7 @@ public class PrizeController {
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @PersonEditCheck
     public void deletePrize(@PathVariable Integer prizeId,
-                                       @PathVariable Integer personId) {
+                            @PathVariable Integer personId) {
         prizeService.deletePrize(prizeId, personId);
     }
 
@@ -81,7 +81,7 @@ public class PrizeController {
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @PersonEditCheck
     public void deletePrizeProof(@PathVariable Integer prizeId,
-                                            @PathVariable Integer proofId) {
+                                 @PathVariable Integer proofId) {
         prizeService.deleteProof(proofId, prizeId);
     }
 }

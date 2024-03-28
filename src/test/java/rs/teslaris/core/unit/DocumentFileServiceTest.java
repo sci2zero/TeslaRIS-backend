@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.mock.web.MockMultipartFile;
@@ -25,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.impl.document.DocumentFileServiceImpl;
@@ -96,6 +99,7 @@ public class DocumentFileServiceTest {
         // given
         var dto = new DocumentFileDTO();
         var doc = new DocumentFile();
+        doc.setApproveStatus(ApproveStatus.APPROVED);
         doc.setFilename("filename.txt");
         dto.setFile(
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
@@ -209,5 +213,24 @@ public class DocumentFileServiceTest {
 
         // then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void testChangeApproveStatus() throws IOException {
+        // Given
+        var documentFileId = 123;
+        var approved = true;
+        var documentFile = new DocumentFile();
+
+        when(documentFileRepository.findById(documentFileId)).thenReturn(Optional.of(documentFile));
+        when(fileService.loadAsResource(any())).thenReturn(
+            new ByteArrayResource("Some test data".getBytes()));
+
+        // When
+        documentFileService.changeApproveStatus(documentFileId, approved);
+
+        // Then
+        verify(documentFileRepository, times(1)).findById(documentFileId);
+        verify(fileService, times(1)).loadAsResource(any());
     }
 }

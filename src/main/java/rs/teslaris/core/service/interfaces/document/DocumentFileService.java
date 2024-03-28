@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.document;
 
+import java.io.IOException;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,8 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
     DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index);
 
     void deleteDocumentFile(String serverFilename);
+
+    void changeApproveStatus(Integer documentFileId, Boolean approved) throws IOException;
 
     void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,
                                   String serverFilename, DocumentFileIndex documentIndex);
