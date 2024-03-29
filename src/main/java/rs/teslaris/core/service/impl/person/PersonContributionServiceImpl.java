@@ -59,7 +59,30 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contribution.setIsCorrespondingContributor(
                 contributionDTO.getIsCorrespondingContributor());
 
-            document.addDocumentContribution(contribution);
+            var addedPrevoiusly = document.getContributors().stream().anyMatch(
+                previousContribution -> {
+                    if (Objects.nonNull(previousContribution.getPerson())) {
+                        return previousContribution.getPerson().getId()
+                            .equals(contribution.getPerson().getId());
+                    }
+
+                    return previousContribution.getAffiliationStatement().getDisplayPersonName()
+                        .getFirstname().equals(
+                            contribution.getAffiliationStatement().getDisplayPersonName()
+                                .getFirstname()) &&
+                        previousContribution.getAffiliationStatement().getDisplayPersonName()
+                            .getLastname().equals(
+                                contribution.getAffiliationStatement().getDisplayPersonName()
+                                    .getLastname()) &&
+                        previousContribution.getAffiliationStatement().getDisplayPersonName()
+                            .getOtherName().equals(
+                                contribution.getAffiliationStatement().getDisplayPersonName()
+                                    .getOtherName());
+                });
+
+            if (!addedPrevoiusly) {
+                document.addDocumentContribution(contribution);
+            }
         });
     }
 

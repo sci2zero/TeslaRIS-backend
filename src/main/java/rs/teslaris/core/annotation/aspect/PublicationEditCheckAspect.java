@@ -101,7 +101,7 @@ public class PublicationEditCheckAspect {
             case RESEARCHER:
                 if (!contributors.contains(userId)) {
                     throw new CantEditPublicationException(
-                        "You do not have the permission to edit this publication.");
+                        "unauthorizedPublicationEditAttemptMessage");
                 }
                 break;
             case INSTITUTIONAL_EDITOR:
@@ -109,7 +109,7 @@ public class PublicationEditCheckAspect {
                     personId -> personService.isPersonEmployedInOrganisationUnit(personId,
                         userService.getUserOrganisationUnitId(userId)))) {
                     throw new CantEditPublicationException(
-                        "You do not have the permission to edit this publication.");
+                        "unauthorizedPublicationEditAttemptMessage");
                 }
                 break;
         }
