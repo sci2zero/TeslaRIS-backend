@@ -425,7 +425,7 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(
                 new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate.pdf", "1111.pdf",
                     new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
-                    License.APACHE, ApproveStatus.APPROVED))));
+                    License.CREATIVE_COMMONS, ApproveStatus.APPROVED))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -441,7 +441,7 @@ public class DbInitializer implements ApplicationRunner {
                 1)),
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-                License.APACHE, ApproveStatus.APPROVED)), LocalDate.of(2023, 4, 17)));
+                License.OPEN_ACCESS, ApproveStatus.APPROVED)), LocalDate.of(2023, 4, 17)));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));

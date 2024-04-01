@@ -110,6 +110,8 @@ public class SecurityConfiguration {
                 "/api/software/{publicationId}").permitAll()
             .antMatchers(HttpMethod.GET,
                 "/api/dataset/{publicationId}").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/patent/{patentId}").permitAll()
 
             // INVOLVEMENT
             .antMatchers(HttpMethod.GET,

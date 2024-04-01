@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +31,7 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.impl.document.DocumentFileServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -232,5 +235,21 @@ public class DocumentFileServiceTest {
         // Then
         verify(documentFileRepository, times(1)).findById(documentFileId);
         verify(fileService, times(1)).loadAsResource(any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(License.class)
+    public void shouldReturnDocumentFileAccessLevelForAllLicenseTypes(License license) {
+        // given
+        var documentFile = new DocumentFile();
+        documentFile.setLicense(license);
+
+        when(documentFileRepository.getReferenceByServerFilename(any())).thenReturn(documentFile);
+
+        // when
+        var actual = documentFileService.getDocumentAccessLevel("serverFilename");
+
+        // then
+        assertEquals(license, actual);
     }
 }

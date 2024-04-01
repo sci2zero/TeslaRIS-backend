@@ -36,6 +36,12 @@ public class OrganisationUnitController {
 
     private final OrganisationUnitService organisationUnitService;
 
+    @GetMapping("/{organisationUnitId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    public boolean canEditOrganisationUnit() {
+        return true;
+    }
+
     @GetMapping
     public Page<OrganisationUnitDTO> getAllOrganisationUnits(Pageable pageable) {
         return organisationUnitService.findOrganisationUnits(pageable);

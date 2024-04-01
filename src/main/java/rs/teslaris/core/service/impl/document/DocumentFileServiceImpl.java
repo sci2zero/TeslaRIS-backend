@@ -28,6 +28,7 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -76,6 +77,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     public DocumentFile findDocumentFileById(Integer id) {
         return documentFileRepository.findById(id).orElseThrow(
             () -> new NotFoundException("Document file with given id does not exist."));
+    }
+
+    @Override
+    public License getDocumentAccessLevel(String serverFilename) {
+        return documentFileRepository.getReferenceByServerFilename(serverFilename).getLicense();
     }
 
     @Override

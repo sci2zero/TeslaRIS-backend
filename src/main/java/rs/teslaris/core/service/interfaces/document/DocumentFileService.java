@@ -10,6 +10,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.core.util.search.SearchRequestType;
 
@@ -17,6 +18,8 @@ import rs.teslaris.core.util.search.SearchRequestType;
 public interface DocumentFileService extends JPAService<DocumentFile> {
 
     DocumentFile findDocumentFileById(Integer id);
+
+    License getDocumentAccessLevel(String serverFilename);
 
     DocumentFileIndex findDocumentFileIndexByDatabaseId(Integer databaseId);
 
