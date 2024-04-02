@@ -38,7 +38,7 @@ import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
@@ -339,7 +339,7 @@ public class OrganisationUnitServiceTest {
 
     @Test
     void shouldCreateOrganisationUnits() {
-        OrganisationUnitDTORequest organisationUnitDTORequest = new OrganisationUnitDTORequest();
+        var organisationUnitDTORequest = new OrganisationUnitRequestDTO();
         // Set properties for organisationUnitDTORequest
 
         MultiLingualContent name = new MultiLingualContent();
@@ -400,7 +400,7 @@ public class OrganisationUnitServiceTest {
 
     @Test
     void shouldEditOrganisationUnits() {
-        OrganisationUnitDTORequest organisationUnitDTORequest = new OrganisationUnitDTORequest();
+        var organisationUnitDTORequest = new OrganisationUnitRequestDTO();
         organisationUnitDTORequest.setName(List.of(new MultilingualContentDTO()));
         organisationUnitDTORequest.setKeyword(List.of(new MultilingualContentDTO()));
         organisationUnitDTORequest.setResearchAreasId(List.of(1));

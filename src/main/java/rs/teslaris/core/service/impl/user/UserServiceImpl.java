@@ -374,7 +374,6 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
-        // TODO: Maybe add email verification?
         userToUpdate.setPreferredLanguage(preferredLanguage);
 
         if (!userUpdateRequest.getOldPassword().isEmpty() &&

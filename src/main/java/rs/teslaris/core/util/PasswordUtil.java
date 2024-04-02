@@ -1,6 +1,8 @@
 package rs.teslaris.core.util;
 
 import java.security.SecureRandom;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class PasswordUtil {
 
@@ -36,9 +38,12 @@ public class PasswordUtil {
     }
 
     public static boolean validatePasswordStrength(String password) {
-        return password.length() >= 8 &&
-            password.matches(".*[0-9].*") &&
-            password.matches(".*[a-z].*") &&
-            password.matches(".*[A-Z].*");
+        Predicate<String> hasMinimumLength = str -> str.length() >= 8;
+        Predicate<String> hasLowerCase = str -> str.chars().anyMatch(Character::isLowerCase);
+        Predicate<String> hasUpperCase = str -> str.chars().anyMatch(Character::isUpperCase);
+        Predicate<String> hasDigit = str -> str.chars().anyMatch(Character::isDigit);
+
+        return Stream.of(hasMinimumLength, hasLowerCase, hasUpperCase, hasDigit)
+            .allMatch(predicate -> predicate.test(password));
     }
 }

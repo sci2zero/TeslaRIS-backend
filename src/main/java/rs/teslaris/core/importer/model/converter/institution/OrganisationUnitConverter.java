@@ -6,7 +6,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
@@ -20,7 +20,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 @Component
 @RequiredArgsConstructor
 public class OrganisationUnitConverter
-    implements RecordConverter<OrgUnit, OrganisationUnitDTORequest> {
+    implements RecordConverter<OrgUnit, OrganisationUnitRequestDTO> {
 
     private final MultilingualContentConverter multilingualContentConverter;
 

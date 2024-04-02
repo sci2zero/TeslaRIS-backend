@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
@@ -42,9 +42,9 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     RelationGraphDataDTO getOrganisationUnitsRelationsChain(Integer leafId);
 
     OrganisationUnitDTO createOrganisationUnit(
-        OrganisationUnitDTORequest organisationUnitDTORequest, Boolean index);
+        OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index);
 
-    OrganisationUnit editOrganisationUnit(OrganisationUnitDTORequest organisationUnitDTORequest,
+    OrganisationUnit editOrganisationUnit(OrganisationUnitRequestDTO organisationUnitDTORequest,
                                           Integer organisationUnitId);
 
     OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,

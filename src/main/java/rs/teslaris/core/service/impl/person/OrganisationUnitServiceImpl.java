@@ -24,8 +24,8 @@ import rs.teslaris.core.converter.institution.RelationConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitDTORequest;
 import rs.teslaris.core.dto.institution.OrganisationUnitGraphRelationDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
@@ -214,10 +214,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnitDTO createOrganisationUnit(
-        OrganisationUnitDTORequest organisationUnitDTORequest, Boolean index) {
+        OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index) {
+
         OrganisationUnit organisationUnit = new OrganisationUnit();
 
-        setCommonOUFields(organisationUnit, organisationUnitDTORequest);
+        setCommonOUFields(organisationUnit, organisationUnitRequestDTO);
 
         if (organisationUnitApprovedByDefault) {
             organisationUnit.setApproveStatus(ApproveStatus.APPROVED);
@@ -236,7 +237,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnit editOrganisationUnit(
-        OrganisationUnitDTORequest organisationUnitDTORequest, Integer organisationUnitId) {
+        OrganisationUnitRequestDTO organisationUnitDTORequest, Integer organisationUnitId) {
+
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
 
         organisationUnitToUpdate.getName().clear();
@@ -257,7 +259,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     private void setCommonOUFields(OrganisationUnit organisationUnit,
-                                   OrganisationUnitDTORequest organisationUnitDTO) {
+                                   OrganisationUnitRequestDTO organisationUnitDTO) {
         organisationUnit.setName(
             multilingualContentService.getMultilingualContent(organisationUnitDTO.getName())
         );

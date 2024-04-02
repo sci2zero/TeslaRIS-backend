@@ -1,10 +1,11 @@
 package rs.teslaris.core.service.impl.person;
 
+import java.util.HashSet;
 import java.util.Objects;
+import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -182,10 +183,18 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getContributionDescription()));
 
         setAffiliationStatement(contribution, contributionDTO, contributor);
-        // TODO: Moze li ovo ovako?
-        contribution.getInstitutions()
-            .add(personService.getLatestResearcherInvolvement(contributor));
 
+        contribution.setInstitutions(new HashSet<>());
+        if (Objects.isNull(contributionDTO.getInstitutionIds()) ||
+            contributionDTO.getInstitutionIds().isEmpty()) {
+            contribution.getInstitutions()
+                .add(personService.getLatestResearcherInvolvement(contributor));
+        } else {
+            contributionDTO.getInstitutionIds().forEach(institutionId -> {
+                var organisationUnit = organisationUnitService.findOne(institutionId);
+                contribution.getInstitutions().add(organisationUnit);
+            });
+        }
 
         contribution.setOrderNumber(contributionDTO.getOrderNumber());
         contribution.setApproveStatus(

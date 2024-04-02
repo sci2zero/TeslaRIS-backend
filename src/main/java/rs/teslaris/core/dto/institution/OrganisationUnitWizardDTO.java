@@ -11,9 +11,12 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrganisationUnitWizardDTO extends OrganisationUnitDTORequest {
+public class OrganisationUnitWizardDTO extends OrganisationUnitRequestDTO {
 
     private List<MultilingualContentDTO> superOrganisationUnitName;
 
     private Integer superOrganisationUnitId;
+
+    public void setOldId(Integer integer) {
+    }
 }
