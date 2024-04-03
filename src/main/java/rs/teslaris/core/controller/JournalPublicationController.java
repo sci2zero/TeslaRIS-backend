@@ -38,10 +38,10 @@ public class JournalPublicationController {
     private final UserService userService;
 
 
-    @GetMapping("/{publicationId}")
+    @GetMapping("/{documentId}")
     public JournalPublicationResponseDTO readJournalPublication(
-        @PathVariable Integer publicationId) {
-        return journalPublicationService.readJournalPublicationById(publicationId);
+        @PathVariable Integer documentId) {
+        return journalPublicationService.readJournalPublicationById(documentId);
     }
 
     @GetMapping("/journal/{journalId}/my-publications")
@@ -71,19 +71,19 @@ public class JournalPublicationController {
         return journalPublication;
     }
 
-    @PutMapping("/{publicationId}")
+    @PutMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void editJournalPublication(@PathVariable Integer publicationId,
+    public void editJournalPublication(@PathVariable Integer documentId,
                                        @RequestBody
                                        @Valid JournalPublicationDTO journalPublication) {
-        journalPublicationService.editJournalPublication(publicationId, journalPublication);
+        journalPublicationService.editJournalPublication(documentId, journalPublication);
     }
 
-    @DeleteMapping("/{publicationId}")
+    @DeleteMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void deleteJournalPublication(@PathVariable Integer publicationId) {
-        journalPublicationService.deleteJournalPublication(publicationId);
+    public void deleteJournalPublication(@PathVariable Integer documentId) {
+        journalPublicationService.deleteJournalPublication(documentId);
     }
 }

@@ -39,8 +39,6 @@ public class PublicationEditCheckAspect {
 
     private final JwtUtil tokenUtil;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
 
     @Around("@annotation(rs.teslaris.core.annotation.PublicationEditCheck)")
     public Object checkApiKey(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -89,7 +87,7 @@ public class PublicationEditCheckAspect {
     }
 
     private List<Integer> getContributorsFromDatabase(Map<String, String> attributeMap) {
-        int publicationId = Integer.parseInt(attributeMap.get("publicationId"));
+        int publicationId = Integer.parseInt(attributeMap.get("documentId"));
         return documentPublicationService.getContributorIds(publicationId);
     }
 

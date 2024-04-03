@@ -40,7 +40,7 @@ public class DocumentPublicationController {
     private final UserService userService;
 
 
-    @GetMapping("/{publicationId}/can-edit")
+    @GetMapping("/{documentId}/can-edit")
     @PublicationEditCheck
     public boolean canEditDocumentPublication() {
         return true;
@@ -83,35 +83,35 @@ public class DocumentPublicationController {
         return documentPublicationService.getPublicationCount();
     }
 
-    @PatchMapping("/{publicationId}/approval")
+    @PatchMapping("/{documentId}/approval")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('APPROVE_DOCUMENT')")
-    void updateDocumentApprovalStatus(@PathVariable Integer publicationId,
+    void updateDocumentApprovalStatus(@PathVariable Integer documentId,
                                       @RequestParam Boolean isApproved) {
-        documentPublicationService.updateDocumentApprovalStatus(publicationId, isApproved);
+        documentPublicationService.updateDocumentApprovalStatus(documentId, isApproved);
     }
 
-    @PatchMapping("/{publicationId}")
+    @PatchMapping("/{documentId}")
     @PublicationEditCheck
     @Idempotent
-    DocumentFileResponseDTO addDocumentFile(@PathVariable Integer publicationId,
+    DocumentFileResponseDTO addDocumentFile(@PathVariable Integer documentId,
                                             @ModelAttribute @Valid DocumentFileDTO documentFile,
                                             @RequestParam Boolean isProof) {
-        return documentPublicationService.addDocumentFile(publicationId, documentFile, isProof);
+        return documentPublicationService.addDocumentFile(documentId, documentFile, isProof);
     }
 
-    @DeleteMapping("/{publicationId}/{documentFileId}")
+    @DeleteMapping("/{documentId}/{documentFileId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    void deleteDocumentFile(@PathVariable Integer publicationId,
+    void deleteDocumentFile(@PathVariable Integer documentId,
                             @PathVariable Integer documentFileId) {
-        documentPublicationService.deleteDocumentFile(publicationId, documentFileId);
+        documentPublicationService.deleteDocumentFile(documentId, documentFileId);
     }
 
-    @DeleteMapping("/{publicationId}")
+    @DeleteMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    void deleteDocumentPublication(@PathVariable Integer publicationId) {
-        documentPublicationService.deleteDocumentPublication(publicationId);
+    void deleteDocumentPublication(@PathVariable Integer documentId) {
+        documentPublicationService.deleteDocumentPublication(documentId);
     }
 }
