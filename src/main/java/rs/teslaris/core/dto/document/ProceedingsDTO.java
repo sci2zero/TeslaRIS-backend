@@ -1,6 +1,7 @@
 package rs.teslaris.core.dto.document;
 
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ public class ProceedingsDTO extends DocumentDTO {
 
     private Integer numberOfPages;
 
+    @NotNull(message = "You have to provide languages.")
     private List<Integer> languageTagIds;
 
     private Integer publisherId;

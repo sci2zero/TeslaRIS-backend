@@ -10,10 +10,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -282,7 +283,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             basicPersonDTO.setPersonName(personNameDTO);
             basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
 
-            person = personService.createPersonWithBasicInfo(basicPersonDTO);
+            person = personService.createPersonWithBasicInfo(basicPersonDTO, true);
         }
         var organisationUnit = personService.getLatestResearcherInvolvement(person);
 
@@ -294,7 +295,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 person, organisationUnit);
         var savedUser = userRepository.save(newUser);
 
-        reindexUser(savedUser);
+        indexUser(savedUser, new UserAccountIndex());
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
@@ -328,7 +329,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 null, organisationUnit);
         var savedUser = userRepository.save(newUser);
 
-        reindexUser(savedUser);
+        indexUser(savedUser, new UserAccountIndex());
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
@@ -389,7 +390,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         userRepository.save(userToUpdate);
-        reindexUser(userToUpdate);
+        var index = userAccountIndexRepository.findByDatabaseId(userToUpdate.getId())
+            .orElse(new UserAccountIndex());
+        indexUser(userToUpdate, index);
 
         var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
         return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
@@ -449,7 +452,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var userToUpdate = boundUser.get();
         userToUpdate.setOrganisationUnit(personService.getLatestResearcherInvolvement(person));
         userRepository.save(userToUpdate);
-        reindexUser(userToUpdate);
+        var index = userAccountIndexRepository.findByDatabaseId(userToUpdate.getId())
+            .orElse(new UserAccountIndex());
+        indexUser(userToUpdate, index);
     }
 
     @Override
@@ -459,6 +464,25 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             .orElseThrow(() -> new NotFoundException("personNotBound"));
 
         return UserConverter.toUserResponseDTO(boundUser);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexUsers() {
+        userAccountIndexRepository.deleteAll();
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<User> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((user) -> indexUser(user, new UserAccountIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 
     private String createAndSaveRefreshTokenForUser(User user) {
@@ -485,9 +509,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             orgUnitNameOther.length() > 0 ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
     }
 
-    private void reindexUser(User user) {
-        var index = userAccountIndexRepository.findByDatabaseId(user.getId())
-            .orElse(new UserAccountIndex());
+    private void indexUser(User user, UserAccountIndex index) {
         index.setDatabaseId(user.getId());
 
         indexCommonFields(index, user);

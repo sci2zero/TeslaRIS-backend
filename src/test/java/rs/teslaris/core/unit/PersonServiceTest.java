@@ -2,10 +2,12 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -178,7 +180,6 @@ public class PersonServiceTest {
 
         var person = new Person();
         person.setName(new PersonName());
-        person.setInvolvements(new HashSet<>());
         person.setPersonalInfo(personalInfo);
         person.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -189,7 +190,7 @@ public class PersonServiceTest {
         when(personRepository.save(any(Person.class))).thenReturn(person);
 
         // then
-        var result = personService.createPersonWithBasicInfo(personDTO);
+        var result = personService.createPersonWithBasicInfo(personDTO, true);
         assertNotNull(result);
         assertEquals("John", result.getName().getFirstname());
         assertEquals("Doe", result.getName().getLastname());
@@ -215,7 +216,6 @@ public class PersonServiceTest {
     public void shouldSetPersonBiographyWithAnyData() {
         // given
         var person = new Person();
-        person.setBiography(new HashSet<>());
         var bio1 = new MultilingualContentDTO(1, "EN", "English content", 1);
         var bio2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var bioList = Arrays.asList(bio1, bio2);
@@ -235,7 +235,6 @@ public class PersonServiceTest {
     public void shouldSetPersonKeywordWithAnyData() {
         // given
         var person = new Person();
-        person.setBiography(new HashSet<>());
         var keyword1 = new MultilingualContentDTO(1, "EN", "English content", 1);
         var keyword2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var keywordList = Arrays.asList(keyword1, keyword2);
@@ -262,11 +261,9 @@ public class PersonServiceTest {
 
         var person = new Person();
         person.setId(1);
-        person.setOtherNames(new HashSet<>());
         person.getOtherNames().add(personName2);
         person.setName(personName1);
         person.setPersonalInfo(personalInfo);
-        person.setInvolvements(new HashSet<>());
         person.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(1)).thenReturn(Optional.of(person));
@@ -292,7 +289,6 @@ public class PersonServiceTest {
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
-        personToUpdate.setOtherNames(new HashSet<>());
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
 
@@ -365,8 +361,6 @@ public class PersonServiceTest {
 
         var postalAddress = new PostalAddress();
         postalAddress.setCountry(new Country());
-        postalAddress.setCity(new HashSet<>());
-        postalAddress.setStreetAndNumber(new HashSet<>());
         personalInfo.setPostalAddress(postalAddress);
 
         var contact = new Contact();
@@ -376,7 +370,6 @@ public class PersonServiceTest {
         personToUpdate.setId(personId);
         personToUpdate.setPersonalInfo(personalInfo);
         personToUpdate.setName(new PersonName());
-        personToUpdate.setInvolvements(new HashSet<>());
         personToUpdate.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
@@ -541,5 +534,61 @@ public class PersonServiceTest {
         verify(personRepository, times(1)).findById(personId);
         verify(personRepository, times(1)).save(any());
         verify(personIndexRepository, times(1)).delete(any());
+    }
+
+    @Test
+    public void shouldReindexPersons() {
+        // Given
+        var person1 = new Person();
+        person1.setName(new PersonName());
+        person1.setPersonalInfo(new PersonalInfo());
+        var person2 = new Person();
+        person2.setName(new PersonName());
+        person2.setPersonalInfo(new PersonalInfo());
+        var person3 = new Person();
+        person3.setName(new PersonName());
+        person3.setPersonalInfo(new PersonalInfo());
+        var persons = Arrays.asList(person1, person2, person3);
+        var page1 = new PageImpl<>(persons.subList(0, 2), PageRequest.of(0, 10), persons.size());
+        var page2 = new PageImpl<>(persons.subList(2, 3), PageRequest.of(1, 10), persons.size());
+
+        when(personRepository.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        personService.reindexPersons();
+
+        // Then
+        verify(personIndexRepository, times(1)).deleteAll();
+        verify(personRepository, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(personIndexRepository, atLeastOnce()).save(any(PersonIndex.class));
+    }
+
+    @Test
+    void shouldFindPersonByOldId() {
+        // Given
+        var oldId = 123;
+        var expectedPerson = new Person();
+        when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.of(expectedPerson));
+
+        // When
+        var actualPerson = personService.findPersonByOldId(oldId);
+
+        // Then
+        assertEquals(expectedPerson, actualPerson);
+        verify(personRepository, times(1)).findPersonByOldId(oldId);
+    }
+
+    @Test
+    void shouldReturnNullWhenOldIdDoesNotExist() {
+        // Given
+        var oldId = 123;
+        when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.empty());
+
+        // When
+        var actualPerson = personService.findPersonByOldId(oldId);
+
+        // Then
+        assertNull(actualPerson);
+        verify(personRepository, times(1)).findPersonByOldId(oldId);
     }
 }

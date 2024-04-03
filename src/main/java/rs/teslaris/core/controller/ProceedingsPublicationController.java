@@ -64,7 +64,8 @@ public class ProceedingsPublicationController {
     public ProceedingsPublicationDTO createProceedingsPublication(
         @RequestBody @Valid ProceedingsPublicationDTO proceedingsPublication) {
         var savedProceedingsPublication =
-            proceedingsPublicationService.createProceedingsPublication(proceedingsPublication);
+            proceedingsPublicationService.createProceedingsPublication(proceedingsPublication,
+                true);
         proceedingsPublication.setId(savedProceedingsPublication.getId());
         return proceedingsPublication;
     }

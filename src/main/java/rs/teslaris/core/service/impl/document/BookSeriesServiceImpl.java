@@ -2,14 +2,14 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.BookSeriesConverter;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
@@ -72,15 +72,16 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
-    public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO) {
+    public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index) {
         var bookSeries = new BookSeries();
-        bookSeries.setLanguages(new HashSet<>());
 
         setPublicationSeriesCommonFields(bookSeries, bookSeriesDTO);
         setBookSeriesFields(bookSeries, bookSeriesDTO);
 
         var newBookSeries = bookSeriesJPAService.save(bookSeries);
-        indexBookSeries(newBookSeries);
+        if (index) {
+            indexBookSeries(newBookSeries, new BookSeriesIndex());
+        }
 
         return newBookSeries;
     }
@@ -94,7 +95,10 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         setBookSeriesFields(bookSeriesToUpdate, bookSeriesDTO);
 
         bookSeriesJPAService.save(bookSeriesToUpdate);
-        indexBookSeries(bookSeriesToUpdate);
+        var index =
+            bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesToUpdate.getId())
+                .orElse(new BookSeriesIndex());
+        indexBookSeries(bookSeriesToUpdate, index);
     }
 
     @Override
@@ -109,6 +113,26 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             .ifPresent(bookSeriesIndexRepository::delete);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexBookSeries() {
+        bookSeriesIndexRepository.deleteAll();
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<BookSeries> chunk =
+                bookSeriesJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((bookSeries) -> indexBookSeries(bookSeries, new BookSeriesIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+    }
+
     private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {
         if (Objects.nonNull(bookSeriesDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForBookSeries(
@@ -117,10 +141,9 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         }
     }
 
-    private void indexBookSeries(BookSeries bookSeries) {
-        var index = bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeries.getId())
-            .orElse(new BookSeriesIndex());
+    private void indexBookSeries(BookSeries bookSeries, BookSeriesIndex index) {
         index.setDatabaseId(bookSeries.getId());
+
         indexCommonFields(bookSeries, index);
         bookSeriesIndexRepository.save(index);
     }

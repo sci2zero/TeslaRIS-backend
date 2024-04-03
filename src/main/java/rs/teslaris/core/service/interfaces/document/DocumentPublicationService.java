@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.service.interfaces.JPAService;
@@ -15,13 +16,21 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     Document findDocumentById(Integer documentId);
 
+    Document findDocumentByOldId(Integer documentId);
+
+    Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId, Pageable pageable);
+
+    Page<DocumentPublicationIndex> findPublicationsForPublisher(Integer publisherId,
+                                                                Pageable pageable);
+
     Long getPublicationCount();
 
     void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved);
 
-    void addDocumentFile(Integer documentId, List<DocumentFileDTO> documentFiles, Boolean isProof);
+    DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO documentFiles,
+                                            Boolean isProof);
 
-    void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof);
+    void deleteDocumentFile(Integer documentId, Integer documentFileId);
 
     void deleteDocumentPublication(Integer documentId);
 
@@ -34,4 +43,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                               Pageable pageable,
                                                               SearchRequestType type);
+
+    void deleteIndexes();
 }

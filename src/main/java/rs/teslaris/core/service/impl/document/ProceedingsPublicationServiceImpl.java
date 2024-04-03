@@ -2,11 +2,12 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -91,7 +92,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Override
     public ProceedingsPublication createProceedingsPublication(
-        ProceedingsPublicationDTO proceedingsPublicationDTO) {
+        ProceedingsPublicationDTO proceedingsPublicationDTO, Boolean index) {
         var publication = new ProceedingsPublication();
 
         setCommonFields(publication, proceedingsPublicationDTO);
@@ -102,7 +103,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         var savedPublication = proceedingPublicationJPAService.save(publication);
 
-        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
         }
 
@@ -139,7 +140,6 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         this.delete(proceedingsPublicationId);
     }
 
-    @Override
     public void indexProceedingsPublication(ProceedingsPublication publication,
                                             DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
@@ -155,6 +155,29 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                                                   Pageable pageable) {
         return documentPublicationIndexRepository.findByTypeAndEventId(
             DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexProceedingsPublications() {
+        // Super service does the initial deletion
+
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<ProceedingsPublication> chunk =
+                proceedingPublicationJPAService.findAll(PageRequest.of(pageNumber, chunkSize))
+                    .getContent();
+
+            chunk.forEach((journalPublication) -> indexProceedingsPublication(journalPublication,
+                new DocumentPublicationIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 
     private void setProceedingsPublicationRelatedFields(ProceedingsPublication publication,

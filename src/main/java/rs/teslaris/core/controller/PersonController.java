@@ -25,6 +25,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -39,6 +40,13 @@ public class PersonController {
     private final PersonService personService;
 
 
+    @GetMapping("/{personId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
+    public boolean canEditPerson() {
+        return true;
+    }
+
     @GetMapping
     public Page<PersonIndex> findAll(Pageable pageable) {
         return personService.findAllIndex(pageable);
@@ -52,6 +60,11 @@ public class PersonController {
     @GetMapping("/{personId}")
     public PersonResponseDTO readPersonWithBasicInfo(@PathVariable Integer personId) {
         return personService.readPersonWithBasicInfo(personId);
+    }
+
+    @GetMapping("/{personId}/person-user")
+    public PersonUserResponseDTO readPersonWithUser(@PathVariable Integer personId) {
+        return personService.readPersonWithUser(personId);
     }
 
     @GetMapping("/simple-search")
@@ -82,7 +95,7 @@ public class PersonController {
     @PreAuthorize("hasAuthority('REGISTER_PERSON')")
     @Idempotent
     public BasicPersonDTO createPersonWithBasicInfo(@RequestBody @Valid BasicPersonDTO person) {
-        var createdPerson = personService.createPersonWithBasicInfo(person);
+        var createdPerson = personService.createPersonWithBasicInfo(person, true);
         person.setId(createdPerson.getId());
         return person;
     }

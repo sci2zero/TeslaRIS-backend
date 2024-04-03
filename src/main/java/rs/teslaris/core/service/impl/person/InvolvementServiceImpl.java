@@ -1,13 +1,15 @@
 package rs.teslaris.core.service.impl.person;
 
-import java.util.HashSet;
-import java.util.List;
-import javax.transaction.Transactional;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
@@ -118,18 +120,20 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         personInvolved.addInvolvement(newEmployment);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+        personService.indexPerson(personInvolved, personInvolved.getId());
 
         return involvementRepository.save(newEmployment);
     }
 
     @Override
-    public void addInvolvementProofs(List<DocumentFileDTO> proofs, Integer involvementId) {
+    public DocumentFileResponseDTO addInvolvementProof(DocumentFileDTO proof,
+                                                       Integer involvementId) {
         var involvement = findOne(involvementId);
-        proofs.forEach(proof -> {
-            var documentFile = documentFileService.saveNewDocument(proof, true);
-            involvement.getProofs().add(documentFile);
-            involvementRepository.save(involvement);
-        });
+        var documentFile = documentFileService.saveNewDocument(proof, false);
+        involvement.getProofs().add(documentFile);
+        involvementRepository.save(involvement);
+
+        return DocumentFileConverter.toDTO(documentFile);
     }
 
     @Override
@@ -137,10 +141,18 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         var involvement = findOne(involvementId);
         var documentFile = documentFileService.findDocumentFileById(proofId);
 
-        involvement.setDeleted(true);
+        involvement.setProofs(involvement.getProofs().stream()
+            .filter(proof -> !Objects.equals(proof.getId(), proofId)).collect(
+                Collectors.toSet()));
         save(involvement);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+    }
+
+    @Override
+    public DocumentFileResponseDTO updateProof(Integer proofId, Integer involvementId,
+                                               DocumentFileDTO updatedProof) {
+        return documentFileService.editDocumentFile(updatedProof, false);
     }
 
     @Override
@@ -233,7 +245,6 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvement.setDateFrom(commonFields.getDateFrom());
         involvement.setDateTo(commonFields.getDateTo());
         involvement.setApproveStatus(ApproveStatus.APPROVED);
-        involvement.setProofs(new HashSet<>());
         involvement.setInvolvementType(commonFields.getInvolvementType());
         involvement.setAffiliationStatement(affiliationStatements);
         involvement.setOrganisationUnit(organisationUnit);

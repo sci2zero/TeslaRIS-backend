@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,7 +12,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -97,17 +97,7 @@ public class ConferenceServiceTest {
         // given
         var pageable = Pageable.ofSize(5);
         var conference1 = new Conference();
-        conference1.setName(new HashSet<>());
-        conference1.setNameAbbreviation(new HashSet<>());
-        conference1.setState(new HashSet<>());
-        conference1.setPlace(new HashSet<>());
-        conference1.setContributions(new HashSet<>());
         var conference2 = new Conference();
-        conference2.setName(new HashSet<>());
-        conference2.setNameAbbreviation(new HashSet<>());
-        conference2.setState(new HashSet<>());
-        conference2.setPlace(new HashSet<>());
-        conference2.setContributions(new HashSet<>());
 
         when(conferenceJPAService.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(conference1, conference2)));
@@ -117,13 +107,6 @@ public class ConferenceServiceTest {
     public void shouldReadConferenceWhenExists() {
         // given
         var conference1 = new Conference();
-        conference1.setName(new HashSet<>());
-        conference1.setNameAbbreviation(new HashSet<>());
-        conference1.setState(new HashSet<>());
-        conference1.setPlace(new HashSet<>());
-        conference1.setDescription(new HashSet<>());
-        conference1.setKeywords(new HashSet<>());
-        conference1.setContributions(new HashSet<>());
         conference1.setFee("fee");
         conference1.setNumber("number");
 
@@ -160,10 +143,14 @@ public class ConferenceServiceTest {
         conferenceDTO.setDateTo(LocalDate.now());
         conferenceDTO.setContributions(new ArrayList<>());
 
-        when(conferenceJPAService.save(any())).thenReturn(new Conference());
+        var conference = new Conference();
+        conference.setDateFrom(LocalDate.now());
+        conference.setDateTo(LocalDate.now());
+
+        when(conferenceJPAService.save(any())).thenReturn(conference);
 
         // when
-        var savedConference = conferenceService.createConference(conferenceDTO);
+        var savedConference = conferenceService.createConference(conferenceDTO, true);
 
         // then
         assertNotNull(savedConference);
@@ -180,6 +167,9 @@ public class ConferenceServiceTest {
 
         var conference = new Conference();
         conference.setId(1);
+        conference.setDateFrom(LocalDate.now());
+        conference.setDateTo(LocalDate.now());
+
         when(conferenceJPAService.save(any())).thenReturn(conference);
 
         // when
@@ -195,13 +185,6 @@ public class ConferenceServiceTest {
     public void shouldUpdateConferenceWhenProvidedWithValidData() {
         // given
         var conference1 = new Conference();
-        conference1.setName(new HashSet<>());
-        conference1.setNameAbbreviation(new HashSet<>());
-        conference1.setDescription(new HashSet<>());
-        conference1.setKeywords(new HashSet<>());
-        conference1.setState(new HashSet<>());
-        conference1.setPlace(new HashSet<>());
-        conference1.setContributions(new HashSet<>());
 
         var conferenceDTO = new ConferenceDTO();
         conferenceDTO.setName(new ArrayList<>());
@@ -256,5 +239,34 @@ public class ConferenceServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexConferences() {
+        // Given
+        var conference1 = new Conference();
+        conference1.setDateFrom(LocalDate.now());
+        conference1.setDateTo(LocalDate.now());
+        var conference2 = new Conference();
+        conference2.setDateFrom(LocalDate.now());
+        conference2.setDateTo(LocalDate.now());
+        var conference3 = new Conference();
+        conference3.setDateFrom(LocalDate.now());
+        conference3.setDateTo(LocalDate.now());
+        var conferences = Arrays.asList(conference1, conference2, conference3);
+        var page1 =
+            new PageImpl<>(conferences.subList(0, 2), PageRequest.of(0, 10), conferences.size());
+        var page2 =
+            new PageImpl<>(conferences.subList(2, 3), PageRequest.of(1, 10), conferences.size());
+
+        when(conferenceJPAService.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        conferenceService.reindexConferences();
+
+        // Then
+        verify(eventIndexRepository, times(1)).deleteAll();
+        verify(conferenceJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(eventIndexRepository, atLeastOnce()).save(any(EventIndex.class));
     }
 }

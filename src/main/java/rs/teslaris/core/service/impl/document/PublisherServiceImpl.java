@@ -2,18 +2,19 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.document.PublisherConverter;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.indexmodel.PublisherIndex;
@@ -54,6 +55,11 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    public PublisherDTO readPublisherById(Integer publisherId) {
+        return PublisherConverter.toDTO(findPublisherById(publisherId));
+    }
+
+    @Override
     public Publisher findPublisherById(Integer publisherId) {
         return this.findOne(publisherId);
     }
@@ -65,13 +71,15 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
-    public Publisher createPublisher(PublisherDTO publisherDTO) {
+    public Publisher createPublisher(PublisherDTO publisherDTO, Boolean index) {
         var publisher = new Publisher();
 
         setCommonFields(publisher, publisherDTO);
         var savedPublisher = this.save(publisher);
 
-        reindexPublisher(savedPublisher);
+        if (index) {
+            indexPublisher(savedPublisher, new PublisherIndex());
+        }
 
         return savedPublisher;
     }
@@ -79,8 +87,6 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Override
     public Publisher createPublisher(PublisherBasicAdditionDTO publisherDTO) {
         var publisher = new Publisher();
-
-        publisher.setPlace(new HashSet<>());
 
         publisher.setName(
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
@@ -91,7 +97,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         emailUtil.notifyInstitutionalEditor(savedPublisher.getId(), "publisher");
 
-        reindexPublisher(publisher);
+        indexPublisher(publisher, new PublisherIndex());
 
         return savedPublisher;
     }
@@ -104,7 +110,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         this.save(publisherToUpdate);
 
-        reindexPublisher(publisherToUpdate);
+        var index = publisherIndexRepository.findByDatabaseId(publisherToUpdate.getId())
+            .orElse(new PublisherIndex());
+        indexPublisher(publisherToUpdate, index);
     }
 
     @Override
@@ -125,6 +133,25 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         index.ifPresent(publisherIndexRepository::delete);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexPublishers() {
+        publisherIndexRepository.deleteAll();
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<Publisher> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((publisher) -> indexPublisher(publisher, new PublisherIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+    }
+
     private void setCommonFields(Publisher publisher, PublisherDTO publisherDTO) {
         publisher.setName(
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
@@ -134,14 +161,8 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             multilingualContentService.getMultilingualContent(publisherDTO.getState()));
     }
 
-    private void reindexPublisher(Publisher publisher) {
-        PublisherIndex index = new PublisherIndex();
-        var indexOptional = publisherIndexRepository.findByDatabaseId(publisher.getId());
-        if (indexOptional.isPresent()) {
-            index = indexOptional.get();
-        } else {
-            index.setDatabaseId(publisher.getId());
-        }
+    private void indexPublisher(Publisher publisher, PublisherIndex index) {
+        index.setDatabaseId(publisher.getId());
 
         indexCommonFields(publisher, index);
         publisherIndexRepository.save(index);

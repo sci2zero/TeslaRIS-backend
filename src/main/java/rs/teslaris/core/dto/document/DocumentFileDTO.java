@@ -1,7 +1,6 @@
 package rs.teslaris.core.dto.document;
 
 import java.util.List;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,7 +24,6 @@ public class DocumentFileDTO {
     @NotNull(message = "You must provide a valid document file.")
     private MultipartFile file;
 
-    @Valid
     private List<MultilingualContentDTO> description;
 
     @NotNull(message = "You must provide a valid resource type.")

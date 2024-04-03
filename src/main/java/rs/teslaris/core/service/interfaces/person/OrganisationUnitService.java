@@ -9,6 +9,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
+import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -20,6 +21,8 @@ import rs.teslaris.core.util.search.SearchRequestType;
 public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnit findOrganisationUnitById(Integer id);
+
+    OrganisationUnit findOrganisationUnitByOldId(Integer oldId);
 
     OrganisationUnit getReferenceToOrganisationUnitById(Integer id);
 
@@ -36,8 +39,10 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                                              Integer targetId,
                                                                              Pageable pageable);
 
+    RelationGraphDataDTO getOrganisationUnitsRelationsChain(Integer leafId);
+
     OrganisationUnitDTO createOrganisationUnit(
-        OrganisationUnitRequestDTO organisationUnitDTORequest);
+        OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index);
 
     OrganisationUnit editOrganisationUnit(OrganisationUnitRequestDTO organisationUnitDTORequest,
                                           Integer organisationUnitId);
@@ -64,4 +69,5 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer organisationUnitId,
                                                       Integer belongOrganisationUnit);
 
+    void reindexOrganisationUnits();
 }

@@ -2,15 +2,16 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -99,7 +100,7 @@ public class JournalServiceTest {
         when(journalJPAService.save(any())).thenReturn(new Journal());
 
         // when
-        var savedJournal = journalService.createJournal(journalDTO);
+        var savedJournal = journalService.createJournal(journalDTO, true);
 
         // then
         assertNotNull(savedJournal);
@@ -140,7 +141,6 @@ public class JournalServiceTest {
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
         var journal = new Journal();
-        journal.setLanguages(new HashSet<>());
         var journalIndex = new JournalIndex();
         journalIndex.setDatabaseId(journalId);
 
@@ -169,7 +169,6 @@ public class JournalServiceTest {
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
         var journal = new Journal();
-        journal.setLanguages(new HashSet<>());
 
         when(journalJPAService.findOne(journalId)).thenReturn(journal);
         when(journalJPAService.save(any())).thenReturn(new Journal());
@@ -223,19 +222,11 @@ public class JournalServiceTest {
         // given
         var pageable = Pageable.ofSize(5);
         var journal1 = new Journal();
-        journal1.setTitle(new HashSet<>());
-        journal1.setNameAbbreviation(new HashSet<>());
         journal1.setEISSN("eISSN1");
         journal1.setPrintISSN("printISSN1");
-        journal1.setContributions(new HashSet<>());
-        journal1.setLanguages(new HashSet<>());
         var journal2 = new Journal();
-        journal2.setTitle(new HashSet<>());
-        journal2.setNameAbbreviation(new HashSet<>());
         journal2.setEISSN("eISSN2");
         journal2.setPrintISSN("printISSN2");
-        journal2.setContributions(new HashSet<>());
-        journal2.setLanguages(new HashSet<>());
 
         when(journalJPAService.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(journal1, journal2)));
@@ -252,12 +243,8 @@ public class JournalServiceTest {
         // given
         var journalId = 1;
         var journal = new Journal();
-        journal.setTitle(new HashSet<>());
-        journal.setNameAbbreviation(new HashSet<>());
         journal.setEISSN("eISSN1");
         journal.setPrintISSN("printISSN1");
-        journal.setContributions(new HashSet<>());
-        journal.setLanguages(new HashSet<>());
 
         when(journalJPAService.findOne(journalId)).thenReturn(journal);
 
@@ -284,5 +271,54 @@ public class JournalServiceTest {
 
         // then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexJournals() {
+        // Given
+        var journal1 = new Journal();
+        var journal2 = new Journal();
+        var journal3 = new Journal();
+        var journals = Arrays.asList(journal1, journal2, journal3);
+        var page1 = new PageImpl<>(journals.subList(0, 2), PageRequest.of(0, 10), journals.size());
+        var page2 = new PageImpl<>(journals.subList(2, 3), PageRequest.of(1, 10), journals.size());
+
+        when(journalJPAService.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        journalService.reindexJournals();
+
+        // Then
+        verify(journalIndexRepository, times(1)).deleteAll();
+        verify(journalJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(journalIndexRepository, atLeastOnce()).save(any(JournalIndex.class));
+    }
+
+    @Test
+    public void shouldReturnJournalWhenOldIdExists() {
+        // Given
+        var journalId = 123;
+        var expectedJournal = new Journal();
+        when(journalRepository.findJournalByOldId(journalId)).thenReturn(
+            Optional.of(expectedJournal));
+
+        // When
+        var actualJournal = journalService.findJournalByOldId(journalId);
+
+        // Then
+        assertEquals(expectedJournal, actualJournal);
+    }
+
+    @Test
+    public void shouldReturnNullWhenJournalDoesNotExist() {
+        // Given
+        var journalId = 123;
+        when(journalRepository.findJournalByOldId(journalId)).thenReturn(Optional.empty());
+
+        // When
+        var actualJournal = journalService.findJournalByOldId(journalId);
+
+        // Then
+        assertNull(actualJournal);
     }
 }

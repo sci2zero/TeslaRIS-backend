@@ -47,13 +47,9 @@ public class ResearchAreaServiceTest {
         var pageable = Pageable.ofSize(10).withPage(0);
         var researchArea1 = new ResearchArea();
         researchArea1.setId(1);
-        researchArea1.setName(new HashSet<>());
-        researchArea1.setDescription(new HashSet<>());
 
         ResearchArea researchArea2 = new ResearchArea();
         researchArea2.setId(2);
-        researchArea2.setName(new HashSet<>());
-        researchArea2.setDescription(new HashSet<>());
 
         var researchAreasPage = new PageImpl<>(List.of(researchArea1, researchArea2));
 

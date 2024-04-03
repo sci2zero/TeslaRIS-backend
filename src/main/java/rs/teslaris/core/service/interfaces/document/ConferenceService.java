@@ -20,11 +20,13 @@ public interface ConferenceService {
 
     Conference findConferenceById(Integer conferenceId);
 
-    Conference createConference(ConferenceDTO conferenceDTO);
+    Conference createConference(ConferenceDTO conferenceDTO, Boolean index);
 
     Conference createConference(ConferenceBasicAdditionDTO conferenceDTO);
 
     void updateConference(ConferenceDTO conferenceDTO, Integer conferenceId);
 
     void deleteConference(Integer conferenceId);
+
+    void reindexConferences();
 }

@@ -57,25 +57,28 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "author_ids", store = true)
     private List<Integer> authorIds = new ArrayList<>();
 
-    @Field(type = FieldType.Text, name = "authorNames", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @Field(type = FieldType.Text, name = "author_names", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String authorNames = "";
+
+    @Field(type = FieldType.Keyword, name = "author_names_sortable", store = true)
+    private String authorNamesSortable = "";
 
     @Field(type = FieldType.Integer, name = "editor_ids", store = true)
     private List<Integer> editorIds = new ArrayList<>();
 
-    @Field(type = FieldType.Text, name = "editorNames", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @Field(type = FieldType.Text, name = "editor_names", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String editorNames = "";
 
     @Field(type = FieldType.Integer, name = "reviewer_ids", store = true)
     private List<Integer> reviewerIds = new ArrayList<>();
 
-    @Field(type = FieldType.Text, name = "reviewerNames", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @Field(type = FieldType.Text, name = "reviewer_names", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String reviewerNames = "";
 
     @Field(type = FieldType.Integer, name = "advisor_ids", store = true)
     private List<Integer> advisorIds = new ArrayList<>();
 
-    @Field(type = FieldType.Text, name = "advisorNames", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @Field(type = FieldType.Text, name = "advisor_names", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String advisorNames = "";
 
     @Field(type = FieldType.Integer, name = "year", store = true)

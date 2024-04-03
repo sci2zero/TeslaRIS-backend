@@ -1,12 +1,12 @@
 package rs.teslaris.core.service.impl.document;
 
-import java.util.HashSet;
 import java.util.List;
-import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -63,21 +63,17 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
-    public Conference createConference(ConferenceDTO conferenceDTO) {
+    public Conference createConference(ConferenceDTO conferenceDTO, Boolean index) {
         var conference = new Conference();
-        conference.setContributions(new HashSet<>());
-        var index = new EventIndex();
-        index.setEventType(EventType.CONFERENCE);
 
         setEventCommonFields(conference, conferenceDTO);
         setConferenceRelatedFields(conference, conferenceDTO);
 
-        indexEventCommonFields(index, conference);
-
         var savedConference = conferenceJPAService.save(conference);
 
-        index.setDatabaseId(savedConference.getId());
-        eventIndexRepository.save(index);
+        if (index) {
+            indexConference(savedConference, new EventIndex());
+        }
 
         return savedConference;
     }
@@ -85,17 +81,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     public Conference createConference(ConferenceBasicAdditionDTO conferenceDTO) {
         var conference = new Conference();
-        conference.setContributions(new HashSet<>());
-        var index = new EventIndex();
-        index.setEventType(EventType.CONFERENCE);
 
         conference.setName(
             multilingualContentService.getMultilingualContent(conferenceDTO.getName()));
-        conference.setNameAbbreviation(new HashSet<>());
-        conference.setDescription(new HashSet<>());
-        conference.setKeywords(new HashSet<>());
-        conference.setState(new HashSet<>());
-        conference.setPlace(new HashSet<>());
         conference.setDateFrom(conferenceDTO.getDateFrom());
         conference.setDateTo(conferenceDTO.getDateTo());
         conference.setSerialEvent(false);
@@ -104,9 +92,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         notifyAboutBasicCreation(savedConference.getId());
 
-        indexEventCommonFields(index, conference);
-        index.setDatabaseId(savedConference.getId());
-        eventIndexRepository.save(index);
+        indexConference(savedConference, new EventIndex());
 
         return savedConference;
     }
@@ -123,13 +109,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         var indexToUpdate =
             eventIndexRepository.findByDatabaseId(conferenceId).orElse(new EventIndex());
-        indexToUpdate.setEventType(EventType.CONFERENCE);
-        indexToUpdate.setDatabaseId(conferenceToUpdate.getId());
 
         clearEventIndexCommonFields(indexToUpdate);
-        indexEventCommonFields(indexToUpdate, conferenceToUpdate);
-
-        eventIndexRepository.save(indexToUpdate);
+        indexConference(conferenceToUpdate, indexToUpdate);
     }
 
     @Override
@@ -146,8 +128,36 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         index.ifPresent(eventIndexRepository::delete);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexConferences() {
+        eventIndexRepository.deleteAll();
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<Conference> chunk =
+                conferenceJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((conference) -> indexConference(conference, new EventIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+    }
+
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
         conference.setNumber(conference.getNumber());
         conference.setFee(conference.getFee());
+    }
+
+    private void indexConference(Conference conference, EventIndex index) {
+        index.setDatabaseId(conference.getId());
+        index.setEventType(EventType.CONFERENCE);
+
+        indexEventCommonFields(index, conference);
+        eventIndexRepository.save(index);
     }
 }

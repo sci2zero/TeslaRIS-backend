@@ -2,28 +2,33 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import javax.transaction.Transactional;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitGraphRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
+import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -89,6 +94,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Nullable
+    public OrganisationUnit findOrganisationUnitByOldId(Integer oldId) {
+        return organisationUnitRepository.findOrganisationUnitByOldId(oldId).orElse(null);
+    }
+
+    @Override
     public OrganisationUnit findOne(Integer id) {
         return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id)
             .orElseThrow(
@@ -126,6 +137,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     m -> m.field("name_sr").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_other").value("*" + token + "*").caseInsensitive(true)));
+                b.should(sb -> sb.match(
+                    m -> m.field("super_ou_name_sr").query(token)));
+                b.should(sb -> sb.match(
+                    m -> m.field("super_ou_name_other").query(token)));
                 b.should(sb -> sb.wildcard(
                     m -> m.field("keywords_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.wildcard(
@@ -154,6 +169,40 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    public RelationGraphDataDTO getOrganisationUnitsRelationsChain(
+        Integer leafId) {
+        var nodes = new ArrayList<OrganisationUnitDTO>();
+        var links = new ArrayList<OrganisationUnitGraphRelationDTO>();
+        nodes.add(OrganisationUnitConverter.toDTO(findOne(leafId)));
+
+        var currentBelongsToRelation = organisationUnitsRelationRepository.getSuperOU(leafId);
+        while (currentBelongsToRelation.isPresent()) {
+            links.add(new OrganisationUnitGraphRelationDTO(
+                currentBelongsToRelation.get().getSourceOrganisationUnit().getId(),
+                currentBelongsToRelation.get().getTargetOrganisationUnit().getId(),
+                OrganisationUnitRelationType.BELONGS_TO));
+
+            organisationUnitsRelationRepository.getSuperOUsMemberOf(
+                    currentBelongsToRelation.get().getSourceOrganisationUnit().getId())
+                .forEach((relation -> {
+                    links.add(new OrganisationUnitGraphRelationDTO(
+                        relation.getSourceOrganisationUnit().getId(),
+                        relation.getTargetOrganisationUnit().getId(),
+                        OrganisationUnitRelationType.MEMBER_OF));
+                    nodes.add(
+                        OrganisationUnitConverter.toDTO(relation.getTargetOrganisationUnit()));
+                }));
+
+            nodes.add(OrganisationUnitConverter.toDTO(
+                currentBelongsToRelation.get().getTargetOrganisationUnit()));
+            currentBelongsToRelation = organisationUnitsRelationRepository.getSuperOU(
+                currentBelongsToRelation.get().getTargetOrganisationUnit().getId());
+        }
+
+        return new RelationGraphDataDTO(nodes, links);
+    }
+
+    @Override
     public OrganisationUnit getReferenceToOrganisationUnitById(Integer id) {
         return id == null ? null : organisationUnitRepository.getReferenceById(id);
     }
@@ -165,12 +214,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnitDTO createOrganisationUnit(
-        OrganisationUnitRequestDTO organisationUnitDTORequest) {
-        OrganisationUnit organisationUnit = new OrganisationUnit();
-        OrganisationUnitIndex organisationUnitIndex = new OrganisationUnitIndex();
+        OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index) {
 
-        setCommonOUFields(organisationUnit, organisationUnitDTORequest);
-        indexCommonFields(organisationUnit, organisationUnitIndex);
+        OrganisationUnit organisationUnit = new OrganisationUnit();
+
+        setCommonOUFields(organisationUnit, organisationUnitRequestDTO);
 
         if (organisationUnitApprovedByDefault) {
             organisationUnit.setApproveStatus(ApproveStatus.APPROVED);
@@ -179,10 +227,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         var savedOU = this.save(organisationUnit);
-        organisationUnitIndex.setDatabaseId(savedOU.getId());
-        organisationUnitIndexRepository.save(organisationUnitIndex);
 
-        return OrganisationUnitConverter.toDTO(organisationUnit);
+        if (organisationUnit.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+            indexOrganisationUnit(organisationUnit, new OrganisationUnitIndex());
+        }
+
+        return OrganisationUnitConverter.toDTO(savedOU);
     }
 
     @Override
@@ -190,10 +240,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         OrganisationUnitRequestDTO organisationUnitDTORequest, Integer organisationUnitId) {
 
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
-        var indexToUpdate = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                organisationUnitId)
-            .orElse(new OrganisationUnitIndex());
-        indexToUpdate.setDatabaseId(organisationUnitId);
 
         organisationUnitToUpdate.getName().clear();
         organisationUnitToUpdate.getKeyword().clear();
@@ -202,6 +248,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         setCommonOUFields(organisationUnitToUpdate, organisationUnitDTORequest);
 
         organisationUnitToUpdate = this.save(organisationUnitToUpdate);
+
+        if (organisationUnitToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                organisationUnitId).orElse(new OrganisationUnitIndex());
+            indexOrganisationUnit(organisationUnitToUpdate, index);
+        }
+
         return organisationUnitToUpdate;
     }
 
@@ -216,6 +269,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 organisationUnitDTO.getKeyword())
         );
 
+        organisationUnit.setOldId(organisationUnitDTO.getOldId());
+
         var researchAreas = researchAreaService.getResearchAreasByIds(
             organisationUnitDTO.getResearchAreasId());
         organisationUnit.setResearchAreas(new HashSet<>(researchAreas));
@@ -226,6 +281,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
+    }
+
+    private void indexOrganisationUnit(OrganisationUnit organisationUnit,
+                                       OrganisationUnitIndex index) {
+        index.setDatabaseId(organisationUnit.getId());
+
+        indexCommonFields(organisationUnit, index);
+        organisationUnitIndexRepository.save(index);
     }
 
     private void indexCommonFields(OrganisationUnit organisationUnit, OrganisationUnitIndex index) {
@@ -255,6 +318,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.setResearchAreasOther(
             researchAreaOtherContent.length() > 0 ? researchAreaOtherContent.toString() :
                 researchAreaSrContent.toString());
+
+        indexBelongsToSuperOURelation(organisationUnit, index);
+    }
+
+    private void indexBelongsToSuperOURelation(OrganisationUnit organisationUnit,
+                                               OrganisationUnitIndex index) {
+        var belongsToRelation =
+            organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
+        belongsToRelation.ifPresent(organisationUnitsRelation -> indexMultilingualContent(index,
+            organisationUnitsRelation.getTargetOrganisationUnit(),
+            OrganisationUnit::getName,
+            OrganisationUnitIndex::setSuperOUNameSr,
+            OrganisationUnitIndex::setSuperOUNameOther));
     }
 
     private void indexMultilingualContent(OrganisationUnitIndex index,
@@ -328,7 +404,17 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             newRelation.setApproveStatus(ApproveStatus.REQUESTED);
         }
 
-        return organisationUnitsRelationJPAService.save(newRelation);
+        var savedRelation = organisationUnitsRelationJPAService.save(newRelation);
+
+        var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            savedRelation.getSourceOrganisationUnit().getId());
+        index.ifPresent(organisationUnitIndex -> {
+            indexBelongsToSuperOURelation(savedRelation.getSourceOrganisationUnit(),
+                organisationUnitIndex);
+            organisationUnitIndexRepository.save(organisationUnitIndex);
+        });
+
+        return savedRelation;
     }
 
     @Override
@@ -380,7 +466,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public void addRelationProofs(List<DocumentFileDTO> proofs, Integer relationId) {
         var relation = findOrganisationUnitsRelationById(relationId);
         proofs.forEach(proof -> {
-            var documentFile = documentFileService.saveNewDocument(proof, true);
+            var documentFile = documentFileService.saveNewDocument(proof, false);
             relation.getProofs().add(documentFile);
             organisationUnitsRelationJPAService.save(relation);
         });
@@ -415,5 +501,26 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
         return false;
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexOrganisationUnits() {
+        organisationUnitIndexRepository.deleteAll();
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<OrganisationUnit> chunk =
+                findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((organisationUnit) -> indexOrganisationUnit(organisationUnit,
+                new OrganisationUnitIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 }

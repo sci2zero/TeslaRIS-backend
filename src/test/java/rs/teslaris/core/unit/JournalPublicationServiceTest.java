@@ -5,12 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -23,6 +26,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -110,12 +115,6 @@ public class JournalPublicationServiceTest {
         journal.setId(1);
         var document = new JournalPublication();
         document.setJournal(journal);
-        document.setContributors(new HashSet<>());
-        document.setTitle(new HashSet<>());
-        document.setSubTitle(new HashSet<>());
-        document.setDescription(new HashSet<>());
-        document.setKeywords(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         document.setDocumentDate("2023");
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
@@ -124,7 +123,7 @@ public class JournalPublicationServiceTest {
         when(eventService.findEventById(1)).thenReturn(new Conference());
 
         // When
-        var result = journalPublicationService.createJournalPublication(publicationDTO);
+        var result = journalPublicationService.createJournalPublication(publicationDTO, true);
 
         // Then
         verify(multilingualContentService, times(4)).getMultilingualContent(any());
@@ -141,12 +140,6 @@ public class JournalPublicationServiceTest {
         publicationDTO.setEventId(1);
         var publicationToUpdate = new JournalPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        publicationToUpdate.setTitle(new HashSet<>());
-        publicationToUpdate.setSubTitle(new HashSet<>());
-        publicationToUpdate.setDescription(new HashSet<>());
-        publicationToUpdate.setKeywords(new HashSet<>());
-        publicationToUpdate.setContributors(new HashSet<>());
-        publicationToUpdate.setUris(new HashSet<>());
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
@@ -186,21 +179,14 @@ public class JournalPublicationServiceTest {
         // Given
         var publicationId = 1;
         var publication = new JournalPublication();
-        publication.setTitle(new HashSet<>());
-        publication.setSubTitle(new HashSet<>());
-        publication.setDescription(new HashSet<>());
-        publication.setKeywords(new HashSet<>());
         publication.setApproveStatus(ApproveStatus.APPROVED);
 
         var contribution = new PersonDocumentContribution();
-        contribution.setContributionDescription(new HashSet<>());
-        contribution.setInstitutions(new HashSet<>());
         contribution.setContributionType(type);
-        contribution.setMainContributor(isMainAuthor);
-        contribution.setCorrespondingContributor(isCorrespondingAuthor);
+        contribution.setIsMainContributor(isMainAuthor);
+        contribution.setIsCorrespondingContributor(isCorrespondingAuthor);
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         var affiliationStatement = new AffiliationStatement();
-        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
@@ -208,9 +194,7 @@ public class JournalPublicationServiceTest {
         contribution.setAffiliationStatement(affiliationStatement);
         publication.setContributors(Set.of(contribution));
 
-        publication.setUris(new HashSet<>());
         var journal = new Journal();
-        journal.setTitle(new HashSet<>());
         publication.setJournal(journal);
 
         when(documentRepository.findById(publicationId)).thenReturn(
@@ -273,17 +257,40 @@ public class JournalPublicationServiceTest {
         publication2.setType("JOURNAL_PUBLICATION");
         publication2.setJournalId(journalId);
 
-        var expectedPublications = Arrays.asList(publication1, publication2);
+        var expectedPublications = new PageImpl<>(Arrays.asList(publication1, publication2));
+        var pageable = PageRequest.of(0, 10);
 
         when(documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId))
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable))
             .thenReturn(expectedPublications);
 
         // When
         var actualPublications =
-            journalPublicationService.findPublicationsInJournal(journalId);
+            journalPublicationService.findPublicationsInJournal(journalId, pageable);
 
         // Then
         assertEquals(expectedPublications, actualPublications);
+    }
+
+    @Test
+    public void shouldReindexJournalPublications() {
+        // Given
+        var journalPublication = new JournalPublication();
+        journalPublication.setDocumentDate("2024");
+        journalPublication.setJournal(new Journal());
+        var journalPublications = List.of(journalPublication);
+        var page1 = new PageImpl<>(journalPublications.subList(0, 1), PageRequest.of(0, 10),
+            journalPublications.size());
+
+        when(journalPublicationJPAService.findAll(any(PageRequest.class))).thenReturn(page1);
+
+        // When
+        journalPublicationService.reindexJournalPublications();
+
+        // Then
+        verify(documentPublicationIndexRepository, never()).deleteAll();
+        verify(journalPublicationJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(documentPublicationIndexRepository, atLeastOnce()).save(
+            any(DocumentPublicationIndex.class));
     }
 }

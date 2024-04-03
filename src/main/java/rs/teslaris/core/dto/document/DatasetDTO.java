@@ -1,0 +1,19 @@
+package rs.teslaris.core.dto.document;
+
+import javax.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class DatasetDTO extends DocumentDTO {
+
+    private String internalNumber;
+
+    @Positive(message = "Publisher id cannot be a negative number.")
+    private Integer publisherId;
+}

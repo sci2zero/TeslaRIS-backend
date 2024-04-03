@@ -1,9 +1,12 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
-import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -73,13 +76,15 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
-    public List<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId) {
+    public Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
+                                                                    Pageable pageable) {
         return documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId);
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
     }
 
     @Override
-    public JournalPublication createJournalPublication(JournalPublicationDTO publicationDTO) {
+    public JournalPublication createJournalPublication(JournalPublicationDTO publicationDTO,
+                                                       Boolean index) {
         var publication = new JournalPublication();
 
         setCommonFields(publication, publicationDTO);
@@ -90,7 +95,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         var savedPublication = journalPublicationJPAService.save(publication);
 
-        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
         }
 
@@ -121,11 +126,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         var publicationToDelete = (JournalPublication) findOne(journalPublicationId);
 
         deleteProofsAndFileItems(publicationToDelete);
-        delete(journalPublicationId);
+
+        journalPublicationJPAService.delete(journalPublicationId);
         this.delete(journalPublicationId);
     }
 
-    @Override
     public void indexJournalPublication(JournalPublication publication,
                                         DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
@@ -135,6 +140,29 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         index.setJournalId(publication.getJournal().getId());
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void reindexJournalPublications() {
+        // Super service does the initial deletion
+
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<JournalPublication> chunk =
+                journalPublicationJPAService.findAll(PageRequest.of(pageNumber, chunkSize))
+                    .getContent();
+
+            chunk.forEach((journalPublication) -> indexJournalPublication(journalPublication,
+                new DocumentPublicationIndex()));
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 
     private void setJournalPublicationRelatedFields(JournalPublication publication,

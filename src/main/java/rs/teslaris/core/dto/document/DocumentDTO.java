@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.document;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.validation.Valid;
@@ -18,6 +19,8 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 public class DocumentDTO {
 
     private Integer id;
+
+    private Integer oldId;
 
     @Valid
     @NotNull(message = "You have to provide a title.")
@@ -50,4 +53,9 @@ public class DocumentDTO {
 
     @Positive(message = "Event Id must be a positive number.")
     private Integer eventId;
+
+    // Used only for responses
+    private List<DocumentFileResponseDTO> fileItems = new ArrayList<>();
+
+    private List<DocumentFileResponseDTO> proofs = new ArrayList<>();
 }

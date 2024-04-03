@@ -22,5 +22,6 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
         publicationDTO.setNumberOfPages(publication.getNumberOfPages());
         publicationDTO.setArticleNumber(publication.getArticleNumber());
         publicationDTO.setProceedingsId(publication.getProceedings().getId());
+        publicationDTO.setEventId(publication.getEvent().getId());
     }
 }

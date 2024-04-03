@@ -71,11 +71,17 @@ public class SecurityConfiguration {
             // PERSON
             .antMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
             .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
+
+            // COUNTRY
+            .antMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/person/{personId}/person-user").permitAll()
 
             // ORGANISATION UNIT
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/organisation-unit/{organisationUnitId}").permitAll()
             .antMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/organisation-unit-relation/{leafId}").permitAll()
 
             // LANGUAGE
             .antMatchers(HttpMethod.GET, "/api/language").permitAll()
@@ -84,18 +90,41 @@ public class SecurityConfiguration {
             // DOCUMENT
             .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
             .antMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/document/for-researcher/{personId}").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/document/for-publisher/{publisherId}").permitAll()
 
             // PROCEEDINGS
             .antMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()
 
+            // PUBLISHERS
+            .antMatchers(HttpMethod.GET, "/api/publisher/{publisherId}").permitAll()
+
             // PUBLICATION
+            .antMatchers(HttpMethod.GET,
+                "/api/journal-publication/{publicationId}").permitAll()
             .antMatchers(HttpMethod.GET,
                 "/api/journal-publication/journal/{journalId}/my-publications").permitAll()
             .antMatchers(HttpMethod.GET,
                 "/api/proceedings-publication/event/{eventId}/my-publications").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/software/{publicationId}").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/dataset/{publicationId}").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/patent/{patentId}").permitAll()
 
-            // HARVESTER
-            .antMatchers(HttpMethod.GET, "/api/harvest").permitAll()
+            // INVOLVEMENT
+            .antMatchers(HttpMethod.GET,
+                "/api/involvement/employment/{employmentId}").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/involvement/education/{educationId}").permitAll()
+            .antMatchers(HttpMethod.GET,
+                "/api/involvement/membership/{membershipId}").permitAll()
+
+            // FILE
+            .antMatchers(HttpMethod.GET,
+                "/api/file/{serverFilename}").permitAll()
+
             .anyRequest().fullyAuthenticated();
 
         http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");

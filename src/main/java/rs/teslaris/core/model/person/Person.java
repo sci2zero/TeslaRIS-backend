@@ -19,6 +19,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.user.User;
 
 @Getter
 @Setter
@@ -33,25 +34,28 @@ public class Person extends BaseEntity {
     private PersonName name;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<PersonName> otherNames;
+    private Set<PersonName> otherNames = new HashSet<>();
 
     @Embedded
     private PersonalInfo personalInfo;
 
+    @OneToOne(mappedBy = "person")
+    private User user;
+
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<Involvement> involvements;
+    private Set<Involvement> involvements = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
-    private Set<ExpertiseOrSkill> expertisesAndSkills;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<ExpertiseOrSkill> expertisesAndSkills = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
-    private Set<Prize> prizes;
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MultiLingualContent> biography;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<Prize> prizes = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MultiLingualContent> keyword;
+    private Set<MultiLingualContent> biography = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<MultiLingualContent> keyword = new HashSet<>();
 
     @Column(name = "apvnt")
     private String apvnt;
@@ -66,7 +70,7 @@ public class Person extends BaseEntity {
     private String scopusAuthorId;
 
     @Column(name = "cris_uns_id")
-    private int oldId;
+    private Integer oldId;
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas;

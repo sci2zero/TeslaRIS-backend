@@ -33,8 +33,21 @@ public interface DocumentPublicationIndexRepository extends
 
     @Query("{\"bool\": " +
         "{\"must\": [" +
+        "{\"terms\": {\"author_ids\": [\"?0\"]}}" +
+        "]}}")
+    Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
+
+    @Query("{\"bool\": " +
+        "{\"must\": [" +
         "{\"term\": {\"type\": \"?0\"}}, " +
         "{\"term\": {\"journal_id\": \"?1\"}}, " +
         "]}}")
-    List<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId);
+    Page<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId,
+                                                          Pageable pageable);
+
+    @Query("{\"bool\": " +
+        "{\"must\": [" +
+        "{\"term\": {\"publisher_id\": \"?0\"}}, " +
+        "]}}")
+    Page<DocumentPublicationIndex> findByPublisherId(Integer publisherId, Pageable pageable);
 }

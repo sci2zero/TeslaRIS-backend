@@ -1,10 +1,10 @@
 package rs.teslaris.core.service.impl.document;
 
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
@@ -52,6 +52,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
             multilingualContentService.getMultilingualContent(
                 publicationSeriesDTO.getNameAbbreviation()));
 
+        publicationSeries.setOldId(publicationSeriesDTO.getOldId());
         publicationSeries.setEISSN(publicationSeriesDTO.getEissn());
         publicationSeries.setPrintISSN(publicationSeriesDTO.getPrintISSN());
 

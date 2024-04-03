@@ -98,7 +98,6 @@ public class InvolvementServiceTest {
         var education = new Education();
         education.setOrganisationUnit(new OrganisationUnit());
         education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
-        education.setProofs(new HashSet<>());
         education.setThesisTitle(new HashSet<>(Set.of(mc1)));
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
@@ -193,7 +192,6 @@ public class InvolvementServiceTest {
         var mc1 = new MultiLingualContent(null, "aaa", 1);
         var education = new Education();
         education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
-        education.setProofs(new HashSet<>());
         education.setThesisTitle(new HashSet<>(Set.of(mc1)));
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
@@ -223,7 +221,6 @@ public class InvolvementServiceTest {
         var mc1 = new MultiLingualContent(null, "aaa", 1);
         var membership = new Membership();
         membership.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
-        membership.setProofs(new HashSet<>());
         membership.setContributionDescription(new HashSet<>(Set.of(mc1)));
         membership.setRole(new HashSet<>(Set.of(mc1)));
         membership.setPersonInvolved(new Person());
@@ -251,7 +248,6 @@ public class InvolvementServiceTest {
         var mc1 = new MultiLingualContent(null, "aaa", 1);
         var employment = new Employment();
         employment.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
-        employment.setProofs(new HashSet<>());
         employment.setRole(new HashSet<>(Set.of(mc1)));
         employment.setPersonInvolved(new Person());
         var employmentDTO = new EmploymentDTO();
@@ -276,7 +272,6 @@ public class InvolvementServiceTest {
     public void shouldDeleteInvolvementWhenInvolvementExists() {
         // given
         var involvement = new Involvement();
-        involvement.setProofs(new HashSet<>());
         var person = new Person();
         person.addInvolvement(involvement);
 
@@ -304,17 +299,15 @@ public class InvolvementServiceTest {
     public void shouldAddInvolvementProofWhenInvolvementExists() {
         // given
         var involvement = new Involvement();
-        involvement.setProofs(new HashSet<>());
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
-        when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
+        when(documentFileService.saveNewDocument(any(), eq(false))).thenReturn(new DocumentFile());
 
         // when
-        involvementService.addInvolvementProofs(
-            List.of(new DocumentFileDTO(), new DocumentFileDTO()), 1);
+        involvementService.addInvolvementProof(new DocumentFileDTO(), 1);
 
         //then
-        verify(involvementRepository, times(2)).save(involvement);
+        verify(involvementRepository, times(1)).save(involvement);
     }
 
     @Test

@@ -3,6 +3,7 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -11,7 +12,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
@@ -107,8 +108,6 @@ public class DocumentPublicationServiceTest {
         var documentFileId = 1;
         var isProof = true;
         var document = new JournalPublication();
-        document.setProofs(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         document.setApproveStatus(ApproveStatus.REQUESTED);
         var documentFile = new DocumentFile();
 
@@ -118,10 +117,10 @@ public class DocumentPublicationServiceTest {
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
-        documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
+        documentPublicationService.deleteDocumentFile(documentId, documentFileId);
 
         // Then
-        verify(documentRepository, times(1)).save(document);
+        verify(documentFileService, times(1)).deleteDocumentFile(any());
     }
 
     @Test
@@ -132,7 +131,6 @@ public class DocumentPublicationServiceTest {
         var isProof = false;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
-        document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
@@ -141,23 +139,19 @@ public class DocumentPublicationServiceTest {
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
-        documentPublicationService.deleteDocumentFile(documentId, documentFileId, isProof);
+        documentPublicationService.deleteDocumentFile(documentId, documentFileId);
 
         // Then
-        verify(documentRepository, times(1)).save(document);
+        verify(documentFileService, times(1)).deleteDocumentFile(any());
     }
 
     @Test
     public void shouldAddDocumentFileWithProof() {
         // Given
         var documentId = 1;
-        var documentFiles = new ArrayList<DocumentFileDTO>();
-        documentFiles.add(new DocumentFileDTO());
         var isProof = true;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
-        document.setProofs(new HashSet<>());
-        document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
@@ -167,7 +161,7 @@ public class DocumentPublicationServiceTest {
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
-        documentPublicationService.addDocumentFile(documentId, documentFiles, isProof);
+        documentPublicationService.addDocumentFile(documentId, new DocumentFileDTO(), isProof);
 
         // Then
         verify(documentRepository, times(1)).save(document);
@@ -177,17 +171,15 @@ public class DocumentPublicationServiceTest {
     public void shouldAddDocumentFileWithFileItem() {
         // Given
         var documentId = 1;
-        var documentFiles = new ArrayList<DocumentFileDTO>();
-        documentFiles.add(new DocumentFileDTO());
         var isProof = false;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
-        document.setFileItems(new HashSet<>());
         var documentFile = new DocumentFile();
         documentFile.setId(1);
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
-        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
+        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class),
+            eq(!isProof))).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -195,7 +187,7 @@ public class DocumentPublicationServiceTest {
             new DocumentFileIndex());
 
         // When
-        documentPublicationService.addDocumentFile(documentId, documentFiles, isProof);
+        documentPublicationService.addDocumentFile(documentId, new DocumentFileDTO(), isProof);
 
         // Then
         verify(documentRepository, times(1)).save(document);
@@ -324,5 +316,49 @@ public class DocumentPublicationServiceTest {
         // Then
         verify(documentRepository, times(1)).delete(any());
         verify(documentPublicationIndexRepository, never()).delete(any());
+    }
+
+    @Test
+    public void shouldDeleteIndexes() {
+        // Given: No need for any specific arrangement
+
+        // When
+        documentPublicationService.deleteIndexes();
+
+        // Then
+        verify(documentPublicationIndexRepository, times(1)).deleteAll();
+    }
+
+    @Test
+    public void shouldFindResearcherPublications() {
+        // given
+        var authorId = 123;
+        var pageable = PageRequest.of(0, 10);
+        var expectedPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
+        when(documentPublicationIndexRepository.findByAuthorIds(anyInt(),
+            any(Pageable.class))).thenReturn(expectedPage);
+
+        // when
+        var resultPage =
+            documentPublicationService.findResearcherPublications(authorId, pageable);
+
+        // then
+        assertEquals(expectedPage, resultPage);
+        verify(documentPublicationIndexRepository).findByAuthorIds(authorId, pageable);
+    }
+
+    @Test
+    public void shouldReadDocumentForPublisherWhenItExists() {
+        // given
+        var expected = new DocumentPublicationIndex();
+        var pageable = Pageable.ofSize(5);
+        when(documentPublicationIndexRepository.findByPublisherId(1, pageable)).thenReturn(
+            new PageImpl<>(List.of(expected)));
+
+        // when
+        var result = documentPublicationService.findPublicationsForPublisher(1, pageable);
+
+        // then
+        assertEquals(1, result.getTotalElements());
     }
 }

@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,6 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -119,7 +122,8 @@ public class ProceedingsPublicationServiceTest {
             new Conference());
 
         // When
-        var result = proceedingsPublicationService.createProceedingsPublication(publicationDTO);
+        var result =
+            proceedingsPublicationService.createProceedingsPublication(publicationDTO, true);
 
         // Then
         verify(multilingualContentService, times(4)).getMultilingualContent(any());
@@ -137,12 +141,6 @@ public class ProceedingsPublicationServiceTest {
         publicationDTO.setEventId(1);
         var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        publicationToUpdate.setTitle(new HashSet<>());
-        publicationToUpdate.setSubTitle(new HashSet<>());
-        publicationToUpdate.setDescription(new HashSet<>());
-        publicationToUpdate.setKeywords(new HashSet<>());
-        publicationToUpdate.setContributors(new HashSet<>());
-        publicationToUpdate.setUris(new HashSet<>());
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
@@ -185,21 +183,15 @@ public class ProceedingsPublicationServiceTest {
         // Given
         var publicationId = 1;
         var publication = new ProceedingsPublication();
-        publication.setTitle(new HashSet<>());
-        publication.setSubTitle(new HashSet<>());
-        publication.setDescription(new HashSet<>());
-        publication.setKeywords(new HashSet<>());
         publication.setApproveStatus(ApproveStatus.APPROVED);
+        publication.setEvent(new Conference());
 
         var contribution = new PersonDocumentContribution();
-        contribution.setContributionDescription(new HashSet<>());
-        contribution.setInstitutions(new HashSet<>());
         contribution.setContributionType(type);
-        contribution.setMainContributor(isMainAuthor);
-        contribution.setCorrespondingContributor(isCorrespondingAuthor);
+        contribution.setIsMainContributor(isMainAuthor);
+        contribution.setIsCorrespondingContributor(isCorrespondingAuthor);
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         var affiliationStatement = new AffiliationStatement();
-        affiliationStatement.setDisplayAffiliationStatement(new HashSet<>());
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
@@ -207,7 +199,6 @@ public class ProceedingsPublicationServiceTest {
         contribution.setAffiliationStatement(affiliationStatement);
         publication.setContributors(Set.of(contribution));
 
-        publication.setUris(new HashSet<>());
         var proceedings = new Proceedings();
         proceedings.setId(1);
         publication.setProceedings(proceedings);
@@ -229,15 +220,9 @@ public class ProceedingsPublicationServiceTest {
         var eventId = 1;
         var authorId = 1;
         var proceedings = new Proceedings();
-        proceedings.setTitle(new HashSet<>());
         var publication = new ProceedingsPublication();
         publication.setProceedings(proceedings);
-        publication.setTitle(new HashSet<>());
-        publication.setSubTitle(new HashSet<>());
-        publication.setDescription(new HashSet<>());
-        publication.setKeywords(new HashSet<>());
         publication.setApproveStatus(ApproveStatus.APPROVED);
-        publication.setUris(new HashSet<>());
 
         when(proceedingsPublicationRepository.findProceedingsPublicationsForEventId(
             eventId, authorId)).thenReturn(List.of(publication));
@@ -269,5 +254,29 @@ public class ProceedingsPublicationServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexProceedingsPublications() {
+        // Given
+        var proceedingsPublication = new ProceedingsPublication();
+        proceedingsPublication.setDocumentDate("2024");
+        var proceedings = new Proceedings();
+        proceedings.setEvent(new Conference());
+        proceedingsPublication.setProceedings(proceedings);
+        var peroceedingsPublications = List.of(proceedingsPublication);
+        var page1 = new PageImpl<>(peroceedingsPublications.subList(0, 1), PageRequest.of(0, 10),
+            peroceedingsPublications.size());
+
+        when(proceedingPublicationJPAService.findAll(any(PageRequest.class))).thenReturn(page1);
+
+        // When
+        proceedingsPublicationService.reindexProceedingsPublications();
+
+        // Then
+        verify(documentPublicationIndexRepository, never()).deleteAll();
+        verify(proceedingPublicationJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(documentPublicationIndexRepository, atLeastOnce()).save(
+            any(DocumentPublicationIndex.class));
     }
 }

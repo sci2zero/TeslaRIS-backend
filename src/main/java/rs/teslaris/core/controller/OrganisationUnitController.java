@@ -36,6 +36,12 @@ public class OrganisationUnitController {
 
     private final OrganisationUnitService organisationUnitService;
 
+    @GetMapping("/{organisationUnitId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    public boolean canEditOrganisationUnit() {
+        return true;
+    }
+
     @GetMapping
     public Page<OrganisationUnitDTO> getAllOrganisationUnits(Pageable pageable) {
         return organisationUnitService.findOrganisationUnits(pageable);
@@ -76,8 +82,8 @@ public class OrganisationUnitController {
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @Idempotent
     public OrganisationUnitDTO createOrganisationUnit(
-        @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitDTORequest) {
-        return organisationUnitService.createOrganisationUnit(organisationUnitDTORequest);
+        @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitRequestDTO) {
+        return organisationUnitService.createOrganisationUnit(organisationUnitRequestDTO, true);
     }
 
 
@@ -85,10 +91,10 @@ public class OrganisationUnitController {
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.OK)
     public OrganisationUnitDTO updateOrganisationUnit(
-        @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitDTORequest,
+        @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitRequestDTO,
         @PathVariable Integer organisationUnitId) {
         var organisationUnit =
-            organisationUnitService.editOrganisationUnit(organisationUnitDTORequest,
+            organisationUnitService.editOrganisationUnit(organisationUnitRequestDTO,
                 organisationUnitId);
         return OrganisationUnitConverter.toDTO(organisationUnit);
     }

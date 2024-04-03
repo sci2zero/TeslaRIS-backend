@@ -3,9 +3,12 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -47,6 +50,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
@@ -141,9 +145,6 @@ public class OrganisationUnitServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setNameAbbreviation("ID1");
-        organisationUnit.setResearchAreas(new HashSet<>());
-        organisationUnit.setKeyword(new HashSet<>());
-        organisationUnit.setName(new HashSet<>());
         organisationUnit.setLocation(new GeoLocation());
         organisationUnit.setContact(new Contact());
         Page<OrganisationUnit>
@@ -194,13 +195,9 @@ public class OrganisationUnitServiceTest {
         var pageable = Mockito.mock(Pageable.class);
 
         var ou = new OrganisationUnit();
-        ou.setName(new HashSet<>());
         var relation = new OrganisationUnitsRelation();
-        relation.setSourceAffiliationStatement(new HashSet<>());
-        relation.setTargetAffiliationStatement(new HashSet<>());
         relation.setSourceOrganisationUnit(ou);
         relation.setTargetOrganisationUnit(ou);
-        relation.setProofs(new HashSet<>());
         var relations = new ArrayList<OrganisationUnitsRelation>();
         relations.add(relation);
         var page = new PageImpl<>(relations);
@@ -254,18 +251,21 @@ public class OrganisationUnitServiceTest {
         relationDTO.setSourceOrganisationUnitId(1);
         relationDTO.setTargetOrganisationUnitId(2);
 
-        var newRelation = Mockito.mock(OrganisationUnitsRelation.class);
-        when(organisationUnitsRelationJPAService.save(
-            any(OrganisationUnitsRelation.class))).thenReturn(newRelation);
+        var organisationUnitsRelation = new OrganisationUnitsRelation();
+        organisationUnitsRelation.setSourceOrganisationUnit(new OrganisationUnit());
+
         when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
+        when(organisationUnitsRelationJPAService.save(any())).thenReturn(organisationUnitsRelation);
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            any())).thenReturn(Optional.empty());
 
         // when
         var result = organisationUnitService.createOrganisationUnitsRelation(relationDTO);
 
         // then
         assertNotNull(result);
-        assertEquals(newRelation, result);
+        assertEquals(organisationUnitsRelation, result);
         verify(organisationUnitsRelationJPAService).save(any(OrganisationUnitsRelation.class));
     }
 
@@ -290,8 +290,6 @@ public class OrganisationUnitServiceTest {
         var relationId = 1;
 
         var relation = new OrganisationUnitsRelation();
-        relation.setSourceAffiliationStatement(new HashSet<>());
-        relation.setTargetAffiliationStatement(new HashSet<>());
 
         when(organisationUnitsRelationJPAService.findOne(relationId)).thenReturn(relation);
         when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
@@ -308,7 +306,6 @@ public class OrganisationUnitServiceTest {
     public void shouldAddInvolvementProofWhenInvolvementExists() {
         // given
         var relation = new OrganisationUnitsRelation();
-        relation.setProofs(new HashSet<>());
 
         when(organisationUnitsRelationJPAService.findOne(1)).thenReturn(relation);
         when(documentFileService.saveNewDocument(any(), eq(true))).thenReturn(new DocumentFile());
@@ -355,8 +352,6 @@ public class OrganisationUnitServiceTest {
 
         ResearchArea researchArea = new ResearchArea();
         researchArea.setId(1);
-        researchArea.setName(new HashSet<>());
-        researchArea.setDescription(new HashSet<>());
         List<ResearchArea> researchAreas = List.of(researchArea);
 
         organisationUnitDTORequest.setName(new ArrayList<>());
@@ -382,7 +377,7 @@ public class OrganisationUnitServiceTest {
             });
 
         var result =
-            organisationUnitService.createOrganisationUnit(organisationUnitDTORequest);
+            organisationUnitService.createOrganisationUnit(organisationUnitDTORequest, true);
 
 //        assertEquals(Set.of(name), result.getName());
 //        assertEquals(organisationUnitDTORequest.getNameAbbreviation(),
@@ -423,7 +418,8 @@ public class OrganisationUnitServiceTest {
         organisationUnit.setContact(new Contact("a", "a"));
 
         organisationUnit.getName().clear();
-        Integer organisationUnitId = 1;
+        organisationUnit.setApproveStatus(ApproveStatus.APPROVED);
+        var organisationUnitId = 1;
 
 //        OrganisationUnit organisationUnit = new OrganisationUnit();
 
@@ -579,5 +575,90 @@ public class OrganisationUnitServiceTest {
         // Then
         assertEquals(expectedCount, actualCount);
         verify(organisationUnitIndexRepository, times(1)).count();
+    }
+
+    @Test
+    public void shouldReindexOrganisationUnits() {
+        // Given
+        var ou1 = new OrganisationUnit();
+        var ou2 = new OrganisationUnit();
+        var ou3 = new OrganisationUnit();
+        var organisationUnits = Arrays.asList(ou1, ou2, ou3);
+        var page1 = new PageImpl<>(organisationUnits.subList(0, 2), PageRequest.of(0, 10),
+            organisationUnits.size());
+        var page2 = new PageImpl<>(organisationUnits.subList(2, 3), PageRequest.of(1, 10),
+            organisationUnits.size());
+
+        when(organisationUnitRepository.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        organisationUnitService.reindexOrganisationUnits();
+
+        // Then
+        verify(organisationUnitIndexRepository, times(1)).deleteAll();
+        verify(organisationUnitRepository, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(organisationUnitIndexRepository, atLeastOnce()).save(
+            any(OrganisationUnitIndex.class));
+    }
+
+    @Test
+    void shouldFindOrganisationUnitByOldId() {
+        // Given
+        var oldId = 123;
+        var expectedUnit = new OrganisationUnit();
+        when(organisationUnitRepository.findOrganisationUnitByOldId(oldId)).thenReturn(
+            Optional.of(expectedUnit));
+
+        // When
+        var actualUnit = organisationUnitService.findOrganisationUnitByOldId(oldId);
+
+        // Then
+        assertEquals(expectedUnit, actualUnit);
+        verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldId(oldId);
+    }
+
+    @Test
+    void shouldReturnNullWhenOldIdDoesNotExist() {
+        // Given
+        Integer oldId = 123;
+        when(organisationUnitRepository.findOrganisationUnitByOldId(oldId)).thenReturn(
+            Optional.empty());
+
+        // When
+        var actualUnit = organisationUnitService.findOrganisationUnitByOldId(oldId);
+
+        // Then
+        assertNull(actualUnit);
+        verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldId(oldId);
+    }
+
+    @Test
+    void testGetOrganisationUnitsRelationsChain() {
+        // Given
+        var leafUnit = new OrganisationUnit();
+        leafUnit.setId(1);
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            leafUnit.getId())).thenReturn(Optional.of(leafUnit));
+
+        var middleUnit = new OrganisationUnit();
+        middleUnit.setId(2);
+        when(organisationUnitsRelationRepository.getSuperOU(1)).thenReturn(Optional.of(
+            new OrganisationUnitsRelation(new HashSet<>(), new HashSet<>(),
+                OrganisationUnitRelationType.BELONGS_TO, null, null, ApproveStatus.APPROVED,
+                new HashSet<>(), leafUnit, middleUnit)));
+
+        var rootUnit = new OrganisationUnit();
+        rootUnit.setId(3);
+        when(organisationUnitsRelationRepository.getSuperOU(2)).thenReturn(Optional.of(
+            new OrganisationUnitsRelation(new HashSet<>(), new HashSet<>(),
+                OrganisationUnitRelationType.BELONGS_TO, null, null, ApproveStatus.APPROVED,
+                new HashSet<>(), middleUnit, rootUnit)));
+
+        // When
+        var result = organisationUnitService.getOrganisationUnitsRelationsChain(leafUnit.getId());
+
+        // Then
+        assertEquals(3, result.getNodes().size());
+        verify(organisationUnitsRelationRepository, times(3)).getSuperOU(anyInt());
     }
 }

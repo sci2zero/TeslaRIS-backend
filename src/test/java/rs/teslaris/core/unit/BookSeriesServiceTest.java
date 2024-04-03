@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -110,7 +110,7 @@ public class BookSeriesServiceTest {
             Optional.of(bookSeriesIndex));
 
         // when
-        var savedBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO);
+        var savedBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO, true);
 
         // then
         assertNotNull(savedBookSeries);
@@ -130,7 +130,6 @@ public class BookSeriesServiceTest {
         bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
 
         var bookSeries = new BookSeries();
-        bookSeries.setLanguages(new HashSet<>());
 
         when(bookSeriesJPAService.findOne(bookSeriesId)).thenReturn(bookSeries);
         when(bookSeriesJPAService.save(any())).thenReturn(new BookSeries());
@@ -184,19 +183,11 @@ public class BookSeriesServiceTest {
         // given
         var pageable = Pageable.ofSize(5);
         var bookSeries1 = new BookSeries();
-        bookSeries1.setTitle(new HashSet<>());
-        bookSeries1.setNameAbbreviation(new HashSet<>());
         bookSeries1.setEISSN("eISSN1");
         bookSeries1.setPrintISSN("printISSN1");
-        bookSeries1.setContributions(new HashSet<>());
-        bookSeries1.setLanguages(new HashSet<>());
         var bookSeries2 = new BookSeries();
-        bookSeries2.setTitle(new HashSet<>());
-        bookSeries2.setNameAbbreviation(new HashSet<>());
         bookSeries2.setEISSN("eISSN2");
         bookSeries2.setPrintISSN("printISSN2");
-        bookSeries2.setContributions(new HashSet<>());
-        bookSeries2.setLanguages(new HashSet<>());
 
         when(bookSeriesJPAService.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(bookSeries1, bookSeries2)));
@@ -213,12 +204,8 @@ public class BookSeriesServiceTest {
         // given
         var bookSeriesId = 1;
         var bookSeries = new BookSeries();
-        bookSeries.setTitle(new HashSet<>());
-        bookSeries.setNameAbbreviation(new HashSet<>());
         bookSeries.setEISSN("eISSN1");
         bookSeries.setPrintISSN("printISSN1");
-        bookSeries.setContributions(new HashSet<>());
-        bookSeries.setLanguages(new HashSet<>());
 
         when(bookSeriesJPAService.findOne(bookSeriesId)).thenReturn(bookSeries);
 
@@ -245,5 +232,28 @@ public class BookSeriesServiceTest {
 
         // then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexBookSeries() {
+        // Given
+        var bookSeries1 = new BookSeries();
+        var bookSeries2 = new BookSeries();
+        var bookSeries3 = new BookSeries();
+        var bookSeries = Arrays.asList(bookSeries1, bookSeries2, bookSeries3);
+        var page1 =
+            new PageImpl<>(bookSeries.subList(0, 2), PageRequest.of(0, 10), bookSeries.size());
+        var page2 =
+            new PageImpl<>(bookSeries.subList(2, 3), PageRequest.of(1, 10), bookSeries.size());
+
+        when(bookSeriesJPAService.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        bookSeriesService.reindexBookSeries();
+
+        // Then
+        verify(bookSeriesIndexRepository, times(1)).deleteAll();
+        verify(bookSeriesJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(bookSeriesIndexRepository, atLeastOnce()).save(any(BookSeriesIndex.class));
     }
 }

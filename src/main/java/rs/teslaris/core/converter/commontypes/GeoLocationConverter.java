@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.commontypes;
 
+import java.util.Objects;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 
@@ -15,9 +16,12 @@ public class GeoLocationConverter {
 
     public static GeoLocationDTO toDTO(GeoLocation geoLocation) {
         var geoLocationDTO = new GeoLocationDTO();
-        geoLocationDTO.setLongitude(geoLocation.getLongitude());
-        geoLocationDTO.setLatitude(geoLocation.getLatitude());
-        geoLocationDTO.setAddress(geoLocation.getAddress());
+
+        if (Objects.nonNull(geoLocation)) {
+            geoLocationDTO.setLongitude(geoLocation.getLongitude());
+            geoLocationDTO.setLatitude(geoLocation.getLatitude());
+            geoLocationDTO.setAddress(geoLocation.getAddress());
+        }
 
         return geoLocationDTO;
     }

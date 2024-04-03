@@ -48,15 +48,13 @@ public class PersonEditCheckAspect {
                 break;
             case RESEARCHER:
                 if (!userService.isUserAResearcher(userId, personId)) {
-                    throw new CantEditPersonException(
-                        "You do not have the permission to edit this person.");
+                    throw new CantEditPersonException("unauthorizedPersonEditAttemptMessage");
                 }
                 break;
             case INSTITUTIONAL_EDITOR:
                 if (!personService.isPersonEmployedInOrganisationUnit(personId,
                     userService.getUserOrganisationUnitId(userId))) {
-                    throw new CantEditPersonException(
-                        "You do not have the permission to edit this person.");
+                    throw new CantEditPersonException("unauthorizedPersonEditAttemptMessage");
                 }
                 break;
         }

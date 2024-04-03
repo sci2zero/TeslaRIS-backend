@@ -51,17 +51,39 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     @Override
     public void setPersonDocumentContributionsForDocument(Document document,
                                                           DocumentDTO documentDTO) {
-        document.setContributors(new HashSet<>());
         documentDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonDocumentContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
 
             contribution.setContributionType(contributionDTO.getContributionType());
-            contribution.setMainContributor(contributionDTO.getIsMainContributor());
-            contribution.setCorrespondingContributor(
+            contribution.setIsMainContributor(contributionDTO.getIsMainContributor());
+            contribution.setIsCorrespondingContributor(
                 contributionDTO.getIsCorrespondingContributor());
 
-            document.addDocumentContribution(contribution);
+            var addedPrevoiusly = document.getContributors().stream().anyMatch(
+                previousContribution -> {
+                    if (Objects.nonNull(previousContribution.getPerson())) {
+                        return previousContribution.getPerson().getId()
+                            .equals(contribution.getPerson().getId());
+                    }
+
+                    return previousContribution.getAffiliationStatement().getDisplayPersonName()
+                        .getFirstname().equals(
+                            contribution.getAffiliationStatement().getDisplayPersonName()
+                                .getFirstname()) &&
+                        previousContribution.getAffiliationStatement().getDisplayPersonName()
+                            .getLastname().equals(
+                                contribution.getAffiliationStatement().getDisplayPersonName()
+                                    .getLastname()) &&
+                        previousContribution.getAffiliationStatement().getDisplayPersonName()
+                            .getOtherName().equals(
+                                contribution.getAffiliationStatement().getDisplayPersonName()
+                                    .getOtherName());
+                });
+
+            if (!addedPrevoiusly) {
+                document.addDocumentContribution(contribution);
+            }
         });
     }
 
@@ -69,11 +91,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     public void setPersonPublicationSeriesContributionsForJournal(
         PublicationSeries publicationSeries,
         PublicationSeriesDTO journalDTO) {
-        if (publicationSeries.getContributions() != null) {
-            publicationSeries.getContributions().clear();
-        } else {
-            publicationSeries.setContributions(new HashSet<>());
-        }
+        publicationSeries.getContributions().clear();
 
         journalDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonPublicationSeriesContribution();
@@ -91,11 +109,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     public void setPersonPublicationSeriesContributionsForBookSeries(
         PublicationSeries publicationSeries,
         BookSeriesDTO bookSeriesDTO) {
-        if (publicationSeries.getContributions() != null) {
-            publicationSeries.getContributions().clear();
-        } else {
-            publicationSeries.setContributions(new HashSet<>());
-        }
+        publicationSeries.getContributions().clear();
 
         bookSeriesDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonPublicationSeriesContribution();
@@ -126,8 +140,11 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                                          Person contributor) {
         var personName = getPersonName(contributionDTO, contributor);
 
-        var contact = new Contact(contributor.getPersonalInfo().getContact().getContactEmail(),
-            contributor.getPersonalInfo().getContact().getPhoneNumber());
+        Contact contact = null;
+        if (Objects.nonNull(contributor.getPersonalInfo().getContact())) {
+            contact = new Contact(contributor.getPersonalInfo().getContact().getContactEmail(),
+                contributor.getPersonalInfo().getContact().getPhoneNumber());
+        }
 
         contribution.setAffiliationStatement(new AffiliationStatement(
             multilingualContentService.getMultilingualContent(
@@ -147,8 +164,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getPersonName().getLastname(),
             contributionDTO.getPersonName().getDateFrom(),
             contributionDTO.getPersonName().getDateTo());
-        if (personName.getFirstname().isEmpty() && personName.getOtherName().isEmpty() &&
-            personName.getLastname().isEmpty()) {
+        if (personName.getFirstname().isEmpty() && personName.getLastname().isEmpty()) {
             personName = new PersonName(contributor.getName().getFirstname(),
                 contributor.getName().getOtherName(),
                 contributor.getName().getLastname(),

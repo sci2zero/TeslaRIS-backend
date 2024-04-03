@@ -21,11 +21,15 @@ public interface JournalService {
 
     Journal findJournalById(Integer journalId);
 
-    Journal createJournal(PublicationSeriesDTO journalDTO);
+    Journal findJournalByOldId(Integer journalId);
+
+    Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index);
 
     Journal createJournal(JournalBasicAdditionDTO journalDTO);
 
     void updateJournal(PublicationSeriesDTO journalDTO, Integer journalId);
 
     void deleteJournal(Integer journalId);
+
+    void reindexJournals();
 }

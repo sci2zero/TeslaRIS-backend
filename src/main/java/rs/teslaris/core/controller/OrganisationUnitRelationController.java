@@ -23,6 +23,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
+import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 
 @RestController
@@ -36,6 +37,12 @@ public class OrganisationUnitRelationController {
     public Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
         @PathVariable Integer sourceId, @PathVariable Integer targetId, Pageable pageable) {
         return organisationUnitService.getOrganisationUnitsRelations(sourceId, targetId, pageable);
+    }
+
+    @GetMapping("/{leafId}")
+    public RelationGraphDataDTO getOrganisationUnitsRelationsChain(
+        @PathVariable Integer leafId) {
+        return organisationUnitService.getOrganisationUnitsRelationsChain(leafId);
     }
 
     @PostMapping

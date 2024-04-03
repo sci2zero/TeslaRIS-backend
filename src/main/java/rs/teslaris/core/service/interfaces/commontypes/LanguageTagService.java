@@ -8,4 +8,6 @@ import rs.teslaris.core.service.interfaces.JPAService;
 public interface LanguageTagService extends JPAService<LanguageTag> {
 
     LanguageTag findLanguageTagById(Integer languageTagId);
+
+    LanguageTag findLanguageTagByValue(String languageTag);
 }

@@ -20,8 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -32,6 +35,16 @@ public class DocumentPublicationController {
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final JwtUtil tokenUtil;
+
+    private final UserService userService;
+
+
+    @GetMapping("/{publicationId}/can-edit")
+    @PublicationEditCheck
+    public boolean canEditDocumentPublication() {
+        return true;
+    }
 
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
@@ -52,6 +65,19 @@ public class DocumentPublicationController {
             SearchRequestType.ADVANCED);
     }
 
+    @GetMapping("/for-researcher/{personId}")
+    public Page<DocumentPublicationIndex> findResearcherPublications(@PathVariable Integer personId,
+                                                                     Pageable pageable) {
+        return documentPublicationService.findResearcherPublications(personId, pageable);
+    }
+
+    @GetMapping("/for-publisher/{publisherId}")
+    public Page<DocumentPublicationIndex> findPublicationsForPublisher(
+        @PathVariable Integer publisherId,
+        Pageable pageable) {
+        return documentPublicationService.findPublicationsForPublisher(publisherId, pageable);
+    }
+
     @GetMapping("/count")
     public Long countAll() {
         return documentPublicationService.getPublicationCount();
@@ -66,21 +92,20 @@ public class DocumentPublicationController {
     }
 
     @PatchMapping("/{publicationId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
     @Idempotent
-    void addDocumentFile(@PathVariable Integer publicationId,
-                         @ModelAttribute @Valid DocumentFileDTO documentFile,
-                         @RequestParam Boolean isProof) {
-        documentPublicationService.addDocumentFile(publicationId, List.of(documentFile), isProof);
+    DocumentFileResponseDTO addDocumentFile(@PathVariable Integer publicationId,
+                                            @ModelAttribute @Valid DocumentFileDTO documentFile,
+                                            @RequestParam Boolean isProof) {
+        return documentPublicationService.addDocumentFile(publicationId, documentFile, isProof);
     }
 
     @DeleteMapping("/{publicationId}/{documentFileId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
     void deleteDocumentFile(@PathVariable Integer publicationId,
-                            @PathVariable Integer documentFileId, @RequestParam Boolean isProof) {
-        documentPublicationService.deleteDocumentFile(publicationId, documentFileId, isProof);
+                            @PathVariable Integer documentFileId) {
+        documentPublicationService.deleteDocumentFile(publicationId, documentFileId);
     }
 
     @DeleteMapping("/{publicationId}")

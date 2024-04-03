@@ -3,6 +3,8 @@ package rs.teslaris.core.controller;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -52,9 +54,9 @@ public class JournalPublicationController {
     }
 
     @GetMapping("/journal/{journalId}")
-    public List<DocumentPublicationIndex> findPublicationsInJournal(
-        @PathVariable Integer journalId, @RequestHeader("Authorization") String bearerToken) {
-        return journalPublicationService.findPublicationsInJournal(journalId);
+    public Page<DocumentPublicationIndex> findPublicationsInJournal(
+        @PathVariable Integer journalId, Pageable pageable) {
+        return journalPublicationService.findPublicationsInJournal(journalId, pageable);
     }
 
     @PostMapping
@@ -64,7 +66,7 @@ public class JournalPublicationController {
     public JournalPublicationDTO createJournalPublication(
         @RequestBody @Valid JournalPublicationDTO journalPublication) {
         var savedJournalPublication =
-            journalPublicationService.createJournalPublication(journalPublication);
+            journalPublicationService.createJournalPublication(journalPublication, true);
         journalPublication.setId(savedJournalPublication.getId());
         return journalPublication;
     }

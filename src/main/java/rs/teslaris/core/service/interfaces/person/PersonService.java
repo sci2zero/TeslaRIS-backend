@@ -8,6 +8,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -30,11 +31,15 @@ public interface PersonService extends JPAService<Person> {
 
     Person findPersonById(Integer id);
 
+    Person findPersonByOldId(Integer id);
+
     PersonResponseDTO readPersonWithBasicInfo(Integer id);
+
+    PersonUserResponseDTO readPersonWithUser(Integer id);
 
     boolean isPersonEmployedInOrganisationUnit(Integer personId, Integer organisationUnitId);
 
-    Person createPersonWithBasicInfo(BasicPersonDTO personDTO);
+    Person createPersonWithBasicInfo(BasicPersonDTO personDTO, Boolean index);
 
     void setPersonBiography(List<MultilingualContentDTO> biography, Integer personId);
 
@@ -51,4 +56,8 @@ public interface PersonService extends JPAService<Person> {
     void deletePerson(Integer personId);
 
     OrganisationUnit getLatestResearcherInvolvement(Person person);
+
+    void reindexPersons();
+
+    void indexPerson(Person savedPerson, Integer personDatabaseId);
 }

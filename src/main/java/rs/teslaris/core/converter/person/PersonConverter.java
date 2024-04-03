@@ -3,12 +3,18 @@ package rs.teslaris.core.converter.person;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.ExpertiseOrSkillResponseDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
+import rs.teslaris.core.dto.person.PrizeResponseDTO;
+import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -23,7 +29,19 @@ public class PersonConverter {
 
         var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
 
+        var employmentIds = new ArrayList<Integer>();
+        var educationIds = new ArrayList<Integer>();
+        var membershipIds = new ArrayList<Integer>();
+        setPersonInvolvementIds(person, employmentIds, educationIds, membershipIds);
+
+        var expertisesOrSkills = new ArrayList<ExpertiseOrSkillResponseDTO>();
+        setExpertisesAndSkills(person, expertisesOrSkills);
+
+        var prizes = new ArrayList<PrizeResponseDTO>();
+        setPrizes(person, prizes);
+
         return new PersonResponseDTO(
+            person.getId(),
             new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
                 person.getName().getDateTo()), otherNames,
@@ -31,11 +49,14 @@ public class PersonConverter {
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo()
                     .getSex(), postalAddress,
-                new ContactDTO(person.getPersonalInfo().getContact().getContactEmail(),
-                    person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
+                new ContactDTO(Objects.nonNull(person.getPersonalInfo().getContact()) ?
+                    person.getPersonalInfo().getContact().getContactEmail() : null,
+                    Objects.nonNull(person.getPersonalInfo().getContact()) ?
+                        person.getPersonalInfo().getContact().getPhoneNumber() : null),
+                person.getApvnt(),
                 person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
-            keyword,
-            person.getApproveStatus());
+            keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
+            expertisesOrSkills, prizes);
     }
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
@@ -102,5 +123,87 @@ public class PersonConverter {
                 keyw.getPriority())));
 
         return keywordDTO;
+    }
+
+    private static void setPersonInvolvementIds(Person person, ArrayList<Integer> employmentIds,
+                                                ArrayList<Integer> educationIds,
+                                                ArrayList<Integer> membershipIds) {
+        person.getInvolvements().forEach(involvement -> {
+            switch (involvement.getInvolvementType()) {
+                case HIRED_BY:
+                case EMPLOYED_AT:
+                    employmentIds.add(involvement.getId());
+                    break;
+                case MEMBER_OF:
+                    membershipIds.add(involvement.getId());
+                    break;
+                default:
+                    educationIds.add(involvement.getId());
+            }
+        });
+    }
+
+    private static void setExpertisesAndSkills(Person person,
+                                               ArrayList<ExpertiseOrSkillResponseDTO> expertisesOrSkills) {
+        person.getExpertisesAndSkills().forEach(expertiseOrSkill -> {
+            var dto = new ExpertiseOrSkillResponseDTO();
+            dto.setId(expertiseOrSkill.getId());
+            dto.setName(
+                MultilingualContentConverter.getMultilingualContentDTO(expertiseOrSkill.getName()));
+            dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
+                expertiseOrSkill.getDescription()));
+
+            dto.setProofs(new ArrayList<>());
+            expertiseOrSkill.getProofs().forEach(proof -> {
+                dto.getProofs().add(DocumentFileConverter.toDTO(proof));
+            });
+            expertisesOrSkills.add(dto);
+        });
+    }
+
+    private static void setPrizes(Person person, ArrayList<PrizeResponseDTO> prizes) {
+        person.getPrizes().forEach(prize -> {
+            var dto = new PrizeResponseDTO();
+            dto.setId(prize.getId());
+            dto.setTitle(
+                MultilingualContentConverter.getMultilingualContentDTO(prize.getTitle()));
+            dto.setDescription(
+                MultilingualContentConverter.getMultilingualContentDTO(prize.getDescription()));
+            dto.setDate(prize.getDate());
+
+            dto.setProofs(new ArrayList<>());
+            prize.getProofs().forEach(proof -> {
+                dto.getProofs().add(DocumentFileConverter.toDTO(proof));
+            });
+            prizes.add(dto);
+        });
+    }
+
+    public static PersonUserResponseDTO toDTOWithUser(Person person) {
+        var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
+        var biography = getPersonBiographyDTO(person.getBiography());
+        var keyword = getPersonKeywordDTO(person.getKeyword());
+
+        var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
+
+        UserResponseDTO userDTO = null;
+        if (person.getUser() != null) {
+            userDTO = UserConverter.toUserResponseDTO(person.getUser());
+        }
+
+        return new PersonUserResponseDTO(
+            new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
+                person.getName().getLastname(), person.getName().getDateFrom(),
+                person.getName().getDateTo()), otherNames,
+            new PersonalInfoDTO(person.getPersonalInfo()
+                .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
+                person.getPersonalInfo()
+                    .getSex(), postalAddress,
+                new ContactDTO(person.getPersonalInfo().getContact().getContactEmail(),
+                    person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
+                person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
+            keyword,
+            person.getApproveStatus(),
+            userDTO);
     }
 }

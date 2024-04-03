@@ -3,19 +3,19 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import javax.transaction.Transactional;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
@@ -58,6 +58,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    @Nullable
+    public Event findEventByOldId(Integer eventId) {
+        return eventRepository.findEventByOldId(eventId).orElse(null);
+    }
+
+    @Override
     public void setEventCommonFields(Event event, EventDTO eventDTO) {
         event.setName(multilingualContentService.getMultilingualContent(eventDTO.getName()));
         event.setNameAbbreviation(
@@ -72,11 +78,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.setDateFrom(eventDTO.getDateFrom());
         event.setDateTo(eventDTO.getDateTo());
         event.setSerialEvent(eventDTO.getSerialEvent());
+        event.setOldId(eventDTO.getOldId());
 
         if (Objects.nonNull(eventDTO.getContributions())) {
             personContributionService.setPersonEventContributionForEvent(event, eventDTO);
-        } else {
-            event.setContributions(new HashSet<>());
         }
     }
 

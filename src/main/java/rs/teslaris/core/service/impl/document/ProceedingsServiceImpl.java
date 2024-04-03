@@ -1,11 +1,10 @@
 package rs.teslaris.core.service.impl.document;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -93,9 +92,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
-    public Proceedings createProceedings(ProceedingsDTO proceedingsDTO) {
+    public Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index) {
         var proceedings = new Proceedings();
-        proceedings.setLanguages(new HashSet<>());
 
         setCommonFields(proceedings, proceedingsDTO);
         setProceedingsRelatedFields(proceedings, proceedingsDTO);
@@ -104,7 +102,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         var savedProceedings = proceedingJPAService.save(proceedings);
 
-        if (proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (proceedings.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
             indexProceedings(savedProceedings, new DocumentPublicationIndex());
         }
 

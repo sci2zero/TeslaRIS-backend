@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.commontypes;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -26,5 +27,5 @@ public class Country extends BaseEntity {
     private String code;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name = new HashSet<>();
 }

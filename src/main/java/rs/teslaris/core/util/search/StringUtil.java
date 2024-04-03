@@ -15,6 +15,14 @@ public class StringUtil {
         }
     }
 
+    public static String removeLeadingColonSpace(String content) {
+        StringBuilder stringBuilder = new StringBuilder(content);
+        if (stringBuilder.toString().startsWith("; ")) {
+            stringBuilder.delete(0, 2);
+        }
+        return stringBuilder.toString();
+    }
+
     public static void sanitizeTokens(List<String> tokens) {
         tokens.replaceAll(token -> token.equals("*") ? token : QueryParserBase.escape(token));
     }

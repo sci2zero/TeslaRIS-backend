@@ -3,6 +3,7 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -76,14 +76,11 @@ public class PublisherServiceTest {
         publisherDTO.setState(new ArrayList<>());
 
         var publisher = new Publisher();
-        publisher.setName(new HashSet<>());
-        publisher.setPlace(new HashSet<>());
-        publisher.setState(new HashSet<>());
 
         when(publisherRepository.save(any())).thenReturn(publisher);
 
         // When
-        var result = publisherService.createPublisher(publisherDTO);
+        var result = publisherService.createPublisher(publisherDTO, true);
 
         // Then
         assertEquals(publisher, result);
@@ -211,13 +208,7 @@ public class PublisherServiceTest {
         // given
         var pageable = Pageable.ofSize(5);
         var publisher1 = new Publisher();
-        publisher1.setName(new HashSet<>());
-        publisher1.setPlace(new HashSet<>());
-        publisher1.setState(new HashSet<>());
         var publisher2 = new Publisher();
-        publisher2.setName(new HashSet<>());
-        publisher2.setPlace(new HashSet<>());
-        publisher2.setState(new HashSet<>());
 
         when(publisherRepository.findAll(pageable)).thenReturn(
             new PageImpl<>(List.of(publisher1, publisher2)));
@@ -245,5 +236,41 @@ public class PublisherServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldReindexPublishers() {
+        // Given
+        var publisher1 = new Publisher();
+        var publisher2 = new Publisher();
+        var publisher3 = new Publisher();
+        var publishers = Arrays.asList(publisher1, publisher2, publisher3);
+        var page1 =
+            new PageImpl<>(publishers.subList(0, 2), PageRequest.of(0, 10), publishers.size());
+        var page2 =
+            new PageImpl<>(publishers.subList(2, 3), PageRequest.of(1, 10), publishers.size());
+
+        when(publisherRepository.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        publisherService.reindexPublishers();
+
+        // Then
+        verify(publisherIndexRepository, times(1)).deleteAll();
+        verify(publisherRepository, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(publisherIndexRepository, atLeastOnce()).save(any(PublisherIndex.class));
+    }
+
+    @Test
+    public void shouldReadPublisherWhenItExists() {
+        // given
+        var expected = new PublisherDTO();
+        when(publisherRepository.findById(1)).thenReturn(Optional.of(new Publisher()));
+
+        // when
+        var result = publisherService.readPublisherById(1);
+
+        // then
+        assertEquals(expected.getId(), result.getId());
     }
 }

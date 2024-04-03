@@ -14,15 +14,19 @@ public interface PublisherService {
 
     Page<PublisherDTO> readAllPublishers(Pageable pageable);
 
+    PublisherDTO readPublisherById(Integer publisherId);
+
     Publisher findPublisherById(Integer publisherId);
 
     Page<PublisherIndex> searchPublishers(List<String> tokens, Pageable pageable);
 
-    Publisher createPublisher(PublisherDTO publisherDTO);
+    Publisher createPublisher(PublisherDTO publisherDTO, Boolean index);
 
     Publisher createPublisher(PublisherBasicAdditionDTO publisherDTO);
 
     void updatePublisher(PublisherDTO publisherDTO, Integer publisherId);
 
     void deletePublisher(Integer publisherId);
+
+    void reindexPublishers();
 }

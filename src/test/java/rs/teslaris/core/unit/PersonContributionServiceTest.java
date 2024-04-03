@@ -56,7 +56,6 @@ public class PersonContributionServiceTest {
     public void testSetPersonDocumentContributionsForDocument() {
         // Given
         var document = new JournalPublication();
-        document.setContributors(new HashSet<>());
         var documentDTO = new DocumentDTO();
 
         var contributor = new Person();

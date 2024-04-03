@@ -27,4 +27,10 @@ public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag>
         return languageTagRepository.findById(languageTagId)
             .orElseThrow(() -> new NotFoundException("Language tag with given ID does not exist."));
     }
+
+    @Override
+    public LanguageTag findLanguageTagByValue(String languageTag) {
+        return languageTagRepository.findLanguageTagByLanguageTag(languageTag)
+            .orElse(new LanguageTag());
+    }
 }

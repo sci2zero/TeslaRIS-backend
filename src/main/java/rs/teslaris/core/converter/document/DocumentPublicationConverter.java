@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.document;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
@@ -25,5 +26,17 @@ public class DocumentPublicationConverter {
         publicationDTO.setDocumentDate(publication.getDocumentDate());
         publicationDTO.setDoi(publication.getDoi());
         publicationDTO.setScopusId(publication.getScopusId());
+
+        if (Objects.nonNull(publication.getEvent())) {
+            publicationDTO.setEventId(publication.getEvent().getId());
+        }
+
+        publication.getFileItems().forEach(fileItem -> {
+            publicationDTO.getFileItems().add(DocumentFileConverter.toDTO(fileItem));
+        });
+
+        publication.getProofs().forEach(proof -> {
+            publicationDTO.getProofs().add(DocumentFileConverter.toDTO(proof));
+        });
     }
 }

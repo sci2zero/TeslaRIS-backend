@@ -6,12 +6,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -19,15 +18,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
-import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -81,6 +82,24 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Nullable
+    public Document findDocumentByOldId(Integer documentId) {
+        return documentRepository.findDocumentByOldId(documentId).orElse(null);
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
+                                                                     Pageable pageable) {
+        return documentPublicationIndexRepository.findByAuthorIds(authorId, pageable);
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findPublicationsForPublisher(Integer publisherId,
+                                                                       Pageable pageable) {
+        return documentPublicationIndexRepository.findByPublisherId(publisherId, pageable);
+    }
+
+    @Override
     public Long getPublicationCount() {
         return documentPublicationIndexRepository.count();
     }
@@ -98,43 +117,35 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public void addDocumentFile(Integer documentId, List<DocumentFileDTO> documentFiles,
-                                Boolean isProof) {
+    public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
+                                                   Boolean isProof) {
         var document = findOne(documentId);
-        documentFiles.forEach(file -> {
-            var documentFile = documentFileService.saveNewDocument(file, !isProof);
-            if (isProof) {
-                document.getProofs().add(documentFile);
-            } else {
-                document.getFileItems().add(documentFile);
-            }
-            documentRepository.save(document);
-        });
+        var documentFile = documentFileService.saveNewDocument(file, !isProof);
+        if (isProof) {
+            document.getProofs().add(documentFile);
+        } else {
+            document.getFileItems().add(documentFile);
+        }
+        documentRepository.save(document);
 
         if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
+
+        return DocumentFileConverter.toDTO(documentFile);
     }
 
     @Override
     @Transactional
-    public void deleteDocumentFile(Integer documentId, Integer documentFileId, Boolean isProof) {
+    public void deleteDocumentFile(Integer documentId, Integer documentFileId) {
         var document = findOne(documentId);
         var documentFile = documentFileService.findOne(documentFileId);
 
-        if (isProof) {
-            Set<DocumentFile> proofs = document.getProofs();
-            proofs.forEach(p -> p.setDeleted(true));
-            documentFileService.saveAll(proofs);
-        } else {
-            Set<DocumentFile> fileItems = document.getFileItems();
-            fileItems.forEach(p -> p.setDeleted(true));
-            documentFileService.saveAll(fileItems);
-        }
-        documentRepository.save(document);
-
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+
+        var isProof =
+            document.getProofs().stream().anyMatch((proof) -> proof.getId().equals(documentFileId));
 
         if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
             indexDocumentFilesContent(document,
@@ -156,7 +167,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public List<Integer> getContributorIds(Integer publicationId) {
-        return findOne(publicationId).getContributors().stream().map(BaseEntity::getId)
+        return findOne(publicationId).getContributors().stream().map(contribution -> {
+                if (Objects.nonNull(contribution.getPerson())) {
+                    return contribution.getPerson().getId();
+                }
+                return -1;
+            })
             .filter(Objects::nonNull).collect(Collectors.toList());
     }
 
@@ -174,49 +190,62 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
 
-        document.getContributors().forEach(contribution -> {
-            var personExists = contribution.getPerson() != null;
+        document.getContributors()
+            .stream().sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
+            .forEach(contribution -> {
+                var personExists = Objects.nonNull(contribution.getPerson());
 
-            var contributorDisplayName =
-                contribution.getAffiliationStatement().getDisplayPersonName();
-            var contributorName =
-                Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
-                    Objects.toString(contributorDisplayName.getLastname(), "");
+                var contributorDisplayName =
+                    contribution.getAffiliationStatement().getDisplayPersonName();
+                var contributorName =
+                    (Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
+                        Objects.toString(contributorDisplayName.getOtherName(), "") + " " +
+                        Objects.toString(contributorDisplayName.getLastname(), "")).trim();
 
-            switch (contribution.getContributionType()) {
-                case AUTHOR:
-                    if (personExists) {
-                        index.getAuthorIds().add(contribution.getPerson().getId());
-                    }
-                    index.setAuthorNames(index.getAuthorNames() + ", " + contributorName);
-                    break;
-                case EDITOR:
-                    if (personExists) {
-                        index.getEditorIds().add(contribution.getPerson().getId());
-                    }
-                    index.setEditorNames(index.getEditorNames() + ", " + contributorName);
-                    break;
-                case ADVISOR:
-                    if (personExists) {
-                        index.getAdvisorIds().add(contribution.getPerson().getId());
-                    }
-                    index.setAdvisorNames(index.getAdvisorNames() + ", " + contributorName);
-                    break;
-                case REVIEWER:
-                    if (personExists) {
-                        index.getReviewerIds().add(contribution.getPerson().getId());
-                    }
-                    index.setReviewerNames(index.getReviewerNames() + ", " + contributorName);
-                    break;
-            }
-        });
+                switch (contribution.getContributionType()) {
+                    case AUTHOR:
+                        if (contribution.getOrderNumber() == 1) {
+                            contributorName += "*";
+                        }
+
+                        if (personExists) {
+                            index.getAuthorIds().add(contribution.getPerson().getId());
+                        }
+                        index.setAuthorNames(StringUtil.removeLeadingColonSpace(
+                            index.getAuthorNames() + "; " + contributorName));
+                        break;
+                    case EDITOR:
+                        if (personExists) {
+                            index.getEditorIds().add(contribution.getPerson().getId());
+                        }
+                        index.setEditorNames(StringUtil.removeLeadingColonSpace(
+                            index.getEditorNames() + "; " + contributorName));
+                        break;
+                    case ADVISOR:
+                        if (personExists) {
+                            index.getAdvisorIds().add(contribution.getPerson().getId());
+                        }
+                        index.setAdvisorNames(StringUtil.removeLeadingColonSpace(
+                            index.getAdvisorNames() + "; " + contributorName));
+                        break;
+                    case REVIEWER:
+                        if (personExists) {
+                            index.getReviewerIds().add(contribution.getPerson().getId());
+                        }
+                        index.setReviewerNames(StringUtil.removeLeadingColonSpace(
+                            index.getReviewerNames() + "; " + contributorName));
+                        break;
+                }
+            });
+        index.setAuthorNamesSortable(index.getAuthorNames());
     }
 
     @Override
     public DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId) {
+        var fallbackDocument = new DocumentPublicationIndex();
+        fallbackDocument.setDatabaseId(documentId);
         return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            documentId).orElseThrow(() -> new NotFoundException(
-            "Document publication index with given ID does not exist."));
+            documentId).orElse(fallbackDocument);
     }
 
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
@@ -273,6 +302,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private int parseYear(String dateString) {
+        if (Objects.isNull(dateString)) {
+            return -1;
+        }
+
         DateTimeFormatter[] formatters = {
             DateTimeFormatter.ofPattern("yyyy"), // Year only
             DateTimeFormatter.ofPattern("dd-MM-yyyy"),
@@ -309,13 +342,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
+        document.setOldId(documentDTO.getOldId());
         document.setUris(documentDTO.getUris());
         document.setDocumentDate(documentDTO.getDocumentDate());
         document.setDoi(documentDTO.getDoi());
         document.setScopusId(documentDTO.getScopusId());
-
-        document.setProofs(new HashSet<>());
-        document.setFileItems(new HashSet<>());
 
         if (Objects.nonNull(documentDTO.getEventId())) {
             document.setEvent(eventService.findEventById(documentDTO.getEventId()));
@@ -364,40 +395,45 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             DocumentPublicationIndex.class, "document_publication");
     }
 
+    @Override
+    public void deleteIndexes() {
+        documentPublicationIndexRepository.deleteAll();
+    }
+
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
-                        b.should(sb -> sb.wildcard(
+                        eq.should(sb -> sb.wildcard(
                             m -> m.field("title_sr").value(token).caseInsensitive(true)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("title_sr").query(token)));
-                        b.should(sb -> sb.wildcard(
+                        eq.should(sb -> sb.wildcard(
                             m -> m.field("title_other").value(token).caseInsensitive(true)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("description_sr").query(token)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("description_other").query(token)));
-                        b.should(sb -> sb.wildcard(
+                        eq.should(sb -> sb.wildcard(
                             m -> m.field("keywords_sr").value("*" + token + "*")));
-                        b.should(sb -> sb.wildcard(
+                        eq.should(sb -> sb.wildcard(
                             m -> m.field("keywords_other").value("*" + token + "*")));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("full_text_sr").query(token)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("full_text_other").query(token)));
-                        b.should(sb -> sb.match(
-                            m -> m.field("authorNames").query(token)));
-                        b.should(sb -> sb.match(
-                            m -> m.field("editorNames").query(token)));
-                        b.should(sb -> sb.match(
-                            m -> m.field("reviewerNames").query(token)));
-                        b.should(sb -> sb.match(
-                            m -> m.field("advisorNames").query(token)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
+                            m -> m.field("author_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("editor_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("reviewer_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("advisor_names").query(token)));
+                        eq.should(sb -> sb.match(
                             m -> m.field("type").query(token)));
-                        b.should(sb -> sb.match(
+                        eq.should(sb -> sb.match(
                             m -> m.field("doi").query(token)));
                     });
                     return eq;
