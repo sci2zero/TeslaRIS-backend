@@ -24,10 +24,10 @@ public class SoftwareController {
 
     private final SoftwareService softwareService;
 
-    @GetMapping("/{publicationId}")
+    @GetMapping("/{documentId}")
     public SoftwareDTO readSoftware(
-        @PathVariable Integer publicationId) {
-        return softwareService.readSoftwareById(publicationId);
+        @PathVariable Integer documentId) {
+        return softwareService.readSoftwareById(documentId);
     }
 
     @PostMapping
@@ -40,18 +40,18 @@ public class SoftwareController {
         return software;
     }
 
-    @PutMapping("/{publicationId}")
+    @PutMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void editSoftware(@PathVariable Integer publicationId,
+    public void editSoftware(@PathVariable Integer documentId,
                              @RequestBody @Valid SoftwareDTO software) {
-        softwareService.editSoftware(publicationId, software);
+        softwareService.editSoftware(documentId, software);
     }
 
-    @DeleteMapping("/{publicationId}")
+    @DeleteMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void deleteSoftware(@PathVariable Integer publicationId) {
-        softwareService.deleteSoftware(publicationId);
+    public void deleteSoftware(@PathVariable Integer documentId) {
+        softwareService.deleteSoftware(documentId);
     }
 }

@@ -57,7 +57,7 @@ public class ProceedingsControllerTest extends BaseTest {
     @WithMockUser(username = "admin@admin.com", password = "admin")
     public void testReadProceedings() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.get("http://localhost:8081/api/proceedings/{publicationId}", 40)
+                MockMvcRequestBuilders.get("http://localhost:8081/api/proceedings/{documentId}", 40)
                     .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
             .andExpect(jsonPath("$.eisbn").value("MOCK_eISBN"));
     }
@@ -67,7 +67,7 @@ public class ProceedingsControllerTest extends BaseTest {
     public void testReadProceedingsForEvent() throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/proceedings/for-event/{publicationId}", 38)
+                        "http://localhost:8081/api/proceedings/for-event/{documentId}", 38)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
@@ -97,7 +97,7 @@ public class ProceedingsControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(proceedingsDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{publicationId}", 41)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{documentId}", 41)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -109,7 +109,7 @@ public class ProceedingsControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("http://localhost:8081/api/proceedings/{publicationId}",
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/proceedings/{documentId}",
                         41).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

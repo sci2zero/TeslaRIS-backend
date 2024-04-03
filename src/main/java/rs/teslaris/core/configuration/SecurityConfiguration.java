@@ -101,15 +101,15 @@ public class SecurityConfiguration {
 
             // PUBLICATION
             .antMatchers(HttpMethod.GET,
-                "/api/journal-publication/{publicationId}").permitAll()
+                "/api/journal-publication/{documentId}").permitAll()
             .antMatchers(HttpMethod.GET,
                 "/api/journal-publication/journal/{journalId}/my-publications").permitAll()
             .antMatchers(HttpMethod.GET,
                 "/api/proceedings-publication/event/{eventId}/my-publications").permitAll()
             .antMatchers(HttpMethod.GET,
-                "/api/software/{publicationId}").permitAll()
+                "/api/software/{documentId}").permitAll()
             .antMatchers(HttpMethod.GET,
-                "/api/dataset/{publicationId}").permitAll()
+                "/api/dataset/{documentId}").permitAll()
             .antMatchers(HttpMethod.GET,
                 "/api/patent/{patentId}").permitAll()
 

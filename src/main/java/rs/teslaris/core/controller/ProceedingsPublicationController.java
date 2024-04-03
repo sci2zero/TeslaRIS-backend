@@ -37,10 +37,10 @@ public class ProceedingsPublicationController {
     private final UserService userService;
 
 
-    @GetMapping("/{publicationId}")
+    @GetMapping("/{documentId}")
     public ProceedingsPublicationDTO readProceedingsPublication(
-        @PathVariable Integer publicationId) {
-        return proceedingsPublicationService.readProceedingsPublicationById(publicationId);
+        @PathVariable Integer documentId) {
+        return proceedingsPublicationService.readProceedingsPublicationById(documentId);
     }
 
     @GetMapping("/event/{eventId}/my-publications")
@@ -70,21 +70,21 @@ public class ProceedingsPublicationController {
         return proceedingsPublication;
     }
 
-    @PutMapping("/{publicationId}")
+    @PutMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void editProceedingsPublication(@PathVariable Integer publicationId,
+    public void editProceedingsPublication(@PathVariable Integer documentId,
                                            @RequestBody
                                            @Valid
                                            ProceedingsPublicationDTO proceedingsPublication) {
-        proceedingsPublicationService.editProceedingsPublication(publicationId,
+        proceedingsPublicationService.editProceedingsPublication(documentId,
             proceedingsPublication);
     }
 
-    @DeleteMapping("/{publicationId}")
+    @DeleteMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void deleteProceedingsPublication(@PathVariable Integer publicationId) {
-        proceedingsPublicationService.deleteProceedingsPublication(publicationId);
+    public void deleteProceedingsPublication(@PathVariable Integer documentId) {
+        proceedingsPublicationService.deleteProceedingsPublication(documentId);
     }
 }
