@@ -127,7 +127,7 @@ public class PersonController {
         personService.setPersonBiography(biography, personId);
     }
 
-    @PatchMapping("/keyword/{personId}")
+    @PatchMapping("/keywords/{personId}")
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PersonEditCheck

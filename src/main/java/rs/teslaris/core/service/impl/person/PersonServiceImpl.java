@@ -204,7 +204,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             return new MultiLingualContent(languageTag, keyword.getContent(),
                 keyword.getPriority());
         }).forEach(keyword -> {
-            personToUpdate.getBiography().add(keyword);
+            personToUpdate.getKeyword().add(keyword);
             this.save(personToUpdate);
         });
     }

@@ -11,6 +11,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResearchAreaDTO {
+
+    private Integer id;
+
     private List<MultilingualContentDTO> name;
 
     private List<MultilingualContentDTO> description;
