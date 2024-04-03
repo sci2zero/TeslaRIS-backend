@@ -32,6 +32,13 @@ public class PublisherController {
 
     private final PublisherService publisherService;
 
+
+    @GetMapping("/{publisherId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
+    public boolean canEditPublisher() {
+        return true;
+    }
+
     @GetMapping
     public Page<PublisherDTO> readAll(Pageable pageable) {
         return publisherService.readAllPublishers(pageable);

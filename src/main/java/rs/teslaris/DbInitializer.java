@@ -251,7 +251,7 @@ public class DbInitializer implements ApplicationRunner {
         var publisher1 = new Publisher();
         publisher1.setName(Set.of(new MultiLingualContent(englishTag, "Name1", 1)));
         publisher1.setPlace(Set.of(new MultiLingualContent(englishTag, "Place1", 1)));
-        publisher1.setState(Set.of(new MultiLingualContent(englishTag, "State1", 1)));
+        publisher1.setState(Set.of(new MultiLingualContent(englishTag, "Serbia", 1)));
         publisherRepository.save(publisher1);
 
         var conferenceEvent2 = new Conference();

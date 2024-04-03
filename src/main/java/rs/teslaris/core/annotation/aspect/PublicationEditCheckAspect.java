@@ -1,6 +1,5 @@
 package rs.teslaris.core.annotation.aspect;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
