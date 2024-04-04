@@ -18,6 +18,8 @@ public interface BookSeriesService {
 
     BookSeriesResponseDTO readBookSeries(Integer journalId);
 
+    BookSeries findBookSeriesById(Integer bookSeriesId);
+
     BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index);
 
     void updateBookSeries(BookSeriesDTO bookSeriesDTO, Integer bookSeriesId);

@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.document;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ public interface JournalService {
     JournalResponseDTO readJournal(Integer journalId);
 
     Journal findJournalById(Integer journalId);
+
+    Optional<Journal> tryToFindById(Integer journalId);
 
     Journal findJournalByOldId(Integer journalId);
 

@@ -32,6 +32,13 @@ public class BookSeriesController {
 
     private final BookSeriesService bookSeriesService;
 
+
+    @GetMapping("/{bookSeriesId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
+    public boolean canEditBookSeries() {
+        return true;
+    }
+
     @GetMapping
     public Page<BookSeriesResponseDTO> readAll(Pageable pageable) {
         return bookSeriesService.readAllBookSeries(pageable);

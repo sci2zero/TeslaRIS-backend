@@ -72,6 +72,11 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    public BookSeries findBookSeriesById(Integer bookSeriesId) {
+        return bookSeriesJPAService.findOne(bookSeriesId);
+    }
+
+    @Override
     public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index) {
         var bookSeries = new BookSeries();
 

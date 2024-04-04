@@ -3,6 +3,8 @@ package rs.teslaris.core.controller;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 
 @RestController
@@ -35,6 +38,12 @@ public class ProceedingsController {
     @GetMapping("/for-event/{eventId}")
     public List<ProceedingsResponseDTO> readProceedingsForEvent(@PathVariable Integer eventId) {
         return proceedingsService.readProceedingsForEventId(eventId);
+    }
+
+    @GetMapping("/book-series/{bookSeriesId}")
+    public Page<DocumentPublicationIndex> findProceedingsForBookSeries(
+        @PathVariable Integer bookSeriesId, Pageable pageable) {
+        return proceedingsService.findProceedingsForBookSeries(bookSeriesId, pageable);
     }
 
     @PostMapping

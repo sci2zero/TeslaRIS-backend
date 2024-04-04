@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -78,6 +79,11 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     @Override
     public Journal findJournalById(Integer journalId) {
         return journalJPAService.findOne(journalId);
+    }
+
+    @Override
+    public Optional<Journal> tryToFindById(Integer journalId) {
+        return journalRepository.findById(journalId);
     }
 
     @Override

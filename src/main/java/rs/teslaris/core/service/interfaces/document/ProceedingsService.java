@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.interfaces.document;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -13,6 +15,9 @@ public interface ProceedingsService {
     ProceedingsResponseDTO readProceedingsById(Integer proceedingsId);
 
     List<ProceedingsResponseDTO> readProceedingsForEventId(Integer eventId);
+
+    Page<DocumentPublicationIndex> findProceedingsForBookSeries(Integer bookSeriesId,
+                                                                Pageable pageable);
 
     Proceedings findProceedingsById(Integer proceedingsId);
 
