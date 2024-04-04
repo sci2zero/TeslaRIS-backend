@@ -1,8 +1,10 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -18,8 +20,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -194,5 +200,24 @@ public class ProceedingsServiceTest {
 
         // Then
         assertNull(actual);
+    }
+
+    @Test
+    void findProceedingsForBookSeries_ReturnsPageOfProceedings() {
+        // Given
+        var bookSeriesId = 123;
+        var pageable = Pageable.ofSize(10).withPage(0);
+
+        when(documentPublicationIndexRepository.findByTypeAndJournalId(
+            DocumentPublicationType.PROCEEDINGS.name(), bookSeriesId, pageable))
+            .thenReturn(new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+
+        // When
+        var result = proceedingsService.findProceedingsForBookSeries(bookSeriesId, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.getSize() >= 2);
     }
 }

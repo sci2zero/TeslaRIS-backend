@@ -33,6 +33,13 @@ public class JournalController {
 
     private final JournalService journalService;
 
+
+    @GetMapping("/{journalId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
+    public boolean canEditJournal() {
+        return true;
+    }
+
     @GetMapping
     public Page<JournalResponseDTO> readAll(Pageable pageable) {
         return journalService.readAllJournals(pageable);

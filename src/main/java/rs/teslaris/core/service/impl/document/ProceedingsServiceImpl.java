@@ -1,8 +1,11 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
@@ -19,6 +22,7 @@ import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingJPAServiceI
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -41,9 +45,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private final JournalService journalService;
 
+    private final BookSeriesService bookSeriesService;
+
     private final EventService eventService;
 
     private final PublisherService publisherService;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
 
     @Autowired
@@ -58,8 +66,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   ProceedingJPAServiceImpl proceedingJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
-                                  JournalService journalService, EventService eventService1,
-                                  PublisherService publisherService) {
+                                  JournalService journalService,
+                                  BookSeriesService bookSeriesService, EventService eventService1,
+                                  PublisherService publisherService,
+                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService,
             personContributionService, searchService, expressionTransformer, eventService);
@@ -67,8 +77,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
         this.journalService = journalService;
+        this.bookSeriesService = bookSeriesService;
         this.eventService = eventService1;
         this.publisherService = publisherService;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
     }
 
     @Override
@@ -84,6 +96,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public List<ProceedingsResponseDTO> readProceedingsForEventId(Integer eventId) {
         return proceedingsRepository.findProceedingsForEventId(eventId).stream()
             .map(ProceedingsConverter::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findProceedingsForBookSeries(Integer bookSeriesId,
+                                                                       Pageable pageable) {
+        return documentPublicationIndexRepository.findByTypeAndJournalId(
+            DocumentPublicationType.PROCEEDINGS.name(), bookSeriesId, pageable);
     }
 
     @Override
@@ -156,6 +175,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         index.setEventId(proceedings.getEvent().getId());
         index.setType(DocumentPublicationType.PROCEEDINGS.name());
 
+        if (Objects.nonNull(proceedings.getPublicationSeries())) {
+            index.setJournalId(proceedings.getPublicationSeries().getId());
+        }
+
         documentPublicationIndexRepository.save(index);
     }
 
@@ -174,8 +197,16 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         proceedings.setEvent(eventService.findEventById(proceedingsDTO.getEventId()));
 
         if (proceedingsDTO.getPublicationSeriesId() != null) {
-            proceedings.setPublicationSeries(
-                journalService.findJournalById(proceedingsDTO.getPublicationSeriesId()));
+            var optionalJournal =
+                journalService.tryToFindById(proceedingsDTO.getPublicationSeriesId());
+
+            if (optionalJournal.isPresent()) {
+                proceedings.setPublicationSeries(optionalJournal.get());
+            } else {
+                var bookSeries = bookSeriesService.findBookSeriesById(
+                    proceedingsDTO.getPublicationSeriesId());
+                proceedings.setPublicationSeries(bookSeries);
+            }
         }
 
         if (proceedingsDTO.getPublisherId() != null) {
