@@ -17,7 +17,7 @@ import org.hibernate.annotations.Where;
 @Where(clause = "deleted=false")
 public class Patent extends Document {
 
-    @Column(name = "number", unique = true)
+    @Column(name = "number")
     private String number;
 
     @ManyToOne(fetch = FetchType.LAZY)
