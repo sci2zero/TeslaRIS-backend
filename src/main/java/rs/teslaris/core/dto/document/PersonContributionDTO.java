@@ -18,6 +18,8 @@ import rs.teslaris.core.dto.person.PostalAddressDTO;
 @AllArgsConstructor
 public class PersonContributionDTO {
 
+    private Integer id;
+
     private Integer personId;
 
     @NotNull(message = "You have to provide a contribution description.")

@@ -21,4 +21,6 @@ public interface PersonContributionService {
                                                               BookSeriesDTO bookSeriesDTO);
 
     void setPersonEventContributionForEvent(Event event, EventDTO eventDTO);
+
+    void deleteContribution(Integer contributionId);
 }
