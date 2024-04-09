@@ -358,6 +358,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         publication.getSubTitle().clear();
         publication.getDescription().clear();
         publication.getKeywords().clear();
+
+        publication.getContributors().forEach(
+            contribution -> personContributionService.deleteContribution(contribution.getId()));
+        publication.getContributors().clear();
     }
 
     private void clearCommonIndexFields(DocumentPublicationIndex index) {

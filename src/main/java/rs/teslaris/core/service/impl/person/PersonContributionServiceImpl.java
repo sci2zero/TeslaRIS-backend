@@ -24,6 +24,7 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -42,6 +43,8 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     private final OrganisationUnitService organisationUnitService;
 
     private final MultilingualContentService multilingualContentService;
+
+    private final PersonContributionRepository personContributionRepository;
 
 
     @Value("${contribution.approved_by_default}")
@@ -133,6 +136,11 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
             event.addContribution(contribution);
         });
+    }
+
+    @Override
+    public void deleteContribution(Integer contributionId) {
+        personContributionRepository.deleteById(contributionId);
     }
 
     private void setAffiliationStatement(PersonContribution contribution,

@@ -19,7 +19,8 @@ public class PersonContributionConverter {
     public static ArrayList<PersonDocumentContributionDTO> documentContributionToDTO(
         Set<PersonDocumentContribution> contributions) {
         var contributionDTOs = new ArrayList<PersonDocumentContributionDTO>();
-        contributions.stream().filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED))
+        contributions.stream().filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED) &&
+                c.getDeleted().equals(false))
             .forEach((c) -> {
                 var contribution = new PersonDocumentContributionDTO();
                 setCommonFields(contribution, c);
@@ -67,6 +68,8 @@ public class PersonContributionConverter {
 
     private static void setCommonFields(PersonContributionDTO contributionDTO,
                                         PersonContribution contribution) {
+        contributionDTO.setId(contribution.getId());
+
         contributionDTO.setContributionDescription(
             MultilingualContentConverter.getMultilingualContentDTO(
                 contribution.getContributionDescription()));
