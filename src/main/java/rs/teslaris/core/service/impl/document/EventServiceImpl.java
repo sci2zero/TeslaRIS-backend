@@ -91,9 +91,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.getNameAbbreviation().clear();
         event.getState().clear();
         event.getPlace().clear();
-        event.getContributions().clear();
         event.getDescription().clear();
         event.getKeywords().clear();
+
+        event.getContributions().forEach(
+            contribution -> personContributionService.deleteContribution(contribution.getId()));
+        event.getContributions().clear();
     }
 
     protected void clearEventIndexCommonFields(EventIndex index) {

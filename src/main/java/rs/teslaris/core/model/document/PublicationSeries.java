@@ -36,7 +36,7 @@ public abstract class PublicationSeries extends BaseEntity {
     @Column(name = "print_issn")
     private String printISSN;
 
-    @OneToMany(mappedBy = "publicationSeries", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "publicationSeries", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<PersonPublicationSeriesContribution> contributions = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)

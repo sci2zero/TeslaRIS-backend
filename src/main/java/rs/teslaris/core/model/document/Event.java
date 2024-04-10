@@ -52,7 +52,7 @@ public abstract class Event extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> place = new HashSet<>();
 
-    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<PersonEventContribution> contributions = new HashSet<>();
 
     @Column(name = "cris_uns_id")

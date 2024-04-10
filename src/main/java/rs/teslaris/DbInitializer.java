@@ -234,6 +234,7 @@ public class DbInitializer implements ApplicationRunner {
         conferenceEvent1.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija", 1)));
         conferenceEvent1.setDateFrom(LocalDate.of(2021, 3, 6));
         conferenceEvent1.setDateTo(LocalDate.of(2021, 3, 10));
+        conferenceEvent1.setSerialEvent(false);
         conferenceRepository.save(conferenceEvent1);
 
         var proceedings1 = new Proceedings();
@@ -258,6 +259,7 @@ public class DbInitializer implements ApplicationRunner {
         conferenceEvent2.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija2", 1)));
         conferenceEvent2.setDateFrom(LocalDate.of(2020, 6, 13));
         conferenceEvent2.setDateTo(LocalDate.of(2020, 6, 19));
+        conferenceEvent2.setSerialEvent(true);
         conferenceRepository.save(conferenceEvent2);
 
         var journal2 = new Journal();
