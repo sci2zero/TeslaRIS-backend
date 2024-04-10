@@ -3,6 +3,9 @@ package rs.teslaris.core.model.project;
 import java.time.LocalDate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,4 +31,8 @@ public class PersonProjectContribution extends PersonContribution {
 
     @Column(name = "date_to")
     private LocalDate dateTo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 }

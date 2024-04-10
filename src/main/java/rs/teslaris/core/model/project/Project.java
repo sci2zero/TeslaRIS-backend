@@ -42,7 +42,7 @@ public class Project extends BaseEntity {
     @ElementCollection
     private Set<String> uris = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<PersonProjectContribution> contributions = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)

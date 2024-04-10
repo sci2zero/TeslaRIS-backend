@@ -33,6 +33,12 @@ public class ConferenceController {
     private final ConferenceService conferenceService;
 
 
+    @GetMapping("/{conferenceId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
+    public boolean canEditConference() {
+        return true;
+    }
+
     @GetMapping
     public Page<ConferenceDTO> readAll(Pageable pageable) {
         return conferenceService.readAllConferences(pageable);
