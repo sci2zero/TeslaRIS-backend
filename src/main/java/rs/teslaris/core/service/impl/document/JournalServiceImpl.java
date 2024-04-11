@@ -95,6 +95,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     public Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index) {
         var journal = new Journal();
 
+        clearPublicationSeriesCommonFields(journal);
         setPublicationSeriesCommonFields(journal, journalDTO);
         setJournalRelatedFields(journal, journalDTO);
 
@@ -130,6 +131,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         var journalToUpdate = journalJPAService.findOne(journalId);
         journalToUpdate.getLanguages().clear();
 
+        clearPublicationSeriesCommonFields(journalToUpdate);
         setPublicationSeriesCommonFields(journalToUpdate, journalDTO);
         setJournalRelatedFields(journalToUpdate, journalDTO);
 

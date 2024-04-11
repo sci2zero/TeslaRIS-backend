@@ -64,25 +64,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                 contributionDTO.getIsCorrespondingContributor());
 
             var addedPrevoiusly = document.getContributors().stream().anyMatch(
-                previousContribution -> {
-                    if (Objects.nonNull(previousContribution.getPerson())) {
-                        return previousContribution.getPerson().getId()
-                            .equals(contribution.getPerson().getId());
-                    }
-
-                    return previousContribution.getAffiliationStatement().getDisplayPersonName()
-                        .getFirstname().equals(
-                            contribution.getAffiliationStatement().getDisplayPersonName()
-                                .getFirstname()) &&
-                        previousContribution.getAffiliationStatement().getDisplayPersonName()
-                            .getLastname().equals(
-                                contribution.getAffiliationStatement().getDisplayPersonName()
-                                    .getLastname()) &&
-                        previousContribution.getAffiliationStatement().getDisplayPersonName()
-                            .getOtherName().equals(
-                                contribution.getAffiliationStatement().getDisplayPersonName()
-                                    .getOtherName());
-                });
+                previousContribution -> compareContributions(previousContribution, contribution));
 
             if (!addedPrevoiusly) {
                 document.addDocumentContribution(contribution);
@@ -94,7 +76,6 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     public void setPersonPublicationSeriesContributionsForJournal(
         PublicationSeries publicationSeries,
         PublicationSeriesDTO journalDTO) {
-        publicationSeries.getContributions().clear();
 
         journalDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonPublicationSeriesContribution();
@@ -104,7 +85,12 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contribution.setDateFrom(contributionDTO.getDateFrom());
             contribution.setDateTo(contributionDTO.getDateTo());
 
-            publicationSeries.addContribution(contribution);
+            var addedPrevoiusly = publicationSeries.getContributions().stream().anyMatch(
+                previousContribution -> compareContributions(previousContribution, contribution));
+
+            if (!addedPrevoiusly) {
+                publicationSeries.addContribution(contribution);
+            }
         });
     }
 
@@ -112,7 +98,6 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     public void setPersonPublicationSeriesContributionsForBookSeries(
         PublicationSeries publicationSeries,
         BookSeriesDTO bookSeriesDTO) {
-        publicationSeries.getContributions().clear();
 
         bookSeriesDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonPublicationSeriesContribution();
@@ -122,7 +107,12 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contribution.setDateFrom(contributionDTO.getDateFrom());
             contribution.setDateTo(contributionDTO.getDateTo());
 
-            publicationSeries.addContribution(contribution);
+            var addedPrevoiusly = publicationSeries.getContributions().stream().anyMatch(
+                previousContribution -> compareContributions(previousContribution, contribution));
+
+            if (!addedPrevoiusly) {
+                publicationSeries.addContribution(contribution);
+            }
         });
     }
 
@@ -134,7 +124,12 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
             contribution.setContributionType(contributionDTO.getEventContributionType());
 
-            event.addContribution(contribution);
+            var addedPrevoiusly = event.getContributions().stream().anyMatch(
+                previousContribution -> compareContributions(previousContribution, contribution));
+
+            if (!addedPrevoiusly) {
+                event.addContribution(contribution);
+            }
         });
     }
 
@@ -207,5 +202,26 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         contribution.setOrderNumber(contributionDTO.getOrderNumber());
         contribution.setApproveStatus(
             contributionApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
+    }
+
+    private boolean compareContributions(PersonContribution previousContribution,
+                                         PersonContribution contribution) {
+        if (Objects.nonNull(previousContribution.getPerson())) {
+            return previousContribution.getPerson().getId()
+                .equals(contribution.getPerson().getId());
+        }
+
+        return previousContribution.getAffiliationStatement().getDisplayPersonName()
+            .getFirstname().equals(
+                contribution.getAffiliationStatement().getDisplayPersonName()
+                    .getFirstname()) &&
+            previousContribution.getAffiliationStatement().getDisplayPersonName()
+                .getLastname().equals(
+                    contribution.getAffiliationStatement().getDisplayPersonName()
+                        .getLastname()) &&
+            previousContribution.getAffiliationStatement().getDisplayPersonName()
+                .getOtherName().equals(
+                    contribution.getAffiliationStatement().getDisplayPersonName()
+                        .getOtherName());
     }
 }
