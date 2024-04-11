@@ -80,6 +80,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index) {
         var bookSeries = new BookSeries();
 
+        clearPublicationSeriesCommonFields(bookSeries);
         setPublicationSeriesCommonFields(bookSeries, bookSeriesDTO);
         setBookSeriesFields(bookSeries, bookSeriesDTO);
 
@@ -96,6 +97,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         var bookSeriesToUpdate = bookSeriesJPAService.findOne(bookSeriesId);
         bookSeriesToUpdate.getLanguages().clear();
 
+        clearPublicationSeriesCommonFields(bookSeriesToUpdate);
         setPublicationSeriesCommonFields(bookSeriesToUpdate, bookSeriesDTO);
         setBookSeriesFields(bookSeriesToUpdate, bookSeriesDTO);
 

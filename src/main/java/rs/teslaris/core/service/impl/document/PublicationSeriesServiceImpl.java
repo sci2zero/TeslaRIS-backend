@@ -61,4 +61,10 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
                 .add(languageTagService.findLanguageTagById(languageTagId));
         });
     }
+
+    public void clearPublicationSeriesCommonFields(PublicationSeries publicationSeries) {
+        publicationSeries.getContributions().forEach(
+            contribution -> personContributionService.deleteContribution(contribution.getId()));
+        publicationSeries.getContributions().clear();
+    }
 }
