@@ -661,4 +661,30 @@ public class OrganisationUnitServiceTest {
         assertEquals(3, result.getNodes().size());
         verify(organisationUnitsRelationRepository, times(3)).getSuperOU(anyInt());
     }
+
+    @Test
+    public void shouldGetOrganisationUnitIdsFromSubHierarchy() {
+        // given
+        var unit1 = new OrganisationUnit();
+        unit1.setId(1);
+        var unit2 = new OrganisationUnit();
+        unit2.setId(2);
+        var unit3 = new OrganisationUnit();
+        unit3.setId(3);
+
+        var rel1 = new OrganisationUnitsRelation();
+        rel1.setSourceOrganisationUnit(unit2);
+
+        var rel2 = new OrganisationUnitsRelation();
+        rel2.setSourceOrganisationUnit(unit3);
+
+        when(organisationUnitsRelationRepository.getOuSubUnits(1)).thenReturn(List.of(rel1));
+        when(organisationUnitsRelationRepository.getOuSubUnits(2)).thenReturn(List.of(rel2));
+
+        // when
+        var result = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(unit1.getId());
+
+        // then
+        assertEquals(List.of(1, 2, 3), result);
+    }
 }
