@@ -502,8 +502,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public Page<PersonIndex> findPeopleForOrganisationUnit(
         Integer employmentInstitutionId,
         Pageable pageable) {
+        var ouHierarchyIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(employmentInstitutionId);
         return personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
-            List.of(employmentInstitutionId));
+            ouHierarchyIds);
     }
 
     @Override

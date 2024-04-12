@@ -451,6 +451,8 @@ public class PersonServiceTest {
         var employmentInstitutionId = 123;
         var pageable = PageRequest.of(0, 10);
 
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+            employmentInstitutionId)).thenReturn(List.of(employmentInstitutionId));
         when(personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
             List.of(employmentInstitutionId))).thenReturn(
             new PageImpl<>(List.of(new PersonIndex())));

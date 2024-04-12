@@ -41,6 +41,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     RelationGraphDataDTO getOrganisationUnitsRelationsChain(Integer leafId);
 
+    List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId);
+
     OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index);
 

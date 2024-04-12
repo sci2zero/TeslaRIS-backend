@@ -203,6 +203,22 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    public List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId) {
+        var nodeIds = new ArrayList<Integer>();
+        nodeIds.add(currentOUNodeId);
+
+        var subUnits = organisationUnitsRelationRepository.getOuSubUnits(currentOUNodeId);
+
+        for (var subUnit : subUnits) {
+            var childrenSubUnits =
+                getOrganisationUnitIdsFromSubHierarchy(subUnit.getSourceOrganisationUnit().getId());
+            nodeIds.addAll(childrenSubUnits);
+        }
+
+        return nodeIds;
+    }
+
+    @Override
     public OrganisationUnit getReferenceToOrganisationUnitById(Integer id) {
         return id == null ? null : organisationUnitRepository.getReferenceById(id);
     }
