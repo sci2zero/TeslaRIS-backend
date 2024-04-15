@@ -113,7 +113,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Override
     public void editProceedingsPublication(Integer publicationId,
                                            ProceedingsPublicationDTO publicationDTO) {
-        var publicationToUpdate = (ProceedingsPublication) this.findOne(publicationId);
+        var publicationToUpdate =
+            (ProceedingsPublication) proceedingPublicationJPAService.findOne(publicationId);
 
         clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();

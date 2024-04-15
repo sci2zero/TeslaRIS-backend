@@ -142,8 +142,8 @@ public class ProceedingsPublicationServiceTest {
         var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
 
-        when(documentRepository.findById(publicationId)).thenReturn(
-            Optional.of(publicationToUpdate));
+        when(proceedingPublicationJPAService.findOne(publicationId)).thenReturn(
+            publicationToUpdate);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
         when(eventService.findEventById(publicationDTO.getProceedingsId())).thenReturn(
@@ -153,7 +153,7 @@ public class ProceedingsPublicationServiceTest {
         proceedingsPublicationService.editProceedingsPublication(publicationId, publicationDTO);
 
         // Then
-        verify(documentRepository).findById(eq(publicationId));
+        verify(proceedingPublicationJPAService).findOne(eq(publicationId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             eq(publicationToUpdate), eq(publicationDTO));
     }

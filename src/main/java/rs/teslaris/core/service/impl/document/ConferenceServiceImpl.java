@@ -149,8 +149,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
-        conference.setNumber(conference.getNumber());
-        conference.setFee(conference.getFee());
+        conference.setNumber(conferenceDTO.getNumber());
+        conference.setFee(conferenceDTO.getFee());
     }
 
     private void indexConference(Conference conference, EventIndex index) {
