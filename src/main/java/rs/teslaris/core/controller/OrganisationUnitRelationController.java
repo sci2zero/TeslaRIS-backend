@@ -3,8 +3,6 @@ package rs.teslaris.core.controller;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,10 +31,10 @@ public class OrganisationUnitRelationController {
 
     private final OrganisationUnitService organisationUnitService;
 
-    @GetMapping("/{sourceId}/{targetId}")
-    public Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
-        @PathVariable Integer sourceId, @PathVariable Integer targetId, Pageable pageable) {
-        return organisationUnitService.getOrganisationUnitsRelations(sourceId, targetId, pageable);
+    @GetMapping("/get-all/{sourceId}")
+    public List<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
+        @PathVariable Integer sourceId) {
+        return organisationUnitService.getOrganisationUnitsRelations(sourceId);
     }
 
     @GetMapping("/{leafId}")

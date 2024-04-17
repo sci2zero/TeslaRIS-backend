@@ -32,5 +32,9 @@ public class OrganisationUnitsRelationResponseDTO {
 
     private List<MultilingualContentDTO> sourceOrganisationUnitName;
 
+    private Integer sourceOrganisationUnitId;
+
     private List<MultilingualContentDTO> targetOrganisationUnitName;
+
+    private Integer targetOrganisationUnitId;
 }

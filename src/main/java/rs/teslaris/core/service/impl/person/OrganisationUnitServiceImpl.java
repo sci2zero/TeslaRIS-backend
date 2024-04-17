@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -162,10 +163,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    public Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
-        Integer sourceId, Integer targetId, Pageable pageable) {
-        return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(pageable,
-            sourceId, targetId).map(RelationConverter::toResponseDTO);
+    public List<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
+        Integer sourceId) {
+        return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(sourceId)
+            .stream()
+            .map(RelationConverter::toResponseDTO).collect(Collectors.toList());
     }
 
     @Override
