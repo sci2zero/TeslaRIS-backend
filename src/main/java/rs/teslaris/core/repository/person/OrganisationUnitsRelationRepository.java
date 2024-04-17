@@ -2,8 +2,6 @@ package rs.teslaris.core.repository.person;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -16,11 +14,8 @@ public interface OrganisationUnitsRelationRepository
 
     @Query("select our from OrganisationUnitsRelation our" +
         " where our.sourceOrganisationUnit.id = :sourceId" +
-        " and our.targetOrganisationUnit.id = :targetId" +
         " and our.approveStatus = 1")
-    Page<OrganisationUnitsRelation> getRelationsForOrganisationUnits(Pageable pageable,
-                                                                     Integer sourceId,
-                                                                     Integer targetId);
+    List<OrganisationUnitsRelation> getRelationsForOrganisationUnits(Integer sourceId);
 
     @Query("select our from OrganisationUnitsRelation our" +
         " where our.sourceOrganisationUnit.id = :sourceId" +

@@ -35,9 +35,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
-    Page<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(Integer sourceId,
-                                                                             Integer targetId,
-                                                                             Pageable pageable);
+    List<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(Integer sourceId);
 
     RelationGraphDataDTO getOrganisationUnitsRelationsChain(Integer leafId);
 

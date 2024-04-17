@@ -200,18 +200,16 @@ public class OrganisationUnitServiceTest {
         relation.setTargetOrganisationUnit(ou);
         var relations = new ArrayList<OrganisationUnitsRelation>();
         relations.add(relation);
-        var page = new PageImpl<>(relations);
 
-        when(
-            organisationUnitsRelationRepository.getRelationsForOrganisationUnits(pageable, sourceId,
-                targetId)).thenReturn(page);
+        when(organisationUnitsRelationRepository.getRelationsForOrganisationUnits(
+            sourceId)).thenReturn(relations);
 
         // when
         var result =
-            organisationUnitService.getOrganisationUnitsRelations(sourceId, targetId, pageable);
+            organisationUnitService.getOrganisationUnitsRelations(sourceId);
 
         // then
-        assertEquals(relations.size(), result.getTotalElements());
+        assertEquals(relations.size(), result.size());
     }
 
     @Test

@@ -30,9 +30,12 @@ public class RelationConverter {
         relationResponse.setSourceOrganisationUnitName(
             MultilingualContentConverter.getMultilingualContentDTO(
                 relation.getSourceOrganisationUnit().getName()));
+        relationResponse.setSourceOrganisationUnitId(relation.getSourceOrganisationUnit().getId());
+
         relationResponse.setTargetOrganisationUnitName(
             MultilingualContentConverter.getMultilingualContentDTO(
                 relation.getTargetOrganisationUnit().getName()));
+        relationResponse.setTargetOrganisationUnitId(relation.getTargetOrganisationUnit().getId());
 
         return relationResponse;
     }
