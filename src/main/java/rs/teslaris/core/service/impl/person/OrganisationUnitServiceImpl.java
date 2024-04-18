@@ -178,22 +178,20 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         nodes.add(OrganisationUnitConverter.toDTO(findOne(leafId)));
 
         var currentBelongsToRelation = organisationUnitsRelationRepository.getSuperOU(leafId);
+
+        if (currentBelongsToRelation.isEmpty()) {
+            addMembershipOrganisations(nodes, links, leafId);
+            return new RelationGraphDataDTO(nodes, links);
+        }
+
         while (currentBelongsToRelation.isPresent()) {
             links.add(new OrganisationUnitGraphRelationDTO(
                 currentBelongsToRelation.get().getSourceOrganisationUnit().getId(),
                 currentBelongsToRelation.get().getTargetOrganisationUnit().getId(),
                 OrganisationUnitRelationType.BELONGS_TO));
 
-            organisationUnitsRelationRepository.getSuperOUsMemberOf(
-                    currentBelongsToRelation.get().getSourceOrganisationUnit().getId())
-                .forEach((relation -> {
-                    links.add(new OrganisationUnitGraphRelationDTO(
-                        relation.getSourceOrganisationUnit().getId(),
-                        relation.getTargetOrganisationUnit().getId(),
-                        OrganisationUnitRelationType.MEMBER_OF));
-                    nodes.add(
-                        OrganisationUnitConverter.toDTO(relation.getTargetOrganisationUnit()));
-                }));
+            addMembershipOrganisations(nodes, links,
+                currentBelongsToRelation.get().getSourceOrganisationUnit().getId());
 
             nodes.add(OrganisationUnitConverter.toDTO(
                 currentBelongsToRelation.get().getTargetOrganisationUnit()));
@@ -202,6 +200,20 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         return new RelationGraphDataDTO(nodes, links);
+    }
+
+    private void addMembershipOrganisations(ArrayList<OrganisationUnitDTO> nodes,
+                                            ArrayList<OrganisationUnitGraphRelationDTO> links,
+                                            Integer currentNodeId) {
+        organisationUnitsRelationRepository.getSuperOUsMemberOf(currentNodeId)
+            .forEach((relation -> {
+                links.add(new OrganisationUnitGraphRelationDTO(
+                    relation.getSourceOrganisationUnit().getId(),
+                    relation.getTargetOrganisationUnit().getId(),
+                    OrganisationUnitRelationType.MEMBER_OF));
+                nodes.add(
+                    OrganisationUnitConverter.toDTO(relation.getTargetOrganisationUnit()));
+            }));
     }
 
     @Override
@@ -411,6 +423,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         if (Objects.equals(relationDTO.getSourceOrganisationUnitId(),
             relationDTO.getTargetOrganisationUnitId())) {
             throw new SelfRelationException("Organisation unit cannot relate to itself.");
+        }
+
+        if (relationDTO.getRelationType().equals(OrganisationUnitRelationType.BELONGS_TO) &&
+            organisationUnitsRelationRepository.getSuperOU(
+                relationDTO.getSourceOrganisationUnitId()).isPresent()) {
+            return new OrganisationUnitsRelation();
         }
 
         var newRelation = new OrganisationUnitsRelation();

@@ -248,12 +248,14 @@ public class OrganisationUnitServiceTest {
         var relationDTO = new OrganisationUnitsRelationDTO();
         relationDTO.setSourceOrganisationUnitId(1);
         relationDTO.setTargetOrganisationUnitId(2);
+        relationDTO.setRelationType(OrganisationUnitRelationType.BELONGS_TO);
 
         var organisationUnitsRelation = new OrganisationUnitsRelation();
         organisationUnitsRelation.setSourceOrganisationUnit(new OrganisationUnit());
 
         when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
             Optional.of(new OrganisationUnit()));
+        when(organisationUnitsRelationRepository.getSuperOU(any())).thenReturn(Optional.empty());
         when(organisationUnitsRelationJPAService.save(any())).thenReturn(organisationUnitsRelation);
         when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             any())).thenReturn(Optional.empty());

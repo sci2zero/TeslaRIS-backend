@@ -30,7 +30,6 @@ public class OrganisationUnitsRelationDTO {
     @NotNull(message = "You have to provide a valid relation type.")
     private OrganisationUnitRelationType relationType;
 
-    @NotNull(message = "You have to provide a valid start date.")
     private LocalDate dateFrom;
 
     private LocalDate dateTo;

@@ -46,7 +46,6 @@ public class OrganisationUnitRelationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_OU_RELATIONS')")
-    @Idempotent
     public OrganisationUnitsRelationDTO createOrganisationUnitsRelations(
         @RequestBody @Valid OrganisationUnitsRelationDTO relationDTO) {
         var newRelation = organisationUnitService.createOrganisationUnitsRelation(relationDTO);
