@@ -102,6 +102,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "database_id", store = true)
     private Integer databaseId;
 
-    @Field(type = FieldType.Keyword, store = true, name = "doi")
+    @Field(type = FieldType.Keyword, name = "doi", store = true)
     private String doi;
+
+    @Field(type = FieldType.Integer, name = "organisation_unit_ids", store = true)
+    private List<Integer> organisationUnitIds = new ArrayList<>();
 }
