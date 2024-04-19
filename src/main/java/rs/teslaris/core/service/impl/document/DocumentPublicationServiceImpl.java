@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +28,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -190,6 +192,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
 
+        var organisationUnitIds = new ArrayList<Integer>();
+
         document.getContributors()
             .stream().sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
             .forEach(contribution -> {
@@ -201,6 +205,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     (Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
                         Objects.toString(contributorDisplayName.getOtherName(), "") + " " +
                         Objects.toString(contributorDisplayName.getLastname(), "")).trim();
+
+                organisationUnitIds.addAll(
+                    contribution.getInstitutions().stream().map((BaseEntity::getId)).collect(
+                        Collectors.toList()));
 
                 switch (contribution.getContributionType()) {
                     case AUTHOR:
@@ -238,6 +246,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 }
             });
         index.setAuthorNamesSortable(index.getAuthorNames());
+        index.setOrganisationUnitIds(organisationUnitIds);
     }
 
     @Override

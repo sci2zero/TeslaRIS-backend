@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,11 @@ public class InvolvementController {
     @GetMapping("/employment/{employmentId}")
     public EmploymentDTO getEmployment(@PathVariable Integer employmentId) {
         return involvementService.getInvolvement(employmentId, Employment.class);
+    }
+
+    @GetMapping("/employments/{personId}")
+    public List<EmploymentDTO> getEmploymentsForPerson(@PathVariable Integer personId) {
+        return involvementService.getEmploymentsForPerson(personId);
     }
 
     @PostMapping("/education/{personId}")

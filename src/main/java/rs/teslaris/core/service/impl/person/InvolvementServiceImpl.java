@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.repository.person.EmploymentRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -46,6 +48,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     private final InvolvementRepository involvementRepository;
 
     private final DocumentFileService documentFileService;
+
+    private final EmploymentRepository employmentRepository;
 
     @Override
     protected JpaRepository<Involvement, Integer> getEntityRepository() {
@@ -105,6 +109,13 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
 
         return involvementRepository.save(newMembership);
+    }
+
+    @Override
+    public List<EmploymentDTO> getEmploymentsForPerson(Integer personId) {
+        return employmentRepository.findByPersonInvolvedId(personId).stream()
+            .map(InvolvementConverter::toDTO).collect(
+                Collectors.toList());
     }
 
     @Override

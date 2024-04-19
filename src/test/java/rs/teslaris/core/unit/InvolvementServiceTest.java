@@ -33,6 +33,7 @@ import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.person.EmploymentRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.person.InvolvementServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -63,8 +64,12 @@ public class InvolvementServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private EmploymentRepository employmentRepository;
+
     @InjectMocks
     private InvolvementServiceImpl involvementService;
+
 
     @Test
     public void shouldReturnInvolvementWhenInvolvementExists() {
@@ -324,9 +329,28 @@ public class InvolvementServiceTest {
         // when
         involvementService.deleteProof(1, 1);
 
-        //then
+        // then
         verify(involvementRepository, times(1)).save(involvement);
         verify(documentFileService, times(1)).deleteDocumentFile(df.getServerFilename());
+    }
+
+    @Test
+    public void shouldGetEmploymentsWhenValidPersonProvided() {
+        // given
+        var personId = 1;
+        var employment1 = new Employment();
+        employment1.setOrganisationUnit(new OrganisationUnit());
+        var employment2 = new Employment();
+        employment2.setOrganisationUnit(new OrganisationUnit());
+
+        when(employmentRepository.findByPersonInvolvedId(personId)).thenReturn(
+            List.of(employment1, employment2));
+
+        // when
+        var result = involvementService.getEmploymentsForPerson(personId);
+
+        // then
+        assertEquals(2, result.size());
     }
 
 }
