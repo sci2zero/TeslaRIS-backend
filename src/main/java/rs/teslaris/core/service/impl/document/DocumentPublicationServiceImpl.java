@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -66,6 +68,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final ExpressionTransformer expressionTransformer;
 
     private final EventService eventService;
+
+    private final OrganisationUnitService organisationUnitService;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -99,6 +103,24 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public Page<DocumentPublicationIndex> findPublicationsForPublisher(Integer publisherId,
                                                                        Pageable pageable) {
         return documentPublicationIndexRepository.findByPublisherId(publisherId, pageable);
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
+        Integer organisationUnitId, Pageable pageable) {
+        var allOUIdsFromSubHierarchy =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
+        var combinedResults = new ArrayList<DocumentPublicationIndex>();
+        allOUIdsFromSubHierarchy.forEach((id) -> {
+            var resultsPage =
+                documentPublicationIndexRepository.findByOrganisationUnitIds(id, pageable);
+            combinedResults.addAll(resultsPage.getContent());
+        });
+
+        // TEMPORARY FIX
+        // TODO: Update this as soon as we update spring-data-elasticsearch version
+        return new PageImpl<>(combinedResults, pageable, combinedResults.size());
     }
 
     @Override

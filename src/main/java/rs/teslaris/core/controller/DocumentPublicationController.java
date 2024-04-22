@@ -78,6 +78,14 @@ public class DocumentPublicationController {
         return documentPublicationService.findPublicationsForPublisher(publisherId, pageable);
     }
 
+    @GetMapping("/for-organisation-unit/{organisationUnitId}")
+    public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
+        @PathVariable Integer organisationUnitId,
+        Pageable pageable) {
+        return documentPublicationService.findPublicationsForOrganisationUnit(organisationUnitId,
+            pageable);
+    }
+
     @GetMapping("/count")
     public Long countAll() {
         return documentPublicationService.getPublicationCount();

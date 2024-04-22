@@ -21,6 +21,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
@@ -34,19 +35,19 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
 
     @Autowired
-    public PatentServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        PersonContributionService personContributionService,
-        SearchService<DocumentPublicationIndex> searchService,
-        ExpressionTransformer expressionTransformer,
-        EventService eventService, PatentJPAServiceImpl patentJPAService,
-        PublisherService publisherService) {
+    public PatentServiceImpl(MultilingualContentService multilingualContentService,
+                             DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                             DocumentRepository documentRepository,
+                             DocumentFileService documentFileService,
+                             PersonContributionService personContributionService,
+                             SearchService<DocumentPublicationIndex> searchService,
+                             ExpressionTransformer expressionTransformer, EventService eventService,
+                             OrganisationUnitService organisationUnitService,
+                             PatentJPAServiceImpl patentJPAService,
+                             PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService, personContributionService, searchService, expressionTransformer,
-            eventService);
+            eventService, organisationUnitService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
     }

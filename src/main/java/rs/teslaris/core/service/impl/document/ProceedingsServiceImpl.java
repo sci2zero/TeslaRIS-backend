@@ -28,6 +28,7 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -63,6 +64,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   SearchService<DocumentPublicationIndex> searchService,
                                   ExpressionTransformer expressionTransformer,
                                   EventService eventService,
+                                  OrganisationUnitService organisationUnitService,
                                   ProceedingJPAServiceImpl proceedingJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
@@ -71,8 +73,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService,
-            personContributionService, searchService, expressionTransformer, eventService);
+            documentFileService, personContributionService, searchService, expressionTransformer,
+            eventService, organisationUnitService);
         this.proceedingJPAService = proceedingJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;

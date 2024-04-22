@@ -20,6 +20,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
@@ -32,19 +33,20 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
 
     @Autowired
-    public SoftwareServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        PersonContributionService personContributionService,
-        SearchService<DocumentPublicationIndex> searchService,
-        ExpressionTransformer expressionTransformer,
-        EventService eventService, SoftwareJPAServiceImpl softwareJPAService,
-        PublisherService publisherService) {
+    public SoftwareServiceImpl(MultilingualContentService multilingualContentService,
+                               DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                               DocumentRepository documentRepository,
+                               DocumentFileService documentFileService,
+                               PersonContributionService personContributionService,
+                               SearchService<DocumentPublicationIndex> searchService,
+                               ExpressionTransformer expressionTransformer,
+                               EventService eventService,
+                               OrganisationUnitService organisationUnitService,
+                               SoftwareJPAServiceImpl softwareJPAService,
+                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService, personContributionService, searchService, expressionTransformer,
-            eventService);
+            eventService, organisationUnitService);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }

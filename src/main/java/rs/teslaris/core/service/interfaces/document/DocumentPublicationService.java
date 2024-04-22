@@ -23,6 +23,9 @@ public interface DocumentPublicationService extends JPAService<Document> {
     Page<DocumentPublicationIndex> findPublicationsForPublisher(Integer publisherId,
                                                                 Pageable pageable);
 
+    Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(Integer organisationUnitId,
+                                                                       Pageable pageable);
+
     Long getPublicationCount();
 
     void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved);

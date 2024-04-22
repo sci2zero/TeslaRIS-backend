@@ -23,6 +23,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -48,12 +49,13 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          SearchService<DocumentPublicationIndex> searchService,
                                          ExpressionTransformer expressionTransformer,
                                          EventService eventService,
+                                         OrganisationUnitService organisationUnitService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService,
-            personContributionService, searchService, expressionTransformer, eventService);
+            documentFileService, personContributionService, searchService, expressionTransformer,
+            eventService, organisationUnitService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
