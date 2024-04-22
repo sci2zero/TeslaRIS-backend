@@ -346,7 +346,7 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personalInfoDTO = new PersonalInfoDTO();
-        personalInfoDTO.setPlaceOfBrith("City");
+        personalInfoDTO.setPlaceOfBirth("City");
         personalInfoDTO.setApvnt("Mr.");
         personalInfoDTO.setMnid("123456");
         personalInfoDTO.setOrcid("0000-0000-0000-0000");

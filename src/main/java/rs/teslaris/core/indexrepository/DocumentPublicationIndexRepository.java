@@ -37,6 +37,20 @@ public interface DocumentPublicationIndexRepository extends
         "]}}")
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
+//    @Query("{\"bool\": " +
+//        "{\"must\": [" +
+//        "{\"terms\": {\"organisation_unit_ids\": ?0}}" +
+//        "]}}")
+//    Page<DocumentPublicationIndex> findByOrganisationUnitIds(JsonArray organisationUnitIds,
+//                                                             Pageable pageable);
+
+    @Query("{\"bool\": " +
+        "{\"must\": [" +
+        "{\"terms\": {\"organisation_unit_ids\": [\"?0\"]}}" +
+        "]}}")
+    Page<DocumentPublicationIndex> findByOrganisationUnitIds(Integer organisationUnitId,
+                                                             Pageable pageable);
+
     @Query("{\"bool\": " +
         "{\"must\": [" +
         "{\"term\": {\"type\": \"?0\"}}, " +

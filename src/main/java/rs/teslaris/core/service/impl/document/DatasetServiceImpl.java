@@ -20,6 +20,7 @@ import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
@@ -32,19 +33,20 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
 
     @Autowired
-    public DatasetServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        PersonContributionService personContributionService,
-        SearchService<DocumentPublicationIndex> searchService,
-        ExpressionTransformer expressionTransformer,
-        EventService eventService, DatasetJPAServiceImpl datasetJPAService,
-        PublisherService publisherService) {
+    public DatasetServiceImpl(MultilingualContentService multilingualContentService,
+                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                              DocumentRepository documentRepository,
+                              DocumentFileService documentFileService,
+                              PersonContributionService personContributionService,
+                              SearchService<DocumentPublicationIndex> searchService,
+                              ExpressionTransformer expressionTransformer,
+                              EventService eventService,
+                              OrganisationUnitService organisationUnitService,
+                              DatasetJPAServiceImpl datasetJPAService,
+                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService, personContributionService, searchService, expressionTransformer,
-            eventService);
+            eventService, organisationUnitService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }

@@ -256,7 +256,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personToUpdate.setScopusAuthorId(personalInfo.getScopusAuthorId());
 
         var personalInfoToUpdate = personToUpdate.getPersonalInfo();
-        personalInfoToUpdate.setPlaceOfBrith(personalInfo.getPlaceOfBrith());
+        personalInfoToUpdate.setPlaceOfBrith(personalInfo.getPlaceOfBirth());
         personalInfoToUpdate.setLocalBirthDate(personalInfo.getLocalBirthDate());
         personalInfoToUpdate.setSex(personalInfo.getSex());
 

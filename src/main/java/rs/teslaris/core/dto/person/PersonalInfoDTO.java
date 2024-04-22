@@ -18,7 +18,7 @@ public class PersonalInfoDTO {
     @NotNull(message = "You have to provide a local bitrth date.")
     private LocalDate localBirthDate;
 
-    private String placeOfBrith;
+    private String placeOfBirth;
 
     @NotNull(message = "You must provide a person sex.")
     private Sex sex;

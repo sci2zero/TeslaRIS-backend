@@ -190,8 +190,10 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         contribution.setInstitutions(new HashSet<>());
         if (Objects.isNull(contributionDTO.getInstitutionIds()) ||
             contributionDTO.getInstitutionIds().isEmpty()) {
-            contribution.getInstitutions()
-                .add(personService.getLatestResearcherInvolvement(contributor));
+            var latestInvolvement = personService.getLatestResearcherInvolvement(contributor);
+            if (Objects.nonNull(latestInvolvement)) {
+                contribution.getInstitutions().add(latestInvolvement);
+            }
         } else {
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
                 var organisationUnit = organisationUnitService.findOne(institutionId);
