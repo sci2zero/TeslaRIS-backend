@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,5 +19,10 @@ public class CountryController {
     @GetMapping("/{countryId}")
     public CountryDTO readCountry(@PathVariable Integer countryId) {
         return countryService.readCountryById(countryId);
+    }
+
+    @GetMapping
+    public List<CountryDTO> readAll() {
+        return countryService.readAllCountries();
     }
 }
