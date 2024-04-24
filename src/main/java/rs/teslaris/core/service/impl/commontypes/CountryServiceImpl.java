@@ -1,5 +1,7 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,12 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
     @Deprecated(forRemoval = true)
     public Country findCountryById(Integer countryId) {
         return this.findOne(countryId);
+    }
+
+    @Override
+    public List<CountryDTO> readAllCountries() {
+        return countryRepository.findAll().stream().map(CountryConverter::toDTO)
+            .collect(Collectors.toList());
     }
 
     @Override
