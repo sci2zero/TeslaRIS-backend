@@ -20,7 +20,6 @@ public class InvolvementDTO {
 
     private Integer id;
 
-    @NotNull(message = "You must provide a valid starting date.")
     private LocalDate dateFrom;
 
     private LocalDate dateTo;
