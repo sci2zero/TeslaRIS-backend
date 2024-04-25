@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -321,7 +322,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                         involvement.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
                         involvement.getInvolvementType().equals(InvolvementType.MEMBER_OF))
-                .max(Comparator.comparing(Involvement::getDateFrom));
+                .max(Comparator.comparing((involvement) -> {
+                    if (Objects.nonNull(involvement.getDateFrom())) {
+                        return involvement.getDateFrom();
+                    }
+
+                    return LocalDate.now(); // Look at it as most recent involvement
+                }));
 
             if (latestInvolvement.isPresent()) {
                 organisationUnit = latestInvolvement.get().getOrganisationUnit();
