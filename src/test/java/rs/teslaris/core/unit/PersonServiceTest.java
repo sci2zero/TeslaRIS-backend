@@ -284,8 +284,8 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO("John", "Doe", "Smith", null, null));
-        personNameDTOList.add(new PersonNameDTO("Jane", "Marie", "Doe", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "Jane", "Marie", "Doe", null, null));
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
@@ -305,7 +305,7 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO("John", "Doe", "Smith", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
@@ -329,7 +329,7 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO("John", "Doe", "Smith", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
 
         when(personRepository.findById(personId)).thenReturn(Optional.empty());
 

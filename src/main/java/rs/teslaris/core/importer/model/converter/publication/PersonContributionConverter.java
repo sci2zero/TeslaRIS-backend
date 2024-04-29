@@ -59,7 +59,7 @@ public class PersonContributionConverter {
 
         if (Objects.nonNull(contributor.getDisplayName())) {
             contribution.setPersonName(
-                new PersonNameDTO(contributor.getDisplayName(), "", "", null, null));
+                new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null));
         }
 
         contribution.setOrderNumber(orderNumber);

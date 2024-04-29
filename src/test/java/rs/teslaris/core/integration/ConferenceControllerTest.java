@@ -49,7 +49,7 @@ public class ConferenceControllerTest extends BaseTest {
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
-            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
         conferenceDTO.setContributions(List.of(contribution));
 
         return conferenceDTO;

@@ -13,6 +13,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PersonNameDTO {
 
+    private Integer id;
+
     @NotBlank(message = "You must provide a first name.")
     private String firstname;
 

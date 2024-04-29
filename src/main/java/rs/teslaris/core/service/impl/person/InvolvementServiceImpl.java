@@ -233,9 +233,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Override
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findOne(involvementId);
-//        TODO: Do i need to delete those involvments or just logicaly avoid (soft delete)
         var personId = involvementToDelete.getPersonInvolved().getId();
-        involvementToDelete.getPersonInvolved().removeInvolvement(involvementToDelete);
 
         involvementToDelete.getProofs()
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));

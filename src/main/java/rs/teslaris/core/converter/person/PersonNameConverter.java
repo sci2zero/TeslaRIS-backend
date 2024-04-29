@@ -6,7 +6,8 @@ import rs.teslaris.core.model.person.PersonName;
 public class PersonNameConverter {
 
     public static PersonNameDTO toDTO(PersonName personName) {
-        return new PersonNameDTO(personName.getFirstname(), personName.getOtherName(),
-            personName.getLastname(), personName.getDateFrom(), personName.getDateTo());
+        return new PersonNameDTO(personName.getId(), personName.getFirstname(),
+            personName.getOtherName(), personName.getLastname(), personName.getDateFrom(),
+            personName.getDateTo());
     }
 }
