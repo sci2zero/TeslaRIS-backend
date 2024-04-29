@@ -46,7 +46,7 @@ public class SoftwareControllerTest extends BaseTest {
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
-            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
         softwareDTO.setContributions(List.of(contribution));
         softwareDTO.setUris(new HashSet<>());
 

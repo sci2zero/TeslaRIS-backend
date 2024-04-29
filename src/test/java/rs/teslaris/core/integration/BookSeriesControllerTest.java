@@ -44,7 +44,7 @@ public class BookSeriesControllerTest extends BaseTest {
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
-            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
         bookSeriesDTO.setContributions(List.of(contribution));
         bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
 

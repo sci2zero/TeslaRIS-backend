@@ -73,7 +73,7 @@ public class PersonContributionServiceTest {
         contributionDTO1.setOrderNumber(1);
         contributionDTO1.setPersonId(1);
         contributionDTO1.setPersonName(
-            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
 
         var contributionsDTO = new ArrayList<PersonDocumentContributionDTO>();
         contributionsDTO.add(contributionDTO1);

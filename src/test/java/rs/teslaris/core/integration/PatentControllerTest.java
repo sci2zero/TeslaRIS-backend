@@ -46,7 +46,7 @@ public class PatentControllerTest extends BaseTest {
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
-            new PersonNameDTO("Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
         patentDTO.setContributions(List.of(contribution));
         patentDTO.setUris(new HashSet<>());
 

@@ -42,7 +42,8 @@ public class PersonConverter {
 
         return new PersonResponseDTO(
             person.getId(),
-            new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
+            new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
+                person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
                 person.getName().getDateTo()), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
@@ -93,7 +94,7 @@ public class PersonConverter {
         var otherNamesDTO = new ArrayList<PersonNameDTO>();
 
         otherNames.forEach(otherName -> otherNamesDTO.add(
-            new PersonNameDTO(otherName.getFirstname(), otherName.getOtherName(),
+            new PersonNameDTO(otherName.getId(), otherName.getFirstname(), otherName.getOtherName(),
                 otherName.getLastname(), otherName.getDateFrom(), otherName.getDateTo())));
 
         return otherNamesDTO;
@@ -192,7 +193,8 @@ public class PersonConverter {
         }
 
         return new PersonUserResponseDTO(
-            new PersonNameDTO(person.getName().getFirstname(), person.getName().getOtherName(),
+            new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
+                person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
                 person.getName().getDateTo()), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
