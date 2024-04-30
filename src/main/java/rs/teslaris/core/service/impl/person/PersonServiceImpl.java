@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -26,12 +27,12 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -313,8 +314,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         index.ifPresent(personIndexRepository::delete);
     }
 
-    public OrganisationUnit getLatestResearcherInvolvement(Person person) {
-        OrganisationUnit organisationUnit = null;
+    @Nullable
+    public Involvement getLatestResearcherInvolvement(Person person) {
         if (Objects.nonNull(person.getInvolvements())) {
             Optional<Involvement> latestInvolvement = person.getInvolvements().stream()
                 .filter(involvement -> Objects.nonNull(involvement.getOrganisationUnit()))
@@ -331,10 +332,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 }));
 
             if (latestInvolvement.isPresent()) {
-                organisationUnit = latestInvolvement.get().getOrganisationUnit();
+                return latestInvolvement.get();
             }
         }
-        return organisationUnit;
+        return null;
+    }
+
+    @Override
+    @Transactional
+    public InvolvementDTO getLatestResearcherInvolvement(Integer personId) {
+        var person = findOne(personId);
+        var latestInvolvement = getLatestResearcherInvolvement(person);
+        return Objects.nonNull(latestInvolvement) ? InvolvementConverter.toDTO(latestInvolvement) :
+            null;
     }
 
     @Override

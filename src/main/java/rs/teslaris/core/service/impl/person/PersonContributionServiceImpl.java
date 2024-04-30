@@ -188,13 +188,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         setAffiliationStatement(contribution, contributionDTO, contributor);
 
         contribution.setInstitutions(new HashSet<>());
-        if (Objects.isNull(contributionDTO.getInstitutionIds()) ||
-            contributionDTO.getInstitutionIds().isEmpty()) {
-            var latestInvolvement = personService.getLatestResearcherInvolvement(contributor);
-            if (Objects.nonNull(latestInvolvement)) {
-                contribution.getInstitutions().add(latestInvolvement);
-            }
-        } else {
+        if (Objects.nonNull(contributionDTO.getInstitutionIds())) {
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
                 var organisationUnit = organisationUnitService.findOne(institutionId);
                 contribution.getInstitutions().add(organisationUnit);
