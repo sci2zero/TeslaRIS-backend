@@ -10,8 +10,9 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
-import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.JPAService;
 
@@ -55,9 +56,13 @@ public interface PersonService extends JPAService<Person> {
 
     void deletePerson(Integer personId);
 
-    OrganisationUnit getLatestResearcherInvolvement(Person person);
+    Involvement getLatestResearcherInvolvement(Person person);
+
+    InvolvementDTO getLatestResearcherInvolvement(Integer personId);
 
     void reindexPersons();
 
     void indexPerson(Person savedPerson, Integer personDatabaseId);
+
+
 }

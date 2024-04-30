@@ -285,14 +285,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
             person = personService.createPersonWithBasicInfo(basicPersonDTO, true);
         }
-        var organisationUnit = personService.getLatestResearcherInvolvement(person);
+        var involvement = personService.getLatestResearcherInvolvement(person);
 
         var newUser =
             new User(registrationRequest.getEmail(),
                 passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
                 languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
-                person, organisationUnit);
+                person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null);
         var savedUser = userRepository.save(newUser);
 
         indexUser(savedUser, new UserAccountIndex());
@@ -449,8 +449,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             return;
         }
 
+        var latestInvolvement = personService.getLatestResearcherInvolvement(person);
+
         var userToUpdate = boundUser.get();
-        userToUpdate.setOrganisationUnit(personService.getLatestResearcherInvolvement(person));
+        userToUpdate.setOrganisationUnit(
+            Objects.nonNull(latestInvolvement) ? latestInvolvement.getOrganisationUnit() : null);
         userRepository.save(userToUpdate);
         var index = userAccountIndexRepository.findByDatabaseId(userToUpdate.getId())
             .orElse(new UserAccountIndex());

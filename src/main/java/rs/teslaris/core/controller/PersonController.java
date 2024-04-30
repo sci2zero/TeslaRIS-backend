@@ -27,6 +27,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.search.StringUtil;
@@ -159,5 +160,10 @@ public class PersonController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePerson(@PathVariable Integer personId) {
         personService.deletePerson(personId);
+    }
+
+    @GetMapping("/{personId}/latest-involvement")
+    public InvolvementDTO getLatestInvolvementOU(@PathVariable Integer personId) {
+        return personService.getLatestResearcherInvolvement(personId);
     }
 }
