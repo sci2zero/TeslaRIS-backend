@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 import javax.transaction.Transactional;
@@ -12,6 +13,8 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.Notification;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Event;
@@ -25,8 +28,10 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -45,6 +50,10 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     private final MultilingualContentService multilingualContentService;
 
     private final PersonContributionRepository personContributionRepository;
+
+    private final UserRepository userRepository;
+
+    private final NotificationService notificationService;
 
 
     @Value("${contribution.approved_by_default}")
@@ -173,6 +182,24 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                 contributor.getName().getLastname(),
                 contributor.getName().getDateFrom(),
                 contributor.getName().getDateTo());
+        } else if (Objects.nonNull(contributor)) {
+            var userOptional = userRepository.findForResearcher(contributor.getId());
+            if (userOptional.isPresent()) {
+                // TODO: Localization
+                var notificationValues = new HashMap<String, String>();
+                notificationValues.put("firstname", contributionDTO.getPersonName().getFirstname());
+                notificationValues.put("middlename",
+                    contributionDTO.getPersonName().getOtherName());
+                notificationValues.put("lastname", contributionDTO.getPersonName().getLastname());
+                notificationService.createNotification(new Notification(
+                    "Someone added you to a publication with name (" +
+                        notificationValues.get("firstname") + " " +
+                        notificationValues.get("middlename") + " " +
+                        notificationValues.get("lastname") +
+                        "), do you want to add it to your other name list?",
+                    notificationValues, NotificationType.NEW_OTHER_NAME_DETECTED,
+                    userOptional.get()));
+            }
         }
         return personName;
     }

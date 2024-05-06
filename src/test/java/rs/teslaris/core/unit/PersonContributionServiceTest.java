@@ -1,10 +1,12 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -21,6 +23,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.PersonContributionServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -41,6 +44,9 @@ public class PersonContributionServiceTest {
 
     @Mock
     private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private PersonContributionServiceImpl personContributionService;
@@ -80,6 +86,7 @@ public class PersonContributionServiceTest {
         documentDTO.setContributions(contributionsDTO);
 
         when(personService.findOne(1)).thenReturn(contributor);
+        when(userRepository.findForResearcher(any())).thenReturn(Optional.empty());
 
         // When
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
