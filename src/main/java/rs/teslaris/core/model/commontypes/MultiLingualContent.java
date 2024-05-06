@@ -19,7 +19,6 @@ import org.hibernate.validator.constraints.Length;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
 @Entity
 @Table(name = "multi_lingual_content")
 @Where(clause = "deleted=false")
