@@ -43,9 +43,12 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
     @Override
     public PrizeResponseDTO addPrize(Integer personId, PrizeDTO dto) {
         var newPrize = new Prize();
+        var person = personService.findOne(personId);
 
         setCommonFields(newPrize, dto);
         var savedPrize = prizeRepository.save(newPrize);
+
+        person.addPrize(savedPrize);
 
         return new PrizeResponseDTO(
             MultilingualContentConverter.getMultilingualContentDTO(savedPrize.getTitle()),
