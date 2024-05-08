@@ -90,4 +90,8 @@ public class Person extends BaseEntity {
         involvements.remove(involvement);
         involvement.setPersonInvolved(null);
     }
+
+    public void addPrize(Prize prize) {
+        prizes.add(prize);
+    }
 }
