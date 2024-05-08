@@ -61,6 +61,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 newOtherNameNotificationHandler.handle(notification);
                 break;
         }
+
+        delete(notificationId);
     }
 
     @Override

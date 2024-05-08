@@ -13,8 +13,6 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.Notification;
-import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Event;
@@ -35,6 +33,7 @@ import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -185,20 +184,14 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         } else if (Objects.nonNull(contributor)) {
             var userOptional = userRepository.findForResearcher(contributor.getId());
             if (userOptional.isPresent()) {
-                // TODO: Localization
                 var notificationValues = new HashMap<String, String>();
                 notificationValues.put("firstname", contributionDTO.getPersonName().getFirstname());
                 notificationValues.put("middlename",
                     contributionDTO.getPersonName().getOtherName());
                 notificationValues.put("lastname", contributionDTO.getPersonName().getLastname());
-                notificationService.createNotification(new Notification(
-                    "Someone added you to a publication with name (" +
-                        notificationValues.get("firstname") + " " +
-                        notificationValues.get("middlename") + " " +
-                        notificationValues.get("lastname") +
-                        "), do you want to add it to your other name list?",
-                    notificationValues, NotificationType.NEW_OTHER_NAME_DETECTED,
-                    userOptional.get()));
+                notificationService.createNotification(
+                    NotificationFactory.contructNewOtherNameDetectedNotification(notificationValues,
+                        userOptional.get()));
             }
         }
         return personName;
