@@ -18,7 +18,7 @@ public class NotificationFactory {
                         notificationValues.get("lastname") +
                         "), hoćete li da dodate ovo ime u listu drugin oblika imena?",
                     notificationValues, NotificationType.NEW_OTHER_NAME_DETECTED, user);
-            case "EN":
+            default:
                 return new Notification(
                     "Someone added you to a publication with name (" +
                         notificationValues.get("firstname") + " " +
@@ -26,8 +26,24 @@ public class NotificationFactory {
                         notificationValues.get("lastname") +
                         "), do you want to add it to your other name list?",
                     notificationValues, NotificationType.NEW_OTHER_NAME_DETECTED, user);
-
         }
-        return null;
+    }
+
+    public static Notification contructAddedToPublicationNotification(
+        Map<String, String> notificationValues, User user) {
+        switch (user.getPreferredLanguage().getLanguageCode()) {
+            case "SR":
+                return new Notification(
+                    "Neko vas je dodao na publikaciju (" +
+                        notificationValues.get("title") +
+                        "), ukoliko ova publikacija nije vaša, možete se ukloniti sa nje.",
+                    notificationValues, NotificationType.ADDED_TO_PUBLICATION, user);
+            default:
+                return new Notification(
+                    "Someone added zou to publication (" +
+                        notificationValues.get("title") +
+                        "), if this is not your publication, you can remove yourself from it.",
+                    notificationValues, NotificationType.ADDED_TO_PUBLICATION, user);
+        }
     }
 }

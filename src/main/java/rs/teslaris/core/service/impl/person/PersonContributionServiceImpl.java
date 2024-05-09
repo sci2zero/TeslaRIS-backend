@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
@@ -13,6 +14,7 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Event;
@@ -76,6 +78,18 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
             if (!addedPrevoiusly) {
                 document.addDocumentContribution(contribution);
+                var userOptional =
+                    userRepository.findForResearcher(contribution.getPerson().getId());
+                if (userOptional.isPresent()) {
+                    var notificationValues = new HashMap<String, String>();
+                    notificationValues.put("title",
+                        document.getTitle().stream().max(Comparator.comparingInt(
+                            MultiLingualContent::getPriority)).get().getContent());
+                    notificationService.createNotification(
+                        NotificationFactory.contructAddedToPublicationNotification(
+                            notificationValues,
+                            userOptional.get()));
+                }
             }
         });
     }

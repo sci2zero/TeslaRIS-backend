@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.notificationhandling.NotificationAction;
 
 @Service
 public interface NotificationService extends JPAService<Notification> {
@@ -13,9 +14,9 @@ public interface NotificationService extends JPAService<Notification> {
 
     long getUserNotificationCount(Integer userId);
 
-    void approve(Integer notificationId, Integer userId);
+    void performAction(Integer notificationId, Integer userId, NotificationAction action);
 
-    void reject(Integer notificationId, Integer userId);
+    void dismiss(Integer notificationId, Integer userId);
 
     Notification createNotification(Notification notification);
 }
