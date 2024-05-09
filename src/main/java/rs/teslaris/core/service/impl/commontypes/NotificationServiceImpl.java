@@ -12,7 +12,9 @@ import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
-import rs.teslaris.core.util.notificationhandling.NewOtherNameNotificationHandler;
+import rs.teslaris.core.util.notificationhandling.NotificationAction;
+import rs.teslaris.core.util.notificationhandling.NotificationConfiguration;
+import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotificationHandler;
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +36,11 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         var notificationList = notificationRepository.getNotificationsForUser(userId);
 
         return notificationList.stream().map(
-            notification -> new NotificationDTO(notification.getId(),
-                notification.getNotificationText())).collect(
-            Collectors.toList());
+                notification -> new NotificationDTO(notification.getId(),
+                    notification.getNotificationText(),
+                    NotificationConfiguration.allowedActions.get(notification.getNotificationType())))
+            .collect(
+                Collectors.toList());
     }
 
     @Override
@@ -45,7 +49,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
-    public void approve(Integer notificationId, Integer userId) {
+    public void performAction(Integer notificationId, Integer userId,
+                              NotificationAction notificationAction) {
         var notification = findOne(notificationId);
 
         if (!notification.getUser().getId().equals(userId)) {
@@ -58,7 +63,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 //TODO: To be implemented...
                 break;
             case NEW_OTHER_NAME_DETECTED:
-                newOtherNameNotificationHandler.handle(notification);
+                newOtherNameNotificationHandler.handle(notification, notificationAction);
                 break;
         }
 
@@ -66,7 +71,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
-    public void reject(Integer notificationId, Integer userId) {
+    public void dismiss(Integer notificationId, Integer userId) {
         var notification = findOne(notificationId);
 
         if (!notification.getUser().getId().equals(userId)) {

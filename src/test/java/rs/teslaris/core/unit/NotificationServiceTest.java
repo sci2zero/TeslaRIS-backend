@@ -19,7 +19,8 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.service.impl.commontypes.NotificationServiceImpl;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
-import rs.teslaris.core.util.notificationhandling.NewOtherNameNotificationHandler;
+import rs.teslaris.core.util.notificationhandling.NotificationAction;
+import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotificationHandler;
 
 @SpringBootTest
 public class NotificationServiceTest {
@@ -81,10 +82,10 @@ public class NotificationServiceTest {
         when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
 
         // When
-        notificationService.approve(notificationId, userId);
+        notificationService.performAction(notificationId, userId, NotificationAction.APPROVE);
 
         // Then
-        verify(newOtherNameNotificationHandler).handle(notification);
+        verify(newOtherNameNotificationHandler).handle(notification, NotificationAction.APPROVE);
     }
 
     @Test
@@ -106,7 +107,7 @@ public class NotificationServiceTest {
         when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
 
         // When
-        notificationService.reject(notificationId, userId);
+        notificationService.dismiss(notificationId, userId);
 
         // Then
         verify(notificationRepository).save(any());
@@ -127,7 +128,7 @@ public class NotificationServiceTest {
 
         // When
         assertThrows(NotificationException.class, () -> {
-            notificationService.reject(notificationId, userId);
+            notificationService.dismiss(notificationId, userId);
         });
 
         // Then (NotificationException should be thrown)
