@@ -8,6 +8,7 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -30,8 +32,10 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -42,6 +46,7 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
@@ -478,5 +483,32 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
             return b;
         })))._toQuery();
+    }
+
+    protected void sendNotifications(Document document) {
+        var loggedInUser =
+            (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        document.getContributors().forEach(contribution -> {
+            if (Objects.isNull(contribution.getPerson())) {
+                return;
+            }
+
+            var userOptional =
+                personContributionService.getUserForContributor(contribution.getPerson().getId());
+            if (userOptional.isPresent() &&
+                !userOptional.get().getId().equals(loggedInUser.getId())) {
+                var notificationValues = new HashMap<String, String>();
+                notificationValues.put("title",
+                    document.getTitle().stream().max(Comparator.comparingInt(
+                        MultiLingualContent::getPriority)).get().getContent());
+                notificationValues.put("contributionId", contribution.getId().toString());
+                notificationValues.put("personId", contribution.getPerson().getId().toString());
+                personContributionService.notifyContributor(
+                    NotificationFactory.contructAddedToPublicationNotification(
+                        notificationValues,
+                        userOptional.get()));
+            }
+        });
     }
 }

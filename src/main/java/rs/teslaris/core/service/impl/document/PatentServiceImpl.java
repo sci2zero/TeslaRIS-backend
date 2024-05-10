@@ -77,6 +77,8 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             indexPatent(savedPatent, new DocumentPublicationIndex());
         }
 
+        sendNotifications(savedPatent);
+
         return savedPatent;
     }
 
@@ -93,7 +95,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                 publisherService.findPublisherById(patentDTO.getPublisherId()));
         }
 
-        patentJPAService.save(patentToUpdate);
+        var updatedPatent = patentJPAService.save(patentToUpdate);
 
         if (patentToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPatent(patentToUpdate,
@@ -101,6 +103,8 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                         patentId)
                     .orElse(new DocumentPublicationIndex()));
         }
+
+        sendNotifications(updatedPatent);
     }
 
     @Override

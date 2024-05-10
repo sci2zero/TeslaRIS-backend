@@ -14,6 +14,7 @@ import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
 import rs.teslaris.core.util.notificationhandling.NotificationConfiguration;
+import rs.teslaris.core.util.notificationhandling.handlerimpl.AddedToPublicationNotificationHandler;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotificationHandler;
 
 @Service
@@ -25,6 +26,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     private final NotificationRepository notificationRepository;
 
     private final NewOtherNameNotificationHandler newOtherNameNotificationHandler;
+
+    private final AddedToPublicationNotificationHandler addedToPublicationNotificationHandler;
+
 
     @Override
     protected JpaRepository<Notification, Integer> getEntityRepository() {
@@ -64,6 +68,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 break;
             case NEW_OTHER_NAME_DETECTED:
                 newOtherNameNotificationHandler.handle(notification, notificationAction);
+                break;
+            case ADDED_TO_PUBLICATION:
+                addedToPublicationNotificationHandler.handle(notification, notificationAction);
                 break;
         }
 
