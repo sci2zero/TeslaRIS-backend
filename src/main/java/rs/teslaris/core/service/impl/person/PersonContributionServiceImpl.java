@@ -1,9 +1,9 @@
 package rs.teslaris.core.service.impl.person;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +14,7 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Event;
@@ -27,9 +27,9 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -43,8 +43,6 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 public class PersonContributionServiceImpl implements PersonContributionService {
 
     private final PersonService personService;
-
-    private final CountryService countryService;
 
     private final OrganisationUnitService organisationUnitService;
 
@@ -78,18 +76,6 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
             if (!addedPrevoiusly) {
                 document.addDocumentContribution(contribution);
-                var userOptional =
-                    userRepository.findForResearcher(contribution.getPerson().getId());
-                if (userOptional.isPresent()) {
-                    var notificationValues = new HashMap<String, String>();
-                    notificationValues.put("title",
-                        document.getTitle().stream().max(Comparator.comparingInt(
-                            MultiLingualContent::getPriority)).get().getContent());
-                    notificationService.createNotification(
-                        NotificationFactory.contructAddedToPublicationNotification(
-                            notificationValues,
-                            userOptional.get()));
-                }
             }
         });
     }
@@ -253,5 +239,13 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                 .getOtherName().equals(
                     contribution.getAffiliationStatement().getDisplayPersonName()
                         .getOtherName());
+    }
+
+    public Optional<User> getUserForContributor(Integer contributorId) {
+        return userRepository.findForResearcher(contributorId);
+    }
+
+    public void notifyContributor(Notification notification) {
+        notificationService.createNotification(notification);
     }
 }

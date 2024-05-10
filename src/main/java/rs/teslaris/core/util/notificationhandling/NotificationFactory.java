@@ -12,7 +12,7 @@ public class NotificationFactory {
         switch (user.getPreferredLanguage().getLanguageCode()) {
             case "SR":
                 return new Notification(
-                    "Neko vas je dodao na publikaciju sa novim oblikom imena (" +
+                    "Dodati ste na publikaciju sa novim oblikom imena (" +
                         notificationValues.get("firstname") + " " +
                         notificationValues.get("middlename") + " " +
                         notificationValues.get("lastname") +
@@ -20,7 +20,7 @@ public class NotificationFactory {
                     notificationValues, NotificationType.NEW_OTHER_NAME_DETECTED, user);
             default:
                 return new Notification(
-                    "Someone added you to a publication with name (" +
+                    "You are added to a publication with a new name variant (" +
                         notificationValues.get("firstname") + " " +
                         notificationValues.get("middlename") + " " +
                         notificationValues.get("lastname") +

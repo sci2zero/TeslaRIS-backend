@@ -3,6 +3,7 @@ package rs.teslaris.core.util.notificationhandling.handlerimpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -31,11 +32,7 @@ public class AddedToPublicationNotificationHandler implements NotificationHandle
         var bindedPerson =
             personService.findOne(Integer.parseInt(notification.getValues().get("personId")));
         var newPerson = new Person();
-        newPerson.setName(new PersonName(bindedPerson.getName().getFirstname(),
-            bindedPerson.getName().getOtherName(), bindedPerson.getName().getLastname(), null,
-            null));
-
-        var savedPerson = personService.save(newPerson);
+        newPerson.setApproveStatus(ApproveStatus.APPROVED);
 
         var contributionId = Integer.parseInt(notification.getValues().get("contributionId"));
         var contributionOptional = personContributionRepository.findById(contributionId);
@@ -44,9 +41,17 @@ public class AddedToPublicationNotificationHandler implements NotificationHandle
         }
 
         var contribution = contributionOptional.get();
+        newPerson.setName(new PersonName(
+            contribution.getAffiliationStatement().getDisplayPersonName().getFirstname(),
+            contribution.getAffiliationStatement().getDisplayPersonName().getOtherName(),
+            contribution.getAffiliationStatement().getDisplayPersonName().getLastname(), null,
+            null));
+        var savedPerson = personService.save(newPerson);
+
         contribution.setPerson(savedPerson);
         personContributionRepository.save(contribution);
 
         // TODO: notify admin?
+        // TODO: should be reindexed
     }
 }

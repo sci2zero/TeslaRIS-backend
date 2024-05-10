@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -24,6 +25,9 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -38,6 +42,7 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.document.PatentServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
@@ -105,10 +110,17 @@ public class PatentServiceTest {
             Set.of(new MultiLingualContent()));
         when(patentJPAService.save(any())).thenReturn(document);
 
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User());
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
         // When
         var result = patentService.createPatent(dto, true);
 
         // Then
+        assertNotNull(result);
         verify(multilingualContentService, times(4)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
@@ -126,6 +138,13 @@ public class PatentServiceTest {
         patentToUpdate.setDocumentDate("2023");
 
         when(patentJPAService.findOne(patentId)).thenReturn(patentToUpdate);
+        when(patentJPAService.save(any())).thenReturn(new Patent());
+
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User());
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
 
         // When
         patentService.editPatent(patentId, patentDTO);
