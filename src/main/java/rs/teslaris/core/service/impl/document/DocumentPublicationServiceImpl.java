@@ -503,6 +503,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     document.getTitle().stream().max(Comparator.comparingInt(
                         MultiLingualContent::getPriority)).get().getContent());
                 notificationValues.put("contributionId", contribution.getId().toString());
+                notificationValues.put("documentId", document.getId().toString());
                 notificationValues.put("personId", contribution.getPerson().getId().toString());
                 personContributionService.notifyContributor(
                     NotificationFactory.contructAddedToPublicationNotification(

@@ -77,6 +77,8 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
             indexSoftware(savedSoftware, new DocumentPublicationIndex());
         }
 
+        sendNotifications(savedSoftware);
+
         return savedSoftware;
     }
 
@@ -101,6 +103,8 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                         softwareId)
                     .orElse(new DocumentPublicationIndex()));
         }
+
+        sendNotifications(softwareToUpdate);
     }
 
     @Override

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,6 +29,9 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -45,6 +49,7 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.service.impl.document.JournalPublicationServiceImpl;
@@ -122,6 +127,12 @@ public class JournalPublicationServiceTest {
         when(journalPublicationJPAService.save(any())).thenReturn(document);
         when(eventService.findEventById(1)).thenReturn(new Conference());
 
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User());
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
         // When
         var result = journalPublicationService.createJournalPublication(publicationDTO, true);
 
@@ -144,6 +155,13 @@ public class JournalPublicationServiceTest {
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
         when(eventService.findEventById(1)).thenReturn(new Conference());
+        when(journalPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
+
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User());
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
 
         // When
         journalPublicationService.editJournalPublication(publicationId, publicationDTO);

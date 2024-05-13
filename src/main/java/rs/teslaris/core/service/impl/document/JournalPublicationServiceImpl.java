@@ -101,6 +101,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
         }
 
+        sendNotifications(savedPublication);
+
         return savedPublication;
     }
 
@@ -121,6 +123,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         }
 
         journalPublicationJPAService.save(publicationToUpdate);
+
+        sendNotifications(publicationToUpdate);
     }
 
     @Override

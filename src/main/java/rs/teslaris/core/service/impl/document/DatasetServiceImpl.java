@@ -77,6 +77,8 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             indexDataset(savedDataset, new DocumentPublicationIndex());
         }
 
+        sendNotifications(savedDataset);
+
         return savedDataset;
     }
 
@@ -101,6 +103,8 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                         datasetId)
                     .orElse(new DocumentPublicationIndex()));
         }
+
+        sendNotifications(datasetToUpdate);
     }
 
     @Override
