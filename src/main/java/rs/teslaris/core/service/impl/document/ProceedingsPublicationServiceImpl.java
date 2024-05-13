@@ -109,6 +109,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
         }
 
+        sendNotifications(savedPublication);
+
         return savedPublication;
     }
 
@@ -130,6 +132,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         }
 
         proceedingPublicationJPAService.save(publicationToUpdate);
+
+        sendNotifications(publicationToUpdate);
     }
 
     @Override

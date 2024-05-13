@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +23,9 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -31,6 +35,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsServiceImpl;
@@ -144,6 +149,12 @@ public class ProceedingsServiceTest {
             Set.of(new MultiLingualContent()));
         when(proceedingJPAService.save(any())).thenReturn(document);
 
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User());
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
         // When
         var result = proceedingsService.createProceedings(proceedingsDTO, true);
 
@@ -164,6 +175,13 @@ public class ProceedingsServiceTest {
         proceedingsToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
 
         when(proceedingJPAService.findOne(proceedingsId)).thenReturn(proceedingsToUpdate);
+        when(proceedingJPAService.save(any())).thenReturn(proceedingsToUpdate);
+
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User());
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
 
         // When
         proceedingsService.updateProceedings(proceedingsId, proceedingsDTO);

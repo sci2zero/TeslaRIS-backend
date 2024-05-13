@@ -127,6 +127,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             indexProceedings(savedProceedings, new DocumentPublicationIndex());
         }
 
+        sendNotifications(savedProceedings);
+
         return savedProceedings;
     }
 
@@ -146,6 +148,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         }
 
         proceedingJPAService.save(proceedingsToUpdate);
+
+        sendNotifications(proceedingsToUpdate);
     }
 
     @Override

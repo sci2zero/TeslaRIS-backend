@@ -18,5 +18,6 @@ public class OrganisationUnitWizardDTO extends OrganisationUnitRequestDTO {
     private Integer superOrganisationUnitId;
 
     public void setOldId(Integer integer) {
+        super.setOldId(integer);
     }
 }
