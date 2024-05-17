@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -121,5 +123,15 @@ public class DocumentPublicationController {
     @PublicationEditCheck
     void deleteDocumentPublication(@PathVariable Integer documentId) {
         documentPublicationService.deleteDocumentPublication(documentId);
+    }
+
+    @PatchMapping("/{documentId}/reorder-contribution/{contributionId}")
+    @PublicationEditCheck
+    void reorderContributions(@PathVariable Integer documentId,
+                              @PathVariable Integer contributionId,
+                              @RequestBody ReorderContributionRequestDTO reorderRequest) {
+        documentPublicationService.reorderDocumentContributions(documentId, contributionId,
+            reorderRequest.getOldContributionOrderNumber(),
+            reorderRequest.getNewContributionOrderNumber());
     }
 }

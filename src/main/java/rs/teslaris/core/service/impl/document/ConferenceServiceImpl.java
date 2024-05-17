@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +15,7 @@ import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -32,13 +34,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Autowired
     public ConferenceServiceImpl(EventIndexRepository eventIndexRepository,
                                  MultilingualContentService multilingualContentService,
-                                 EventRepository eventRepository,
                                  PersonContributionService personContributionService,
-                                 SearchService<EventIndex> searchService,
-                                 EmailUtil emailUtil,
+                                 EventRepository eventRepository,
+                                 SearchService<EventIndex> searchService, EmailUtil emailUtil,
                                  ConferenceJPAServiceImpl conferenceJPAService) {
-        super(eventIndexRepository, multilingualContentService, eventRepository,
-            personContributionService, searchService, emailUtil);
+        super(eventIndexRepository, multilingualContentService, personContributionService,
+            eventRepository, searchService, emailUtil);
         this.conferenceJPAService = conferenceJPAService;
     }
 
@@ -159,5 +160,18 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         indexEventCommonFields(index, conference);
         eventIndexRepository.save(index);
+    }
+
+    @Override
+    public void reorderConferenceContributions(Integer conferenceId, Integer contributionId,
+                                               Integer oldContributionOrderNumber,
+                                               Integer newContributionOrderNumber) {
+        var event = findOne(conferenceId);
+        var contributions = event.getContributions().stream()
+            .map(contribution -> (PersonContribution) contribution).collect(
+                Collectors.toSet());
+
+        personContributionService.reorderContributions(contributions, contributionId,
+            oldContributionOrderNumber, newContributionOrderNumber);
     }
 }

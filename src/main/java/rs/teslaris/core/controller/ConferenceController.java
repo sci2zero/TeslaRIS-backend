@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
@@ -92,5 +94,15 @@ public class ConferenceController {
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     public void deleteConference(@PathVariable Integer conferenceId) {
         conferenceService.deleteConference(conferenceId);
+    }
+
+    @PatchMapping("/{conferenceId}/reorder-contribution/{contributionId}")
+    @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
+    void reorderEventContributions(@PathVariable Integer conferenceId,
+                                   @PathVariable Integer contributionId,
+                                   @RequestBody ReorderContributionRequestDTO reorderRequest) {
+        conferenceService.reorderConferenceContributions(conferenceId, contributionId,
+            reorderRequest.getOldContributionOrderNumber(),
+            reorderRequest.getNewContributionOrderNumber());
     }
 }

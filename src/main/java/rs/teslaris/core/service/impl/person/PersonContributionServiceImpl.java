@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -247,5 +248,31 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
     public void notifyContributor(Notification notification) {
         notificationService.createNotification(notification);
+    }
+
+    @Override
+    public void reorderContributions(Set<PersonContribution> contributions,
+                                     Integer contributionId,
+                                     Integer oldContributionOrderNumber,
+                                     Integer newContributionOrderNumber) {
+        if (oldContributionOrderNumber > newContributionOrderNumber) {
+            contributions.forEach(contribution -> {
+                if (contribution.getId().equals(contributionId)) {
+                    contribution.setOrderNumber(newContributionOrderNumber);
+                } else if (contribution.getOrderNumber() >= newContributionOrderNumber &&
+                    contribution.getOrderNumber() < oldContributionOrderNumber) {
+                    contribution.setOrderNumber(contribution.getOrderNumber() + 1);
+                }
+            });
+        } else if (oldContributionOrderNumber < newContributionOrderNumber) {
+            contributions.forEach(contribution -> {
+                if (contribution.getId().equals(contributionId)) {
+                    contribution.setOrderNumber(newContributionOrderNumber);
+                } else if (contribution.getOrderNumber() > oldContributionOrderNumber &&
+                    contribution.getOrderNumber() <= newContributionOrderNumber) {
+                    contribution.setOrderNumber(contribution.getOrderNumber() - 1);
+                }
+            });
+        }
     }
 }
