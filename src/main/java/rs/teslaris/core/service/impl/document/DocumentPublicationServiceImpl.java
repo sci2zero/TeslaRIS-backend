@@ -439,6 +439,29 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         documentPublicationIndexRepository.deleteAll();
     }
 
+    @Override
+    public void reorderDocumentContributions(Integer documentId, Integer contributionId,
+                                             Integer oldContributionOrderNumber,
+                                             Integer newContributionOrderNumber) {
+        var document = findOne(documentId);
+        var contributions = document.getContributors().stream()
+            .map(contribution -> (PersonContribution) contribution).collect(
+                Collectors.toSet());
+
+        personContributionService.reorderContributions(contributions, contributionId,
+            oldContributionOrderNumber, newContributionOrderNumber);
+
+        document.getContributors().forEach(parentContribution -> {
+            contributions.forEach(contribution -> {
+                if (contribution.getId().equals(parentContribution.getId())) {
+                    contribution.setOrderNumber(parentContribution.getOrderNumber());
+                }
+            });
+        });
+
+        save(document);
+    }
+
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {

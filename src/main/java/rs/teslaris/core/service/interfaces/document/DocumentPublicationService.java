@@ -48,4 +48,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               SearchRequestType type);
 
     void deleteIndexes();
+
+    void reorderDocumentContributions(Integer documentId, Integer contributionId,
+                                      Integer oldContributionOrderNumber,
+                                      Integer newContributionOrderNumber);
 }
