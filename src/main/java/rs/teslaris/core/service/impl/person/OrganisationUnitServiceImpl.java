@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -10,7 +11,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -519,7 +519,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer sourceOrganisationUnitId,
                                                              Integer targetOrganisationUnit) {
         List<OrganisationUnitsRelation> relationsToCheck =
-            organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationType(
+            organisationUnitsRelationRepository.findBySourceOrganisationUnitIdAndRelationType(
                 sourceOrganisationUnitId, OrganisationUnitRelationType.BELONGS_TO);
 
         while (!relationsToCheck.isEmpty()) {
@@ -530,7 +530,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             }
 
             List<OrganisationUnitsRelation> newRelationToCheck =
-                organisationUnitsRelationRepository.findBySourceOrganisationUnitAndRelationType(
+                organisationUnitsRelationRepository.findBySourceOrganisationUnitIdAndRelationType(
                     newTargetOrganisationUnit.getId(), OrganisationUnitRelationType.BELONGS_TO);
             relationsToCheck.addAll(newRelationToCheck);
 

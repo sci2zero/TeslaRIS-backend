@@ -11,4 +11,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Inte
 
     @Query("select t from RefreshToken t where t.refreshTokenValue = :refreshTokenValue")
     Optional<RefreshToken> getRefreshToken(String refreshTokenValue);
+
+    @Query("select t from RefreshToken t where t.user.id = :userId")
+    Optional<RefreshToken> findByUserId(Integer userId);
 }

@@ -13,14 +13,17 @@ public class AuditorAwareImpl implements AuditorAware<String> {
             return Optional.of("SCRIPT_CREATED");
         }
 
-        if (SecurityContextHolder.getContext().getAuthentication()
-            .getPrincipal() instanceof String) {
-            return Optional.of(StringUtils.capitalize(
-                (String) SecurityContextHolder.getContext().getAuthentication()
-                    .getPrincipal()));
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof String) {
+            return Optional.of(StringUtils.capitalize((String) principal));
+        } else if (principal instanceof User) {
+            return Optional.of(((User) principal).getUsername());
+        } else if (principal instanceof org.springframework.security.core.userdetails.User) {
+            return Optional.of(
+                ((org.springframework.security.core.userdetails.User) principal).getUsername());
         }
 
-        return Optional.of(((User) SecurityContextHolder.getContext().getAuthentication()
-            .getPrincipal()).getUsername());
+        return Optional.of("UNKNOWN");
     }
 }

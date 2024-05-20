@@ -1,8 +1,8 @@
 package rs.teslaris.core.annotation.aspect;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Objects;
-import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

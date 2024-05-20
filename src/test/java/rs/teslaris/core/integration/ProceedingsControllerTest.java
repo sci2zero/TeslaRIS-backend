@@ -28,7 +28,7 @@ public class ProceedingsControllerTest extends BaseTest {
 
 
     private ProceedingsDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setTitle(dummyMC);
@@ -36,12 +36,12 @@ public class ProceedingsControllerTest extends BaseTest {
         proceedingsDTO.setDescription(dummyMC);
         proceedingsDTO.setKeywords(dummyMC);
         proceedingsDTO.setDocumentDate("31.01.2000.");
-        proceedingsDTO.setEventId(38);
+        proceedingsDTO.setEventId(1);
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
         contribution.setOrderNumber(1);
-        contribution.setPersonId(22);
+        contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
@@ -54,35 +54,35 @@ public class ProceedingsControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadProceedings() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.get("http://localhost:8081/api/proceedings/{documentId}", 40)
+                MockMvcRequestBuilders.get("http://localhost:8081/api/proceedings/{documentId}", 1)
                     .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
             .andExpect(jsonPath("$.eisbn").value("MOCK_eISBN"));
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadProceedingsForBookSeries() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/proceedings/book-series/{bookSeriesId}", 51)
+                    "http://localhost:8081/api/proceedings/book-series/{bookSeriesId}", 2)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadProceedingsForEvent() throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/proceedings/for-event/{documentId}", 38)
+                        "http://localhost:8081/api/proceedings/for-event/{documentId}", 1)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateProceedings() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -98,7 +98,7 @@ public class ProceedingsControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testUpdateProceedings() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -106,20 +106,20 @@ public class ProceedingsControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(proceedingsDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{documentId}", 41)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{documentId}", 1)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeleteProceedings() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/proceedings/{documentId}",
-                        41).contentType(MediaType.APPLICATION_JSON)
+                        2).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

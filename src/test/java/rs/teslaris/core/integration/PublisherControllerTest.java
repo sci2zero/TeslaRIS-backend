@@ -24,14 +24,14 @@ public class PublisherControllerTest extends BaseTest {
 
     private PublisherDTO getTestPayload() {
         var publisherDTO = new PublisherDTO();
-        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "EN", "Name", 1)));
-        publisherDTO.setPlace(List.of(new MultilingualContentDTO(25, "EN", "Place", 1)));
-        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "EN", "State", 1)));
+        publisherDTO.setName(List.of(new MultilingualContentDTO(1, "EN", "Name", 1)));
+        publisherDTO.setPlace(List.of(new MultilingualContentDTO(1, "EN", "Place", 1)));
+        publisherDTO.setState(List.of(new MultilingualContentDTO(1, "EN", "State", 1)));
         return publisherDTO;
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAllPublishers() throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get("http://localhost:8081/api/publisher")
@@ -40,16 +40,16 @@ public class PublisherControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadPublisher() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.get("http://localhost:8081/api/publisher/{publisherId}", 42)
+                MockMvcRequestBuilders.get("http://localhost:8081/api/publisher/{publisherId}", 1)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testSearchPublishers() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -62,7 +62,7 @@ public class PublisherControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreatePublisher() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -78,13 +78,13 @@ public class PublisherControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreatePublisherBasic() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         var publisherDTO = new PublisherBasicAdditionDTO();
-        publisherDTO.setName(List.of(new MultilingualContentDTO(25, "EN", "Name", 1)));
-        publisherDTO.setState(List.of(new MultilingualContentDTO(25, "EN", "State", 1)));
+        publisherDTO.setName(List.of(new MultilingualContentDTO(1, "EN", "Name", 1)));
+        publisherDTO.setState(List.of(new MultilingualContentDTO(1, "EN", "State", 1)));
 
         String requestBody = objectMapper.writeValueAsString(publisherDTO);
         mockMvc.perform(
@@ -98,26 +98,26 @@ public class PublisherControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testUpdatePublisher() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
         var publisherDTO = getTestPayload();
 
         String requestBody = objectMapper.writeValueAsString(publisherDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/publisher/{publisherId}", 42)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/publisher/{publisherId}", 1)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeletePublisher() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("http://localhost:8081/api/publisher/{publisherId}", 42)
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/publisher/{publisherId}", 1)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

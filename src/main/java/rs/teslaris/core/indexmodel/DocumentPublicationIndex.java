@@ -1,9 +1,9 @@
 package rs.teslaris.core.indexmodel;
 
 
+import jakarta.persistence.Id;
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

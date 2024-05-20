@@ -492,6 +492,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var refreshTokenValue = UUID.randomUUID().toString();
         var hashedRefreshToken =
             Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();
+
+        var oldRefreshToken = refreshTokenRepository.findByUserId(user.getId());
+        oldRefreshToken.ifPresent(refreshTokenRepository::delete);
+
         refreshTokenRepository.save(new RefreshToken(hashedRefreshToken, user));
 
         return refreshTokenValue;

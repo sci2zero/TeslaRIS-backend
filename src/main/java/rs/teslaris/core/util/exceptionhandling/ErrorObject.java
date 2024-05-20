@@ -1,9 +1,9 @@
 package rs.teslaris.core.util.exceptionhandling;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 
 public class ErrorObject {

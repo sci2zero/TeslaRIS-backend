@@ -3,7 +3,6 @@ package rs.teslaris.core.importer.model.converter.publication;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
-import joptsimple.internal.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
@@ -30,7 +29,7 @@ public abstract class DocumentConverter {
 
         if (Objects.nonNull(record.getKeywords())) {
             dto.setKeywords(
-                multilingualContentConverter.toDTO(Strings.join(record.getKeywords(), ", ")));
+                multilingualContentConverter.toDTO(String.join(", ", record.getKeywords())));
         } else {
             dto.setKeywords(new ArrayList<>());
         }

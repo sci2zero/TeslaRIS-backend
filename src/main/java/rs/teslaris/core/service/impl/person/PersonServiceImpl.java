@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -9,9 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -539,8 +538,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         token -> {
                             b.should(sb -> sb.wildcard(
                                 m -> m.field("name").value(token).caseInsensitive(true)));
-                            b.should(sb -> sb.match(m -> m.field("name").query(token).fuzziness(
-                                Fuzziness.ONE.asString())));
+                            b.should(sb -> sb.match(m -> m.field("name").query(token).fuzziness("1")));
                             b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));

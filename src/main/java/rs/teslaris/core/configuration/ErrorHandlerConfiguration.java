@@ -1,11 +1,11 @@
 package rs.teslaris.core.configuration;
 
 import io.jsonwebtoken.MalformedJwtException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.persistence.EntityNotFoundException;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.ConstraintViolationException;
 import org.hibernate.StaleStateException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;

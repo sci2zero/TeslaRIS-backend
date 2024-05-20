@@ -1,7 +1,7 @@
 package rs.teslaris.core.dto.institution;
 
+import jakarta.validation.Valid;
 import java.util.List;
-import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

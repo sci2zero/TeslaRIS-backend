@@ -1,11 +1,11 @@
 package rs.teslaris.core.service.impl.person;
 
+import jakarta.transaction.Transactional;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

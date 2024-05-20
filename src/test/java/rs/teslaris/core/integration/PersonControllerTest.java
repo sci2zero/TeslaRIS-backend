@@ -26,24 +26,24 @@ public class PersonControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeletePerson() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/person/{personId}",
-                        61).contentType(MediaType.APPLICATION_JSON)
+                        2).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCanEditCheckAdmin() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(MockMvcRequestBuilders.get(
-                "http://localhost:8081/api/person/{personId}/can-edit", 22)
+                "http://localhost:8081/api/person/{personId}/can-edit", 1)
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
             .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }

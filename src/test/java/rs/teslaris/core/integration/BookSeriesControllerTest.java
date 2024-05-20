@@ -27,7 +27,7 @@ public class BookSeriesControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private BookSeriesDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(dummyMC);
@@ -40,7 +40,7 @@ public class BookSeriesControllerTest extends BaseTest {
                 PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER,
                 LocalDate.now(), LocalDate.now());
         contribution.setOrderNumber(1);
-        contribution.setPersonId(22);
+        contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
@@ -52,7 +52,7 @@ public class BookSeriesControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAllBookSeriess() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get("http://localhost:8081/api/book-series?page=0&size=5")
@@ -60,15 +60,15 @@ public class BookSeriesControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadBookSeries() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/book-series/{bookSeriesId}", 51)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/book-series/{bookSeriesId}", 3)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateBookSeries() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -86,7 +86,7 @@ public class BookSeriesControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testUpdateBookSeries() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -96,27 +96,27 @@ public class BookSeriesControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(bookSeriesDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/book-series/{bookSeriesId}", 51)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/book-series/{bookSeriesId}", 3)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeleteBookSeries() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/book-series/{bookSeriesId}",
-                        54)
+                        4)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testSearchJournals() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
