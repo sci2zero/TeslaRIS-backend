@@ -31,7 +31,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Entity
 @Table(name = "involvements")
 @Where(clause = "deleted=false")
-@Inheritance(strategy = InheritanceType.JOINED)
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class Involvement extends BaseEntity {
 
     @Column(name = "date_from")
