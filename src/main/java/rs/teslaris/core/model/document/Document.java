@@ -69,7 +69,7 @@ public abstract class Document extends BaseEntity {
     private String scopusId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id")
+    @JoinColumn(name = "event_id", referencedColumnName = "id")
     private Event event;
 
     @Column(name = "cris_uns_id")
