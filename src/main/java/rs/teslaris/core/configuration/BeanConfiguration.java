@@ -69,7 +69,7 @@ public class BeanConfiguration {
     public MessageSource messageSource() {
         var messageSource = new ReloadableResourceBundleMessageSource();
         messageSource.setBasename("classpath:internationalization/messages");
-        messageSource.setCacheSeconds(10);
+        messageSource.setCacheSeconds(60 * 5);
         messageSource.setDefaultEncoding("UTF-8");
         messageSource.setFallbackToSystemLocale(true);
         return messageSource;
