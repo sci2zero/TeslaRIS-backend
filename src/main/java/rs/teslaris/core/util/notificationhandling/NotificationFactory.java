@@ -1,49 +1,68 @@
 package rs.teslaris.core.util.notificationhandling;
 
+import java.util.Locale;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.user.User;
 
+@Component
 public class NotificationFactory {
+
+    private static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
+
+    private static MessageSource messageSource;
+
+
+    @Autowired
+    public NotificationFactory(MessageSource messageSource) {
+        NotificationFactory.messageSource = messageSource;
+    }
 
     public static Notification contructNewOtherNameDetectedNotification(
         Map<String, String> notificationValues, User user) {
-        switch (user.getPreferredLanguage().getLanguageCode()) {
-            case "SR":
-                return new Notification(
-                    "Dodati ste na publikaciju sa novim oblikom imena (" +
-                        notificationValues.get("firstname") + " " +
-                        notificationValues.get("middlename") + " " +
-                        notificationValues.get("lastname") +
-                        "), hoćete li da dodate ovo ime u listu drugin oblika imena?",
-                    notificationValues, NotificationType.NEW_OTHER_NAME_DETECTED, user);
-            default:
-                return new Notification(
-                    "You are added to a publication with a new name variant (" +
-                        notificationValues.get("firstname") + " " +
-                        notificationValues.get("middlename") + " " +
-                        notificationValues.get("lastname") +
-                        "), do you want to add it to your other name list?",
-                    notificationValues, NotificationType.NEW_OTHER_NAME_DETECTED, user);
+        String message;
+        var args =
+            new Object[] {notificationValues.get("firstname"), notificationValues.get("middlename"),
+                notificationValues.get("lastname")};
+        try {
+            message = messageSource.getMessage(
+                "notification.newOtherNameDetected",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
         }
+        return new Notification(message, notificationValues, NotificationType.ADDED_TO_PUBLICATION,
+            user);
     }
 
     public static Notification contructAddedToPublicationNotification(
         Map<String, String> notificationValues, User user) {
-        switch (user.getPreferredLanguage().getLanguageCode()) {
-            case "SR":
-                return new Notification(
-                    "Neko vas je dodao na publikaciju (" +
-                        notificationValues.get("title") +
-                        "), ukoliko ova publikacija nije vaša, možete se ukloniti sa nje.",
-                    notificationValues, NotificationType.ADDED_TO_PUBLICATION, user);
-            default:
-                return new Notification(
-                    "Someone added zou to publication (" +
-                        notificationValues.get("title") +
-                        "), if this is not your publication, you can remove yourself from it.",
-                    notificationValues, NotificationType.ADDED_TO_PUBLICATION, user);
+        String message;
+        var args = new Object[] {notificationValues.get("title")};
+        try {
+            message = messageSource.getMessage(
+                "notification.addedToPublication",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
         }
+        return new Notification(message, notificationValues, NotificationType.ADDED_TO_PUBLICATION,
+            user);
+    }
+
+    private static String fallbackToDefaultLocale(Object[] args) {
+        return messageSource.getMessage(
+            "notification.addedToPublication",
+            args, DEFAULT_LOCALE
+        );
     }
 }

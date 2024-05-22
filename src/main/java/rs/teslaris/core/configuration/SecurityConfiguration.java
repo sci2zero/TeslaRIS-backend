@@ -54,9 +54,11 @@ public class SecurityConfiguration {
             .exceptionHandling(
                 exception -> exception.authenticationEntryPoint(restAuthenticationEntryPoint))
             .authorizeHttpRequests(authorize -> authorize
+
                 // PERMIT FETCHING OF STATIC FILES
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/lib/**", "/favicon.ico")
                 .permitAll()
+
                 // BASIC ENDPOINT CONFIGURATION
 
                 // USER
@@ -127,8 +129,10 @@ public class SecurityConfiguration {
                 // FILE
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
 
+                // ERROR
                 .requestMatchers("/error").permitAll()
 
+                // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );
 
