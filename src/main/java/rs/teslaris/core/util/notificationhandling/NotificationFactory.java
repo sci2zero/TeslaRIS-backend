@@ -40,7 +40,7 @@ public class NotificationFactory {
                     notificationValues, NotificationType.ADDED_TO_PUBLICATION, user);
             default:
                 return new Notification(
-                    "Someone added zou to publication (" +
+                    "Someone added you to a publication (" +
                         notificationValues.get("title") +
                         "), if this is not your publication, you can remove yourself from it.",
                     notificationValues, NotificationType.ADDED_TO_PUBLICATION, user);
