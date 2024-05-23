@@ -37,8 +37,8 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
 
     @Override
     public List<rs.teslaris.core.dto.commontypes.ResearchAreaDTO> getResearchAreas() {
-        return researchAreaRepository.findAll().stream().map(ResearchAreaConverter::toDTO).collect(
-            Collectors.toList());
+        return researchAreaRepository.getAllLeafs().stream().map(ResearchAreaConverter::toDTO)
+            .collect(Collectors.toList());
     }
 
     @Override
