@@ -9,14 +9,14 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 
 @Getter
 @Setter
 @Entity
 @Table(name = "person_journal_contributions")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class PersonPublicationSeriesContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)

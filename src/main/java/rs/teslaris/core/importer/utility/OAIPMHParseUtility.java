@@ -7,7 +7,6 @@ public class OAIPMHParseUtility {
 
     public static Integer parseBISISID(String id) {
         var tokens = id.split("\\)");
-        var aaa = Integer.parseInt(tokens[1]);
         return Integer.parseInt(tokens[1]);
     }
 

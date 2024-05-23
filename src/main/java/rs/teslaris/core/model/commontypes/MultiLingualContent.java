@@ -12,7 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.validator.constraints.Length;
 
 @Getter
@@ -21,7 +21,7 @@ import org.hibernate.validator.constraints.Length;
 @AllArgsConstructor
 @Entity
 @Table(name = "multi_lingual_content")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class MultiLingualContent extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)

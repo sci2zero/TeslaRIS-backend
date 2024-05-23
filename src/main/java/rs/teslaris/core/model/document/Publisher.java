@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
@@ -17,7 +17,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Setter
 @Entity
 @Table(name = "publishers")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Publisher extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

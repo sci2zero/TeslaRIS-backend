@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 @Getter
 @Setter
@@ -15,7 +15,7 @@ import org.hibernate.annotations.Where;
 @AllArgsConstructor
 @Entity
 @Table(name = "language_tag")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class LanguageTag extends BaseEntity {
 
     @Column(name = "language_tag", nullable = false)

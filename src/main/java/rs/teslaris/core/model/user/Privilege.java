@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
@@ -18,7 +18,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @AllArgsConstructor
 @Entity
 @Table(name = "privileges")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Privilege extends BaseEntity implements GrantedAuthority {
 
     @Column(name = "name")

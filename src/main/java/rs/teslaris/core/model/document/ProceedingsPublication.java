@@ -9,13 +9,13 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "proceedings_publications")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class ProceedingsPublication extends Document {
 
     @Column(name = "proceedings_publication_type", nullable = false)

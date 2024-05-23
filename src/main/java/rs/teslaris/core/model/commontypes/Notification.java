@@ -14,7 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.user.User;
 
 @Getter
@@ -23,7 +23,7 @@ import rs.teslaris.core.model.user.User;
 @AllArgsConstructor
 @Entity
 @Table(name = "notification")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Notification extends BaseEntity {
 
     @Column(name = "notification_text", nullable = false)

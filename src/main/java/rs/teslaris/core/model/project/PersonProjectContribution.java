@@ -11,7 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.document.PersonContribution;
 
 @Getter
@@ -20,7 +20,7 @@ import rs.teslaris.core.model.document.PersonContribution;
 @AllArgsConstructor
 @Entity
 @Table(name = "person_project_contribution")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class PersonProjectContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)

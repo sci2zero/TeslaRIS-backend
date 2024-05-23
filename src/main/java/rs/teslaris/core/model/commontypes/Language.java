@@ -12,7 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 @Getter
 @Setter
@@ -20,7 +20,7 @@ import org.hibernate.annotations.Where;
 @AllArgsConstructor
 @Entity
 @Table(name = "languages")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Language extends BaseEntity {
 
     @Column(name = "language_code", nullable = false, unique = true)

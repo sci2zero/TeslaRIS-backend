@@ -10,7 +10,7 @@ import jakarta.persistence.Table;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -19,7 +19,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Setter
 @Entity
 @Table(name = "theses")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Thesis extends Document {
 
     @ManyToOne(fetch = FetchType.LAZY)

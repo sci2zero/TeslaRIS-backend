@@ -11,14 +11,14 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "proceedings")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Proceedings extends Document {
 
     @Column(name = "e_isbn")

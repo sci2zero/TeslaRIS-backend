@@ -8,14 +8,14 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "events_relation")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class EventsRelation extends BaseEntity {
 
     @Column(name = "events_relation_type")

@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -27,7 +27,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "employments")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Employment extends Involvement {
 
     @Column(name = "employment_position")

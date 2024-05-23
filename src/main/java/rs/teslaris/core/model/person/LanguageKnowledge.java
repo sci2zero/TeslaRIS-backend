@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.Language;
 
 @Getter
@@ -18,7 +18,7 @@ import rs.teslaris.core.model.commontypes.Language;
 @AllArgsConstructor
 @Entity
 @Table(name = "language_knowledges")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class LanguageKnowledge extends ExpertiseOrSkill {
 
     @ManyToOne(fetch = FetchType.EAGER)

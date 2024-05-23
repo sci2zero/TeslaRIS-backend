@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
 @Getter
@@ -17,7 +17,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @AllArgsConstructor
 @Entity
 @Table(name = "person_names")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class PersonName extends BaseEntity {
 
     @Column(name = "firstname")

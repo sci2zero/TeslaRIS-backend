@@ -12,7 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -23,7 +23,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @AllArgsConstructor
 @Entity
 @Table(name = "document_files")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class DocumentFile extends BaseEntity {
 
     @Column(name = "filename", nullable = false)

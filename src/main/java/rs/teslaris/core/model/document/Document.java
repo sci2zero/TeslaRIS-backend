@@ -17,7 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -28,7 +28,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @AllArgsConstructor
 @Entity
 @Table(name = "documents")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class Document extends BaseEntity {
 

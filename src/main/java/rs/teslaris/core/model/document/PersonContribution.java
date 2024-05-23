@@ -18,7 +18,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -32,7 +32,7 @@ import rs.teslaris.core.model.person.Person;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "person_contributions")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class PersonContribution extends BaseEntity {
 

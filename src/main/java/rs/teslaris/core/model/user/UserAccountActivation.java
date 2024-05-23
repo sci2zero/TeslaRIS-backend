@@ -11,7 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
 @Getter
@@ -20,7 +20,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @AllArgsConstructor
 @Entity
 @Table(name = "user_account_activations")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class UserAccountActivation extends BaseEntity {
 
     @Column(name = "activation_token")

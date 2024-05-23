@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 
 @Getter
@@ -24,7 +24,7 @@ import org.hibernate.annotations.Where;
 @Entity
 @EqualsAndHashCode(callSuper = false)
 @Table(name = "research_area")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class ResearchArea extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

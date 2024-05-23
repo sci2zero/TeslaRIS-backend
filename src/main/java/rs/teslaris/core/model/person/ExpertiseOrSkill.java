@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -26,7 +26,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "expertise_or_skills")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.JOINED)
 public class ExpertiseOrSkill extends BaseEntity {
 

@@ -8,13 +8,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "journal_publications")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class JournalPublication extends Document {
 
     @Column(name = "journal_publication_type")

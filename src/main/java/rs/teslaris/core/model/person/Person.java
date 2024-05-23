@@ -14,7 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -27,7 +27,7 @@ import rs.teslaris.core.model.user.User;
 @AllArgsConstructor
 @Entity
 @Table(name = "persons")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Person extends BaseEntity {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
