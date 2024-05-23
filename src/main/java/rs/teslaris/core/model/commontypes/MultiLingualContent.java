@@ -2,17 +2,17 @@ package rs.teslaris.core.model.commontypes;
 
 
 import com.google.common.base.Objects;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.validator.constraints.Length;
 
 @Getter
@@ -21,7 +21,7 @@ import org.hibernate.validator.constraints.Length;
 @AllArgsConstructor
 @Entity
 @Table(name = "multi_lingual_content")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class MultiLingualContent extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)

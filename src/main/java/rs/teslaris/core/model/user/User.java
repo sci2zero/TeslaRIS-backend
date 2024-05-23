@@ -1,19 +1,19 @@
 package rs.teslaris.core.model.user;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import java.util.Collection;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import rs.teslaris.core.model.commontypes.BaseEntity;
@@ -27,7 +27,7 @@ import rs.teslaris.core.model.person.Person;
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class User extends BaseEntity implements UserDetails {
 
     @Column(name = "username", nullable = false, unique = true)

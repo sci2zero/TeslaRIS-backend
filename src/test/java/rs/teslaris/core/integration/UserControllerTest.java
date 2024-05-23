@@ -19,7 +19,7 @@ public class UserControllerTest extends BaseTest {
 
     @Test
     public void testForgotPassword() throws Exception {
-        var forgotPasswordRequest = new ForgotPasswordRequestDTO("author@author.com");
+        var forgotPasswordRequest = new ForgotPasswordRequestDTO("admin@admin.com");
         String requestBody = objectMapper.writeValueAsString(forgotPasswordRequest);
         mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/forgot-password")

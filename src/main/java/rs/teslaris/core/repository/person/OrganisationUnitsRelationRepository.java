@@ -32,11 +32,6 @@ public interface OrganisationUnitsRelationRepository
         " and our.approveStatus = 1 and our.relationType = 1")
     List<OrganisationUnitsRelation> getSuperOUsMemberOf(Integer sourceId);
 
-    List<OrganisationUnitsRelation> findBySourceOrganisationUnit(Integer sourceOrganisationId);
-
-    List<OrganisationUnitsRelation> findBySourceOrganisationUnitAndRelationType(
+    List<OrganisationUnitsRelation> findBySourceOrganisationUnitIdAndRelationType(
         Integer sourceOrganisationId, OrganisationUnitRelationType relationType);
-
-    List<OrganisationUnitsRelation> findByTargetOrganisationUnit(Integer destinationOrganisationId);
-
 }

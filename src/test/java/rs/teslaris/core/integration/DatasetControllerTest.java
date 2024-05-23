@@ -30,7 +30,7 @@ public class DatasetControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private DatasetDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         var datasetDTO = new DatasetDTO();
         datasetDTO.setTitle(dummyMC);
@@ -42,7 +42,7 @@ public class DatasetControllerTest extends BaseTest {
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
         contribution.setOrderNumber(1);
-        contribution.setPersonId(22);
+        contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
@@ -54,15 +54,15 @@ public class DatasetControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadDataset() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/dataset/{datasetId}", 77)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/dataset/{datasetId}", 4)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateDataset() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -78,7 +78,7 @@ public class DatasetControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testUpdateDataset() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -86,7 +86,7 @@ public class DatasetControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(datasetDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/dataset/{datasetId}", 77)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/dataset/{datasetId}", 4)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -94,13 +94,13 @@ public class DatasetControllerTest extends BaseTest {
 
     @Test
     @Order(Integer.MAX_VALUE)
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeleteDataset() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/dataset/{datasetId}",
-                        77).contentType(MediaType.APPLICATION_JSON)
+                        4).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

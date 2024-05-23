@@ -1,14 +1,14 @@
 package rs.teslaris.core.model.person;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
 @Getter
@@ -17,7 +17,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @AllArgsConstructor
 @Entity
 @Table(name = "person_names")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class PersonName extends BaseEntity {
 
     @Column(name = "firstname")

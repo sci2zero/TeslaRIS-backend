@@ -13,7 +13,7 @@ public class OrganisationUnitsRelationControllerTest extends BaseTest {
     @Test
     public void testGetOUChain() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/organisation-unit-relation/{leafId}", 27)
+                    "http://localhost:8081/api/organisation-unit-relation/{leafId}", 1)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }

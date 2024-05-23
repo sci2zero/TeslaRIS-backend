@@ -1,5 +1,7 @@
 package rs.teslaris.core.importer.service.impl;
 
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,13 +16,12 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.net.ssl.SSLContext;
 import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.sax.SAXSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.http.HttpHost;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -205,7 +206,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
         }
 
         var requestFactory = new HttpComponentsClientHttpRequestFactory();
-        requestFactory.setHttpClient(httpClient.build());
+        requestFactory.setHttpClient((HttpClient) httpClient.build());
 
         return new RestTemplate(requestFactory);
     }

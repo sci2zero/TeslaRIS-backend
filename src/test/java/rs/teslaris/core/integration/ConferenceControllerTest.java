@@ -27,7 +27,7 @@ public class ConferenceControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private ConferenceDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         var conferenceDTO = new ConferenceDTO();
         conferenceDTO.setName(dummyMC);
@@ -45,7 +45,7 @@ public class ConferenceControllerTest extends BaseTest {
         var contribution =
             new PersonEventContributionDTO(EventContributionType.ORGANIZATION_BOARD_CHAIR);
         contribution.setOrderNumber(1);
-        contribution.setPersonId(22);
+        contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
@@ -56,7 +56,7 @@ public class ConferenceControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAllConferences() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get("http://localhost:8081/api/conference?page=0&size=5")
@@ -64,15 +64,15 @@ public class ConferenceControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadConference() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/conference/{conferenceId}", 38)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/conference/{conferenceId}", 1)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateConference() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -89,13 +89,13 @@ public class ConferenceControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateConferenceBasic() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         var date = LocalDate.now();
         var conferenceDTO = new ConferenceBasicAdditionDTO();
-        conferenceDTO.setName(List.of(new MultilingualContentDTO(25, "EN", "Name", 1)));
+        conferenceDTO.setName(List.of(new MultilingualContentDTO(1, "EN", "Name", 1)));
         conferenceDTO.setDateFrom(date);
         conferenceDTO.setDateTo(date);
 
@@ -110,7 +110,7 @@ public class ConferenceControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testUpdateConference() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -118,20 +118,20 @@ public class ConferenceControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(conferenceDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/conference/{conferenceId}", 38)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/conference/{conferenceId}", 1)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeleteConference() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/conference/{conferenceId}",
-                        46).contentType(MediaType.APPLICATION_JSON)
+                        2).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

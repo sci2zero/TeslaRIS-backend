@@ -1,20 +1,20 @@
 package rs.teslaris.core.model.user;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
@@ -24,7 +24,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @AllArgsConstructor
 @Entity
 @Table(name = "authorities")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Authority extends BaseEntity implements GrantedAuthority {
 
     @Column(name = "name", nullable = false, unique = true)

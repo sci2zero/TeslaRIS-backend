@@ -1,15 +1,13 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.converter.institution.ResearchAreaConverter;
+import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
-import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -38,10 +36,9 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     }
 
     @Override
-    @Deprecated(forRemoval = true)
-    public Page<ResearchAreaResponseDTO> getResearchAreas(Pageable pageable) {
-        return researchAreaRepository.findAll(pageable).map(
-            ResearchAreaConverter::toResponseDTO);
+    public List<rs.teslaris.core.dto.commontypes.ResearchAreaDTO> getResearchAreas() {
+        return researchAreaRepository.getAllLeafs().stream().map(ResearchAreaConverter::toDTO)
+            .collect(Collectors.toList());
     }
 
     @Override

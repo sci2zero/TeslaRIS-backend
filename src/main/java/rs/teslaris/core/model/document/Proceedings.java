@@ -1,24 +1,24 @@
 package rs.teslaris.core.model.document;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "proceedings")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Proceedings extends Document {
 
     @Column(name = "e_isbn")
@@ -32,10 +32,6 @@ public class Proceedings extends Document {
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<LanguageTag> languages = new HashSet<>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
-    private Event event;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")

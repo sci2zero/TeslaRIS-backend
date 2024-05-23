@@ -1,6 +1,6 @@
 package rs.teslaris.core.indexmodel;
 
-import javax.persistence.Id;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -13,7 +13,7 @@ public class CountryControllerTest extends BaseTest {
     @Test
     public void testReadCountry() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/country/{countryId}", 21)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/country/{countryId}", 1)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 }

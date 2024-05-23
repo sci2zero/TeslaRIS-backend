@@ -30,7 +30,7 @@ public class SoftwareControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private SoftwareDTO getTestPayload() {
-        var dummyMC = List.of(new MultilingualContentDTO(25, "EN", "Content", 1));
+        var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         var softwareDTO = new SoftwareDTO();
         softwareDTO.setTitle(dummyMC);
@@ -42,7 +42,7 @@ public class SoftwareControllerTest extends BaseTest {
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
         contribution.setOrderNumber(1);
-        contribution.setPersonId(22);
+        contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
@@ -54,15 +54,15 @@ public class SoftwareControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadSoftware() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/software/{softwareId}", 116)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/software/{softwareId}", 5)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateSoftware() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -78,7 +78,7 @@ public class SoftwareControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testUpdateSoftware() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -86,7 +86,7 @@ public class SoftwareControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(softwareDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/software/{softwareId}", 116)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/software/{softwareId}", 5)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -94,13 +94,13 @@ public class SoftwareControllerTest extends BaseTest {
 
     @Test
     @Order(Integer.MAX_VALUE)
-    @WithMockUser(username = "admin@admin.com", password = "admin")
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeleteSoftware() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/software/{softwareId}",
-                        116).contentType(MediaType.APPLICATION_JSON)
+                        5).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

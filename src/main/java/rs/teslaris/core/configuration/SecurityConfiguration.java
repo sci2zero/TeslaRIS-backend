@@ -1,30 +1,31 @@
 package rs.teslaris.core.configuration;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import rs.teslaris.core.util.exceptionhandling.RestAuthenticationEntryPoint;
 import rs.teslaris.core.util.jwt.JwtFilter;
 
+@Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfiguration {
 
     private final JwtFilter jwtTokenFilter;
-
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
-    @Autowired
     public SecurityConfiguration(JwtFilter jwtTokenFilter,
                                  RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
         this.jwtTokenFilter = jwtTokenFilter;
@@ -34,104 +35,115 @@ public class SecurityConfiguration {
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http,
                                                        BCryptPasswordEncoder bCryptPasswordEncoder,
-                                                       UserDetailsService userDetailService)
+                                                       UserDetailsService userDetailsService)
         throws Exception {
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
-            .userDetailsService(userDetailService)
-            .passwordEncoder(bCryptPasswordEncoder)
-            .and()
-            .build();
+        AuthenticationManagerBuilder authenticationManagerBuilder =
+            http.getSharedObject(AuthenticationManagerBuilder.class);
+        authenticationManagerBuilder
+            .userDetailsService(userDetailsService)
+            .passwordEncoder(bCryptPasswordEncoder);
+        return authenticationManagerBuilder.build();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http = http.cors().and().csrf().disable();
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(
+                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(
+                exception -> exception.authenticationEntryPoint(restAuthenticationEntryPoint))
+            .authorizeHttpRequests(authorize -> authorize
 
-        http =
-            http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
+                // PERMIT FETCHING OF STATIC FILES
+                .requestMatchers("/css/**", "/js/**", "/img/**", "/lib/**", "/favicon.ico")
+                .permitAll()
 
-        http.exceptionHandling().authenticationEntryPoint(restAuthenticationEntryPoint);
+                // BASIC ENDPOINT CONFIGURATION
 
-        http.authorizeRequests()
+                // USER
+                .requestMatchers(HttpMethod.GET, "/api/user/person/{personId}").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/register-researcher").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
 
-            // PERMIT FETCHING OF STATIC FILES
-            .antMatchers("/css/**", "/js/**", "/img/**", "/lib/**", "/favicon.ico").permitAll()
+                // PERSON
+                .requestMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
 
-            // BASIC ENDPOINT CONFIGURATION
+                // COUNTRY
+                .requestMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/{personId}/person-user").permitAll()
 
-            // USER
-            .antMatchers(HttpMethod.GET, "/api/user/person/{personId}").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/user/register-researcher").permitAll()
-            .antMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
-            .antMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
+                // ORGANISATION UNIT
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/{organisationUnitId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit-relation/{leafId}")
+                .permitAll()
 
-            // PERSON
-            .antMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/person/count").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
+                // LANGUAGE
+                .requestMatchers(HttpMethod.GET, "/api/language").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/language/tags").permitAll()
 
-            // COUNTRY
-            .antMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/person/{personId}/person-user").permitAll()
+                // DOCUMENT
+                .requestMatchers(HttpMethod.GET, "/api/document/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/document/for-researcher/{personId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/document/for-publisher/{publisherId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/document/for-organisation-unit/{organisationUnitId}").permitAll()
 
-            // ORGANISATION UNIT
-            .antMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/organisation-unit/{organisationUnitId}").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/organisation-unit-relation/{leafId}").permitAll()
+                // PROCEEDINGS
+                .requestMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()
 
-            // LANGUAGE
-            .antMatchers(HttpMethod.GET, "/api/language").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/language/tags").permitAll()
+                // PUBLISHERS
+                .requestMatchers(HttpMethod.GET, "/api/publisher/{publisherId}").permitAll()
 
-            // DOCUMENT
-            .antMatchers(HttpMethod.GET, "/api/document/count").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/document/for-researcher/{personId}").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/document/for-publisher/{publisherId}").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/document/for-organisation-unit/{organisationUnitId}")
-            .permitAll()
+                // PUBLICATION
+                .requestMatchers(HttpMethod.GET, "/api/journal-publication/{documentId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/journal-publication/journal/{journalId}/my-publications").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/proceedings-publication/event/{eventId}/my-publications").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/software/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/dataset/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/patent/{patentId}").permitAll()
 
-            // PROCEEDINGS
-            .antMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()
+                // INVOLVEMENT
+                .requestMatchers(HttpMethod.GET, "/api/involvement/employment/{employmentId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/involvement/education/{educationId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/involvement/membership/{membershipId}")
+                .permitAll()
 
-            // PUBLISHERS
-            .antMatchers(HttpMethod.GET, "/api/publisher/{publisherId}").permitAll()
+                // FILE
+                .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
 
-            // PUBLICATION
-            .antMatchers(HttpMethod.GET,
-                "/api/journal-publication/{documentId}").permitAll()
-            .antMatchers(HttpMethod.GET,
-                "/api/journal-publication/journal/{journalId}/my-publications").permitAll()
-            .antMatchers(HttpMethod.GET,
-                "/api/proceedings-publication/event/{eventId}/my-publications").permitAll()
-            .antMatchers(HttpMethod.GET,
-                "/api/software/{documentId}").permitAll()
-            .antMatchers(HttpMethod.GET,
-                "/api/dataset/{documentId}").permitAll()
-            .antMatchers(HttpMethod.GET,
-                "/api/patent/{patentId}").permitAll()
+                // ERROR
+                .requestMatchers("/error").permitAll()
 
-            // INVOLVEMENT
-            .antMatchers(HttpMethod.GET,
-                "/api/involvement/employment/{employmentId}").permitAll()
-            .antMatchers(HttpMethod.GET,
-                "/api/involvement/education/{educationId}").permitAll()
-            .antMatchers(HttpMethod.GET,
-                "/api/involvement/membership/{membershipId}").permitAll()
+                // EVERYTHING ELSE
+                .anyRequest().authenticated()
+            );
 
-            // FILE
-            .antMatchers(HttpMethod.GET,
-                "/api/file/{serverFilename}").permitAll()
+        http.headers(headers ->
+            headers.xssProtection(
+                xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
+            ).contentSecurityPolicy(
+                cps -> cps.policyDirectives("script-src 'self'")
+            ));
 
-            .anyRequest().fullyAuthenticated();
-
-        http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");
-
-        http.addFilterBefore(jwtTokenFilter, BasicAuthenticationFilter.class);
+        http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

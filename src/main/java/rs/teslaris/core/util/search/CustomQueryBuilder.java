@@ -7,7 +7,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.PrefixQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import lombok.Getter;
-import org.elasticsearch.common.unit.Fuzziness;
 
 @Getter
 public class CustomQueryBuilder {
@@ -16,8 +15,6 @@ public class CustomQueryBuilder {
 
     public static Query buildQuery(SearchType queryType, String field, String value) {
         validateInput(field, value);
-
-        String fuzzinessLevel = Fuzziness.fromEdits(MAX_EDITS).asString();
 
         switch (queryType) {
             case regular:
@@ -29,7 +26,7 @@ public class CustomQueryBuilder {
                 return FuzzyQuery.of(m -> m
                     .field(field)
                     .value(value)
-                    .fuzziness(fuzzinessLevel)
+                    .fuzziness("1")
                 )._toQuery();
             case prefix:
                 return PrefixQuery.of(m -> m

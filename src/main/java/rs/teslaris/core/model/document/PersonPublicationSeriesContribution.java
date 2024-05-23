@@ -1,22 +1,22 @@
 package rs.teslaris.core.model.document;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 
 @Getter
 @Setter
 @Entity
 @Table(name = "person_journal_contributions")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class PersonPublicationSeriesContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)

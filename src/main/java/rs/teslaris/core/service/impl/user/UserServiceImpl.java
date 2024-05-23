@@ -24,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -488,10 +489,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     private String createAndSaveRefreshTokenForUser(User user) {
         var refreshTokenValue = UUID.randomUUID().toString();
         var hashedRefreshToken =
             Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();
+
+        var oldRefreshToken = refreshTokenRepository.findByUserId(user.getId());
+        oldRefreshToken.ifPresent(refreshTokenRepository::delete);
+
         refreshTokenRepository.save(new RefreshToken(hashedRefreshToken, user));
 
         return refreshTokenValue;

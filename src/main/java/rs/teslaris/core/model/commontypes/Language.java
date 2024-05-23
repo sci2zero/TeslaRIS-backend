@@ -1,18 +1,18 @@
 package rs.teslaris.core.model.commontypes;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 @Getter
 @Setter
@@ -20,7 +20,7 @@ import org.hibernate.annotations.Where;
 @AllArgsConstructor
 @Entity
 @Table(name = "languages")
-@Where(clause = "deleted=false")
+@SQLRestriction("deleted=false")
 public class Language extends BaseEntity {
 
     @Column(name = "language_code", nullable = false, unique = true)
