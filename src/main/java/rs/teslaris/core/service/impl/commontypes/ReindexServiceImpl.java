@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
@@ -14,6 +15,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -54,6 +56,8 @@ public class ReindexServiceImpl implements ReindexService {
     private final SoftwareService softwareService;
 
     private final DatasetService datasetService;
+
+    private final MonographService monographService;
 
 
     @Override
@@ -104,18 +108,7 @@ public class ReindexServiceImpl implements ReindexService {
         }
 
         if (indexesToRepopulate.contains(IndexType.PUBLICATION)) {
-            var reindexPublicationsThread = new Thread(() -> {
-                documentFileService.deleteIndexes();
-                documentPublicationService.deleteIndexes();
-
-                journalPublicationService.reindexJournalPublications();
-                proceedingsPublicationService.reindexProceedingsPublications();
-                patentService.reindexPatents();
-                softwareService.reindexSoftware();
-                datasetService.reindexDatasets();
-            });
-
-            reindexPublicationsThread.start();
+            var reindexPublicationsThread = getReindexPublicationsThread();
             threadPool.add(reindexPublicationsThread);
         }
 
@@ -126,5 +119,23 @@ public class ReindexServiceImpl implements ReindexService {
         } catch (InterruptedException e) {
             log.error("Thread interrupted while waiting for reindexing to complete", e);
         }
+    }
+
+    @NotNull
+    private Thread getReindexPublicationsThread() {
+        var reindexPublicationsThread = new Thread(() -> {
+            documentFileService.deleteIndexes();
+            documentPublicationService.deleteIndexes();
+
+            journalPublicationService.reindexJournalPublications();
+            proceedingsPublicationService.reindexProceedingsPublications();
+            patentService.reindexPatents();
+            softwareService.reindexSoftware();
+            datasetService.reindexDatasets();
+            monographService.reindexMonographs();
+        });
+
+        reindexPublicationsThread.start();
+        return reindexPublicationsThread;
     }
 }

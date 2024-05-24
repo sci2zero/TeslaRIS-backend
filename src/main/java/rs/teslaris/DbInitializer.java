@@ -27,6 +27,8 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
@@ -60,6 +62,7 @@ import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -116,6 +119,8 @@ public class DbInitializer implements ApplicationRunner {
     private final DatasetRepository datasetRepository;
 
     private final PersonContributionRepository personContributionRepository;
+
+    private final MonographRepository monographRepository;
 
 
     @Override
@@ -483,5 +488,19 @@ public class DbInitializer implements ApplicationRunner {
 
         dummyOU.getResearchAreas().add(researchArea3);
         organisationUnitRepository.save(dummyOU);
+
+        var monograph1 = new Monograph();
+        monograph1.setApproveStatus(ApproveStatus.APPROVED);
+        monograph1.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Monografija 1", 1)));
+        monograph1.setMonographType(MonographType.BIBLIOGRAPHY);
+        monographRepository.save(monograph1);
+
+        var monograph2 = new Monograph();
+        monograph2.setApproveStatus(ApproveStatus.DECLINED);
+        monograph2.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
+        monograph2.setMonographType(MonographType.RESEARCH_MONOGRAPH);
+        monographRepository.save(monograph2);
     }
 }

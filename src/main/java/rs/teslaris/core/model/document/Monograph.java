@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
@@ -49,7 +50,7 @@ public class Monograph extends Document {
     private PublicationSeries publicationSeries;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<LanguageTag> languages;
+    private Set<LanguageTag> languages = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "research_area_id")
