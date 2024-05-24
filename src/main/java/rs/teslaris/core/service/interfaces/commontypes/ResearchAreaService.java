@@ -13,6 +13,8 @@ public interface ResearchAreaService extends JPAService<ResearchArea> {
 
     List<rs.teslaris.core.dto.commontypes.ResearchAreaDTO> getResearchAreas();
 
+    List<ResearchAreaDTO> listResearchAreas();
+
     ResearchArea createResearchArea(ResearchAreaDTO researchAreaDTO);
 
     void editResearchArea(ResearchAreaDTO researchAreaDTO, Integer researchAreaId);

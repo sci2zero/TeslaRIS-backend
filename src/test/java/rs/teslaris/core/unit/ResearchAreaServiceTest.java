@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -181,4 +183,37 @@ public class ResearchAreaServiceTest {
         verifyNoMoreInteractions(researchAreaRepository);
     }
 
+    @Test
+    public void shouldListResearchAreas() {
+        // Given
+        var researchArea1 = new ResearchArea();
+        researchArea1.setId(1);
+        var superResearchArea1 = new ResearchArea();
+        superResearchArea1.setId(10);
+        researchArea1.setSuperResearchArea(superResearchArea1);
+
+        var researchArea2 = new ResearchArea();
+        researchArea2.setId(2);
+        var superResearchArea2 = new ResearchArea();
+        superResearchArea2.setId(20);
+        researchArea2.setSuperResearchArea(superResearchArea2);
+
+        var researchAreas = Arrays.asList(researchArea1, researchArea2);
+        when(researchAreaRepository.findAll()).thenReturn(researchAreas);
+
+        // When
+        var result = researchAreaService.listResearchAreas();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+
+        ResearchAreaDTO dto1 = result.getFirst();
+        assertEquals(1, dto1.getId());
+        assertEquals(10, dto1.getSuperResearchAreaId());
+
+        ResearchAreaDTO dto2 = result.get(1);
+        assertEquals(2, dto2.getId());
+        assertEquals(20, dto2.getSuperResearchAreaId());
+    }
 }
