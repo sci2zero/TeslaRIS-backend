@@ -219,6 +219,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
 
+        if (Objects.nonNull(document.getEvent())) {
+            index.setEventId(document.getEvent().getId());
+        }
+
         var organisationUnitIds = new ArrayList<Integer>();
 
         document.getContributors()

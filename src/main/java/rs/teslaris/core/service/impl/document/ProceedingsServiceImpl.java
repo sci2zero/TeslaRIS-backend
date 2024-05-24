@@ -170,18 +170,14 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
         indexCommonFields(proceedings, index);
 
-        if (proceedings.getPublicationSeries() != null) {
-            index.setPublicationSeriesId(proceedings.getPublicationSeries().getId());
-        }
-
         if (proceedings.getPublisher() != null) {
             index.setPublisherId(proceedings.getPublisher().getId());
         }
 
-        index.setEventId(proceedings.getEvent().getId());
         index.setType(DocumentPublicationType.PROCEEDINGS.name());
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
+            index.setPublicationSeriesId(proceedings.getPublicationSeries().getId());
             index.setJournalId(proceedings.getPublicationSeries().getId());
         }
 
@@ -219,6 +215,5 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             proceedings.setPublisher(
                 publisherService.findPublisherById(proceedingsDTO.getPublisherId()));
         }
-
     }
 }
