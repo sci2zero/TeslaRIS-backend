@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
@@ -39,6 +40,15 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     public List<rs.teslaris.core.dto.commontypes.ResearchAreaDTO> getResearchAreas() {
         return researchAreaRepository.getAllLeafs().stream().map(ResearchAreaConverter::toDTO)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ResearchAreaDTO> listResearchAreas() {
+        return researchAreaRepository.findAll().stream().map((researchArea) -> new ResearchAreaDTO(
+            researchArea.getId(),
+            MultilingualContentConverter.getMultilingualContentDTO(researchArea.getName()),
+            MultilingualContentConverter.getMultilingualContentDTO(researchArea.getDescription()),
+            researchArea.getSuperResearchArea().getId())).collect(Collectors.toList());
     }
 
     @Override
