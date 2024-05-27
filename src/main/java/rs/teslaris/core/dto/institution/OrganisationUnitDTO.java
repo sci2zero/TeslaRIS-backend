@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.commontypes.ResearchAreaDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 
 @Getter
@@ -25,7 +25,7 @@ public class OrganisationUnitDTO {
 
     private List<MultilingualContentDTO> keyword;
 
-    private List<ResearchAreaDTO> researchAreas;
+    private List<ResearchAreaHierarchyDTO> researchAreas;
 
     private GeoLocationDTO location;
 

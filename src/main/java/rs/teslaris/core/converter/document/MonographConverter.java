@@ -3,8 +3,6 @@ package rs.teslaris.core.converter.document;
 import java.util.ArrayList;
 import java.util.Objects;
 import rs.teslaris.core.dto.document.MonographDTO;
-import rs.teslaris.core.model.document.BookSeries;
-import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Monograph;
 
 public class MonographConverter extends DocumentPublicationConverter {
@@ -44,10 +42,6 @@ public class MonographConverter extends DocumentPublicationConverter {
             return;
         }
 
-        if (publicationSeries instanceof BookSeries) {
-            monographResponseDTO.setBookSeriesId(publicationSeries.getId());
-        } else if (publicationSeries instanceof Journal) {
-            monographResponseDTO.setJournalId(publicationSeries.getId());
-        }
+        monographResponseDTO.setPublicationSeriesId(publicationSeries.getId());
     }
 }

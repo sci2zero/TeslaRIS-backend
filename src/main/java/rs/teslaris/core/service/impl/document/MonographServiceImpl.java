@@ -166,12 +166,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             monograph.getLanguages().add(languageTagService.findLanguageTagById(id));
         });
 
-        if (Objects.nonNull(monographDTO.getJournalId())) {
-            monograph.setPublicationSeries(
-                journalService.findJournalById(monographDTO.getJournalId()));
-        } else if (Objects.nonNull(monographDTO.getBookSeriesId())) {
-            monograph.setPublicationSeries(
-                bookSeriesService.findBookSeriesById(monographDTO.getBookSeriesId()));
+        if (Objects.nonNull(monographDTO.getPublicationSeriesId())) {
+            var optionalJournal =
+                journalService.tryToFindById(monographDTO.getPublicationSeriesId());
+
+            if (optionalJournal.isPresent()) {
+                monograph.setPublicationSeries(optionalJournal.get());
+            } else {
+                var bookSeries = bookSeriesService.findBookSeriesById(
+                    monographDTO.getPublicationSeriesId());
+                monograph.setPublicationSeries(bookSeries);
+            }
         }
 
         if (Objects.nonNull(monographDTO.getResearchAreaId())) {
