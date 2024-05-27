@@ -43,7 +43,7 @@ public class Monograph extends Document {
     private String volume;
 
     @Column(name = "monograph_number")
-    private Integer number;
+    private String number;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publication_series_id")

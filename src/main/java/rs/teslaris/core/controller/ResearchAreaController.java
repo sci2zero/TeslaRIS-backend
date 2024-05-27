@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 
@@ -25,8 +26,19 @@ public class ResearchAreaController {
     private final ResearchAreaService researchAreaService;
 
     @GetMapping
-    public List<rs.teslaris.core.dto.commontypes.ResearchAreaDTO> getResearchAreas() {
+    public List<ResearchAreaHierarchyDTO> getResearchAreas() {
         return researchAreaService.getResearchAreas();
+    }
+
+    @GetMapping("{researchAreaId}")
+    public ResearchAreaHierarchyDTO getResearchArea(
+        @PathVariable Integer researchAreaId) {
+        return researchAreaService.readResearchArea(researchAreaId);
+    }
+
+    @GetMapping("/list")
+    public List<ResearchAreaDTO> listResearchAreas() {
+        return researchAreaService.listResearchAreas();
     }
 
     @PostMapping

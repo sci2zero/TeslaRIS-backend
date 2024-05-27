@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResearchAreaDTO {
+public class ResearchAreaHierarchyDTO {
 
     private Integer id;
 
@@ -18,5 +18,5 @@ public class ResearchAreaDTO {
 
     private List<MultilingualContentDTO> description;
 
-    private ResearchAreaDTO superResearchArea;
+    private ResearchAreaHierarchyDTO superResearchArea;
 }

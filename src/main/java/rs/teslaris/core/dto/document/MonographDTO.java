@@ -25,11 +25,9 @@ public class MonographDTO extends DocumentDTO {
 
     private String volume;
 
-    private Integer number;
+    private String number;
 
-    private Integer bookSeriesId;
-
-    private Integer journalId;
+    private Integer publicationSeriesId;
 
     private List<Integer> languageTagIds;
 

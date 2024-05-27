@@ -1,12 +1,12 @@
 package rs.teslaris.core.converter.commontypes;
 
 import java.util.Objects;
-import rs.teslaris.core.dto.commontypes.ResearchAreaDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 
 public class ResearchAreaConverter {
-    public static ResearchAreaDTO toDTO(ResearchArea researchArea) {
-        var dto = new ResearchAreaDTO();
+    public static ResearchAreaHierarchyDTO toDTO(ResearchArea researchArea) {
+        var dto = new ResearchAreaHierarchyDTO();
 
         dto.setId(researchArea.getId());
         dto.setName(MultilingualContentConverter.getMultilingualContentDTO(researchArea.getName()));

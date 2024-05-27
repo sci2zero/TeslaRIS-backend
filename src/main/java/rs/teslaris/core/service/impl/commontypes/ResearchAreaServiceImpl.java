@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
@@ -37,9 +39,15 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     }
 
     @Override
-    public List<rs.teslaris.core.dto.commontypes.ResearchAreaDTO> getResearchAreas() {
+    public List<ResearchAreaHierarchyDTO> getResearchAreas() {
         return researchAreaRepository.getAllLeafs().stream().map(ResearchAreaConverter::toDTO)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public ResearchAreaHierarchyDTO readResearchArea(
+        Integer researchAreaId) {
+        return ResearchAreaConverter.toDTO(findOne(researchAreaId));
     }
 
     @Override
@@ -48,7 +56,8 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
             researchArea.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(researchArea.getName()),
             MultilingualContentConverter.getMultilingualContentDTO(researchArea.getDescription()),
-            researchArea.getSuperResearchArea().getId())).collect(Collectors.toList());
+            Objects.nonNull(researchArea.getSuperResearchArea()) ?
+                researchArea.getSuperResearchArea().getId() : null)).collect(Collectors.toList());
     }
 
     @Override
