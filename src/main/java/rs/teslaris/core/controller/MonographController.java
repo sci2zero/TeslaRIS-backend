@@ -26,7 +26,7 @@ public class MonographController {
 
 
     @GetMapping("/{documentId}")
-    private MonographDTO readMonograph(@PathVariable Integer documentId) {
+    public MonographDTO readMonograph(@PathVariable Integer documentId) {
         return monographService.readMonographById(documentId);
     }
 

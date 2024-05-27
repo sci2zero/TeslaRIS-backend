@@ -497,7 +497,7 @@ public class DbInitializer implements ApplicationRunner {
         monographRepository.save(monograph1);
 
         var monograph2 = new Monograph();
-        monograph2.setApproveStatus(ApproveStatus.DECLINED);
+        monograph2.setApproveStatus(ApproveStatus.APPROVED);
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
         monograph2.setMonographType(MonographType.RESEARCH_MONOGRAPH);
