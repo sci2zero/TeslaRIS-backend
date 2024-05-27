@@ -121,7 +121,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     @Override
     public void deleteMonograph(Integer monographId) {
-        var proceedingsToDelete = findOne(monographId);
+        var proceedingsToDelete = monographJPAService.findOne(monographId);
 
         // TODO: Should we delete files if we have soft delete
 //        deleteProofsAndFileItems(proceedingsToDelete);
