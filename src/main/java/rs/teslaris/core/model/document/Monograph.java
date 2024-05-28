@@ -30,10 +30,10 @@ public class Monograph extends Document {
     @Enumerated(value = EnumType.ORDINAL)
     private MonographType monographType;
 
-    @Column(name = "print_isbn", unique = true)
+    @Column(name = "print_isbn")
     private String printISBN;
 
-    @Column(name = "e_isbn", unique = true)
+    @Column(name = "e_isbn")
     private String eISBN;
 
     @Column(name = "number_of_pages")

@@ -180,7 +180,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         }
 
         if (Objects.nonNull(monographDTO.getResearchAreaId())) {
-            researchAreaService.findOne(monographDTO.getResearchAreaId());
+            monograph.setResearchArea(
+                researchAreaService.findOne(monographDTO.getResearchAreaId()));
         }
     }
 

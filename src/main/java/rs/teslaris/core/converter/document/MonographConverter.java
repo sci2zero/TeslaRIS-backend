@@ -23,6 +23,11 @@ public class MonographConverter extends DocumentPublicationConverter {
         monographResponseDTO.setNumberOfPages(monograph.getNumberOfPages());
 
         monographResponseDTO.setLanguageTagIds(new ArrayList<>());
+
+        if (Objects.nonNull(monograph.getResearchArea())) {
+            monographResponseDTO.setResearchAreaId(monograph.getResearchArea().getId());
+        }
+
         setLanguageInfo(monograph, monographResponseDTO);
         setPublicationSeriesInfo(monograph, monographResponseDTO);
     }
