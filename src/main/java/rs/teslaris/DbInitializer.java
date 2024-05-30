@@ -398,7 +398,7 @@ public class DbInitializer implements ApplicationRunner {
             .add(new MultiLingualContent(englishTag, "Lorem ipsum dolor sit amet.", 1));
         person1.getBiography().add(new MultiLingualContent(serbianTag, "Srpska biografija.", 2));
         person1.getKeyword().add(new MultiLingualContent(englishTag,
-            "Machine Learning, Cybersecurity, Reverse Engineering, Web Security", 1));
+            "Machine Learning\nCybersecurity\nReverse Engineering\nWeb Security", 1));
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null, dummyOU,

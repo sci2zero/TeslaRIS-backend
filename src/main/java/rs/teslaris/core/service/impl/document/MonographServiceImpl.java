@@ -156,7 +156,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     private void setMonographRelatedFields(Monograph monograph,
                                            MonographDTO monographDTO) {
         monograph.setMonographType(monographDTO.getMonographType());
-        monograph.setEISBN(monographDTO.getEISBN());
+        monograph.setEISBN(monographDTO.getEisbn());
         monograph.setPrintISBN(monographDTO.getPrintISBN());
         monograph.setNumberOfPages(monographDTO.getNumberOfPages());
         monograph.setVolume(monographDTO.getVolume());

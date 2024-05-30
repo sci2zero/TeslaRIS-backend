@@ -19,7 +19,7 @@ public class MonographDTO extends DocumentDTO {
 
     private String printISBN;
 
-    private String eISBN;
+    private String eisbn;
 
     private Integer numberOfPages;
 
