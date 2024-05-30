@@ -29,7 +29,7 @@ public abstract class DocumentConverter {
 
         if (Objects.nonNull(record.getKeywords())) {
             dto.setKeywords(
-                multilingualContentConverter.toDTO(String.join(", ", record.getKeywords())));
+                multilingualContentConverter.toDTO(String.join("\n", record.getKeywords())));
         } else {
             dto.setKeywords(new ArrayList<>());
         }

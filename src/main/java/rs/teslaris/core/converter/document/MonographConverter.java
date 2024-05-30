@@ -18,9 +18,12 @@ public class MonographConverter extends DocumentPublicationConverter {
 
     private static void setMonographAffiliatedFields(Monograph monograph,
                                                      MonographDTO monographResponseDTO) {
-        monographResponseDTO.setEISBN(monograph.getEISBN());
+        monographResponseDTO.setEisbn(monograph.getEISBN());
         monographResponseDTO.setPrintISBN(monograph.getPrintISBN());
         monographResponseDTO.setNumberOfPages(monograph.getNumberOfPages());
+        monographResponseDTO.setMonographType(monograph.getMonographType());
+        monographResponseDTO.setNumber(monograph.getNumber());
+        monographResponseDTO.setVolume(monograph.getVolume());
 
         monographResponseDTO.setLanguageTagIds(new ArrayList<>());
 

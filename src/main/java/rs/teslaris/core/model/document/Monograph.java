@@ -6,8 +6,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,7 +49,7 @@ public class Monograph extends Document {
     @JoinColumn(name = "publication_series_id")
     private PublicationSeries publicationSeries;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     private Set<LanguageTag> languages = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
