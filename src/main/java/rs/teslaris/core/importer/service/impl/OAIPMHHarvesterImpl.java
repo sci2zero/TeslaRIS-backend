@@ -1,5 +1,6 @@
 package rs.teslaris.core.importer.service.impl;
 
+import jakarta.annotation.Nullable;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import java.io.FileInputStream;
@@ -21,15 +22,18 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.sax.SAXSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.http.HttpHost;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
-import org.apache.http.ssl.TrustStrategy;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.hc.core5.ssl.TrustStrategy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -39,6 +43,7 @@ import org.xml.sax.SAXException;
 import rs.teslaris.core.importer.model.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.common.ResumptionToken;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHHarvester;
+import rs.teslaris.core.importer.utility.HarvestProgressReport;
 import rs.teslaris.core.importer.utility.OAIPMHDataSet;
 import rs.teslaris.core.importer.utility.OAIPMHSource;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
@@ -49,8 +54,9 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTempla
 @Slf4j
 public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
 
-    private final MongoTemplate mongoTemplate;
+    private static final int MAX_RESTART_NUMBER = 10;
 
+    private final MongoTemplate mongoTemplate;
     @Value("${ssl.trust-store}")
     private String trustStorePath;
 
@@ -70,31 +76,62 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
             constructOAIPMHEndpoint(requestDataSet.getStringValue(), source.getStringValue());
         var restTemplate = constructRestTemplate();
 
+        // Reset Loader progress
         ProgressReportUtility.resetProgressReport(requestDataSet, userId, mongoTemplate);
 
+        var harvestProgressReport = getProgressReport(requestDataSet, userId);
+
+        if (Objects.nonNull(harvestProgressReport)) {
+            endpoint = source.getStringValue() + "?verb=ListRecords&resumptionToken=" +
+                harvestProgressReport.getResumptionToken();
+        }
+
+        int restartCount = 0;
         while (true) {
-            ResponseEntity<String> responseEntity =
-                restTemplate.getForEntity(endpoint, String.class);
-            if (responseEntity.getStatusCodeValue() == 200) {
-                String responseBody = responseEntity.getBody();
-                var optionalOaiPmhResponse = parseResponse(responseBody);
-                if (optionalOaiPmhResponse.isEmpty()) {
-                    break;
+            try {
+                ResponseEntity<String> responseEntity =
+                    restTemplate.getForEntity(endpoint, String.class);
+                if (responseEntity.getStatusCodeValue() == 200) {
+                    String responseBody = responseEntity.getBody();
+                    var optionalOaiPmhResponse = parseResponse(responseBody);
+                    if (optionalOaiPmhResponse.isEmpty()) {
+                        break;
+                    }
+
+                    var optionalResumptionToken =
+                        handleOAIPMHResponse(requestDataSet, optionalOaiPmhResponse.get(), userId);
+                    if (optionalResumptionToken.isEmpty() ||
+                        optionalResumptionToken.get().getValue().isBlank()) {
+                        break;
+                    }
+
+                    endpoint = source.getStringValue() + "?verb=ListRecords&resumptionToken=" +
+                        optionalResumptionToken.get().getValue();
+
+                    updateProgressReport(requestDataSet, optionalResumptionToken.get().getValue(),
+                        userId);
+                } else {
+                    log.error("OAI-PMH request failed with response code: " +
+                        responseEntity.getStatusCodeValue());
+                }
+            } catch (Exception e) {
+                if (restartCount == MAX_RESTART_NUMBER) {
+                    log.error(
+                        "Harvest did not complete because host (" + source.getStringValue() +
+                            ") keeps crashing. Manual restart required.");
+                    return;
                 }
 
-                var optionalResumptionToken =
-                    handleOAIPMHResponse(requestDataSet, optionalOaiPmhResponse.get(), userId);
-                if (optionalResumptionToken.isEmpty()) {
-                    break;
-                }
+                restartCount += 1;
 
-                endpoint = source.getStringValue() + "?verb=ListRecords&resumptionToken=" +
-                    optionalResumptionToken.get().getValue();
-            } else {
-                log.error("OAI-PMH request failed with response code: " +
-                    responseEntity.getStatusCodeValue());
+                log.warn(
+                    "No route to host for endpoint: " + endpoint + " - Restarting " +
+                        restartCount + " of " + MAX_RESTART_NUMBER);
             }
         }
+
+        // Delete progress report after completing the harvest
+        deleteProgressReport(requestDataSet, userId);
     }
 
     private Optional<ResumptionToken> handleOAIPMHResponse(OAIPMHDataSet requestDataSet,
@@ -179,12 +216,12 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
         }
     }
 
-    private RestTemplate constructRestTemplate() {
-        TrustStrategy acceptingTrustStrategy = (x509Certificates, s) -> true;
+    public RestTemplate constructRestTemplate() {
+        TrustStrategy acceptingTrustStrategy = new TrustSelfSignedStrategy();
 
         SSLContext sslContext;
         try (InputStream truststoreInputStream = new FileInputStream(trustStorePath)) {
-            var truststore = KeyStore.getInstance(KeyStore.getDefaultType());
+            KeyStore truststore = KeyStore.getInstance(KeyStore.getDefaultType());
             truststore.load(truststoreInputStream, trustStorePassword.toCharArray());
 
             sslContext = SSLContexts.custom()
@@ -197,16 +234,23 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                 "Unable to establish secure connection to remote host.");
         }
 
-        var connectionSocketFactory =
-            new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
-        var httpClient = HttpClients.custom().setSSLSocketFactory(connectionSocketFactory);
+        SSLConnectionSocketFactory connectionSocketFactory =
+            new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+        var connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+            .setSSLSocketFactory(connectionSocketFactory).build();
+        var httpClient = HttpClients.custom()
+            .setConnectionManager(connectionManager)
+            .build();
 
         if (!proxyHost.isEmpty()) {
-            httpClient.setProxy(new HttpHost(proxyHost, proxyPort));
+            httpClient = HttpClients.custom()
+                .setConnectionManager(connectionManager)
+                .setProxy(new HttpHost(proxyHost, proxyPort))
+                .build();
         }
 
-        var requestFactory = new HttpComponentsClientHttpRequestFactory();
-        requestFactory.setHttpClient((HttpClient) httpClient.build());
+        HttpComponentsClientHttpRequestFactory requestFactory =
+            new HttpComponentsClientHttpRequestFactory(httpClient);
 
         return new RestTemplate(requestFactory);
     }
@@ -214,4 +258,30 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
     private String constructOAIPMHEndpoint(String set, String base) {
         return base + "?verb=ListRecords&set=" + set + "&metadataPrefix=oai_cerif_openaire";
     }
+
+    private void updateProgressReport(OAIPMHDataSet requestDataSet, String resumptionToken,
+                                      Integer userId) {
+        Query deleteQuery = new Query();
+        deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet))
+            .addCriteria(Criteria.where("userId").is(userId));
+        mongoTemplate.remove(deleteQuery, HarvestProgressReport.class);
+
+        mongoTemplate.save(new HarvestProgressReport(resumptionToken, userId, requestDataSet));
+    }
+
+    @Nullable
+    private HarvestProgressReport getProgressReport(OAIPMHDataSet requestDataSet, Integer userId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("dataset").is(requestDataSet.name()))
+            .addCriteria(Criteria.where("userId").is(userId));
+        return mongoTemplate.findOne(query, HarvestProgressReport.class);
+    }
+
+    private void deleteProgressReport(OAIPMHDataSet requestDataSet, Integer userId) {
+        Query deleteQuery = new Query();
+        deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet.name()))
+            .addCriteria(Criteria.where("userId").is(userId));
+        mongoTemplate.remove(deleteQuery, HarvestProgressReport.class);
+    }
+
 }

@@ -31,9 +31,9 @@ import rs.teslaris.core.importer.model.product.Product;
 import rs.teslaris.core.importer.model.publication.Publication;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHLoader;
 import rs.teslaris.core.importer.utility.CreatorMethod;
+import rs.teslaris.core.importer.utility.LoadProgressReport;
 import rs.teslaris.core.importer.utility.OAIPMHDataSet;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
-import rs.teslaris.core.importer.utility.ProgressReport;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -253,11 +253,11 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     }
 
     @Nullable
-    private ProgressReport getProgressReport(OAIPMHDataSet requestDataSet, Integer userId) {
+    private LoadProgressReport getProgressReport(OAIPMHDataSet requestDataSet, Integer userId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("dataset").is(requestDataSet.name()))
             .addCriteria(Criteria.where("userId").is(userId));
-        return mongoTemplate.findOne(query, ProgressReport.class);
+        return mongoTemplate.findOne(query, LoadProgressReport.class);
     }
 
     private void updateProgressReport(OAIPMHDataSet requestDataSet, String lastLoadedId,
@@ -265,9 +265,9 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
         Query deleteQuery = new Query();
         deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet))
             .addCriteria(Criteria.where("userId").is(userId));
-        mongoTemplate.remove(deleteQuery, ProgressReport.class);
+        mongoTemplate.remove(deleteQuery, LoadProgressReport.class);
 
-        mongoTemplate.save(new ProgressReport(lastLoadedId, userId, requestDataSet));
+        mongoTemplate.save(new LoadProgressReport(lastLoadedId, userId, requestDataSet));
     }
 
     @Override

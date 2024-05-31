@@ -11,9 +11,9 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class ProgressReport {
+public class HarvestProgressReport {
 
-    private String lastLoadedId;
+    private String resumptionToken;
 
     private Integer userId;
 

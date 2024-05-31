@@ -12,8 +12,8 @@ public class ProgressReportUtility {
         Query deleteQuery = new Query();
         deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet))
             .addCriteria(Criteria.where("userId").is(userId));
-        mongoTemplate.remove(deleteQuery, ProgressReport.class);
-        mongoTemplate.save(new ProgressReport("", userId, requestDataSet));
+        mongoTemplate.remove(deleteQuery, LoadProgressReport.class);
+        mongoTemplate.save(new LoadProgressReport("", userId, requestDataSet));
     }
 
     public static void deleteProgressReport(OAIPMHDataSet requestDataSet, Integer userId,
@@ -21,6 +21,6 @@ public class ProgressReportUtility {
         Query deleteQuery = new Query();
         deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet))
             .addCriteria(Criteria.where("userId").is(userId));
-        mongoTemplate.remove(deleteQuery, ProgressReport.class);
+        mongoTemplate.remove(deleteQuery, LoadProgressReport.class);
     }
 }
