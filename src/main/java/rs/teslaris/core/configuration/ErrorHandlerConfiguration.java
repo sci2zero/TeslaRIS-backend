@@ -29,6 +29,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
+import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
 
 @ControllerAdvice
 public class ErrorHandlerConfiguration {
@@ -198,6 +199,14 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(StaleStateException.class)
     @ResponseBody
     ErrorObject handleStaleStateException(HttpServletRequest request, StaleStateException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(UserIsNotResearcherException.class)
+    @ResponseBody
+    ErrorObject handleUserIsNotResearcherException(HttpServletRequest request,
+                                                   UserIsNotResearcherException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

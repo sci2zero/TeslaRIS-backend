@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -91,7 +92,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
             try {
                 ResponseEntity<String> responseEntity =
                     restTemplate.getForEntity(endpoint, String.class);
-                if (responseEntity.getStatusCodeValue() == 200) {
+                if (responseEntity.getStatusCode() == HttpStatus.OK) {
                     String responseBody = responseEntity.getBody();
                     var optionalOaiPmhResponse = parseResponse(responseBody);
                     if (optionalOaiPmhResponse.isEmpty()) {
@@ -112,7 +113,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                         userId);
                 } else {
                     log.error("OAI-PMH request failed with response code: " +
-                        responseEntity.getStatusCodeValue());
+                        responseEntity.getStatusCode());
                 }
             } catch (Exception e) {
                 if (restartCount == MAX_RESTART_NUMBER) {
