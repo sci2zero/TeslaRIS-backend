@@ -185,7 +185,7 @@ public class DbInitializer implements ApplicationRunner {
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);
         person1.setOrcid("0000-0002-1825-0097");
-        person1.setScopusAuthorId("7006095048");
+        person1.setScopusAuthorId("35795419600");
         personRepository.save(person1);
 
         var adminUser =
