@@ -2,11 +2,11 @@ package rs.teslaris.core.importer.utility;
 
 import java.util.HashMap;
 import java.util.Map;
-import rs.teslaris.core.importer.model.event.Event;
-import rs.teslaris.core.importer.model.organisationunit.OrgUnit;
-import rs.teslaris.core.importer.model.patent.Patent;
-import rs.teslaris.core.importer.model.product.Product;
-import rs.teslaris.core.importer.model.publication.Publication;
+import rs.teslaris.core.importer.model.oaipmh.event.Event;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
+import rs.teslaris.core.importer.model.oaipmh.patent.Patent;
+import rs.teslaris.core.importer.model.oaipmh.product.Product;
+import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
 import rs.teslaris.core.model.person.Person;
 
 public enum OAIPMHDataSet {
