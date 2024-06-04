@@ -1,6 +1,5 @@
 package rs.teslaris.core.importer.model.common;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,14 +10,20 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MultilingualContent {
+public class Person {
 
-    @Field("language_tag")
-    private String languageTag;
+    @Field("name")
+    private PersonName name;
 
-    @Field("content")
-    private String content;
+    @Field("apvnt")
+    private String apvnt;
 
-    @Field("priority")
-    private int priority;
+    @Field("mnid")
+    private String mnid;
+
+    @Field("orcid")
+    private String orcid;
+
+    @Field("scopus_id")
+    private String scopusAuthorId;
 }

@@ -42,3 +42,5 @@ build/
 src/main/resources/*.jks
 src/main/resources/*.p12
 src/main/resources/*.pem
+
+.env
