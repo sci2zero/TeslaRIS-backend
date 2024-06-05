@@ -60,7 +60,8 @@ public class CommonLoaderImpl implements CommonLoader {
         Query nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gt(progressReport.getLastLoadedId()));
+        nextRecordQuery.addCriteria(
+            Criteria.where("identifier").gt(progressReport.getLastLoadedId()));
 
         var nextRecord = mongoTemplate.findOne(nextRecordQuery, DocumentImport.class);
         if (Objects.nonNull(nextRecord)) {
