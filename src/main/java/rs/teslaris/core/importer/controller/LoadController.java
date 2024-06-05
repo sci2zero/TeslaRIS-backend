@@ -6,10 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
-import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
