@@ -30,6 +30,7 @@ public class Publication {
     @XmlElement(name = "Keyword")
     List<String> keywords;
     private String id;
+
     @XmlAttribute(name = "id")
     private String oldId;
 

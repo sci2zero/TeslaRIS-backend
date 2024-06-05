@@ -5,8 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.importer.dto.ProceedingsPublicationLoadDTO;
+import rs.teslaris.core.importer.model.common.DocumentImport;
 import rs.teslaris.core.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
+import rs.teslaris.core.importer.utility.CommonRecordConverter;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -15,7 +18,8 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 @Component
 @Slf4j
 public class ProceedingsPublicationConverter extends DocumentConverter implements
-    RecordConverter<Publication, ProceedingsPublicationDTO> {
+    RecordConverter<Publication, ProceedingsPublicationDTO>,
+    CommonRecordConverter<DocumentImport, ProceedingsPublicationLoadDTO> {
 
     private final DocumentPublicationService documentPublicationService;
 
@@ -55,6 +59,22 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         }
         dto.setProceedingsId(proceedings.getId());
         dto.setEventId(proceedings.getEvent().getId());
+
+        return dto;
+    }
+
+    @Override
+    public ProceedingsPublicationLoadDTO toImportDTO(DocumentImport document) {
+        var dto = new ProceedingsPublicationLoadDTO();
+
+        setCommonFields(document, dto);
+
+        dto.setProceedingsName(multilingualContentConverter.toLoaderDTO(document.getPublishedIn()));
+        dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+        dto.setArticleNumber(document.getArticleNumber());
+        dto.setNumberOfPages(document.getNumberOfPages());
+        dto.setStartPage(document.getStartPage());
+        dto.setEndPage(document.getEndPage());
 
         return dto;
     }

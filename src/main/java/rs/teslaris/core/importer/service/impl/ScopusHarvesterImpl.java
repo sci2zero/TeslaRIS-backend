@@ -64,6 +64,11 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
                 newEntriesCount.addAndGet(1);
                 var documentImport = ScopusConverter.toCommonImportModel(entry);
+
+                // TODO: set other contributors by ScopusID
+                documentImport.getImportUsersId().add(userId);
+                documentImport.setIdentifier(entry.identifier());
+
                 mongoTemplate.save(documentImport, "documentImports");
             }));
 

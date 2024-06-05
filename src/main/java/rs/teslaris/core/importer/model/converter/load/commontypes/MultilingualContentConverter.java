@@ -54,6 +54,41 @@ public class MultilingualContentConverter {
         return result;
     }
 
+    public List<MultilingualContentDTO> toLoaderDTO(
+        List<rs.teslaris.core.importer.model.common.MultilingualContent> multilingualContent) {
+        var result = new ArrayList<MultilingualContentDTO>();
+
+        if (Objects.isNull(multilingualContent) || multilingualContent.isEmpty()) {
+            return result;
+        }
+
+        multilingualContent.forEach((mc) -> {
+            var dto = new MultilingualContentDTO();
+            var languageTagValue = mc.getLanguageTag().toUpperCase();
+
+            if (languageTagValue.isEmpty()) {
+                languageTagValue = LanguageAbbreviations.ENGLISH;
+            }
+
+            if (languageTagValue.equals(LanguageAbbreviations.CROATIAN)) {
+                languageTagValue = LanguageAbbreviations.SERBIAN;
+            }
+
+            var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
+            if (Objects.isNull(languageTag.getId())) {
+                return;
+            }
+            dto.setLanguageTagId(languageTag.getId());
+            dto.setLanguageTag(languageTagValue);
+            dto.setContent(mc.getContent());
+            dto.setPriority(mc.getPriority());
+
+            result.add(dto);
+        });
+
+        return result;
+    }
+
     public List<MultilingualContentDTO> toDTO(String content) {
         var result = new ArrayList<MultilingualContentDTO>();
         if (Objects.isNull(content) || content.trim().isEmpty()) {
