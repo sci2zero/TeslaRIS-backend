@@ -1,6 +1,5 @@
 package rs.teslaris.core.importer.model.common;
 
-import jakarta.persistence.Id;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -9,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.FieldType;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 
 @Getter
@@ -18,8 +19,16 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 @Document(collection = "documentImports")
 public class DocumentImport {
 
-    @Id
+    @MongoId(targetType = FieldType.OBJECT_ID)
     private String id;
+
+    private String identifier;
+
+    @Field("import_users_id")
+    private List<Integer> importUsersId = new ArrayList<>();
+
+    @Field("is_loaded")
+    private Boolean loaded = false;
 
     @Field("title")
     private List<MultilingualContent> title = new ArrayList<>();
@@ -32,6 +41,9 @@ public class DocumentImport {
 
     @Field("keywords")
     private List<MultilingualContent> keywords = new ArrayList<>();
+
+    @Field("published_in")
+    private List<MultilingualContent> publishedIn = new ArrayList<>();
 
     @Field("contributors")
     private List<PersonDocumentContribution> contributions = new ArrayList<>();
@@ -68,4 +80,13 @@ public class DocumentImport {
 
     @Field(name = "number_of_pages")
     private Integer numberOfPages;
+
+    @Field(name = "article_number")
+    private String articleNumber;
+
+    @Field(name = "volume")
+    private String volume;
+
+    @Field(name = "issue")
+    private String issue;
 }

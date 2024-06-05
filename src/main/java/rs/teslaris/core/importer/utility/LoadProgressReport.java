@@ -17,5 +17,5 @@ public class LoadProgressReport {
 
     private Integer userId;
 
-    private OAIPMHDataSet dataset;
+    private DataSet dataset;
 }

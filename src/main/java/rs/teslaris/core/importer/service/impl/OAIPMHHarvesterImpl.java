@@ -44,8 +44,8 @@ import org.xml.sax.SAXException;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.ResumptionToken;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHHarvester;
+import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.HarvestProgressReport;
-import rs.teslaris.core.importer.utility.OAIPMHDataSet;
 import rs.teslaris.core.importer.utility.OAIPMHSource;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
@@ -72,7 +72,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
 
 
     @Override
-    public void harvest(OAIPMHDataSet requestDataSet, OAIPMHSource source, Integer userId) {
+    public void harvest(DataSet requestDataSet, OAIPMHSource source, Integer userId) {
         String endpoint =
             constructOAIPMHEndpoint(requestDataSet.getStringValue(), source.getStringValue());
         var restTemplate = constructRestTemplate();
@@ -135,7 +135,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
         deleteProgressReport(requestDataSet, userId);
     }
 
-    private Optional<ResumptionToken> handleOAIPMHResponse(OAIPMHDataSet requestDataSet,
+    private Optional<ResumptionToken> handleOAIPMHResponse(DataSet requestDataSet,
                                                            OAIPMHResponse oaiPmhResponse,
                                                            Integer userId) {
         if (oaiPmhResponse.getListRecords() == null) {
@@ -260,7 +260,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
         return base + "?verb=ListRecords&set=" + set + "&metadataPrefix=oai_cerif_openaire";
     }
 
-    private void updateProgressReport(OAIPMHDataSet requestDataSet, String resumptionToken,
+    private void updateProgressReport(DataSet requestDataSet, String resumptionToken,
                                       Integer userId) {
         Query deleteQuery = new Query();
         deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet))
@@ -271,14 +271,14 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
     }
 
     @Nullable
-    private HarvestProgressReport getProgressReport(OAIPMHDataSet requestDataSet, Integer userId) {
+    private HarvestProgressReport getProgressReport(DataSet requestDataSet, Integer userId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("dataset").is(requestDataSet.name()))
             .addCriteria(Criteria.where("userId").is(userId));
         return mongoTemplate.findOne(query, HarvestProgressReport.class);
     }
 
-    private void deleteProgressReport(OAIPMHDataSet requestDataSet, Integer userId) {
+    private void deleteProgressReport(DataSet requestDataSet, Integer userId) {
         Query deleteQuery = new Query();
         deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet.name()))
             .addCriteria(Criteria.where("userId").is(userId));

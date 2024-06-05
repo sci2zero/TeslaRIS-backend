@@ -5,16 +5,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.importer.dto.JournalPublicationLoadDTO;
+import rs.teslaris.core.importer.model.common.DocumentImport;
 import rs.teslaris.core.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
+import rs.teslaris.core.importer.utility.CommonRecordConverter;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
+import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 
 @Component
 @Slf4j
 public class JournalPublicationConverter extends DocumentConverter
-    implements RecordConverter<Publication, JournalPublicationDTO> {
+    implements RecordConverter<Publication, JournalPublicationDTO>,
+    CommonRecordConverter<DocumentImport, JournalPublicationLoadDTO> {
 
     private final JournalService journalService;
 
@@ -48,6 +53,23 @@ public class JournalPublicationConverter extends DocumentConverter
             return null;
         }
         dto.setJournalId(journal.getId());
+
+        return dto;
+    }
+
+    @Override
+    public JournalPublicationLoadDTO toImportDTO(DocumentImport document) {
+        var dto = new JournalPublicationLoadDTO();
+
+        setCommonFields(document, dto);
+
+        dto.setJournalName(multilingualContentConverter.toLoaderDTO(document.getPublishedIn()));
+        dto.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
+        dto.setArticleNumber(document.getArticleNumber());
+        dto.setVolume(document.getVolume());
+        dto.setIssue(document.getIssue());
+        dto.setStartPage(document.getStartPage());
+        dto.setEndPage(document.getEndPage());
 
         return dto;
     }

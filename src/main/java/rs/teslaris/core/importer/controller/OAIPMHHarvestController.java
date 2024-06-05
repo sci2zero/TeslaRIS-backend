@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHLoader;
-import rs.teslaris.core.importer.utility.OAIPMHDataSet;
+import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.OAIPMHSource;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -28,7 +28,7 @@ public class OAIPMHHarvestController {
 
 
     @GetMapping("/harvest")
-    public void harvest(@RequestParam("dataSet") OAIPMHDataSet dataSet,
+    public void harvest(@RequestParam("dataSet") DataSet dataSet,
                         @RequestParam("source") OAIPMHSource source,
                         @RequestHeader("Authorization") String bearerToken) {
         oaipmhHarvester.harvest(dataSet, source,
@@ -36,7 +36,7 @@ public class OAIPMHHarvestController {
     }
 
     @GetMapping("/load")
-    public void loadAuto(@RequestParam("dataSet") OAIPMHDataSet dataSet,
+    public void loadAuto(@RequestParam("dataSet") DataSet dataSet,
                          @RequestParam("performIndex") Boolean performIndex,
                          @RequestHeader("Authorization") String bearerToken) {
         oaipmhLoader.loadRecordsAuto(dataSet, performIndex,
@@ -45,14 +45,14 @@ public class OAIPMHHarvestController {
 
     @PatchMapping("/skip")
     public void skipRecord(@RequestHeader("Authorization") String bearerToken,
-                           @RequestParam("dataSet") OAIPMHDataSet dataSet) {
+                           @RequestParam("dataSet") DataSet dataSet) {
         oaipmhLoader.skipRecord(dataSet,
             tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
     }
 
     @PatchMapping("/mark-as-loaded")
     public void markRecordAsLoaded(@RequestHeader("Authorization") String bearerToken,
-                                   @RequestParam("dataSet") OAIPMHDataSet dataSet) {
+                                   @RequestParam("dataSet") DataSet dataSet) {
         oaipmhLoader.markRecordAsLoaded(dataSet,
             tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
     }
@@ -66,7 +66,7 @@ public class OAIPMHHarvestController {
 
     @GetMapping("/load-wizard")
     @SuppressWarnings("unchecked")
-    private <R> R loadUsingWizard(@RequestParam("dataSet") OAIPMHDataSet dataSet,
+    private <R> R loadUsingWizard(@RequestParam("dataSet") DataSet dataSet,
                                   @RequestHeader("Authorization") String bearerToken) {
         var returnDto = oaipmhLoader.loadRecordsWizard(dataSet,
             tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
