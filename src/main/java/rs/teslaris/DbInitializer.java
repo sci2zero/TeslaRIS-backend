@@ -509,5 +509,18 @@ public class DbInitializer implements ApplicationRunner {
                 "Schöpfel", "Joachim", false, false, germanLanguage, researcherAuthority, person2,
                 null);
         userRepository.save(researcherUser2);
+
+        var person3 = new Person();
+        var postalAddress3 = new PostalAddress(country, new HashSet<>(),
+            new HashSet<>());
+        var personalInfo3 =
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.FEMALE, postalAddress3,
+                new Contact("test@email.com", "021555769"));
+        person3.setApproveStatus(ApproveStatus.APPROVED);
+        person3.setPersonalInfo(personalInfo3);
+        person3.setName(
+            new PersonName("Jelena", "", "Nikolic", LocalDate.of(1976, 7, 16), null));
+        person2.setScopusAuthorId("14419566900");
+        personRepository.save(person3);
     }
 }
