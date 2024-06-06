@@ -1,7 +1,9 @@
 package rs.teslaris.core.importer.model.common;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +27,7 @@ public class DocumentImport {
     private String identifier;
 
     @Field("import_users_id")
-    private List<Integer> importUsersId = new ArrayList<>();
+    private Set<Integer> importUsersId = new HashSet<>();
 
     @Field("is_loaded")
     private Boolean loaded = false;

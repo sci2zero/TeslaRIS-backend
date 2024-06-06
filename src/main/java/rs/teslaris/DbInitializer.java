@@ -303,12 +303,13 @@ public class DbInitializer implements ApplicationRunner {
         var postalAddress2 = new PostalAddress(country, new HashSet<>(),
             new HashSet<>());
         var personalInfo2 =
-            new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress2,
-                new Contact("mark@ftn.uns.ac.com", "021555769"));
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Germany", Sex.MALE, postalAddress2,
+                new Contact("joakim@email.com", "021555769"));
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
         person2.setName(
-            new PersonName("Marko", "Janko", "Markovic", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null));
+        person2.setScopusAuthorId("14619562900");
         personRepository.save(person2);
 
         var registerEmployee = new Privilege("REGISTER_EMPLOYEE");
@@ -502,5 +503,11 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
         monograph2.setMonographType(MonographType.RESEARCH_MONOGRAPH);
         monographRepository.save(monograph2);
+
+        var researcherUser2 =
+            new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
+                "Schöpfel", "Joachim", false, false, germanLanguage, researcherAuthority, person2,
+                null);
+        userRepository.save(researcherUser2);
     }
 }

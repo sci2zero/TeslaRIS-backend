@@ -64,10 +64,20 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
                 newEntriesCount.addAndGet(1);
                 var documentImport = ScopusConverter.toCommonImportModel(entry);
-
-                // TODO: set other contributors by ScopusID
-                documentImport.getImportUsersId().add(userId);
                 documentImport.setIdentifier(entry.identifier());
+
+                documentImport.getImportUsersId().add(userId);
+
+                documentImport.getContributions().forEach(personDocumentContribution -> {
+                    var contributorUserOptional = personService.findUserByScopusAuthorId(
+                        personDocumentContribution.getPerson().getScopusAuthorId());
+
+                    if (contributorUserOptional.isEmpty()) {
+                        return;
+                    }
+
+                    documentImport.getImportUsersId().add(contributorUserOptional.get().getId());
+                });
 
                 mongoTemplate.save(documentImport, "documentImports");
             }));
