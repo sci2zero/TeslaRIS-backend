@@ -80,6 +80,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 });
 
                 mongoTemplate.save(documentImport, "documentImports");
+
+                // TODO: send notification(s)
             }));
 
         return newEntriesCount.get();
