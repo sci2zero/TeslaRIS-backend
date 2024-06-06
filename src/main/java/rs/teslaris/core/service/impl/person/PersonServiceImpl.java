@@ -40,6 +40,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
@@ -88,6 +89,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public Person findPersonById(Integer id) {
         return personRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
+    }
+
+    @Override
+    @Nullable
+    public PersonResponseDTO readPersonByScopusId(String scopusAuthorId) {
+        var personOptional = personRepository.findPersonByScopusAuthorId(scopusAuthorId);
+
+        return personOptional.map(PersonConverter::toDTO).orElse(null);
+    }
+
+    @Override
+    @Nullable
+    public Optional<User> findUserByScopusAuthorId(String scopusAuthorId) {
+        return personRepository.findUserForPersonScopusId(scopusAuthorId);
     }
 
     @Override

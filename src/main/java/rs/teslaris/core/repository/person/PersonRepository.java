@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.User;
 
 @Repository
 public interface PersonRepository extends JpaRepository<Person, Integer> {
@@ -25,4 +26,10 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query("select p from Person p left join p.user pu where p.id = :id and p.approveStatus = 1")
     Optional<Person> findApprovedPersonByIdWithUser(Integer id);
+
+    @Query("select p from Person p where p.scopusAuthorId = :scopusId")
+    Optional<Person> findPersonByScopusAuthorId(String scopusId);
+
+    @Query("select u from User u where u.person.scopusAuthorId = :scopusId")
+    Optional<User> findUserForPersonScopusId(String scopusId);
 }
