@@ -5,9 +5,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.importer.model.common.DocumentImport;
 import rs.teslaris.core.importer.model.converter.load.publication.JournalPublicationConverter;
@@ -15,6 +17,7 @@ import rs.teslaris.core.importer.model.converter.load.publication.ProceedingsPub
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
 import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
+import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 
 @Service
 @RequiredArgsConstructor
@@ -85,28 +88,33 @@ public class CommonLoaderImpl implements CommonLoader {
         var progressReport =
             ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
                 mongoTemplate);
+
         Query query = new Query();
         query.addCriteria(Criteria.where("identifier").is(progressReport.getLastLoadedId()));
-        query.addCriteria(Criteria.where("import_users_id").in(userId));
+        query.addCriteria(Criteria.where("import_users_id").is(userId));
+        query.addCriteria(Criteria.where("loaded").is(false));
 
         var entityClass = DataSet.getClassForValue(DataSet.DOCUMENT_IMPORTS.getStringValue());
-        var record = mongoTemplate.findOne(query, entityClass);
 
-        if (Objects.nonNull(record)) {
-            Method setLoadedMethod;
-            try {
-                setLoadedMethod = entityClass.getMethod("setLoaded", Boolean.class);
-                setLoadedMethod.invoke(record, true);
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                return;
-            }
-            mongoTemplate.save(record);
+        var updateOperation = new Update();
+        updateOperation.set("loaded", true);
+
+        var updatedRecord = mongoTemplate.findAndModify(query, updateOperation,
+            new FindAndModifyOptions().returnNew(true).upsert(false),
+            entityClass);
+
+        if (Objects.isNull(updatedRecord)) {
+            throw new RecordAlreadyLoadedException("recordAlreadyLoadedMessage");
         }
     }
 
     @Override
     public Integer countRemainingDocumentsForLoading(Integer userId) {
-        return null;
+        var countQuery = new Query();
+        countQuery.addCriteria(Criteria.where("loaded").is(false));
+        countQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+
+        return Math.toIntExact(mongoTemplate.count(countQuery, DocumentImport.class));
     }
 
     @Nullable
