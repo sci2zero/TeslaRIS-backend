@@ -16,36 +16,33 @@ public class CustomQueryBuilder {
     public static Query buildQuery(SearchType queryType, String field, String value) {
         validateInput(field, value);
 
-        switch (queryType) {
-            case regular:
-                return MatchQuery.of(m -> m
-                    .field(field)
-                    .query(value)
-                )._toQuery();
-            case fuzzy:
-                return FuzzyQuery.of(m -> m
-                    .field(field)
-                    .value(value)
-                    .fuzziness("1")
-                )._toQuery();
-            case prefix:
-                return PrefixQuery.of(m -> m
-                    .field(field)
-                    .value(value)
-                )._toQuery();
-            case range:
+        return switch (queryType) {
+            case regular -> MatchQuery.of(m -> m
+                .field(field)
+                .query(value)
+            )._toQuery();
+            case fuzzy -> FuzzyQuery.of(m -> m
+                .field(field)
+                .value(value)
+                .fuzziness("1")
+            )._toQuery();
+            case prefix -> PrefixQuery.of(m -> m
+                .field(field)
+                .value(value)
+            )._toQuery();
+            case range -> {
                 String[] values = value.split(" ");
-                return RangeQuery.of(m -> m
+                yield RangeQuery.of(m -> m
                     .field(field)
                     .from(values[0])
                     .to(values[1])
                 )._toQuery();
-            default:
-                return MatchPhraseQuery.of(m -> m
-                    .field(field)
-                    .query(value)
-                )._toQuery();
-        }
+            }
+            default -> MatchPhraseQuery.of(m -> m
+                .field(field)
+                .query(value)
+            )._toQuery();
+        };
     }
 
     private static void validateInput(String field, String value) {
