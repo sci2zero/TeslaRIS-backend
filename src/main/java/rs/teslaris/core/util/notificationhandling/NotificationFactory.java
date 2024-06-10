@@ -59,6 +59,24 @@ public class NotificationFactory {
             user);
     }
 
+    public static Notification contructNewImportsNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("newImportCount")};
+        try {
+            message = messageSource.getMessage(
+                "notification.newImportsHarvested",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues, NotificationType.NEW_IMPORTS_HARVESTED,
+            user);
+    }
+
     private static String fallbackToDefaultLocale(Object[] args) {
         return messageSource.getMessage(
             "notification.addedToPublication",

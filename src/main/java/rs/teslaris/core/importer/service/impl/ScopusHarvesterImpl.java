@@ -1,7 +1,7 @@
 package rs.teslaris.core.importer.service.impl;
 
+import java.util.HashMap;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -30,7 +30,9 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
 
     @Override
-    public Integer harvestDocumentsForAuthor(Integer userId, Integer startYear, Integer endYear) {
+    public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId, Integer startYear,
+                                                               Integer endYear,
+                                                               HashMap<Integer, Integer> newEntriesCount) {
         var personId = userService.getPersonIdForUser(userId);
 
         if (personId == -1) {
@@ -46,7 +48,6 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
         var yearlyResults = scopusImportUtility.getDocumentsByAuthor(scopusId, startYear, endYear);
 
-        var newEntriesCount = new AtomicInteger();
         yearlyResults.forEach(
             yearlyResult -> yearlyResult.searchResults().entries().forEach(entry -> {
                 if (Objects.isNull(entry.title())) {
@@ -62,7 +63,6 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                     return;
                 }
 
-                newEntriesCount.addAndGet(1);
                 var documentImport = ScopusConverter.toCommonImportModel(entry);
                 documentImport.setIdentifier(entry.identifier());
 
@@ -76,14 +76,14 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                         return;
                     }
 
-                    documentImport.getImportUsersId().add(contributorUserOptional.get().getId());
+                    var contributorUserId = contributorUserOptional.get().getId();
+                    documentImport.getImportUsersId().add(contributorUserId);
+                    newEntriesCount.merge(contributorUserId, 1, Integer::sum);
                 });
 
                 mongoTemplate.save(documentImport, "documentImports");
-
-                // TODO: send notification(s)
             }));
 
-        return newEntriesCount.get();
+        return newEntriesCount;
     }
 }

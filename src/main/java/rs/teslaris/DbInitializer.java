@@ -520,7 +520,7 @@ public class DbInitializer implements ApplicationRunner {
         person3.setPersonalInfo(personalInfo3);
         person3.setName(
             new PersonName("Jelena", "", "Nikolic", LocalDate.of(1976, 7, 16), null));
-        person2.setScopusAuthorId("14419566900");
+        person3.setScopusAuthorId("14419566900");
         personRepository.save(person3);
     }
 }

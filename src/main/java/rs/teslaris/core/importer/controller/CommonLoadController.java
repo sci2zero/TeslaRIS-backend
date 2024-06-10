@@ -13,7 +13,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("/api/load")
 @RequiredArgsConstructor
-public class LoadController {
+public class CommonLoadController {
 
     private final CommonLoader loader;
 
