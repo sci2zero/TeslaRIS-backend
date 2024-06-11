@@ -111,8 +111,8 @@ package person {
     -String firstname
     -String otherName
     -String lastname
-    -LocalDate from
-    -LocalDate to
+    -LocalDate dateFrom
+    -LocalDate dateTo
   }
 
   class PersonalInfo {
@@ -135,8 +135,8 @@ package person {
   }
 
   class Involvement {
-    -LocalDate from
-    -LocalDate to
+    -LocalDate dateFrom
+    -LocalDate dateTo
     -ApproveStatus approveStatus
     -Set<DocumentFile> proofs
     -InvolvementType involvementType
@@ -178,7 +178,6 @@ package person {
   class ExpertiseOrSkill {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
-   ' int levelOfExpertise
     Set<DocumentFile> proofs
   }
 
@@ -222,8 +221,8 @@ package institution {
     Set<MultiLingualContent> sourceAffiliationStatement
     Set<MultiLingualContent> targetAffiliationStatement
     OrganisationUnitRelationType relationType
-    LocalDate from
-    LocalDate to
+    LocalDate dateFrom
+    LocalDate dateTo
     ApproveStatus approveStatus
     Set<DocumentFile> proofs
   }
@@ -257,7 +256,7 @@ package document {
     -Set<MultiLingualContent> contributionDescription
     -AffiliationStatement affiliationStatement
     -Set<OrganisationUnit> institutions
-    -int orderNumber
+    -Integer orderNumber
     -ApproveStatus approveStatus
     ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
   }
@@ -280,7 +279,7 @@ package document {
     String serverFilename
     Set<MultiLingualContent> description
     String mimeType
-    int fileSize
+    Long fileSize
     ResourceType resourceType
     License license
   }
@@ -317,7 +316,7 @@ package document {
 
   class ProceedingsPublication extends Document {
     -String startPage;
-	-String endPage;
+    -String endPage;
     -Integer numberOfPages
     -String articleNumber
   }
@@ -342,8 +341,8 @@ package document {
     -Set<MultiLingualContent> description
     -Set<MultiLingualContent> keywords
     -Boolean serialEvent
-    -LocalDate from
-    -LocalDate to
+    -LocalDate dateFrom
+    -LocalDate dateTo
     -Set<MultiLingualContent> state
     -Set<MultiLingualContent> place
     -Set<PersonEventContribution> contributors
@@ -417,8 +416,8 @@ package document {
 
   class PersonJournalContribution extends PersonContribution {
     -JournalContributionType contributionType
-    -LocalDate from
-    -LocalDate to
+    -LocalDate dateFrom
+    -LocalDate dateTo
   }
 
   enum JournalContributionType {
@@ -548,8 +547,8 @@ package project {
     Set<String> uris
     Set<PersonProjectContribution> contributors
     Set<ProjectDocument> documents
-    LocalDate from
-    LocalDate to
+    LocalDate dateFrom
+    LocalDate dateTo
     Set<ProjectStatus> statuses
     ProjectType type
     Set<Funding> fundings
@@ -577,8 +576,8 @@ package project {
     Set<MultiLingualContent> fundingProgram
     Set<MultiLingualContent> fundingAgency
     MonetaryAmount grant
-    LocalDate from
-    LocalDate to
+    LocalDate dateFrom
+    LocalDate dateTo
   }
 
   class MonetaryAmount {
@@ -594,8 +593,8 @@ package project {
 
   class PersonProjectContribution extends PersonContribution {
     ProjectContributionType contributionType
-    LocalDate from
-    LocalDate to
+    LocalDate dateFrom
+    LocalDate dateTo
   }
 
   enum ProjectContributionType {
@@ -608,8 +607,8 @@ package project {
 
   class ProjectsRelation {
     ProjectsRelationType relationType
-    LocalDate from
-    LocalDate to
+    LocalDate dateFrom
+    LocalDate dateTo
   }
 
 
