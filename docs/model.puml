@@ -2,56 +2,62 @@
 
 package commonTypes {
 
-enum ApproveStatus {
-  REQUESTED
-  APPROVED
-  DECLINED
+  enum ApproveStatus {
+    REQUESTED
+    APPROVED
+    DECLINED
+  }
+
+  class Language {
+    -String languageCode ' ISO 639-1 - https://www.loc.gov/standards/iso639-2/php/English_list.php
+    -Set<MultiLingualContent> name
+  }
+
+  class LanguageTag {
+    -String languageTag ' https://github.com/EuroCRIS/CERIF-Core/blob/main/datatypes/Language_Tag.md
+    -String display
+  }
+
+  class Country {
+    -String code ' ISO_3166_Alpha2_Code
+    -Set<MultiLingualContent> name
+  }
+
+  class MultiLingualContent {
+    LanguageTag language
+    String content
+    Integer priority
+  }
+
+  class GeoLocation {
+    Double longitude
+    Double latitude
+    String address
+  }
+
+  class ResearchArea {
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+  }
+  ResearchArea "1" --> "*" ResearchArea
+
 }
 
-class Language {
-  -String languageCode ' ISO 639-1 - https://www.loc.gov/standards/iso639-2/php/English_list.php
-  -Set<MultiLingualContent> name
-}
-
-class LanguageTag {
-  -String languageTag ' https://github.com/EuroCRIS/CERIF-Core/blob/main/datatypes/Language_Tag.md
-  -String display
-}
-
-class Country {
-   -String code ' ISO_3166_Alpha2_Code
-   -Set<MultiLingualContent> name
-}
-
-class MultiLingualContent {
-  LanguageTag language
-  String content
-  int priority
-}
-
-class GeoLocation {
-  Double longitude
-  Double latitude
-  int precisionInMeters
-}
-
-class ResearchArea {
-  Set<MultiLingualContent> name
-  Set<MultiLingualContent> description
-}
-ResearchArea "1" --> "*" ResearchArea
-
-}
 
 package user {
-  
-  class Permission {
+  enum UserRole {
+    ADMIN
+    RESEARCHER
+    INSTITUTIONAL_EDITOR
+  }
+
+  class Privilege {
     -String name
   }
   
   class Authority {
     -String name
-    -Set<Permission> permissions 
+    -Set<Privilege> privileges 
   }
 
 
@@ -68,14 +74,17 @@ package user {
     -OrganisationUnit OrganisationUnit
   }
 
-  class UserActivation {
+  class UserAccountActivation {
     -String code
     -LocalDateTime timestamp
   }
   UserActivation -> User
+
+  class RefreshToken {
+    -String refreshTokenValue
+  }
+  RefreshToken -> User
 }
-
-
 
 
 package person {
@@ -91,9 +100,9 @@ package person {
     -Set<MultiLingualContent> keyword
     -String apvnt
     -String mnid
-    -String ORCID
+    -String orcid
     -String scopusAuthorId
-    -int oldId
+    -Integer oldId
     -Set<ResearchArea> researchAreas
     -ApproveStatus approveStatus
   }
@@ -198,11 +207,12 @@ package person {
 package institution {
   class OrganisationUnit {
     -Set<MultiLingualContent> name
-    -String acronym
+    -String nameAbbreviation
     -Set<MultiLingualContent> keyword
     -Set<ResearchArea> researchAreas
     -GeoLocation location
     -ApproveStatus approveStatus
+    -Integer oldId
   }
 
   OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : source
@@ -302,6 +312,7 @@ package document {
     -String note
     -String doi
     -String scopusId
+    -Integer oldId
   }
 
   class ProceedingsPublication extends Document {
@@ -336,6 +347,7 @@ package document {
     -Set<MultiLingualContent> state
     -Set<MultiLingualContent> place
     -Set<PersonEventContribution> contributors
+    -Integer oldId
   }
 
   enum EventContributionType {
@@ -379,11 +391,11 @@ package document {
 
   class JournalPublication extends Document {
     -String startPage;
-	-String endPage;
+    -String endPage;
     -Integer numberOfPages
     -String articleNumber
     -String volume
-	-String issue
+    -String issue
   }
 
   class PublicationSeries {
@@ -393,14 +405,14 @@ package document {
     -Set<LanguageTag> languages
     -Set<MultiLingualContent> name
     -Set<MultiLingualContent> nameAbbreviation
+    -Integer oldId
   }
 
   class Journal extends PublicationSeries {
-
   }
 
   class BookSeries extends PublicationSeries {
-' for instance https://www.springer.com/gp/computer-science/lncs
+    ' for instance https://www.springer.com/gp/computer-science/lncs
   }
 
   class PersonJournalContribution extends PersonContribution {
@@ -431,8 +443,8 @@ package document {
     -String eISBN
     -Integer numberOfPages
     -String volume
-' volume and number are defined only in the case publicationSeries is defined.
-' We can even model that with link entity PublicationToPublicationSeriesRelation (with volume and number)
+    ' volume and number are defined only in the case publicationSeries is defined.
+    ' We can even model that with link entity PublicationToPublicationSeriesRelation (with volume and number)
     -String number
     -Set<LanguageTag> languages
     -ResearchArea researchArea
