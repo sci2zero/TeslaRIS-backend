@@ -1,6 +1,7 @@
 package rs.teslaris.core.importer.controller;
 
 import jakarta.annotation.PostConstruct;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @RestController
-@RequestMapping("/api/import-scopus")
+@RequestMapping("/api/import-common")
 @RequiredArgsConstructor
 public class CommonHarvestController {
 
@@ -41,8 +42,11 @@ public class CommonHarvestController {
 
     @GetMapping("/documents-by-author")
     public Integer harvestPublicationsForAuthor(
-        @RequestHeader("Authorization") String bearerToken, @RequestParam Integer startYear,
-        @RequestParam Integer endYear) {
+        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
+        @RequestParam LocalDate dateTo) {
+        var startYear = dateFrom.getYear();
+        var endYear = dateTo.getYear();
+
         var userId = tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]);
         var newEntriesCount = new HashMap<Integer, Integer>();
 
