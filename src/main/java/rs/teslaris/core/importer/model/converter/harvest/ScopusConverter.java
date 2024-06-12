@@ -33,8 +33,10 @@ public class ScopusConverter {
         if (Objects.nonNull(entry.pageRange())) {
             var pages = entry.pageRange().split("-");
             document.setStartPage(pages[0]);
-            document.setEndPage(pages[1]);
-            document.setNumberOfPages(Integer.parseInt(pages[1]) - Integer.parseInt(pages[0]));
+            if (pages.length > 1) {
+                document.setEndPage(pages[1]);
+                document.setNumberOfPages(Integer.parseInt(pages[1]) - Integer.parseInt(pages[0]));
+            }
         }
 
         return document;
@@ -85,20 +87,22 @@ public class ScopusConverter {
             var person = getPerson(author);
             contribution.setPerson(person);
 
-            author.afid().forEach(authorAfid -> {
-                var authorAffiliation = entry.affiliations().stream()
-                    .filter(affiliation -> authorAfid.id().equals(affiliation.afid())).findFirst();
+            if (Objects.nonNull(author.afid())) {
+                author.afid().forEach(authorAfid -> {
+                    var authorAffiliation = entry.affiliations().stream()
+                        .filter(affiliation -> authorAfid.id().equals(affiliation.afid()))
+                        .findFirst();
 
-                if (authorAffiliation.isEmpty()) {
-                    return;
-                }
+                    if (authorAffiliation.isEmpty()) {
+                        return;
+                    }
 
-                var institution = new OrganisationUnit();
-                institution.getName()
-                    .add(new MultilingualContent("EN", authorAffiliation.get().affilName(), 1));
-                contribution.getInstitutions().add(institution);
-            });
-
+                    var institution = new OrganisationUnit();
+                    institution.getName()
+                        .add(new MultilingualContent("EN", authorAffiliation.get().affilName(), 1));
+                    contribution.getInstitutions().add(institution);
+                });
+            }
 
             document.getContributions().add(contribution);
         });
