@@ -1,0 +1,39 @@
+{
+  "analysis": {
+    "analyzer": {
+      "serbian": {
+        "type": "custom",
+        "tokenizer": "icu_tokenizer",
+        "filter": [
+          "lowercase",
+          "serbian_stop",
+          "serbian_stemmer",
+          "icu_folding"
+        ]
+      },
+      "serbian_simple": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": [
+          "lowercase",
+          "serbian_cyrillic_to_latinic",
+          "icu_folding"
+        ]
+      }
+    },
+    "filter": {
+      "serbian_stop": {
+        "type": "stop",
+        "stopwords": "_serbian_"
+      },
+      "serbian_stemmer": {
+        "type": "stemmer",
+        "language": "serbian"
+      },
+      "serbian_cyrillic_to_latinic": {
+        "type": "icu_transform",
+        "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC"
+      }
+    }
+  }
+}
