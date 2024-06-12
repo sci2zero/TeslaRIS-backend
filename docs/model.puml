@@ -1,0 +1,637 @@
+@startuml
+
+package commonTypes {
+
+  enum ApproveStatus {
+    REQUESTED
+    APPROVED
+    DECLINED
+  }
+
+  class Language {
+    -String languageCode ' ISO 639-1 - https://www.loc.gov/standards/iso639-2/php/English_list.php
+    -Set<MultiLingualContent> name
+  }
+
+  class LanguageTag {
+    -String languageTag ' https://github.com/EuroCRIS/CERIF-Core/blob/main/datatypes/Language_Tag.md
+    -String display
+  }
+
+  class Country {
+    -String code ' ISO_3166_Alpha2_Code
+    -Set<MultiLingualContent> name
+  }
+
+  class MultiLingualContent {
+    LanguageTag language
+    String content
+    Integer priority
+  }
+
+  class GeoLocation {
+    Double longitude
+    Double latitude
+    String address
+  }
+
+  class ResearchArea {
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+  }
+  ResearchArea "1" --> "*" ResearchArea
+
+}
+
+
+package user {
+  enum UserRole {
+    ADMIN
+    RESEARCHER
+    INSTITUTIONAL_EDITOR
+  }
+
+  class Privilege {
+    -String name
+  }
+  
+  class Authority {
+    -String name
+    -Set<Privilege> privileges 
+  }
+
+
+  class User {
+    -String email
+    -String password
+    -String note
+    -Stirng firstname
+    -Stirng lastname
+    -LanguageTag preferedLanguage
+    -boolean isActive
+    -Authority authority
+    -Person person
+    -OrganisationUnit OrganisationUnit
+  }
+
+  class UserAccountActivation {
+    -String code
+    -LocalDateTime timestamp
+  }
+  UserActivation -> User
+
+  class RefreshToken {
+    -String refreshTokenValue
+  }
+  RefreshToken -> User
+}
+
+
+package person {
+
+  class Person {
+    -PersonName name
+    -Set<PersonName> otherNames
+    +String name()
+    -Set<Involvement> involvements
+    -Set<ExpertiseOrSkill> expertisesAndSkills
+    -Set<Prize> prizes
+    -Set<MultiLingualContent> biography
+    -Set<MultiLingualContent> keyword
+    -String apvnt
+    -String mnid
+    -String orcid
+    -String scopusAuthorId
+    -Integer oldId
+    -Set<ResearchArea> researchAreas
+    -ApproveStatus approveStatus
+  }
+  
+  class PersonName {
+    -String firstname
+    -String otherName
+    -String lastname
+    -LocalDate dateFrom
+    -LocalDate dateTo
+  }
+
+  class PersonalInfo {
+    -LocalDate localBirth
+    -String placeOfBrith
+    -Sex sex
+    -PostalAddress postalAddress
+    -Contact contact
+  }
+
+  class Contact {
+      -String contactEmail
+      -String phoneNumber
+  }
+
+  class PostalAddress {
+     -Country country
+     -Set<MultiLingualContent> streetAndNumber
+     -Set<MultiLingualContent> city
+  }
+
+  class Involvement {
+    -LocalDate dateFrom
+    -LocalDate dateTo
+    -ApproveStatus approveStatus
+    -Set<DocumentFile> proofs
+    -InvolvementType involvementType
+    -Set<MultiLingualContent> affiliationStatement
+    ' an entity OrganisationUnit can be linked with Involvement, or it should be only specified in affiliationStatement
+    ' it means if I studied in Germany, that institution record wouldn't be created in the database, it will be only specified in affiliationStatement
+  }
+
+  enum InvolvementType {
+      STUDIED_AT
+      COMPLETED_COURSE_AT
+      POSTDOC_AT
+      MEMBER_OF
+      EMPLOYED_AT
+      HIRED_BY ' or selfemployed
+  }
+
+  Involvement "*" --> "1" Person : person
+  Involvement "*" --> "0..1" OrganisationUnit : orgUnit
+
+
+  class Education extends Involvement {
+    -Set<MultiLingualContent> thesisTitle
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> shortTitle
+  }
+
+  class Employment extends Involvement {
+    -Position position
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> role
+  }
+
+  class Membership extends Involvement {
+      -Set<MultiLingualContent> contributionDescription
+      -Set<MultiLingualContent> role
+  }
+
+  class ExpertiseOrSkill {
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    Set<DocumentFile> proofs
+  }
+
+  class LanguageKnowledge extends ExpertiseOrSkill {
+      Language language
+    '  int speakingLevel
+    '  int readingLevel
+    '  int writingLevel
+  }
+  ' the another example of expertise might be usage of some complex piece of equipment
+
+  class Prize {
+    Set<MultiLingualContent> title
+    Set<MultiLingualContent> description
+    Set<DocumentFile> proofs
+    LocalDate date
+  }
+
+  enum Sex {
+    MALE
+    FEMALE
+  }
+
+}
+
+package institution {
+  class OrganisationUnit {
+    -Set<MultiLingualContent> name
+    -String nameAbbreviation
+    -Set<MultiLingualContent> keyword
+    -Set<ResearchArea> researchAreas
+    -GeoLocation location
+    -ApproveStatus approveStatus
+    -Integer oldId
+  }
+
+  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : source
+  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : target
+
+  class OrganisationUnitsRelation {
+    Set<MultiLingualContent> sourceAffiliationStatement
+    Set<MultiLingualContent> targetAffiliationStatement
+    OrganisationUnitRelationType relationType
+    LocalDate dateFrom
+    LocalDate dateTo
+    ApproveStatus approveStatus
+    Set<DocumentFile> proofs
+  }
+
+
+  enum OrganisationUnitsRelationType {
+    BELONGS_TO
+    MEMBER_OF
+  }
+
+}
+
+package document {
+
+  enum DocumentContributionType {
+    AUTHOR
+    EDITOR
+    REVIEWER
+    ADVISOR
+    ' TODO: check contribution types at https://credit.niso.org/ and https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonOutputContributions.xml
+  }
+
+  class Publisher {
+    -Set<MultiLingualContent> name
+    -Set<MultiLingualContent> place
+    -Set<MultiLingualContent> state
+  }
+
+  class PersonContribution {
+    -Person person
+    -Set<MultiLingualContent> contributionDescription
+    -AffiliationStatement affiliationStatement
+    -Set<OrganisationUnit> institutions
+    -Integer orderNumber
+    -ApproveStatus approveStatus
+    ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
+  }
+
+  class AffiliationStatement {
+     Set<MultiLingualContent> displayAffiliationStatement
+     PersonName displayPersonName
+     PostalAddress address
+     Contact contact
+  }
+
+  class PersonDocumentContribution extends PersonContribution {
+    -DocumentContributionType contributionType
+    -boolean mainContributor
+    -boolean correspondingContributor
+  }
+
+  class DocumentFile {
+    String filename
+    String serverFilename
+    Set<MultiLingualContent> description
+    String mimeType
+    Long fileSize
+    ResourceType resourceType
+    License license
+  }
+
+  enum License {
+    BSD
+    CREATIVE_COMMONS
+    APACHE
+  }
+
+  enum ResourceType {
+    PREPRINT
+    OFFICIAL_PUBLICATION
+    SUPPLEMENT
+  }
+
+  class Document {
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> subTitle
+    -Set<MultiLingualContent> description
+    -Set<MultiLingualContent> note
+    -Set<PersonDocumentContribution> contributors
+    -Set<String> uris
+    -String documentDate
+    -Set<DocumentFile> fileItems
+    -Set<DocumentFile> proof
+    -Set<MultiLingualContent> keywords
+    -ApproveStatus approveStatus
+    -String note
+    -String doi
+    -String scopusId
+    -Integer oldId
+  }
+
+  class ProceedingsPublication extends Document {
+    -String startPage;
+    -String endPage;
+    -Integer numberOfPages
+    -String articleNumber
+  }
+
+  class Proceedings extends Document {
+    -String eISBN
+    -String printISBN
+    -Integer numberOfPages
+    -Set<LanguageTag> languages
+    -String publicationSeriesVolume
+    -String publicationSeriesIssue
+  }
+
+  class Conference extends Event{
+    -String number
+    -String fee
+  }
+
+  class Event {
+    -Set<MultiLingualContent> name
+    -Set<MultiLingualContent> nameAbbreviation
+    -Set<MultiLingualContent> description
+    -Set<MultiLingualContent> keywords
+    -Boolean serialEvent
+    -LocalDate dateFrom
+    -LocalDate dateTo
+    -Set<MultiLingualContent> state
+    -Set<MultiLingualContent> place
+    -Set<PersonEventContribution> contributors
+    -Integer oldId
+  }
+
+  enum EventContributionType {
+     ORGANIZATION_BOARD_CHAIR
+     ORGANIZATION_BOARD_MEMBER
+     REVIEWER
+     PROGRAMME_BOARD_MEMBER  ' TODO: check other types here - https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonEventInvolvements.xml
+     SPEAKER
+     PANELISTS
+     CHAIR
+     AUDIENCE
+     DEMONSTRATOR
+  }
+
+  class PersonEventContribution extends PersonContribution {
+     -EventContributionType contributionType
+  }
+
+  EventsRelation "*" --> "0..1" Event : source
+  EventsRelation "*" --> "0..1" Event : target
+
+  class EventsRelation {
+    EventsRelationType relationType
+  }
+
+
+  enum EventsRelationType {
+    PART_OF
+' the relation type above is used to link one event which is part of the another event (for instance, workshop at a conference)
+    BELONGS_TO_SERIES
+' the relation type above is used to link an event occurence (conference, for instance ICIST 2023) with event series (event with data property serialEvent=true, for instance ICIST)
+    COLLOCATED_WITH
+' the relation type above is used to link two events organized together
+  }
+
+  ProceedingsPublication "1..*" --> "1" Proceedings
+' Proceedings "1..*" --> "1" Conference the relation below should replace this one. However, the conference should have one or more linked proceedings,
+' but also any event (for instance plenary presentation is an event which is part of conference) could have linked documents (presentation, dataset, etc.)
+  Document "*" --> "0..1" Event
+  Proceedings "1..*" --> "0..1" PublicationSeries : publicationSeries
+
+  class JournalPublication extends Document {
+    -String startPage;
+    -String endPage;
+    -Integer numberOfPages
+    -String articleNumber
+    -String volume
+    -String issue
+  }
+
+  class PublicationSeries {
+    -String eISSN
+    -String printISSN
+    -Set<PersonJournalContribution> contributors
+    -Set<LanguageTag> languages
+    -Set<MultiLingualContent> name
+    -Set<MultiLingualContent> nameAbbreviation
+    -Integer oldId
+  }
+
+  class Journal extends PublicationSeries {
+  }
+
+  class BookSeries extends PublicationSeries {
+    ' for instance https://www.springer.com/gp/computer-science/lncs
+  }
+
+  class PersonJournalContribution extends PersonContribution {
+    -JournalContributionType contributionType
+    -LocalDate dateFrom
+    -LocalDate dateTo
+  }
+
+  enum JournalContributionType {
+    EDITOR
+    ASSOCIATE_EDITOR
+    REVIEWER
+    SCIENTIFIC_BOARD_MEMBER
+  }
+
+
+  JournalPublication "1..*" --> "1" Journal
+
+  class MonographPublication extends Document {
+    -String startPage;
+	-String endPage
+    -Integer numberOfPages
+    -String articleNumber
+  }
+
+  class Monograph extends Document {
+    -String printISBN
+    -String eISBN
+    -Integer numberOfPages
+    -String volume
+    ' volume and number are defined only in the case publicationSeries is defined.
+    ' We can even model that with link entity PublicationToPublicationSeriesRelation (with volume and number)
+    -String number
+    -Set<LanguageTag> languages
+    -ResearchArea researchArea
+  }
+
+  Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
+
+  MonographPublication "1..*" --> "1" Monograph
+
+  class Patent extends Document {
+    -String number;
+  }
+
+  class InformativeAttachment extends Document {
+  }
+
+  class EncyclopedicContribution extends Document {
+  }
+
+  class LexicographicContribution extends Document {
+  }
+
+  class ScientificCritic extends Document {
+  }
+
+  ScientificCritic "1..*" --> "1" Journal
+
+  ScientificCritic "1..*" --> "1" Monograph
+
+  ScientificCritic "1..*" --> "1" Proceedings
+
+  class Polemics extends Document {
+  }
+
+  Polemics "1..*" --> "1" Journal
+
+  Polemics "1..*" --> "1" Monograph
+
+  Polemics "1..*" --> "1" Proceedings
+
+  class Thesis extends Document {
+    -OrganisationUnit OrganisationUnit
+    -ThesisCategory category
+    -Integer numberOfPages
+    -Set<LanguageTag> languages
+    -ResearchArea researchArea
+  }
+
+  class Dataset extends Document {
+    -String internalNumber
+  }
+
+  class Software extends Document {
+    -String internalNumber
+  }
+
+  enum ThesisCategory {
+    MR
+    PHD
+    MASTER
+    BACHELOR
+  }
+
+
+  Document "1" --> "1..*" PersonDocumentContribution
+  Journal "1" --> "1..*" PersonJournalContribution
+  Event "1" --> "1..*" PersonEventContribution
+  Thesis "0..*" --> "1" Publisher
+  Monograph "0..*" --> "1" Publisher
+  Proceedings "0..*" --> "1" Publisher
+  Patent "0..*" --> "1" Publisher
+  Dataset "0..*" --> "1" Publisher
+  Software "0..*" --> "1" Publisher
+
+
+  DocumentsRelation "*" --> "0..1" Document : source
+  DocumentsRelation "*" --> "0..1" Document : target
+
+  class DocumentsRelation {
+    DocumentsRelationType relationType
+  }
+
+
+  enum DocumentsRelationType {
+    PART_OF
+    USED_BY
+    CITED_BY
+    RESULT_OF
+  }
+
+}
+
+package project {
+
+  class Project {
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    Set<MultiLingualContent> nameAbbreviation
+    Set<MultiLingualContent> keywords
+    Set<MultiLingualContent> note
+    Set<String> uris
+    Set<PersonProjectContribution> contributors
+    Set<ProjectDocument> documents
+    LocalDate dateFrom
+    LocalDate dateTo
+    Set<ProjectStatus> statuses
+    ProjectType type
+    Set<Funding> fundings
+  }
+
+  enum ProjectStatus {
+    PROPOSAL
+    SUBMITTED
+    REJECTED
+    APPROVED
+    STARTED
+    COMPLETED
+  }
+
+  enum ProjectType {
+    INTERNAL
+    INTERNATIONAL
+    NATIONAL
+  }
+
+  class Funding {
+    String fundingNumber
+    DocumentFile agreement
+    Set<MultiLingualContent> fundingCall
+    Set<MultiLingualContent> fundingProgram
+    Set<MultiLingualContent> fundingAgency
+    MonetaryAmount grant
+    LocalDate dateFrom
+    LocalDate dateTo
+  }
+
+  class MonetaryAmount {
+    double amount
+    Currency currency
+  }
+
+  class Currency {
+    Set<MultiLingualContent> name
+    String symbol ' for instance - $
+    String code  ' for instance USD
+  }
+
+  class PersonProjectContribution extends PersonContribution {
+    ProjectContributionType contributionType
+    LocalDate dateFrom
+    LocalDate dateTo
+  }
+
+  enum ProjectContributionType {
+    PRINCIPLE_INVESTIGATOR
+    PARTICIPATION
+  }
+
+  ProjectsRelation "*" --> "1" Project : source
+  ProjectsRelation "*" --> "1" Project : target
+
+  class ProjectsRelation {
+    ProjectsRelationType relationType
+    LocalDate dateFrom
+    LocalDate dateTo
+  }
+
+
+  enum ProjectsRelationType {
+    PART_OF
+    RESULT_OF
+    PREDECESSOR
+  }
+
+
+  class ProjectDocument {
+    Document document
+    ProjectDocumentType relationType
+  }
+
+
+  enum ProjectDocumentType {
+    REPORT
+    RESULT
+    USED
+  }
+
+}
+
+@enduml
+
