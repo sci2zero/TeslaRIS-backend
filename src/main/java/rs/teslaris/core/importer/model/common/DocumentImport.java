@@ -24,7 +24,11 @@ public class DocumentImport {
     @MongoId(targetType = FieldType.OBJECT_ID)
     private String id;
 
+    @Field("identifier")
     private String identifier;
+
+    @Field("embedding")
+    private float[] embedding;
 
     @Field("import_users_id")
     private Set<Integer> importUsersId = new HashSet<>();
