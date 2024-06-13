@@ -15,12 +15,10 @@ import rs.teslaris.core.model.person.Sex;
 @AllArgsConstructor
 public class PersonalInfoDTO {
 
-    @NotNull(message = "You have to provide a local bitrth date.")
     private LocalDate localBirthDate;
 
     private String placeOfBirth;
 
-    @NotNull(message = "You must provide a person sex.")
     private Sex sex;
 
     @Valid
