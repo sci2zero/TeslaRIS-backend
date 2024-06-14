@@ -117,6 +117,7 @@ public abstract class DocumentConverter {
             institution.setName(
                 multilingualContentConverter.toLoaderDTO(importInstitution.getName()));
             institution.setNameAbbreviation(importInstitution.getNameAbbreviation());
+            institution.setScopusAfid(importInstitution.getScopusAfid());
 
             dto.getInstitutions().add(institution);
         });

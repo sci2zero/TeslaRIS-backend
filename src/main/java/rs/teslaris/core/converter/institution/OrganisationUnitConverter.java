@@ -27,6 +27,7 @@ public class OrganisationUnitConverter {
 
         dto.setLocation(GeoLocationConverter.toDTO(organisationUnit.getLocation()));
         dto.setContact(ContactConverter.toDTO(organisationUnit.getContact()));
+        dto.setScopusAfid(organisationUnit.getScopusAfid());
 
         return dto;
     }

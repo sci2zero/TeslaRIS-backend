@@ -17,4 +17,6 @@ public class OrganisationUnitLoadDTO {
     private List<MultilingualContentDTO> name = new ArrayList<>();
 
     private String nameAbbreviation;
+
+    private String scopusAfid;
 }

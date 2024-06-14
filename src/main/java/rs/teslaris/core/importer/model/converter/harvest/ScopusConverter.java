@@ -98,6 +98,7 @@ public class ScopusConverter {
                     }
 
                     var institution = new OrganisationUnit();
+                    institution.setScopusAfid(authorAfid.id());
                     institution.getName()
                         .add(new MultilingualContent("EN", authorAffiliation.get().affilName(), 1));
                     contribution.getInstitutions().add(institution);

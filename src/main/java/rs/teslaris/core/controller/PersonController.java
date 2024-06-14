@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,6 +31,7 @@ import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Validated
@@ -39,6 +41,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class PersonController {
 
     private final PersonService personService;
+
+    private final JwtUtil tokenUtil;
 
 
     @GetMapping("/{personId}/can-edit")
@@ -66,6 +70,12 @@ public class PersonController {
     @GetMapping("/{personId}/person-user")
     public PersonUserResponseDTO readPersonWithUser(@PathVariable Integer personId) {
         return personService.readPersonWithUser(personId);
+    }
+
+    @GetMapping("/for-user")
+    public Integer getPersonIdForUser(@RequestHeader("Authorization") String bearerToken) {
+        return personService.getPersonIdForUserId(
+            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
     }
 
     @GetMapping("/simple-search")

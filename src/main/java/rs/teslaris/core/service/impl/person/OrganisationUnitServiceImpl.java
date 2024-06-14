@@ -277,7 +277,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         setCommonOUFields(organisationUnitToUpdate, organisationUnitDTORequest);
 
-        organisationUnitToUpdate = this.save(organisationUnitToUpdate);
+        organisationUnitToUpdate = save(organisationUnitToUpdate);
 
         if (organisationUnitToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
@@ -299,6 +299,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 organisationUnitDTO.getKeyword())
         );
 
+        organisationUnit.setScopusAfid(organisationUnitDTO.getScopusAfid());
         organisationUnit.setOldId(organisationUnitDTO.getOldId());
 
         var researchAreas = researchAreaService.getResearchAreasByIds(

@@ -24,7 +24,7 @@ public class DeduplicationUtil {
 
     public static Double MIN_SIMILARITY_THRESHOLD = 0.95;
 
-    Predictor<String, float[]> predictor;
+    private static Predictor<String, float[]> predictor;
 
     @Autowired
     public DeduplicationUtil() throws ModelNotFoundException, MalformedModelException, IOException {
@@ -38,23 +38,23 @@ public class DeduplicationUtil {
                 .build();
 
         ZooModel<String, float[]> model = criteria.loadModel();
-        this.predictor = model.newPredictor();
+        DeduplicationUtil.predictor = model.newPredictor();
     }
 
-    public String flattenJson(String json) {
+    public static String flattenJson(String json) {
         var gson = new GsonBuilder().create();
         var map = gson.fromJson(json, HashMap.class);
         return map.toString();
     }
 
-    public double cosineSimilarity(INDArray vectorA, INDArray vectorB) {
+    public static double cosineSimilarity(INDArray vectorA, INDArray vectorB) {
         double dotProduct = vectorA.mul(vectorB).sumNumber().doubleValue();
         double magnitudeA = vectorA.norm2Number().doubleValue();
         double magnitudeB = vectorB.norm2Number().doubleValue();
         return dotProduct / (magnitudeA * magnitudeB);
     }
 
-    public INDArray getEmbedding(String text) throws TranslateException {
+    public static INDArray getEmbedding(String text) throws TranslateException {
         return Nd4j.create(predictor.predict(text));
     }
 }

@@ -16,4 +16,6 @@ public class OrganisationUnit {
     private List<MultilingualContent> name = new ArrayList<>();
 
     private String nameAbbreviation;
+
+    private String scopusAfid;
 }
