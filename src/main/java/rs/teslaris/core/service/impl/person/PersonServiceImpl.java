@@ -419,6 +419,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndexRepository.save(personIndex);
     }
 
+    @Override
+    public Integer getPersonIdForUserId(Integer userId) {
+        return personRepository.findPersonIdForUserId(userId).orElse(null);
+    }
+
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
         return personIndexRepository.findByDatabaseId(personDatabaseId).orElse(new PersonIndex());
     }

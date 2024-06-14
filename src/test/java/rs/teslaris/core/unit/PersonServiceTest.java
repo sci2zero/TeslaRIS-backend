@@ -593,4 +593,28 @@ public class PersonServiceTest {
         assertNull(actualPerson);
         verify(personRepository, times(1)).findPersonByOldId(oldId);
     }
+
+    @Test
+    public void shouldGetPersonIdForUserId() {
+        var userId = 1;
+        var expectedPersonId = 100;
+
+        when(personRepository.findPersonIdForUserId(userId)).thenReturn(
+            Optional.of(expectedPersonId));
+
+        Integer actualPersonId = personService.getPersonIdForUserId(userId);
+
+        assertEquals(expectedPersonId, actualPersonId);
+    }
+
+    @Test
+    public void shouldNotTestGetPersonIdForUserIdWhenNotPresent() {
+        var userId = 1;
+
+        when(personRepository.findPersonIdForUserId(userId)).thenReturn(Optional.empty());
+
+        Integer actualPersonId = personService.getPersonIdForUserId(userId);
+
+        assertNull(actualPersonId);
+    }
 }

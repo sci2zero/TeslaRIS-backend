@@ -27,6 +27,8 @@ public class OrganisationUnitDTO {
 
     private List<ResearchAreaHierarchyDTO> researchAreas;
 
+    private String scopusAfid;
+
     private GeoLocationDTO location;
 
     private ContactDTO contact;

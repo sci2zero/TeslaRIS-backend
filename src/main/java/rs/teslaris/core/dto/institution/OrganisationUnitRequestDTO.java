@@ -33,5 +33,7 @@ public class OrganisationUnitRequestDTO {
 
     private ContactDTO contact;
 
+    private String scopusAfid;
+
     private Integer oldId;
 }

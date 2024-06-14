@@ -43,6 +43,9 @@ public class OrganisationUnit extends BaseEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
 
+    @Column(name = "scopus_afid")
+    private String scopusAfid;
+
     @Embedded
     private GeoLocation location;
 

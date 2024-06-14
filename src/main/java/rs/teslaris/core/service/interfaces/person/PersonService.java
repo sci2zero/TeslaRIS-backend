@@ -70,5 +70,5 @@ public interface PersonService extends JPAService<Person> {
 
     void indexPerson(Person savedPerson, Integer personDatabaseId);
 
-
+    Integer getPersonIdForUserId(Integer userId);
 }

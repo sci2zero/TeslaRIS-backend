@@ -32,4 +32,7 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query("select u from User u where u.person.scopusAuthorId = :scopusId")
     Optional<User> findUserForPersonScopusId(String scopusId);
+
+    @Query("select u.person.id from User u where u.id = :userId")
+    Optional<Integer> findPersonIdForUserId(Integer userId);
 }
