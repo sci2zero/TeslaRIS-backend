@@ -454,6 +454,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personIndex.setDatabaseId(savedPerson.getId());
         personIndex.setOrcid(savedPerson.getOrcid());
+        personIndex.setScopusAuthorId(savedPerson.getScopusAuthorId());
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
@@ -551,6 +552,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return searchService.runQuery(query, pageable, PersonIndex.class, "person");
     }
 
+    @Override
+    @Nullable
+    public PersonIndex findPersonByScopusAuthorId(String scopusAuthorId) {
+        return personIndexRepository.findByScopusAuthorId(scopusAuthorId).orElse(null);
+    }
+
     private Query buildNameAndEmploymentQuery(List<String> tokens) {
         return BoolQuery.of(q -> q
             .must(mb -> mb.bool(b -> {
@@ -558,7 +565,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         token -> {
                             b.should(sb -> sb.wildcard(
                                 m -> m.field("name").value(token).caseInsensitive(true)));
-                            b.should(sb -> sb.match(m -> m.field("name").query(token).fuzziness("1")));
+                            b.should(sb -> sb.match(m -> m.field("name").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));

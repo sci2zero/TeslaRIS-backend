@@ -57,7 +57,7 @@ public class SoftwareControllerTest extends BaseTest {
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadSoftware() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/software/{softwareId}", 5)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/software/{softwareId}", 7)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
@@ -86,7 +86,7 @@ public class SoftwareControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(softwareDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/software/{softwareId}", 5)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/software/{softwareId}", 7)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -100,7 +100,7 @@ public class SoftwareControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/software/{softwareId}",
-                        5).contentType(MediaType.APPLICATION_JSON)
+                        7).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

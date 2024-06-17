@@ -359,7 +359,8 @@ public class DbInitializer implements ApplicationRunner {
         languageRepository.save(russianLanguage);
 
         var software = new Software();
-        software.setTitle(Set.of(new MultiLingualContent(englishTag, "TeslaRIS", 1)));
+        software.setTitle(Set.of(new MultiLingualContent(englishTag,
+            "TeslaRIS - Reengineering of CRIS at the University of Novi Sad", 1)));
         software.setInternalNumber("123456");
         software.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -474,9 +475,6 @@ public class DbInitializer implements ApplicationRunner {
             new PersonName("Ivan", "", "M.", LocalDate.of(2000, 1, 31), null));
         personContributionRepository.save(softwareContribution);
 
-        software.addDocumentContribution(softwareContribution);
-        softwareRepository.save(software);
-
         var researchArea2 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Softversko inzenjerstvo", 2))),
             new HashSet<>(), researchArea1);
@@ -519,8 +517,27 @@ public class DbInitializer implements ApplicationRunner {
         person3.setApproveStatus(ApproveStatus.APPROVED);
         person3.setPersonalInfo(personalInfo3);
         person3.setName(
-            new PersonName("Jelena", "", "Nikolic", LocalDate.of(1976, 7, 16), null));
+            new PersonName("Dusan", "", "Nikolic", LocalDate.of(1976, 7, 16), null));
         person3.setScopusAuthorId("14419566900");
         personRepository.save(person3);
+
+        var softwareContribution2 = new PersonDocumentContribution();
+        softwareContribution2.setPerson(person3);
+        softwareContribution2.setContributionType(DocumentContributionType.AUTHOR);
+        softwareContribution2.setIsMainContributor(false);
+        softwareContribution2.setIsCorrespondingContributor(false);
+        softwareContribution2.setOrderNumber(2);
+        softwareContribution2.setDocument(dataset);
+        softwareContribution2.setApproveStatus(ApproveStatus.APPROVED);
+        softwareContribution2.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), new PersonName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+        softwareContribution2.getAffiliationStatement().setDisplayPersonName(
+            new PersonName("Dušan", "", "N.", null, null));
+        personContributionRepository.save(softwareContribution2);
+
+        software.addDocumentContribution(softwareContribution);
+        software.addDocumentContribution(softwareContribution2);
+        softwareRepository.save(software);
     }
 }

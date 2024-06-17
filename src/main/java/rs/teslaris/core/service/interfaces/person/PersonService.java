@@ -32,6 +32,8 @@ public interface PersonService extends JPAService<Person> {
 
     Page<PersonIndex> advancedSearch(List<String> tokens, Pageable pageable);
 
+    PersonIndex findPersonByScopusAuthorId(String scopusAuthorId);
+
     Person findPersonById(Integer id);
 
     PersonResponseDTO readPersonByScopusId(String scopusAuthorId);
