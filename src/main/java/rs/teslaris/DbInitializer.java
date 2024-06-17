@@ -512,7 +512,7 @@ public class DbInitializer implements ApplicationRunner {
         var postalAddress3 = new PostalAddress(country, new HashSet<>(),
             new HashSet<>());
         var personalInfo3 =
-            new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.FEMALE, postalAddress3,
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress3,
                 new Contact("test@email.com", "021555769"));
         person3.setApproveStatus(ApproveStatus.APPROVED);
         person3.setPersonalInfo(personalInfo3);
@@ -539,5 +539,18 @@ public class DbInitializer implements ApplicationRunner {
         software.addDocumentContribution(softwareContribution);
         software.addDocumentContribution(softwareContribution2);
         softwareRepository.save(software);
+
+        var person4 = new Person();
+        var postalAddress4 = new PostalAddress(country, new HashSet<>(),
+            new HashSet<>());
+        var personalInfo4 =
+            new PersonalInfo(LocalDate.of(1976, 6, 24), "Serbia", Sex.FEMALE, postalAddress4,
+                new Contact("test1@email.com", "021555769"));
+        person4.setApproveStatus(ApproveStatus.APPROVED);
+        person4.setPersonalInfo(personalInfo4);
+        person4.setName(
+            new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null));
+        person4.setScopusAuthorId("14419566900");
+        personRepository.save(person4);
     }
 }
