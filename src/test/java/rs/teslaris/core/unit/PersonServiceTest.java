@@ -596,25 +596,58 @@ public class PersonServiceTest {
 
     @Test
     public void shouldGetPersonIdForUserId() {
+        // Given
         var userId = 1;
         var expectedPersonId = 100;
 
         when(personRepository.findPersonIdForUserId(userId)).thenReturn(
             Optional.of(expectedPersonId));
 
-        Integer actualPersonId = personService.getPersonIdForUserId(userId);
+        // When
+        var actualPersonId = personService.getPersonIdForUserId(userId);
 
+        // Then
         assertEquals(expectedPersonId, actualPersonId);
     }
 
     @Test
     public void shouldNotTestGetPersonIdForUserIdWhenNotPresent() {
+        // Given
         var userId = 1;
 
         when(personRepository.findPersonIdForUserId(userId)).thenReturn(Optional.empty());
 
-        Integer actualPersonId = personService.getPersonIdForUserId(userId);
+        // When
+        var actualPersonId = personService.getPersonIdForUserId(userId);
 
+        // Then
         assertNull(actualPersonId);
+    }
+
+    @Test
+    public void testFindPersonByScopusAuthorId_PersonExists() {
+        // Given
+        var person = new PersonIndex();
+        person.setScopusAuthorId("12345");
+
+        when(personIndexRepository.findByScopusAuthorId("12345")).thenReturn(Optional.of(person));
+
+        // When
+        var foundPerson = personService.findPersonByScopusAuthorId("12345");
+
+        // Then
+        assertEquals(person, foundPerson);
+    }
+
+    @Test
+    public void testFindPersonByScopusAuthorId_PersonDoesNotExist() {
+        // Given
+        when(personIndexRepository.findByScopusAuthorId("12345")).thenReturn(Optional.empty());
+
+        // When
+        var foundPerson = personService.findPersonByScopusAuthorId("12345");
+
+        // Then
+        assertNull(foundPerson);
     }
 }

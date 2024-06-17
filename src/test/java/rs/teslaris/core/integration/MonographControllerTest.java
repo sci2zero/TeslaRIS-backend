@@ -101,7 +101,7 @@ public class MonographControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/monograph/{monographId}",
-                        7).contentType(MediaType.APPLICATION_JSON)
+                        5).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

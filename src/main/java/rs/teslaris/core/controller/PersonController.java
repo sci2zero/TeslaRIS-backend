@@ -88,6 +88,11 @@ public class PersonController {
             pageable);
     }
 
+    @GetMapping("/scopus-author")
+    public PersonIndex findByScopusId(@RequestParam("scopusId") String scopusId) {
+        return personService.findPersonByScopusAuthorId(scopusId);
+    }
+
     @GetMapping("/employed-at/{organisationUnitId}")
     public Page<PersonIndex> findEmployeesForInstitution(@PathVariable Integer organisationUnitId,
                                                          Pageable pageable) {
