@@ -1,4 +1,4 @@
-@startuml
+@startuml teslaris
 
 package commonTypes {
 
@@ -13,21 +13,25 @@ package commonTypes {
     -Set<MultiLingualContent> name
   }
 
-  class LanguageTag {
-    -String languageTag ' https://github.com/EuroCRIS/CERIF-Core/blob/main/datatypes/Language_Tag.md
-    -String display
-  }
+  !startsub Language_Tag
+    class LanguageTag {
+      -String languageTag ' https://github.com/EuroCRIS/CERIF-Core/blob/main/datatypes/Language_Tag.md
+      -String display
+    }
+  !endsub
 
   class Country {
     -String code ' ISO_3166_Alpha2_Code
     -Set<MultiLingualContent> name
   }
 
-  class MultiLingualContent {
-    LanguageTag language
-    String content
-    Integer priority
-  }
+  !startsub Multilingual_Content
+    class MultiLingualContent {
+      LanguageTag language
+      String content
+      Integer priority
+    }
+  !endsub
 
   class GeoLocation {
     Double longitude
@@ -40,7 +44,6 @@ package commonTypes {
     Set<MultiLingualContent> description
   }
   ResearchArea "1" --> "*" ResearchArea
-
 }
 
 
@@ -89,6 +92,7 @@ package user {
 
 package person {
 
+!startsub Person
   class Person {
     -PersonName name
     -Set<PersonName> otherNames
@@ -106,6 +110,7 @@ package person {
     -Set<ResearchArea> researchAreas
     -ApproveStatus approveStatus
   }
+!endsub
   
   class PersonName {
     -String firstname
@@ -204,15 +209,18 @@ package person {
 }
 
 package institution {
-  class OrganisationUnit {
-    -Set<MultiLingualContent> name
-    -String nameAbbreviation
-    -Set<MultiLingualContent> keyword
-    -Set<ResearchArea> researchAreas
-    -GeoLocation location
-    -ApproveStatus approveStatus
-    -Integer oldId
-  }
+  !startsub Organisation_Unit
+    class OrganisationUnit {
+      -Set<MultiLingualContent> name
+      -String nameAbbreviation
+      -Set<MultiLingualContent> keyword
+      -Set<ResearchArea> researchAreas
+      -GeoLocation location
+      -ApproveStatus approveStatus
+      -Integer oldId
+      -String scopusAfid
+    }
+  !endsub
 
   OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : source
   OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : target
@@ -237,13 +245,15 @@ package institution {
 
 package document {
 
-  enum DocumentContributionType {
-    AUTHOR
-    EDITOR
-    REVIEWER
-    ADVISOR
-    ' TODO: check contribution types at https://credit.niso.org/ and https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonOutputContributions.xml
-  }
+  !startsub Person_Contribution
+    enum DocumentContributionType {
+      AUTHOR
+      EDITOR
+      REVIEWER
+      ADVISOR
+      ' TODO: check contribution types at https://credit.niso.org/ and https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonOutputContributions.xml
+    }
+  !endsub
 
   class Publisher {
     -Set<MultiLingualContent> name
@@ -251,38 +261,46 @@ package document {
     -Set<MultiLingualContent> state
   }
 
-  class PersonContribution {
-    -Person person
-    -Set<MultiLingualContent> contributionDescription
-    -AffiliationStatement affiliationStatement
-    -Set<OrganisationUnit> institutions
-    -Integer orderNumber
-    -ApproveStatus approveStatus
-    ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
-  }
+  !startsub Person_Contribution
+    class PersonContribution {
+      -Person person
+      -Set<MultiLingualContent> contributionDescription
+      -AffiliationStatement affiliationStatement
+      -Set<OrganisationUnit> institutions
+      -Integer orderNumber
+      -ApproveStatus approveStatus
+      ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
+    }
+  !endsub
 
-  class AffiliationStatement {
-     Set<MultiLingualContent> displayAffiliationStatement
-     PersonName displayPersonName
-     PostalAddress address
-     Contact contact
-  }
+  !startsub Person_Contribution
+    class AffiliationStatement {
+      Set<MultiLingualContent> displayAffiliationStatement
+      PersonName displayPersonName
+      PostalAddress address
+      Contact contact
+    }
+  !endsub
 
-  class PersonDocumentContribution extends PersonContribution {
-    -DocumentContributionType contributionType
-    -boolean mainContributor
-    -boolean correspondingContributor
-  }
+  !startsub Person_Document_Contribution
+    class PersonDocumentContribution extends PersonContribution {
+      -DocumentContributionType contributionType
+      -boolean mainContributor
+      -boolean correspondingContributor
+    }
+  !endsub
 
-  class DocumentFile {
-    String filename
-    String serverFilename
-    Set<MultiLingualContent> description
-    String mimeType
-    Long fileSize
-    ResourceType resourceType
-    License license
-  }
+  !startsub Person_COntribution
+    class DocumentFile {
+      String filename
+      String serverFilename
+      Set<MultiLingualContent> description
+      String mimeType
+      Long fileSize
+      ResourceType resourceType
+      License license
+    }
+  !endsub
 
   enum License {
     BSD
@@ -296,23 +314,25 @@ package document {
     SUPPLEMENT
   }
 
-  class Document {
-    -Set<MultiLingualContent> title
-    -Set<MultiLingualContent> subTitle
-    -Set<MultiLingualContent> description
-    -Set<MultiLingualContent> note
-    -Set<PersonDocumentContribution> contributors
-    -Set<String> uris
-    -String documentDate
-    -Set<DocumentFile> fileItems
-    -Set<DocumentFile> proof
-    -Set<MultiLingualContent> keywords
-    -ApproveStatus approveStatus
-    -String note
-    -String doi
-    -String scopusId
-    -Integer oldId
-  }
+  !startsub Document
+    class Document {
+      -Set<MultiLingualContent> title
+      -Set<MultiLingualContent> subTitle
+      -Set<MultiLingualContent> description
+      -Set<MultiLingualContent> note
+      -Set<PersonDocumentContribution> contributors
+      -Set<String> uris
+      -String documentDate
+      -Set<DocumentFile> fileItems
+      -Set<DocumentFile> proof
+      -Set<MultiLingualContent> keywords
+      -ApproveStatus approveStatus
+      -String note
+      -String doi
+      -String scopusId
+      -Integer oldId
+    }
+  !endsub
 
   class ProceedingsPublication extends Document {
     -String startPage;
@@ -385,17 +405,23 @@ package document {
   ProceedingsPublication "1..*" --> "1" Proceedings
 ' Proceedings "1..*" --> "1" Conference the relation below should replace this one. However, the conference should have one or more linked proceedings,
 ' but also any event (for instance plenary presentation is an event which is part of conference) could have linked documents (presentation, dataset, etc.)
-  Document "*" --> "0..1" Event
+  
+  !startsub Document
+    Document "*" --> "0..1" Event
+  !endsub
+  
   Proceedings "1..*" --> "0..1" PublicationSeries : publicationSeries
 
-  class JournalPublication extends Document {
-    -String startPage;
-    -String endPage;
-    -Integer numberOfPages
-    -String articleNumber
-    -String volume
-    -String issue
-  }
+  !startsub Journal_Publication
+    class JournalPublication extends Document {
+      -String startPage;
+      -String endPage;
+      -Integer numberOfPages
+      -String articleNumber
+      -String volume
+      -String issue
+    }
+  !endsub
 
   class PublicationSeries {
     -String eISSN
