@@ -271,6 +271,9 @@ package document {
       -ApproveStatus approveStatus
       ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
     }
+
+    PersonContribution "*" --> "0..1" OrganisationUnit
+    PersonContribution "*" --> "1" Person
   !endsub
 
   !startsub Person_Contribution
@@ -355,19 +358,21 @@ package document {
     -String fee
   }
 
-  class Event {
-    -Set<MultiLingualContent> name
-    -Set<MultiLingualContent> nameAbbreviation
-    -Set<MultiLingualContent> description
-    -Set<MultiLingualContent> keywords
-    -Boolean serialEvent
-    -LocalDate dateFrom
-    -LocalDate dateTo
-    -Set<MultiLingualContent> state
-    -Set<MultiLingualContent> place
-    -Set<PersonEventContribution> contributors
-    -Integer oldId
-  }
+  !startsub Event
+    class Event {
+      -Set<MultiLingualContent> name
+      -Set<MultiLingualContent> nameAbbreviation
+      -Set<MultiLingualContent> description
+      -Set<MultiLingualContent> keywords
+      -Boolean serialEvent
+      -LocalDate dateFrom
+      -LocalDate dateTo
+      -Set<MultiLingualContent> state
+      -Set<MultiLingualContent> place
+      -Set<PersonEventContribution> contributors
+      -Integer oldId
+    }
+  !endsub
 
   enum EventContributionType {
      ORGANIZATION_BOARD_CHAIR
@@ -408,6 +413,7 @@ package document {
   
   !startsub Document
     Document "*" --> "0..1" Event
+    Document "*" --> "1..*" PersonDocumentContribution
   !endsub
   
   Proceedings "1..*" --> "0..1" PublicationSeries : publicationSeries
