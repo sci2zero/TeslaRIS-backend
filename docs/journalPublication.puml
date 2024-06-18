@@ -7,5 +7,6 @@
     !includesub model.puml!Person_Contribution
     !includesub model.puml!Person_Document_Contribution
     !includesub model.puml!Person
+    !includesub model.puml!Event
 
 @enduml
