@@ -33,7 +33,7 @@ public class IdempotencyAspect {
         if (idempotencyCacheStore.getIfPresent(idempotencyKey) == null) {
             idempotencyCacheStore.put(idempotencyKey, (byte) 1);
         } else {
-            throw new IdempotencyException("Idempotency key allready in use.");
+            throw new IdempotencyException("idempotencyKeyAlreadyInUse");
         }
 
         return joinPoint.proceed();

@@ -130,6 +130,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
                 b.should(sb -> sb.wildcard(
@@ -153,7 +155,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 b.should(sb -> sb.match(
                     m -> m.field("orcid").query(token)));
             });
-            return b;
+            return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();
     }
 

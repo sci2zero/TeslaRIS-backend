@@ -289,6 +289,9 @@ public class PersonServiceTest {
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
+        personToUpdate.setApproveStatus(ApproveStatus.APPROVED);
+        personToUpdate.setName(new PersonName());
+        personToUpdate.setPersonalInfo(new PersonalInfo());
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
 
@@ -297,7 +300,7 @@ public class PersonServiceTest {
 
         // then
         verify(personRepository, times(1)).findById(personId);
-        verify(personRepository, times(2)).save(personToUpdate);
+        verify(personRepository, times(3)).save(personToUpdate);
     }
 
     @Test
@@ -309,6 +312,9 @@ public class PersonServiceTest {
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
+        personToUpdate.setApproveStatus(ApproveStatus.APPROVED);
+        personToUpdate.setName(new PersonName());
+        personToUpdate.setPersonalInfo(new PersonalInfo());
 
         var personNames = new HashSet<PersonName>();
         personNames.add(new PersonName("Jane", "Marie", "Doe", null, null));

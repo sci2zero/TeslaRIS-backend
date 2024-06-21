@@ -24,6 +24,7 @@ public class StringUtil {
     }
 
     public static void sanitizeTokens(List<String> tokens) {
-        tokens.replaceAll(token -> token.equals("*") ? token : QueryParserBase.escape(token));
+        tokens.replaceAll(
+            token -> token.equals("*") || token.equals(".") ? "*" : QueryParserBase.escape(token));
     }
 }

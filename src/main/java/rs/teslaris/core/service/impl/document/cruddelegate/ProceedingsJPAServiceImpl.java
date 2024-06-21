@@ -8,12 +8,12 @@ import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 
 @Component
-public class ProceedingJPAServiceImpl extends JPAServiceImpl<Proceedings> {
+public class ProceedingsJPAServiceImpl extends JPAServiceImpl<Proceedings> {
 
     private final ProceedingsRepository proceedingsRepository;
 
     @Autowired
-    public ProceedingJPAServiceImpl(ProceedingsRepository proceedingsRepository) {
+    public ProceedingsJPAServiceImpl(ProceedingsRepository proceedingsRepository) {
         this.proceedingsRepository = proceedingsRepository;
     }
 
