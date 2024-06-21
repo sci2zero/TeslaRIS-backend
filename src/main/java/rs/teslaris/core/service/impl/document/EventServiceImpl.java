@@ -125,6 +125,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType) {
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
@@ -158,7 +160,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                         eq.should(sb -> sb.wildcard(
                             m -> m.field("date_from_to").value(token)));
                     });
-                    return eq;
+                    return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
                 });
                 return bq;
             });

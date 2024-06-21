@@ -467,6 +467,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
@@ -502,7 +504,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         eq.should(sb -> sb.match(
                             m -> m.field("doi").query(token)));
                     });
-                    return eq;
+                    return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
                 });
                 return bq;
             });

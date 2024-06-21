@@ -260,6 +260,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 personToUpdate.getOtherNames().add(personName);
                 personRepository.save(personToUpdate);
             });
+
+        save(personToUpdate);
+        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(personToUpdate, personToUpdate.getId());
+        }
     }
 
     @Override
@@ -292,7 +297,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personalInfoToUpdate.getContact()
             .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
 
-        this.save(personToUpdate);
+        save(personToUpdate);
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate, personToUpdate.getId());
@@ -559,6 +564,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens) {
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+
         return BoolQuery.of(q -> q
             .must(mb -> mb.bool(b -> {
                     tokens.forEach(
@@ -568,10 +575,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
                             b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
                         });
-                    return b;
+                    return b.minimumShouldMatch(Integer.toString(minShouldMatch));
                 }
             ))
         )._toQuery();

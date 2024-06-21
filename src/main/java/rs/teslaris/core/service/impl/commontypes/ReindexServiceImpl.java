@@ -18,6 +18,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -50,6 +51,8 @@ public class ReindexServiceImpl implements ReindexService {
     private final JournalPublicationService journalPublicationService;
 
     private final ProceedingsPublicationService proceedingsPublicationService;
+
+    private final ProceedingsService proceedingsService;
 
     private final PatentService patentService;
 
@@ -133,6 +136,7 @@ public class ReindexServiceImpl implements ReindexService {
             softwareService.reindexSoftware();
             datasetService.reindexDatasets();
             monographService.reindexMonographs();
+            proceedingsService.reindexProceedings();
         });
 
         reindexPublicationsThread.start();

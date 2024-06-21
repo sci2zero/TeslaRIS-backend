@@ -243,14 +243,17 @@ public class DbInitializer implements ApplicationRunner {
         conferenceRepository.save(conferenceEvent1);
 
         var proceedings1 = new Proceedings();
+        proceedings1.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 1", 1));
         proceedings1.setApproveStatus(ApproveStatus.APPROVED);
-        proceedings1.setEISBN("MOCK_eISBN");
+        proceedings1.setEISBN("MOCK_eISBN1");
+        proceedings1.setDocumentDate("2021");
         proceedings1.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings1);
 
         var proceedings2 = new Proceedings();
+        proceedings2.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 2", 1));
         proceedings2.setApproveStatus(ApproveStatus.REQUESTED);
-        proceedings2.setEISBN("MOCK_eISBN");
+        proceedings2.setEISBN("MOCK_eISBN2");
         proceedings2.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings2);
 

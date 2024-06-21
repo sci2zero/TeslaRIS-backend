@@ -239,6 +239,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
                 b.should(sb -> sb.match(
@@ -255,7 +257,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                     m -> m.field("pdf_text_other")
                         .query(token)));
             });
-            return b;
+            return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();
     }
 

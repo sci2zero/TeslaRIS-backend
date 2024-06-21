@@ -175,6 +175,8 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
                 b.should(sb -> sb.wildcard(
@@ -188,7 +190,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                 b.should(sb -> sb.match(
                     m -> m.field("print_issn").query(token)));
             });
-            return b;
+            return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();
     }
 }

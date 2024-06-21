@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -39,7 +42,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsServiceImpl;
-import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingJPAServiceImpl;
+import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingsJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -83,7 +86,7 @@ public class ProceedingsServiceTest {
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Mock
-    private ProceedingJPAServiceImpl proceedingJPAService;
+    private ProceedingsJPAServiceImpl proceedingsJPAService;
 
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
@@ -99,7 +102,7 @@ public class ProceedingsServiceTest {
         // given
         var expectedProceedings = new Proceedings();
 
-        when(proceedingJPAService.findOne(1)).thenReturn(expectedProceedings);
+        when(proceedingsJPAService.findOne(1)).thenReturn(expectedProceedings);
 
         // when
         var actualProceedings = proceedingsService.findProceedingsById(1);
@@ -111,7 +114,7 @@ public class ProceedingsServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenProceedingsDoesNotExist() {
         // given
-        when(proceedingJPAService.findOne(1)).thenThrow(NotFoundException.class);
+        when(proceedingsJPAService.findOne(1)).thenThrow(NotFoundException.class);
 
         // when
         assertThrows(NotFoundException.class, () -> proceedingsService.findProceedingsById(1));
@@ -147,7 +150,7 @@ public class ProceedingsServiceTest {
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
-        when(proceedingJPAService.save(any())).thenReturn(document);
+        when(proceedingsJPAService.save(any())).thenReturn(document);
 
         var authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
@@ -162,7 +165,7 @@ public class ProceedingsServiceTest {
         verify(multilingualContentService, times(4)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(proceedingsDTO));
-        verify(proceedingJPAService).save(eq(document));
+        verify(proceedingsJPAService).save(eq(document));
     }
 
     @Test
@@ -174,8 +177,8 @@ public class ProceedingsServiceTest {
         var proceedingsToUpdate = new Proceedings();
         proceedingsToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
 
-        when(proceedingJPAService.findOne(proceedingsId)).thenReturn(proceedingsToUpdate);
-        when(proceedingJPAService.save(any())).thenReturn(proceedingsToUpdate);
+        when(proceedingsJPAService.findOne(proceedingsId)).thenReturn(proceedingsToUpdate);
+        when(proceedingsJPAService.save(any())).thenReturn(proceedingsToUpdate);
 
         var authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
@@ -187,7 +190,7 @@ public class ProceedingsServiceTest {
         proceedingsService.updateProceedings(proceedingsId, proceedingsDTO);
 
         // Then
-        verify(proceedingJPAService).findOne(eq(proceedingsId));
+        verify(proceedingsJPAService).findOne(eq(proceedingsId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             eq(proceedingsToUpdate), eq(proceedingsDTO));
     }
@@ -237,5 +240,28 @@ public class ProceedingsServiceTest {
         // Then
         assertNotNull(result);
         assertTrue(result.getSize() >= 2);
+    }
+
+    @Test
+    public void shouldReindexProceedings() {
+        // Given
+        var proceedings1 = new Proceedings();
+        var proceedings2 = new Proceedings();
+        var proceedings3 = new Proceedings();
+        var proceedings = Arrays.asList(proceedings1, proceedings2, proceedings3);
+        var page1 =
+            new PageImpl<>(proceedings.subList(0, 2), PageRequest.of(0, 10), proceedings.size());
+        var page2 =
+            new PageImpl<>(proceedings.subList(2, 3), PageRequest.of(1, 10), proceedings.size());
+
+        when(proceedingsJPAService.findAll(any(PageRequest.class))).thenReturn(page1, page2);
+
+        // When
+        proceedingsService.reindexProceedings();
+
+        // Then
+        verify(proceedingsJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(documentPublicationIndexRepository, atLeastOnce()).save(
+            any(DocumentPublicationIndex.class));
     }
 }
