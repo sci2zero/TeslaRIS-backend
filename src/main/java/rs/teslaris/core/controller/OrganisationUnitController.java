@@ -58,6 +58,11 @@ public class OrganisationUnitController {
             organisationUnitService.findOrganisationUnitById(organisationUnitId));
     }
 
+    @GetMapping("/afid/{scopusAfid}")
+    public OrganisationUnitIndex getOrganisationUnitByScopusAfid(@PathVariable String scopusAfid) {
+        return organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid);
+    }
+
     @GetMapping("/simple-search")
     public Page<OrganisationUnitIndex> searchOrganisationUnitSimple(
         @RequestParam("tokens")

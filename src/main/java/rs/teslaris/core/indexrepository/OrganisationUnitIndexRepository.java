@@ -11,5 +11,7 @@ public interface OrganisationUnitIndexRepository
 
     Optional<OrganisationUnitIndex> findOrganisationUnitIndexByDatabaseId(Integer databaseId);
 
+    Optional<OrganisationUnitIndex> findOrganisationUnitIndexByScopusAfid(String scopusAfid);
+
     long count();
 }

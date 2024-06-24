@@ -209,6 +209,7 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
+        dummyOU.setScopusAfid("60068801");
         dummyOU.setLocation(new GeoLocation(19.850885, 45.245688, "NOWHERE"));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);

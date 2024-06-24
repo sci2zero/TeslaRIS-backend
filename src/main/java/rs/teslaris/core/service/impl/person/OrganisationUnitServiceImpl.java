@@ -96,6 +96,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Nullable
+    public OrganisationUnitIndex findOrganisationUnitByScopusAfid(String scopusAfid) {
+        return organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(scopusAfid)
+            .orElse(null);
+    }
+
+    @Override
+    @Nullable
     public OrganisationUnit findOrganisationUnitByOldId(Integer oldId) {
         return organisationUnitRepository.findOrganisationUnitByOldId(oldId).orElse(null);
     }
@@ -331,6 +338,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.setNameSr(index.getNameSr() + " " + organisationUnit.getNameAbbreviation());
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());
+
+        index.setScopusAfid(organisationUnit.getScopusAfid());
 
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getKeyword,
             OrganisationUnitIndex::setKeywordsSr,
