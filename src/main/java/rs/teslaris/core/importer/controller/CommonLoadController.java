@@ -4,9 +4,13 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -39,7 +43,7 @@ public class CommonLoadController {
 
     @GetMapping("/load-wizard")
     @SuppressWarnings("unchecked")
-    private <R> R loadUsingWizard(@RequestHeader("Authorization") String bearerToken) {
+    public <R> R loadUsingWizard(@RequestHeader("Authorization") String bearerToken) {
         var returnDto =
             loader.loadRecordsWizard(tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
 
@@ -50,4 +54,13 @@ public class CommonLoadController {
 
         return (R) returnDto;
     }
+
+    @PostMapping("/institution/{scopusAfid}")
+    @Idempotent
+    public OrganisationUnitDTO createInstitution(@RequestHeader("Authorization") String bearerToken,
+                                                 @PathVariable String scopusAfid) {
+        return loader.createInstitution(scopusAfid,
+            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+    }
+
 }

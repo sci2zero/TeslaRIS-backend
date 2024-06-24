@@ -687,4 +687,33 @@ public class OrganisationUnitServiceTest {
         // then
         assertEquals(List.of(1, 2, 3), result);
     }
+
+    @Test
+    public void shouldFindOUByScopusAfid() {
+        // Given
+        var ou = new OrganisationUnitIndex();
+        ou.setScopusAfid("12345");
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(
+            "12345")).thenReturn(Optional.of(ou));
+
+        // When
+        var foundOu = organisationUnitService.findOrganisationUnitByScopusAfid("12345");
+
+        // Then
+        assertEquals(ou, foundOu);
+    }
+
+    @Test
+    public void shouldNotFindOUByScopusAfidWhenOUDoesNotExist() {
+        // Given
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(
+            "12345")).thenReturn(Optional.empty());
+
+        // When
+        var foundOu = organisationUnitService.findOrganisationUnitByScopusAfid("12345");
+
+        // Then
+        assertNull(foundOu);
+    }
 }

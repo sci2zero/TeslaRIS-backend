@@ -65,4 +65,7 @@ public class OrganisationUnitIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "super_ou_name_other_sortable")
     private String superOUNameOtherSortable;
+
+    @Field(type = FieldType.Keyword, store = true, name = "scopus_afid")
+    private String scopusAfid;
 }

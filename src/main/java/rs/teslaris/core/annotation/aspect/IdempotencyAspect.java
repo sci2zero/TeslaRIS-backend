@@ -30,10 +30,12 @@ public class IdempotencyAspect {
             throw new IdempotencyException("You have to provide an idempotency key.");
         }
 
-        if (idempotencyCacheStore.getIfPresent(idempotencyKey) == null) {
-            idempotencyCacheStore.put(idempotencyKey, (byte) 1);
-        } else {
-            throw new IdempotencyException("idempotencyKeyAlreadyInUse");
+        synchronized (idempotencyCacheStore) {
+            if (idempotencyCacheStore.getIfPresent(idempotencyKey) == null) {
+                idempotencyCacheStore.put(idempotencyKey, (byte) 1);
+            } else {
+                throw new IdempotencyException("idempotencyKeyAlreadyInUse");
+            }
         }
 
         return joinPoint.proceed();
