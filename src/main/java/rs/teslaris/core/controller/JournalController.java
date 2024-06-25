@@ -59,6 +59,11 @@ public class JournalController {
         return journalService.readJournal(journalId);
     }
 
+    @GetMapping("/issn")
+    public JournalIndex readJournal(@RequestParam String eIssn, @RequestParam String printIssn) {
+        return journalService.readJournalByIssn(eIssn, printIssn);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")

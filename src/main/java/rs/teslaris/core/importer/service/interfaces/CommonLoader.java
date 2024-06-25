@@ -1,6 +1,7 @@
 package rs.teslaris.core.importer.service.interfaces;
 
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 
 @Service
@@ -17,4 +18,6 @@ public interface CommonLoader {
     Integer countRemainingDocumentsForLoading(Integer userId);
 
     OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId);
+
+    PublicationSeriesDTO createJournal(String eIssn, String printIssn, Integer userId);
 }

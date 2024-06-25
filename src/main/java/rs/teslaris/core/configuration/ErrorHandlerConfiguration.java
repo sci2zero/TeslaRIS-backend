@@ -23,6 +23,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
+import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
@@ -216,6 +217,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleRecordAlreadyLoadedException(HttpServletRequest request,
                                                    RecordAlreadyLoadedException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ProceedingsReferenceConstraintViolationException.class)
+    @ResponseBody
+    ErrorObject handleProceedingsReferenceConstraintViolationException(HttpServletRequest request,
+                                                                       ProceedingsReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

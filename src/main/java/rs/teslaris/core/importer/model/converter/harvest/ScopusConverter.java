@@ -54,6 +54,8 @@ public class ScopusConverter {
         document.getTitle().add(new MultilingualContent("EN", entry.title(), 1));
         document.getDescription().add(new MultilingualContent("EN", entry.description(), 1));
 
+        document.getPublishedIn().add(new MultilingualContent("EN", entry.publicationName(), 1));
+
         if (Objects.nonNull(entry.authKeywords())) {
             document.getKeywords()
                 .add(new MultilingualContent("EN", entry.authKeywords().replace("|", "\n"), 1));

@@ -321,4 +321,33 @@ public class JournalServiceTest {
         // Then
         assertNull(actualJournal);
     }
+
+    @Test
+    public void shouldFindJournalByISSN() {
+        // Given
+        var journalIndex = new JournalIndex();
+        journalIndex.setEISSN("12345");
+
+        when(journalIndexRepository.findJournalIndexByeISSNOrPrintISSN(
+            "12345", "6789")).thenReturn(Optional.of(journalIndex));
+
+        // When
+        var foundJournal = journalService.readJournalByIssn("12345", "6789");
+
+        // Then
+        assertEquals(journalIndex, foundJournal);
+    }
+
+    @Test
+    public void shouldNotFindJournalByIssnWhenJournalDoesNotExist() {
+        // Given
+        when(journalIndexRepository.findJournalIndexByeISSNOrPrintISSN(
+            "12345", "6789")).thenReturn(Optional.empty());
+
+        // When
+        var foundJournal = journalService.readJournalByIssn("12345", "6789");
+
+        // Then
+        assertNull(foundJournal);
+    }
 }

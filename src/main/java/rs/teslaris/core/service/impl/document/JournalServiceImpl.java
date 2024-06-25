@@ -77,6 +77,12 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public JournalIndex readJournalByIssn(String eIssn, String printIssn) {
+        return journalIndexRepository.findJournalIndexByeISSNOrPrintISSN(eIssn, printIssn)
+            .orElse(null);
+    }
+
+    @Override
     public Journal findJournalById(Integer journalId) {
         return journalJPAService.findOne(journalId);
     }
