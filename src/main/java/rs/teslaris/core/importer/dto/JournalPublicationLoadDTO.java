@@ -28,7 +28,9 @@ public class JournalPublicationLoadDTO extends DocumentLoadDTO {
 
     private String issue;
 
-    private Integer journalId;
+    private String journalEIssn;
+
+    private String journalPrintIssn;
 
     private List<MultilingualContentDTO> journalName;
 }

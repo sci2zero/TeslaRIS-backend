@@ -20,6 +20,8 @@ public interface JournalService {
 
     JournalResponseDTO readJournal(Integer journalId);
 
+    JournalIndex readJournalByIssn(String eIssn, String printIssn);
+
     Journal findJournalById(Integer journalId);
 
     Optional<Journal> tryToFindById(Integer journalId);

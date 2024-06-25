@@ -9,4 +9,6 @@ import rs.teslaris.core.indexmodel.JournalIndex;
 public interface JournalIndexRepository extends ElasticsearchRepository<JournalIndex, String> {
 
     Optional<JournalIndex> findJournalIndexByDatabaseId(Integer databaseId);
+
+    Optional<JournalIndex> findJournalIndexByeISSNOrPrintISSN(String eISSN, String printISSN);
 }

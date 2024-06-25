@@ -32,6 +32,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
@@ -156,6 +157,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Override
     public void deleteProceedings(Integer proceedingsId) {
         var proceedingsToDelete = findProceedingsById(proceedingsId);
+
+        if (proceedingsRepository.hasPublications(proceedingsId)) {
+            throw new ProceedingsReferenceConstraintViolationException("proceedingsInUse");
+        }
 
 //        TODO: Should we delete files if we have soft delete
 //        deleteProofsAndFileItems(proceedingsToDelete);
