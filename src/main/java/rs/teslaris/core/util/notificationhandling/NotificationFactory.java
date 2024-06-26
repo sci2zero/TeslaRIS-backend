@@ -38,7 +38,8 @@ public class NotificationFactory {
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
         }
-        return new Notification(message, notificationValues, NotificationType.ADDED_TO_PUBLICATION,
+        return new Notification(message, notificationValues,
+            NotificationType.NEW_OTHER_NAME_DETECTED,
             user);
     }
 
