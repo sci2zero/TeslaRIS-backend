@@ -74,6 +74,7 @@ public abstract class DocumentConverter {
         dto.setUris(new HashSet<>(document.getUris()));
 
         dto.setDoi(document.getDoi());
+        dto.setScopusId(document.getScopusId());
 
         setContributionInformation(document, dto);
     }

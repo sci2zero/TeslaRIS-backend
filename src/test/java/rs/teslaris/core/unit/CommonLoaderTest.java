@@ -36,6 +36,7 @@ import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.LoadProgressReport;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -404,6 +405,9 @@ public class CommonLoaderTest {
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
         nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
 
+        var createdJournal = new Journal();
+        createdJournal.setId(1);
+        when(journalService.createJournal(any(), any())).thenReturn(createdJournal);
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(
             currentlyLoadedEntity);
@@ -412,7 +416,7 @@ public class CommonLoaderTest {
         var result = commonLoader.createJournal(eIssn, printIssn, userId);
 
         // Then
-        assertNotNull(result);
+        assertEquals(createdJournal.getId(), result.getId());
     }
 
     @Test

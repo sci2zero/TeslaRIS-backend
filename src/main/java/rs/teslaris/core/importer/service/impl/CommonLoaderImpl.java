@@ -209,7 +209,9 @@ public class CommonLoaderImpl implements CommonLoader {
         journalDTO.setNameAbbreviation(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
-        journalService.createJournal(journalDTO, true);
+        var createdJournal = journalService.createJournal(journalDTO, true);
+        journalDTO.setId(createdJournal.getId());
+
         return journalDTO;
     }
 
