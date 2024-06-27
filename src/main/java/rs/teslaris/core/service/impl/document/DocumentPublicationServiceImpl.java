@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -243,7 +244,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
                 switch (contribution.getContributionType()) {
                     case AUTHOR:
-                        if (contribution.getOrderNumber() == 1) {
+                        if (contribution.getIsCorrespondingContributor()) {
                             contributorName += "*";
                         }
 
@@ -348,6 +349,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         DateTimeFormatter[] formatters = {
             DateTimeFormatter.ofPattern("yyyy"), // Year only
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
             DateTimeFormatter.ofPattern("dd-MM-yyyy"),
             DateTimeFormatter.ofPattern("dd/MM/yyyy"),
             DateTimeFormatter.ofPattern("MM/dd/yyyy"),
@@ -385,11 +387,22 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setOldId(documentDTO.getOldId());
         document.setUris(documentDTO.getUris());
         document.setDocumentDate(documentDTO.getDocumentDate());
-        document.setDoi(documentDTO.getDoi());
+
+        setDoi(document, documentDTO);
+
         document.setScopusId(documentDTO.getScopusId());
 
         if (Objects.nonNull(documentDTO.getEventId())) {
             document.setEvent(eventService.findEventById(documentDTO.getEventId()));
+        }
+    }
+
+    private void setDoi(Document document, DocumentDTO documentDTO) {
+        var doiPattern = "^10\\.\\d{4,9}/[-._;()/:A-Z0-9]+$";
+        if (Objects.nonNull(documentDTO.getDoi()) &&
+            (Pattern.compile(doiPattern, Pattern.CASE_INSENSITIVE).matcher(documentDTO.getDoi())
+                .matches() || documentDTO.getDoi().isBlank())) {
+            document.setDoi(documentDTO.getDoi().trim());
         }
     }
 

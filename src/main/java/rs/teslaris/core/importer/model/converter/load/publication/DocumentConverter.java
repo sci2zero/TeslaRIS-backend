@@ -59,6 +59,7 @@ public abstract class DocumentConverter {
         }
 
         dto.setDoi(record.getDoi());
+        dto.setScopusId(record.getScpNumber());
         dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
 
         setContributionInformation(record, dto);
