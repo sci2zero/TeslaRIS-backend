@@ -216,6 +216,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOtherSortable(index.getTitleOther());
         index.setDoi(document.getDoi());
+        index.setScopusId(document.getScopusId());
         indexDescription(document, index);
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
@@ -385,9 +386,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
         document.setOldId(documentDTO.getOldId());
-        document.setUris(documentDTO.getUris());
         document.setDocumentDate(documentDTO.getDocumentDate());
 
+        setUris(document, documentDTO);
         setDoi(document, documentDTO);
 
         document.setScopusId(documentDTO.getScopusId());
@@ -399,10 +400,26 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private void setDoi(Document document, DocumentDTO documentDTO) {
         var doiPattern = "^10\\.\\d{4,9}/[-._;()/:A-Z0-9]+$";
+        var pattern = Pattern.compile(doiPattern, Pattern.CASE_INSENSITIVE);
+
         if (Objects.nonNull(documentDTO.getDoi()) &&
-            (Pattern.compile(doiPattern, Pattern.CASE_INSENSITIVE).matcher(documentDTO.getDoi())
+            (pattern.matcher(documentDTO.getDoi())
                 .matches() || documentDTO.getDoi().isBlank())) {
             document.setDoi(documentDTO.getDoi().trim());
+        }
+    }
+
+    private void setUris(Document document, DocumentDTO documentDTO) {
+        var uriPattern =
+            "^(?:(?:http|https)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?$";
+        var pattern = Pattern.compile(uriPattern, Pattern.CASE_INSENSITIVE);
+
+        if (Objects.nonNull(documentDTO.getUris())) {
+            documentDTO.getUris().forEach(uri -> {
+                if (pattern.matcher(uri).matches()) {
+                    document.getUris().add(uri);
+                }
+            });
         }
     }
 
@@ -452,6 +469,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
+                                                                 String scopusId) {
+        var query = buildDeduplicationSearchQuery(titles, doi, scopusId);
+        return searchService.runQuery(query,
+            Pageable.ofSize(5),
+            DocumentPublicationIndex.class, "document_publication");
+    }
+
+    @Override
     public void deleteIndexes() {
         documentPublicationIndexRepository.deleteAll();
     }
@@ -477,6 +503,47 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         });
 
         save(document);
+
+        var index =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
+        index.ifPresent(documentPublicationIndex -> {
+            indexCommonFields(document, documentPublicationIndex);
+            documentPublicationIndexRepository.save(documentPublicationIndex);
+        });
+    }
+
+    private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.must(bq -> {
+                bq.bool(eq -> {
+                    titles.forEach(title -> {
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_sr").query(title)));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_other").query(title)));
+                    });
+                    eq.should(sb -> sb.match(
+                        m -> m.field("scopusId").query(scopusId)));
+                    eq.should(sb -> sb.match(
+                        m -> m.field("doi").query(doi)));
+                    return eq;
+                });
+                return bq;
+            });
+            b.must(bq -> {
+                bq.bool(eq -> {
+                    eq.should(sb -> sb.match(
+                        m -> m.field("type")
+                            .query(DocumentPublicationType.JOURNAL_PUBLICATION.name())));
+                    eq.should(sb -> sb.match(
+                        m -> m.field("type")
+                            .query(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name())));
+                    return eq;
+                });
+                return bq;
+            });
+            return b;
+        })))._toQuery();
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
