@@ -67,6 +67,13 @@ public class DocumentPublicationController {
             SearchRequestType.ADVANCED);
     }
 
+    @GetMapping("/deduplication-search")
+    public Page<DocumentPublicationIndex> deduplicationSearch(
+        @RequestParam("titles") List<String> titles, @RequestParam("doi") String doi,
+        @RequestParam("scopusId") String scopusId) {
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId);
+    }
+
     @GetMapping("/for-researcher/{personId}")
     public Page<DocumentPublicationIndex> findResearcherPublications(@PathVariable Integer personId,
                                                                      Pageable pageable) {

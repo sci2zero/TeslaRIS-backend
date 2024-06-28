@@ -274,6 +274,7 @@ package document {
 
     PersonContribution "*" --> "0..1" OrganisationUnit
     PersonContribution "*" --> "1" Person
+    PersonContribution "1" --> "0..1" AffiliationStatement
   !endsub
 
   !startsub Person_Contribution

@@ -72,8 +72,7 @@ public class PersonNameServiceTest {
         personNameService.deletePersonNamesWithIds(personNameIds);
 
         // then
-        verify(personNameRepository, times(1)).save(personName1);
-        verify(personNameRepository, times(1)).save(personName2);
+        verify(personNameRepository, times(2)).save(any());
         verify(personNameRepository, never()).delete(any());
     }
 

@@ -183,6 +183,10 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                 contributor.getName().getDateFrom(),
                 contributor.getName().getDateTo());
         } else if (Objects.nonNull(contributor)) {
+            if (contributor.getOtherNames().contains(personName)) {
+                return personName;
+            }
+
             var userOptional = userRepository.findForResearcher(contributor.getId());
             if (userOptional.isPresent()) {
                 var notificationValues = new HashMap<String, String>();

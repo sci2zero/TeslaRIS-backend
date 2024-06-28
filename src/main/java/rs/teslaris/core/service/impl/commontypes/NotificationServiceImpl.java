@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import jakarta.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.model.commontypes.Notification;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -90,7 +93,25 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
+    @Nullable
     public Notification createNotification(Notification notification) {
+        if (Objects.requireNonNull(notification.getNotificationType())
+            .equals(NotificationType.NEW_OTHER_NAME_DETECTED)) {
+            var newOtherNameNotifications =
+                notificationRepository.getNewOtherNameNotificationsForUser(
+                    notification.getUser().getId());
+            for (var oldNotification : newOtherNameNotifications) {
+                if (oldNotification.getValues().get("firstname")
+                    .equals(notification.getValues().get("firstname")) &&
+                    oldNotification.getValues().get("middlename")
+                        .equals(notification.getValues().get("middlename")) &&
+                    oldNotification.getValues().get("lastname")
+                        .equals(notification.getValues().get("lastname"))) {
+                    return null;
+                }
+            }
+        }
+
         return notificationRepository.save(notification);
     }
 }

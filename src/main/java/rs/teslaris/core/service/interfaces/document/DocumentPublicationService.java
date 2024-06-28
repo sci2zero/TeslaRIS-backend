@@ -47,6 +47,9 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               Pageable pageable,
                                                               SearchRequestType type);
 
+    Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
+                                                          String scopusId);
+
     void deleteIndexes();
 
     void reorderDocumentContributions(Integer documentId, Integer contributionId,

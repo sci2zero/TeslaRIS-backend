@@ -361,4 +361,21 @@ public class DocumentPublicationServiceTest {
         // then
         assertEquals(1, result.getTotalElements());
     }
+
+    @Test
+    public void shouldFindDocumentDuplicates() {
+        // given
+        var titles = Arrays.asList("titleSr", "titleEn", "titleRu");
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+
+        // when
+        var result =
+            documentPublicationService.findDocumentDuplicates(titles, "DOI", "scopusId");
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
+    }
 }
