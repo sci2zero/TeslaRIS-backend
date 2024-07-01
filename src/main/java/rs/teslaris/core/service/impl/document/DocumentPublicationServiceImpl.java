@@ -416,7 +416,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         if (Objects.nonNull(documentDTO.getUris())) {
             documentDTO.getUris().forEach(uri -> {
-                if (pattern.matcher(uri).matches()) {
+                if (uri.length() <= 2048 && pattern.matcher(uri).matches()) {
                     document.getUris().add(uri);
                 }
             });

@@ -294,7 +294,7 @@ package document {
     }
   !endsub
 
-  !startsub Person_COntribution
+  !startsub Person_Contribution
     class DocumentFile {
       String filename
       String serverFilename
