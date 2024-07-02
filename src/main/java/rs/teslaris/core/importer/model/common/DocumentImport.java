@@ -78,6 +78,9 @@ public class DocumentImport {
     @Field("print_issn")
     private String printIssn;
 
+    @Field("isbn")
+    private String isbn;
+
     @Field(name = "start_page")
     private String startPage;
 

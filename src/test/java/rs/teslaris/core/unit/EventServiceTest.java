@@ -151,6 +151,21 @@ public class EventServiceTest {
     }
 
     @Test
+    public void shouldFindConferenceWhenSearchingWithImportQuery() {
+        // Given
+        var names = Arrays.asList("name 1", "name 2");
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(List.of(new EventIndex(), new EventIndex())));
+
+        // When
+        var result = eventService.searchEventsImport(names, "dateFrom", "dateTo");
+
+        // Then
+        assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
     void shouldFindEventByOldId() {
         // Given
         var oldId = 123;

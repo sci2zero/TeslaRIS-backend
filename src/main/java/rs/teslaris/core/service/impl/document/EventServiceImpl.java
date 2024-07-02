@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import jakarta.annotation.Nullable;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -122,6 +124,49 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                          EventType eventType) {
         return searchService.runQuery(buildSimpleSearchQuery(tokens, eventType),
             pageable, EventIndex.class, "events");
+    }
+
+    @Override
+    public Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo) {
+        return searchService.runQuery(buildEventImportSearchQuery(names, dateFrom, dateTo),
+            Pageable.ofSize(5), EventIndex.class, "events");
+    }
+
+    private Query buildEventImportSearchQuery(List<String> names, String dateFrom, String dateTo) {
+        var namesQuery = names.stream()
+            .flatMap(name -> Stream.of(
+                    QueryBuilders.matchPhrase().field("name_sr").query(name).build()._toQuery(),
+                    QueryBuilders.matchPhrase().field("name_other").query(name).build()._toQuery()
+                )
+            )
+            .reduce((q1, q2) -> BoolQuery.of(b -> b.should(q1).should(q2))._toQuery())
+            .orElse(null);
+
+        var datesQuery = BoolQuery.of(b -> b
+            .must(QueryBuilders.match().field("date_from_to").query(dateFrom).build()._toQuery())
+            .must(QueryBuilders.match().field("date_from_to").query(dateTo).build()._toQuery())
+        )._toQuery();
+
+        var combinedQuery = BoolQuery.of(b -> b
+            .must(namesQuery)
+            .must(datesQuery)
+        )._toQuery();
+
+        var fallbackQuery = names.stream()
+            .flatMap(name -> Stream.of(
+                    QueryBuilders.matchPhrase().field("name_sr").query(name).build()._toQuery(),
+                    QueryBuilders.matchPhrase().field("name_other").query(name).build()._toQuery()
+                )
+            )
+            .reduce((q1, q2) -> BoolQuery.of(b -> b.should(q1).should(q2))._toQuery())
+            .orElse(null);
+
+        return BoolQuery.of(b -> b
+            .should(combinedQuery)
+            .should(fallbackQuery)
+            .must(QueryBuilders.match().field("type").query(EventType.CONFERENCE.name()).build()
+                ._toQuery())
+        )._toQuery();
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType) {
