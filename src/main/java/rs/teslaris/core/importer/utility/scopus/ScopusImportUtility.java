@@ -276,6 +276,7 @@ public class ScopusImportUtility {
         @JsonProperty("prism:publicationName") String publicationName,
         @JsonProperty("prism:issn") String issn,
         @JsonProperty("prism:eIssn") String eIssn,
+        @JsonProperty("prism:isbn") String isbn,
         @JsonProperty("prism:pageRange") String pageRange,
         @JsonProperty("prism:coverDate") String coverDate,
         @JsonProperty("prism:coverDisplayDate") String coverDisplayDate,
@@ -340,16 +341,128 @@ public class ScopusImportUtility {
     }
 
     public record AbstractRetrievalResponse(
-        @JsonProperty("coredata") CoreData coreData
+        @JsonProperty("coredata") CoreData coreData,
+        @JsonProperty("item") ItemRecord item
     ) {
     }
 
     public record CoreData(
         @JsonProperty("dc:title") String title,
-        @JsonProperty("dc:creator") String creator,
         @JsonProperty("prism:publicationName") String publicationName,
         @JsonProperty("prism:coverDate") String coverDate,
         @JsonProperty("citedby-count") String citedByCount
+    ) {
+    }
+
+    public record ItemRecord(
+        @JsonProperty("bibrecord") BibRecord bibRecord
+    ) {
+    }
+
+    public record BibRecord(
+        @JsonProperty("head") Head head
+    ) {
+    }
+
+    public record Head(
+        @JsonProperty("source") SourceRecord sourceRecord
+    ) {
+    }
+
+    public record SourceRecord(
+        @JsonProperty("website") WebsiteRecord website,
+        @JsonProperty("translated-sourcetitle") TranslatedSourceTitleRecord translatedSourcetitle,
+        @JsonProperty("volisspag") VolIssPagRecord volisspag,
+        @JsonProperty("@type") String type,
+        @JsonProperty("additional-srcinfo") AdditionalSrcInfoRecord additionalSrcinfo
+    ) {
+    }
+
+    public record WebsiteRecord(
+        @JsonProperty("ce:e-address") EAddressRecord eAddress
+    ) {
+    }
+
+    public record EAddressRecord(
+        @JsonProperty("$") String address,
+        @JsonProperty("@type") String type
+    ) {
+    }
+
+    public record TranslatedSourceTitleRecord(
+        @JsonProperty("$") String content,
+        @JsonProperty("@xml:lang") String xmlLang
+    ) {
+    }
+
+    public record VolIssPagRecord(
+        @JsonProperty("voliss") VolIssRecord voliss,
+        @JsonProperty("pagerange") PageRangeRecord pagerange
+    ) {
+    }
+
+    public record VolIssRecord(
+        @JsonProperty("@volume") String volume,
+        @JsonProperty("@issue") String issue
+    ) {
+    }
+
+    public record PageRangeRecord(
+        @JsonProperty("@first") String first,
+        @JsonProperty("@last") String last
+    ) {
+    }
+
+    public record AdditionalSrcInfoRecord(
+        @JsonProperty("conferenceinfo") ConferenceInfoDetailsRecord conferenceinfo
+    ) {
+    }
+
+    public record ConferenceInfoDetailsRecord(
+        @JsonProperty("confpublication") ConfPublicationRecord confpublication,
+        @JsonProperty("confevent") ConfEventRecord confevent
+    ) {
+    }
+
+    public record ConfPublicationRecord(
+        @JsonProperty("procpartno") String procpartno
+    ) {
+    }
+
+    public record ConfEventRecord(
+        @JsonProperty("confname") String confname,
+        @JsonProperty("confnumber") String confnumber,
+        @JsonProperty("confseriestitle") String confseriestitle,
+        @JsonProperty("conflocation") ConfLocationRecord conflocation,
+        @JsonProperty("confcode") String confcode,
+        @JsonProperty("confdate") ConfDateRecord confdate,
+        @JsonProperty("confURL") String confURL
+    ) {
+    }
+
+    public record ConfLocationRecord(
+        @JsonProperty("@country") String country,
+        @JsonProperty("city") String city
+    ) {
+    }
+
+    public record ConfDateRecord(
+        @JsonProperty("enddate") EndDateRecord enddate,
+        @JsonProperty("startdate") StartDateRecord startdate
+    ) {
+    }
+
+    public record EndDateRecord(
+        @JsonProperty("@day") String day,
+        @JsonProperty("@year") String year,
+        @JsonProperty("@month") String month
+    ) {
+    }
+
+    public record StartDateRecord(
+        @JsonProperty("@day") String day,
+        @JsonProperty("@year") String year,
+        @JsonProperty("@month") String month
     ) {
     }
 }

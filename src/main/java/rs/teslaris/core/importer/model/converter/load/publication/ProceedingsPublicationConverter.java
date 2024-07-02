@@ -70,11 +70,18 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         setCommonFields(document, dto);
 
         dto.setProceedingsName(multilingualContentConverter.toLoaderDTO(document.getPublishedIn()));
+        dto.setConferenceName(
+            multilingualContentConverter.toLoaderDTO(document.getEvent().getName()));
         dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
         dto.setArticleNumber(document.getArticleNumber());
         dto.setNumberOfPages(document.getNumberOfPages());
         dto.setStartPage(document.getStartPage());
         dto.setEndPage(document.getEndPage());
+        dto.setEIssn(document.getEIssn());
+        dto.setPrintIssn(document.getPrintIssn());
+        dto.setEventDateFrom(document.getEvent().getDateFrom().toString());
+        dto.setEventDateTo(document.getEvent().getDateTo().toString());
+        dto.setIsbn(document.getIsbn());
 
         return dto;
     }

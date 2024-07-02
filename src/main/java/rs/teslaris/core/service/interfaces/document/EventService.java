@@ -24,4 +24,6 @@ public interface EventService {
 
     Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
                                   EventType eventType);
+
+    Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo);
 }

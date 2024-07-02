@@ -16,6 +16,8 @@ public interface ConferenceService {
 
     Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable);
 
+    Page<EventIndex> searchConferencesForImport(List<String> names, String dateFrom, String dateTo);
+
     ConferenceDTO readConference(Integer conferenceId);
 
     Conference findConferenceById(Integer conferenceId);
