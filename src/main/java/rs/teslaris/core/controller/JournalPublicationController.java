@@ -50,7 +50,7 @@ public class JournalPublicationController {
         @PathVariable Integer journalId, @RequestHeader("Authorization") String bearerToken) {
         return journalPublicationService.findMyPublicationsInJournal(journalId,
             userService.getPersonIdForUser(
-                tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1])));
+                tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
     @GetMapping("/journal/{journalId}")

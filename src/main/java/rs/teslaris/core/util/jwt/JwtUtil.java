@@ -33,21 +33,38 @@ public class JwtUtil {
     @Value("${spring.application.name}")
     public String appName;
 
+
     public String extractUsernameFromToken(String token) {
+        if (token.startsWith("Bearer")) {
+            token = parseJWTFromHeader(token);
+        }
+
         return extractClaim(token, Claims::getSubject);
     }
 
     public Integer extractUserIdFromToken(String token) {
+        if (token.startsWith("Bearer")) {
+            token = parseJWTFromHeader(token);
+        }
+
         var claims = this.getAllClaimsFromToken(token);
         return claims.get("userId", Integer.class);
     }
 
     public String extractUserRoleFromToken(String token) {
+        if (token.startsWith("Bearer")) {
+            token = parseJWTFromHeader(token);
+        }
+
         var claims = this.getAllClaimsFromToken(token);
         return claims.get("role", String.class);
     }
 
     public String extractJWTSecurity(String token) {
+        if (token.startsWith("Bearer")) {
+            token = parseJWTFromHeader(token);
+        }
+
         var claims = this.getAllClaimsFromToken(token);
         return claims.get("jwt-security-fingerprint", String.class);
     }
@@ -59,6 +76,10 @@ public class JwtUtil {
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final var claims = getAllClaimsFromToken(token);
         return claimsResolver.apply(claims);
+    }
+
+    private String parseJWTFromHeader(String bearerToken) {
+        return bearerToken.split(" ")[1];
     }
 
     private Claims getAllClaimsFromToken(String token) {

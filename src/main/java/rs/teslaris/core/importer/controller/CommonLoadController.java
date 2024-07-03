@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
@@ -28,30 +29,30 @@ public class CommonLoadController {
 
     @PatchMapping("/skip")
     public void skipRecord(@RequestHeader("Authorization") String bearerToken) {
-        loader.skipRecord(tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+        loader.skipRecord(tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @PatchMapping("/mark-as-loaded")
     public void markRecordAsLoaded(@RequestHeader("Authorization") String bearerToken) {
-        loader.markRecordAsLoaded(tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+        loader.markRecordAsLoaded(tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/load-wizard/count-remaining")
     public Integer getRemainingRecordsCount(
         @RequestHeader("Authorization") String bearerToken) {
         return loader.countRemainingDocumentsForLoading(
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/load-wizard")
     @SuppressWarnings("unchecked")
     public <R> R loadUsingWizard(@RequestHeader("Authorization") String bearerToken) {
         var returnDto =
-            loader.loadRecordsWizard(tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            loader.loadRecordsWizard(tokenUtil.extractUserIdFromToken(bearerToken));
 
         if (Objects.isNull(returnDto)) {
             return loader.loadSkippedRecordsWizard(
-                tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+                tokenUtil.extractUserIdFromToken(bearerToken));
         }
 
         return (R) returnDto;
@@ -62,7 +63,7 @@ public class CommonLoadController {
     public OrganisationUnitDTO createInstitution(@RequestHeader("Authorization") String bearerToken,
                                                  @PathVariable String scopusAfid) {
         return loader.createInstitution(scopusAfid,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @PostMapping("/journal")
@@ -71,7 +72,15 @@ public class CommonLoadController {
                                               @RequestParam String eIssn,
                                               @RequestParam String printIssn) {
         return loader.createJournal(eIssn, printIssn,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
+    }
+
+    @PostMapping("/proceedings")
+    @Idempotent
+    public ProceedingsDTO createProceedings(
+        @RequestHeader("Authorization") String bearerToken) {
+        return loader.createProceedings(
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
 }
