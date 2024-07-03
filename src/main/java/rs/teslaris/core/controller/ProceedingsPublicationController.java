@@ -48,7 +48,7 @@ public class ProceedingsPublicationController {
         @PathVariable Integer eventId, @RequestHeader("Authorization") String bearerToken) {
         return proceedingsPublicationService.findAuthorsProceedingsForEvent(eventId,
             userService.getPersonIdForUser(
-                tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1])));
+                tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
     @GetMapping("/event/{eventId}")

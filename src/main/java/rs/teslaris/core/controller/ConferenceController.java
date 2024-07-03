@@ -58,8 +58,8 @@ public class ConferenceController {
     @GetMapping("/import-search")
     Page<EventIndex> searchConferencesImport(
         @RequestParam("names") List<String> names,
-        @RequestParam("names") String dateFrom,
-        @RequestParam("names") String dateTo) {
+        @RequestParam("dateFrom") String dateFrom,
+        @RequestParam("dateTo") String dateTo) {
         StringUtil.sanitizeTokens(names);
         return conferenceService.searchConferencesForImport(names, dateFrom, dateTo);
     }

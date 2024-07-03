@@ -4,6 +4,8 @@ import jakarta.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -14,19 +16,26 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.importer.model.common.DocumentImport;
+import rs.teslaris.core.importer.model.common.Event;
+import rs.teslaris.core.importer.model.common.MultilingualContent;
 import rs.teslaris.core.importer.model.common.OrganisationUnit;
 import rs.teslaris.core.importer.model.converter.load.publication.JournalPublicationConverter;
 import rs.teslaris.core.importer.model.converter.load.publication.ProceedingsPublicationConverter;
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
 import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
@@ -44,6 +53,10 @@ public class CommonLoaderImpl implements CommonLoader {
     private final OrganisationUnitService organisationUnitService;
 
     private final JournalService journalService;
+
+    private final ConferenceService conferenceService;
+
+    private final ProceedingsService proceedingsService;
 
     private final LanguageTagService languageTagService;
 
@@ -174,6 +187,19 @@ public class CommonLoaderImpl implements CommonLoader {
         throw new NotFoundException("Journal with given ISSN is not loaded.");
     }
 
+    @Override
+    public ProceedingsDTO createProceedings(Integer userId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId);
+
+        if (Objects.isNull(currentlyLoadedEntity)) {
+            throw new NotFoundException("No entity is being loaded at the moment.");
+        }
+
+        var createdConference = createConference(currentlyLoadedEntity.getEvent());
+        return createProceedings(currentlyLoadedEntity, createdConference.getId());
+        // TODO: join publication series via essn from common entity
+    }
+
     private DocumentImport retrieveCurrentlyLoadedEntity(Integer userId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("import_users_id").in(userId));
@@ -213,6 +239,66 @@ public class CommonLoaderImpl implements CommonLoader {
         journalDTO.setId(createdJournal.getId());
 
         return journalDTO;
+    }
+
+    private ProceedingsDTO createProceedings(DocumentImport proceedingsPublication,
+                                             Integer eventId) {
+        var proceedingsDTO = new ProceedingsDTO();
+        proceedingsDTO.setEventId(eventId);
+
+        proceedingsDTO.setTitle(new ArrayList<>());
+        setMultilingualContent(proceedingsDTO.getTitle(), proceedingsPublication.getPublishedIn());
+
+        proceedingsDTO.setSubTitle(new ArrayList<>());
+        proceedingsDTO.setDescription(new ArrayList<>());
+        proceedingsDTO.setKeywords(new ArrayList<>());
+        proceedingsDTO.setContributions(new ArrayList<>());
+        proceedingsDTO.setUris(new HashSet<>());
+        proceedingsDTO.setLanguageTagIds(new ArrayList<>());
+
+        var createdProceedings = proceedingsService.createProceedings(proceedingsDTO, true);
+        proceedingsDTO.setId(createdProceedings.getId());
+        return proceedingsDTO;
+    }
+
+    private Conference createConference(Event conference) {
+        var conferenceDTO = new ConferenceDTO();
+
+        conferenceDTO.setName(new ArrayList<>());
+        setMultilingualContent(conferenceDTO.getName(), conference.getName());
+
+        conferenceDTO.setNameAbbreviation(new ArrayList<>());
+        setMultilingualContent(conferenceDTO.getNameAbbreviation(),
+            conference.getNameAbbreviation());
+
+        conferenceDTO.setDescription(new ArrayList<>());
+        setMultilingualContent(conferenceDTO.getDescription(), conference.getDescription());
+
+        conferenceDTO.setKeywords(new ArrayList<>());
+        setMultilingualContent(conferenceDTO.getKeywords(), conference.getKeywords());
+
+        conferenceDTO.setState(new ArrayList<>());
+        setMultilingualContent(conferenceDTO.getState(), conference.getState());
+
+        conferenceDTO.setPlace(new ArrayList<>());
+        setMultilingualContent(conferenceDTO.getPlace(), conference.getPlace());
+
+        conferenceDTO.setSerialEvent(conference.getSerialEvent());
+        conferenceDTO.setDateFrom(conference.getDateFrom());
+        conferenceDTO.setDateTo(conference.getDateTo());
+
+        return conferenceService.createConference(conferenceDTO, true);
+    }
+
+    private void setMultilingualContent(List<MultilingualContentDTO> targetList,
+                                        List<MultilingualContent> sourceList) {
+        sourceList.forEach(sourceItem -> {
+            var languageTag =
+                languageTagService.findLanguageTagByValue(sourceItem.getLanguageTag());
+            targetList.add(
+                new MultilingualContentDTO(languageTag.getId(), sourceItem.getLanguageTag(),
+                    sourceItem.getContent(), sourceItem.getPriority()));
+        });
     }
 
     private OrganisationUnitDTO createLoadedInstitution(OrganisationUnit institution) {
