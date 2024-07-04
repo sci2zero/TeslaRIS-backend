@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -45,6 +46,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
@@ -75,6 +77,9 @@ public class CommonLoaderTest {
 
     @Mock
     private LanguageTagService languageTagService;
+
+    @Mock
+    private PublicationSeriesService publicationSeriesService;
 
     @InjectMocks
     private CommonLoaderImpl commonLoader;
@@ -485,7 +490,46 @@ public class CommonLoaderTest {
     }
 
     @Test
-    void createProceedingsShouldCreateProceedingsWhenExists() {
+    void createProceedingsShouldCreateProceedingsWhenExistsWithPublicationSeries() {
+        // Given
+        var lastLoadedId = "54321";
+        var userId = 1;
+
+        var currentlyLoadedEntity = new DocumentImport();
+        currentlyLoadedEntity.setEvent(new Event());
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedId(lastLoadedId);
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+
+        var createdProceedings = new Proceedings();
+        createdProceedings.setId(1);
+        var event = new Conference();
+        event.setId(1);
+        when(conferenceService.createConference(any(), any())).thenReturn(event);
+        when(proceedingsService.createProceedings(any(), anyBoolean())).thenReturn(
+            createdProceedings);
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            currentlyLoadedEntity);
+        when(publicationSeriesService.findPublicationSeriesByIssn(anyString(),
+            anyString())).thenReturn(new Journal());
+
+        // When
+        var result = commonLoader.createProceedings(userId);
+
+        // Then
+        assertEquals(createdProceedings.getId(), result.getId());
+    }
+
+    @Test
+    void createProceedingsShouldCreateProceedingsWhenExistsWithoutPublicationSeries() {
         // Given
         var lastLoadedId = "54321";
         var userId = 1;
