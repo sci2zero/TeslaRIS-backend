@@ -126,7 +126,6 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo) {
-        System.out.println(buildEventImportSearchQuery(names, dateFrom, dateTo).toString());
         return searchService.runQuery(buildEventImportSearchQuery(names, dateFrom, dateTo),
             Pageable.ofSize(5), EventIndex.class, "events");
     }
@@ -145,7 +144,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                         m -> m.field("date_from_to").value(dateTo)));
                     eq.should(sb -> sb.match(
                         m -> m.field("date_sortable").query(dateFrom)));
-                    return eq.minimumShouldMatch(Integer.toString(80));
+                    return eq;
                 });
                 return bq;
             });

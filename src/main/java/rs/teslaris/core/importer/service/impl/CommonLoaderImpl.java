@@ -36,6 +36,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
@@ -59,6 +60,8 @@ public class CommonLoaderImpl implements CommonLoader {
     private final ProceedingsService proceedingsService;
 
     private final LanguageTagService languageTagService;
+
+    private final PublicationSeriesService publicationSeriesService;
 
 
     @Override
@@ -197,7 +200,6 @@ public class CommonLoaderImpl implements CommonLoader {
 
         var createdConference = createConference(currentlyLoadedEntity.getEvent());
         return createProceedings(currentlyLoadedEntity, createdConference.getId());
-        // TODO: join publication series via essn from common entity
     }
 
     private DocumentImport retrieveCurrentlyLoadedEntity(Integer userId) {
@@ -221,13 +223,8 @@ public class CommonLoaderImpl implements CommonLoader {
         var journalDTO = new PublicationSeriesDTO();
 
         journalDTO.setTitle(new ArrayList<>());
-        documentImport.getPublishedIn().forEach(name -> {
-            var languageTag =
-                languageTagService.findLanguageTagByValue(name.getLanguageTag());
-            journalDTO.getTitle().add(
-                new MultilingualContentDTO(languageTag.getId(), name.getLanguageTag(),
-                    name.getContent(), name.getPriority()));
-        });
+        setMultilingualContent(journalDTO.getTitle(), documentImport.getPublishedIn());
+
         journalDTO.setEissn(documentImport.getEIssn());
         journalDTO.setPrintISSN(documentImport.getPrintIssn());
 
@@ -255,6 +252,14 @@ public class CommonLoaderImpl implements CommonLoader {
         proceedingsDTO.setContributions(new ArrayList<>());
         proceedingsDTO.setUris(new HashSet<>());
         proceedingsDTO.setLanguageTagIds(new ArrayList<>());
+
+        var publicationSeries =
+            publicationSeriesService.findPublicationSeriesByIssn(proceedingsPublication.getEIssn(),
+                proceedingsPublication.getPrintIssn());
+
+        if (Objects.nonNull(publicationSeries)) {
+            proceedingsDTO.setPublicationSeriesId(publicationSeries.getId());
+        }
 
         var createdProceedings = proceedingsService.createProceedings(proceedingsDTO, true);
         proceedingsDTO.setId(createdProceedings.getId());
@@ -293,6 +298,10 @@ public class CommonLoaderImpl implements CommonLoader {
     private void setMultilingualContent(List<MultilingualContentDTO> targetList,
                                         List<MultilingualContent> sourceList) {
         sourceList.forEach(sourceItem -> {
+            if (Objects.isNull(sourceItem.getContent())) {
+                return;
+            }
+
             var languageTag =
                 languageTagService.findLanguageTagByValue(sourceItem.getLanguageTag());
             targetList.add(
@@ -302,25 +311,21 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private OrganisationUnitDTO createLoadedInstitution(OrganisationUnit institution) {
-        var creationDTO = new OrganisationUnitRequestDTO();
-        creationDTO.setName(new ArrayList<>());
-        institution.getName().forEach(name -> {
-            var languageTag =
-                languageTagService.findLanguageTagByValue(name.getLanguageTag());
-            creationDTO.getName().add(
-                new MultilingualContentDTO(languageTag.getId(), name.getLanguageTag(),
-                    name.getContent(), name.getPriority()));
-        });
-        creationDTO.setNameAbbreviation(
+        var organisationUnitDTO = new OrganisationUnitRequestDTO();
+
+        organisationUnitDTO.setName(new ArrayList<>());
+        setMultilingualContent(organisationUnitDTO.getName(), institution.getName());
+
+        organisationUnitDTO.setNameAbbreviation(
             Objects.nonNull(institution.getNameAbbreviation()) ?
                 institution.getNameAbbreviation() : "");
-        creationDTO.setScopusAfid(institution.getScopusAfid());
-        creationDTO.setKeyword(new ArrayList<>());
-        creationDTO.setResearchAreasId(new ArrayList<>());
-        creationDTO.setContact(new ContactDTO());
-        creationDTO.setLocation(new GeoLocationDTO());
+        organisationUnitDTO.setScopusAfid(institution.getScopusAfid());
+        organisationUnitDTO.setKeyword(new ArrayList<>());
+        organisationUnitDTO.setResearchAreasId(new ArrayList<>());
+        organisationUnitDTO.setContact(new ContactDTO());
+        organisationUnitDTO.setLocation(new GeoLocationDTO());
 
-        return organisationUnitService.createOrganisationUnit(creationDTO, true);
+        return organisationUnitService.createOrganisationUnit(organisationUnitDTO, true);
     }
 
     @Nullable

@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -196,6 +197,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         publication.setArticleNumber(publicationDTO.getArticleNumber());
         publication.setProceedings(
             proceedingsService.findProceedingsById(publicationDTO.getProceedingsId()));
-        publication.setDocumentDate(publication.getProceedings().getDocumentDate());
+
+        if (Objects.isNull(publication.getDocumentDate()) ||
+            publication.getDocumentDate().isEmpty()) {
+            publication.setDocumentDate(publication.getProceedings().getDocumentDate());
+        }
     }
 }

@@ -31,7 +31,7 @@ public class ScopusConverter {
 
         setCommonFields(entry, document);
 
-        document.setScopusId(entry.identifier());
+        document.setScopusId(entry.identifier().split(":")[1]); // format is SCOPUS_ID:XXX
         document.setEIssn(entry.eIssn());
         document.setIsbn(entry.isbn());
         document.setPrintIssn(entry.issn());
