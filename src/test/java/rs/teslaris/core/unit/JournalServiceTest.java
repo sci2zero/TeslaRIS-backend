@@ -92,8 +92,8 @@ public class JournalServiceTest {
         var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEissn("eISSN");
-        journalDTO.setPrintISSN("printISSN");
+        journalDTO.setEissn("8765-4322");
+        journalDTO.setPrintISSN("8765-4322");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
@@ -135,8 +135,8 @@ public class JournalServiceTest {
         var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEissn("eISSN");
-        journalDTO.setPrintISSN("printISSN");
+        journalDTO.setEissn("1234-5678");
+        journalDTO.setPrintISSN("1234-5678");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
@@ -163,8 +163,8 @@ public class JournalServiceTest {
         var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setEissn("eISSN");
-        journalDTO.setPrintISSN("printISSN");
+        journalDTO.setEissn("8765-4321");
+        journalDTO.setPrintISSN("8765-4321");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 

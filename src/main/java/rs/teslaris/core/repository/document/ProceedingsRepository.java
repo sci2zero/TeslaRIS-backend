@@ -14,4 +14,12 @@ public interface ProceedingsRepository extends JpaRepository<Proceedings, Intege
 
     @Query("select count(pp) > 0 from ProceedingsPublication pp where pp.proceedings.id = :proceedingsId")
     boolean hasPublications(Integer proceedingsId);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Proceedings p WHERE p.eISBN = :eISBN AND p.id <> :id")
+    boolean existsByeISBN(String eISBN, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Proceedings p WHERE p.printISBN = :printISBN AND p.id <> :id")
+    boolean existsByPrintISBN(String printISBN, Integer id);
 }

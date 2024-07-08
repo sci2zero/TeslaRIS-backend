@@ -31,6 +31,7 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -213,8 +214,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private void setProceedingsRelatedFields(Proceedings proceedings,
                                              ProceedingsDTO proceedingsDTO) {
-        proceedings.setEISBN(proceedingsDTO.getEISBN());
-        proceedings.setPrintISBN(proceedingsDTO.getPrintISBN());
+
+        setCommonIdentifiers(proceedings, proceedingsDTO);
+
         proceedings.setNumberOfPages(proceedingsDTO.getNumberOfPages());
         proceedings.setPublicationSeriesVolume(proceedingsDTO.getPublicationSeriesVolume());
         proceedings.setPublicationSeriesIssue(proceedingsDTO.getPublicationSeriesIssue());
@@ -242,5 +244,27 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             proceedings.setPublisher(
                 publisherService.findPublisherById(proceedingsDTO.getPublisherId()));
         }
+    }
+
+    private void setCommonIdentifiers(Proceedings proceedings, ProceedingsDTO proceedingsDTO) {
+        IdentifierUtil.validateAndSetIdentifier(
+            proceedingsDTO.getEISBN(),
+            proceedings.getId(),
+            "^(?:(?:\\d[\\ |-]?){9}[\\dX]|(?:\\d[\\ |-]?){13})$",
+            proceedingsRepository::existsByeISBN,
+            proceedings::setEISBN,
+            "eisbnFormatError",
+            "eisbnExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            proceedingsDTO.getPrintISBN(),
+            proceedings.getId(),
+            "^(?:(?:\\d[\\ |-]?){9}[\\dX]|(?:\\d[\\ |-]?){13})$",
+            proceedingsRepository::existsByPrintISBN,
+            proceedings::setPrintISBN,
+            "printIsbnFormatError",
+            "printIsbnExistsError"
+        );
     }
 }

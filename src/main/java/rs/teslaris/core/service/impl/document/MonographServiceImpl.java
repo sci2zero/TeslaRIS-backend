@@ -7,12 +7,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
+import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -25,6 +28,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
@@ -42,6 +46,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private final ResearchAreaService researchAreaService;
 
+    private final MonographRepository monographRepository;
+
 
     @Autowired
     public MonographServiceImpl(
@@ -56,7 +62,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         OrganisationUnitService organisationUnitService,
         MonographJPAServiceImpl monographJPAService, LanguageTagService languageTagService,
         JournalService journalService, BookSeriesService bookSeriesService,
-        ResearchAreaService researchAreaService) {
+        ResearchAreaService researchAreaService, MonographRepository monographRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
             documentFileService, personContributionService, searchService, expressionTransformer,
             eventService, organisationUnitService);
@@ -65,6 +71,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         this.journalService = journalService;
         this.bookSeriesService = bookSeriesService;
         this.researchAreaService = researchAreaService;
+        this.monographRepository = monographRepository;
     }
 
     @Override
@@ -195,5 +202,27 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         index.setType(DocumentPublicationType.MONOGRAPH.name());
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    private void setCommonIdentifiers(Proceedings proceedings, ProceedingsDTO proceedingsDTO) {
+        IdentifierUtil.validateAndSetIdentifier(
+            proceedingsDTO.getEISBN(),
+            proceedings.getId(),
+            "^(?:(?:\\d[\\ |-]?){9}[\\dX]|(?:\\d[\\ |-]?){13})$",
+            monographRepository::existsByeISBN,
+            proceedings::setEISBN,
+            "eisbnFormatError",
+            "eisbnExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            proceedingsDTO.getPrintISBN(),
+            proceedings.getId(),
+            "^(?:(?:\\d[\\ |-]?){9}[\\dX]|(?:\\d[\\ |-]?){13})$",
+            monographRepository::existsByPrintISBN,
+            proceedings::setPrintISBN,
+            "printIsbnFormatError",
+            "printIsbnExistsError"
+        );
     }
 }

@@ -18,6 +18,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTempla
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
+import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
@@ -225,6 +226,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleProceedingsReferenceConstraintViolationException(HttpServletRequest request,
                                                                        ProceedingsReferenceConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(IdentifierException.class)
+    @ResponseBody
+    ErrorObject handleIdentifierException(HttpServletRequest request,
+                                          IdentifierException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

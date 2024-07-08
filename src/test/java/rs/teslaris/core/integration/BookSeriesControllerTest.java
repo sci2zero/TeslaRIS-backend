@@ -32,8 +32,8 @@ public class BookSeriesControllerTest extends BaseTest {
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(dummyMC);
         bookSeriesDTO.setNameAbbreviation(dummyMC);
-        bookSeriesDTO.setEissn("eISSN");
-        bookSeriesDTO.setPrintISSN("printISSN");
+        bookSeriesDTO.setEissn("1234-5678");
+        bookSeriesDTO.setPrintISSN("8765-4321");
 
         var contribution =
             new PersonPublicationSeriesContributionDTO(
@@ -81,8 +81,8 @@ public class BookSeriesControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_BOOK_SERIES")).andExpect(status().isCreated())
-            .andExpect(jsonPath("$.printISSN").value("printISSN"))
-            .andExpect(jsonPath("$.eissn").value("eISSN"));
+            .andExpect(jsonPath("$.printISSN").value("8765-4321"))
+            .andExpect(jsonPath("$.eissn").value("1234-5678"));
     }
 
     @Test
@@ -91,8 +91,8 @@ public class BookSeriesControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var bookSeriesDTO = getTestPayload();
-        bookSeriesDTO.setEissn("TEST_E_ISSN");
-        bookSeriesDTO.setPrintISSN("TEST_PRINT_ISSN");
+        bookSeriesDTO.setEissn("1234-5677");
+        bookSeriesDTO.setPrintISSN("8765-4322");
 
         String requestBody = objectMapper.writeValueAsString(bookSeriesDTO);
         mockMvc.perform(
