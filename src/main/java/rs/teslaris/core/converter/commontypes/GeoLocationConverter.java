@@ -7,9 +7,21 @@ import rs.teslaris.core.model.commontypes.GeoLocation;
 public class GeoLocationConverter {
     public static GeoLocation fromDTO(GeoLocationDTO geoLocationDTO) {
         var geoLocation = new GeoLocation();
-        geoLocation.setLongitude(geoLocationDTO.getLongitude());
-        geoLocation.setLatitude(geoLocationDTO.getLatitude());
-        geoLocation.setAddress(geoLocationDTO.getAddress());
+        geoLocation.setLongitude(
+            (Objects.nonNull(geoLocation.getLongitude()) && geoLocationDTO.getLongitude() != 0) ?
+                geoLocation.getLongitude() : null);
+        geoLocation.setLatitude(
+            (Objects.nonNull(geoLocation.getLatitude()) && geoLocationDTO.getLatitude() != 0) ?
+                geoLocation.getLatitude() : null);
+
+        if (Objects.nonNull(geoLocationDTO.getAddress())) {
+            if (geoLocationDTO.getAddress().isBlank() ||
+                geoLocationDTO.getAddress().toLowerCase().contains("undefined")) {
+                geoLocation.setAddress(null);
+            } else {
+                geoLocation.setAddress(geoLocationDTO.getAddress());
+            }
+        }
 
         return geoLocation;
     }
