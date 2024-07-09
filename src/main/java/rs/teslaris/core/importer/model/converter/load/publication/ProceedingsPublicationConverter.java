@@ -75,6 +75,7 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         dto.setNumberOfPages(document.getNumberOfPages());
         dto.setStartPage(document.getStartPage());
         dto.setEndPage(document.getEndPage());
+        dto.setConfId(document.getEvent().getConfId());
 
         return dto;
     }

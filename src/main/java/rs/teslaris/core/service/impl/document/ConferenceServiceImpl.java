@@ -22,6 +22,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 
@@ -152,6 +153,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
         conference.setNumber(conferenceDTO.getNumber());
         conference.setFee(conferenceDTO.getFee());
+
+        IdentifierUtil.validateAndSetIdentifier(
+            conference.getConfId(),
+            conference.getId(),
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            eventRepository::existsByConfId,
+            conference::setConfId,
+            "confIdFormatError",
+            "confIdExistsError"
+        );
     }
 
     private void indexConference(Conference conference, EventIndex index) {

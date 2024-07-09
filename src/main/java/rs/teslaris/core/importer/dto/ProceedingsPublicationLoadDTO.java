@@ -25,4 +25,6 @@ public class ProceedingsPublicationLoadDTO extends DocumentLoadDTO {
     private String articleNumber;
 
     private List<MultilingualContentDTO> proceedingsName;
+
+    private String confId;
 }
