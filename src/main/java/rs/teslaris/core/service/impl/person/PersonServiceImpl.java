@@ -603,7 +603,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         IdentifierUtil.validateAndSetIdentifier(
             personDTO.getENaukaId(),
             person.getId(),
-            "^[a-zA-Z]{2}\\d+$",
+            "^[A-Z]{2}\\d+$",
             personRepository::existsByeNaukaId,
             person::setENaukaId,
             "eNaukaIdFormatError",
