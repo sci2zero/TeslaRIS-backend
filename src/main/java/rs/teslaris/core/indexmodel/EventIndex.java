@@ -75,4 +75,7 @@ public class EventIndex {
 
     @Field(type = FieldType.Text, name = "event_type", store = true)
     private EventType eventType;
+
+    @Field(type = FieldType.Boolean, name = "is_serial_event", store = true)
+    private Boolean serialEvent;
 }

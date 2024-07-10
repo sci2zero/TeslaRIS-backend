@@ -141,18 +141,19 @@ public class DbInitializer implements ApplicationRunner {
         var editPublishers = new Privilege("EDIT_PUBLISHERS");
         var editPublicationSeries = new Privilege("EDIT_PUBLICATION_SERIES");
         var editConferences = new Privilege("EDIT_CONFERENCES");
+        var editEventRelations = new Privilege("EDIT_EVENT_RELATIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
                 editResearchAreas, approvePublication, editOURelations, editPublishers,
-                editPublicationSeries, editConferences));
+                editPublicationSeries, editConferences, editEventRelations));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
                 createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
                 editOURelations, approvePublication, editPublishers, editPublicationSeries,
-                editConferences)));
+                editConferences, editEventRelations)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
@@ -268,7 +269,7 @@ public class DbInitializer implements ApplicationRunner {
         conferenceEvent2.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija2", 1)));
         conferenceEvent2.setDateFrom(LocalDate.of(2020, 6, 13));
         conferenceEvent2.setDateTo(LocalDate.of(2020, 6, 19));
-        conferenceEvent2.setSerialEvent(true);
+        conferenceEvent2.setSerialEvent(false);
         conferenceRepository.save(conferenceEvent2);
 
         var journal2 = new Journal();
@@ -556,5 +557,12 @@ public class DbInitializer implements ApplicationRunner {
             new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null));
         person4.setScopusAuthorId("14419566900");
         personRepository.save(person4);
+
+        var conferenceEvent3 = new Conference();
+        conferenceEvent3.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija3", 1)));
+        conferenceEvent3.setDateFrom(LocalDate.of(2024, 6, 29));
+        conferenceEvent3.setDateTo(LocalDate.of(2024, 7, 3));
+        conferenceEvent3.setSerialEvent(true);
+        conferenceRepository.save(conferenceEvent3);
     }
 }

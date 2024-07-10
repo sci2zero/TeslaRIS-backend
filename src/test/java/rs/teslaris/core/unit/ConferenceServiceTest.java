@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +37,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
@@ -158,6 +161,24 @@ public class ConferenceServiceTest {
     }
 
     @Test
+    public void shouldThrowExceptionWhenNonSerialNotProvidedWithDates() {
+        // given
+        var conferenceDTO = new ConferenceDTO();
+        conferenceDTO.setName(new ArrayList<>());
+        conferenceDTO.setNameAbbreviation(new ArrayList<>());
+        conferenceDTO.setPlace(new ArrayList<>());
+        conferenceDTO.setState(new ArrayList<>());
+        conferenceDTO.setSerialEvent(false);
+        conferenceDTO.setContributions(new ArrayList<>());
+
+        // when & then
+        assertThrows(MissingDataException.class,
+            () -> conferenceService.createConference(conferenceDTO, true));
+
+        // MissingDataException should be thrown
+    }
+
+    @Test
     public void shouldCreateConferenceBasicWhenProvidedWithValidData() {
         // given
         var conferenceDTO = new ConferenceBasicAdditionDTO();
@@ -224,8 +245,9 @@ public class ConferenceServiceTest {
         // Then (JournalInUseException should be thrown)
     }
 
-    @Test
-    public void shouldFindConferenceWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void shouldFindConferenceWhenSearchingWithSimpleQuery(Boolean returnOnlySerialEvents) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -235,7 +257,7 @@ public class ConferenceServiceTest {
 
         // When
         var result =
-            conferenceService.searchConferences(tokens, pageable);
+            conferenceService.searchConferences(tokens, pageable, returnOnlySerialEvents);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

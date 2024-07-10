@@ -13,27 +13,34 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.EventsRelation;
+import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.document.EventServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
@@ -51,9 +58,18 @@ public class EventServiceTest {
     @Mock
     private SearchService<EventIndex> searchService;
 
+    @Mock
+    private EventsRelationRepository eventsRelationRepository;
+
     @InjectMocks
     private EventServiceImpl eventService;
 
+    static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery_arguments() {
+        return Stream.of(
+            Arguments.of(EventType.CONFERENCE, true),
+            Arguments.of(EventType.CONFERENCE, false)
+        );
+    }
 
     @Test
     public void shouldReturnEventWhenItExists() {
@@ -134,8 +150,9 @@ public class EventServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(EventType.class)
-    public void shouldFindConferenceWhenSearchingWithSimpleQuery(EventType eventType) {
+    @MethodSource("shouldFindConferenceWhenSearchingWithSimpleQuery_arguments")
+    public void shouldFindConferenceWhenSearchingWithSimpleQuery(EventType eventType,
+                                                                 boolean returnOnlySerialEvents) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -144,7 +161,7 @@ public class EventServiceTest {
             new PageImpl<>(List.of(new EventIndex(), new EventIndex())));
 
         // When
-        var result = eventService.searchEvents(tokens, pageable, eventType);
+        var result = eventService.searchEvents(tokens, pageable, eventType, returnOnlySerialEvents);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
@@ -192,5 +209,111 @@ public class EventServiceTest {
         // Then
         assertNull(actual);
         verify(eventRepository, times(1)).findEventByOldId(oldId);
+    }
+
+    @Test
+    public void shouldAddEventsRelationSuccessfully() {
+        // Given
+        var sourceEvent = new Conference();
+        sourceEvent.setId(1);
+        var targetEvent = new Conference();
+        targetEvent.setId(2);
+        targetEvent.setSerialEvent(true);
+
+        var eventsRelationDTO = new EventsRelationDTO();
+        eventsRelationDTO.setSourceId(1);
+        eventsRelationDTO.setTargetId(2);
+        eventsRelationDTO.setEventsRelationType(EventsRelationType.BELONGS_TO_SERIES);
+
+        when(eventRepository.findById(1)).thenReturn(Optional.of(sourceEvent));
+        when(eventRepository.findById(2)).thenReturn(Optional.of(targetEvent));
+
+        // When
+        eventService.addEventsRelation(eventsRelationDTO);
+
+        // Then
+        verify(eventsRelationRepository, times(1)).save(any(EventsRelation.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenTargetEventIsNotSerial() {
+        // Given
+        var sourceEvent = new Conference();
+        sourceEvent.setId(1);
+        var targetEvent = new Conference();
+        targetEvent.setId(2);
+        targetEvent.setSerialEvent(false);
+
+        var eventsRelationDTO = new EventsRelationDTO();
+        eventsRelationDTO.setSourceId(1);
+        eventsRelationDTO.setTargetId(2);
+        eventsRelationDTO.setEventsRelationType(EventsRelationType.BELONGS_TO_SERIES);
+
+        when(eventRepository.findById(1)).thenReturn(Optional.of(sourceEvent));
+        when(eventRepository.findById(2)).thenReturn(Optional.of(targetEvent));
+
+        // When & Then
+        Exception exception =
+            assertThrows(ConferenceReferenceConstraintViolationException.class, () -> {
+                eventService.addEventsRelation(eventsRelationDTO);
+            });
+
+        assertEquals("Target event is not serial event", exception.getMessage());
+        verify(eventsRelationRepository, times(0)).save(any(EventsRelation.class));
+    }
+
+    @Test
+    public void shouldAddEventsRelationForDifferentRelationType() {
+        // Given
+        var sourceEvent = new Conference();
+        sourceEvent.setId(1);
+        var targetEvent = new Conference();
+        targetEvent.setId(2);
+
+        var eventsRelationDTO = new EventsRelationDTO();
+        eventsRelationDTO.setSourceId(1);
+        eventsRelationDTO.setTargetId(2);
+        eventsRelationDTO.setEventsRelationType(EventsRelationType.COLLOCATED_WITH);
+
+        when(eventRepository.findById(1)).thenReturn(Optional.of(sourceEvent));
+        when(eventRepository.findById(2)).thenReturn(Optional.of(targetEvent));
+
+        // When
+        eventService.addEventsRelation(eventsRelationDTO);
+
+        // Then
+        verify(eventsRelationRepository, times(1)).save(any(EventsRelation.class));
+    }
+
+    @Test
+    public void shouldDeleteEventRelationSuccessfully() {
+        // Given
+        var relationId = 1;
+        var relation = new EventsRelation();
+        relation.setId(relationId);
+
+        when(eventsRelationRepository.findById(relationId)).thenReturn(Optional.of(relation));
+
+        // When
+        eventService.deleteEventRelation(relationId);
+
+        // Then
+        verify(eventsRelationRepository, times(1)).delete(relation);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenRelationDoesNotExist() {
+        // Given
+        var relationId = 1;
+
+        when(eventsRelationRepository.findById(relationId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class, () -> {
+            eventService.deleteEventRelation(relationId);
+        });
+
+        assertEquals("Relation does not exist.", exception.getMessage());
+        verify(eventsRelationRepository, times(0)).delete(any());
     }
 }

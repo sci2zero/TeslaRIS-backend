@@ -17,6 +17,7 @@ import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -36,10 +37,11 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  MultilingualContentService multilingualContentService,
                                  PersonContributionService personContributionService,
                                  EventRepository eventRepository,
+                                 EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService, EmailUtil emailUtil,
                                  ConferenceJPAServiceImpl conferenceJPAService) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
-            eventRepository, searchService, emailUtil);
+            eventRepository, eventsRelationRepository, searchService, emailUtil);
         this.conferenceJPAService = conferenceJPAService;
     }
 
@@ -49,8 +51,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
-    public Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable) {
-        return searchEvents(tokens, pageable, EventType.CONFERENCE);
+    public Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable,
+                                              Boolean returnOnlyNonSerialEvents) {
+        return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents);
     }
 
     @Override

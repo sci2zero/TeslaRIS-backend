@@ -38,7 +38,7 @@ public class ConferenceControllerTest extends BaseTest {
         conferenceDTO.setKeywords(dummyMC);
         conferenceDTO.setDateFrom(LocalDate.now());
         conferenceDTO.setDateTo(LocalDate.now());
-        conferenceDTO.setSerialEvent(true);
+        conferenceDTO.setSerialEvent(false);
         conferenceDTO.setNumber("12R34A");
         conferenceDTO.setFee("100$");
 
