@@ -55,6 +55,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    public Page<EventIndex> searchConferencesForImport(List<String> names, String dateFrom,
+                                                       String dateTo) {
+        return searchEventsImport(names, dateFrom, dateTo);
+    }
+
+    @Override
     public ConferenceDTO readConference(Integer conferenceId) {
         return ConferenceConverter.toDTO(findConferenceById(conferenceId));
     }

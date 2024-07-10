@@ -124,6 +124,36 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             pageable, EventIndex.class, "events");
     }
 
+    @Override
+    public Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo) {
+        return searchService.runQuery(buildEventImportSearchQuery(names, dateFrom, dateTo),
+            Pageable.ofSize(5), EventIndex.class, "events");
+    }
+
+    private Query buildEventImportSearchQuery(List<String> names, String dateFrom, String dateTo) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.must(bq -> {
+                bq.bool(eq -> {
+                    names.forEach(name -> {
+                        eq.should(sb -> sb.matchPhrase(m -> m.field("name_sr").query(name)));
+                        eq.should(sb -> sb.matchPhrase(m -> m.field("name_other").query(name)));
+                    });
+                    eq.should(sb -> sb.wildcard(
+                        m -> m.field("date_from_to").value(dateFrom)));
+                    eq.should(sb -> sb.wildcard(
+                        m -> m.field("date_from_to").value(dateTo)));
+                    eq.should(sb -> sb.match(
+                        m -> m.field("date_sortable").query(dateFrom)));
+                    return eq;
+                });
+                return bq;
+            });
+            b.must(sb -> sb.match(
+                m -> m.field("event_type").query(EventType.CONFERENCE.name())));
+            return b;
+        })))._toQuery();
+    }
+
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 

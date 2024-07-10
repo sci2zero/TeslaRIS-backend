@@ -50,7 +50,7 @@ public class CommonHarvestController {
         var startYear = dateFrom.getYear();
         var endYear = dateTo.getYear();
 
-        var userId = tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]);
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var newEntriesCount = new HashMap<Integer, Integer>();
 
         var newDocumentImportCountByUser =

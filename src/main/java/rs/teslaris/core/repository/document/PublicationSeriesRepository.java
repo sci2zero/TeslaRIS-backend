@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.document;
 
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -18,4 +19,7 @@ public interface PublicationSeriesRepository extends JpaRepository<PublicationSe
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
         "FROM PublicationSeries p WHERE p.printISSN = :printISSN AND p.id <> :id")
     boolean existsByPrintISSN(String printISSN, Integer id);
+
+    Optional<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN,
+                                                                        String printISSN);
 }

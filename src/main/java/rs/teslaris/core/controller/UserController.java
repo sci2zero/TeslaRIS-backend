@@ -53,7 +53,7 @@ public class UserController {
 
     @GetMapping
     public UserResponseDTO getUser(@RequestHeader("Authorization") String bearerToken) {
-        var userId = tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]);
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         return userService.getUserProfile(userId);
     }
 
@@ -151,7 +151,7 @@ public class UserController {
         var fingerprint = tokenUtil.generateJWTSecurityFingerprint();
 
         var authenticationResponse = userService.updateUser(updateRequest,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]), fingerprint);
+            tokenUtil.extractUserIdFromToken(bearerToken), fingerprint);
 
         var headers = getJwtSecurityCookieHeader(fingerprint);
         return new ResponseEntity<>(authenticationResponse, headers, HttpStatus.OK);

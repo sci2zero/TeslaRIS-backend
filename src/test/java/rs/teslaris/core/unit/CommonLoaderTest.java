@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -27,6 +29,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.importer.dto.JournalPublicationLoadDTO;
 import rs.teslaris.core.importer.dto.ProceedingsPublicationLoadDTO;
 import rs.teslaris.core.importer.model.common.DocumentImport;
+import rs.teslaris.core.importer.model.common.Event;
 import rs.teslaris.core.importer.model.common.OrganisationUnit;
 import rs.teslaris.core.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.core.importer.model.converter.load.publication.JournalPublicationConverter;
@@ -36,9 +39,14 @@ import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.LoadProgressReport;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
@@ -62,7 +70,16 @@ public class CommonLoaderTest {
     private JournalService journalService;
 
     @Mock
+    private ConferenceService conferenceService;
+
+    @Mock
+    private ProceedingsService proceedingsService;
+
+    @Mock
     private LanguageTagService languageTagService;
+
+    @Mock
+    private PublicationSeriesService publicationSeriesService;
 
     @InjectMocks
     private CommonLoaderImpl commonLoader;
@@ -470,5 +487,104 @@ public class CommonLoaderTest {
         // When & Then
         assertThrows(
             NotFoundException.class, () -> commonLoader.createJournal(eIssn, printIssn, userId));
+    }
+
+    @Test
+    void createProceedingsShouldCreateProceedingsWhenExistsWithPublicationSeries() {
+        // Given
+        var lastLoadedId = "54321";
+        var userId = 1;
+
+        var currentlyLoadedEntity = new DocumentImport();
+        currentlyLoadedEntity.setEvent(new Event());
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedId(lastLoadedId);
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+
+        var createdProceedings = new Proceedings();
+        createdProceedings.setId(1);
+        var event = new Conference();
+        event.setId(1);
+        when(conferenceService.createConference(any(), any())).thenReturn(event);
+        when(proceedingsService.createProceedings(any(), anyBoolean())).thenReturn(
+            createdProceedings);
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            currentlyLoadedEntity);
+        when(publicationSeriesService.findPublicationSeriesByIssn(anyString(),
+            anyString())).thenReturn(new Journal());
+
+        // When
+        var result = commonLoader.createProceedings(userId);
+
+        // Then
+        assertEquals(createdProceedings.getId(), result.getId());
+    }
+
+    @Test
+    void createProceedingsShouldCreateProceedingsWhenExistsWithoutPublicationSeries() {
+        // Given
+        var lastLoadedId = "54321";
+        var userId = 1;
+
+        var currentlyLoadedEntity = new DocumentImport();
+        currentlyLoadedEntity.setEvent(new Event());
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedId(lastLoadedId);
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+
+        var createdProceedings = new Proceedings();
+        createdProceedings.setId(1);
+        var event = new Conference();
+        event.setId(1);
+        when(conferenceService.createConference(any(), any())).thenReturn(event);
+        when(proceedingsService.createProceedings(any(), anyBoolean())).thenReturn(
+            createdProceedings);
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            currentlyLoadedEntity);
+
+        // When
+        var result = commonLoader.createProceedings(userId);
+
+        // Then
+        assertEquals(createdProceedings.getId(), result.getId());
+    }
+
+    @Test
+    void createProceedingsShouldThrowNotFoundExceptionWhenNoEntityLoaded() {
+        // Given
+        var lastLoadedId = "54321";
+        var userId = 1;
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedId(lastLoadedId);
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").gt(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(null);
+
+        // When & Then
+        assertThrows(NotFoundException.class,
+            () -> commonLoader.createProceedings(userId));
     }
 }

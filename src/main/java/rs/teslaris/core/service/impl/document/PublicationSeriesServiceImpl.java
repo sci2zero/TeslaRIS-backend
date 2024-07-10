@@ -1,5 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
+import jakarta.annotation.Nullable;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,8 +47,22 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     }
 
     @Override
-    public void setPublicationSeriesCommonFields(PublicationSeries publicationSeries,
-                                                 PublicationSeriesDTO publicationSeriesDTO) {
+    @Nullable
+    public PublicationSeries findPublicationSeriesByIssn(String eIssn, String printIssn) {
+        if (Objects.isNull(eIssn)) { // null will match with other nulls
+            eIssn = "";
+        }
+
+        if (Objects.isNull(printIssn)) { // null will match with other nulls
+            printIssn = "";
+        }
+
+        return publicationSeriesRepository.findPublicationSeriesByeISSNOrPrintISSN(eIssn,
+            printIssn).orElse(null);
+    }
+
+    protected void setPublicationSeriesCommonFields(PublicationSeries publicationSeries,
+                                                    PublicationSeriesDTO publicationSeriesDTO) {
         publicationSeries.setTitle(
             multilingualContentService.getMultilingualContent(publicationSeriesDTO.getTitle()));
         publicationSeries.setNameAbbreviation(
@@ -63,7 +79,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         });
     }
 
-    public void clearPublicationSeriesCommonFields(PublicationSeries publicationSeries) {
+    protected void clearPublicationSeriesCommonFields(PublicationSeries publicationSeries) {
         publicationSeries.getContributions().forEach(
             contribution -> personContributionService.deleteContribution(contribution.getId()));
         publicationSeries.getContributions().clear();

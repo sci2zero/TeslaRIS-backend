@@ -28,14 +28,14 @@ public class NotificationController {
     public List<NotificationDTO> getAllNotificationsForUser(
         @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         return notificationService.getUserNotifications(
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/count")
     public long getNotificationCountForUser(
         @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         return notificationService.getUserNotificationCount(
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @PatchMapping("/{notificationId}/perform")
@@ -44,7 +44,7 @@ public class NotificationController {
                                           String bearerToken,
                                           @RequestParam NotificationAction action) {
         notificationService.performAction(notificationId,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]), action);
+            tokenUtil.extractUserIdFromToken(bearerToken), action);
     }
 
     @DeleteMapping("/{notificationId}/dismiss")
@@ -52,6 +52,6 @@ public class NotificationController {
                                     @RequestHeader(value = "Authorization", required = false)
                                     String bearerToken) {
         notificationService.dismiss(notificationId,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 }

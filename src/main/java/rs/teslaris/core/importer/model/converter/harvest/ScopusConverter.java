@@ -1,8 +1,10 @@
 package rs.teslaris.core.importer.model.converter.harvest;
 
+import java.time.LocalDate;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import rs.teslaris.core.importer.model.common.DocumentImport;
+import rs.teslaris.core.importer.model.common.Event;
 import rs.teslaris.core.importer.model.common.MultilingualContent;
 import rs.teslaris.core.importer.model.common.OrganisationUnit;
 import rs.teslaris.core.importer.model.common.Person;
@@ -14,19 +16,24 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 
 public class ScopusConverter {
 
-    public static DocumentImport toCommonImportModel(ScopusImportUtility.Entry entry) {
+    public static DocumentImport toCommonImportModel(ScopusImportUtility.Entry entry,
+                                                     ScopusImportUtility scopusImportUtility) {
         var document = new DocumentImport();
 
         if (entry.subtypeDescription().equals("Article")) {
             document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
         } else if (entry.subtypeDescription().equals("Conference Paper")) {
             document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+
+            var abstractData = scopusImportUtility.getAbstractData(entry.identifier());
+            setConferenceInfo(abstractData, document);
         }
 
         setCommonFields(entry, document);
 
-        document.setScopusId(entry.identifier());
+        document.setScopusId(entry.identifier().split(":")[1]); // format is SCOPUS_ID:XXX
         document.setEIssn(entry.eIssn());
+        document.setIsbn(entry.isbn());
         document.setPrintIssn(entry.issn());
         document.setDoi(entry.doi());
 
@@ -109,5 +116,44 @@ public class ScopusConverter {
 
             document.getContributions().add(contribution);
         });
+    }
+
+    private static void setConferenceInfo(ScopusImportUtility.AbstractDataResponse abstractData,
+                                          DocumentImport document) {
+        if (Objects.nonNull(abstractData)) {
+            var sourceRecord =
+                abstractData.abstractRetrievalResponse().item().bibRecord().head()
+                    .sourceRecord();
+
+            var conference = new Event();
+            conference.getName().add(new MultilingualContent("EN",
+                sourceRecord.additionalSrcinfo()
+                    .conferenceinfo().confevent().confname(), 1));
+
+            conference.getState().add(new MultilingualContent("EN",
+                sourceRecord.additionalSrcinfo()
+                    .conferenceinfo().confevent().conflocation().country(), 1));
+
+            conference.getPlace().add(new MultilingualContent("EN",
+                sourceRecord.additionalSrcinfo()
+                    .conferenceinfo().confevent().conflocation().city(), 1));
+
+            var dateFromObject =
+                sourceRecord.additionalSrcinfo().conferenceinfo().confevent().confdate()
+                    .startdate();
+            var dateToObject =
+                sourceRecord.additionalSrcinfo().conferenceinfo().confevent().confdate()
+                    .enddate();
+            conference.setDateFrom(
+                LocalDate.of(Integer.parseInt(dateFromObject.year()),
+                    Integer.parseInt(dateFromObject.month()),
+                    Integer.parseInt(dateFromObject.day())));
+            conference.setDateTo(
+                LocalDate.of(Integer.parseInt(dateToObject.year()),
+                    Integer.parseInt(dateToObject.month()),
+                    Integer.parseInt(dateToObject.day())));
+
+            document.setEvent(conference);
+        }
     }
 }

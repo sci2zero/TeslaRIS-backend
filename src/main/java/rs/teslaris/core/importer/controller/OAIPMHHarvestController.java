@@ -32,7 +32,7 @@ public class OAIPMHHarvestController {
                         @RequestParam("source") OAIPMHSource source,
                         @RequestHeader("Authorization") String bearerToken) {
         oaipmhHarvester.harvest(dataSet, source,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/load")
@@ -40,28 +40,28 @@ public class OAIPMHHarvestController {
                          @RequestParam("performIndex") Boolean performIndex,
                          @RequestHeader("Authorization") String bearerToken) {
         oaipmhLoader.loadRecordsAuto(dataSet, performIndex,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @PatchMapping("/skip")
     public void skipRecord(@RequestHeader("Authorization") String bearerToken,
                            @RequestParam("dataSet") DataSet dataSet) {
         oaipmhLoader.skipRecord(dataSet,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @PatchMapping("/mark-as-loaded")
     public void markRecordAsLoaded(@RequestHeader("Authorization") String bearerToken,
                                    @RequestParam("dataSet") DataSet dataSet) {
         oaipmhLoader.markRecordAsLoaded(dataSet,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/load-wizard/count-remaining")
     public RemainingRecordsCountResponseDTO getRemainingRecordsCount(
         @RequestHeader("Authorization") String bearerToken) {
         return oaipmhLoader.countRemainingDocumentsForLoading(
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/load-wizard")
@@ -69,11 +69,11 @@ public class OAIPMHHarvestController {
     private <R> R loadUsingWizard(@RequestParam("dataSet") DataSet dataSet,
                                   @RequestHeader("Authorization") String bearerToken) {
         var returnDto = oaipmhLoader.loadRecordsWizard(dataSet,
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
 
         if (Objects.isNull(returnDto)) {
             return oaipmhLoader.loadSkippedRecordsWizard(dataSet,
-                tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+                tokenUtil.extractUserIdFromToken(bearerToken));
         }
 
         return (R) returnDto;

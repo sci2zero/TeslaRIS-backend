@@ -27,4 +27,16 @@ public class ProceedingsPublicationLoadDTO extends DocumentLoadDTO {
     private List<MultilingualContentDTO> proceedingsName;
 
     private String confId;
+
+    private List<MultilingualContentDTO> conferenceName;
+
+    private String eIssn;
+
+    private String printIssn;
+
+    private String isbn;
+
+    private String eventDateFrom;
+
+    private String eventDateTo;
 }

@@ -75,7 +75,7 @@ public class PersonController {
     @GetMapping("/for-user")
     public Integer getPersonIdForUser(@RequestHeader("Authorization") String bearerToken) {
         return personService.getPersonIdForUserId(
-            tokenUtil.extractUserIdFromToken(bearerToken.split(" ")[1]));
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/simple-search")

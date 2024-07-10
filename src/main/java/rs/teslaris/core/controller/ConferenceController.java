@@ -55,6 +55,15 @@ public class ConferenceController {
         return conferenceService.searchConferences(tokens, pageable);
     }
 
+    @GetMapping("/import-search")
+    Page<EventIndex> searchConferencesImport(
+        @RequestParam("names") List<String> names,
+        @RequestParam("dateFrom") String dateFrom,
+        @RequestParam("dateTo") String dateTo) {
+        StringUtil.sanitizeTokens(names);
+        return conferenceService.searchConferencesForImport(names, dateFrom, dateTo);
+    }
+
     @GetMapping("/{conferenceId}")
     public ConferenceDTO readConference(@PathVariable Integer conferenceId) {
         return conferenceService.readConference(conferenceId);
