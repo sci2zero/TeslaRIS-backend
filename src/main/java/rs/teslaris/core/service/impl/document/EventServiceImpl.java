@@ -37,6 +37,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -152,6 +153,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public void addEventsRelation(EventsRelationDTO eventsRelationDTO) {
+        if (eventsRelationDTO.getSourceId().equals(eventsRelationDTO.getTargetId())) {
+            throw new SelfRelationException("Event cannot relate to itself");
+        }
+
         var sourceEvent = findOne(eventsRelationDTO.getSourceId());
         var targetEvent = findOne(eventsRelationDTO.getTargetId());
 

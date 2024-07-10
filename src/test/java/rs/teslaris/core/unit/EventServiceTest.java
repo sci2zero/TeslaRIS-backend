@@ -42,6 +42,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 
 @SpringBootTest
 public class EventServiceTest {
@@ -253,12 +254,30 @@ public class EventServiceTest {
         when(eventRepository.findById(2)).thenReturn(Optional.of(targetEvent));
 
         // When & Then
-        Exception exception =
+        var exception =
             assertThrows(ConferenceReferenceConstraintViolationException.class, () -> {
                 eventService.addEventsRelation(eventsRelationDTO);
             });
 
         assertEquals("Target event is not serial event", exception.getMessage());
+        verify(eventsRelationRepository, times(0)).save(any(EventsRelation.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenTargetEventIsSameAsSourceEvent() {
+        // Given
+        var eventsRelationDTO = new EventsRelationDTO();
+        eventsRelationDTO.setSourceId(1);
+        eventsRelationDTO.setTargetId(1);
+        eventsRelationDTO.setEventsRelationType(EventsRelationType.PART_OF);
+
+        // When & Then
+        var exception =
+            assertThrows(SelfRelationException.class, () -> {
+                eventService.addEventsRelation(eventsRelationDTO);
+            });
+
+        assertEquals("Event cannot relate to itself", exception.getMessage());
         verify(eventsRelationRepository, times(0)).save(any(EventsRelation.class));
     }
 
