@@ -9,10 +9,10 @@ import rs.teslaris.core.model.document.Monograph;
 public interface MonographRepository extends JpaRepository<Monograph, Integer> {
 
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Monograph m WHERE m.eISBN = :eISBN AND m.id <> :id")
+        "FROM Monograph m WHERE (m.eISBN = :eISBN OR m.printISBN = :eISBN) AND m.id <> :id")
     boolean existsByeISBN(String eISBN, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Monograph m WHERE m.printISBN = :printISBN AND m.id <> :id")
+        "FROM Monograph m WHERE (m.printISBN = :printISBN OR m.eISBN = :printISBN) AND m.id <> :id")
     boolean existsByPrintISBN(String printISBN, Integer id);
 }
