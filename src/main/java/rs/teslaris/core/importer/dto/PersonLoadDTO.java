@@ -19,7 +19,9 @@ public class PersonLoadDTO {
 
     private String apvnt;
 
-    private String mnid;
+    private String eCrisId;
+
+    private String eNaukaId;
 
     private String orcid;
 

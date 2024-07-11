@@ -55,7 +55,8 @@ public class PersonConverter {
                     Objects.nonNull(person.getPersonalInfo().getContact()) ?
                         person.getPersonalInfo().getContact().getPhoneNumber() : null),
                 person.getApvnt(),
-                person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
+                person.getECrisId(), person.getENaukaId(), person.getOrcid(),
+                person.getScopusAuthorId()), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
             expertisesOrSkills, prizes);
     }
@@ -203,7 +204,8 @@ public class PersonConverter {
                     .getSex(), postalAddress,
                 new ContactDTO(person.getPersonalInfo().getContact().getContactEmail(),
                     person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
-                person.getMnid(), person.getOrcid(), person.getScopusAuthorId()), biography,
+                person.getECrisId(), person.getENaukaId(), person.getOrcid(),
+                person.getScopusAuthorId()), biography,
             keyword,
             person.getApproveStatus(),
             userDTO);

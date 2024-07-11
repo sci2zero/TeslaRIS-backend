@@ -24,4 +24,7 @@ public class Conference extends Event {
 
     @Column(name = "fee")
     private String fee;
+
+    @Column(name = "conf_id")
+    private String confId;
 }

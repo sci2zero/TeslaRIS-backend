@@ -15,12 +15,22 @@ import lombok.Setter;
 public class Event {
 
     private List<MultilingualContent> name = new ArrayList<>();
+
     private List<MultilingualContent> nameAbbreviation = new ArrayList<>();
+
     private List<MultilingualContent> description = new ArrayList<>();
+
     private List<MultilingualContent> keywords = new ArrayList<>();
+
     private Boolean serialEvent;
+
     private LocalDate dateFrom;
+
     private LocalDate dateTo;
+
+    private String confId;
+
     private List<MultilingualContent> state = new ArrayList<>();
+
     private List<MultilingualContent> place = new ArrayList<>();
 }

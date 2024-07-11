@@ -31,6 +31,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.document.MonographServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -67,6 +68,9 @@ public class MographServiceTest {
 
     @Mock
     private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private DocumentRepository documentRepository;
 
     @InjectMocks
     private MonographServiceImpl monographService;

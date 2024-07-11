@@ -32,4 +32,8 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
 
     @Query("select count(u) > 0 from User u join u.organisationUnit ou where ou.id = :organisationUnitId")
     boolean hasEmployees(Integer organisationUnitId);
+
+    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM OrganisationUnit ou WHERE ou.scopusAfid = :scopusAfid AND ou.id <> :id")
+    boolean existsByScopusAfid(String scopusAfid, Integer id);
 }

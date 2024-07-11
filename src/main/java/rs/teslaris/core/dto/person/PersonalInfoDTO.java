@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.person;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -13,7 +14,7 @@ import rs.teslaris.core.model.person.Sex;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PersonalInfoDTO {
+public class PersonalInfoDTO implements PersonIdentifierable {
 
     private LocalDate localBirthDate;
 
@@ -30,7 +31,11 @@ public class PersonalInfoDTO {
 
     private String apvnt;
 
-    private String mnid;
+    @JsonProperty("eCrisId")
+    private String eCrisId;
+
+    @JsonProperty("eNaukaId")
+    private String eNaukaId;
 
     private String orcid;
 

@@ -169,7 +169,8 @@ public class PersonServiceTest {
         personDTO.setLocalBirthDate(LocalDate.of(1985, 5, 15));
         personDTO.setPhoneNumber("+1-555-555-5555");
         personDTO.setApvnt("12345");
-        personDTO.setMnid("67890");
+        personDTO.setECrisId("67890");
+        personDTO.setENaukaId("rp67890");
         personDTO.setOrcid("0000-0002-1825-0097");
         personDTO.setScopusAuthorId("00000000000");
         personDTO.setOrganisationUnitId(1);
@@ -200,7 +201,8 @@ public class PersonServiceTest {
         assertEquals(LocalDate.of(1985, 5, 15), result.getPersonalInfo().getLocalBirthDate());
         assertEquals("+1-555-555-5555", result.getPersonalInfo().getContact().getPhoneNumber());
         assertEquals("12345", result.getApvnt());
-        assertEquals("67890", result.getMnid());
+        assertEquals("67890", result.getECrisId());
+        assertEquals("rp67890", result.getENaukaId());
         assertEquals("0000-0002-1825-0097", result.getOrcid());
         assertEquals("00000000000", result.getScopusAuthorId());
         assertEquals(ApproveStatus.APPROVED, result.getApproveStatus());
@@ -353,8 +355,9 @@ public class PersonServiceTest {
         var personId = 1;
         var personalInfoDTO = new PersonalInfoDTO();
         personalInfoDTO.setPlaceOfBirth("City");
-        personalInfoDTO.setApvnt("Mr.");
-        personalInfoDTO.setMnid("123456");
+        personalInfoDTO.setApvnt("123123");
+        personalInfoDTO.setECrisId("67890");
+        personalInfoDTO.setENaukaId("aa123456");
         personalInfoDTO.setOrcid("0000-0000-0000-0000");
         personalInfoDTO.setScopusAuthorId("1234567");
         personalInfoDTO.setPostalAddress(
@@ -390,8 +393,9 @@ public class PersonServiceTest {
         // then
         verify(personRepository, times(1)).findById(personId);
         verify(personRepository, times(1)).save(personToUpdate);
-        assertEquals("Mr.", personToUpdate.getApvnt());
-        assertEquals("123456", personToUpdate.getMnid());
+        assertEquals("123123", personToUpdate.getApvnt());
+        assertEquals("67890", personToUpdate.getECrisId());
+        assertEquals("aa123456", personToUpdate.getENaukaId());
         assertEquals("0000-0000-0000-0000", personToUpdate.getOrcid());
         assertEquals("1234567", personToUpdate.getScopusAuthorId());
         assertEquals("City", personalInfo.getPlaceOfBrith());
