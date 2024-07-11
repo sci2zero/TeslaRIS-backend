@@ -28,6 +28,10 @@ public interface EventService {
 
     Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo);
 
+    List<EventsRelationDTO> readEventRelations(Integer eventId);
+
+    List<EventsRelationDTO> readSerialEventRelations(Integer serialEventId);
+
     void addEventsRelation(EventsRelationDTO eventsRelationDTO);
 
     void deleteEventRelation(Integer relationId);

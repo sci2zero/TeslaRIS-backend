@@ -27,8 +27,8 @@ public class EventsRelationControllerTest extends BaseTest {
         var eventsRelationDTO = new EventsRelationDTO();
 
         eventsRelationDTO.setEventsRelationType(EventsRelationType.COLLOCATED_WITH);
-        eventsRelationDTO.setSourceId(1);
-        eventsRelationDTO.setTargetId(2);
+        eventsRelationDTO.setSourceId(2);
+        eventsRelationDTO.setTargetId(1);
 
         return eventsRelationDTO;
     }
@@ -63,5 +63,22 @@ public class EventsRelationControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadEventsRelationsForOneTimeEvent() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get("http://localhost:8081/api/events-relation/{eventId}", 1)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadEventsRelationsForSerialEvent() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/events-relation/serial-event/{serialEventId}", 3)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 }

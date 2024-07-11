@@ -5,11 +5,13 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
@@ -152,9 +155,48 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    public List<EventsRelationDTO> readEventRelations(Integer eventId) {
+        var event = findOne(eventId);
+
+        if (event.getSerialEvent()) {
+            throw new NotFoundException("One time event with this ID does not exist.");
+        }
+
+        var relations = new ArrayList<>(
+            eventsRelationRepository.getRelationsForOneTimeEvent(eventId).stream()
+                .map(EventsRelationConverter::toDTO).toList());
+
+        var reverseRelations =
+            eventsRelationRepository.getReverseRelationsForOneTimeEvent(eventId).stream()
+                .map(EventsRelationConverter::toDTO).toList();
+
+        relations.addAll(reverseRelations);
+
+        return relations;
+    }
+
+    @Override
+    public List<EventsRelationDTO> readSerialEventRelations(Integer serialEventId) {
+        var serialEvent = findOne(serialEventId);
+
+        if (!serialEvent.getSerialEvent()) {
+            throw new NotFoundException("Serial event with this ID does not exist.");
+        }
+
+        return eventsRelationRepository.getRelationsForSerialEvent(serialEventId).stream()
+            .map(EventsRelationConverter::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
     public void addEventsRelation(EventsRelationDTO eventsRelationDTO) {
         if (eventsRelationDTO.getSourceId().equals(eventsRelationDTO.getTargetId())) {
-            throw new SelfRelationException("Event cannot relate to itself");
+            throw new SelfRelationException("selfRelationEventError");
+        }
+
+        if (eventsRelationRepository.relationExists(eventsRelationDTO.getSourceId(),
+            eventsRelationDTO.getTargetId())) {
+            throw new ConferenceReferenceConstraintViolationException(
+                "relationAlreadyExistsError");
         }
 
         var sourceEvent = findOne(eventsRelationDTO.getSourceId());
@@ -163,7 +205,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         if (eventsRelationDTO.getEventsRelationType()
             .equals(EventsRelationType.BELONGS_TO_SERIES) && !targetEvent.getSerialEvent()) {
             throw new ConferenceReferenceConstraintViolationException(
-                "Target event is not serial event");
+                "targetEventNotSerialError");
         }
 
         var newRelation = new EventsRelation();

@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -259,7 +261,7 @@ public class EventServiceTest {
                 eventService.addEventsRelation(eventsRelationDTO);
             });
 
-        assertEquals("Target event is not serial event", exception.getMessage());
+        assertEquals("targetEventNotSerialError", exception.getMessage());
         verify(eventsRelationRepository, times(0)).save(any(EventsRelation.class));
     }
 
@@ -277,7 +279,27 @@ public class EventServiceTest {
                 eventService.addEventsRelation(eventsRelationDTO);
             });
 
-        assertEquals("Event cannot relate to itself", exception.getMessage());
+        assertEquals("selfRelationEventError", exception.getMessage());
+        verify(eventsRelationRepository, times(0)).save(any(EventsRelation.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRelationExists() {
+        // Given
+        var eventsRelationDTO = new EventsRelationDTO();
+        eventsRelationDTO.setSourceId(1);
+        eventsRelationDTO.setTargetId(2);
+        eventsRelationDTO.setEventsRelationType(EventsRelationType.PART_OF);
+
+        when(eventsRelationRepository.relationExists(1, 2)).thenReturn(true);
+
+        // When & Then
+        var exception =
+            assertThrows(ConferenceReferenceConstraintViolationException.class, () -> {
+                eventService.addEventsRelation(eventsRelationDTO);
+            });
+
+        assertEquals("relationAlreadyExistsError", exception.getMessage());
         verify(eventsRelationRepository, times(0)).save(any(EventsRelation.class));
     }
 
@@ -327,12 +349,102 @@ public class EventServiceTest {
 
         when(eventsRelationRepository.findById(relationId)).thenReturn(Optional.empty());
 
-        // When & Then
+        // When
         var exception = assertThrows(NotFoundException.class, () -> {
             eventService.deleteEventRelation(relationId);
         });
 
+        // Then
         assertEquals("Relation does not exist.", exception.getMessage());
         verify(eventsRelationRepository, times(0)).delete(any());
+    }
+
+    @Test
+    void shouldReadEventRelations() {
+        // Given
+        var oneTimeEvent = new Conference();
+        oneTimeEvent.setId(2);
+        oneTimeEvent.setSerialEvent(false);
+
+        var eventId = oneTimeEvent.getId();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(oneTimeEvent));
+        when(eventsRelationRepository.getRelationsForOneTimeEvent(eventId)).thenReturn(
+            Stream.of(
+                new EventsRelation(EventsRelationType.PART_OF, oneTimeEvent, new Conference()),
+                new EventsRelation(EventsRelationType.COLLOCATED_WITH, oneTimeEvent,
+                    new Conference())).collect(Collectors.toList())
+        );
+
+        // When
+        var result = eventService.readEventRelations(eventId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(eventsRelationRepository, times(1)).getRelationsForOneTimeEvent(eventId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenReadingEventRelationsForSerialEvent() {
+        // Given
+        var serialEvent = new Conference();
+        serialEvent.setId(1);
+        serialEvent.setSerialEvent(true);
+
+        var eventId = serialEvent.getId();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(serialEvent));
+
+        // When
+        var exception = assertThrows(NotFoundException.class, () -> {
+            eventService.readEventRelations(eventId);
+        });
+
+        // Then
+        assertEquals("One time event with this ID does not exist.", exception.getMessage());
+    }
+
+    @Test
+    void shouldReadSerialEventRelations() {
+        // Given
+        var serialEvent = new Conference();
+        serialEvent.setId(1);
+        serialEvent.setSerialEvent(true);
+
+        var serialEventId = serialEvent.getId();
+        when(eventRepository.findById(serialEventId)).thenReturn(Optional.of(serialEvent));
+        when(eventsRelationRepository.getRelationsForSerialEvent(serialEventId)).thenReturn(
+            Stream.of(
+                new EventsRelation(EventsRelationType.BELONGS_TO_SERIES, new Conference(),
+                    serialEvent),
+                new EventsRelation(EventsRelationType.BELONGS_TO_SERIES, new Conference(),
+                    serialEvent)).collect(Collectors.toList())
+        );
+
+        // When
+        var result = eventService.readSerialEventRelations(serialEventId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(eventsRelationRepository, times(1)).getRelationsForSerialEvent(serialEventId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenReadingSerialEventRelationsForOneTimeEvent() {
+        // Given
+        var oneTimeEvent = new Conference();
+        oneTimeEvent.setId(2);
+        oneTimeEvent.setSerialEvent(false);
+
+        var eventId = oneTimeEvent.getId();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(oneTimeEvent));
+
+        // When
+        var exception = assertThrows(NotFoundException.class, () -> {
+            eventService.readSerialEventRelations(eventId);
+        });
+
+        // Then
+        assertEquals("Serial event with this ID does not exist.", exception.getMessage());
     }
 }
