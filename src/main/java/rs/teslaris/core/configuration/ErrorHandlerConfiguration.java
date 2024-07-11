@@ -19,6 +19,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
+import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -243,5 +244,13 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleConferenceReferenceConstraintViolationException(HttpServletRequest request,
                                                                       ConferenceReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(IdentifierException.class)
+    @ResponseBody
+    ErrorObject handleIdentifierException(HttpServletRequest request,
+                                          IdentifierException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

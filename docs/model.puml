@@ -103,7 +103,8 @@ package person {
     -Set<MultiLingualContent> biography
     -Set<MultiLingualContent> keyword
     -String apvnt
-    -String mnid
+    -String eCrisId
+    -String eNaukaId
     -String orcid
     -String scopusAuthorId
     -Integer oldId

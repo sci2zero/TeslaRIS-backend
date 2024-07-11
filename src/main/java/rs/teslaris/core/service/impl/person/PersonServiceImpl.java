@@ -22,6 +22,7 @@ import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.PersonIdentifierable;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
@@ -49,6 +50,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -166,11 +168,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var newPerson = new Person();
         newPerson.setName(personName);
         newPerson.setPersonalInfo(personalInfo);
-        newPerson.setApvnt(personDTO.getApvnt());
-        newPerson.setMnid(personDTO.getMnid());
-        newPerson.setOrcid(personDTO.getOrcid());
-        newPerson.setScopusAuthorId(personDTO.getScopusAuthorId());
 
+        setAllPersonIdentifiers(newPerson, personDTO);
         newPerson.setOldId(personDTO.getOldId());
 
         if (Objects.nonNull(personDTO.getOrganisationUnitId())) {
@@ -271,10 +270,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Transactional
     public void updatePersonalInfo(PersonalInfoDTO personalInfo, Integer personId) {
         var personToUpdate = findOne(personId);
-        personToUpdate.setApvnt(personalInfo.getApvnt());
-        personToUpdate.setMnid(personalInfo.getMnid());
-        personToUpdate.setOrcid(personalInfo.getOrcid());
-        personToUpdate.setScopusAuthorId(personalInfo.getScopusAuthorId());
+        setAllPersonIdentifiers(personToUpdate, personalInfo);
 
         var personalInfoToUpdate = personToUpdate.getPersonalInfo();
         personalInfoToUpdate.setPlaceOfBrith(personalInfo.getPlaceOfBirth());
@@ -581,5 +577,57 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 }
             ))
         )._toQuery();
+    }
+
+    private void setAllPersonIdentifiers(Person person, PersonIdentifierable personDTO) {
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getApvnt(),
+            person.getId(),
+            "^\\d+$",
+            personRepository::existsByApvnt,
+            person::setApvnt,
+            "apvntFormatError",
+            "apvntExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getECrisId(),
+            person.getId(),
+            "^\\d+$",
+            personRepository::existsByeCrisId,
+            person::setECrisId,
+            "eCrisIdFormatError",
+            "eCrisIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getENaukaId(),
+            person.getId(),
+            "^[A-Z]{2}\\d+$",
+            personRepository::existsByeNaukaId,
+            person::setENaukaId,
+            "eNaukaIdFormatError",
+            "eNaukaIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getOrcid(),
+            person.getId(),
+            "^\\d{4}-\\d{4}-\\d{4}-\\d{4}$",
+            personRepository::existsByOrcid,
+            person::setOrcid,
+            "orcidIdFormatError",
+            "orcidIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getScopusAuthorId(),
+            person.getId(),
+            "^\\d+$",
+            personRepository::existsByScopusAuthorId,
+            person::setScopusAuthorId,
+            "scopusAuthorIdFormatError",
+            "scopusAuthorIdExistsError"
+        );
     }
 }

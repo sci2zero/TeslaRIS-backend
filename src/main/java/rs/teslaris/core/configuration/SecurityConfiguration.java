@@ -117,6 +117,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/software/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/dataset/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/patent/{patentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/monograph/{monographId}").permitAll()
 
                 // INVOLVEMENT
                 .requestMatchers(HttpMethod.GET, "/api/involvement/employment/{employmentId}")

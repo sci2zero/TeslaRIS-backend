@@ -15,6 +15,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 
 @Service
@@ -69,8 +70,8 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
                 publicationSeriesDTO.getNameAbbreviation()));
 
         publicationSeries.setOldId(publicationSeriesDTO.getOldId());
-        publicationSeries.setEISSN(publicationSeriesDTO.getEissn());
-        publicationSeries.setPrintISSN(publicationSeriesDTO.getPrintISSN());
+
+        setCommonIdentifiers(publicationSeries, publicationSeriesDTO);
 
         publicationSeriesDTO.getLanguageTagIds().forEach(languageTagId -> {
             publicationSeries.getLanguages()
@@ -82,5 +83,28 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         publicationSeries.getContributions().forEach(
             contribution -> personContributionService.deleteContribution(contribution.getId()));
         publicationSeries.getContributions().clear();
+    }
+
+    private void setCommonIdentifiers(PublicationSeries publicationSeries,
+                                      PublicationSeriesDTO publicationSeriesDTO) {
+        IdentifierUtil.validateAndSetIdentifier(
+            publicationSeriesDTO.getEissn(),
+            publicationSeries.getId(),
+            "^\\d{4}-\\d{4}$",
+            publicationSeriesRepository::existsByeISSN,
+            publicationSeries::setEISSN,
+            "eissnFormatError",
+            "eissnExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            publicationSeriesDTO.getPrintISSN(),
+            publicationSeries.getId(),
+            "^\\d{4}-\\d{4}([\\dX])?$",
+            publicationSeriesRepository::existsByPrintISSN,
+            publicationSeries::setPrintISSN,
+            "printIssnFormatError",
+            "printIssnExistsError"
+        );
     }
 }

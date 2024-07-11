@@ -13,4 +13,8 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     boolean hasProceedings(Integer eventId);
 
     Optional<Event> findEventByOldId(Integer oldId);
+
+    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Event e WHERE e.confId = :confId AND e.id <> :id")
+    boolean existsByConfId(String confId, Integer id);
 }

@@ -35,4 +35,24 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query("select u.person.id from User u where u.id = :userId")
     Optional<Integer> findPersonIdForUserId(Integer userId);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.apvnt = :apvnt AND p.id <> :id")
+    boolean existsByApvnt(String apvnt, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.eCrisId = :eCrisId AND p.id <> :id")
+    boolean existsByeCrisId(String eCrisId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.eNaukaId = :eNaukaId AND p.id <> :id")
+    boolean existsByeNaukaId(String eNaukaId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.orcid = :orcid AND p.id <> :id")
+    boolean existsByOrcid(String orcid, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.scopusAuthorId = :scopusAuthorId AND p.id <> :id")
+    boolean existsByScopusAuthorId(String scopusAuthorId, Integer id);
 }

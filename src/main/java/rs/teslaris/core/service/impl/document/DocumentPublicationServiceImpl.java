@@ -46,6 +46,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
@@ -390,7 +391,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setDocumentDate(documentDTO.getDocumentDate());
 
         setUris(document, documentDTO);
-        setDoi(document, documentDTO);
+        setCommonIdentifiers(document, documentDTO);
 
         document.setScopusId(documentDTO.getScopusId());
 
@@ -406,15 +407,26 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
     }
 
-    private void setDoi(Document document, DocumentDTO documentDTO) {
-        var doiPattern = "^10\\.\\d{4,9}/[-._;()/:A-Z0-9]+$";
-        var pattern = Pattern.compile(doiPattern, Pattern.CASE_INSENSITIVE);
+    private void setCommonIdentifiers(Document document, DocumentDTO documentDTO) {
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getDoi(),
+            document.getId(),
+            "^10\\.\\d{4,9}/[-._;()/:A-Z0-9]+$",
+            documentRepository::existsByDoi,
+            document::setDoi,
+            "doiFormatError",
+            "doiExistsError"
+        );
 
-        if (Objects.nonNull(documentDTO.getDoi()) &&
-            (pattern.matcher(documentDTO.getDoi())
-                .matches() || documentDTO.getDoi().isBlank())) {
-            document.setDoi(documentDTO.getDoi().trim());
-        }
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getScopusId(),
+            document.getId(),
+            "^\\d{6,11}$",
+            documentRepository::existsByScopusId,
+            document::setScopusId,
+            "scopusIdFormatError",
+            "scopusIdExistsError"
+        );
     }
 
     private void setUris(Document document, DocumentDTO documentDTO) {

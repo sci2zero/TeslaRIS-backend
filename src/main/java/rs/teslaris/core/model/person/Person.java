@@ -60,8 +60,11 @@ public class Person extends BaseEntity {
     @Column(name = "apvnt")
     private String apvnt;
 
-    @Column(name = "mnid")
-    private String mnid;
+    @Column(name = "e_cris_id")
+    private String eCrisId;
+
+    @Column(name = "e_nauka_id")
+    private String eNaukaId;
 
     @Column(name = "orcid")
     private String orcid;

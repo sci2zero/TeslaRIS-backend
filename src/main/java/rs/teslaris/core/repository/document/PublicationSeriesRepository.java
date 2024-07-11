@@ -12,6 +12,14 @@ public interface PublicationSeriesRepository extends JpaRepository<PublicationSe
     @Query("select count(p) > 0 from Proceedings p join p.publicationSeries bs where bs.id = :publicationSeriesId")
     boolean hasProceedings(Integer publicationSeriesId);
 
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM PublicationSeries p WHERE (p.eISSN = :eISSN OR p.printISSN = :eISSN) AND p.id <> :id")
+    boolean existsByeISSN(String eISSN, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM PublicationSeries p WHERE (p.printISSN = :printISSN OR p.eISSN = :printISSN) AND p.id <> :id")
+    boolean existsByPrintISSN(String printISSN, Integer id);
+
     Optional<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN,
                                                                         String printISSN);
 }

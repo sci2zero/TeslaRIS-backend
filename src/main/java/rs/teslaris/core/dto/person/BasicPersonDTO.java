@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.person;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -15,7 +16,7 @@ import rs.teslaris.core.model.person.Sex;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BasicPersonDTO {
+public class BasicPersonDTO implements PersonIdentifierable {
 
     private Integer id;
 
@@ -34,7 +35,11 @@ public class BasicPersonDTO {
 
     private String apvnt;
 
-    private String mnid;
+    @JsonProperty("eCrisId")
+    private String eCrisId;
+
+    @JsonProperty("eNaukaId")
+    private String eNaukaId;
 
     private String orcid;
 

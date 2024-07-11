@@ -46,6 +46,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolation;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
@@ -308,7 +309,16 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 organisationUnitDTO.getKeyword())
         );
 
-        organisationUnit.setScopusAfid(organisationUnitDTO.getScopusAfid());
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getScopusAfid(),
+            organisationUnit.getId(),
+            "^\\d+$",
+            organisationUnitRepository::existsByScopusAfid,
+            organisationUnit::setScopusAfid,
+            "scopusAfidFormatError",
+            "scopusAfidExistsError"
+        );
+
         organisationUnit.setOldId(organisationUnitDTO.getOldId());
 
         var researchAreas = researchAreaService.getResearchAreasByIds(

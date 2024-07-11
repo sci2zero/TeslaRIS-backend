@@ -55,7 +55,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected final PersonContributionService personContributionService;
 
-    private final EventRepository eventRepository;
+    protected final EventRepository eventRepository;
 
     private final EventsRelationRepository eventsRelationRepository;
 

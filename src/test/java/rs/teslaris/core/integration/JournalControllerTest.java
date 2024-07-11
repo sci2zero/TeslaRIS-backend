@@ -34,8 +34,8 @@ public class JournalControllerTest extends BaseTest {
         var journalDTO = new PublicationSeriesDTO();
         journalDTO.setTitle(dummyMC);
         journalDTO.setNameAbbreviation(dummyMC);
-        journalDTO.setEissn("eISSN");
-        journalDTO.setPrintISSN("printISSN");
+        journalDTO.setEissn("1234-5678");
+        journalDTO.setPrintISSN("1234-5678");
 
         var contribution =
             new PersonPublicationSeriesContributionDTO(
@@ -82,8 +82,8 @@ public class JournalControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_JOURNAL")).andExpect(status().isCreated())
-            .andExpect(jsonPath("$.printISSN").value("printISSN"))
-            .andExpect(jsonPath("$.eissn").value("eISSN"));
+            .andExpect(jsonPath("$.printISSN").value("1234-5678"))
+            .andExpect(jsonPath("$.eissn").value("1234-5678"));
     }
 
     @Test
@@ -93,8 +93,8 @@ public class JournalControllerTest extends BaseTest {
 
         var journalDTO = new JournalBasicAdditionDTO();
         journalDTO.setTitle(List.of(new MultilingualContentDTO(1, "EN", "Title", 1)));
-        journalDTO.setEISSN("eISSN1");
-        journalDTO.setPrintISSN("printISSN1");
+        journalDTO.setEISSN("1234-5675");
+        journalDTO.setPrintISSN("1234-5675");
 
         String requestBody = objectMapper.writeValueAsString(journalDTO);
         mockMvc.perform(
@@ -104,8 +104,8 @@ public class JournalControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_JOURNAL_BASIC"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.printISSN").value("printISSN1"))
-            .andExpect(jsonPath("$.eissn").value("eISSN1"));
+            .andExpect(jsonPath("$.printISSN").value("1234-5675"))
+            .andExpect(jsonPath("$.eissn").value("1234-5675"));
     }
 
     @Test
@@ -114,8 +114,8 @@ public class JournalControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var journalDTO = getTestPayload();
-        journalDTO.setEissn("TEST_E_ISSN");
-        journalDTO.setPrintISSN("TEST_PRINT_ISSN");
+        journalDTO.setEissn("1234-5674");
+        journalDTO.setPrintISSN("1234-5674");
 
         String requestBody = objectMapper.writeValueAsString(journalDTO);
         mockMvc.perform(

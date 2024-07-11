@@ -96,8 +96,8 @@ public class BookSeriesServiceTest {
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(new ArrayList<>());
         bookSeriesDTO.setNameAbbreviation(new ArrayList<>());
-        bookSeriesDTO.setEissn("eISSN");
-        bookSeriesDTO.setPrintISSN("printISSN");
+        bookSeriesDTO.setEissn("1234-5678");
+        bookSeriesDTO.setPrintISSN("1234-5678");
         bookSeriesDTO.setContributions(new ArrayList<>());
         bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
 
@@ -124,8 +124,8 @@ public class BookSeriesServiceTest {
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(new ArrayList<>());
         bookSeriesDTO.setNameAbbreviation(new ArrayList<>());
-        bookSeriesDTO.setEissn("eISSN");
-        bookSeriesDTO.setPrintISSN("printISSN");
+        bookSeriesDTO.setEissn("1234-5676");
+        bookSeriesDTO.setPrintISSN("1234-5676");
         bookSeriesDTO.setContributions(new ArrayList<>());
         bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
 
