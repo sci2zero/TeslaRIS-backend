@@ -336,7 +336,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     event.getDateTo().format(formatter));
             index.setDateSortable(event.getDateFrom());
         } else {
-            index.setDateSortable(LocalDate.MIN);
+            index.setDateSortable(LocalDate.of(1, 1, 1)); // lowest date ES will parse
         }
 
         index.setSerialEvent(event.getSerialEvent());
