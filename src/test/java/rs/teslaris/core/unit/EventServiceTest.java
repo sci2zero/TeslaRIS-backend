@@ -239,7 +239,7 @@ public class EventServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenTargetEventIsNotSerial() {
+    public void shouldThrowExceptionWhenTargetEventIsNotSerialInBelongsToRelation() {
         // Given
         var sourceEvent = new Conference();
         sourceEvent.setId(1);
@@ -262,6 +262,30 @@ public class EventServiceTest {
             });
 
         assertEquals("targetEventNotSerialError", exception.getMessage());
+        verify(eventsRelationRepository, times(0)).save(any(EventsRelation.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenSourceEventIsSerial() {
+        // Given
+        var sourceEvent = new Conference();
+        sourceEvent.setId(1);
+        sourceEvent.setSerialEvent(true);
+
+        var eventsRelationDTO = new EventsRelationDTO();
+        eventsRelationDTO.setSourceId(1);
+        eventsRelationDTO.setTargetId(2);
+        eventsRelationDTO.setEventsRelationType(EventsRelationType.BELONGS_TO_SERIES);
+
+        when(eventRepository.findById(1)).thenReturn(Optional.of(sourceEvent));
+
+        // When & Then
+        var exception =
+            assertThrows(ConferenceReferenceConstraintViolationException.class, () -> {
+                eventService.addEventsRelation(eventsRelationDTO);
+            });
+
+        assertEquals("Source event cannot be serial.", exception.getMessage());
         verify(eventsRelationRepository, times(0)).save(any(EventsRelation.class));
     }
 

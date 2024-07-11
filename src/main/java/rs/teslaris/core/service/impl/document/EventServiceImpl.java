@@ -200,6 +200,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         var sourceEvent = findOne(eventsRelationDTO.getSourceId());
+
+        if (sourceEvent.getSerialEvent()) {
+            throw new ConferenceReferenceConstraintViolationException(
+                "Source event cannot be serial.");
+        }
+
         var targetEvent = findOne(eventsRelationDTO.getTargetId());
 
         if (eventsRelationDTO.getEventsRelationType()
