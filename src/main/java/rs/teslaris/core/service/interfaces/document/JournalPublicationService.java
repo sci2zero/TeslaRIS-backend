@@ -26,4 +26,7 @@ public interface JournalPublicationService {
     void deleteJournalPublication(Integer journalPublicationId);
 
     void reindexJournalPublications();
+
+    void indexJournalPublication(JournalPublication publication,
+                                 DocumentPublicationIndex index);
 }
