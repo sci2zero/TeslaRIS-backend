@@ -47,6 +47,6 @@ public class MergeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void switchAllPublicationsToOtherPerson(@PathVariable Integer sourcePersonId,
                                                    @PathVariable Integer targetPersonId) {
-        mergeService.switchAllPublicationsToOtherJournal(sourcePersonId, targetPersonId);
+        mergeService.switchAllPublicationToOtherPerson(sourcePersonId, targetPersonId);
     }
 }

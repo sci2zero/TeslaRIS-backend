@@ -19,6 +19,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 
 @Service
 @RequiredArgsConstructor
@@ -47,37 +48,27 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
-    public void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId) {
-        processChunks(
-            sourceId,
-            (srcId, journalPublicationIndex) -> performJournalPublicationSwitch(targetId,
-                journalPublicationIndex.getDatabaseId()),
-            pageRequest -> documentPublicationIndexRepository.findByTypeAndJournalId(
-                    DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, pageRequest)
-                .getContent()
-        );
-    }
-
-    @Override
     public void switchPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId,
                                                Integer publicationId) {
-        performPersonPublicationSwitch(sourcePersonId, targetPersonId, publicationId);
-    }
-
-    @Override
-    public void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId) {
-        processChunks(
-            sourcePersonId,
-            (srcId, personPublicationIndex) -> performPersonPublicationSwitch(srcId, targetPersonId,
-                personPublicationIndex.getDatabaseId()),
-            pageRequest -> documentPublicationService.findResearcherPublications(sourcePersonId,
-                pageRequest).getContent()
-        );
+        performPersonPublicationSwitch(sourcePersonId, targetPersonId, publicationId, false);
     }
 
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,
-                                                Integer publicationId) {
+                                                Integer publicationId,
+                                                boolean skipCoauthoredPublications) {
         var document = documentPublicationService.findDocumentById(publicationId);
+
+        for (var contribution : document.getContributors()) {
+            if (Objects.nonNull(contribution.getPerson()) &&
+                contribution.getPerson().getId().equals(targetPersonId)) {
+                if (skipCoauthoredPublications) {
+                    return;
+                } else {
+                    throw new PersonReferenceConstraintViolationException(
+                        "allreadyInAuthorListError");
+                }
+            }
+        }
 
         document.getContributors().forEach(contribution -> {
             if (Objects.nonNull(contribution.getPerson()) &&
@@ -87,6 +78,11 @@ public class MergeServiceImpl implements MergeService {
         });
 
         documentRepository.save(document);
+
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            publicationId).orElse(new DocumentPublicationIndex());
+        documentPublicationService.indexCommonFields(document, index);
+        documentPublicationIndexRepository.save(index);
     }
 
     private void performJournalPublicationSwitch(Integer targetJournalId, Integer publicationId) {
@@ -100,11 +96,34 @@ public class MergeServiceImpl implements MergeService {
 
         publication.get().setJournal(targetJournal);
 
+        journalPublicationRepository.save(publication.get());
+
         var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             publicationId).orElse(new DocumentPublicationIndex());
-
         journalPublicationService.indexJournalPublication(publication.get(), index);
-        journalPublicationRepository.save(publication.get());
+    }
+
+    @Override
+    public void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, journalPublicationIndex) -> performJournalPublicationSwitch(targetId,
+                journalPublicationIndex.getDatabaseId()),
+            pageRequest -> documentPublicationIndexRepository.findByTypeAndJournalId(
+                    DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, pageRequest)
+                .getContent()
+        );
+    }
+
+    @Override
+    public void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId) {
+        processChunks(
+            sourcePersonId,
+            (srcId, personPublicationIndex) -> performPersonPublicationSwitch(srcId, targetPersonId,
+                personPublicationIndex.getDatabaseId(), true),
+            pageRequest -> documentPublicationService.findResearcherPublications(sourcePersonId,
+                pageRequest).getContent()
+        );
     }
 
     private <T> void processChunks(int sourceId,

@@ -184,7 +184,7 @@ public class MergerServiceTest {
 
         mergeService.switchAllPublicationToOtherPerson(sourceId, targetId);
 
-        verify(documentRepository, times(2)).save(any(JournalPublication.class));
+        verify(documentRepository, times(1)).save(any(JournalPublication.class));
         assertEquals(contribution.getPerson().getId(), targetId);
     }
 }
