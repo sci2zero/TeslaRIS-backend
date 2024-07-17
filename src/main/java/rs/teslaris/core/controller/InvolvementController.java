@@ -26,6 +26,7 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
+import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Membership;
@@ -155,5 +156,15 @@ public class InvolvementController {
     @PersonEditCheck
     public void deleteInvolvement(@PathVariable Integer involvementId) {
         involvementService.deleteInvolvement(involvementId);
+    }
+
+    @PatchMapping("/merge/person/source/{sourcePersonId}/target/{targetPersonId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    public void switchInvolvementsToOtherPerson(@PathVariable Integer sourcePersonId,
+                                                @PathVariable Integer targetPersonId,
+                                                @RequestBody
+                                                PersonCollectionEntitySwitchListDTO involvementSwitchList) {
+        involvementService.switchInvolvements(involvementSwitchList.getEntityIds(),
+            sourcePersonId, targetPersonId);
     }
 }

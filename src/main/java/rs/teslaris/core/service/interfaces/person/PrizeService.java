@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.person;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -22,4 +23,6 @@ public interface PrizeService extends JPAService<Prize> {
     DocumentFileResponseDTO updateProof(DocumentFileDTO updatedProof);
 
     void deleteProof(Integer proofId, Integer prizeId);
+
+    void switchPrizes(List<Integer> prizeIds, Integer sourcePersonId, Integer targetPersonId);
 }

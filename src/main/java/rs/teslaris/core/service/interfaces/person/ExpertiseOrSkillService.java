@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.person;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -23,4 +24,6 @@ public interface ExpertiseOrSkillService extends JPAService<ExpertiseOrSkill> {
     DocumentFileResponseDTO updateProof(DocumentFileDTO updatedProof);
 
     void deleteProof(Integer proofId, Integer expertiseOrSkillId);
+
+    void switchSkills(List<Integer> skillIds, Integer sourcePersonId, Integer targetPersonId);
 }

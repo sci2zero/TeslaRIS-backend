@@ -353,4 +353,51 @@ public class InvolvementServiceTest {
         assertEquals(2, result.size());
     }
 
+    @Test
+    void testSwitchInvolvements() {
+        // Given
+        var sourcePersonId = 1;
+        var targetPersonId = 2;
+        var involvementIds = List.of(100, 101, 102);
+
+        var sourcePerson = new Person();
+        sourcePerson.setId(sourcePersonId);
+        var sourceInvolvements = new HashSet<Involvement>();
+        involvementIds.forEach(id -> {
+            var involvement = new Involvement();
+            involvement.setId(id);
+            involvement.setPersonInvolved(sourcePerson);
+            sourceInvolvements.add(involvement);
+        });
+        sourcePerson.setInvolvements(sourceInvolvements);
+
+        var targetPerson = new Person();
+        targetPerson.setId(targetPersonId);
+        var targetInvolvements = new HashSet<Involvement>();
+        targetPerson.setInvolvements(targetInvolvements);
+
+        when(personService.findOne(sourcePersonId)).thenReturn(sourcePerson);
+        when(personService.findOne(targetPersonId)).thenReturn(targetPerson);
+        involvementIds.forEach(id -> {
+            var involvement = new Education();
+            involvement.setId(id);
+            when(involvementRepository.findById(id)).thenReturn(Optional.of(involvement));
+        });
+
+        // When
+        involvementService.switchInvolvements(involvementIds, sourcePersonId, targetPersonId);
+
+        // Then
+        involvementIds.forEach(id -> {
+            var involvement = new Involvement();
+            involvement.setId(id);
+            verify(involvementRepository, times(1)).save(any(Involvement.class));
+        });
+        verify(personService).save(sourcePerson);
+        verify(personService).save(targetPerson);
+        verify(userService).updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
+        verify(userService).updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
+        verify(personService).indexPerson(sourcePerson, sourcePersonId);
+        verify(personService).indexPerson(targetPerson, targetPersonId);
+    }
 }

@@ -22,6 +22,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillResponseDTO;
+import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 
 @Validated
@@ -76,12 +77,22 @@ public class ExpertiseOrSkillController {
         return expertiseOrSkillService.updateProof(proof);
     }
 
-    @DeleteMapping("/{personId}/{expertiseOrSillId}/{proofId}")
+    @DeleteMapping("/{personId}/{expertiseOrSkillId}/{proofId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @PersonEditCheck
-    public void deleteExpertiseOrSkillProof(@PathVariable Integer expertiseOrSillId,
+    public void deleteExpertiseOrSkillProof(@PathVariable Integer expertiseOrSkillId,
                                             @PathVariable Integer proofId) {
-        expertiseOrSkillService.deleteProof(proofId, expertiseOrSillId);
+        expertiseOrSkillService.deleteProof(proofId, expertiseOrSkillId);
+    }
+
+    @PatchMapping("/merge/person/source/{sourcePersonId}/target/{targetPersonId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    public void switchInvolvementsToOtherPerson(@PathVariable Integer sourcePersonId,
+                                                @PathVariable Integer targetPersonId,
+                                                @RequestBody
+                                                PersonCollectionEntitySwitchListDTO skillSwitchList) {
+        expertiseOrSkillService.switchSkills(skillSwitchList.getEntityIds(), sourcePersonId,
+            targetPersonId);
     }
 }

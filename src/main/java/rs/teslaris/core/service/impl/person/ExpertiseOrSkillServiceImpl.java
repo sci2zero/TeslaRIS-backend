@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.person;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -112,6 +113,24 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
         save(expertiseOrSkill);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+    }
+
+    @Override
+    public void switchSkills(List<Integer> skillIds, Integer sourcePersonId,
+                             Integer targetPersonId) {
+        var sourcePerson = personService.findOne(sourcePersonId);
+        var targetPerson = personService.findOne(targetPersonId);
+
+        skillIds.forEach(skillId -> {
+            var skillToUpdate = findOne(skillId);
+
+            sourcePerson.getExpertisesAndSkills().remove(skillToUpdate);
+
+            targetPerson.getExpertisesAndSkills().add(skillToUpdate);
+        });
+
+        personService.save(sourcePerson);
+        personService.save(targetPerson);
     }
 
     private void setCommonFields(ExpertiseOrSkill expertiseOrSkill, ExpertiseOrSkillDTO dto) {

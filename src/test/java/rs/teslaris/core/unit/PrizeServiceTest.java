@@ -1,14 +1,17 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -104,7 +107,7 @@ public class PrizeServiceTest {
         prizeService.deletePrize(1, 1);
 
         // Then
-        assertTrue(person.getExpertisesAndSkills().isEmpty());
+        assertTrue(person.getPrizes().isEmpty());
     }
 
     @Test
@@ -163,5 +166,50 @@ public class PrizeServiceTest {
 
         // Then
         assertTrue(prize.getProofs().isEmpty());
+    }
+
+    @Test
+    void testSwitchSkills() {
+        // Given
+        var sourcePersonId = 1;
+        var targetPersonId = 2;
+        var prizeIds = List.of(100, 101, 102);
+
+        var sourcePerson = new Person();
+        sourcePerson.setId(sourcePersonId);
+        var sourcePrizes = new HashSet<Prize>();
+        prizeIds.forEach(id -> {
+            var prize = new Prize();
+            prize.setId(id);
+            sourcePrizes.add(prize);
+        });
+        sourcePerson.setPrizes(sourcePrizes);
+
+        var targetPerson = new Person();
+        targetPerson.setId(targetPersonId);
+        var targetPrizes = new HashSet<Prize>();
+        targetPerson.setPrizes(targetPrizes);
+
+        when(personService.findOne(sourcePersonId)).thenReturn(sourcePerson);
+        when(personService.findOne(targetPersonId)).thenReturn(targetPerson);
+        prizeIds.forEach(id -> {
+            var prize = new Prize();
+            prize.setId(id);
+            when(prizeRepository.findById(id)).thenReturn(Optional.of(prize));
+        });
+
+        // When
+        prizeService.switchPrizes(prizeIds, sourcePersonId, targetPersonId);
+
+        // Then
+        prizeIds.forEach(id -> {
+            var prize = new Prize();
+            prize.setId(id);
+            verify(prizeRepository).findById(id);
+            assertFalse(sourcePerson.getPrizes().contains(prize));
+            assertTrue(targetPerson.getPrizes().contains(prize));
+        });
+        verify(personService).save(sourcePerson);
+        verify(personService).save(targetPerson);
     }
 }

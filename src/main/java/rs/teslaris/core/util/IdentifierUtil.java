@@ -16,7 +16,12 @@ public class IdentifierUtil {
         String formatError,
         String existsError
     ) {
-        if (Objects.nonNull(identifier) && !identifier.isBlank()) {
+        if (Objects.nonNull(identifier)) {
+            if (identifier.isBlank()) {
+                setter.accept("");
+                return;
+            }
+
             var compiledPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
             if (compiledPattern.matcher(identifier).matches()) {
                 if (existenceCheck.test(identifier, entityId)) {

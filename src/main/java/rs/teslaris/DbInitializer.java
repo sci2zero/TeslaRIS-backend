@@ -144,20 +144,21 @@ public class DbInitializer implements ApplicationRunner {
         var editEventRelations = new Privilege("EDIT_EVENT_RELATIONS");
         var mergeJournalPublications = new Privilege("MERGE_JOURNAL_PUBLICATIONS");
         var mergePersonPublications = new Privilege("MERGE_PERSON_PUBLICATIONS");
+        var mergePersonMetadata = new Privilege("MERGE_PERSON_METADATA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
                 editResearchAreas, approvePublication, editOURelations, editPublishers,
                 editPublicationSeries, editConferences, editEventRelations,
-                mergeJournalPublications, mergePersonPublications));
+                mergeJournalPublications, mergePersonPublications, mergePersonMetadata));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
                 createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
                 editOURelations, approvePublication, editPublishers, editPublicationSeries,
                 editConferences, editEventRelations, mergeJournalPublications,
-                mergePersonPublications)));
+                mergePersonPublications, mergePersonMetadata)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,

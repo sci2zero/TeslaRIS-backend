@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.person;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -108,6 +109,26 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         save(prize);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+    }
+
+    @Override
+    public void switchPrizes(List<Integer> prizeIds, Integer sourcePersonId,
+                             Integer targetPersonId) {
+        var sourcePerson = personService.findOne(sourcePersonId);
+        var targetPerson = personService.findOne(targetPersonId);
+
+        prizeIds.forEach(prizeId -> {
+            var prizeToUpdate = findOne(prizeId);
+
+            sourcePerson.getPrizes().remove(prizeToUpdate);
+
+            if (!targetPerson.getPrizes().contains(prizeToUpdate)) {
+                targetPerson.addPrize(prizeToUpdate);
+            }
+        });
+
+        personService.save(sourcePerson);
+        personService.save(targetPerson);
     }
 
     private void setCommonFields(Prize prize, PrizeDTO dto) {

@@ -22,6 +22,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.PrizeDTO;
 import rs.teslaris.core.dto.person.PrizeResponseDTO;
+import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
 
 @Validated
@@ -83,5 +84,14 @@ public class PrizeController {
     public void deletePrizeProof(@PathVariable Integer prizeId,
                                  @PathVariable Integer proofId) {
         prizeService.deleteProof(proofId, prizeId);
+    }
+
+    @PatchMapping("/merge/person/source/{sourcePersonId}/target/{targetPersonId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    public void switchInvolvementsToOtherPerson(@PathVariable Integer sourcePersonId,
+                                                @PathVariable Integer targetPersonId,
+                                                @RequestBody
+                                                PersonCollectionEntitySwitchListDTO prizeSwitchList) {
+        prizeService.switchPrizes(prizeSwitchList.getEntityIds(), sourcePersonId, targetPersonId);
     }
 }

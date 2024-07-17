@@ -242,6 +242,36 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
     }
 
+    @Override
+    public void switchInvolvements(List<Integer> involvementIds, Integer sourcePersonId,
+                                   Integer targetPersonId) {
+        var sourcePerson = personService.findOne(sourcePersonId);
+        var targetPerson = personService.findOne(targetPersonId);
+
+        involvementIds.forEach(involvementId -> {
+            var involvementToUpdate = findOne(involvementId);
+
+            if (sourcePerson.getInvolvements().contains(involvementToUpdate)) {
+                sourcePerson.removeInvolvement(involvementToUpdate);
+                involvementRepository.save(involvementToUpdate);
+            }
+
+            if (!targetPerson.getInvolvements().contains(involvementToUpdate)) {
+                involvementToUpdate.setPersonInvolved(targetPerson);
+                targetPerson.addInvolvement(involvementToUpdate);
+                involvementRepository.save(involvementToUpdate);
+            }
+        });
+
+        personService.save(sourcePerson);
+        personService.save(targetPerson);
+
+        userService.updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
+
+        personService.indexPerson(sourcePerson, sourcePerson.getId());
+        personService.indexPerson(targetPerson, targetPerson.getId());
+    }
 
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
         var organisationUnit =
