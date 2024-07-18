@@ -148,6 +148,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         this.delete(proceedingsPublicationId);
     }
 
+    @Override
     public void indexProceedingsPublication(ProceedingsPublication publication,
                                             DocumentPublicationIndex index) {
         indexCommonFields(publication, index);

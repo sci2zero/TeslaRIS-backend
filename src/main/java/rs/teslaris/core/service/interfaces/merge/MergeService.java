@@ -9,6 +9,11 @@ public interface MergeService {
 
     void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId);
 
+    void switchProceedingsPublicationToOtherProceedings(Integer targetProceedingsId,
+                                                        Integer publicationId);
+
+    void switchAllPublicationsToOtherProceedings(Integer sourceId, Integer targetId);
+
     void switchPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId,
                                         Integer publicationId);
 
@@ -20,5 +25,6 @@ public interface MergeService {
 
     void switchProceedingsToOtherConference(Integer targetConferenceId, Integer proceedingsId);
 
-    void switchAllProceedingsToOtherConference(Integer sourceConferenceId, Integer targetConferenceId);
+    void switchAllProceedingsToOtherConference(Integer sourceConferenceId,
+                                               Integer targetConferenceId);
 }

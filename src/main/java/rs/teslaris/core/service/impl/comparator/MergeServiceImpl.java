@@ -14,10 +14,12 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -37,6 +39,10 @@ public class MergeServiceImpl implements MergeService {
     private final JournalPublicationService journalPublicationService;
 
     private final JournalPublicationRepository journalPublicationRepository;
+
+    private final ProceedingsPublicationService proceedingsPublicationService;
+
+    private final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
@@ -65,6 +71,79 @@ public class MergeServiceImpl implements MergeService {
     public void switchPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId,
                                                Integer publicationId) {
         performPersonPublicationSwitch(sourcePersonId, targetPersonId, publicationId, false);
+    }
+
+    @Override
+    public void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, journalPublicationIndex) -> performJournalPublicationSwitch(targetId,
+                journalPublicationIndex.getDatabaseId()),
+            pageRequest -> documentPublicationIndexRepository.findByTypeAndJournalId(
+                    DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, pageRequest)
+                .getContent()
+        );
+    }
+
+    @Override
+    public void switchProceedingsPublicationToOtherProceedings(Integer targetProceedingsId,
+                                                               Integer publicationId) {
+        performProceedingsPublicationSwitch(targetProceedingsId, publicationId);
+    }
+
+    @Override
+    public void switchAllPublicationsToOtherProceedings(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, proceedingsPublication) -> performProceedingsPublicationSwitch(targetId,
+                proceedingsPublication.getId()),
+            pageRequest -> proceedingsPublicationRepository.findProceedingsPublicationsForProceedingsId(
+                sourceId, pageRequest).getContent()
+        );
+    }
+
+    @Override
+    public void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId) {
+        processChunks(
+            sourcePersonId,
+            (srcId, personPublicationIndex) -> performPersonPublicationSwitch(srcId, targetPersonId,
+                personPublicationIndex.getDatabaseId(), true),
+            pageRequest -> documentPublicationService.findResearcherPublications(sourcePersonId,
+                pageRequest).getContent()
+        );
+    }
+
+    @Override
+    public void switchPersonToOtherOU(Integer sourceOUId, Integer targetOUId, Integer personId) {
+        performEmployeeSwitch(sourceOUId, targetOUId, personId);
+    }
+
+    @Override
+    public void switchAllPersonsToOtherOU(Integer sourceOUId, Integer targetOUId) {
+        processChunks(
+            sourceOUId,
+            (srcId, personIndex) -> performEmployeeSwitch(srcId, targetOUId,
+                personIndex.getDatabaseId()),
+            pageRequest -> personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest)
+                .getContent()
+        );
+    }
+
+    @Override
+    public void switchProceedingsToOtherConference(Integer targetConferenceId,
+                                                   Integer proceedingsId) {
+        performProceedingsSwitch(targetConferenceId, proceedingsId);
+    }
+
+    @Override
+    public void switchAllProceedingsToOtherConference(Integer sourceConferenceId,
+                                                      Integer targetConferenceId) {
+        processChunks(
+            sourceConferenceId,
+            (srcId, proceedingsResponse) -> performProceedingsSwitch(targetConferenceId,
+                proceedingsResponse.getId()),
+            pageRequest -> proceedingsService.readProceedingsForEventId(sourceConferenceId)
+        );
     }
 
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,
@@ -131,60 +210,23 @@ public class MergeServiceImpl implements MergeService {
         journalPublicationService.indexJournalPublication(publication.get(), index);
     }
 
-    @Override
-    public void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId) {
-        processChunks(
-            sourceId,
-            (srcId, journalPublicationIndex) -> performJournalPublicationSwitch(targetId,
-                journalPublicationIndex.getDatabaseId()),
-            pageRequest -> documentPublicationIndexRepository.findByTypeAndJournalId(
-                    DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, pageRequest)
-                .getContent()
-        );
-    }
+    private void performProceedingsPublicationSwitch(Integer targetProceedingsId,
+                                                     Integer publicationId) {
+        var publication = proceedingsPublicationRepository.findById(publicationId);
 
-    @Override
-    public void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId) {
-        processChunks(
-            sourcePersonId,
-            (srcId, personPublicationIndex) -> performPersonPublicationSwitch(srcId, targetPersonId,
-                personPublicationIndex.getDatabaseId(), true),
-            pageRequest -> documentPublicationService.findResearcherPublications(sourcePersonId,
-                pageRequest).getContent()
-        );
-    }
+        if (publication.isEmpty()) {
+            throw new NotFoundException("Publication does not exist.");
+        }
 
-    @Override
-    public void switchPersonToOtherOU(Integer sourceOUId, Integer targetOUId, Integer personId) {
-        performEmployeeSwitch(sourceOUId, targetOUId, personId);
-    }
+        var targetProceedings = proceedingsService.findProceedingsById(targetProceedingsId);
 
-    @Override
-    public void switchAllPersonsToOtherOU(Integer sourceOUId, Integer targetOUId) {
-        processChunks(
-            sourceOUId,
-            (srcId, personIndex) -> performEmployeeSwitch(srcId, targetOUId,
-                personIndex.getDatabaseId()),
-            pageRequest -> personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest)
-                .getContent()
-        );
-    }
+        publication.get().setProceedings(targetProceedings);
 
-    @Override
-    public void switchProceedingsToOtherConference(Integer targetConferenceId,
-                                                   Integer proceedingsId) {
-        performProceedingsSwitch(targetConferenceId, proceedingsId);
-    }
+        proceedingsPublicationRepository.save(publication.get());
 
-    @Override
-    public void switchAllProceedingsToOtherConference(Integer sourceConferenceId,
-                                                      Integer targetConferenceId) {
-        processChunks(
-            sourceConferenceId,
-            (srcId, proceedingsResponse) -> performProceedingsSwitch(targetConferenceId,
-                proceedingsResponse.getId()),
-            pageRequest -> proceedingsService.readProceedingsForEventId(sourceConferenceId)
-        );
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            publicationId).orElse(new DocumentPublicationIndex());
+        proceedingsPublicationService.indexProceedingsPublication(publication.get(), index);
     }
 
     private void performProceedingsSwitch(Integer targetConferenceId,

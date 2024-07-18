@@ -28,4 +28,7 @@ public interface ProceedingsPublicationService {
     Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId, Pageable pageable);
 
     void reindexProceedingsPublications();
+
+    void indexProceedingsPublication(ProceedingsPublication publication,
+                                     DocumentPublicationIndex index);
 }
