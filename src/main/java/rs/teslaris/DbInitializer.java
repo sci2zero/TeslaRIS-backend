@@ -145,20 +145,24 @@ public class DbInitializer implements ApplicationRunner {
         var mergeJournalPublications = new Privilege("MERGE_JOURNAL_PUBLICATIONS");
         var mergePersonPublications = new Privilege("MERGE_PERSON_PUBLICATIONS");
         var mergePersonMetadata = new Privilege("MERGE_PERSON_METADATA");
+        var mergeOUEmployments = new Privilege("MERGE_OU_EMPLOYMENTS");
+        var mergeConferenceProceedings = new Privilege("MERGE_CONFERENCE_PROCEEDINGS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
                 editResearchAreas, approvePublication, editOURelations, editPublishers,
-                editPublicationSeries, editConferences, editEventRelations,
-                mergeJournalPublications, mergePersonPublications, mergePersonMetadata));
+                editPublicationSeries, editConferences, editEventRelations, mergeOUEmployments,
+                mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
+                mergeConferenceProceedings));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
                 createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
                 editOURelations, approvePublication, editPublishers, editPublicationSeries,
                 editConferences, editEventRelations, mergeJournalPublications,
-                mergePersonPublications, mergePersonMetadata)));
+                mergePersonPublications, mergePersonMetadata, mergeOUEmployments,
+                mergeConferenceProceedings)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,

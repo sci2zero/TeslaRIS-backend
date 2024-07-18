@@ -49,4 +49,37 @@ public class MergeController {
                                                    @PathVariable Integer targetPersonId) {
         mergeService.switchAllPublicationToOtherPerson(sourcePersonId, targetPersonId);
     }
+
+    @PatchMapping("/employment/{sourceOUId}/target/{targetOUId}/person/{personId}")
+    @PreAuthorize("hasAuthority('MERGE_OU_EMPLOYMENTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchEmployeeToOtherOrganisationUnit(@PathVariable Integer sourceOUId,
+                                                      @PathVariable Integer targetOUId,
+                                                      @PathVariable Integer personId) {
+        mergeService.switchPersonToOtherOU(sourceOUId, targetOUId, personId);
+    }
+
+    @PatchMapping("/employment/{sourceOUId}/target/{targetOUId}")
+    @PreAuthorize("hasAuthority('MERGE_OU_EMPLOYMENTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllEmployeesToOtherOrganisationUnit(@PathVariable Integer sourceOUId,
+                                                          @PathVariable Integer targetOUId) {
+        mergeService.switchAllPersonsToOtherOU(sourceOUId, targetOUId);
+    }
+
+    @PatchMapping("/conference/{targetConferenceId}/proceedings/{proceedingsId}")
+    @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchProceedingsToOtherConference(@PathVariable Integer targetConferenceId,
+                                                   @PathVariable Integer proceedingsId) {
+        mergeService.switchProceedingsToOtherConference(targetConferenceId, proceedingsId);
+    }
+
+    @PatchMapping("/conference/{sourceConferenceId}/target/{targetConferenceId}")
+    @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllProceedingsToOtherConference(@PathVariable Integer sourceConferenceId,
+                                                      @PathVariable Integer targetConferenceId) {
+        mergeService.switchAllProceedingsToOtherConference(sourceConferenceId, targetConferenceId);
+    }
 }

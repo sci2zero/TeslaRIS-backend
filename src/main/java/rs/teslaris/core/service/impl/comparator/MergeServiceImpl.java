@@ -11,13 +11,19 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 
@@ -39,6 +45,14 @@ public class MergeServiceImpl implements MergeService {
     private final DocumentRepository documentRepository;
 
     private final PersonService personService;
+
+    private final UserService userService;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final ConferenceService conferenceService;
+
+    private final ProceedingsService proceedingsService;
 
 
     @Override
@@ -73,7 +87,21 @@ public class MergeServiceImpl implements MergeService {
         document.getContributors().forEach(contribution -> {
             if (Objects.nonNull(contribution.getPerson()) &&
                 contribution.getPerson().getId().equals(sourcePersonId)) {
-                contribution.setPerson(personService.findOne(targetPersonId));
+                var newPerson = personService.findOne(targetPersonId);
+                contribution.setPerson(newPerson);
+
+                if (!newPerson.getName()
+                    .equals(contribution.getAffiliationStatement().getDisplayPersonName()) &&
+                    !newPerson.getOtherNames()
+                        .contains(contribution.getAffiliationStatement().getDisplayPersonName())) {
+                    contribution.getAffiliationStatement().getDisplayPersonName()
+                        .setFirstname(newPerson.getName().getFirstname());
+                    contribution.getAffiliationStatement().getDisplayPersonName()
+                        .setOtherName("");
+                    contribution.getAffiliationStatement().getDisplayPersonName()
+                        .setLastname(newPerson.getName().getLastname());
+                }
+
             }
         });
 
@@ -124,6 +152,71 @@ public class MergeServiceImpl implements MergeService {
             pageRequest -> documentPublicationService.findResearcherPublications(sourcePersonId,
                 pageRequest).getContent()
         );
+    }
+
+    @Override
+    public void switchPersonToOtherOU(Integer sourceOUId, Integer targetOUId, Integer personId) {
+        performEmployeeSwitch(sourceOUId, targetOUId, personId);
+    }
+
+    @Override
+    public void switchAllPersonsToOtherOU(Integer sourceOUId, Integer targetOUId) {
+        processChunks(
+            sourceOUId,
+            (srcId, personIndex) -> performEmployeeSwitch(srcId, targetOUId,
+                personIndex.getDatabaseId()),
+            pageRequest -> personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest)
+                .getContent()
+        );
+    }
+
+    @Override
+    public void switchProceedingsToOtherConference(Integer targetConferenceId,
+                                                   Integer proceedingsId) {
+        performProceedingsSwitch(targetConferenceId, proceedingsId);
+    }
+
+    @Override
+    public void switchAllProceedingsToOtherConference(Integer sourceConferenceId,
+                                                      Integer targetConferenceId) {
+        processChunks(
+            sourceConferenceId,
+            (srcId, proceedingsResponse) -> performProceedingsSwitch(targetConferenceId,
+                proceedingsResponse.getId()),
+            pageRequest -> proceedingsService.readProceedingsForEventId(sourceConferenceId)
+        );
+    }
+
+    private void performProceedingsSwitch(Integer targetConferenceId,
+                                          Integer proceedingsId) {
+        var targetConference = conferenceService.findConferenceById(targetConferenceId);
+        var proceedings = proceedingsService.findProceedingsById(proceedingsId);
+
+        if (targetConference.getSerialEvent()) {
+            throw new ConferenceReferenceConstraintViolationException(
+                "Target conference cannot be serial event.");
+        }
+
+        proceedings.setEvent(targetConference);
+
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            proceedingsId).orElse(new DocumentPublicationIndex());
+        proceedingsService.indexProceedings(proceedings, index);
+    }
+
+    private void performEmployeeSwitch(Integer sourceOUId, Integer targetOUId, Integer personId) {
+        var person = personService.findOne(personId);
+
+        person.getInvolvements().forEach(involvement -> {
+            if ((involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                involvement.getOrganisationUnit().getId().equals(sourceOUId)) {
+                involvement.setOrganisationUnit(organisationUnitService.findOne(targetOUId));
+            }
+        });
+
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+        personService.indexPerson(person, personId);
     }
 
     private <T> void processChunks(int sourceId,

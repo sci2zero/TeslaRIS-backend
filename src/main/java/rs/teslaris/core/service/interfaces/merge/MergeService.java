@@ -13,4 +13,12 @@ public interface MergeService {
                                         Integer publicationId);
 
     void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId);
+
+    void switchPersonToOtherOU(Integer sourceOUId, Integer targetOUId, Integer personId);
+
+    void switchAllPersonsToOtherOU(Integer sourceOUId, Integer targetOUId);
+
+    void switchProceedingsToOtherConference(Integer targetConferenceId, Integer proceedingsId);
+
+    void switchAllProceedingsToOtherConference(Integer sourceConferenceId, Integer targetConferenceId);
 }
