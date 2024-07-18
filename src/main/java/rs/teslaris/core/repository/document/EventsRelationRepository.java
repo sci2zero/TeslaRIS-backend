@@ -13,10 +13,7 @@ public interface EventsRelationRepository extends JpaRepository<EventsRelation, 
     List<EventsRelation> getRelationsForOneTimeEvent(Integer eventId);
 
     @Query("select er from EventsRelation er where er.target.id = :eventId")
-    List<EventsRelation> getReverseRelationsForOneTimeEvent(Integer eventId);
-
-    @Query("select er from EventsRelation er where er.target.id = :serialEventId")
-    List<EventsRelation> getRelationsForSerialEvent(Integer serialEventId);
+    List<EventsRelation> getRelationsForEvent(Integer eventId);
 
     @Query("select count(er) > 0 from EventsRelation er " +
         "where (er.source.id = :sourceId and er.target.id = :targetId) or" +

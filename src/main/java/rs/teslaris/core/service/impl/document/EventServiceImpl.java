@@ -167,7 +167,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 .map(EventsRelationConverter::toDTO).toList());
 
         var reverseRelations =
-            eventsRelationRepository.getReverseRelationsForOneTimeEvent(eventId).stream()
+            eventsRelationRepository.getRelationsForEvent(eventId).stream()
                 .map(EventsRelationConverter::toDTO).toList();
 
         relations.addAll(reverseRelations);
@@ -183,7 +183,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             throw new NotFoundException("Serial event with this ID does not exist.");
         }
 
-        return eventsRelationRepository.getRelationsForSerialEvent(serialEventId).stream()
+        return eventsRelationRepository.getRelationsForEvent(serialEventId).stream()
             .map(EventsRelationConverter::toDTO).collect(Collectors.toList());
     }
 

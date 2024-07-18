@@ -436,7 +436,7 @@ public class EventServiceTest {
 
         var serialEventId = serialEvent.getId();
         when(eventRepository.findById(serialEventId)).thenReturn(Optional.of(serialEvent));
-        when(eventsRelationRepository.getRelationsForSerialEvent(serialEventId)).thenReturn(
+        when(eventsRelationRepository.getRelationsForEvent(serialEventId)).thenReturn(
             Stream.of(
                 new EventsRelation(EventsRelationType.BELONGS_TO_SERIES, new Conference(),
                     serialEvent),
@@ -450,7 +450,7 @@ public class EventServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(2, result.size());
-        verify(eventsRelationRepository, times(1)).getRelationsForSerialEvent(serialEventId);
+        verify(eventsRelationRepository, times(1)).getRelationsForEvent(serialEventId);
     }
 
     @Test
