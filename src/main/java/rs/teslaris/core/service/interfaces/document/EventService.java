@@ -34,5 +34,5 @@ public interface EventService {
 
     void addEventsRelation(EventsRelationDTO eventsRelationDTO);
 
-    void deleteEventRelation(Integer relationId);
+    void deleteEventsRelation(Integer relationId);
 }

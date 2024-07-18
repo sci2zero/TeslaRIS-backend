@@ -46,6 +46,6 @@ public class EventsRelationController {
     @PreAuthorize("hasAuthority('EDIT_EVENT_RELATIONS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteEventsRelation(@PathVariable Integer relationId) {
-        eventService.deleteEventRelation(relationId);
+        eventService.deleteEventsRelation(relationId);
     }
 }

@@ -223,7 +223,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
-    public void deleteEventRelation(Integer relationId) {
+    public void deleteEventsRelation(Integer relationId) {
         var relationToDelete = eventsRelationRepository.findById(relationId);
 
         if (relationToDelete.isEmpty()) {

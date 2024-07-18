@@ -360,7 +360,7 @@ public class EventServiceTest {
         when(eventsRelationRepository.findById(relationId)).thenReturn(Optional.of(relation));
 
         // When
-        eventService.deleteEventRelation(relationId);
+        eventService.deleteEventsRelation(relationId);
 
         // Then
         verify(eventsRelationRepository, times(1)).delete(relation);
@@ -375,7 +375,7 @@ public class EventServiceTest {
 
         // When
         var exception = assertThrows(NotFoundException.class, () -> {
-            eventService.deleteEventRelation(relationId);
+            eventService.deleteEventsRelation(relationId);
         });
 
         // Then
