@@ -95,10 +95,11 @@ public class MergeServiceImpl implements MergeService {
     public void switchAllPublicationsToOtherProceedings(Integer sourceId, Integer targetId) {
         processChunks(
             sourceId,
-            (srcId, proceedingsPublication) -> performProceedingsPublicationSwitch(targetId,
-                proceedingsPublication.getId()),
-            pageRequest -> proceedingsPublicationRepository.findProceedingsPublicationsForProceedingsId(
-                sourceId, pageRequest).getContent()
+            (srcId, proceedingsPublicationIndex) -> performProceedingsPublicationSwitch(targetId,
+                proceedingsPublicationIndex.getDatabaseId()),
+            pageRequest -> documentPublicationIndexRepository.findByTypeAndProceedingsId(
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), sourceId, pageRequest)
+                .getContent()
         );
     }
 

@@ -147,6 +147,7 @@ public class DbInitializer implements ApplicationRunner {
         var mergePersonMetadata = new Privilege("MERGE_PERSON_METADATA");
         var mergeOUEmployments = new Privilege("MERGE_OU_EMPLOYMENTS");
         var mergeConferenceProceedings = new Privilege("MERGE_CONFERENCE_PROCEEDINGS");
+        var mergeProceedingsPublications = new Privilege("MERGE_PROCEEDINGS_PUBLICATIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -154,7 +155,7 @@ public class DbInitializer implements ApplicationRunner {
                 editResearchAreas, approvePublication, editOURelations, editPublishers,
                 editPublicationSeries, editConferences, editEventRelations, mergeOUEmployments,
                 mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
-                mergeConferenceProceedings));
+                mergeConferenceProceedings, mergeProceedingsPublications));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
@@ -162,7 +163,7 @@ public class DbInitializer implements ApplicationRunner {
                 editOURelations, approvePublication, editPublishers, editPublicationSeries,
                 editConferences, editEventRelations, mergeJournalPublications,
                 mergePersonPublications, mergePersonMetadata, mergeOUEmployments,
-                mergeConferenceProceedings)));
+                mergeConferenceProceedings, mergeProceedingsPublications)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
@@ -256,7 +257,7 @@ public class DbInitializer implements ApplicationRunner {
         var proceedings1 = new Proceedings();
         proceedings1.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 1", 1));
         proceedings1.setApproveStatus(ApproveStatus.APPROVED);
-        proceedings1.setEISBN("MOCK_eISBN1");
+        proceedings1.setEISBN("978-3-16-148410-0");
         proceedings1.setDocumentDate("2021");
         proceedings1.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings1);
@@ -264,7 +265,7 @@ public class DbInitializer implements ApplicationRunner {
         var proceedings2 = new Proceedings();
         proceedings2.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 2", 1));
         proceedings2.setApproveStatus(ApproveStatus.REQUESTED);
-        proceedings2.setEISBN("MOCK_eISBN2");
+        proceedings2.setEISBN("978-3-16-145410-0");
         proceedings2.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings2);
 

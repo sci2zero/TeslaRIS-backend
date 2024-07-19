@@ -1,8 +1,6 @@
 package rs.teslaris.core.repository.document;
 
 import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -17,8 +15,4 @@ public interface ProceedingsPublicationRepository
         "WHERE e.id = :eventId AND :authorId in (select c.person.id from pp.contributors c where c.contributionType = 0)")
     List<ProceedingsPublication> findProceedingsPublicationsForEventId(Integer eventId,
                                                                        Integer authorId);
-
-    @Query("SELECT DISTINCT pp FROM ProceedingsPublication pp WHERE pp.proceedings.id = :proceedingsId")
-    Page<ProceedingsPublication> findProceedingsPublicationsForProceedingsId(Integer proceedingsId,
-                                                                             Pageable pageable);
 }

@@ -82,4 +82,24 @@ public class MergeController {
                                                       @PathVariable Integer targetConferenceId) {
         mergeService.switchAllProceedingsToOtherConference(sourceConferenceId, targetConferenceId);
     }
+
+    @PatchMapping("/proceedings/{targetProceedingsId}/publication/{publicationId}")
+    @PreAuthorize("hasAuthority('MERGE_PROCEEDINGS_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchProceedingsPublicationToOtherProceedings(
+        @PathVariable Integer targetProceedingsId,
+        @PathVariable Integer publicationId) {
+        mergeService.switchProceedingsPublicationToOtherProceedings(targetProceedingsId,
+            publicationId);
+    }
+
+    @PatchMapping("/proceedings/{sourceProceedingsId}/target/{targetProceedingsId}")
+    @PreAuthorize("hasAuthority('MERGE_PROCEEDINGS_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllProceedingsPublicationsToOtherProceedings(
+        @PathVariable Integer sourceProceedingsId,
+        @PathVariable Integer targetProceedingsId) {
+        mergeService.switchAllPublicationsToOtherProceedings(sourceProceedingsId,
+            targetProceedingsId);
+    }
 }

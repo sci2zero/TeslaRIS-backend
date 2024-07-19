@@ -353,15 +353,16 @@ public class MergeServiceTest {
         var sourceId = 1;
         var targetId = 2;
 
-        var publicationIndex1 = new ProceedingsPublication();
-        publicationIndex1.setId(1);
-        var publicationIndex2 = new ProceedingsPublication();
-        publicationIndex2.setId(2);
+        var publicationIndex1 = new DocumentPublicationIndex();
+        publicationIndex1.setDatabaseId(1);
+        var publicationIndex2 = new DocumentPublicationIndex();
+        publicationIndex2.setDatabaseId(2);
         var page1 = new PageImpl<>(
             List.of(publicationIndex1, publicationIndex2));
         var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
 
-        when(proceedingsPublicationRepository.findProceedingsPublicationsForProceedingsId(sourceId,
+        when(documentPublicationIndexRepository.findByTypeAndProceedingsId(
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), sourceId,
             PageRequest.of(0, 10)))
             .thenReturn(page1);
         when(documentPublicationIndexRepository.findByTypeAndJournalId(
@@ -370,9 +371,11 @@ public class MergeServiceTest {
 
         var publication1 = new ProceedingsPublication();
         var publication2 = new ProceedingsPublication();
-        when(proceedingsPublicationRepository.findById(publicationIndex1.getId())).thenReturn(
+        when(proceedingsPublicationRepository.findById(
+            publicationIndex1.getDatabaseId())).thenReturn(
             Optional.of(publication1));
-        when(proceedingsPublicationRepository.findById(publicationIndex2.getId())).thenReturn(
+        when(proceedingsPublicationRepository.findById(
+            publicationIndex2.getDatabaseId())).thenReturn(
             Optional.of(publication2));
 
         var targetProceedings = new Proceedings();

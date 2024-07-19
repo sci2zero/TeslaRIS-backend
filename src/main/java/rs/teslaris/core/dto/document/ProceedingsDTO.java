@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.document;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ProceedingsDTO extends DocumentDTO {
 
+    @JsonProperty("eISBN")
     private String eISBN;
 
     private String printISBN;
