@@ -3,12 +3,15 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -16,20 +19,28 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
+import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Event;
+import rs.teslaris.core.model.document.EventsRelation;
+import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -45,6 +56,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     protected final PersonContributionService personContributionService;
 
     protected final EventRepository eventRepository;
+
+    private final EventsRelationRepository eventsRelationRepository;
 
     private final SearchService<EventIndex> searchService;
 
@@ -75,9 +88,19 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.setState(multilingualContentService.getMultilingualContent(eventDTO.getState()));
         event.setPlace(multilingualContentService.getMultilingualContent(eventDTO.getPlace()));
 
-        event.setDateFrom(eventDTO.getDateFrom());
-        event.setDateTo(eventDTO.getDateTo());
-        event.setSerialEvent(eventDTO.getSerialEvent());
+        event.setSerialEvent(
+            Objects.nonNull(eventDTO.getSerialEvent()) ? eventDTO.getSerialEvent() : false);
+
+        if (!event.getSerialEvent()) {
+            if (Objects.isNull(eventDTO.getDateFrom()) || Objects.isNull(eventDTO.getDateTo())) {
+                throw new MissingDataException(
+                    "You have to provide start and end dates for a non-serial event.");
+            }
+
+            event.setDateFrom(eventDTO.getDateFrom());
+            event.setDateTo(eventDTO.getDateTo());
+        }
+
         event.setOldId(eventDTO.getOldId());
 
         if (Objects.nonNull(eventDTO.getContributions())) {
@@ -119,8 +142,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
-                                         EventType eventType) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, eventType),
+                                         EventType eventType, Boolean returnOnlyNonSerialEvents) {
+        return searchService.runQuery(
+            buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents),
             pageable, EventIndex.class, "events");
     }
 
@@ -128,6 +152,85 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     public Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo) {
         return searchService.runQuery(buildEventImportSearchQuery(names, dateFrom, dateTo),
             Pageable.ofSize(5), EventIndex.class, "events");
+    }
+
+    @Override
+    public List<EventsRelationDTO> readEventRelations(Integer eventId) {
+        var event = findOne(eventId);
+
+        if (event.getSerialEvent()) {
+            throw new NotFoundException("One time event with this ID does not exist.");
+        }
+
+        var relations = new ArrayList<>(
+            eventsRelationRepository.getRelationsForOneTimeEvent(eventId).stream()
+                .map(EventsRelationConverter::toDTO).toList());
+
+        var reverseRelations =
+            eventsRelationRepository.getRelationsForEvent(eventId).stream()
+                .map(EventsRelationConverter::toDTO).toList();
+
+        relations.addAll(reverseRelations);
+
+        return relations;
+    }
+
+    @Override
+    public List<EventsRelationDTO> readSerialEventRelations(Integer serialEventId) {
+        var serialEvent = findOne(serialEventId);
+
+        if (!serialEvent.getSerialEvent()) {
+            throw new NotFoundException("Serial event with this ID does not exist.");
+        }
+
+        return eventsRelationRepository.getRelationsForEvent(serialEventId).stream()
+            .map(EventsRelationConverter::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public void addEventsRelation(EventsRelationDTO eventsRelationDTO) {
+        if (eventsRelationDTO.getSourceId().equals(eventsRelationDTO.getTargetId())) {
+            throw new SelfRelationException("selfRelationEventError");
+        }
+
+        if (eventsRelationRepository.relationExists(eventsRelationDTO.getSourceId(),
+            eventsRelationDTO.getTargetId())) {
+            throw new ConferenceReferenceConstraintViolationException(
+                "relationAlreadyExistsError");
+        }
+
+        var sourceEvent = findOne(eventsRelationDTO.getSourceId());
+
+        if (sourceEvent.getSerialEvent()) {
+            throw new ConferenceReferenceConstraintViolationException(
+                "Source event cannot be serial.");
+        }
+
+        var targetEvent = findOne(eventsRelationDTO.getTargetId());
+
+        if (eventsRelationDTO.getEventsRelationType()
+            .equals(EventsRelationType.BELONGS_TO_SERIES) && !targetEvent.getSerialEvent()) {
+            throw new ConferenceReferenceConstraintViolationException(
+                "targetEventNotSerialError");
+        }
+
+        var newRelation = new EventsRelation();
+        newRelation.setSource(sourceEvent);
+        newRelation.setTarget(targetEvent);
+        newRelation.setEventsRelationType(eventsRelationDTO.getEventsRelationType());
+
+        eventsRelationRepository.save(newRelation);
+    }
+
+    @Override
+    public void deleteEventsRelation(Integer relationId) {
+        var relationToDelete = eventsRelationRepository.findById(relationId);
+
+        if (relationToDelete.isEmpty()) {
+            throw new NotFoundException("Relation does not exist.");
+        }
+
+        eventsRelationRepository.delete(relationToDelete.get());
     }
 
     private Query buildEventImportSearchQuery(List<String> names, String dateFrom, String dateTo) {
@@ -148,13 +251,17 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 });
                 return bq;
             });
-            b.must(sb -> sb.match(
-                m -> m.field("event_type").query(EventType.CONFERENCE.name())));
+            b.must(sb -> {
+                sb.match(m -> m.field("event_type").query(EventType.CONFERENCE.name()));
+                sb.match(m -> m.field("is_serial_event").query(false));
+                return sb;
+            });
             return b;
         })))._toQuery();
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType) {
+    private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
+                                         Boolean returnOnlyNonSerialEvents) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -194,8 +301,15 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 });
                 return bq;
             });
-            b.must(sb -> sb.match(
-                m -> m.field("event_type").query(eventType.name())));
+            b.must(sb -> {
+                sb.match(m -> m.field("event_type").query(eventType.name()));
+
+                if (returnOnlyNonSerialEvents) {
+                    sb.match(m -> m.field("is_serial_event").query(false));
+                }
+
+                return sb;
+            });
             return b;
         })))._toQuery();
     }
@@ -221,10 +335,17 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
             EventIndex::setPlaceOther);
 
-        var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
-        index.setDateFromTo(
-            event.getDateFrom().format(formatter) + " - " + event.getDateTo().format(formatter));
-        index.setDateSortable(event.getDateFrom());
+        if (Objects.nonNull(event.getDateFrom()) && Objects.nonNull(event.getDateTo())) {
+            var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+            index.setDateFromTo(
+                event.getDateFrom().format(formatter) + " - " +
+                    event.getDateTo().format(formatter));
+            index.setDateSortable(event.getDateFrom());
+        } else {
+            index.setDateSortable(LocalDate.of(1, 1, 1)); // lowest date ES will parse
+        }
+
+        index.setSerialEvent(event.getSerialEvent());
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,
@@ -239,9 +360,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
         StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
         srSetter.accept(index,
-            srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
-            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
     protected void notifyAboutBasicCreation(Integer eventId) {

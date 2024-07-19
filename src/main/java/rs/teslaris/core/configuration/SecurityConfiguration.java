@@ -127,6 +127,11 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/involvement/membership/{membershipId}")
                 .permitAll()
 
+                // EVENTS RELATION
+                .requestMatchers(HttpMethod.GET, "/api/events-relation/{eventId}").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/events-relation/serial-event/{serialEventId}").permitAll()
+
                 // FILE
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
 
