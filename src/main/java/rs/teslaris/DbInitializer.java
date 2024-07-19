@@ -25,6 +25,8 @@ import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.EventsRelation;
+import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
@@ -61,6 +63,7 @@ import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
@@ -121,6 +124,8 @@ public class DbInitializer implements ApplicationRunner {
     private final PersonContributionRepository personContributionRepository;
 
     private final MonographRepository monographRepository;
+
+    private final EventsRelationRepository eventsRelationRepository;
 
 
     @Override
@@ -279,7 +284,7 @@ public class DbInitializer implements ApplicationRunner {
         conferenceEvent2.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija2", 1)));
         conferenceEvent2.setDateFrom(LocalDate.of(2020, 6, 13));
         conferenceEvent2.setDateTo(LocalDate.of(2020, 6, 19));
-        conferenceEvent2.setSerialEvent(true);
+        conferenceEvent2.setSerialEvent(false);
         conferenceRepository.save(conferenceEvent2);
 
         var journal2 = new Journal();
@@ -567,5 +572,24 @@ public class DbInitializer implements ApplicationRunner {
             new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null));
         person4.setScopusAuthorId("14419566900");
         personRepository.save(person4);
+
+        var conferenceEvent3 = new Conference();
+        conferenceEvent3.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija3", 1)));
+        conferenceEvent3.setDateFrom(LocalDate.of(2024, 6, 29));
+        conferenceEvent3.setDateTo(LocalDate.of(2024, 7, 3));
+        conferenceEvent3.setSerialEvent(true);
+        conferenceRepository.save(conferenceEvent3);
+
+        var eventsRelation1 = new EventsRelation();
+        eventsRelation1.setSource(conferenceEvent1);
+        eventsRelation1.setTarget(conferenceEvent2);
+        eventsRelation1.setEventsRelationType(EventsRelationType.PART_OF);
+        eventsRelationRepository.save(eventsRelation1);
+
+        var eventsRelation2 = new EventsRelation();
+        eventsRelation2.setSource(conferenceEvent1);
+        eventsRelation2.setTarget(conferenceEvent3);
+        eventsRelation2.setEventsRelationType(EventsRelationType.BELONGS_TO_SERIES);
+        eventsRelationRepository.save(eventsRelation2);
     }
 }

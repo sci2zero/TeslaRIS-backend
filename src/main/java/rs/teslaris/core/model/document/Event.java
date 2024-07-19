@@ -38,7 +38,7 @@ public abstract class Event extends BaseEntity {
     private Set<MultiLingualContent> keywords = new HashSet<>();
 
     @Column(name = "serial_event")
-    private Boolean serialEvent;
+    private Boolean serialEvent = false;
 
     @Column(name = "date_from")
     private LocalDate dateFrom;

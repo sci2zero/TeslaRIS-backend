@@ -48,6 +48,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -395,7 +396,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setScopusId(documentDTO.getScopusId());
 
         if (Objects.nonNull(documentDTO.getEventId())) {
-            document.setEvent(eventService.findEventById(documentDTO.getEventId()));
+            var event = eventService.findEventById(documentDTO.getEventId());
+
+            if (event.getSerialEvent()) {
+                throw new ProceedingsReferenceConstraintViolationException(
+                    "Proceedings cannot be bound to serial event.");
+            }
+
+            document.setEvent(event);
         }
     }
 
