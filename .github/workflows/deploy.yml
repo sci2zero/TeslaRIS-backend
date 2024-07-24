@@ -7,6 +7,8 @@ on:
         description: 'Skip running tests'
         default: false
         required: false
+  push:
+    branches: [feature/branch]
 
 
 jobs:
@@ -28,3 +30,5 @@ jobs:
 
       - name: Echo test
         run: ls -l
+
+      
