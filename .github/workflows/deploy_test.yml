@@ -8,8 +8,8 @@ on:
         default: false
         required: false
   push:
-    branches: [feature/branch]
-
+    branches:
+      - feature/deploy 
 
 jobs:
   build:
