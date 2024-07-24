@@ -8,20 +8,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import rs.teslaris.core.importer.model.common.OrganisationUnit;
+import rs.teslaris.core.importer.model.common.Event;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "organisationUnitExports")
-public class ExportOrganisationUnit extends OrganisationUnit {
+@Document(collection = "eventExports")
+public class ExportEvent extends Event {
 
     @Id
     private String id;
-
-    @Field("super_organisation_unit")
-    private ExportOrganisationUnit superOU;
 
     @Field("last_updated")
     private LocalDateTime lastUpdated;
