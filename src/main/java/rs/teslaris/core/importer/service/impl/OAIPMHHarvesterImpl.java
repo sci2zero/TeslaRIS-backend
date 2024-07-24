@@ -43,6 +43,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.ResumptionToken;
+import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.HarvestProgressReport;
@@ -172,8 +173,8 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                         mongoTemplate.save(metadata.getProduct());
                         break;
                     case PUBLICATIONS:
-                        metadata.getPublication().setImportUserId(List.of(userId));
-                        metadata.getPublication().setLoaded(false);
+                        ((Publication) metadata.getPublication()).setImportUserId(List.of(userId));
+                        ((Publication) metadata.getPublication()).setLoaded(false);
                         mongoTemplate.save(metadata.getPublication());
                         break;
                     case ORGANISATION_UNITS:

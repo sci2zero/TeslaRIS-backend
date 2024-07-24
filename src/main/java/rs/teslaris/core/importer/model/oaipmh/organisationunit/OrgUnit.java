@@ -32,7 +32,7 @@ public class OrgUnit {
     private String oldId;
 
     @XmlElement(name = "Name")
-    private List<MultilingualContent> multilingualContent;
+    private List<MultilingualContent> name;
 
     @XmlElement(name = "PartOf")
     private PartOf partOf;

@@ -90,7 +90,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         IdentifierUtil.validateAndSetIdentifier(
             publicationSeriesDTO.getEissn(),
             publicationSeries.getId(),
-            "^\\d{4}-\\d{4}$",
+            "^(\\d{4}-\\d{4}|\\d{4}-\\d{3}[\\dX]?)$",
             publicationSeriesRepository::existsByeISSN,
             publicationSeries::setEISSN,
             "eissnFormatError",
@@ -100,7 +100,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         IdentifierUtil.validateAndSetIdentifier(
             publicationSeriesDTO.getPrintISSN(),
             publicationSeries.getId(),
-            "^\\d{4}-\\d{4}([\\dX])?$",
+            "^(\\d{4}-\\d{4}|\\d{4}-\\d{3}[\\dX]?)$",
             publicationSeriesRepository::existsByPrintISSN,
             publicationSeries::setPrintISSN,
             "printIssnFormatError",
