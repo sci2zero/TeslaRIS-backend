@@ -1,8 +1,6 @@
 package rs.teslaris.core.exporter.model.common;
 
-import jakarta.persistence.Id;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,16 +17,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "publicationExports")
-public class ExportPublication {
-
-    @Id
-    private String id;
-
-    @Field("database_id")
-    private Integer databaseId;
-
-    @Field("last_updated")
-    private LocalDateTime lastUpdated;
+public class ExportPublication extends BaseExportEntity {
 
     @Field("type")
     private DocumentPublicationType type;

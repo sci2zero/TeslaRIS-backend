@@ -1,6 +1,5 @@
 package rs.teslaris.core.exporter.model.common;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,8 +10,14 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExportPublisher {
+public class ExportPersonName {
 
-    @Field("name")
-    private List<ExportMultilingualContent> name;
+    @Field("first_name")
+    private String firstName;
+
+    @Field("middle_name")
+    private String middleName;
+
+    @Field("last_name")
+    private String lastName;
 }

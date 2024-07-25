@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Field;
-import rs.teslaris.core.importer.model.common.MultilingualContent;
 
 @Getter
 @Setter
@@ -15,10 +14,10 @@ import rs.teslaris.core.importer.model.common.MultilingualContent;
 public class ExportPublicationSeries {
 
     @Field("title")
-    private List<MultilingualContent> title;
+    private List<ExportMultilingualContent> title;
 
     @Field("name_abbreviation")
-    private List<MultilingualContent> nameAbbreviation;
+    private List<ExportMultilingualContent> nameAbbreviation;
 
     @Field("e_issn")
     private String eIssn;

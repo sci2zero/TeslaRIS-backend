@@ -48,7 +48,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolation;
+import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -429,7 +429,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnitRepository.hasThesis(organisationUnitId) ||
             organisationUnitRepository.hasRelation(organisationUnitId) ||
             organisationUnitRepository.hasInvolvement(organisationUnitId)) {
-            throw new OrganisationUnitReferenceConstraintViolation(
+            throw new OrganisationUnitReferenceConstraintViolationException(
                 "Organisation unit is already in use.");
         }
 

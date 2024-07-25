@@ -1,7 +1,7 @@
 package rs.teslaris.core.exporter.model.common;
 
-import jakarta.persistence.Id;
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import rs.teslaris.core.importer.model.common.Person;
 import rs.teslaris.core.model.person.Sex;
 
 @Getter
@@ -17,20 +16,32 @@ import rs.teslaris.core.model.person.Sex;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "personExports")
-public class ExportPerson extends Person {
+public class ExportPerson extends BaseExportEntity {
 
-    @Id
-    private String id;
+    @Field("name")
+    private ExportPersonName name;
+
+    @Field("apvnt")
+    private String apvnt;
+
+    @Column(name = "e_cris_id")
+    private String eCrisId;
+
+    @Column(name = "e_nauka_id")
+    private String eNaukaId;
+
+    @Field("orcid")
+    private String orcid;
+
+    @Field("scopus_id")
+    private String scopusAuthorId;
 
     @Field("sex")
     private Sex sex;
 
-    @Field("last_updated")
-    private LocalDateTime lastUpdated;
-
     @Field("electronic_addresses")
-    private List<String> electronicAddresses;
+    private List<String> electronicAddresses = new ArrayList<>();
 
     @Field("employment_institutions")
-    private List<ExportOrganisationUnit> employmentInstitutions;
+    private List<ExportOrganisationUnit> employmentInstitutions = new ArrayList<>();
 }
