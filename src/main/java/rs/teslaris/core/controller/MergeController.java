@@ -5,9 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 
 @RestController
@@ -101,5 +103,34 @@ public class MergeController {
         @PathVariable Integer targetProceedingsId) {
         mergeService.switchAllPublicationsToOtherProceedings(sourceProceedingsId,
             targetProceedingsId);
+    }
+
+    @PatchMapping("/person/involvements/source/{sourcePersonId}/target/{targetPersonId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    public void switchInvolvementsToOtherPerson(@PathVariable Integer sourcePersonId,
+                                                @PathVariable Integer targetPersonId,
+                                                @RequestBody
+                                                PersonCollectionEntitySwitchListDTO involvementSwitchList) {
+        mergeService.switchInvolvements(involvementSwitchList.getEntityIds(),
+            sourcePersonId, targetPersonId);
+    }
+
+    @PatchMapping("/person/skills/source/{sourcePersonId}/target/{targetPersonId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    public void switchSkillsToOtherPerson(@PathVariable Integer sourcePersonId,
+                                          @PathVariable Integer targetPersonId,
+                                          @RequestBody
+                                          PersonCollectionEntitySwitchListDTO skillSwitchList) {
+        mergeService.switchSkills(skillSwitchList.getEntityIds(), sourcePersonId,
+            targetPersonId);
+    }
+
+    @PatchMapping("/person/prizes/source/{sourcePersonId}/target/{targetPersonId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    public void switchPrizesToOtherPerson(@PathVariable Integer sourcePersonId,
+                                          @PathVariable Integer targetPersonId,
+                                          @RequestBody
+                                          PersonCollectionEntitySwitchListDTO prizeSwitchList) {
+        mergeService.switchPrizes(prizeSwitchList.getEntityIds(), sourcePersonId, targetPersonId);
     }
 }

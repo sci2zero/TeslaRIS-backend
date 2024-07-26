@@ -1,17 +1,14 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -166,50 +163,5 @@ public class ExpertiseOrSkillServiceTest {
 
         // Then
         assertTrue(expertiseOrSkill.getProofs().isEmpty());
-    }
-
-    @Test
-    void testSwitchSkills() {
-        // Given
-        var sourcePersonId = 1;
-        var targetPersonId = 2;
-        var skillIds = List.of(100, 101, 102);
-
-        var sourcePerson = new Person();
-        sourcePerson.setId(sourcePersonId);
-        var sourceSkills = new HashSet<ExpertiseOrSkill>();
-        skillIds.forEach(id -> {
-            var skill = new ExpertiseOrSkill();
-            skill.setId(id);
-            sourceSkills.add(skill);
-        });
-        sourcePerson.setExpertisesAndSkills(sourceSkills);
-
-        var targetPerson = new Person();
-        targetPerson.setId(targetPersonId);
-        var targetSkills = new HashSet<ExpertiseOrSkill>();
-        targetPerson.setExpertisesAndSkills(targetSkills);
-
-        when(personService.findOne(sourcePersonId)).thenReturn(sourcePerson);
-        when(personService.findOne(targetPersonId)).thenReturn(targetPerson);
-        skillIds.forEach(id -> {
-            var skill = new ExpertiseOrSkill();
-            skill.setId(id);
-            when(expertiseOrSkillRepository.findById(id)).thenReturn(Optional.of(skill));
-        });
-
-        // When
-        expertiseOrSkillService.switchSkills(skillIds, sourcePersonId, targetPersonId);
-
-        // Then
-        skillIds.forEach(id -> {
-            var skill = new ExpertiseOrSkill();
-            skill.setId(id);
-            verify(expertiseOrSkillRepository).findById(id);
-            assertFalse(sourcePerson.getExpertisesAndSkills().contains(skill));
-            assertTrue(targetPerson.getExpertisesAndSkills().contains(skill));
-        });
-        verify(personService).save(sourcePerson);
-        verify(personService).save(targetPerson);
     }
 }

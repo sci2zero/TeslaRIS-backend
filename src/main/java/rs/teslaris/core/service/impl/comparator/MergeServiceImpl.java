@@ -22,8 +22,11 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
+import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -59,6 +62,12 @@ public class MergeServiceImpl implements MergeService {
     private final ConferenceService conferenceService;
 
     private final ProceedingsService proceedingsService;
+
+    private final PrizeService prizeService;
+
+    private final ExpertiseOrSkillService expertiseOrSkillService;
+
+    private final InvolvementService involvementService;
 
 
     @Override
@@ -145,6 +154,75 @@ public class MergeServiceImpl implements MergeService {
                 proceedingsResponse.getId()),
             pageRequest -> proceedingsService.readProceedingsForEventId(sourceConferenceId)
         );
+    }
+
+    @Override
+    public void switchInvolvements(List<Integer> involvementIds, Integer sourcePersonId,
+                                   Integer targetPersonId) {
+        var sourcePerson = personService.findOne(sourcePersonId);
+        var targetPerson = personService.findOne(targetPersonId);
+
+        involvementIds.forEach(involvementId -> {
+            var involvementToUpdate = involvementService.findOne(involvementId);
+
+            if (sourcePerson.getInvolvements().contains(involvementToUpdate)) {
+                sourcePerson.removeInvolvement(involvementToUpdate);
+                involvementService.save(involvementToUpdate);
+            }
+
+            if (!targetPerson.getInvolvements().contains(involvementToUpdate)) {
+                involvementToUpdate.setPersonInvolved(targetPerson);
+                targetPerson.addInvolvement(involvementToUpdate);
+                involvementService.save(involvementToUpdate);
+            }
+        });
+
+        personService.save(sourcePerson);
+        personService.save(targetPerson);
+
+        userService.updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
+
+        personService.indexPerson(sourcePerson, sourcePerson.getId());
+        personService.indexPerson(targetPerson, targetPerson.getId());
+    }
+
+    @Override
+    public void switchSkills(List<Integer> skillIds, Integer sourcePersonId,
+                             Integer targetPersonId) {
+        var sourcePerson = personService.findOne(sourcePersonId);
+        var targetPerson = personService.findOne(targetPersonId);
+
+        skillIds.forEach(skillId -> {
+            var skillToUpdate = expertiseOrSkillService.findOne(skillId);
+
+            sourcePerson.getExpertisesAndSkills().remove(skillToUpdate);
+
+            targetPerson.getExpertisesAndSkills().add(skillToUpdate);
+        });
+
+        personService.save(sourcePerson);
+        personService.save(targetPerson);
+    }
+
+    @Override
+    public void switchPrizes(List<Integer> prizeIds, Integer sourcePersonId,
+                             Integer targetPersonId) {
+        var sourcePerson = personService.findOne(sourcePersonId);
+        var targetPerson = personService.findOne(targetPersonId);
+
+        prizeIds.forEach(prizeId -> {
+            var prizeToUpdate = prizeService.findOne(prizeId);
+
+            sourcePerson.getPrizes().remove(prizeToUpdate);
+
+            if (!targetPerson.getPrizes().contains(prizeToUpdate)) {
+                targetPerson.addPrize(prizeToUpdate);
+            }
+        });
+
+        personService.save(sourcePerson);
+        personService.save(targetPerson);
     }
 
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,

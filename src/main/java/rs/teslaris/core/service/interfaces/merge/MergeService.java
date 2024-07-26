@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.merge;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,4 +28,11 @@ public interface MergeService {
 
     void switchAllProceedingsToOtherConference(Integer sourceConferenceId,
                                                Integer targetConferenceId);
+
+    void switchInvolvements(List<Integer> involvementIds, Integer sourcePersonId,
+                            Integer targetPersonId);
+
+    void switchSkills(List<Integer> skillIds, Integer sourcePersonId, Integer targetPersonId);
+
+    void switchPrizes(List<Integer> prizeIds, Integer sourcePersonId, Integer targetPersonId);
 }
