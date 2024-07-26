@@ -2,6 +2,8 @@ package rs.teslaris.core.exporter.model.common;
 
 import jakarta.persistence.Id;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,4 +27,7 @@ public abstract class BaseExportEntity {
 
     @Field("last_updated")
     private Date lastUpdated;
+
+    @Field("related_institution_ids")
+    private Set<Integer> relatedInstitutionIds = new HashSet<>();
 }

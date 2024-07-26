@@ -1,0 +1,64 @@
+package rs.teslaris.core.exporter.model.converter;
+
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import rs.teslaris.core.exporter.model.common.ExportContribution;
+import rs.teslaris.core.exporter.model.common.ExportPublicationSeries;
+import rs.teslaris.core.model.document.PublicationSeries;
+import rs.teslaris.core.model.document.PublicationSeriesContributionType;
+
+public class ExportPublicationSeriesConverter extends ExportConverterBase {
+
+    public static ExportPublicationSeries toCommonExportModel(
+        PublicationSeries publicationSeries) {
+        var commonExportPublicationSeries = new ExportPublicationSeries();
+
+        setBaseFields(commonExportPublicationSeries, publicationSeries);
+        if (commonExportPublicationSeries.getDeleted()) {
+            return commonExportPublicationSeries;
+        }
+
+        commonExportPublicationSeries.setTitle(
+            ExportMultilingualContentConverter.toCommonExportModel(publicationSeries.getTitle()));
+        commonExportPublicationSeries.setNameAbbreviation(
+            ExportMultilingualContentConverter.toCommonExportModel(
+                publicationSeries.getNameAbbreviation()));
+        commonExportPublicationSeries.setEIssn(publicationSeries.getEISSN());
+        commonExportPublicationSeries.setPrintIssn(publicationSeries.getPrintISSN());
+
+        publicationSeries.getContributions().forEach(contribution -> {
+            if (contribution.getContributionType()
+                .equals(PublicationSeriesContributionType.EDITOR)) {
+                var exportContribution = new ExportContribution();
+                exportContribution.setDisplayName(
+                    contribution.getAffiliationStatement().getDisplayPersonName().toString());
+                if (Objects.nonNull(contribution.getPerson())) {
+                    exportContribution.setPerson(
+                        ExportPersonConverter.toCommonExportModel(contribution.getPerson()));
+                }
+                commonExportPublicationSeries.getEditors().add(exportContribution);
+            }
+
+        });
+
+        publicationSeries.getLanguages().forEach(languageTag -> {
+            commonExportPublicationSeries.getLanguageTags().add(languageTag.getLanguageTag());
+        });
+
+        commonExportPublicationSeries.getRelatedInstitutionIds()
+            .addAll(getRelatedInstitutions(publicationSeries));
+        return commonExportPublicationSeries;
+    }
+
+    private static Set<Integer> getRelatedInstitutions(PublicationSeries publicationSeries) {
+        var relations = new HashSet<Integer>();
+        publicationSeries.getContributions().forEach(contribution -> {
+            if (Objects.nonNull(contribution.getPerson())) {
+                relations.addAll(ExportPersonConverter.getRelatedEmploymentInstitutions(
+                    contribution.getPerson()));
+            }
+        });
+        return relations;
+    }
+}

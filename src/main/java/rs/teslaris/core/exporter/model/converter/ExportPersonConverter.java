@@ -1,19 +1,19 @@
 package rs.teslaris.core.exporter.model.converter;
 
+import java.util.HashSet;
+import java.util.Set;
 import rs.teslaris.core.exporter.model.common.ExportPerson;
 import rs.teslaris.core.exporter.model.common.ExportPersonName;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 
-public class ExportPersonConverter {
+public class ExportPersonConverter extends ExportConverterBase {
 
     public static ExportPerson toCommonExportModel(Person person) {
         var commonExportPerson = new ExportPerson();
-        commonExportPerson.setDatabaseId(person.getId());
-        commonExportPerson.setLastUpdated(person.getLastModification());
 
-        if (person.getDeleted()) {
-            commonExportPerson.setDeleted(true);
+        setBaseFields(commonExportPerson, person);
+        if (commonExportPerson.getDeleted()) {
             return commonExportPerson;
         }
 
@@ -38,6 +38,19 @@ public class ExportPersonConverter {
             }
         });
 
+        commonExportPerson.getRelatedInstitutionIds()
+            .addAll(getRelatedEmploymentInstitutions(person));
         return commonExportPerson;
+    }
+
+    public static Set<Integer> getRelatedEmploymentInstitutions(Person person) {
+        var relations = new HashSet<Integer>();
+        person.getInvolvements().forEach(involvement -> {
+            if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) {
+                relations.add(involvement.getOrganisationUnit().getId());
+            }
+        });
+        return relations;
     }
 }

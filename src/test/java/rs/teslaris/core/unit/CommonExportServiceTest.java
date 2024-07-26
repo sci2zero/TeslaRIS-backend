@@ -11,8 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
@@ -26,6 +28,13 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.document.ConferenceRepository;
+import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
+import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 
@@ -43,6 +52,27 @@ public class CommonExportServiceTest {
 
     @Mock
     private ConferenceRepository conferenceRepository;
+
+    @Mock
+    private DatasetRepository datasetRepository;
+
+    @Mock
+    private SoftwareRepository softwareRepository;
+
+    @Mock
+    private PatentRepository patentRepository;
+
+    @Mock
+    private JournalPublicationRepository journalPublicationRepository;
+
+    @Mock
+    private MonographRepository monographRepository;
+
+    @Mock
+    private ProceedingsRepository proceedingsRepository;
+
+    @Mock
+    private ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     @InjectMocks
     private CommonExportServiceImpl commonExportService;
@@ -104,5 +134,40 @@ public class CommonExportServiceTest {
         // Then
         verify(mongoTemplate, times(1)).remove(any(Query.class), eq(ExportEvent.class));
         verify(mongoTemplate, times(1)).save(any(ExportEvent.class));
+    }
+
+    @Test
+    public void shouldExportDocumentsToCommonModel() {
+        // Given
+        var emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+
+        when(datasetRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
+            (Page) emptyPage);
+        when(softwareRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
+            (Page) emptyPage);
+        when(patentRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
+            (Page) emptyPage);
+        when(journalPublicationRepository.findAllModifiedInLast24Hours(
+            any(Pageable.class))).thenReturn((Page) emptyPage);
+        when(proceedingsRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
+            (Page) emptyPage);
+        when(proceedingsPublicationRepository.findAllModifiedInLast24Hours(
+            any(Pageable.class))).thenReturn((Page) emptyPage);
+        when(monographRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
+            (Page) emptyPage);
+
+        // When
+        commonExportService.exportDocumentsToCommonModel();
+
+        // Then
+        verify(datasetRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
+        verify(softwareRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
+        verify(patentRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
+        verify(journalPublicationRepository, times(1)).findAllModifiedInLast24Hours(
+            any(Pageable.class));
+        verify(proceedingsRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
+        verify(proceedingsPublicationRepository, times(1)).findAllModifiedInLast24Hours(
+            any(Pageable.class));
+        verify(monographRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
     }
 }

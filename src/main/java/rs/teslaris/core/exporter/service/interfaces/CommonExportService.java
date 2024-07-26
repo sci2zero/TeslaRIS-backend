@@ -10,4 +10,6 @@ public interface CommonExportService {
     void exportPersonsToCommonModel();
 
     void exportConferencesToCommonModel();
+
+    void exportDocumentsToCommonModel();
 }

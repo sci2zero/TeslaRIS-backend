@@ -1,6 +1,7 @@
 package rs.teslaris.core.exporter.service.impl;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -9,20 +10,37 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
 import rs.teslaris.core.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.core.exporter.model.common.ExportPerson;
+import rs.teslaris.core.exporter.model.converter.ExportDocumentConverter;
 import rs.teslaris.core.exporter.model.converter.ExportEventConverter;
 import rs.teslaris.core.exporter.model.converter.ExportOrganisationUnitConverter;
 import rs.teslaris.core.exporter.model.converter.ExportPersonConverter;
 import rs.teslaris.core.exporter.service.interfaces.CommonExportService;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.document.ProceedingsPublication;
+import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.ConferenceRepository;
+import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
+import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 
@@ -38,6 +56,20 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final PersonRepository personRepository;
 
     private final ConferenceRepository conferenceRepository;
+
+    private final DatasetRepository datasetRepository;
+
+    private final SoftwareRepository softwareRepository;
+
+    private final PatentRepository patentRepository;
+
+    private final JournalPublicationRepository journalPublicationRepository;
+
+    private final MonographRepository monographRepository;
+
+    private final ProceedingsRepository proceedingsRepository;
+
+    private final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
 
     @Override
@@ -71,6 +103,76 @@ public class CommonExportServiceImpl implements CommonExportService {
             ExportEvent.class,
             Conference::getId
         );
+    }
+
+    @Override
+    @Scheduled(cron = "${export-to-common.schedule.documents}")
+    public void exportDocumentsToCommonModel() {
+        var datasetFuture = exportEntitiesAsync(
+            datasetRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            Dataset::getId
+        );
+
+        var softwareFuture = exportEntitiesAsync(
+            softwareRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            Software::getId
+        );
+
+        var patentFuture = exportEntitiesAsync(
+            patentRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            Patent::getId
+        );
+
+        var journalPublicationFuture = exportEntitiesAsync(
+            journalPublicationRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            JournalPublication::getId
+        );
+
+        var proceedingsFuture = exportEntitiesAsync(
+            proceedingsRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            Proceedings::getId
+        );
+
+        var proceedingsPublicationFuture = exportEntitiesAsync(
+            proceedingsPublicationRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            ProceedingsPublication::getId
+        );
+
+        var monographFuture = exportEntitiesAsync(
+            monographRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            Monograph::getId
+        );
+
+        CompletableFuture.allOf(
+            datasetFuture, softwareFuture, patentFuture,
+            journalPublicationFuture, proceedingsFuture,
+            proceedingsPublicationFuture, monographFuture
+        ).join();
+    }
+
+    @Async
+    public <T, E> CompletableFuture<Void> exportEntitiesAsync(
+        Function<Pageable, Page<T>> repositoryFunction,
+        Function<T, E> converter,
+        Class<E> exportClass,
+        Function<T, Integer> idGetter
+    ) {
+        exportEntities(repositoryFunction, converter, exportClass, idGetter);
+        return CompletableFuture.completedFuture(null);
     }
 
     private <T, E> void exportEntities(

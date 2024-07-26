@@ -3,6 +3,7 @@ package rs.teslaris.core.model.person;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -36,4 +37,13 @@ public class PersonName extends BaseEntity {
 
     @Column(name = "date_to")
     private LocalDate dateTo;
+
+    @Override
+    public String toString() {
+        if (otherName.isEmpty()) {
+            return MessageFormat.format("{0} {1}", firstname, lastname);
+        }
+
+        return MessageFormat.format("{0} {1} {2}", firstname, otherName, lastname);
+    }
 }

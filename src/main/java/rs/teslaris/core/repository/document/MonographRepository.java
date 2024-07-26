@@ -1,5 +1,7 @@
 package rs.teslaris.core.repository.document;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -15,4 +17,8 @@ public interface MonographRepository extends JpaRepository<Monograph, Integer> {
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Monograph m WHERE (m.printISBN = :printISBN OR m.eISBN = :printISBN) AND m.id <> :id")
     boolean existsByPrintISBN(String printISBN, Integer id);
+
+    @Query(value = "SELECT * FROM monographs m WHERE " +
+        "m.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
+    Page<Monograph> findAllModifiedInLast24Hours(Pageable pageable);
 }
