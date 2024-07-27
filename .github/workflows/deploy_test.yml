@@ -61,9 +61,11 @@ jobs:
           docker ps
           docker exec elasticsearch bash -c "bin/elasticsearch-plugin install analysis-icu"
           docker restart elasticsearch
-          
+
       - name: Build and package with Maven
         run: mvn clean package
+        env:
+          DB_PASSWORD: postgres
 
       - name: Echo test
         run: ls -l
