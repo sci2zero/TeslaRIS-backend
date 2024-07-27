@@ -15,10 +15,6 @@ jobs:
   build-backend:
     runs-on: ubuntu-latest
 
-    environment:
-      name: test
-      url: ${{ steps.create_release.outputs.html_url }}
-      
     services:
       postgres:
         image: postgres:13.3
@@ -92,3 +88,8 @@ jobs:
       - name: Set environment
         run: echo "Setting environment for approval."
 
+  approve-deploy:
+    needs: build-backend
+    if: needs.build-backend == 'success'
+    environment:
+      name: test
