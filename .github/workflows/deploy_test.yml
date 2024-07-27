@@ -88,6 +88,8 @@ jobs:
 
 
   approve-deploy:
+    runs-on: ubuntu-latest
+
     needs: build-backend
     if: needs.build-backend == 'success'
     environment:
