@@ -85,11 +85,14 @@ jobs:
           name: teslaris
           path: target/teslaris-*.jar
 
-      - name: Set environment
-        run: echo "Setting environment for approval."
+
 
   approve-deploy:
     needs: build-backend
     if: needs.build-backend == 'success'
     environment:
       name: test
+
+    steps:
+      - name: Aprrove
+        run: echo "Approval."
