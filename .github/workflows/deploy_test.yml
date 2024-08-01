@@ -123,6 +123,14 @@ jobs:
             chmod +x /opt/teslaris/deploy-script.sh
             /opt/teslaris/deploy-script.sh deploy-blue
 
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    needs: deploy-backend
+    environment:
+      name: test
+
+    steps:
       - name: Apply blue node
         uses: appleboy/ssh-action@master
         with:
