@@ -112,7 +112,7 @@ jobs:
           target: "tmp/github-backend"
 
 
-      - name: Apply new version
+      - name: Deploy application to blue node
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -120,4 +120,14 @@ jobs:
           key: ${{ secrets.SERVER_PRIVATE_KEY }}
           script: |
             chmod +x /opt/teslaris/deploy-script.sh
-            /opt/teslaris/deploy-script.sh
+            /opt/teslaris/deploy-script.sh deploy-blue
+
+      - name: Apply blue node
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_PRIVATE_KEY }}
+          script: |
+            chmod +x /opt/teslaris/deploy-script.sh
+            /opt/teslaris/deploy-script.sh apply-blue
