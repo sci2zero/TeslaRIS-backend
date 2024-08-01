@@ -95,10 +95,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: teslaris
-          path: teslaris.jar
+          path: teslaris
 
       - name: Echo test
         run: |
+          cp teslaris/teslaris-*.jar teslaris.jar 
           pwd
           ls -la
 
