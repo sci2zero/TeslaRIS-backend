@@ -19,6 +19,9 @@ on:
     branches:
       - feature/deploy 
 
+env:
+  ENVIRONMENT: ${{ inputs.environment || 'test' }} # Set the default value to the environment variable or a fallback value
+
 jobs:
   build-backend:
     strategy:
@@ -100,7 +103,7 @@ jobs:
 
     needs: build-backend
     environment:
-      name: ${{ inputs.environment }}
+      name: ${{ env.ENVIRONMENT }}
 
     steps:
 
@@ -141,7 +144,7 @@ jobs:
 
     needs: deploy-backend
     environment:
-      name: ${{ inputs.environment }}
+      name: ${{ env.ENVIRONMENT }}
 
     steps:
       - name: Apply blue node
