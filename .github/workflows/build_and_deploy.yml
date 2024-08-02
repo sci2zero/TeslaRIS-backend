@@ -1,4 +1,4 @@
-name: TeslaRIS Backend Deploy TEST
+name: TeslaRIS Backend Deploy
 
 on:
   workflow_dispatch:
