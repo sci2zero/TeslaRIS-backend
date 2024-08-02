@@ -75,13 +75,14 @@ jobs:
 
 
       - uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux' and matrix.java == 21
         with:
           name: teslaris
           path: target/teslaris-*.jar
 
       - uses: actions/upload-artifact@v4
         with:
-          name: teslaris-${{ matrix.os }}-JDK_${{ matrix.java}}
+          name: teslaris-${{ matrix.os }}-JDK_${{ matrix.java }}
           path: target/teslaris-*.jar
 
 
