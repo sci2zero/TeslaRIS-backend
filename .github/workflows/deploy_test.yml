@@ -14,9 +14,9 @@ on:
 jobs:
   build-backend:
     strategy:
-    matrix:
-      os: [ubuntu-latest, macos-latest, windows-latest]
-      java: [21]  # Add other versions as needed
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        java: [21]  # Add other versions as needed
     runs-on: ${{ matrix.os }}
 
     services:
