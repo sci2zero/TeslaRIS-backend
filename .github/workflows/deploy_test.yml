@@ -17,7 +17,7 @@ jobs:
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest] # CONTAINER SERVICE ARE NOT SUPPORTED FOR MACOS AND WINDOWS
         os: [ubuntu-latest]
-        java: [21, 16]  # Add other versions as needed
+        java: [21, 22]  # Add other versions as needed
     runs-on: ${{ matrix.os }}
 
     services:
