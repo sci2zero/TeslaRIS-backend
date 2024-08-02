@@ -19,16 +19,13 @@ on:
     branches:
       - feature/deploy 
 
-env:
-  ENVIRONMENT: ${{ inputs.environment || 'test' }} # Set the default value to the environment variable or a fallback value
-
 jobs:
   build-backend:
     strategy:
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest] # CONTAINER SERVICE ARE NOT SUPPORTED FOR MACOS AND WINDOWS
         os: [ubuntu-latest]
-        java: [21, 22]  # Add other versions as needed
+        java: [21]
     runs-on: ${{ matrix.os }}
 
     services:
@@ -103,7 +100,7 @@ jobs:
 
     needs: build-backend
     environment:
-      name: ${{ env.ENVIRONMENT }}
+      name: ${{ inputs.environment || 'test' }}
 
     steps:
 
@@ -144,7 +141,7 @@ jobs:
 
     needs: deploy-backend
     environment:
-      name: ${{ env.ENVIRONMENT }}
+      name: ${{ inputs.environment || 'test' }}
 
     steps:
       - name: Apply blue node
