@@ -6,7 +6,15 @@ on:
       skip_tests:
         description: 'Skip running tests'
         default: false
+        type: boolean
+      environment:
+        description: 'Deploy environment'
+        type: environment
         required: false
+      without_deploy:
+        description: 'Only build (without deploy)'
+        default: false
+        type: boolean
   push:
     branches:
       - feature/deploy 
@@ -68,8 +76,8 @@ jobs:
           docker exec elasticsearch bash -c "bin/elasticsearch-plugin install analysis-icu"
           docker restart elasticsearch
 
-      - name: Build and package with Maven
-        run: mvn clean package -DskipTests
+      - name: Build and package with Maven ${{ inputs.skip_tests && '(WITHOUT TESTS)' || '' }}
+        run: mvn clean package ${{ inputs.skip_tests && '-DskipTests' || '' }}
         env:
           DB_PASSWORD: postgres
 
@@ -88,11 +96,11 @@ jobs:
 
   deploy-backend:
     runs-on: ubuntu-latest
+    if: inputs.without_deploy == 'false'
 
     needs: build-backend
-    if: needs.build-backend.result == 'success'
     environment:
-      name: test
+      name: ${{ inputs.environment }}
 
     steps:
 
@@ -129,10 +137,11 @@ jobs:
 
   start-new-backend:
     runs-on: ubuntu-latest
+    if: inputs.without_deploy == 'false'
 
     needs: deploy-backend
     environment:
-      name: test
+      name: ${{ inputs.environment }}
 
     steps:
       - name: Apply blue node
