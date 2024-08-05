@@ -382,6 +382,7 @@ public class DbInitializer implements ApplicationRunner {
         var dataset = new Dataset();
         dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));
         dataset.setApproveStatus(ApproveStatus.APPROVED);
+        dataset.setDocumentDate("2020-01-01");
 
         var datasetContribution = new PersonDocumentContribution();
         datasetContribution.setPerson(person1);

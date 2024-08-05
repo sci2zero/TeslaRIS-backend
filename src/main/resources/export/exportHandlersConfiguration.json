@@ -1,0 +1,20 @@
+{
+  "handlers": [
+    {
+      "identifier": "OAIHandlerOpenAIRECRIS",
+      "internalInstitutionId": "2",
+      "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
+      "handlerDescription": "CERIF compliant CRIS system developed at Faculty of Sciences, University of Novi Sad",
+      "sets": [
+        {
+          "setSpec": "openaire_cris_equipments",
+          "setName": "OpenAIRE_CRIS_equipments"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_cerif_openaire"
+      ]
+    }
+  ]
+}

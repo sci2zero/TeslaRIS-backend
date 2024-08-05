@@ -30,6 +30,7 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
@@ -61,6 +62,9 @@ public class CommonExportServiceTest {
 
     @Mock
     private PatentRepository patentRepository;
+
+    @Mock
+    private JournalRepository journalRepository;
 
     @Mock
     private JournalPublicationRepository journalPublicationRepository;
@@ -147,6 +151,8 @@ public class CommonExportServiceTest {
             (Page) emptyPage);
         when(patentRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
             (Page) emptyPage);
+        when(journalRepository.findAllModifiedInLast24Hours(
+            any(Pageable.class))).thenReturn((Page) emptyPage);
         when(journalPublicationRepository.findAllModifiedInLast24Hours(
             any(Pageable.class))).thenReturn((Page) emptyPage);
         when(proceedingsRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
@@ -163,6 +169,7 @@ public class CommonExportServiceTest {
         verify(datasetRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
         verify(softwareRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
         verify(patentRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
+        verify(journalRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
         verify(journalPublicationRepository, times(1)).findAllModifiedInLast24Hours(
             any(Pageable.class));
         verify(proceedingsRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));

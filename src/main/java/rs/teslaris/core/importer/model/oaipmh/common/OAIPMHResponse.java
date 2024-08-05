@@ -12,7 +12,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-@XmlType(name = "TOAI-PMH", propOrder = {"responseDate", "request", "listRecords"})
+@XmlType(name = "TOAI-PMH", propOrder = {
+    "responseDate",
+    "request",
+    "identify",
+    "listSets",
+    "listMetadataFormats",
+    "listRecords",
+    "getRecord"
+})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "OAI-PMH")
 @Getter
@@ -22,8 +30,20 @@ import lombok.ToString;
 @ToString
 public class OAIPMHResponse {
 
+    @XmlElement(name = "Identify")
+    private Identify identify;
+
+    @XmlElement(name = "ListSets")
+    private ListSets listSets;
+
+    @XmlElement(name = "ListMetadataFormats")
+    private ListMetadataFormats listMetadataFormats;
+
     @XmlElement(name = "ListRecords")
     private ListRecords listRecords;
+
+    @XmlElement(name = "GetRecord")
+    private GetRecord getRecord;
 
     @XmlElement(name = "responseDate")
     private Date responseDate;

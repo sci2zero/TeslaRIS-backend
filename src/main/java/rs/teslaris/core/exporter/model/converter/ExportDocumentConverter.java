@@ -5,8 +5,8 @@ import java.util.Objects;
 import java.util.Set;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
+import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.exporter.model.common.ExportPublisher;
-import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -21,7 +21,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static ExportDocument toCommonExportModel(Dataset dataset) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(DocumentPublicationType.DATASET);
+        commonExportDocument.setType(ExportPublicationType.DATASET);
 
         setBaseFields(commonExportDocument, dataset);
         if (commonExportDocument.getDeleted()) {
@@ -42,7 +42,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static ExportDocument toCommonExportModel(Software software) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(DocumentPublicationType.SOFTWARE);
+        commonExportDocument.setType(ExportPublicationType.SOFTWARE);
 
         setBaseFields(commonExportDocument, software);
         if (commonExportDocument.getDeleted()) {
@@ -63,7 +63,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static ExportDocument toCommonExportModel(Patent patent) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(DocumentPublicationType.PATENT);
+        commonExportDocument.setType(ExportPublicationType.PATENT);
 
         setBaseFields(commonExportDocument, patent);
         if (commonExportDocument.getDeleted()) {
@@ -84,7 +84,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static ExportDocument toCommonExportModel(JournalPublication journalPublication) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(DocumentPublicationType.JOURNAL_PUBLICATION);
+        commonExportDocument.setType(ExportPublicationType.JOURNAL_PUBLICATION);
 
         setBaseFields(commonExportDocument, journalPublication);
         if (commonExportDocument.getDeleted()) {
@@ -110,7 +110,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static ExportDocument toCommonExportModel(Proceedings proceedings) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(DocumentPublicationType.PROCEEDINGS);
+        commonExportDocument.setType(ExportPublicationType.PROCEEDINGS);
 
         setBaseFields(commonExportDocument, proceedings);
         if (commonExportDocument.getDeleted()) {
@@ -143,7 +143,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
     public static ExportDocument toCommonExportModel(
         ProceedingsPublication proceedingsPublication) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+        commonExportDocument.setType(ExportPublicationType.PROCEEDINGS_PUBLICATION);
 
         setBaseFields(commonExportDocument, proceedingsPublication);
         if (commonExportDocument.getDeleted()) {
@@ -167,7 +167,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static ExportDocument toCommonExportModel(Monograph monograph) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(DocumentPublicationType.MONOGRAPH);
+        commonExportDocument.setType(ExportPublicationType.MONOGRAPH);
 
         setBaseFields(commonExportDocument, monograph);
         if (commonExportDocument.getDeleted()) {

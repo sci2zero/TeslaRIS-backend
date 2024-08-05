@@ -4,15 +4,15 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
-import rs.teslaris.core.exporter.model.common.ExportPublicationSeries;
+import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 public class ExportPublicationSeriesConverter extends ExportConverterBase {
 
-    public static ExportPublicationSeries toCommonExportModel(
+    public static ExportDocument toCommonExportModel(
         PublicationSeries publicationSeries) {
-        var commonExportPublicationSeries = new ExportPublicationSeries();
+        var commonExportPublicationSeries = new ExportDocument();
 
         setBaseFields(commonExportPublicationSeries, publicationSeries);
         if (commonExportPublicationSeries.getDeleted()) {

@@ -22,9 +22,11 @@ import rs.teslaris.core.exporter.model.converter.ExportDocumentConverter;
 import rs.teslaris.core.exporter.model.converter.ExportEventConverter;
 import rs.teslaris.core.exporter.model.converter.ExportOrganisationUnitConverter;
 import rs.teslaris.core.exporter.model.converter.ExportPersonConverter;
+import rs.teslaris.core.exporter.model.converter.ExportPublicationSeriesConverter;
 import rs.teslaris.core.exporter.service.interfaces.CommonExportService;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.Patent;
@@ -36,6 +38,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
@@ -62,6 +65,8 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final SoftwareRepository softwareRepository;
 
     private final PatentRepository patentRepository;
+
+    private final JournalRepository journalRepository;
 
     private final JournalPublicationRepository journalPublicationRepository;
 
@@ -129,6 +134,13 @@ public class CommonExportServiceImpl implements CommonExportService {
             Patent::getId
         );
 
+        var journalFuture = exportEntitiesAsync(
+            journalRepository::findAllModifiedInLast24Hours,
+            ExportPublicationSeriesConverter::toCommonExportModel,
+            ExportDocument.class,
+            Journal::getId
+        );
+
         var journalPublicationFuture = exportEntitiesAsync(
             journalPublicationRepository::findAllModifiedInLast24Hours,
             ExportDocumentConverter::toCommonExportModel,
@@ -159,8 +171,9 @@ public class CommonExportServiceImpl implements CommonExportService {
 
         CompletableFuture.allOf(
             datasetFuture, softwareFuture, patentFuture,
-            journalPublicationFuture, proceedingsFuture,
-            proceedingsPublicationFuture, monographFuture
+            journalFuture, journalPublicationFuture,
+            proceedingsFuture, proceedingsPublicationFuture,
+            monographFuture
         ).join();
     }
 

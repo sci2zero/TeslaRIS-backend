@@ -138,6 +138,9 @@ public class SecurityConfiguration {
                 // ERROR
                 .requestMatchers("/error").permitAll()
 
+                // EXPORT
+                .requestMatchers(HttpMethod.GET, "/OAIHandlerOpenAIRECRIS").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );
