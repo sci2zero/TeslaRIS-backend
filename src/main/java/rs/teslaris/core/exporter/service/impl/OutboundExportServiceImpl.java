@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
+import rs.teslaris.core.exporter.util.ExportDataFormat;
 import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
 import rs.teslaris.core.importer.model.oaipmh.common.Description;
 import rs.teslaris.core.importer.model.oaipmh.common.GetRecord;
@@ -19,8 +20,10 @@ import rs.teslaris.core.importer.model.oaipmh.common.Identify;
 import rs.teslaris.core.importer.model.oaipmh.common.ListMetadataFormats;
 import rs.teslaris.core.importer.model.oaipmh.common.ListRecords;
 import rs.teslaris.core.importer.model.oaipmh.common.ListSets;
+import rs.teslaris.core.importer.model.oaipmh.common.MetadataFormat;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIIdentifier;
 import rs.teslaris.core.importer.model.oaipmh.common.ServiceDescription;
+import rs.teslaris.core.importer.model.oaipmh.common.Set;
 import rs.teslaris.core.importer.model.oaipmh.common.Toolkit;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 
@@ -131,11 +134,45 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
     @Override
     public ListSets listSetsForHandler(String handler) {
-        return null;
+        var handlerConfiguration =
+            ExportHandlersConfigurationLoader.getHandlerByIdentifier(handler);
+        if (handlerConfiguration.isEmpty()) {
+            throw new LoadingException("No handler with identifier " + handler);
+        }
+
+        var listSets = new ListSets();
+        handlerConfiguration.get().sets().forEach(set -> {
+            var newSet = new Set();
+            newSet.setSetName(set.setName());
+            newSet.setSetSpec(set.setSpec());
+            listSets.getSet().add(newSet);
+        });
+
+        return listSets;
     }
 
     @Override
     public ListMetadataFormats listMetadataFormatsForHandler(String handler) {
-        return null;
+        var handlerConfiguration =
+            ExportHandlersConfigurationLoader.getHandlerByIdentifier(handler);
+        if (handlerConfiguration.isEmpty()) {
+            throw new LoadingException("No handler with identifier " + handler);
+        }
+
+        var listMetadataFormats = new ListMetadataFormats();
+        handlerConfiguration.get().metadataFormats().forEach(format -> {
+            var newMetadataFormat = new MetadataFormat();
+            var exportFormatEnum = ExportDataFormat.fromStringValue(format);
+            newMetadataFormat.setMetadataPrefix(format);
+            newMetadataFormat.setSchema(exportFormatEnum.getSchema());
+            newMetadataFormat.setMetadataNamespace(exportFormatEnum.getNamespace());
+            listMetadataFormats.getMetadataFormats().add(newMetadataFormat);
+        });
+
+        return listMetadataFormats;
+    }
+
+    private void setCommonMetadataFormatFields(String format) {
+
     }
 }

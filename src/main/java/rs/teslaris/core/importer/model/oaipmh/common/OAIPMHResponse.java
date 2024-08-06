@@ -19,7 +19,8 @@ import lombok.ToString;
     "listSets",
     "listMetadataFormats",
     "listRecords",
-    "getRecord"
+    "getRecord",
+    "error"
 })
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "OAI-PMH")
@@ -50,4 +51,7 @@ public class OAIPMHResponse {
 
     @XmlElement(name = "request")
     private Request request;
+
+    @XmlElement(name = "error")
+    private OAIError error;
 }

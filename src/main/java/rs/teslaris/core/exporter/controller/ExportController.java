@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
 import rs.teslaris.core.exporter.util.ExportDataFormat;
+import rs.teslaris.core.importer.model.oaipmh.common.OAIError;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.Request;
 
@@ -68,6 +69,8 @@ public class ExportController {
                     outboundExportService.listRequestedRecord(handlerName, metadataPrefix,
                         identifier));
                 break;
+            default:
+                response.setError(new OAIError("badVerb", "Illegal verb"));
         }
 
         return response;
