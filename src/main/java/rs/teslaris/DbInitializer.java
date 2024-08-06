@@ -582,5 +582,12 @@ public class DbInitializer implements ApplicationRunner {
         eventsRelation2.setTarget(conferenceEvent3);
         eventsRelation2.setEventsRelationType(EventsRelationType.BELONGS_TO_SERIES);
         eventsRelationRepository.save(eventsRelation2);
+
+        var conferenceEvent4 = new Conference();
+        conferenceEvent4.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija4", 1)));
+        conferenceEvent4.setDateFrom(LocalDate.of(2022, 7, 17));
+        conferenceEvent4.setDateTo(LocalDate.of(2022, 7, 22));
+        conferenceEvent4.setSerialEvent(false);
+        conferenceRepository.save(conferenceEvent4);
     }
 }
