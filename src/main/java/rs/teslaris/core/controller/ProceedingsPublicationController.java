@@ -57,6 +57,12 @@ public class ProceedingsPublicationController {
         return proceedingsPublicationService.findProceedingsForEvent(eventId, pageable);
     }
 
+    @GetMapping("/proceedings/{proceedingsId}")
+    public Page<DocumentPublicationIndex> readAllProceedingsPublicationsForProceedings(
+        @PathVariable Integer proceedingsId, Pageable pageable) {
+        return proceedingsPublicationService.findPublicationsInProceedings(proceedingsId, pageable);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")

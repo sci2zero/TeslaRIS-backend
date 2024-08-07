@@ -94,6 +94,13 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    public Page<DocumentPublicationIndex> findPublicationsInProceedings(Integer proceedingsId,
+                                                                        Pageable pageable) {
+        return documentPublicationIndexRepository.findByTypeAndProceedingsId(
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), proceedingsId, pageable);
+    }
+
+    @Override
     public ProceedingsPublication createProceedingsPublication(
         ProceedingsPublicationDTO proceedingsPublicationDTO, Boolean index) {
         var publication = new ProceedingsPublication();
@@ -148,12 +155,17 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         this.delete(proceedingsPublicationId);
     }
 
+    @Override
     public void indexProceedingsPublication(ProceedingsPublication publication,
                                             DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
 
         index.setEventId(publication.getProceedings().getEvent().getId());
         index.setType(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
+
+        if (Objects.nonNull(publication.getProceedings())) {
+            index.setProceedingsId(publication.getProceedings().getId());
+        }
 
         documentPublicationIndexRepository.save(index);
     }

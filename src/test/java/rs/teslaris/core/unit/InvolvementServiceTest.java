@@ -352,5 +352,4 @@ public class InvolvementServiceTest {
         // then
         assertEquals(2, result.size());
     }
-
 }
