@@ -1,10 +1,13 @@
 package rs.teslaris.core.exporter.model.converter;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.ExportOrganisationUnit;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.PartOf;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
@@ -32,6 +35,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             ExportMultilingualContentConverter.toCommonExportModel(organisationUnit.getName()));
         commonExportOU.setNameAbbreviation(organisationUnit.getNameAbbreviation());
         commonExportOU.setScopusAfid(organisationUnit.getScopusAfid());
+        commonExportOU.setOldId(organisationUnit.getOldId());
 
         var superOu = organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
         superOu.ifPresent(organisationUnitsRelation -> commonExportOU.setSuperOU(
@@ -57,5 +61,18 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         } while (superRelation.isPresent());
 
         return relations;
+    }
+
+    public static OrgUnit toOpenaireModel(ExportOrganisationUnit organisationUnit) {
+        var orgUnit = new OrgUnit();
+        orgUnit.setOldId("TESLARIS(" + organisationUnit.getDatabaseId() + ")");
+        orgUnit.setName(
+            ExportMultilingualContentConverter.toOpenaireModel(organisationUnit.getName()));
+        if (Objects.nonNull(organisationUnit.getSuperOU())) {
+            orgUnit.setPartOf(new PartOf(
+                ExportOrganisationUnitConverter.toOpenaireModel(organisationUnit.getSuperOU())));
+        }
+
+        return orgUnit;
     }
 }

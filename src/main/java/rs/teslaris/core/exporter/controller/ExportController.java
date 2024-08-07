@@ -1,7 +1,6 @@
 package rs.teslaris.core.exporter.controller;
 
 import java.util.Date;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
-import rs.teslaris.core.exporter.util.ExportDataFormat;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIError;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.Request;
@@ -27,14 +25,13 @@ public class ExportController {
     @GetMapping(value = "/OAIHandlerOpenAIRECRIS", produces = "application/xml")
     public OAIPMHResponse handleOAIOpenAIRECRIS(@RequestParam String verb,
                                                 @RequestParam(required = false)
-                                                ExportDataFormat metadataPrefix,
+                                                String metadataPrefix,
                                                 @RequestParam(required = false) String from,
                                                 @RequestParam(required = false) String until,
                                                 @RequestParam(required = false) String set,
                                                 @RequestParam(required = false) String identifier) {
-        return performExport("OAIHandlerOpenAIRECRIS", verb,
-            Objects.nonNull(metadataPrefix) ? metadataPrefix.getStringValue() : "", from,
-            until, set, identifier);
+        return performExport("OAIHandlerOpenAIRECRIS", verb, metadataPrefix, from, until, set,
+            identifier);
     }
 
     private OAIPMHResponse performExport(String handlerName,
@@ -62,12 +59,12 @@ public class ExportController {
             case "ListRecords":
                 response.setListRecords(
                     outboundExportService.listRequestedRecords(handlerName, metadataPrefix, from,
-                        until, set));
+                        until, set, response));
                 break;
             case "GetRecord":
                 response.setGetRecord(
                     outboundExportService.listRequestedRecord(handlerName, metadataPrefix,
-                        identifier));
+                        identifier, response));
                 break;
             default:
                 response.setError(new OAIError("badVerb", "Illegal verb"));

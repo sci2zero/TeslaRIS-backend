@@ -54,6 +54,7 @@ public class ExportEventConverter extends ExportConverterBase {
             ExportMultilingualContentConverter.toCommonExportModel(event.getPlace()));
 
         commonExportEvent.getRelatedInstitutionIds().addAll(getRelatedInstitutions(event));
+        commonExportEvent.setOldId(event.getOldId());
     }
 
     private static Set<Integer> getRelatedInstitutions(Event event) {

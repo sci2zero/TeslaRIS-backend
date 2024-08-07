@@ -26,6 +26,7 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
                 publicationSeries.getNameAbbreviation()));
         commonExportPublicationSeries.setEIssn(publicationSeries.getEISSN());
         commonExportPublicationSeries.setPrintIssn(publicationSeries.getPrintISSN());
+        commonExportPublicationSeries.setOldId(publicationSeries.getOldId());
 
         publicationSeries.getContributions().forEach(contribution -> {
             if (contribution.getContributionType()

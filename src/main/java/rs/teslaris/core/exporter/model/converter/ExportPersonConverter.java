@@ -1,11 +1,16 @@
 package rs.teslaris.core.exporter.model.converter;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import rs.teslaris.core.exporter.model.common.ExportPerson;
 import rs.teslaris.core.exporter.model.common.ExportPersonName;
+import rs.teslaris.core.importer.model.oaipmh.person.Affiliation;
+import rs.teslaris.core.importer.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.Sex;
 
 public class ExportPersonConverter extends ExportConverterBase {
 
@@ -28,6 +33,7 @@ public class ExportPersonConverter extends ExportConverterBase {
         commonExportPerson.setSex(person.getPersonalInfo().getSex());
         commonExportPerson.getElectronicAddresses()
             .add(person.getPersonalInfo().getContact().getContactEmail());
+        commonExportPerson.setOldId(person.getOldId());
 
         person.getInvolvements().forEach(involvement -> {
             if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
@@ -52,5 +58,34 @@ public class ExportPersonConverter extends ExportConverterBase {
             }
         });
         return relations;
+    }
+
+    public static rs.teslaris.core.importer.model.oaipmh.person.Person toOpenaireModel(
+        ExportPerson exportPerson) {
+        var openairePerson = new rs.teslaris.core.importer.model.oaipmh.person.Person();
+        openairePerson.setOldId("TESLARIS(" + exportPerson.getDatabaseId() + ")");
+        openairePerson.setScopusAuthorId(exportPerson.getScopusAuthorId());
+        openairePerson.setOrcid(exportPerson.getOrcid());
+        openairePerson.setPersonName(new PersonName(exportPerson.getName().getLastName(),
+            exportPerson.getName().getFirstName()));
+
+        openairePerson.setElectronicAddresses(new ArrayList<>());
+        exportPerson.getElectronicAddresses().forEach(elAddress -> {
+            openairePerson.getElectronicAddresses().add(elAddress);
+        });
+
+        if (Objects.nonNull(exportPerson.getSex())) {
+            openairePerson.setGender(exportPerson.getSex().equals(Sex.MALE) ? "M" : "F");
+        }
+
+        if (exportPerson.getEmploymentInstitutions().size() > 0) {
+            openairePerson.setAffiliation(new Affiliation(new ArrayList<>()));
+            exportPerson.getEmploymentInstitutions().forEach(employmentInstitution -> {
+                openairePerson.getAffiliation().getOrgUnits()
+                    .add(ExportOrganisationUnitConverter.toOpenaireModel(employmentInstitution));
+            });
+        }
+
+        return openairePerson;
     }
 }

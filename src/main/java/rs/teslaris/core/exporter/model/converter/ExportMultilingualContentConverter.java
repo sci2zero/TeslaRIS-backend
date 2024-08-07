@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
+import rs.teslaris.core.importer.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 public class ExportMultilingualContentConverter {
@@ -22,5 +23,19 @@ public class ExportMultilingualContentConverter {
         });
 
         return commonExportMC;
+    }
+
+    public static List<MultilingualContent> toOpenaireModel(
+        List<ExportMultilingualContent> multilingualContent) {
+        var openaireMCList = new ArrayList<MultilingualContent>();
+
+        multilingualContent.forEach(mc -> {
+            var openaireMC = new MultilingualContent();
+            openaireMC.setLang(mc.getLanguageTag());
+            openaireMC.setValue(mc.getContent());
+            openaireMCList.add(openaireMC);
+        });
+
+        return openaireMCList;
     }
 }

@@ -1,6 +1,7 @@
 package rs.teslaris.core.exporter.service.impl;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -10,21 +11,39 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.exporter.model.common.BaseExportEntity;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
+import rs.teslaris.core.exporter.model.common.ExportEvent;
+import rs.teslaris.core.exporter.model.common.ExportOrganisationUnit;
+import rs.teslaris.core.exporter.model.common.ExportPerson;
+import rs.teslaris.core.exporter.model.converter.ExportDocumentConverter;
+import rs.teslaris.core.exporter.model.converter.ExportEventConverter;
+import rs.teslaris.core.exporter.model.converter.ExportOrganisationUnitConverter;
+import rs.teslaris.core.exporter.model.converter.ExportPersonConverter;
 import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
 import rs.teslaris.core.exporter.util.ExportDataFormat;
 import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
+import rs.teslaris.core.exporter.util.OAIErrorFactory;
 import rs.teslaris.core.importer.model.oaipmh.common.Description;
 import rs.teslaris.core.importer.model.oaipmh.common.GetRecord;
+import rs.teslaris.core.importer.model.oaipmh.common.Header;
 import rs.teslaris.core.importer.model.oaipmh.common.Identify;
 import rs.teslaris.core.importer.model.oaipmh.common.ListMetadataFormats;
 import rs.teslaris.core.importer.model.oaipmh.common.ListRecords;
 import rs.teslaris.core.importer.model.oaipmh.common.ListSets;
+import rs.teslaris.core.importer.model.oaipmh.common.Metadata;
 import rs.teslaris.core.importer.model.oaipmh.common.MetadataFormat;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIIdentifier;
+import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
+import rs.teslaris.core.importer.model.oaipmh.common.Record;
 import rs.teslaris.core.importer.model.oaipmh.common.ServiceDescription;
 import rs.teslaris.core.importer.model.oaipmh.common.Set;
 import rs.teslaris.core.importer.model.oaipmh.common.Toolkit;
+import rs.teslaris.core.importer.model.oaipmh.event.Event;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
+import rs.teslaris.core.importer.model.oaipmh.person.Person;
+import rs.teslaris.core.importer.model.oaipmh.publication.AbstractPublication;
+import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 
 @Service
@@ -45,16 +64,170 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     @Value("${client.address}")
     private String frontendURL;
 
+
     @Override
     public ListRecords listRequestedRecords(String handler, String metadataPrefix,
-                                            String from, String until, String set) {
+                                            String from, String until, String set,
+                                            OAIPMHResponse response) {
         return null;
     }
 
     @Override
     public GetRecord listRequestedRecord(String handler, String metadataPrefix,
-                                         String identifier) {
-        return null;
+                                         String identifier, OAIPMHResponse response) {
+        if (Objects.isNull(metadataPrefix) || metadataPrefix.isBlank() ||
+            Objects.isNull(identifier) || identifier.isBlank()) {
+            response.setError(OAIErrorFactory.constructBadArgumentError());
+            return null;
+        }
+
+        var handlerConfiguration =
+            ExportHandlersConfigurationLoader.getHandlerByIdentifier(handler);
+        if (handlerConfiguration.isEmpty()) {
+            throw new LoadingException("No handler with identifier " + handler);
+        }
+
+        var getRecord = new GetRecord();
+        var record = new Record();
+        var metadata = new Metadata();
+        var metadataFormat = ExportDataFormat.fromStringValue(metadataPrefix);
+
+        Class<?> recordClass = null;
+        Class<?> converterClass = null;
+
+        String set;
+        if (identifier.contains("/")) {
+            set = identifier.split("/")[0].split(":")[2];
+            switch (set) {
+                case "Publications", "Products", "Patents":
+                    recordClass = ExportDocument.class;
+                    converterClass = ExportDocumentConverter.class;
+                    break;
+                case "Persons":
+                    recordClass = ExportPerson.class;
+                    converterClass = ExportPersonConverter.class;
+                    break;
+                case "Projects":
+                    // TODO: to be implemented
+                    break;
+                case "Events":
+                    recordClass = ExportEvent.class;
+                    converterClass = ExportEventConverter.class;
+                    break;
+                case "Orgunits":
+                    recordClass = ExportOrganisationUnit.class;
+                    converterClass = ExportOrganisationUnitConverter.class;
+                    break;
+                case "Funding":
+                    // TODO: to be implemented
+                    break;
+                case "Equipments":
+                    // TODO: to be implemented
+                    break;
+                default:
+                    recordClass = ExportDocument.class; // Default case if none match
+                    converterClass = ExportDocumentConverter.class;
+                    break;
+            }
+        } else {
+            set = "Publications";
+            recordClass = ExportDocument.class;
+            converterClass = ExportDocumentConverter.class;
+        }
+
+        if (Objects.isNull(recordClass)) {
+            response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
+            return null;
+        }
+
+        var requestedRecordOptional =
+            findRequestedRecord(identifier, recordClass, handlerConfiguration.get());
+        if (requestedRecordOptional.isEmpty()) {
+            response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
+            return null;
+        }
+
+        setMetadataFieldsInGivenFormat(set, recordClass, converterClass, metadataFormat, metadata,
+            requestedRecordOptional.get());
+
+        record.setHeader(constructOaiResponseHeader(handlerConfiguration.get(),
+            (BaseExportEntity) requestedRecordOptional.get(), identifier, set));
+        record.setMetadata(metadata);
+        getRecord.setRecord(record);
+        return getRecord;
+    }
+
+    private Header constructOaiResponseHeader(
+        ExportHandlersConfigurationLoader.Handler handlerConfig, BaseExportEntity exportEntity,
+        String identifier, String identifierSetSpec) {
+        var header = new Header();
+        if (exportEntity.getDeleted()) {
+            header.setStatus("deleted");
+        }
+        header.setIdentifier(identifier);
+        header.setDatestamp(exportEntity.getLastUpdated()); // TODO: is this right
+
+        handlerConfig.sets().forEach(setConfigs -> {
+            if (setConfigs.identifierSetSpec().equals(identifierSetSpec) ||
+                setConfigs.setSpec().equals(identifierSetSpec)) {
+                header.setSetSpec(setConfigs.setSpec());
+            }
+        });
+
+        return header;
+    }
+
+    private <E> void setMetadataFieldsInGivenFormat(String set, Class<?> recordClass,
+                                                    Class<?> converterClass,
+                                                    ExportDataFormat metadataFormat,
+                                                    Metadata metadata, E requestedRecord) {
+        var conversionFunctionName = switch (metadataFormat) {
+            case OAI_CERIF_OPENAIRE -> "toOpenaireModel";
+            case DUBLIN_CORE -> "toDCModel";
+        };
+
+        try {
+            var conversionMethod = converterClass.getMethod(conversionFunctionName, recordClass);
+            Object convertedEntity = conversionMethod.invoke(null, requestedRecord);
+
+            switch (set) {
+                case "Publications":
+                case "Products":
+                case "Patents":
+                    metadata.setPublication((AbstractPublication) convertedEntity);
+                    break;
+                case "Persons":
+                    metadata.setPerson((Person) convertedEntity);
+                    break;
+                case "Events":
+                    metadata.setEvent((Event) convertedEntity);
+                    break;
+                case "Orgunits":
+                    metadata.setOrgUnit((OrgUnit) convertedEntity);
+                    break;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Conversion method invocation failed", e);
+        }
+    }
+
+    private <E> Optional<E> findRequestedRecord(String identifier, Class<E> entityClass,
+                                                ExportHandlersConfigurationLoader.Handler handlerConfiguration) {
+        Query query = new Query();
+
+        if (identifier.contains("BISIS")) {
+            query.addCriteria(
+                Criteria.where("oldId").is(OAIPMHParseUtility.parseBISISID(identifier)));
+        } else if (identifier.contains("TESLARIS")) {
+            query.addCriteria(
+                Criteria.where("databaseId").is(OAIPMHParseUtility.parseBISISID(identifier)));
+        }
+
+        query.addCriteria(Criteria.where("relatedInstitutionIds")
+            .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+        query.limit(1);
+
+        return Optional.ofNullable(mongoTemplate.findOne(query, entityClass));
     }
 
     @Override
@@ -107,7 +280,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         return identify;
     }
 
-    public Optional<ExportDocument> findEarliestDocument(int internalInstitutionId) {
+    private Optional<ExportDocument> findEarliestDocument(int internalInstitutionId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("relatedInstitutionIds").in(internalInstitutionId));
         query.with(Sort.by(Sort.Direction.ASC, "documentDate"));
@@ -120,7 +293,6 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     @NotNull
     private ServiceDescription getServiceDescription(Identify identify,
                                                      ExportHandlersConfigurationLoader.Handler handler) {
-
         var service = new ServiceDescription();
         service.setCompatibility(
             "https://www.openaire.eu/cerif-profile/vocab/OpenAIRE_Service_Compatibility#1.1");
@@ -162,17 +334,17 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var listMetadataFormats = new ListMetadataFormats();
         handlerConfiguration.get().metadataFormats().forEach(format -> {
             var newMetadataFormat = new MetadataFormat();
-            var exportFormatEnum = ExportDataFormat.fromStringValue(format);
             newMetadataFormat.setMetadataPrefix(format);
-            newMetadataFormat.setSchema(exportFormatEnum.getSchema());
-            newMetadataFormat.setMetadataNamespace(exportFormatEnum.getNamespace());
+            setCommonMetadataFormatFields(format, newMetadataFormat);
             listMetadataFormats.getMetadataFormats().add(newMetadataFormat);
         });
 
         return listMetadataFormats;
     }
 
-    private void setCommonMetadataFormatFields(String format) {
-
+    private void setCommonMetadataFormatFields(String format, MetadataFormat metadataFormat) {
+        var exportFormatEnum = ExportDataFormat.fromStringValue(format);
+        metadataFormat.setSchema(exportFormatEnum.getSchema());
+        metadataFormat.setMetadataNamespace(exportFormatEnum.getNamespace());
     }
 }

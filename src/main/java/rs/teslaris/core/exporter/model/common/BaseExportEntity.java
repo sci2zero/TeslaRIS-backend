@@ -22,6 +22,9 @@ public abstract class BaseExportEntity {
     @Field("database_id")
     private Integer databaseId;
 
+    @Field("old_id")
+    private Integer oldId;
+
     @Field("deleted")
     private Boolean deleted = false;
 
