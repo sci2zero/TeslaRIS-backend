@@ -87,8 +87,15 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             throw new LoadingException("No handler with identifier " + handler);
         }
 
+        if (handlerConfiguration.get().metadataFormats().stream()
+            .noneMatch(format -> format.equals(metadataPrefix))) {
+            response.setError(OAIErrorFactory.constructFormatError(metadataPrefix));
+            return null;
+        }
+
         var getRecord = new GetRecord();
         var record = new Record();
+        getRecord.setRecord(record);
         var metadata = new Metadata();
         var metadataFormat = ExportDataFormat.fromStringValue(metadataPrefix);
 
@@ -98,6 +105,15 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         String set;
         if (identifier.contains("/")) {
             set = identifier.split("/")[0].split(":")[2];
+
+            var isSetMatched = handlerConfiguration.get().sets().stream()
+                .anyMatch(setConfiguration -> setConfiguration.identifierSetSpec().equals(set));
+
+            if (!isSetMatched) {
+                response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
+                return null;
+            }
+
             switch (set) {
                 case "Publications", "Products", "Patents":
                     recordClass = ExportDocument.class;
@@ -147,13 +163,18 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             return null;
         }
 
+        record.setHeader(constructOaiResponseHeader(handlerConfiguration.get(),
+            (BaseExportEntity) requestedRecordOptional.get(), identifier, set));
+
+        if (Objects.nonNull(record.getHeader().getStatus()) &&
+            record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
+            return getRecord;
+        }
+
         setMetadataFieldsInGivenFormat(set, recordClass, converterClass, metadataFormat, metadata,
             requestedRecordOptional.get());
 
-        record.setHeader(constructOaiResponseHeader(handlerConfiguration.get(),
-            (BaseExportEntity) requestedRecordOptional.get(), identifier, set));
         record.setMetadata(metadata);
-        getRecord.setRecord(record);
         return getRecord;
     }
 

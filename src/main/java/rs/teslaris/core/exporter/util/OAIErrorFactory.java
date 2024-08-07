@@ -13,4 +13,14 @@ public class OAIErrorFactory {
         return new OAIError("idDoesNotExist",
             "\"" + identifier + "\" is unknown or illegal in this repository");
     }
+
+    public static OAIError constructFormatError(String format) {
+        return new OAIError("cannotDisseminateFormat",
+            "\"" + format + "\" is not supported by the item or by the repository");
+    }
+
+    public static OAIError constructNoRecordsMatchError() {
+        return new OAIError("noRecordsMatch",
+            "The combination of the values of the from, until, set, and metadataPrefix arguments results in an empty list.");
+    }
 }
