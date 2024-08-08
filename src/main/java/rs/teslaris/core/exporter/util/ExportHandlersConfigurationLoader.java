@@ -52,7 +52,8 @@ public class ExportHandlersConfigurationLoader {
     public record Set(
         @JsonProperty("setSpec") String setSpec,
         @JsonProperty("setName") String setName,
-        @JsonProperty("identifierSetSpec") String identifierSetSpec
+        @JsonProperty("identifierSetSpec") String identifierSetSpec,
+        @JsonProperty("commonEntityClass") String commonEntityClass
     ) {
     }
 }

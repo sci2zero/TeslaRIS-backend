@@ -1,6 +1,7 @@
 package rs.teslaris.core.exporter.controller;
 
 import java.util.Date;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,9 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
-import rs.teslaris.core.importer.model.oaipmh.common.OAIError;
+import rs.teslaris.core.exporter.util.OAIErrorFactory;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.Request;
+import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 
 @RestController
 @RequestMapping
@@ -29,9 +31,11 @@ public class ExportController {
                                                 @RequestParam(required = false) String from,
                                                 @RequestParam(required = false) String until,
                                                 @RequestParam(required = false) String set,
-                                                @RequestParam(required = false) String identifier) {
+                                                @RequestParam(required = false) String identifier,
+                                                @RequestParam(required = false)
+                                                String resumptionToken) {
         return performExport("OAIHandlerOpenAIRECRIS", verb, metadataPrefix, from, until, set,
-            identifier);
+            identifier, resumptionToken);
     }
 
     private OAIPMHResponse performExport(String handlerName,
@@ -40,7 +44,8 @@ public class ExportController {
                                          String from,
                                          String until,
                                          String set,
-                                         String identifier) {
+                                         String identifier,
+                                         String resumptionToken) {
         var response = new OAIPMHResponse();
         response.setResponseDate(new Date());
         response.setRequest(new Request(verb, set, metadataPrefix, baseUrl + "/" + handlerName));
@@ -57,9 +62,25 @@ public class ExportController {
                     outboundExportService.listMetadataFormatsForHandler(handlerName));
                 break;
             case "ListRecords":
-                response.setListRecords(
-                    outboundExportService.listRequestedRecords(handlerName, metadataPrefix, from,
-                        until, set, response));
+                if (Objects.nonNull(resumptionToken)) {
+                    OAIPMHParseUtility.ResumptionTokenData dataFromToken = null;
+                    try {
+                        dataFromToken = OAIPMHParseUtility.parseResumptionToken(resumptionToken);
+                    } catch (IllegalArgumentException e) {
+                        response.setError(OAIErrorFactory.constructBadResumptionTokenError());
+                        break;
+                    }
+
+                    response.setListRecords(
+                        outboundExportService.listRequestedRecords(handlerName,
+                            dataFromToken.format(),
+                            dataFromToken.from(), dataFromToken.until(), dataFromToken.set(),
+                            response, dataFromToken.page()));
+                } else {
+                    response.setListRecords(
+                        outboundExportService.listRequestedRecords(handlerName, metadataPrefix,
+                            from, until, set, response, 0));
+                }
                 break;
             case "GetRecord":
                 response.setGetRecord(
@@ -67,7 +88,7 @@ public class ExportController {
                         identifier, response));
                 break;
             default:
-                response.setError(new OAIError("badVerb", "Illegal verb"));
+                response.setError(OAIErrorFactory.constructBadVerbError());
         }
 
         return response;

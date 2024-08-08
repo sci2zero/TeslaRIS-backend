@@ -2,54 +2,63 @@
   "handlers": [
     {
       "identifier": "OAIHandlerOpenAIRECRIS",
-      "internalInstitutionId": "3",
+      "internalInstitutionId": "2",
       "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
       "handlerDescription": "CERIF compliant CRIS system developed at Faculty of Sciences, University of Novi Sad",
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
           "setName": "OpenAIRE_CRIS_equipments",
-          "identifierSetSpec": "Equipments"
+          "identifierSetSpec": "Equipments",
+          "commonEntityClass": "NONE"
         },
         {
           "setSpec": "openaire_cris_events",
           "setName": "OpenAIRE_CRIS_events",
-          "identifierSetSpec": "Events"
+          "identifierSetSpec": "Events",
+          "commonEntityClass": "ExportEvent"
         },
         {
           "setSpec": "openaire_cris_funding",
           "setName": "OpenAIRE_CRIS_funding",
-          "identifierSetSpec": "Funding"
+          "identifierSetSpec": "Funding",
+          "commonEntityClass": "NONE"
         },
         {
           "setSpec": "openaire_cris_orgunits",
           "setName": "OpenAIRE_CRIS_orgunits",
-          "identifierSetSpec": "Orgunits"
+          "identifierSetSpec": "Orgunits",
+          "commonEntityClass": "ExportOrganisationUnit"
         },
         {
           "setSpec": "openaire_cris_patents",
           "setName": "OpenAIRE_CRIS_patents",
-          "identifierSetSpec": "Patents"
+          "identifierSetSpec": "Patents",
+          "commonEntityClass": "ExportDocument"
         },
         {
           "setSpec": "openaire_cris_persons",
           "setName": "OpenAIRE_CRIS_persons",
-          "identifierSetSpec": "Persons"
+          "identifierSetSpec": "Persons",
+          "commonEntityClass": "ExportPerson"
         },
         {
           "setSpec": "openaire_cris_products",
           "setName": "OpenAIRE_CRIS_products",
-          "identifierSetSpec": "Products"
+          "identifierSetSpec": "Products",
+          "commonEntityClass": "ExportDocument"
         },
         {
           "setSpec": "openaire_cris_projects",
           "setName": "OpenAIRE_CRIS_projects",
-          "identifierSetSpec": "Projects"
+          "identifierSetSpec": "Projects",
+          "commonEntityClass": "NONE"
         },
         {
           "setSpec": "openaire_cris_publications",
           "setName": "OpenAIRE_CRIS_publications",
-          "identifierSetSpec": "Publications"
+          "identifierSetSpec": "Publications",
+          "commonEntityClass": "ExportDocument"
         }
       ],
       "metadataFormats": [

@@ -1,11 +1,16 @@
 package rs.teslaris.core.exporter.service.impl;
 
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -36,6 +41,7 @@ import rs.teslaris.core.importer.model.oaipmh.common.MetadataFormat;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIIdentifier;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.Record;
+import rs.teslaris.core.importer.model.oaipmh.common.ResumptionToken;
 import rs.teslaris.core.importer.model.oaipmh.common.ServiceDescription;
 import rs.teslaris.core.importer.model.oaipmh.common.Set;
 import rs.teslaris.core.importer.model.oaipmh.common.Toolkit;
@@ -51,25 +57,95 @@ import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 public class OutboundExportServiceImpl implements OutboundExportService {
 
     private final MongoTemplate mongoTemplate;
-
+    private final int PAGE_SIZE = 10;
     @Value("${export.base.url}")
     private String baseUrl;
-
     @Value("${export.repo.name}")
     private String repositoryName;
-
     @Value("${export.admin.email}")
     private String adminEmail;
-
     @Value("${client.address}")
     private String frontendURL;
 
-
     @Override
     public ListRecords listRequestedRecords(String handler, String metadataPrefix,
-                                            String from, String until, String set,
-                                            OAIPMHResponse response) {
-        return null;
+                                            String from, String until, String requestedSet,
+                                            OAIPMHResponse response, int page) {
+        if (Objects.isNull(metadataPrefix) || metadataPrefix.isBlank() ||
+            Objects.isNull(requestedSet) || requestedSet.isBlank() ||
+            Objects.isNull(from) || from.isBlank() ||
+            Objects.isNull(until) || until.isBlank()) {
+            response.setError(OAIErrorFactory.constructBadArgumentError());
+            return null;
+        }
+
+        var handlerConfiguration =
+            ExportHandlersConfigurationLoader.getHandlerByIdentifier(handler);
+        if (handlerConfiguration.isEmpty()) {
+            throw new LoadingException("No handler with identifier " + handler);
+        }
+
+        if (handlerConfiguration.get().metadataFormats().stream()
+            .noneMatch(format -> format.equals(metadataPrefix))) {
+            response.setError(OAIErrorFactory.constructFormatError(metadataPrefix));
+            return null;
+        }
+
+        var matchedSet = handlerConfiguration.get().sets().stream()
+            .filter(set -> set.setSpec().equals(requestedSet))
+            .findFirst();
+
+        if (matchedSet.isEmpty() || matchedSet.get().commonEntityClass().equals("NONE")) {
+            response.setError(OAIErrorFactory.constructNoRecordsMatchError());
+            return null;
+        }
+
+        Class<?> recordClass = null;
+        Class<?> converterClass = null;
+
+        try {
+            recordClass = Class.forName(
+                "rs.teslaris.core.exporter.model.common." + matchedSet.get().commonEntityClass());
+            converterClass = Class.forName("rs.teslaris.core.exporter.model.converter." +
+                matchedSet.get().commonEntityClass() + "Converter");
+        } catch (ClassNotFoundException e) {
+            response.setError(OAIErrorFactory.constructNoRecordsMatchError());
+            return null;
+        }
+
+        var listRecords = new ListRecords();
+        listRecords.setRecords(new ArrayList<>());
+
+        var records =
+            findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get());
+
+        for (var fetchedRecordEntity : records) {
+            var record = new Record();
+            listRecords.getRecords().add(record);
+            var metadata = new Metadata();
+
+            record.setHeader(constructOaiResponseHeader(handlerConfiguration.get(),
+                (BaseExportEntity) fetchedRecordEntity,
+                "oai:CRIS.UNS:" + (!matchedSet.get().identifierSetSpec().isBlank() ?
+                    (matchedSet.get().identifierSetSpec() + "/") : "") + "(TESLARIS)" +
+                    ((BaseExportEntity) fetchedRecordEntity).getDatabaseId(),
+                matchedSet.get().identifierSetSpec()));
+
+            if (Objects.nonNull(record.getHeader().getStatus()) &&
+                record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
+                return listRecords;
+            }
+
+            setMetadataFieldsInGivenFormat(matchedSet.get().identifierSetSpec(), recordClass,
+                converterClass, ExportDataFormat.fromStringValue(metadataPrefix), metadata,
+                fetchedRecordEntity);
+
+            record.setMetadata(metadata);
+        }
+
+        listRecords.setResumptionToken(
+            constructResumptionToken(from, until, 0, requestedSet, metadataPrefix));
+        return listRecords;
     }
 
     @Override
@@ -251,6 +327,22 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         return Optional.ofNullable(mongoTemplate.findOne(query, entityClass));
     }
 
+    private <E> List<E> findRequestedRecords(Class<E> entityClass, String from, String until,
+                                             int page,
+                                             ExportHandlersConfigurationLoader.Handler handlerConfiguration) {
+        Query query = new Query();
+
+        query.addCriteria(Criteria.where("last_updated").gte(Date.valueOf(
+                LocalDate.parse(from, DateTimeFormatter.ISO_DATE)))
+            .lte(Date.valueOf(
+                LocalDate.parse(until, DateTimeFormatter.ISO_DATE))));
+        query.addCriteria(Criteria.where("relatedInstitutionIds")
+            .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+
+        query.with(PageRequest.of(page, PAGE_SIZE));
+        return mongoTemplate.find(query, entityClass);
+    }
+
     @Override
     public Identify identifyHandler(String handler) {
         var handlerConfiguration =
@@ -367,5 +459,11 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var exportFormatEnum = ExportDataFormat.fromStringValue(format);
         metadataFormat.setSchema(exportFormatEnum.getSchema());
         metadataFormat.setMetadataNamespace(exportFormatEnum.getNamespace());
+    }
+
+    private ResumptionToken constructResumptionToken(String from, String until, int page,
+                                                     String set, String format) {
+        return new ResumptionToken(from + "!" + until + "!" + set + "!" + page + "!" + format, null,
+            "" + page * PAGE_SIZE); // When to expire
     }
 }

@@ -23,4 +23,13 @@ public class OAIErrorFactory {
         return new OAIError("noRecordsMatch",
             "The combination of the values of the from, until, set, and metadataPrefix arguments results in an empty list.");
     }
+
+    public static OAIError constructBadResumptionTokenError() {
+        return new OAIError("badResumptionToken",
+            "The value of the resumptionToken argument is invalid or expired");
+    }
+
+    public static OAIError constructBadVerbError() {
+        return new OAIError("badVerb", "Illegal verb");
+    }
 }

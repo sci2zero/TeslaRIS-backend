@@ -12,7 +12,7 @@ import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 public interface OutboundExportService {
 
     ListRecords listRequestedRecords(String handler, String metadataPrefix, String from,
-                                     String until, String set, OAIPMHResponse response);
+                                     String until, String set, OAIPMHResponse response, int page);
 
     GetRecord listRequestedRecord(String handler, String metadataPrefix,
                                   String identifier, OAIPMHResponse response);

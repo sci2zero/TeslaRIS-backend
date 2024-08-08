@@ -78,7 +78,7 @@ public class ExportPersonConverter extends ExportConverterBase {
             openairePerson.setGender(exportPerson.getSex().equals(Sex.MALE) ? "M" : "F");
         }
 
-        if (exportPerson.getEmploymentInstitutions().size() > 0) {
+        if (!exportPerson.getEmploymentInstitutions().isEmpty()) {
             openairePerson.setAffiliation(new Affiliation(new ArrayList<>()));
             exportPerson.getEmploymentInstitutions().forEach(employmentInstitution -> {
                 openairePerson.getAffiliation().getOrgUnits()
