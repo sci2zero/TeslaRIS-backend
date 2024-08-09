@@ -144,7 +144,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         }
 
         listRecords.setResumptionToken(
-            constructResumptionToken(from, until, 0, requestedSet, metadataPrefix));
+            constructResumptionToken(from, until, page, requestedSet, metadataPrefix));
         return listRecords;
     }
 
@@ -320,8 +320,13 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 Criteria.where("databaseId").is(OAIPMHParseUtility.parseBISISID(identifier)));
         }
 
-        query.addCriteria(Criteria.where("relatedInstitutionIds")
-            .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+        if (handlerConfiguration.exportOnlyActiveEmployees()) {
+            query.addCriteria(Criteria.where("activelyRelatedInstitutionIds")
+                .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+        } else {
+            query.addCriteria(Criteria.where("relatedInstitutionIds")
+                .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+        }
         query.limit(1);
 
         return Optional.ofNullable(mongoTemplate.findOne(query, entityClass));
@@ -336,8 +341,14 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 LocalDate.parse(from, DateTimeFormatter.ISO_DATE)))
             .lte(Date.valueOf(
                 LocalDate.parse(until, DateTimeFormatter.ISO_DATE))));
-        query.addCriteria(Criteria.where("relatedInstitutionIds")
-            .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+
+        if (handlerConfiguration.exportOnlyActiveEmployees()) {
+            query.addCriteria(Criteria.where("activelyRelatedInstitutionIds")
+                .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+        } else {
+            query.addCriteria(Criteria.where("relatedInstitutionIds")
+                .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+        }
 
         query.with(PageRequest.of(page, PAGE_SIZE));
         return mongoTemplate.find(query, entityClass);
@@ -463,7 +474,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
     private ResumptionToken constructResumptionToken(String from, String until, int page,
                                                      String set, String format) {
-        return new ResumptionToken(from + "!" + until + "!" + set + "!" + page + "!" + format, null,
+        return new ResumptionToken(from + "!" + until + "!" + set + "!" + (page + 1) + "!" + format,
+            null,
             "" + page * PAGE_SIZE); // When to expire
     }
 }

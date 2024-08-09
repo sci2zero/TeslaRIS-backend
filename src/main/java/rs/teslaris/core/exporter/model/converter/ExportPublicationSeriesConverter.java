@@ -48,16 +48,19 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
         });
 
         commonExportPublicationSeries.getRelatedInstitutionIds()
-            .addAll(getRelatedInstitutions(publicationSeries));
+            .addAll(getRelatedInstitutions(publicationSeries, false));
+        commonExportPublicationSeries.getActivelyRelatedInstitutionIds()
+            .addAll(getRelatedInstitutions(publicationSeries, true));
         return commonExportPublicationSeries;
     }
 
-    private static Set<Integer> getRelatedInstitutions(PublicationSeries publicationSeries) {
+    private static Set<Integer> getRelatedInstitutions(PublicationSeries publicationSeries,
+                                                       boolean onlyActive) {
         var relations = new HashSet<Integer>();
         publicationSeries.getContributions().forEach(contribution -> {
             if (Objects.nonNull(contribution.getPerson())) {
-                relations.addAll(ExportPersonConverter.getRelatedEmploymentInstitutions(
-                    contribution.getPerson()));
+                relations.addAll(ExportPersonConverter.getRelatedInstitutions(
+                    contribution.getPerson(), onlyActive));
             }
         });
         return relations;

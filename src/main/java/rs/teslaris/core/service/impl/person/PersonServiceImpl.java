@@ -610,10 +610,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             "eNaukaIdExistsError"
         );
 
+        if (Objects.nonNull(personDTO.getOrcid()) &&
+            personDTO.getOrcid().contains("https://orcid.org/")) {
+            personDTO.setOrcid(personDTO.getOrcid().replace("https://orcid.org/", ""));
+        }
         IdentifierUtil.validateAndSetIdentifier(
             personDTO.getOrcid(),
             person.getId(),
-            "^\\d{4}-\\d{4}-\\d{4}-\\d{4}$",
+            "^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$",
             personRepository::existsByOrcid,
             person::setOrcid,
             "orcidIdFormatError",

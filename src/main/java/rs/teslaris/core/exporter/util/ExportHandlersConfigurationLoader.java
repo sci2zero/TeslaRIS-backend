@@ -45,7 +45,8 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty("handlerName") String handlerName,
         @JsonProperty("handlerDescription") String handlerDescription,
         @JsonProperty("sets") List<Set> sets,
-        @JsonProperty("metadataFormats") List<String> metadataFormats
+        @JsonProperty("metadataFormats") List<String> metadataFormats,
+        @JsonProperty("exportOnlyActiveEmployees") Boolean exportOnlyActiveEmployees
     ) {
     }
 

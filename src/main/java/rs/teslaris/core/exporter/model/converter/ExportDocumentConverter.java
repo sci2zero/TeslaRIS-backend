@@ -228,7 +228,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 ExportEventConverter.toCommonExportModel(document.getEvent()));
         }
 
-        commonExportDocument.getRelatedInstitutionIds().addAll(getRelatedInstitutions(document));
+        commonExportDocument.getRelatedInstitutionIds()
+            .addAll(getRelatedInstitutions(document, false));
+        commonExportDocument.getActivelyRelatedInstitutionIds()
+            .addAll(getRelatedInstitutions(document, true));
     }
 
     private static ExportContribution createExportContribution(
@@ -244,12 +247,12 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return exportContribution;
     }
 
-    private static Set<Integer> getRelatedInstitutions(Document document) {
+    private static Set<Integer> getRelatedInstitutions(Document document, boolean onlyActive) {
         var relations = new HashSet<Integer>();
         document.getContributors().forEach(contribution -> {
             if (Objects.nonNull(contribution.getPerson())) {
-                relations.addAll(ExportPersonConverter.getRelatedEmploymentInstitutions(
-                    contribution.getPerson()));
+                relations.addAll(ExportPersonConverter.getRelatedInstitutions(
+                    contribution.getPerson(), onlyActive));
             }
         });
         return relations;

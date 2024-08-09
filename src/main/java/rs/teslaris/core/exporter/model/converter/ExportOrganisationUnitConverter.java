@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
@@ -17,6 +18,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
 
     private static OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
+    @Autowired
     public ExportOrganisationUnitConverter(
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
         ExportOrganisationUnitConverter.organisationUnitsRelationRepository =
@@ -42,12 +44,13 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             ExportOrganisationUnitConverter.toCommonExportModel(
                 organisationUnitsRelation.getTargetOrganisationUnit())));
 
-        commonExportOU.getRelatedInstitutionIds()
-            .addAll(getTopLevelOrganisationUnitId(organisationUnit.getId()));
+        var topLevelIds = getTopLevelOrganisationUnitIds(organisationUnit.getId());
+        commonExportOU.getRelatedInstitutionIds().addAll(topLevelIds);
+        commonExportOU.getActivelyRelatedInstitutionIds().addAll(topLevelIds);
         return commonExportOU;
     }
 
-    private static Set<Integer> getTopLevelOrganisationUnitId(Integer organisationUnitId) {
+    private static Set<Integer> getTopLevelOrganisationUnitIds(Integer organisationUnitId) {
         var relations = new HashSet<Integer>();
         Integer currentId;
         Optional<OrganisationUnitsRelation> superRelation = Optional.empty();

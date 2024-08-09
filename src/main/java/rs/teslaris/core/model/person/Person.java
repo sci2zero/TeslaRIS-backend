@@ -42,7 +42,7 @@ public class Person extends BaseEntity {
     @OneToOne(mappedBy = "person")
     private User user;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "personInvolved", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Involvement> involvements = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

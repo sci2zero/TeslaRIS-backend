@@ -1,9 +1,13 @@
 package rs.teslaris.core.exporter.model.converter;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.exporter.model.common.ExportPerson;
 import rs.teslaris.core.exporter.model.common.ExportPersonName;
 import rs.teslaris.core.importer.model.oaipmh.person.Affiliation;
@@ -11,8 +15,18 @@ import rs.teslaris.core.importer.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.Sex;
+import rs.teslaris.core.repository.document.DocumentRepository;
 
+@Component
+@Transactional
 public class ExportPersonConverter extends ExportConverterBase {
+
+    private static DocumentRepository documentRepository;
+
+    @Autowired
+    public ExportPersonConverter(DocumentRepository documentRepository) {
+        ExportPersonConverter.documentRepository = documentRepository;
+    }
 
     public static ExportPerson toCommonExportModel(Person person) {
         var commonExportPerson = new ExportPerson();
@@ -31,8 +45,10 @@ public class ExportPersonConverter extends ExportConverterBase {
         commonExportPerson.setOrcid(person.getOrcid());
         commonExportPerson.setScopusAuthorId(person.getScopusAuthorId());
         commonExportPerson.setSex(person.getPersonalInfo().getSex());
-        commonExportPerson.getElectronicAddresses()
-            .add(person.getPersonalInfo().getContact().getContactEmail());
+        if (Objects.nonNull(person.getPersonalInfo().getContact())) {
+            commonExportPerson.getElectronicAddresses()
+                .add(person.getPersonalInfo().getContact().getContactEmail());
+        }
         commonExportPerson.setOldId(person.getOldId());
 
         person.getInvolvements().forEach(involvement -> {
@@ -45,18 +61,33 @@ public class ExportPersonConverter extends ExportConverterBase {
         });
 
         commonExportPerson.getRelatedInstitutionIds()
-            .addAll(getRelatedEmploymentInstitutions(person));
+            .addAll(getRelatedInstitutions(person, false));
+        commonExportPerson.getActivelyRelatedInstitutionIds()
+            .addAll(getRelatedInstitutions(person, true));
         return commonExportPerson;
     }
 
-    public static Set<Integer> getRelatedEmploymentInstitutions(Person person) {
+    public static Set<Integer> getRelatedInstitutions(Person person, boolean onlyActive) {
         var relations = new HashSet<Integer>();
         person.getInvolvements().forEach(involvement -> {
             if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) {
+                if (onlyActive && Objects.nonNull(involvement.getDateTo()) &&
+                    involvement.getDateTo().isBefore(LocalDate.now())) {
+                    return;
+                }
                 relations.add(involvement.getOrganisationUnit().getId());
             }
         });
+
+        documentRepository.getDocumentsForAuthorId(person.getId()).forEach(document -> {
+            document.getContributors().forEach(contribution -> {
+                contribution.getInstitutions().forEach(institution -> {
+                    relations.add(institution.getId());
+                });
+            });
+        });
+
         return relations;
     }
 
