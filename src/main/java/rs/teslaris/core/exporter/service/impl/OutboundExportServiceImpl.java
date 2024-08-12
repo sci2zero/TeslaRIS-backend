@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -18,13 +19,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.exporter.model.common.BaseExportEntity;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
-import rs.teslaris.core.exporter.model.common.ExportEvent;
-import rs.teslaris.core.exporter.model.common.ExportOrganisationUnit;
-import rs.teslaris.core.exporter.model.common.ExportPerson;
+import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.exporter.model.converter.ExportDocumentConverter;
-import rs.teslaris.core.exporter.model.converter.ExportEventConverter;
-import rs.teslaris.core.exporter.model.converter.ExportOrganisationUnitConverter;
-import rs.teslaris.core.exporter.model.converter.ExportPersonConverter;
 import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
 import rs.teslaris.core.exporter.util.ExportDataFormat;
 import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
@@ -47,7 +43,9 @@ import rs.teslaris.core.importer.model.oaipmh.common.Set;
 import rs.teslaris.core.importer.model.oaipmh.common.Toolkit;
 import rs.teslaris.core.importer.model.oaipmh.event.Event;
 import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
+import rs.teslaris.core.importer.model.oaipmh.patent.Patent;
 import rs.teslaris.core.importer.model.oaipmh.person.Person;
+import rs.teslaris.core.importer.model.oaipmh.product.Product;
 import rs.teslaris.core.importer.model.oaipmh.publication.AbstractPublication;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -57,15 +55,26 @@ import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 public class OutboundExportServiceImpl implements OutboundExportService {
 
     private final MongoTemplate mongoTemplate;
+
     private final int PAGE_SIZE = 10;
+
+    private final String EXPORT_ENTITY_BASE_PACKAGE = "rs.teslaris.core.exporter.model.common.";
+
+    private final String EXPORT_CONVERTER_BASE_PACKAGE =
+        "rs.teslaris.core.exporter.model.converter.";
+
     @Value("${export.base.url}")
     private String baseUrl;
+
     @Value("${export.repo.name}")
     private String repositoryName;
+
     @Value("${export.admin.email}")
     private String adminEmail;
+
     @Value("${client.address}")
     private String frontendURL;
+
 
     @Override
     public ListRecords listRequestedRecords(String handler, String metadataPrefix,
@@ -100,14 +109,17 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             return null;
         }
 
-        Class<?> recordClass = null;
-        Class<?> converterClass = null;
+        Class<?> recordClass;
+        Class<?> converterClass;
 
         try {
-            recordClass = Class.forName(
-                "rs.teslaris.core.exporter.model.common." + matchedSet.get().commonEntityClass());
-            converterClass = Class.forName("rs.teslaris.core.exporter.model.converter." +
-                matchedSet.get().commonEntityClass() + "Converter");
+            recordClass =
+                Class.forName(EXPORT_ENTITY_BASE_PACKAGE + matchedSet.get().commonEntityClass());
+            converterClass = Class.forName(
+                EXPORT_CONVERTER_BASE_PACKAGE +
+                    (Objects.nonNull(matchedSet.get().converterClass()) ?
+                        matchedSet.get().converterClass() :
+                        (matchedSet.get().commonEntityClass() + "Converter")));
         } catch (ClassNotFoundException e) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
             return null;
@@ -116,8 +128,17 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var listRecords = new ListRecords();
         listRecords.setRecords(new ArrayList<>());
 
+        var publicationTypeFilters = new ArrayList<ExportPublicationType>();
+        if (Objects.nonNull(matchedSet.get().publicationTypes())) {
+            var stringTypes = matchedSet.get().publicationTypes().split(",");
+            Arrays.stream(stringTypes).forEach(stringType -> {
+                publicationTypeFilters.add(ExportPublicationType.fromStringValue(stringType));
+            });
+        }
+
         var records =
-            findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get());
+            findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get(),
+                publicationTypeFilters);
 
         for (var fetchedRecordEntity : records) {
             var record = new Record();
@@ -125,9 +146,9 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             var metadata = new Metadata();
 
             record.setHeader(constructOaiResponseHeader(handlerConfiguration.get(),
-                (BaseExportEntity) fetchedRecordEntity,
-                "oai:CRIS.UNS:" + (!matchedSet.get().identifierSetSpec().isBlank() ?
-                    (matchedSet.get().identifierSetSpec() + "/") : "") + "(TESLARIS)" +
+                (BaseExportEntity) fetchedRecordEntity, ("oai:" + repositoryName + ":") +
+                    (!matchedSet.get().identifierSetSpec().isBlank() ?
+                        (matchedSet.get().identifierSetSpec() + "/") : "") + "(TESLARIS)" +
                     ((BaseExportEntity) fetchedRecordEntity).getDatabaseId(),
                 matchedSet.get().identifierSetSpec()));
 
@@ -175,61 +196,43 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var metadata = new Metadata();
         var metadataFormat = ExportDataFormat.fromStringValue(metadataPrefix);
 
-        Class<?> recordClass = null;
-        Class<?> converterClass = null;
+        Class<?> recordClass;
+        Class<?> converterClass;
 
         String set;
         if (identifier.contains("/")) {
-            set = identifier.split("/")[0].split(":")[2];
-
-            var isSetMatched = handlerConfiguration.get().sets().stream()
-                .anyMatch(setConfiguration -> setConfiguration.identifierSetSpec().equals(set));
-
-            if (!isSetMatched) {
+            try {
+                set = identifier.split("/")[0].split(":")[2];
+            } catch (IndexOutOfBoundsException e) {
                 response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
                 return null;
             }
 
-            switch (set) {
-                case "Publications", "Products", "Patents":
-                    recordClass = ExportDocument.class;
-                    converterClass = ExportDocumentConverter.class;
-                    break;
-                case "Persons":
-                    recordClass = ExportPerson.class;
-                    converterClass = ExportPersonConverter.class;
-                    break;
-                case "Projects":
-                    // TODO: to be implemented
-                    break;
-                case "Events":
-                    recordClass = ExportEvent.class;
-                    converterClass = ExportEventConverter.class;
-                    break;
-                case "Orgunits":
-                    recordClass = ExportOrganisationUnit.class;
-                    converterClass = ExportOrganisationUnitConverter.class;
-                    break;
-                case "Funding":
-                    // TODO: to be implemented
-                    break;
-                case "Equipments":
-                    // TODO: to be implemented
-                    break;
-                default:
-                    recordClass = ExportDocument.class; // Default case if none match
-                    converterClass = ExportDocumentConverter.class;
-                    break;
+            var matchedSet = handlerConfiguration.get().sets().stream()
+                .filter(configuredSet -> configuredSet.identifierSetSpec().equals(set))
+                .findFirst();
+
+            if (matchedSet.isEmpty() || matchedSet.get().commonEntityClass().equals("NONE")) {
+                response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
+                return null;
+            }
+
+            try {
+                recordClass = Class.forName(
+                    EXPORT_ENTITY_BASE_PACKAGE + matchedSet.get().commonEntityClass());
+                converterClass = Class.forName(
+                    EXPORT_CONVERTER_BASE_PACKAGE +
+                        (Objects.nonNull(matchedSet.get().converterClass()) ?
+                            matchedSet.get().converterClass() :
+                            (matchedSet.get().commonEntityClass() + "Converter")));
+            } catch (ClassNotFoundException e) {
+                response.setError(OAIErrorFactory.constructNoRecordsMatchError());
+                return null;
             }
         } else {
             set = "Publications";
             recordClass = ExportDocument.class;
             converterClass = ExportDocumentConverter.class;
-        }
-
-        if (Objects.isNull(recordClass)) {
-            response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
-            return null;
         }
 
         var requestedRecordOptional =
@@ -289,9 +292,13 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
             switch (set) {
                 case "Publications":
-                case "Products":
-                case "Patents":
                     metadata.setPublication((AbstractPublication) convertedEntity);
+                    break;
+                case "Products":
+                    metadata.setProduct((Product) convertedEntity);
+                    break;
+                case "Patents":
+                    metadata.setPatent((Patent) convertedEntity);
                     break;
                 case "Persons":
                     metadata.setPerson((Person) convertedEntity);
@@ -334,7 +341,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
     private <E> List<E> findRequestedRecords(Class<E> entityClass, String from, String until,
                                              int page,
-                                             ExportHandlersConfigurationLoader.Handler handlerConfiguration) {
+                                             ExportHandlersConfigurationLoader.Handler handlerConfiguration,
+                                             List<ExportPublicationType> publicationTypeFilters) {
         Query query = new Query();
 
         query.addCriteria(Criteria.where("last_updated").gte(Date.valueOf(
@@ -348,6 +356,10 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         } else {
             query.addCriteria(Criteria.where("relatedInstitutionIds")
                 .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+        }
+
+        if (!publicationTypeFilters.isEmpty()) {
+            query.addCriteria(Criteria.where("type").in(publicationTypeFilters));
         }
 
         query.with(PageRequest.of(page, PAGE_SIZE));
@@ -383,7 +395,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         oaiIdentifier.setScheme("oai");
         oaiIdentifier.setRepositoryIdentifier(repositoryName);
         oaiIdentifier.setDelimiter(":");
-        oaiIdentifier.setSampleIdentifier("oai:CRIS.UNS:Publications/(BISIS)1000");
+        oaiIdentifier.setSampleIdentifier("oai:" + repositoryName + ":Publications/(TESLARIS)1000");
 
         var toolkit = new Toolkit(); // TODO: Check this data
         toolkit.setTitle("Sci2Zero Alliance Custom implementation");

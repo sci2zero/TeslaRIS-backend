@@ -24,7 +24,7 @@ public enum ExportDataFormat {
     }
 
     public static ExportDataFormat fromStringValue(String value) {
-        for (ExportDataFormat format : ExportDataFormat.values()) {
+        for (var format : ExportDataFormat.values()) {
             if (format.value.equalsIgnoreCase(value)) {
                 return format;
             }

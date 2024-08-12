@@ -88,6 +88,9 @@ public class ExportDocument extends BaseExportEntity {
     @Field("proceedings")
     private ExportDocument proceedings;
 
+    @Field("edition")
+    private String edition;
+
     @Field("journal")
     private ExportDocument journal;
 

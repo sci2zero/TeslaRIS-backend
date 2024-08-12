@@ -1,14 +1,13 @@
 package rs.teslaris.core.exporter.model.converter;
 
 import java.time.ZoneId;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
-import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Event;
 
@@ -82,25 +81,29 @@ public class ExportEventConverter extends ExportConverterBase {
         openaireEvent.setEventName(
             ExportMultilingualContentConverter.toOpenaireModel(exportEvent.getName()));
 
-        var place = exportEvent.getPlace().stream()
-            .max(Comparator.comparingInt(ExportMultilingualContent::getPriority));
-        place.ifPresent(exportMultilingualContent -> openaireEvent.setPlace(
-            exportMultilingualContent.getContent()));
+        ExportMultilingualContentConverter.setFieldFromPriorityContent(
+            exportEvent.getPlace().stream(),
+            Function.identity(),
+            openaireEvent::setPlace
+        );
 
-        var state = exportEvent.getState().stream()
-            .max(Comparator.comparingInt(ExportMultilingualContent::getPriority));
-        state.ifPresent(exportMultilingualContent -> openaireEvent.setCountry(
-            exportMultilingualContent.getContent()));
+        ExportMultilingualContentConverter.setFieldFromPriorityContent(
+            exportEvent.getState().stream(),
+            Function.identity(),
+            openaireEvent::setCountry
+        );
 
-        var description = exportEvent.getDescription().stream()
-            .max(Comparator.comparingInt(ExportMultilingualContent::getPriority));
-        description.ifPresent(exportMultilingualContent -> openaireEvent.setDescription(
-            exportMultilingualContent.getContent()));
+        ExportMultilingualContentConverter.setFieldFromPriorityContent(
+            exportEvent.getDescription().stream(),
+            Function.identity(),
+            openaireEvent::setDescription
+        );
 
-        var keywords = exportEvent.getKeywords().stream()
-            .max(Comparator.comparingInt(ExportMultilingualContent::getPriority));
-        keywords.ifPresent(exportMultilingualContent -> openaireEvent.setKeywords(
-            List.of(exportMultilingualContent.getContent().split("\n"))));
+        ExportMultilingualContentConverter.setFieldFromPriorityContent(
+            exportEvent.getKeywords().stream(),
+            content -> List.of(content.split("\n")),
+            openaireEvent::setKeywords
+        );
 
         openaireEvent.setStartDate(
             Date.from(exportEvent.getDateFrom().atStartOfDay(ZoneId.systemDefault()).toInstant()));

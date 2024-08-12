@@ -35,26 +35,28 @@ public class ExportHandlersConfigurationLoader {
     }
 
     public record ExportHandlersConfiguration(
-        List<Handler> handlers
+        @JsonProperty(value = "handlers", required = true) List<Handler> handlers
     ) {
     }
 
     public record Handler(
-        @JsonProperty("identifier") String identifier,
-        @JsonProperty("internalInstitutionId") String internalInstitutionId,
-        @JsonProperty("handlerName") String handlerName,
-        @JsonProperty("handlerDescription") String handlerDescription,
-        @JsonProperty("sets") List<Set> sets,
-        @JsonProperty("metadataFormats") List<String> metadataFormats,
-        @JsonProperty("exportOnlyActiveEmployees") Boolean exportOnlyActiveEmployees
+        @JsonProperty(value = "identifier", required = true) String identifier,
+        @JsonProperty(value = "internalInstitutionId", required = true) String internalInstitutionId,
+        @JsonProperty(value = "handlerName", required = true) String handlerName,
+        @JsonProperty(value = "handlerDescription", required = true) String handlerDescription,
+        @JsonProperty(value = "sets", required = true) List<Set> sets,
+        @JsonProperty(value = "metadataFormats", required = true) List<String> metadataFormats,
+        @JsonProperty(value = "exportOnlyActiveEmployees", required = true) Boolean exportOnlyActiveEmployees
     ) {
     }
 
     public record Set(
-        @JsonProperty("setSpec") String setSpec,
-        @JsonProperty("setName") String setName,
-        @JsonProperty("identifierSetSpec") String identifierSetSpec,
-        @JsonProperty("commonEntityClass") String commonEntityClass
+        @JsonProperty(value = "setSpec", required = true) String setSpec,
+        @JsonProperty(value = "setName", required = true) String setName,
+        @JsonProperty(value = "identifierSetSpec", required = true) String identifierSetSpec,
+        @JsonProperty(value = "commonEntityClass", required = true) String commonEntityClass,
+        @JsonProperty("publicationTypes") String publicationTypes,
+        @JsonProperty("converterClass") String converterClass
     ) {
     }
 }

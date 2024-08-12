@@ -5,13 +5,13 @@
       "internalInstitutionId": "2",
       "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
       "handlerDescription": "CERIF compliant CRIS system developed at Faculty of Sciences, University of Novi Sad",
-      "exportOnlyActiveEmployees": true,
+      "exportOnlyActiveEmployees": false,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
           "setName": "OpenAIRE_CRIS_equipments",
           "identifierSetSpec": "Equipments",
-          "commonEntityClass": "NONE"
+          "commonEntityClass": null
         },
         {
           "setSpec": "openaire_cris_events",
@@ -23,7 +23,7 @@
           "setSpec": "openaire_cris_funding",
           "setName": "OpenAIRE_CRIS_funding",
           "identifierSetSpec": "Funding",
-          "commonEntityClass": "NONE"
+          "commonEntityClass": null
         },
         {
           "setSpec": "openaire_cris_orgunits",
@@ -35,7 +35,9 @@
           "setSpec": "openaire_cris_patents",
           "setName": "OpenAIRE_CRIS_patents",
           "identifierSetSpec": "Patents",
-          "commonEntityClass": "ExportDocument"
+          "commonEntityClass": "ExportDocument",
+          "converterClass": "ExportPatentConverter",
+          "publicationTypes": "PATENT"
         },
         {
           "setSpec": "openaire_cris_persons",
@@ -47,19 +49,22 @@
           "setSpec": "openaire_cris_products",
           "setName": "OpenAIRE_CRIS_products",
           "identifierSetSpec": "Products",
-          "commonEntityClass": "ExportDocument"
+          "commonEntityClass": "ExportDocument",
+          "converterClass": "ExportProductConverter",
+          "publicationTypes": "SOFTWARE,DATASET"
         },
         {
           "setSpec": "openaire_cris_projects",
           "setName": "OpenAIRE_CRIS_projects",
           "identifierSetSpec": "Projects",
-          "commonEntityClass": "NONE"
+          "commonEntityClass": null
         },
         {
           "setSpec": "openaire_cris_publications",
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
-          "commonEntityClass": "ExportDocument"
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,JOURNAL,JOURNAL_PUBLICATION"
         }
       ],
       "metadataFormats": [

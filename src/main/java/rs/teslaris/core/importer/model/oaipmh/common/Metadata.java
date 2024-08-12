@@ -11,10 +11,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.importer.model.oaipmh.event.AbstractEvent;
 import rs.teslaris.core.importer.model.oaipmh.event.Event;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.AbstractOrgUnit;
 import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
+import rs.teslaris.core.importer.model.oaipmh.patent.AbstractPatent;
 import rs.teslaris.core.importer.model.oaipmh.patent.Patent;
+import rs.teslaris.core.importer.model.oaipmh.person.AbstractPerson;
 import rs.teslaris.core.importer.model.oaipmh.person.Person;
+import rs.teslaris.core.importer.model.oaipmh.product.AbstractProduct;
 import rs.teslaris.core.importer.model.oaipmh.product.Product;
 import rs.teslaris.core.importer.model.oaipmh.publication.AbstractPublication;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
@@ -29,23 +34,33 @@ import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
 @ToString
 public class Metadata {
 
-    @XmlElement(name = "OrgUnit", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
-    private OrgUnit orgUnit;
+    @XmlElements({
+        @XmlElement(name = "OrgUnit", type = OrgUnit.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    })
+    private AbstractOrgUnit orgUnit;
 
-    @XmlElement(name = "Person", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
-    private Person person;
+    @XmlElements({
+        @XmlElement(name = "Person", type = Person.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    })
+    private AbstractPerson person;
 
-    @XmlElement(name = "Event", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
-    private Event event;
+    @XmlElements({
+        @XmlElement(name = "Event", type = Event.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    })
+    private AbstractEvent event;
 
     @XmlElements({
         @XmlElement(name = "Publication", type = Publication.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     })
     private AbstractPublication publication;
 
-    @XmlElement(name = "Patent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
-    private Patent patent;
+    @XmlElements({
+        @XmlElement(name = "Patent", type = Patent.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    })
+    private AbstractPatent patent;
 
-    @XmlElement(name = "Product", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
-    private Product product;
+    @XmlElements({
+        @XmlElement(name = "Product", type = Product.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    })
+    private AbstractProduct product;
 }

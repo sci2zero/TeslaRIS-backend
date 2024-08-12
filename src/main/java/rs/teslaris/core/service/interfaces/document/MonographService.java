@@ -1,8 +1,10 @@
 package rs.teslaris.core.service.interfaces.document;
 
+import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.model.document.Monograph;
 
+@Service
 public interface MonographService {
 
     MonographDTO readMonographById(Integer monographId);

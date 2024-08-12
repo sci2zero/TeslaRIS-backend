@@ -43,6 +43,11 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.ResumptionToken;
+import rs.teslaris.core.importer.model.oaipmh.event.Event;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
+import rs.teslaris.core.importer.model.oaipmh.patent.Patent;
+import rs.teslaris.core.importer.model.oaipmh.person.Person;
+import rs.teslaris.core.importer.model.oaipmh.product.Product;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
 import rs.teslaris.core.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.core.importer.utility.DataSet;
@@ -153,23 +158,23 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                 var metadata = record.getMetadata();
                 switch (requestDataSet) {
                     case EVENTS:
-                        metadata.getEvent().setImportUserId(List.of(userId));
-                        metadata.getEvent().setLoaded(false);
+                        ((Event) metadata.getEvent()).setImportUserId(List.of(userId));
+                        ((Event) metadata.getEvent()).setLoaded(false);
                         mongoTemplate.save(metadata.getEvent());
                         break;
                     case PATENTS:
-                        metadata.getPatent().setImportUserId(List.of(userId));
-                        metadata.getPatent().setLoaded(false);
+                        ((Patent) metadata.getPatent()).setImportUserId(List.of(userId));
+                        ((Patent) metadata.getPatent()).setLoaded(false);
                         mongoTemplate.save(metadata.getPatent());
                         break;
                     case PERSONS:
-                        metadata.getPerson().setImportUserId(List.of(userId));
-                        metadata.getPerson().setLoaded(false);
+                        ((Person) metadata.getPerson()).setImportUserId(List.of(userId));
+                        ((Person) metadata.getPerson()).setLoaded(false);
                         mongoTemplate.save(metadata.getPerson());
                         break;
                     case PRODUCTS:
-                        metadata.getProduct().setImportUserId(List.of(userId));
-                        metadata.getProduct().setLoaded(false);
+                        ((Product) metadata.getProduct()).setImportUserId(List.of(userId));
+                        ((Product) metadata.getProduct()).setLoaded(false);
                         mongoTemplate.save(metadata.getProduct());
                         break;
                     case PUBLICATIONS:
@@ -178,8 +183,8 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                         mongoTemplate.save(metadata.getPublication());
                         break;
                     case ORGANISATION_UNITS:
-                        metadata.getOrgUnit().setImportUserId(List.of(userId));
-                        metadata.getOrgUnit().setLoaded(false);
+                        ((OrgUnit) metadata.getOrgUnit()).setImportUserId(List.of(userId));
+                        ((OrgUnit) metadata.getOrgUnit()).setLoaded(false);
                         mongoTemplate.save(metadata.getOrgUnit());
                         break;
                 }
