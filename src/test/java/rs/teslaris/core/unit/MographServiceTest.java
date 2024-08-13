@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,11 +33,13 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.service.impl.document.MonographServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -71,6 +74,12 @@ public class MographServiceTest {
 
     @Mock
     private DocumentRepository documentRepository;
+
+    @Mock
+    private MonographRepository monographRepository;
+
+    @Mock
+    private SearchService<DocumentPublicationIndex> searchService;
 
     @InjectMocks
     private MonographServiceImpl monographService;
@@ -305,5 +314,22 @@ public class MographServiceTest {
         verify(monographJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(documentPublicationIndexRepository, atLeastOnce()).save(
             any(DocumentPublicationIndex.class));
+    }
+
+    @Test
+    public void shouldFindMonographsWhenSearchingWithSimpleQuery() {
+        // given
+        var tokens = Arrays.asList("ključna", "ријеч", "keyword");
+
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+
+        // when
+        var result =
+            monographService.searchMonographs(new ArrayList<>(tokens));
+
+        // then
+        assertEquals(result.getTotalElements(), 2L);
     }
 }

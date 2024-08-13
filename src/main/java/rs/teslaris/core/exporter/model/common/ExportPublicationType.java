@@ -8,7 +8,8 @@ public enum ExportPublicationType {
     PATENT("PATENT"),
     SOFTWARE("SOFTWARE"),
     DATASET("DATASET"),
-    JOURNAL("JOURNAL");
+    JOURNAL("JOURNAL"),
+    MONOGRAPH_PUBLICATION("MONOGRAPH_PUBLICATION");
 
     private final String value;
 

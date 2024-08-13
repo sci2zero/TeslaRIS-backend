@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.function.Consumer;
 import rs.teslaris.core.exporter.model.common.BaseExportEntity;
+import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
 public class ExportConverterBase {
@@ -42,5 +43,19 @@ public class ExportConverterBase {
                 }
             }
         }
+    }
+
+    protected static String inferPublicationCOARType(ExportPublicationType type) {
+        return switch (type) {
+            case JOURNAL_PUBLICATION -> "http://purl.org/coar/resource_type/c_2df8fbb1";
+            case PROCEEDINGS -> "http://purl.org/coar/resource_type/c_f744";
+            case PROCEEDINGS_PUBLICATION -> "http://purl.org/coar/resource_type/c_5794";
+            case MONOGRAPH -> "http://purl.org/coar/resource_type/c_2f33"; // book
+            case PATENT -> "http://purl.org/coar/resource_type/c_15cd";
+            case SOFTWARE -> "http://purl.org/coar/resource_type/c_5ce6";
+            case DATASET -> "http://purl.org/coar/resource_type/c_ddb1";
+            case JOURNAL -> "http://purl.org/coar/resource_type/c_0640";
+            case MONOGRAPH_PUBLICATION -> "http://purl.org/coar/resource_type/c_3248"; // book part
+        };
     }
 }

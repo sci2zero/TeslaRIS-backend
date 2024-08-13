@@ -65,13 +65,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    protected final SearchService<DocumentPublicationIndex> searchService;
+
     private final DocumentRepository documentRepository;
 
     private final DocumentFileService documentFileService;
 
     private final PersonContributionService personContributionService;
-
-    private final SearchService<DocumentPublicationIndex> searchService;
 
     private final ExpressionTransformer expressionTransformer;
 

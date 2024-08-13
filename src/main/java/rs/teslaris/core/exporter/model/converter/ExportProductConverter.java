@@ -10,33 +10,36 @@ public class ExportProductConverter extends ExportConverterBase {
 
     public static Product toOpenaireModel(
         ExportDocument exportDocument) {
-        var openairePatent = new Product();
-        openairePatent.setOldId("TESLARIS(" + exportDocument.getDatabaseId() + ")");
-        openairePatent.setName(
+        var openaireProduct = new Product();
+        openaireProduct.setOldId("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+        openaireProduct.setName(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
-        openairePatent.setDescription(
+        openaireProduct.setDescription(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getDescription()));
+
+        openaireProduct.setType(inferPublicationCOARType(exportDocument.getType()));
 
         ExportMultilingualContentConverter.setFieldFromPriorityContent(
             exportDocument.getKeywords().stream(),
             content -> List.of(content.split("\n")),
-            openairePatent::setKeywords
+            openaireProduct::setKeywords
         );
 
         if (!exportDocument.getLanguageTags().isEmpty()) {
-            openairePatent.setLanguage(
-                exportDocument.getLanguageTags().getFirst()); // is this ok?
+            openaireProduct.setLanguage(exportDocument.getLanguageTags().getFirst());
         }
 
-        openairePatent.setUrl(exportDocument.getUris());
-        openairePatent.setAccess("OPEN"); // is this ok?
+        openaireProduct.setUrl(exportDocument.getUris());
+        openaireProduct.setAccess(
+            exportDocument.getOpenAccess() ? "http://purl.org/coar/access_right/c_abf2" :
+                "http://purl.org/coar/access_right/c_14cb");
 
-        openairePatent.setCreators(new ArrayList<>());
+        openaireProduct.setCreators(new ArrayList<>());
         exportDocument.getAuthors().forEach(contribution -> {
-            openairePatent.getCreators().add(new PersonAttributes(contribution.getDisplayName(),
+            openaireProduct.getCreators().add(new PersonAttributes(contribution.getDisplayName(),
                 ExportPersonConverter.toOpenaireModel(contribution.getPerson())));
         });
 
-        return openairePatent;
+        return openaireProduct;
     }
 }

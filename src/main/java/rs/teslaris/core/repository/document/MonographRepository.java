@@ -21,4 +21,7 @@ public interface MonographRepository extends JpaRepository<Monograph, Integer> {
     @Query(value = "SELECT * FROM monographs m WHERE " +
         "m.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Monograph> findAllModifiedInLast24Hours(Pageable pageable);
+
+    @Query("select count(p) > 0 from MonographPublication p join p.monograph m where m.id = :monographId")
+    boolean hasPublication(Integer monographId);
 }

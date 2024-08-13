@@ -378,7 +378,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         identify.setBaseURL(baseUrl + "/" + handler);
         identify.setRepositoryName(repositoryName);
         identify.setProtocolVersion("2.0");
-        identify.setAdminEmail("mailto:" + adminEmail);
+        identify.setAdminEmail(adminEmail);
 
         var earliestDocument = findEarliestDocument(
             Integer.parseInt(handlerConfiguration.get().internalInstitutionId()));
@@ -397,10 +397,10 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         oaiIdentifier.setDelimiter(":");
         oaiIdentifier.setSampleIdentifier("oai:" + repositoryName + ":Publications/(TESLARIS)1000");
 
-        var toolkit = new Toolkit(); // TODO: Check this data
+        var toolkit = new Toolkit();
         toolkit.setTitle("Sci2Zero Alliance Custom implementation");
         toolkit.setAuthor(
-            new Toolkit.Author("Sci2Zero team", "mailto:chenejac@uns.ac.rs", "Sci2Zero"));
+            new Toolkit.Author("Sci2Zero team", "chenejac@uns.ac.rs", "Sci2Zero"));
         toolkit.setVersion("1.0.0");
 
         var serviceDescription = new Description();

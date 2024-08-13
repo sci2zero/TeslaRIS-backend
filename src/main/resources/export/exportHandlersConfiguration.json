@@ -64,7 +64,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,JOURNAL,JOURNAL_PUBLICATION"
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION"
         }
       ],
       "metadataFormats": [

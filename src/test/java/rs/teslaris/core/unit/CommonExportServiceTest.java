@@ -31,6 +31,7 @@ import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
@@ -71,6 +72,9 @@ public class CommonExportServiceTest {
 
     @Mock
     private MonographRepository monographRepository;
+
+    @Mock
+    private MonographPublicationRepository monographPublicationRepository;
 
     @Mock
     private ProceedingsRepository proceedingsRepository;
@@ -161,6 +165,9 @@ public class CommonExportServiceTest {
             any(Pageable.class))).thenReturn((Page) emptyPage);
         when(monographRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
             (Page) emptyPage);
+        when(monographPublicationRepository.findAllModifiedInLast24Hours(
+            any(Pageable.class))).thenReturn(
+            (Page) emptyPage);
 
         // When
         commonExportService.exportDocumentsToCommonModel();
@@ -176,5 +183,7 @@ public class CommonExportServiceTest {
         verify(proceedingsPublicationRepository, times(1)).findAllModifiedInLast24Hours(
             any(Pageable.class));
         verify(monographRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class));
+        verify(monographPublicationRepository, times(1)).findAllModifiedInLast24Hours(
+            any(Pageable.class));
     }
 }

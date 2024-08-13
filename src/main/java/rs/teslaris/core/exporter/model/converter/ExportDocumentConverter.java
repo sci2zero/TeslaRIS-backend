@@ -20,7 +20,9 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
@@ -205,7 +207,30 @@ public class ExportDocumentConverter extends ExportConverterBase {
             commonExportDocument.getLanguageTags().add(languageTag.getLanguageTag());
         });
 
-        // TODO: Do we need research areas?
+        return commonExportDocument;
+    }
+
+    public static ExportDocument toCommonExportModel(MonographPublication monographPublication) {
+        var commonExportDocument = new ExportDocument();
+        commonExportDocument.setType(ExportPublicationType.MONOGRAPH_PUBLICATION);
+
+        setBaseFields(commonExportDocument, monographPublication);
+        if (commonExportDocument.getDeleted()) {
+            return commonExportDocument;
+        }
+
+        setCommonFields(commonExportDocument, monographPublication);
+
+        commonExportDocument.setMonographPublicationType(
+            monographPublication.getMonographPublicationType());
+        commonExportDocument.setStartPage(monographPublication.getStartPage());
+        commonExportDocument.setEndPage(monographPublication.getEndPage());
+        commonExportDocument.setNumber(monographPublication.getArticleNumber());
+
+        if (Objects.nonNull(monographPublication.getMonograph())) {
+            commonExportDocument.setMonograph(
+                ExportDocumentConverter.toCommonExportModel(monographPublication.getMonograph()));
+        }
 
         return commonExportDocument;
     }
@@ -246,6 +271,13 @@ public class ExportDocumentConverter extends ExportConverterBase {
             .addAll(getRelatedInstitutions(document, false));
         commonExportDocument.getActivelyRelatedInstitutionIds()
             .addAll(getRelatedInstitutions(document, true));
+
+        commonExportDocument.setOpenAccess(false);
+        document.getFileItems().forEach(file -> {
+            if (file.getLicense().equals(License.OPEN_ACCESS)) {
+                commonExportDocument.setOpenAccess(true);
+            }
+        });
     }
 
     private static ExportContribution createExportContribution(
@@ -280,9 +312,11 @@ public class ExportDocumentConverter extends ExportConverterBase {
         openairePublication.setSubtitle(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getSubtitle()));
 
+        openairePublication.setType(inferPublicationCOARType(exportDocument.getType()));
+
         if (!exportDocument.getLanguageTags().isEmpty()) {
             openairePublication.setLanguage(
-                exportDocument.getLanguageTags().getFirst()); // is this ok?
+                exportDocument.getLanguageTags().getFirst());
         }
 
         setDocumentDate(exportDocument.getDocumentDate(), openairePublication::setPublicationDate);
@@ -295,18 +329,24 @@ public class ExportDocumentConverter extends ExportConverterBase {
         openairePublication.setUrl(exportDocument.getUris());
         openairePublication.setDoi(exportDocument.getDoi());
         openairePublication.setScpNumber(exportDocument.getScopus());
-        openairePublication.setIssn(exportDocument.getEIssn()); // is this ok?
-        openairePublication.setIsbn(exportDocument.getEIsbn()); // is this ok?
-        openairePublication.setAccess("OPEN"); // is this ok?
+        openairePublication.setIssn(
+            Objects.nonNull(exportDocument.getEIssn()) && !exportDocument.getEIssn().isBlank() ?
+                exportDocument.getEIssn() : exportDocument.getPrintIssn());
+        openairePublication.setIsbn(
+            Objects.nonNull(exportDocument.getEIsbn()) && !exportDocument.getEIsbn().isBlank() ?
+                exportDocument.getEIsbn() : exportDocument.getPrintIsbn());
         openairePublication.setEdition(exportDocument.getEdition());
+
+        openairePublication.setAccess(
+            exportDocument.getOpenAccess() ? "http://purl.org/coar/access_right/c_abf2" :
+                "http://purl.org/coar/access_right/c_14cb");
 
         if (Objects.nonNull(exportDocument.getJournal())) {
             openairePublication.setPublishedIn(new PublishedIn(
                 ExportDocumentConverter.toOpenaireModel(exportDocument.getJournal())));
         }
 
-        if (Objects.nonNull(
-            exportDocument.getProceedings())) { // TODO: same for monographs when we add monograph publications
+        if (Objects.nonNull(exportDocument.getProceedings())) {
             var partOf = new PartOf();
             ExportMultilingualContentConverter.setFieldFromPriorityContent(
                 exportDocument.getProceedings().getTitle().stream(),
@@ -315,6 +355,16 @@ public class ExportDocumentConverter extends ExportConverterBase {
             );
             partOf.setPublication(
                 ExportDocumentConverter.toOpenaireModel(exportDocument.getProceedings()));
+            openairePublication.setPartOf(partOf);
+        } else if (Objects.nonNull(exportDocument.getMonograph())) {
+            var partOf = new PartOf();
+            ExportMultilingualContentConverter.setFieldFromPriorityContent(
+                exportDocument.getMonograph().getTitle().stream(),
+                Function.identity(),
+                partOf::setDisplayName
+            );
+            partOf.setPublication(
+                ExportDocumentConverter.toOpenaireModel(exportDocument.getMonograph()));
             openairePublication.setPartOf(partOf);
         }
 
@@ -350,7 +400,6 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 Function.identity(),
                 openairePublisher::setDisplayName
             );
-            // TODO: what to do with publisher's OU?
             openairePublication.getPublishers().add(openairePublisher);
         });
 

@@ -1,19 +1,20 @@
 package rs.teslaris.core.service.impl.document;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
-import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Monograph;
-import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
@@ -29,6 +30,7 @@ import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
@@ -50,21 +52,24 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
 
     @Autowired
-    public MonographServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        PersonContributionService personContributionService,
-        SearchService<DocumentPublicationIndex> searchService,
-        ExpressionTransformer expressionTransformer,
-        EventService eventService,
-        OrganisationUnitService organisationUnitService,
-        MonographJPAServiceImpl monographJPAService, LanguageTagService languageTagService,
-        JournalService journalService, BookSeriesService bookSeriesService,
-        ResearchAreaService researchAreaService, MonographRepository monographRepository) {
-        super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService, expressionTransformer,
+    public MonographServiceImpl(MultilingualContentService multilingualContentService,
+                                DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                SearchService<DocumentPublicationIndex> searchService,
+                                DocumentRepository documentRepository,
+                                DocumentFileService documentFileService,
+                                PersonContributionService personContributionService,
+                                ExpressionTransformer expressionTransformer,
+                                EventService eventService,
+                                OrganisationUnitService organisationUnitService,
+                                MonographJPAServiceImpl monographJPAService,
+                                LanguageTagService languageTagService,
+                                JournalService journalService,
+                                BookSeriesService bookSeriesService,
+                                ResearchAreaService researchAreaService,
+                                MonographRepository monographRepository) {
+        super(multilingualContentService, documentPublicationIndexRepository, searchService,
+            documentRepository, documentFileService, personContributionService,
+            expressionTransformer,
             eventService, organisationUnitService);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
@@ -72,6 +77,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         this.bookSeriesService = bookSeriesService;
         this.researchAreaService = researchAreaService;
         this.monographRepository = monographRepository;
+    }
+
+    @Override
+    public Monograph findMonographById(Integer monographId) {
+        return monographJPAService.findOne(monographId);
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> searchMonographs(List<String> tokens) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens), PageRequest.of(0, 5),
+            DocumentPublicationIndex.class, "document_publication");
     }
 
     @Override
@@ -128,13 +144,16 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     @Override
     public void deleteMonograph(Integer monographId) {
-        var proceedingsToDelete = monographJPAService.findOne(monographId);
+        var monographToDelete = monographJPAService.findOne(monographId);
 
-        // TODO: Should we delete files if we have soft delete
-//        deleteProofsAndFileItems(proceedingsToDelete);
+        if (monographRepository.hasPublication(monographId)) {
+            throw new MonographReferenceConstraintViolationException(
+                "Monograph with given ID is in use and cannot be deleted.");
+        }
+
         monographJPAService.delete(monographId);
 
-        if (proceedingsToDelete.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (monographToDelete.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             documentPublicationIndexRepository.delete(
                 findDocumentPublicationIndexByDatabaseId(monographId));
         }
@@ -162,6 +181,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private void setMonographRelatedFields(Monograph monograph,
                                            MonographDTO monographDTO) {
+        setCommonIdentifiers(monograph, monographDTO);
+
         monograph.setMonographType(monographDTO.getMonographType());
         monograph.setEISBN(monographDTO.getEisbn());
         monograph.setPrintISBN(monographDTO.getPrintISBN());
@@ -204,25 +225,71 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         documentPublicationIndexRepository.save(index);
     }
 
-    private void setCommonIdentifiers(Proceedings proceedings, ProceedingsDTO proceedingsDTO) {
+    private void setCommonIdentifiers(Monograph monograph, MonographDTO monographDTO) {
         IdentifierUtil.validateAndSetIdentifier(
-            proceedingsDTO.getEISBN(),
-            proceedings.getId(),
+            monographDTO.getEisbn(),
+            monograph.getId(),
             "^(?:(?:\\d[\\ |-]?){9}[\\dX]|(?:\\d[\\ |-]?){13})$",
             monographRepository::existsByeISBN,
-            proceedings::setEISBN,
+            monograph::setEISBN,
             "eisbnFormatError",
             "eisbnExistsError"
         );
 
         IdentifierUtil.validateAndSetIdentifier(
-            proceedingsDTO.getPrintISBN(),
-            proceedings.getId(),
+            monographDTO.getPrintISBN(),
+            monograph.getId(),
             "^(?:(?:\\d[\\ |-]?){9}[\\dX]|(?:\\d[\\ |-]?){13})$",
             monographRepository::existsByPrintISBN,
-            proceedings::setPrintISBN,
+            monograph::setPrintISBN,
             "printIsbnFormatError",
             "printIsbnExistsError"
         );
+    }
+
+    private Query buildSimpleSearchQuery(List<String> tokens) {
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.must(bq -> {
+                bq.bool(eq -> {
+                    tokens.forEach(token -> {
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("title_sr").value(token).caseInsensitive(true)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("title_sr").query(token)));
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("title_other").value(token).caseInsensitive(true)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("description_sr").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("description_other").query(token)));
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("keywords_sr").value("*" + token + "*")));
+                        eq.should(sb -> sb.wildcard(
+                            m -> m.field("keywords_other").value("*" + token + "*")));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("full_text_sr").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("full_text_other").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("author_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("editor_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("reviewer_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("advisor_names").query(token)));
+                        eq.should(sb -> sb.match(
+                            m -> m.field("doi").query(token)));
+                    });
+                    return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+                });
+                return bq;
+            });
+            b.must(sb -> sb.match(
+                m -> m.field("type").query(DocumentPublicationType.MONOGRAPH.name())));
+            return b;
+        })))._toQuery();
     }
 }

@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 
@@ -111,4 +112,10 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("monograph_type")
     private MonographType monographType;
+
+    @Field("monograph_publication_type")
+    private MonographPublicationType monographPublicationType;
+
+    @Field("monograph")
+    private ExportDocument monograph;
 }

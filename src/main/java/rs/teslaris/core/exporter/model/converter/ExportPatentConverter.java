@@ -14,6 +14,8 @@ public class ExportPatentConverter extends ExportConverterBase {
         openairePatent.setTitle(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
 
+        openairePatent.setType(inferPublicationCOARType(exportDocument.getType()));
+
         ExportMultilingualContentConverter.setFieldFromPriorityContent(
             exportDocument.getDescription().stream(),
             Function.identity(),
@@ -22,7 +24,9 @@ public class ExportPatentConverter extends ExportConverterBase {
 
         setDocumentDate(exportDocument.getDocumentDate(), openairePatent::setApprovalDate);
         openairePatent.setPatentNumber(exportDocument.getNumber());
-        openairePatent.setAccess("OPEN"); // is this ok?
+        openairePatent.setAccess(
+            exportDocument.getOpenAccess() ? "http://purl.org/coar/access_right/c_abf2" :
+                "http://purl.org/coar/access_right/c_14cb");
 
         openairePatent.setInventor(new ArrayList<>());
         exportDocument.getAuthors().forEach(contribution -> {

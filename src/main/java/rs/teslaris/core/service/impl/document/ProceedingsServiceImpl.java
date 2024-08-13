@@ -61,10 +61,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Autowired
     public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                  SearchService<DocumentPublicationIndex> searchService,
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
-                                  SearchService<DocumentPublicationIndex> searchService,
                                   ExpressionTransformer expressionTransformer,
                                   EventService eventService,
                                   OrganisationUnitService organisationUnitService,
@@ -75,8 +75,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   BookSeriesService bookSeriesService, EventService eventService1,
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
-        super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService, expressionTransformer,
+        super(multilingualContentService, documentPublicationIndexRepository, searchService,
+            documentRepository, documentFileService, personContributionService,
+            expressionTransformer,
             eventService, organisationUnitService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
@@ -214,7 +215,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private void setProceedingsRelatedFields(Proceedings proceedings,
                                              ProceedingsDTO proceedingsDTO) {
-
         setCommonIdentifiers(proceedings, proceedingsDTO);
 
         proceedings.setNumberOfPages(proceedingsDTO.getNumberOfPages());

@@ -37,16 +37,17 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     @Autowired
     public PatentServiceImpl(MultilingualContentService multilingualContentService,
                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                             SearchService<DocumentPublicationIndex> searchService,
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              PersonContributionService personContributionService,
-                             SearchService<DocumentPublicationIndex> searchService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              OrganisationUnitService organisationUnitService,
                              PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService) {
-        super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService, expressionTransformer,
+        super(multilingualContentService, documentPublicationIndexRepository, searchService,
+            documentRepository, documentFileService, personContributionService,
+            expressionTransformer,
             eventService, organisationUnitService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;

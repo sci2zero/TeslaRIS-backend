@@ -48,7 +48,7 @@ public class ExportMultilingualContentConverter extends ExportConverterBase {
         Function<String, R> contentMapper,
         Consumer<R> setter) {
         contentStream
-            .max(Comparator.comparingInt(ExportMultilingualContent::getPriority))
+            .min(Comparator.comparingInt(ExportMultilingualContent::getPriority))
             .map(exportMultilingualContent -> contentMapper.apply(
                 exportMultilingualContent.getContent()))
             .ifPresent(setter);

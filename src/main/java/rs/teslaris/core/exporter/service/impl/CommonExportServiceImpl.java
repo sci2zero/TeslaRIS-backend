@@ -29,6 +29,7 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -39,6 +40,7 @@ import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
@@ -75,6 +77,8 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final ProceedingsRepository proceedingsRepository;
 
     private final ProceedingsPublicationRepository proceedingsPublicationRepository;
+
+    private final MonographPublicationRepository monographPublicationRepository;
 
 
     @Override
@@ -169,11 +173,18 @@ public class CommonExportServiceImpl implements CommonExportService {
             Monograph::getId
         );
 
+        var monographPublicationFuture = exportEntitiesAsync(
+            monographPublicationRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            MonographPublication::getId
+        );
+
         CompletableFuture.allOf(
             datasetFuture, softwareFuture, patentFuture,
             journalFuture, journalPublicationFuture,
             proceedingsFuture, proceedingsPublicationFuture,
-            monographFuture
+            monographFuture, monographPublicationFuture
         ).join();
     }
 
