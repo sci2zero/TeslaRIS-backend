@@ -110,10 +110,16 @@ public class SecurityConfiguration {
                 // PUBLICATION
                 .requestMatchers(HttpMethod.GET, "/api/journal-publication/{documentId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/proceedings-publication/{documentId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/monograph-publication/{documentId}")
+                .permitAll()
                 .requestMatchers(HttpMethod.GET,
-                    "/api/journal-publication/journal/{journalId}/my-publications").permitAll()
+                    "/api/journal-publication/journal/{journalId}").permitAll()
                 .requestMatchers(HttpMethod.GET,
-                    "/api/proceedings-publication/event/{eventId}/my-publications").permitAll()
+                    "/api/proceedings-publication/event/{eventId}").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/monograph-publication/monograph/{monographId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/software/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/dataset/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/patent/{patentId}").permitAll()

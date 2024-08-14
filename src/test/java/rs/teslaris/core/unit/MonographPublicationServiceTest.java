@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Monograph;
@@ -141,6 +143,7 @@ public class MonographPublicationServiceTest {
         // Given
         var monographPublicationDTO = new MonographPublicationDTO();
         var newMonographPublication = new MonographPublication();
+        newMonographPublication.setMonograph(new Monograph());
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
         when(monographPublicationJPAService.save(any(MonographPublication.class))).thenReturn(
@@ -204,12 +207,14 @@ public class MonographPublicationServiceTest {
         // Given
         var monographPublicationId = 1;
         var monographPublicationDTO = new MonographPublicationDTO();
+        monographPublicationDTO.setMonographId(1);
         var monographPublicationToUpdate = new MonographPublication();
         monographPublicationToUpdate.setId(monographPublicationId);
         monographPublicationToUpdate.setApproveStatus(ApproveStatus.APPROVED);
 
         when(monographPublicationJPAService.findOne(monographPublicationId)).thenReturn(
             monographPublicationToUpdate);
+        when(monographService.findMonographById(anyInt())).thenReturn(new Monograph());
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             monographPublicationId)).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
@@ -311,8 +316,11 @@ public class MonographPublicationServiceTest {
     public void shouldReindexMonographPublications() {
         // Given
         var monographPublication1 = new MonographPublication();
+        monographPublication1.setMonograph(new Monograph());
         var monographPublication2 = new MonographPublication();
+        monographPublication2.setMonograph(new Monograph());
         var monographPublication3 = new MonographPublication();
+        monographPublication3.setMonograph(new Monograph());
         var monographPublications =
             Arrays.asList(monographPublication1, monographPublication2, monographPublication3);
         var page1 =
@@ -332,6 +340,53 @@ public class MonographPublicationServiceTest {
         verify(monographPublicationJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(documentPublicationIndexRepository, atLeastOnce()).save(
             any(DocumentPublicationIndex.class));
+    }
+
+
+    @Test
+    public void shouldFindAllPublicationsForMonograph() {
+        // Given
+        var monographId = 1;
+        var pageable = PageRequest.of(0, 10);
+        var mockPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
+
+        when(documentPublicationIndexRepository.findByTypeAndMonographId(
+            DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable))
+            .thenReturn(mockPage);
+
+        // When
+        var result =
+            monographPublicationService.findAllPublicationsForMonograph(monographId, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(documentPublicationIndexRepository, times(1))
+            .findByTypeAndMonographId(DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
+                monographId, pageable);
+    }
+
+    @Test
+    public void shouldFindAuthorsPublicationsForMonograph() {
+        // Given
+        var monographId = 1;
+        var authorId = 2;
+        var mockPublications = List.of(new DocumentPublicationIndex());
+
+        when(documentPublicationIndexRepository.findByTypeAndMonographIdAndAuthorIds(
+            DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, authorId))
+            .thenReturn(mockPublications);
+
+        // When
+        var result = monographPublicationService
+            .findAuthorsPublicationsForMonograph(monographId, authorId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(documentPublicationIndexRepository, times(1))
+            .findByTypeAndMonographIdAndAuthorIds(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, authorId);
     }
 }
 

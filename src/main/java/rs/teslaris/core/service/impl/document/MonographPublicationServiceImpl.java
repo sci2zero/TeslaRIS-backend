@@ -2,8 +2,11 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.MonographPublicationConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -25,6 +28,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
+@Transactional
 public class MonographPublicationServiceImpl extends DocumentPublicationServiceImpl implements
     MonographPublicationService {
 
@@ -86,6 +90,20 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         sendNotifications(savedMonographPublication);
 
         return savedMonographPublication;
+    }
+
+    @Override
+    public List<DocumentPublicationIndex> findAuthorsPublicationsForMonograph(Integer monographId,
+                                                                              Integer authorId) {
+        return documentPublicationIndexRepository.findByTypeAndMonographIdAndAuthorIds(
+            DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, authorId);
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findAllPublicationsForMonograph(Integer monographId,
+                                                                          Pageable pageable) {
+        return documentPublicationIndexRepository.findByTypeAndMonographId(
+            DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
     }
 
     @Override
@@ -160,6 +178,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         indexCommonFields(monographPublication, index);
 
         index.setType(DocumentPublicationType.MONOGRAPH_PUBLICATION.name());
+        index.setMonographId(monographPublication.getMonograph().getId());
 
         documentPublicationIndexRepository.save(index);
     }

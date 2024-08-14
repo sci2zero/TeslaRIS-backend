@@ -99,6 +99,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "journal_id", store = true)
     private Integer journalId;
 
+    @Field(type = FieldType.Integer, name = "monograph_id", store = true)
+    private Integer monographId;
+
     @Field(type = FieldType.Integer, name = "database_id", store = true)
     private Integer databaseId;
 

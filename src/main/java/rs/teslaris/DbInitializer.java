@@ -30,6 +30,7 @@ import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -65,6 +66,7 @@ import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
@@ -126,6 +128,8 @@ public class DbInitializer implements ApplicationRunner {
     private final MonographRepository monographRepository;
 
     private final EventsRelationRepository eventsRelationRepository;
+
+    private final MonographPublicationRepository monographPublicationRepository;
 
 
     @Override
@@ -511,6 +515,7 @@ public class DbInitializer implements ApplicationRunner {
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
         monograph2.setMonographType(MonographType.RESEARCH_MONOGRAPH);
+        monograph2.setDocumentDate("2024");
         monographRepository.save(monograph2);
 
         var researcherUser2 =
@@ -589,5 +594,21 @@ public class DbInitializer implements ApplicationRunner {
         conferenceEvent4.setDateTo(LocalDate.of(2022, 7, 22));
         conferenceEvent4.setSerialEvent(false);
         conferenceRepository.save(conferenceEvent4);
+
+        var monographPublication1 = new MonographPublication();
+        monographPublication1.setApproveStatus(ApproveStatus.APPROVED);
+        monographPublication1.setDocumentDate("2024");
+        monographPublication1.setMonograph(monograph1);
+        monographPublication1.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Monograph Publication 1", 1)));
+        monographPublicationRepository.save(monographPublication1);
+
+        var monographPublication2 = new MonographPublication();
+        monographPublication2.setApproveStatus(ApproveStatus.APPROVED);
+        monographPublication2.setDocumentDate("2024-03-15");
+        monographPublication2.setMonograph(monograph1);
+        monographPublication2.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Rad u monografiji 2", 1)));
+        monographPublicationRepository.save(monographPublication2);
     }
 }
