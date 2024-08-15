@@ -118,4 +118,7 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("monograph")
     private ExportDocument monograph;
+
+    @Field("file_formats")
+    private List<String> fileFormats = new ArrayList<>();
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.exporter.model.common.ExportPerson;
 import rs.teslaris.core.exporter.model.common.ExportPersonName;
+import rs.teslaris.core.importer.model.oaipmh.common.DC;
 import rs.teslaris.core.importer.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.importer.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -118,5 +119,32 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
 
         return openairePerson;
+    }
+
+    public static DC toDCModel(ExportPerson exportPerson) {
+        var dcPerson = new DC();
+        dcPerson.getType().add("party");
+        dcPerson.getSource().add(repositoryName);
+        dcPerson.getIdentifier().add("TESLARIS(" + exportPerson.getDatabaseId() + ")");
+        dcPerson.getIdentifier().add(exportPerson.getOrcid());
+        dcPerson.getIdentifier().add(exportPerson.getScopusAuthorId());
+        dcPerson.getIdentifier().add(exportPerson.getENaukaId());
+
+        clientLanguages.forEach(lang -> {
+            dcPerson.getIdentifier()
+                .add(baseFrontendUrl + lang + "/persons/" +
+                    exportPerson.getDatabaseId());
+        });
+
+        dcPerson.getTitle().add(exportPerson.getName().getFirstName() + " " +
+            exportPerson.getName().getMiddleName() + " " + exportPerson.getName().getLastName());
+
+        addContentToList(
+            exportPerson.getEmploymentInstitutions(),
+            institution -> "oai:CRIS.UNS:Orgunits/(TESLARIS)" + institution.getDatabaseId(),
+            content -> dcPerson.getRelation().add(content)
+        );
+
+        return dcPerson;
     }
 }

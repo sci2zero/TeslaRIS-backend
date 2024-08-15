@@ -24,7 +24,7 @@ import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Product extends AbstractProduct {
+public class Product implements AbstractProduct {
 
     @XmlElement(name = "Keyword")
     List<String> keywords;

@@ -63,7 +63,12 @@ public class ExportController {
                 break;
             case "ListRecords":
                 if (Objects.nonNull(resumptionToken)) {
-                    OAIPMHParseUtility.ResumptionTokenData dataFromToken = null;
+                    if (!OAIPMHParseUtility.validateResumptionToken(resumptionToken)) {
+                        response.setError(OAIErrorFactory.constructBadResumptionTokenError());
+                        break;
+                    }
+
+                    OAIPMHParseUtility.ResumptionTokenData dataFromToken;
                     try {
                         dataFromToken = OAIPMHParseUtility.parseResumptionToken(resumptionToken);
                     } catch (IllegalArgumentException e) {

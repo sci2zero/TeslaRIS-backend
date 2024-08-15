@@ -6,6 +6,7 @@
       "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
       "handlerDescription": "CERIF compliant CRIS system developed at Faculty of Sciences, University of Novi Sad",
       "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",

@@ -1,5 +1,6 @@
 package rs.teslaris.core.exporter.model.converter;
 
+import com.google.common.base.Functions;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -9,8 +10,10 @@ import java.util.Set;
 import java.util.function.Function;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
+import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.exporter.model.common.ExportPublisher;
+import rs.teslaris.core.importer.model.oaipmh.common.DC;
 import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.importer.model.oaipmh.publication.PartOf;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
@@ -274,6 +277,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         commonExportDocument.setOpenAccess(false);
         document.getFileItems().forEach(file -> {
+            commonExportDocument.getFileFormats().add(file.getMimeType());
             if (file.getLicense().equals(License.OPEN_ACCESS)) {
                 commonExportDocument.setOpenAccess(true);
             }
@@ -404,5 +408,92 @@ public class ExportDocumentConverter extends ExportConverterBase {
         });
 
         return openairePublication;
+    }
+
+    public static DC toDCModel(ExportDocument exportDocument) {
+        var dcPublication = new DC();
+        dcPublication.getDate().add(exportDocument.getDocumentDate());
+        dcPublication.getSource().add(repositoryName);
+
+        dcPublication.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+        // TODO: support other identifiers (if applicable)
+
+        dcPublication.getType().add("text"); // TODO: support PHD dissertations when we add them
+
+        clientLanguages.forEach(lang -> {
+            dcPublication.getIdentifier()
+                .add(baseFrontendUrl + lang + "/scientific-results/" +
+                    getConcreteEntityPath(exportDocument.getType()) +
+                    exportDocument.getDatabaseId());
+        });
+
+        addContentToList(
+            exportDocument.getTitle(),
+            ExportMultilingualContent::getContent,
+            content -> dcPublication.getTitle().add(content)
+        );
+
+        addContentToList(
+            exportDocument.getAuthors(),
+            ExportContribution::getDisplayName,
+            content -> dcPublication.getCreator().add(content)
+        );
+
+        addContentToList(
+            exportDocument.getEditors(),
+            ExportContribution::getDisplayName,
+            content -> dcPublication.getContributor().add(content)
+        );
+
+        addContentToList(
+            exportDocument.getDescription(),
+            ExportMultilingualContent::getContent,
+            content -> dcPublication.getDescription().add(content)
+        );
+
+        addContentToList(
+            exportDocument.getKeywords(),
+            ExportMultilingualContent::getContent,
+            content -> dcPublication.getSubject().add(content.replace("\n", "; "))
+        );
+
+        addContentToList(
+            exportDocument.getLanguageTags(),
+            Function.identity(),
+            content -> dcPublication.getLanguage().add(content)
+        );
+
+        exportDocument.getPublishers().forEach(publisher -> {
+            publisher.getName().forEach(name -> {
+                dcPublication.getPublisher().add(name.getContent());
+            });
+        });
+
+        addContentToList(
+            exportDocument.getFileFormats(),
+            Functions.identity(),
+            content -> dcPublication.getFormat().add(content)
+        );
+
+        dcPublication.getRights().add(
+            exportDocument.getOpenAccess() ? "info:eu-repo/semantics/openAccess" :
+                "info:eu-repo/semantics/metadataOnlyAccess");
+        dcPublication.getRights().add("http://creativecommons.org/publicdomain/zero/1.0/");
+
+        return dcPublication;
+    }
+
+    private static String getConcreteEntityPath(ExportPublicationType type) {
+        return switch (type) {
+            case JOURNAL_PUBLICATION -> "journal-publication";
+            case PROCEEDINGS -> "proceedings";
+            case PROCEEDINGS_PUBLICATION -> "proceedings-publication";
+            case MONOGRAPH -> "monograph";
+            case PATENT -> "patent";
+            case SOFTWARE -> "software";
+            case DATASET -> "dataset";
+            case JOURNAL -> "journal";
+            case MONOGRAPH_PUBLICATION -> "monograph-publication";
+        };
     }
 }

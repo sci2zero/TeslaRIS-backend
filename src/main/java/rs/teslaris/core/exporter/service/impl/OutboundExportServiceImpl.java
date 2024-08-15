@@ -1,19 +1,27 @@
 package rs.teslaris.core.exporter.service.impl;
 
 import java.sql.Date;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -25,6 +33,7 @@ import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
 import rs.teslaris.core.exporter.util.ExportDataFormat;
 import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
 import rs.teslaris.core.exporter.util.OAIErrorFactory;
+import rs.teslaris.core.exporter.util.ResumptionTokenStash;
 import rs.teslaris.core.importer.model.oaipmh.common.Description;
 import rs.teslaris.core.importer.model.oaipmh.common.GetRecord;
 import rs.teslaris.core.importer.model.oaipmh.common.Header;
@@ -41,11 +50,11 @@ import rs.teslaris.core.importer.model.oaipmh.common.ResumptionToken;
 import rs.teslaris.core.importer.model.oaipmh.common.ServiceDescription;
 import rs.teslaris.core.importer.model.oaipmh.common.Set;
 import rs.teslaris.core.importer.model.oaipmh.common.Toolkit;
-import rs.teslaris.core.importer.model.oaipmh.event.Event;
-import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
-import rs.teslaris.core.importer.model.oaipmh.patent.Patent;
-import rs.teslaris.core.importer.model.oaipmh.person.Person;
-import rs.teslaris.core.importer.model.oaipmh.product.Product;
+import rs.teslaris.core.importer.model.oaipmh.event.AbstractEvent;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.AbstractOrgUnit;
+import rs.teslaris.core.importer.model.oaipmh.patent.AbstractPatent;
+import rs.teslaris.core.importer.model.oaipmh.person.AbstractPerson;
+import rs.teslaris.core.importer.model.oaipmh.product.AbstractProduct;
 import rs.teslaris.core.importer.model.oaipmh.publication.AbstractPublication;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -136,11 +145,11 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             });
         }
 
-        var records =
+        var recordsPage =
             findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get(),
                 publicationTypeFilters);
 
-        for (var fetchedRecordEntity : records) {
+        for (var fetchedRecordEntity : recordsPage.getContent()) {
             var record = new Record();
             listRecords.getRecords().add(record);
             var metadata = new Metadata();
@@ -164,8 +173,12 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             record.setMetadata(metadata);
         }
 
-        listRecords.setResumptionToken(
-            constructResumptionToken(from, until, page, requestedSet, metadataPrefix));
+        if (!recordsPage.isLast()) {
+            listRecords.setResumptionToken(
+                constructResumptionToken(from, until, page, requestedSet, metadataPrefix,
+                    recordsPage.getTotalElements(), handlerConfiguration.get()));
+        }
+
         return listRecords;
     }
 
@@ -295,19 +308,19 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                     metadata.setPublication((AbstractPublication) convertedEntity);
                     break;
                 case "Products":
-                    metadata.setProduct((Product) convertedEntity);
+                    metadata.setProduct((AbstractProduct) convertedEntity);
                     break;
                 case "Patents":
-                    metadata.setPatent((Patent) convertedEntity);
+                    metadata.setPatent((AbstractPatent) convertedEntity);
                     break;
                 case "Persons":
-                    metadata.setPerson((Person) convertedEntity);
+                    metadata.setPerson((AbstractPerson) convertedEntity);
                     break;
                 case "Events":
-                    metadata.setEvent((Event) convertedEntity);
+                    metadata.setEvent((AbstractEvent) convertedEntity);
                     break;
                 case "Orgunits":
-                    metadata.setOrgUnit((OrgUnit) convertedEntity);
+                    metadata.setOrgUnit((AbstractOrgUnit) convertedEntity);
                     break;
             }
         } catch (Exception e) {
@@ -317,7 +330,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
     private <E> Optional<E> findRequestedRecord(String identifier, Class<E> entityClass,
                                                 ExportHandlersConfigurationLoader.Handler handlerConfiguration) {
-        Query query = new Query();
+        var query = new Query();
 
         if (identifier.contains("BISIS")) {
             query.addCriteria(
@@ -339,11 +352,11 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         return Optional.ofNullable(mongoTemplate.findOne(query, entityClass));
     }
 
-    private <E> List<E> findRequestedRecords(Class<E> entityClass, String from, String until,
+    private <E> Page<E> findRequestedRecords(Class<E> entityClass, String from, String until,
                                              int page,
                                              ExportHandlersConfigurationLoader.Handler handlerConfiguration,
                                              List<ExportPublicationType> publicationTypeFilters) {
-        Query query = new Query();
+        var query = new Query();
 
         query.addCriteria(Criteria.where("last_updated").gte(Date.valueOf(
                 LocalDate.parse(from, DateTimeFormatter.ISO_DATE)))
@@ -362,8 +375,13 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             query.addCriteria(Criteria.where("type").in(publicationTypeFilters));
         }
 
-        query.with(PageRequest.of(page, PAGE_SIZE));
-        return mongoTemplate.find(query, entityClass);
+        var totalCount = mongoTemplate.count(query, entityClass);
+
+        var pageRequest = PageRequest.of(page, PAGE_SIZE);
+        query.with(pageRequest);
+        var records = mongoTemplate.find(query, entityClass);
+
+        return new PageImpl<>(records, pageRequest, totalCount);
     }
 
     @Override
@@ -485,9 +503,26 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     }
 
     private ResumptionToken constructResumptionToken(String from, String until, int page,
-                                                     String set, String format) {
-        return new ResumptionToken(from + "!" + until + "!" + set + "!" + (page + 1) + "!" + format,
-            null,
-            "" + page * PAGE_SIZE); // When to expire
+                                                     String set, String format,
+                                                     long completeListSize,
+                                                     ExportHandlersConfigurationLoader.Handler handler) {
+        var tokenId = UUID.randomUUID().toString();
+        var newToken =
+            new ResumptionToken(
+                Strings.join(List.of(from, until, set, String.valueOf(page + 1), format, tokenId),
+                    '!'),
+                Date.from(
+                    LocalDateTime.now()
+                        .plus(Duration.ofMinutes((handler.tokenExpirationTimeMinutes())))
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()),
+                page * PAGE_SIZE, completeListSize);
+
+        mongoTemplate.save(
+            new ResumptionTokenStash(null, newToken.getValue(), newToken.getExpirationDate()));
+        mongoTemplate.indexOps(ResumptionTokenStash.class)
+            .ensureIndex(new Index().on("expirationTimestamp", Sort.Direction.ASC)
+                .expire(0L));
+        return newToken;
     }
 }

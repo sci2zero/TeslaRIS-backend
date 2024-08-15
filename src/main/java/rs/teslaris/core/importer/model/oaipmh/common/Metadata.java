@@ -35,32 +35,38 @@ import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
 public class Metadata {
 
     @XmlElements({
-        @XmlElement(name = "OrgUnit", type = OrgUnit.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+        @XmlElement(name = "OrgUnit", type = OrgUnit.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
+        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
     })
     private AbstractOrgUnit orgUnit;
 
     @XmlElements({
-        @XmlElement(name = "Person", type = Person.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+        @XmlElement(name = "Person", type = Person.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
+        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
     })
     private AbstractPerson person;
 
     @XmlElements({
-        @XmlElement(name = "Event", type = Event.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+        @XmlElement(name = "Event", type = Event.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
+        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
     })
     private AbstractEvent event;
 
     @XmlElements({
-        @XmlElement(name = "Publication", type = Publication.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+        @XmlElement(name = "Publication", type = Publication.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
+        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
     })
     private AbstractPublication publication;
 
     @XmlElements({
-        @XmlElement(name = "Patent", type = Patent.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+        @XmlElement(name = "Patent", type = Patent.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
+        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
     })
     private AbstractPatent patent;
 
     @XmlElements({
-        @XmlElement(name = "Product", type = Product.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+        @XmlElement(name = "Product", type = Product.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
+        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
     })
     private AbstractProduct product;
 }

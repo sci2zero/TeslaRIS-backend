@@ -1,20 +1,55 @@
 package rs.teslaris.core.exporter.model.converter;
 
+import jakarta.annotation.PostConstruct;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.BaseExportEntity;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
+@Component
 public class ExportConverterBase {
 
     // Inherited classes should include
     // these static methods:
     // static T toCommonExportModel(D modelEntity)
     // static R toOpenaireModel(T commonExportEntity);
+
+    @Autowired
+    private Environment environment;
+
+    protected static String repositoryName;
+
+    protected static String baseFrontendUrl;
+
+    protected static List<String> clientLanguages = new ArrayList<>();
+
+    @PostConstruct
+    public void init() {
+        repositoryName = environment.getProperty("export.repo.name");
+        baseFrontendUrl = environment.getProperty("client.address");
+        clientLanguages.clear();
+        clientLanguages.addAll(Arrays.asList(
+            Objects.requireNonNull(environment.getProperty("client.localization.languages"))
+                .split(",")));
+    }
+
+    protected static <T> void addContentToList(List<T> sourceList,
+                                               Function<T, String> preprocessingFunction,
+                                               Consumer<String> consumer) {
+        sourceList.forEach(item -> consumer.accept(preprocessingFunction.apply(item)));
+    }
 
     protected static void setBaseFields(BaseExportEntity baseExportEntity, BaseEntity baseEntity) {
         baseExportEntity.setDatabaseId(baseEntity.getId());

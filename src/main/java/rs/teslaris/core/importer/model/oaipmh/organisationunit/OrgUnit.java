@@ -24,7 +24,7 @@ import rs.teslaris.core.importer.model.oaipmh.common.MultilingualContent;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(callSuper = false)
-public class OrgUnit extends AbstractOrgUnit {
+public class OrgUnit implements AbstractOrgUnit {
 
     private String id;
 

@@ -21,7 +21,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Person extends AbstractPerson {
+public class Person implements AbstractPerson {
 
     private String id;
 

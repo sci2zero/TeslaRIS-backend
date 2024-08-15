@@ -46,7 +46,8 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty(value = "handlerDescription", required = true) String handlerDescription,
         @JsonProperty(value = "sets", required = true) List<Set> sets,
         @JsonProperty(value = "metadataFormats", required = true) List<String> metadataFormats,
-        @JsonProperty(value = "exportOnlyActiveEmployees", required = true) Boolean exportOnlyActiveEmployees
+        @JsonProperty(value = "exportOnlyActiveEmployees", required = true) Boolean exportOnlyActiveEmployees,
+        @JsonProperty(value = "tokenExpirationTimeMinutes", required = true) Integer tokenExpirationTimeMinutes
     ) {
     }
 

@@ -6,7 +6,9 @@ import java.util.Optional;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.core.exporter.model.common.ExportOrganisationUnit;
+import rs.teslaris.core.importer.model.oaipmh.common.DC;
 import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.importer.model.oaipmh.organisationunit.PartOf;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -77,5 +79,28 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         }
 
         return orgUnit;
+    }
+
+    public static DC toDCModel(ExportOrganisationUnit exportOrganisationUnit) {
+        var dcOrgUnit = new DC();
+        dcOrgUnit.getType().add("party");
+        dcOrgUnit.getSource().add(repositoryName);
+        dcOrgUnit.getIdentifier().add("TESLARIS(" + exportOrganisationUnit.getDatabaseId() + ")");
+        dcOrgUnit.getIdentifier().add(exportOrganisationUnit.getScopusAfid());
+
+        clientLanguages.forEach(lang -> {
+            dcOrgUnit.getIdentifier()
+                .add(baseFrontendUrl + lang + "/organisation-units/" +
+                    exportOrganisationUnit.getDatabaseId());
+        });
+
+        addContentToList(
+            exportOrganisationUnit.getName(),
+            ExportMultilingualContent::getContent,
+            content -> dcOrgUnit.getTitle().add(content)
+        );
+        dcOrgUnit.getTitle().add(exportOrganisationUnit.getNameAbbreviation());
+
+        return dcOrgUnit;
     }
 }

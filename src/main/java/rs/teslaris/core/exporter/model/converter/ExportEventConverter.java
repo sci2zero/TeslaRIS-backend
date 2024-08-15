@@ -8,6 +8,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
+import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
+import rs.teslaris.core.importer.model.oaipmh.common.DC;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Event;
 
@@ -112,5 +114,58 @@ public class ExportEventConverter extends ExportConverterBase {
 
 
         return openaireEvent;
+    }
+
+    public static DC toDCModel(ExportEvent exportEvent) {
+        var dcEvent = new DC();
+        dcEvent.getSource().add(repositoryName);
+        dcEvent.getType().add("event");
+        dcEvent.getCoverage()
+            .add(exportEvent.getDateFrom().toString() + "-" + exportEvent.getDateTo().toString());
+        dcEvent.getIdentifier().add("TESLARIS(" + exportEvent.getDatabaseId() + ")");
+        dcEvent.getIdentifier().add(exportEvent.getConfId());
+
+        clientLanguages.forEach(lang -> {
+            dcEvent.getIdentifier()
+                .add(baseFrontendUrl + lang + "/events/conference/" + exportEvent.getDatabaseId());
+        });
+
+        addContentToList(
+            exportEvent.getName(),
+            ExportMultilingualContent::getContent,
+            content -> dcEvent.getTitle().add(content)
+        );
+
+        addContentToList(
+            exportEvent.getNameAbbreviation(),
+            ExportMultilingualContent::getContent,
+            content -> dcEvent.getTitle().add(content)
+        );
+
+        addContentToList(
+            exportEvent.getDescription(),
+            ExportMultilingualContent::getContent,
+            content -> dcEvent.getDescription().add(content)
+        );
+
+        addContentToList(
+            exportEvent.getKeywords(),
+            keywordSet -> keywordSet.getContent().replace("\n", "; "),
+            content -> dcEvent.getSubject().add(content)
+        );
+
+        addContentToList(
+            exportEvent.getPlace(),
+            ExportMultilingualContent::getContent,
+            content -> dcEvent.getCoverage().add(content)
+        );
+
+        addContentToList(
+            exportEvent.getState(),
+            ExportMultilingualContent::getContent,
+            content -> dcEvent.getCoverage().add(content)
+        );
+
+        return dcEvent;
     }
 }
