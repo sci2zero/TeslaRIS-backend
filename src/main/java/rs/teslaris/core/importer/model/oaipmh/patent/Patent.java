@@ -25,7 +25,7 @@ import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Patent implements AbstractPatent {
+public class Patent implements PatentConvertable {
 
     @XmlElement(name = "Keyword")
     List<String> keywords;

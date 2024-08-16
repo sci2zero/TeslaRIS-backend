@@ -37,6 +37,7 @@ import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.SoftwareRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 
@@ -81,6 +82,9 @@ public class CommonExportServiceTest {
 
     @Mock
     private ProceedingsPublicationRepository proceedingsPublicationRepository;
+
+    @Mock
+    private ThesisRepository thesisRepository;
 
     @InjectMocks
     private CommonExportServiceImpl commonExportService;
@@ -166,7 +170,8 @@ public class CommonExportServiceTest {
         when(monographRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
             (Page) emptyPage);
         when(monographPublicationRepository.findAllModifiedInLast24Hours(
-            any(Pageable.class))).thenReturn(
+            any(Pageable.class))).thenReturn((Page) emptyPage);
+        when(thesisRepository.findAllModifiedInLast24Hours(any(Pageable.class))).thenReturn(
             (Page) emptyPage);
 
         // When

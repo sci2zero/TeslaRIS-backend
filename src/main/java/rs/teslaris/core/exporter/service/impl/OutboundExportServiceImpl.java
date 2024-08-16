@@ -1,5 +1,6 @@
 package rs.teslaris.core.exporter.service.impl;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Date;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.exporter.model.common.BaseExportEntity;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
+import rs.teslaris.core.exporter.model.converter.ExportConverterBase;
 import rs.teslaris.core.exporter.model.converter.ExportDocumentConverter;
 import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
 import rs.teslaris.core.exporter.util.ExportDataFormat;
@@ -50,13 +52,14 @@ import rs.teslaris.core.importer.model.oaipmh.common.ResumptionToken;
 import rs.teslaris.core.importer.model.oaipmh.common.ServiceDescription;
 import rs.teslaris.core.importer.model.oaipmh.common.Set;
 import rs.teslaris.core.importer.model.oaipmh.common.Toolkit;
-import rs.teslaris.core.importer.model.oaipmh.event.AbstractEvent;
-import rs.teslaris.core.importer.model.oaipmh.organisationunit.AbstractOrgUnit;
-import rs.teslaris.core.importer.model.oaipmh.patent.AbstractPatent;
-import rs.teslaris.core.importer.model.oaipmh.person.AbstractPerson;
-import rs.teslaris.core.importer.model.oaipmh.product.AbstractProduct;
-import rs.teslaris.core.importer.model.oaipmh.publication.AbstractPublication;
+import rs.teslaris.core.importer.model.oaipmh.event.EventConvertable;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnitConvertable;
+import rs.teslaris.core.importer.model.oaipmh.patent.PatentConvertable;
+import rs.teslaris.core.importer.model.oaipmh.person.PersonConvertable;
+import rs.teslaris.core.importer.model.oaipmh.product.ProductConvertable;
+import rs.teslaris.core.importer.model.oaipmh.publication.PublicationConvertable;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
+import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 
 @Service
@@ -88,7 +91,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     @Override
     public ListRecords listRequestedRecords(String handler, String metadataPrefix,
                                             String from, String until, String requestedSet,
-                                            OAIPMHResponse response, int page) {
+                                            OAIPMHResponse response, int page,
+                                            boolean identifiersOnly) {
         if (Objects.isNull(metadataPrefix) || metadataPrefix.isBlank() ||
             Objects.isNull(requestedSet) || requestedSet.isBlank() ||
             Objects.isNull(from) || from.isBlank() ||
@@ -166,11 +170,17 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 return listRecords;
             }
 
-            setMetadataFieldsInGivenFormat(matchedSet.get().identifierSetSpec(), recordClass,
-                converterClass, ExportDataFormat.fromStringValue(metadataPrefix), metadata,
-                fetchedRecordEntity);
-
-            record.setMetadata(metadata);
+            if (!identifiersOnly) {
+                try {
+                    setMetadataFieldsInGivenFormat(matchedSet.get().identifierSetSpec(),
+                        recordClass,
+                        converterClass, ExportDataFormat.fromStringValue(metadataPrefix), metadata,
+                        fetchedRecordEntity);
+                } catch (ConverterDoesNotExistException e) {
+                    response.setError(OAIErrorFactory.constructNoRecordsMatchError());
+                }
+                record.setMetadata(metadata);
+            }
         }
 
         if (!recordsPage.isLast()) {
@@ -263,8 +273,13 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             return getRecord;
         }
 
-        setMetadataFieldsInGivenFormat(set, recordClass, converterClass, metadataFormat, metadata,
-            requestedRecordOptional.get());
+        try {
+            setMetadataFieldsInGivenFormat(set, recordClass, converterClass, metadataFormat,
+                metadata,
+                requestedRecordOptional.get());
+        } catch (ConverterDoesNotExistException e) {
+            response.setError(OAIErrorFactory.constructNoRecordsMatchError());
+        }
 
         record.setMetadata(metadata);
         return getRecord;
@@ -293,38 +308,45 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     private <E> void setMetadataFieldsInGivenFormat(String set, Class<?> recordClass,
                                                     Class<?> converterClass,
                                                     ExportDataFormat metadataFormat,
-                                                    Metadata metadata, E requestedRecord) {
+                                                    Metadata metadata, E requestedRecord)
+        throws ConverterDoesNotExistException {
         var conversionFunctionName = switch (metadataFormat) {
             case OAI_CERIF_OPENAIRE -> "toOpenaireModel";
             case DUBLIN_CORE -> "toDCModel";
+            case ETD_MS -> "toETDMSModel";
         };
 
         try {
             var conversionMethod = converterClass.getMethod(conversionFunctionName, recordClass);
             Object convertedEntity = conversionMethod.invoke(null, requestedRecord);
 
+            // TODO: discuss this
+            ExportConverterBase.performExceptionalHandlingWhereAbsolutelyNecessary(convertedEntity,
+                metadataFormat, set);
+
             switch (set) {
                 case "Publications":
-                    metadata.setPublication((AbstractPublication) convertedEntity);
+                    metadata.setPublication((PublicationConvertable) convertedEntity);
                     break;
                 case "Products":
-                    metadata.setProduct((AbstractProduct) convertedEntity);
+                    metadata.setProduct((ProductConvertable) convertedEntity);
                     break;
                 case "Patents":
-                    metadata.setPatent((AbstractPatent) convertedEntity);
+                    metadata.setPatent((PatentConvertable) convertedEntity);
                     break;
                 case "Persons":
-                    metadata.setPerson((AbstractPerson) convertedEntity);
+                    metadata.setPerson((PersonConvertable) convertedEntity);
                     break;
                 case "Events":
-                    metadata.setEvent((AbstractEvent) convertedEntity);
+                    metadata.setEvent((EventConvertable) convertedEntity);
                     break;
                 case "Orgunits":
-                    metadata.setOrgUnit((AbstractOrgUnit) convertedEntity);
+                    metadata.setOrgUnit((OrgUnitConvertable) convertedEntity);
                     break;
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Conversion method invocation failed", e);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new ConverterDoesNotExistException(
+                converterClass.getName() + "." + conversionFunctionName + " is not implemented.");
         }
     }
 
@@ -413,12 +435,13 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         oaiIdentifier.setScheme("oai");
         oaiIdentifier.setRepositoryIdentifier(repositoryName);
         oaiIdentifier.setDelimiter(":");
-        oaiIdentifier.setSampleIdentifier("oai:" + repositoryName + ":Publications/(TESLARIS)1000");
+        oaiIdentifier.setSampleIdentifier(
+            "oai:" + repositoryName.replace(" ", ".") + ":Publications/(TESLARIS)1000");
 
         var toolkit = new Toolkit();
         toolkit.setTitle("Sci2Zero Alliance Custom implementation");
         toolkit.setAuthor(
-            new Toolkit.Author("Sci2Zero team", "chenejac@uns.ac.rs", "Sci2Zero"));
+            new Toolkit.Author("Sci2Zero team", "chenejac@uns.ac.rs", "Science 2.0 Alliance"));
         toolkit.setVersion("1.0.0");
 
         var serviceDescription = new Description();

@@ -38,6 +38,8 @@ import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Education;
@@ -73,6 +75,7 @@ import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.document.SoftwareRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
@@ -130,6 +133,8 @@ public class DbInitializer implements ApplicationRunner {
     private final EventsRelationRepository eventsRelationRepository;
 
     private final MonographPublicationRepository monographPublicationRepository;
+
+    private final ThesisRepository thesisRepository;
 
 
     @Override
@@ -610,5 +615,14 @@ public class DbInitializer implements ApplicationRunner {
         monographPublication2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Rad u monografiji 2", 1)));
         monographPublicationRepository.save(monographPublication2);
+
+        var thesis1 = new Thesis();
+        thesis1.setApproveStatus(ApproveStatus.APPROVED);
+        thesis1.setThesisType(ThesisType.PHD);
+        thesis1.setDocumentDate("2021-05-17");
+        thesis1.setOrganisationUnit(dummyOU2);
+        thesis1.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
+        thesisRepository.save(thesis1);
     }
 }

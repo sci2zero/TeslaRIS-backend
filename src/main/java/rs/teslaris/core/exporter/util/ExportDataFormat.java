@@ -6,7 +6,9 @@ public enum ExportDataFormat {
     OAI_CERIF_OPENAIRE("oai_cerif_openaire", "http://www.openaire.eu/schema/oai_cerif_openaire.xsd",
         "http://www.openaire.eu/namespace/oai_cerif_openaire"),
     DUBLIN_CORE("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd",
-        "http://www.openarchives.org/OAI/2.0/oai_dc/");
+        "http://www.openarchives.org/OAI/2.0/oai_dc/"),
+    ETD_MS("oai_etdms", "http://cris.uns.ac.rs/etdms/1.1/etdms11.xsd",
+                    "http://www.ndltd.org/standards/metadata/etdms/1.1/");
 
     private final String value;
 

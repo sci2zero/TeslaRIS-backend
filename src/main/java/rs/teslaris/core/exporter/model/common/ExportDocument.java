@@ -12,6 +12,7 @@ import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.model.document.ThesisType;
 
 @Getter
 @Setter
@@ -121,4 +122,10 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("file_formats")
     private List<String> fileFormats = new ArrayList<>();
+
+    @Field("thesis_type")
+    private ThesisType thesisType;
+
+    @Field("thesis_grantor")
+    private ExportOrganisationUnit thesisGrantor;
 }

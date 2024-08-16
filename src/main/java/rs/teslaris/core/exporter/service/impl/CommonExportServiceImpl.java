@@ -34,6 +34,7 @@ import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.ConferenceRepository;
@@ -46,6 +47,7 @@ import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.SoftwareRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 
@@ -79,6 +81,8 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     private final MonographPublicationRepository monographPublicationRepository;
+
+    private final ThesisRepository thesisRepository;
 
 
     @Override
@@ -180,11 +184,19 @@ public class CommonExportServiceImpl implements CommonExportService {
             MonographPublication::getId
         );
 
+        var thesisFuture = exportEntitiesAsync(
+            thesisRepository::findAllModifiedInLast24Hours,
+            ExportDocumentConverter::toCommonExportModel,
+            ExportDocument.class,
+            Thesis::getId
+        );
+
         CompletableFuture.allOf(
             datasetFuture, softwareFuture, patentFuture,
             journalFuture, journalPublicationFuture,
             proceedingsFuture, proceedingsPublicationFuture,
-            monographFuture, monographPublicationFuture
+            monographFuture, monographPublicationFuture,
+            thesisFuture
         ).join();
     }
 

@@ -7,13 +7,26 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
+@Component
 public class ExportHandlersConfigurationLoader {
 
     private static ExportHandlersConfiguration exportHandlersConfiguration = null;
 
-    private static void loadConfiguration() throws IOException {
+    @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
+    private static void reloadConfiguration() {
+        try {
+            loadConfiguration();
+        } catch (IOException e) {
+            throw new StorageException(
+                "Failed to reload export handler configuration: " + e.getMessage());
+        }
+    }
+
+    private static synchronized void loadConfiguration() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         exportHandlersConfiguration = objectMapper.readValue(
             new FileInputStream("src/main/resources/export/exportHandlersConfiguration.json"),
@@ -23,11 +36,7 @@ public class ExportHandlersConfigurationLoader {
 
     public static Optional<Handler> getHandlerByIdentifier(String identifier) {
         if (Objects.isNull(exportHandlersConfiguration)) {
-            try {
-                loadConfiguration();
-            } catch (IOException e) {
-                throw new StorageException(e.getMessage());
-            }
+            reloadConfiguration();
         }
         return exportHandlersConfiguration.handlers().stream()
             .filter(handler -> handler.identifier().equals(identifier))

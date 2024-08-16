@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.function.Function;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
-import rs.teslaris.core.importer.model.oaipmh.common.DC;
+import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Event;
 

@@ -1,4 +1,4 @@
-package rs.teslaris.core.importer.model.oaipmh.common;
+package rs.teslaris.core.importer.model.oaipmh.dublincore;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -12,14 +12,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import rs.teslaris.core.importer.model.oaipmh.event.AbstractEvent;
-import rs.teslaris.core.importer.model.oaipmh.organisationunit.AbstractOrgUnit;
-import rs.teslaris.core.importer.model.oaipmh.patent.AbstractPatent;
-import rs.teslaris.core.importer.model.oaipmh.person.AbstractPerson;
-import rs.teslaris.core.importer.model.oaipmh.product.AbstractProduct;
-import rs.teslaris.core.importer.model.oaipmh.publication.AbstractPublication;
+import rs.teslaris.core.importer.model.oaipmh.event.EventConvertable;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnitConvertable;
+import rs.teslaris.core.importer.model.oaipmh.patent.PatentConvertable;
+import rs.teslaris.core.importer.model.oaipmh.person.PersonConvertable;
+import rs.teslaris.core.importer.model.oaipmh.product.ProductConvertable;
+import rs.teslaris.core.importer.model.oaipmh.publication.PublicationConvertable;
 
-@XmlType(name = "oai_dcType", namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
+@XmlType(name = "TOai_dc", namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "dc", namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
 @Getter
@@ -27,8 +27,9 @@ import rs.teslaris.core.importer.model.oaipmh.publication.AbstractPublication;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class DC implements AbstractPublication, AbstractEvent, AbstractOrgUnit, AbstractPerson,
-    AbstractPatent, AbstractProduct {
+public class DC implements PublicationConvertable, EventConvertable, OrgUnitConvertable,
+    PersonConvertable,
+    PatentConvertable, ProductConvertable {
 
     @XmlElement(name = "title", namespace = "http://purl.org/dc/elements/1.1/")
     private List<String> title = new ArrayList<>();

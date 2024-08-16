@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.core.exporter.model.common.ExportOrganisationUnit;
-import rs.teslaris.core.importer.model.oaipmh.common.DC;
+import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.importer.model.oaipmh.organisationunit.PartOf;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -99,7 +99,11 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             ExportMultilingualContent::getContent,
             content -> dcOrgUnit.getTitle().add(content)
         );
-        dcOrgUnit.getTitle().add(exportOrganisationUnit.getNameAbbreviation());
+
+        if (Objects.nonNull(exportOrganisationUnit.getNameAbbreviation()) &&
+            !exportOrganisationUnit.getNameAbbreviation().isBlank()) {
+            dcOrgUnit.getTitle().add(exportOrganisationUnit.getNameAbbreviation());
+        }
 
         return dcOrgUnit;
     }

@@ -6,7 +6,7 @@ import java.util.function.Function;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
-import rs.teslaris.core.importer.model.oaipmh.common.DC;
+import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.importer.model.oaipmh.patent.Patent;
 

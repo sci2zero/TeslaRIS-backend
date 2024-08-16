@@ -23,7 +23,7 @@ import rs.teslaris.core.importer.model.oaipmh.common.MultilingualContent;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Event implements AbstractEvent {
+public class Event implements EventConvertable {
 
     private String id;
 

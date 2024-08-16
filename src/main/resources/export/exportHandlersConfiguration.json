@@ -2,9 +2,9 @@
   "handlers": [
     {
       "identifier": "OAIHandlerOpenAIRECRIS",
-      "internalInstitutionId": "2",
+      "internalInstitutionId": "18",
       "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
-      "handlerDescription": "CERIF compliant CRIS system developed at Faculty of Sciences, University of Novi Sad",
+      "handlerDescription": "CERIF compliant CRIS system developed by Science 2.0 Alliance for Faculty of Sciences, University of Novi Sad",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
       "sets": [

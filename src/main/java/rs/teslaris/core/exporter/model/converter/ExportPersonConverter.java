@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.exporter.model.common.ExportPerson;
 import rs.teslaris.core.exporter.model.common.ExportPersonName;
-import rs.teslaris.core.importer.model.oaipmh.common.DC;
+import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.importer.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.importer.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.InvolvementType;

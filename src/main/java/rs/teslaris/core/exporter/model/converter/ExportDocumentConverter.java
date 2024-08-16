@@ -13,8 +13,12 @@ import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.exporter.model.common.ExportPublisher;
-import rs.teslaris.core.importer.model.oaipmh.common.DC;
 import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
+import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.importer.model.oaipmh.etdms.Degree;
+import rs.teslaris.core.importer.model.oaipmh.etdms.ETDMSThesis;
+import rs.teslaris.core.importer.model.oaipmh.etdms.LevelType;
+import rs.teslaris.core.importer.model.oaipmh.etdms.ThesisType;
 import rs.teslaris.core.importer.model.oaipmh.publication.PartOf;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
 import rs.teslaris.core.importer.model.oaipmh.publication.PublishedIn;
@@ -31,6 +35,7 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.model.document.Thesis;
 
 public class ExportDocumentConverter extends ExportConverterBase {
 
@@ -238,6 +243,34 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return commonExportDocument;
     }
 
+    public static ExportDocument toCommonExportModel(Thesis thesis) {
+        var commonExportDocument = new ExportDocument();
+        commonExportDocument.setType(ExportPublicationType.THESIS);
+
+        setBaseFields(commonExportDocument, thesis);
+        if (commonExportDocument.getDeleted()) {
+            return commonExportDocument;
+        }
+
+        setCommonFields(commonExportDocument, thesis);
+
+        commonExportDocument.setThesisType(thesis.getThesisType());
+        commonExportDocument.setThesisGrantor(
+            ExportOrganisationUnitConverter.toCommonExportModel(thesis.getOrganisationUnit()));
+
+        thesis.getLanguages().forEach(languageTag -> {
+            commonExportDocument.getLanguageTags().add(languageTag.getLanguageTag());
+        });
+
+        if (Objects.nonNull(thesis.getPublisher())) {
+            commonExportDocument.getPublishers().add(new ExportPublisher(
+                ExportMultilingualContentConverter.toCommonExportModel(
+                    thesis.getPublisher().getName())));
+        }
+
+        return commonExportDocument;
+    }
+
     private static void setCommonFields(ExportDocument commonExportDocument, Document document) {
         commonExportDocument.setTitle(
             ExportMultilingualContentConverter.toCommonExportModel(document.getTitle()));
@@ -412,6 +445,34 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static DC toDCModel(ExportDocument exportDocument) {
         var dcPublication = new DC();
+
+        setDCCommonFields(exportDocument, dcPublication);
+
+        return dcPublication;
+    }
+
+    public static ETDMSThesis toETDMSModel(ExportDocument exportDocument) {
+        var thesisType = new ThesisType();
+
+        setDCCommonFields(exportDocument, thesisType);
+
+        var degree = new Degree();
+        addContentToList(
+            exportDocument.getThesisGrantor().getName(),
+            ExportMultilingualContent::getContent,
+            content -> degree.getGrantor().add(content)
+        );
+        degree.setLevel(
+            new LevelType(String.valueOf(exportDocument.getThesisType().ordinal() % 3)));
+        degree.getName().add(exportDocument.getThesisType().name());
+
+        thesisType.setDegree(degree);
+        var thesis = new ETDMSThesis();
+        thesis.setThesisType(thesisType);
+        return thesis;
+    }
+
+    private static void setDCCommonFields(ExportDocument exportDocument, DC dcPublication) {
         dcPublication.getDate().add(exportDocument.getDocumentDate());
         dcPublication.getSource().add(repositoryName);
 
@@ -475,12 +536,15 @@ public class ExportDocumentConverter extends ExportConverterBase {
             content -> dcPublication.getFormat().add(content)
         );
 
+        if (Objects.nonNull(exportDocument.getDoi()) && !exportDocument.getDoi().isBlank()) {
+            dcPublication.getRelation()
+                .add("info:eu-repo/semantics/altIdentifier/doi/" + exportDocument.getDoi());
+        }
+
         dcPublication.getRights().add(
             exportDocument.getOpenAccess() ? "info:eu-repo/semantics/openAccess" :
                 "info:eu-repo/semantics/metadataOnlyAccess");
         dcPublication.getRights().add("http://creativecommons.org/publicdomain/zero/1.0/");
-
-        return dcPublication;
     }
 
     private static String getConcreteEntityPath(ExportPublicationType type) {
@@ -494,6 +558,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             case DATASET -> "dataset";
             case JOURNAL -> "journal";
             case MONOGRAPH_PUBLICATION -> "monograph-publication";
+            case THESIS -> "thesis";
         };
     }
 }

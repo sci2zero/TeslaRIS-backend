@@ -61,7 +61,7 @@ public class ExportController {
                 response.setListMetadataFormats(
                     outboundExportService.listMetadataFormatsForHandler(handlerName));
                 break;
-            case "ListRecords":
+            case "ListRecords", "ListIdentifiers":
                 if (Objects.nonNull(resumptionToken)) {
                     if (!OAIPMHParseUtility.validateResumptionToken(resumptionToken)) {
                         response.setError(OAIErrorFactory.constructBadResumptionTokenError());
@@ -80,11 +80,11 @@ public class ExportController {
                         outboundExportService.listRequestedRecords(handlerName,
                             dataFromToken.format(),
                             dataFromToken.from(), dataFromToken.until(), dataFromToken.set(),
-                            response, dataFromToken.page()));
+                            response, dataFromToken.page(), verb.equals("ListIdentifiers")));
                 } else {
                     response.setListRecords(
                         outboundExportService.listRequestedRecords(handlerName, metadataPrefix,
-                            from, until, set, response, 0));
+                            from, until, set, response, 0, verb.equals("ListIdentifiers")));
                 }
                 break;
             case "GetRecord":

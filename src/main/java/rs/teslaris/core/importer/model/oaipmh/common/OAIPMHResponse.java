@@ -18,6 +18,7 @@ import lombok.ToString;
     "identify",
     "listSets",
     "listMetadataFormats",
+    "listIdentifiers",
     "listRecords",
     "getRecord",
     "error"
@@ -39,6 +40,9 @@ public class OAIPMHResponse {
 
     @XmlElement(name = "ListMetadataFormats")
     private ListMetadataFormats listMetadataFormats;
+
+    @XmlElement(name = "ListIdentifiers")
+    private ListMetadataFormats listIdentifiers;
 
     @XmlElement(name = "ListRecords")
     private ListRecords listRecords;
