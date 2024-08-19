@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.importer.model.oaipmh.publication.PublicationConvertable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "dim", namespace = "http://www.dspace.org/xmlns/dspace/dim")
@@ -19,7 +20,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Dim {
+public class Dim implements PublicationConvertable {
 
     @XmlElement(name = "field", namespace = "http://www.dspace.org/xmlns/dspace/dim")
     private List<DimField> fields = new ArrayList<>();

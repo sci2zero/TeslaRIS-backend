@@ -20,6 +20,6 @@ import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 @AllArgsConstructor
 public class ThesisType extends DC {
 
-    @XmlElement(namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/")
-    protected Degree degree;
+    @XmlElement(name = "degree", namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/")
+    private Degree degree;
 }

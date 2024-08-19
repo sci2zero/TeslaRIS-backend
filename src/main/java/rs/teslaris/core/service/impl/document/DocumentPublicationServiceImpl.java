@@ -387,6 +387,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
+        System.out.println(documentDTO.getOldId());
         document.setOldId(documentDTO.getOldId());
         document.setDocumentDate(documentDTO.getDocumentDate());
 
@@ -411,7 +412,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         IdentifierUtil.validateAndSetIdentifier(
             documentDTO.getDoi(),
             document.getId(),
-            "^10\\.\\d{4,9}/[-._;()/:A-Z0-9]+$",
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
             documentRepository::existsByDoi,
             document::setDoi,
             "doiFormatError",

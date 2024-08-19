@@ -3,7 +3,6 @@ package rs.teslaris.core.importer.model.oaipmh.etdms;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlSchemaType;
 import jakarta.xml.bind.annotation.XmlType;
 import jakarta.xml.bind.annotation.XmlValue;
 import java.util.Arrays;
@@ -22,9 +21,15 @@ import lombok.Setter;
 @AllArgsConstructor
 public class LevelType {
 
-    // Restricting the values to match the pattern [012]
-    @XmlSchemaType(name = "string")
-    protected static final List<String> allowedValues = Arrays.asList("0", "1", "2");
+    // The allowed values, matching the pattern [012]
+    private static final List<String> allowedValues = Arrays.asList("0", "1", "2");
     @XmlValue
-    protected String value;
+    private String value;
+
+    public void setValue(String value) {
+        if (!allowedValues.contains(value)) {
+            throw new IllegalArgumentException("Invalid value for LevelType: " + value);
+        }
+        this.value = value;
+    }
 }

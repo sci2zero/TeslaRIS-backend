@@ -14,6 +14,8 @@ import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.exporter.model.common.ExportPublisher;
 import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
+import rs.teslaris.core.importer.model.oaipmh.dspaceinternal.Dim;
+import rs.teslaris.core.importer.model.oaipmh.dspaceinternal.DimField;
 import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.importer.model.oaipmh.etdms.Degree;
 import rs.teslaris.core.importer.model.oaipmh.etdms.ETDMSThesis;
@@ -31,6 +33,7 @@ import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -281,16 +284,20 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setKeywords(
             ExportMultilingualContentConverter.toCommonExportModel(document.getKeywords()));
 
-        document.getContributors().forEach(contributor -> {
-            switch (contributor.getContributionType()) {
-                case AUTHOR:
-                    commonExportDocument.getAuthors().add(createExportContribution(contributor));
-                    break;
-                case EDITOR:
-                    commonExportDocument.getEditors().add(createExportContribution(contributor));
-                    break;
-            }
-        });
+        document.getContributors().stream()
+            .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
+            .forEach(contributor -> {
+                switch (contributor.getContributionType()) {
+                    case AUTHOR:
+                        commonExportDocument.getAuthors()
+                            .add(createExportContribution(contributor));
+                        break;
+                    case EDITOR:
+                        commonExportDocument.getEditors()
+                            .add(createExportContribution(contributor));
+                        break;
+                }
+            });
 
         commonExportDocument.setUris(document.getUris().stream().toList());
         commonExportDocument.setDocumentDate(document.getDocumentDate());
@@ -456,20 +463,121 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         setDCCommonFields(exportDocument, thesisType);
 
-        var degree = new Degree();
-        addContentToList(
-            exportDocument.getThesisGrantor().getName(),
-            ExportMultilingualContent::getContent,
-            content -> degree.getGrantor().add(content)
-        );
-        degree.setLevel(
-            new LevelType(String.valueOf(exportDocument.getThesisType().ordinal() % 3)));
-        degree.getName().add(exportDocument.getThesisType().name());
+        if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
+            var degree = new Degree();
+            addContentToList(
+                exportDocument.getThesisGrantor().getName(),
+                ExportMultilingualContent::getContent,
+                content -> degree.getGrantor().add(content)
+            );
+            degree.setLevel(
+                new LevelType(String.valueOf(exportDocument.getThesisType().ordinal() % 3)));
+            degree.getName().add(exportDocument.getThesisType().name());
+            thesisType.setDegree(degree);
+        }
 
-        thesisType.setDegree(degree);
         var thesis = new ETDMSThesis();
         thesis.setThesisType(thesisType);
         return thesis;
+    }
+
+    public static Dim toDIMModel(ExportDocument exportDocument) {
+        var dimPublication = new Dim();
+
+        exportDocument.getTitle().forEach(mc -> {
+            var field = new DimField();
+            field.setMdschema("dc");
+            field.setElement("title");
+            field.setLanguage(mc.getLanguageTag());
+            field.setValue(mc.getContent());
+            dimPublication.getFields().add(field);
+        });
+
+        exportDocument.getAuthors().forEach(author -> {
+            var field = new DimField();
+            field.setMdschema("dc");
+            field.setElement("creator");
+            field.setValue(author.getDisplayName());
+            dimPublication.getFields().add(field);
+        });
+
+        exportDocument.getEditors().forEach(editor -> {
+            var field = new DimField();
+            field.setMdschema("dc");
+            field.setElement("contributor");
+            field.setQualifier("editor");
+            field.setValue(editor.getDisplayName());
+            dimPublication.getFields().add(field);
+        });
+
+        exportDocument.getKeywords().forEach(mc -> {
+            var field = new DimField();
+            field.setMdschema("dc");
+            field.setElement("subject");
+            field.setLanguage(mc.getLanguageTag());
+            field.setValue(mc.getContent().replace("\n", ", "));
+            dimPublication.getFields().add(field);
+        });
+
+        exportDocument.getDescription().forEach(mc -> {
+            var field = new DimField();
+            field.setMdschema("dc");
+            field.setElement("description");
+            field.setLanguage(mc.getLanguageTag());
+            field.setValue(mc.getContent().replace("\n", ", "));
+            dimPublication.getFields().add(field);
+        });
+
+        exportDocument.getPublishers().forEach(publisher -> {
+            publisher.getName().forEach(mc -> {
+                var field = new DimField();
+                field.setMdschema("dc");
+                field.setElement("publisher");
+                field.setLanguage(mc.getLanguageTag());
+                field.setValue(mc.getContent());
+                dimPublication.getFields().add(field);
+            });
+        });
+
+        exportDocument.getLanguageTags().forEach(languageTag -> {
+            var field = new DimField();
+            field.setMdschema("dc");
+            field.setElement("language");
+            field.setValue(languageTag);
+            dimPublication.getFields().add(field);
+        });
+
+        dimPublication.getFields().add(new DimField("dc", "date", "issued", null, null, null,
+            exportDocument.getDocumentDate()));
+        dimPublication.getFields().add(
+            new DimField("dc", "type", null, "en", null, null, exportDocument.getType().name()));
+
+        if (Objects.nonNull(exportDocument.getThesisGrantor())) {
+            exportDocument.getThesisGrantor().getName().forEach(mc -> {
+                var field = new DimField();
+                field.setMdschema("dc");
+                field.setElement("source");
+                field.setLanguage(mc.getLanguageTag());
+                field.setValue(mc.getContent());
+                dimPublication.getFields().add(field);
+            });
+        }
+        dimPublication.getFields().add(new DimField("dc", "source", null, null, null, null,
+            repositoryName + " (" + baseFrontendUrl + ")"));
+
+        dimPublication.getFields().add(new DimField("dc", "rights", null, null, null, null,
+            exportDocument.getOpenAccess() ? "Attribution-NonCommercial" :
+                "Attribution-NonCommercial-NoDerivs")); // TODO: improve this
+
+        clientLanguages.forEach(lang -> {
+            dimPublication.getFields()
+                .add(new DimField("dc", "identifier", "uri", lang, null, null,
+                    baseFrontendUrl + lang + "/scientific-results/" +
+                        getConcreteEntityPath(exportDocument.getType()) + "/" +
+                        exportDocument.getDatabaseId()));
+        });
+
+        return dimPublication;
     }
 
     private static void setDCCommonFields(ExportDocument exportDocument, DC dcPublication) {
@@ -484,7 +592,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         clientLanguages.forEach(lang -> {
             dcPublication.getIdentifier()
                 .add(baseFrontendUrl + lang + "/scientific-results/" +
-                    getConcreteEntityPath(exportDocument.getType()) +
+                    getConcreteEntityPath(exportDocument.getType()) + "/" +
                     exportDocument.getDatabaseId());
         });
 
@@ -545,20 +653,5 @@ public class ExportDocumentConverter extends ExportConverterBase {
             exportDocument.getOpenAccess() ? "info:eu-repo/semantics/openAccess" :
                 "info:eu-repo/semantics/metadataOnlyAccess");
         dcPublication.getRights().add("http://creativecommons.org/publicdomain/zero/1.0/");
-    }
-
-    private static String getConcreteEntityPath(ExportPublicationType type) {
-        return switch (type) {
-            case JOURNAL_PUBLICATION -> "journal-publication";
-            case PROCEEDINGS -> "proceedings";
-            case PROCEEDINGS_PUBLICATION -> "proceedings-publication";
-            case MONOGRAPH -> "monograph";
-            case PATENT -> "patent";
-            case SOFTWARE -> "software";
-            case DATASET -> "dataset";
-            case JOURNAL -> "journal";
-            case MONOGRAPH_PUBLICATION -> "monograph-publication";
-            case THESIS -> "thesis";
-        };
     }
 }

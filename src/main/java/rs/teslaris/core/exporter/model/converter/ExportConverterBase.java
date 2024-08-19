@@ -26,6 +26,9 @@ public class ExportConverterBase {
     // these static methods:
     // static T toCommonExportModel(D modelEntity)
     // static R toOpenaireModel(T commonExportEntity);
+    // static D toDCModel(T commonExportEntity);
+    // static E toETDMSModel(T commonExportEntity); // where applicable
+    // static S toDIMSModel(T commonExportEntity); // where applicable
 
     protected static String repositoryName;
     protected static String baseFrontendUrl;
@@ -105,21 +108,37 @@ public class ExportConverterBase {
      * suboptimal or hacky in nature).
      *
      * @param convertedEntity The entity that has been converted and may need exceptional handling.
-     * @param format The export data format being used (e.g., Dublin Core).
-     * @param set The specific set within the export data format, such as "oai_cerif_publications".
+     * @param format          The export data format being used (e.g., Dublin Core).
+     * @param set             The specific set within the export data format, such as "oai_cerif_publications".
      */
     public static void performExceptionalHandlingWhereAbsolutelyNecessary(Object convertedEntity,
                                                                           ExportDataFormat format,
                                                                           String set) {
         if (format.equals(ExportDataFormat.DUBLIN_CORE) && set.equals("oai_cerif_publications")) {
-            ((DC)convertedEntity).getType().clear();
-            ((DC)convertedEntity).getType().add("info:eu-repo/semantics/doctoralThesis");
-            ((DC)convertedEntity).getType().add("info:eu-repo/semantics/publishedVersion");
+            ((DC) convertedEntity).getType().clear();
+            ((DC) convertedEntity).getType().add("info:eu-repo/semantics/doctoralThesis");
+            ((DC) convertedEntity).getType().add("info:eu-repo/semantics/publishedVersion");
 
-            ((DC)convertedEntity).getRights().clear();
-            ((DC)convertedEntity).getRights().add("info:eu-repo/semantics/openAccess");
-            ((DC)convertedEntity).getRights().add("http://creativecommons.org/licenses/by-sa/2.0/uk/");
+            ((DC) convertedEntity).getRights().clear();
+            ((DC) convertedEntity).getRights().add("info:eu-repo/semantics/openAccess");
+            ((DC) convertedEntity).getRights()
+                .add("http://creativecommons.org/licenses/by-sa/2.0/uk/");
         }
+    }
+
+    protected static String getConcreteEntityPath(ExportPublicationType type) {
+        return switch (type) {
+            case JOURNAL_PUBLICATION -> "journal-publication";
+            case PROCEEDINGS -> "proceedings";
+            case PROCEEDINGS_PUBLICATION -> "proceedings-publication";
+            case MONOGRAPH -> "monograph";
+            case PATENT -> "patent";
+            case SOFTWARE -> "software";
+            case DATASET -> "dataset";
+            case JOURNAL -> "journal";
+            case MONOGRAPH_PUBLICATION -> "monograph-publication";
+            case THESIS -> "thesis";
+        };
     }
 
     @PostConstruct

@@ -11,19 +11,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.importer.model.oaipmh.dspaceinternal.Dim;
 import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
-import rs.teslaris.core.importer.model.oaipmh.event.EventConvertable;
+import rs.teslaris.core.importer.model.oaipmh.etdms.ETDMSThesis;
 import rs.teslaris.core.importer.model.oaipmh.event.Event;
-import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnitConvertable;
+import rs.teslaris.core.importer.model.oaipmh.event.EventConvertable;
 import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnit;
-import rs.teslaris.core.importer.model.oaipmh.patent.PatentConvertable;
+import rs.teslaris.core.importer.model.oaipmh.organisationunit.OrgUnitConvertable;
 import rs.teslaris.core.importer.model.oaipmh.patent.Patent;
-import rs.teslaris.core.importer.model.oaipmh.person.PersonConvertable;
+import rs.teslaris.core.importer.model.oaipmh.patent.PatentConvertable;
 import rs.teslaris.core.importer.model.oaipmh.person.Person;
-import rs.teslaris.core.importer.model.oaipmh.product.ProductConvertable;
+import rs.teslaris.core.importer.model.oaipmh.person.PersonConvertable;
 import rs.teslaris.core.importer.model.oaipmh.product.Product;
-import rs.teslaris.core.importer.model.oaipmh.publication.PublicationConvertable;
+import rs.teslaris.core.importer.model.oaipmh.product.ProductConvertable;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
+import rs.teslaris.core.importer.model.oaipmh.publication.PublicationConvertable;
 
 @XmlType(name = "TMetadata")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -55,7 +57,9 @@ public class Metadata {
 
     @XmlElements({
         @XmlElement(name = "Publication", type = Publication.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
-        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
+        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/"),
+        @XmlElement(name = "thesis", type = ETDMSThesis.class, namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/"),
+        @XmlElement(name = "dim", type = Dim.class, namespace = "http://www.dspace.org/xmlns/dspace/dim")
     })
     private PublicationConvertable publication;
 

@@ -17,7 +17,7 @@ import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-public class ExportController {
+public class OutboundExportController {
 
     private final OutboundExportService outboundExportService;
 

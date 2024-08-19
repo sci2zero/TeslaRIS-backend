@@ -153,6 +153,11 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get(),
                 publicationTypeFilters);
 
+        if (recordsPage.getTotalElements() == 0) {
+            response.setError(OAIErrorFactory.constructNoRecordsMatchError());
+            return null;
+        }
+
         for (var fetchedRecordEntity : recordsPage.getContent()) {
             var record = new Record();
             listRecords.getRecords().add(record);
@@ -178,6 +183,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                         fetchedRecordEntity);
                 } catch (ConverterDoesNotExistException e) {
                     response.setError(OAIErrorFactory.constructNoRecordsMatchError());
+                    return null;
                 }
                 record.setMetadata(metadata);
             }
@@ -279,6 +285,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 requestedRecordOptional.get());
         } catch (ConverterDoesNotExistException e) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
+            return null;
         }
 
         record.setMetadata(metadata);
@@ -314,6 +321,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             case OAI_CERIF_OPENAIRE -> "toOpenaireModel";
             case DUBLIN_CORE -> "toDCModel";
             case ETD_MS -> "toETDMSModel";
+            case DSPACE_INTERNAL_MODEL -> "toDIMModel";
         };
 
         try {

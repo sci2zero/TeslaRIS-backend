@@ -13,13 +13,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "TDegree", namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/", propOrder = {
-    "name",
-    "level",
-    "discipline",
-    "grantor"
-})
-@XmlRootElement(name="degree", namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/")
+@XmlType(name = "TDegree", namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/")
+@XmlRootElement(name = "degree", namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,14 +22,14 @@ import lombok.Setter;
 public class Degree {
 
     @XmlElement(name = "name", namespace = "http://purl.org/dc/elements/1.1/")
-    protected List<String> name = new ArrayList<>();
+    private List<String> name = new ArrayList<>();
 
-    @XmlElement(namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/")
-    protected LevelType level;
-
+    @XmlElement(name = "levelType", namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/")
+    private LevelType level;
+    //
     @XmlElement(name = "discipline", namespace = "http://purl.org/dc/elements/1.1/")
-    protected List<String> discipline = new ArrayList<>();
+    private List<String> discipline = new ArrayList<>();
 
     @XmlElement(name = "grantor", namespace = "http://purl.org/dc/elements/1.1/")
-    protected List<String> grantor = new ArrayList<>();
+    private List<String> grantor = new ArrayList<>();
 }

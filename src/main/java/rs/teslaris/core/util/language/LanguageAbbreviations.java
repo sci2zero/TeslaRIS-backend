@@ -21,4 +21,10 @@ public class LanguageAbbreviations {
     public static String SPANISH = "SP";
 
     public static String RUSSIAN = "RU";
+
+    public static String YUGOSLAV = "YU";
+
+    public static String ITALIAN = "IT";
+
+    public static String SLOVENIAN = "SL";
 }

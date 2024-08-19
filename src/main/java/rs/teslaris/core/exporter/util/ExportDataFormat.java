@@ -8,7 +8,10 @@ public enum ExportDataFormat {
     DUBLIN_CORE("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd",
         "http://www.openarchives.org/OAI/2.0/oai_dc/"),
     ETD_MS("oai_etdms", "http://cris.uns.ac.rs/etdms/1.1/etdms11.xsd",
-                    "http://www.ndltd.org/standards/metadata/etdms/1.1/");
+        "http://www.ndltd.org/standards/metadata/etdms/1.1/"),
+    DSPACE_INTERNAL_MODEL("oai_dim",
+        "http://www.dspace.org/xmlns/dspace/dim http://www.dspace.org/schema/dim.xsd",
+        "http://www.dspace.org/xmlns/dspace/dim");
 
     private final String value;
 

@@ -156,18 +156,19 @@ public class DbInitializer implements ApplicationRunner {
         var editPublicationSeries = new Privilege("EDIT_PUBLICATION_SERIES");
         var editConferences = new Privilege("EDIT_CONFERENCES");
         var editEventRelations = new Privilege("EDIT_EVENT_RELATIONS");
+        var prepareExportData = new Privilege("PREPARE_EXPORT_DATA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
                 editResearchAreas, approvePublication, editOURelations, editPublishers,
-                editPublicationSeries, editConferences, editEventRelations));
+                editPublicationSeries, editConferences, editEventRelations, prepareExportData));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
                 createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
                 editOURelations, approvePublication, editPublishers, editPublicationSeries,
-                editConferences, editEventRelations)));
+                editConferences, editEventRelations, prepareExportData)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
@@ -184,7 +185,7 @@ public class DbInitializer implements ApplicationRunner {
         languageRepository.save(englishLanguage);
 
         var yuLanguage = new Language();
-        yuLanguage.setLanguageCode(LanguageAbbreviations.CROATIAN);
+        yuLanguage.setLanguageCode(LanguageAbbreviations.YUGOSLAV);
         yuLanguage.setDeleted(true);
         languageRepository.save(yuLanguage);
 
@@ -624,5 +625,23 @@ public class DbInitializer implements ApplicationRunner {
         thesis1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
         thesisRepository.save(thesis1);
+
+        var croatianTag = new LanguageTag(LanguageAbbreviations.CROATIAN, "Croatian");
+        languageTagRepository.save(croatianTag);
+        var croatianLanguage = new Language();
+        croatianLanguage.setLanguageCode(LanguageAbbreviations.CROATIAN);
+        languageRepository.save(croatianLanguage);
+
+        var italianTag = new LanguageTag(LanguageAbbreviations.ITALIAN, "Italian");
+        languageTagRepository.save(italianTag);
+        var italianLanguage = new Language();
+        italianLanguage.setLanguageCode(LanguageAbbreviations.ITALIAN);
+        languageRepository.save(italianLanguage);
+
+        var slovenianTag = new LanguageTag(LanguageAbbreviations.SLOVENIAN, "Slovenian");
+        languageTagRepository.save(slovenianTag);
+        var slovenianLanguage = new Language();
+        slovenianLanguage.setLanguageCode(LanguageAbbreviations.SLOVENIAN);
+        languageRepository.save(slovenianLanguage);
     }
 }

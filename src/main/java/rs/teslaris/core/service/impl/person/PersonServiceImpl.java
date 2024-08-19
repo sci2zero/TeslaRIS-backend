@@ -367,7 +367,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void reindexPersons() {
         personIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 50;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

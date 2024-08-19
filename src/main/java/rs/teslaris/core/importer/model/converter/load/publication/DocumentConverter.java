@@ -59,7 +59,7 @@ public abstract class DocumentConverter {
             dto.setUris(new HashSet<>(record.getUrl()));
         }
 
-        dto.setDoi(record.getDoi());
+        dto.setDoi(Objects.nonNull(record.getDoi()) ? record.getDoi().replace("|", "") : null);
         dto.setScopusId(record.getScpNumber());
         dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
 
