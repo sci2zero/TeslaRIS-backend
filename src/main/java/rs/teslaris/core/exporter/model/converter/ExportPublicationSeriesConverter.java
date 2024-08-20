@@ -5,14 +5,16 @@ import java.util.Objects;
 import java.util.Set;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
+import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 
 public class ExportPublicationSeriesConverter extends ExportConverterBase {
 
     public static ExportDocument toCommonExportModel(
-        PublicationSeries publicationSeries) {
+        PublicationSeries publicationSeries, boolean computeRelations) {
         var commonExportPublicationSeries = new ExportDocument();
+        commonExportPublicationSeries.setType(ExportPublicationType.JOURNAL);
 
         setBaseFields(commonExportPublicationSeries, publicationSeries);
         if (commonExportPublicationSeries.getDeleted()) {
@@ -36,7 +38,7 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
                     contribution.getAffiliationStatement().getDisplayPersonName().toString());
                 if (Objects.nonNull(contribution.getPerson())) {
                     exportContribution.setPerson(
-                        ExportPersonConverter.toCommonExportModel(contribution.getPerson()));
+                        ExportPersonConverter.toCommonExportModel(contribution.getPerson(), false));
                 }
                 commonExportPublicationSeries.getEditors().add(exportContribution);
             }
@@ -47,21 +49,21 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
             commonExportPublicationSeries.getLanguageTags().add(languageTag.getLanguageTag());
         });
 
-        commonExportPublicationSeries.getRelatedInstitutionIds()
-            .addAll(getRelatedInstitutions(publicationSeries, false));
-        commonExportPublicationSeries.getActivelyRelatedInstitutionIds()
-            .addAll(getRelatedInstitutions(publicationSeries, true));
+        if (computeRelations) {
+            var relations = getRelatedInstitutions(publicationSeries);
+            commonExportPublicationSeries.getRelatedInstitutionIds().addAll(relations);
+            commonExportPublicationSeries.getActivelyRelatedInstitutionIds().addAll(relations);
+        }
+
         return commonExportPublicationSeries;
     }
 
-    private static Set<Integer> getRelatedInstitutions(PublicationSeries publicationSeries,
-                                                       boolean onlyActive) {
+    private static Set<Integer> getRelatedInstitutions(PublicationSeries publicationSeries) {
         var relations = new HashSet<Integer>();
         publicationSeries.getContributions().forEach(contribution -> {
-            if (Objects.nonNull(contribution.getPerson())) {
-                relations.addAll(ExportPersonConverter.getRelatedInstitutions(
-                    contribution.getPerson(), onlyActive));
-            }
+            contribution.getInstitutions().forEach(institution -> {
+                relations.add(institution.getId());
+            });
         });
         return relations;
     }

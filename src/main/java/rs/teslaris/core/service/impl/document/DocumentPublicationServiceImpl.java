@@ -387,7 +387,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
-        System.out.println(documentDTO.getOldId());
         document.setOldId(documentDTO.getOldId());
         document.setDocumentDate(documentDTO.getDocumentDate());
 

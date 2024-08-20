@@ -27,7 +27,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             organisationUnitsRelationRepository;
     }
 
-    public static ExportOrganisationUnit toCommonExportModel(OrganisationUnit organisationUnit) {
+    public static ExportOrganisationUnit toCommonExportModel(OrganisationUnit organisationUnit,
+                                                             boolean computeRelations) {
         var commonExportOU = new ExportOrganisationUnit();
 
         setBaseFields(commonExportOU, organisationUnit);
@@ -44,11 +45,14 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         var superOu = organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
         superOu.ifPresent(organisationUnitsRelation -> commonExportOU.setSuperOU(
             ExportOrganisationUnitConverter.toCommonExportModel(
-                organisationUnitsRelation.getTargetOrganisationUnit())));
+                organisationUnitsRelation.getTargetOrganisationUnit(), false)));
 
-        var topLevelIds = getTopLevelOrganisationUnitIds(organisationUnit.getId());
-        commonExportOU.getRelatedInstitutionIds().addAll(topLevelIds);
-        commonExportOU.getActivelyRelatedInstitutionIds().addAll(topLevelIds);
+        if (computeRelations) {
+            var topLevelIds = getTopLevelOrganisationUnitIds(organisationUnit.getId());
+            commonExportOU.getRelatedInstitutionIds().addAll(topLevelIds);
+            commonExportOU.getActivelyRelatedInstitutionIds().addAll(topLevelIds);
+        }
+
         return commonExportOU;
     }
 

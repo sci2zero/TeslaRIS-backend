@@ -7,16 +7,19 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class PersonContributionConverter {
 
     private final PersonService personService;
@@ -57,12 +60,20 @@ public class PersonContributionConverter {
         }
         contribution.setPersonId(person.getId());
 
+        contribution.setInstitutionIds(new ArrayList<>());
+        person.getInvolvements().forEach(involvement -> {
+            if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) {
+                contribution.getInstitutionIds().add(involvement.getId());
+            }
+        });
+
         if (Objects.nonNull(contributor.getDisplayName())) {
             contribution.setPersonName(
                 new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null));
         }
 
-        contribution.setOrderNumber(orderNumber);
+        contribution.setOrderNumber(orderNumber + 1);
 
         return contribution;
     }

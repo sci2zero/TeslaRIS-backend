@@ -2,6 +2,7 @@ package rs.teslaris.core.exporter.service.impl;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -203,7 +204,7 @@ public class CommonExportServiceImpl implements CommonExportService {
     @Async
     public <T, E> CompletableFuture<Void> exportEntitiesAsync(
         Function<Pageable, Page<T>> repositoryFunction,
-        Function<T, E> converter,
+        BiFunction<T, Boolean, E> converter,
         Class<E> exportClass,
         Function<T, Integer> idGetter
     ) {
@@ -213,27 +214,27 @@ public class CommonExportServiceImpl implements CommonExportService {
 
     private <T, E> void exportEntities(
         Function<Pageable, Page<T>> repositoryFunction,
-        Function<T, E> converter,
+        BiFunction<T, Boolean, E> converter,
         Class<E> exportClass,
         Function<T, Integer> idGetter
     ) {
         int pageNumber = 0;
-        int chunkSize = 50;
+        int chunkSize = 10;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
             List<T> chunk =
                 repositoryFunction.apply(PageRequest.of(pageNumber, chunkSize)).getContent();
-            chunk.forEach(entity -> {
+            for (T entity : chunk) {
                 var query = new Query();
                 query.addCriteria(Criteria.where("database_id").is(idGetter.apply(entity)));
                 query.limit(1);
 
-                var exportEntry = converter.apply(entity);
+                var exportEntry = converter.apply(entity, true);
 
                 mongoTemplate.remove(query, exportClass);
                 mongoTemplate.save(exportEntry);
-            });
+            }
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

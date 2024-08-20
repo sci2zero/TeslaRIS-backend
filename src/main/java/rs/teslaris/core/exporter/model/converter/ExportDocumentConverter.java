@@ -10,7 +10,10 @@ import java.util.Set;
 import java.util.function.Function;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
+import rs.teslaris.core.exporter.model.common.ExportEvent;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
+import rs.teslaris.core.exporter.model.common.ExportPerson;
+import rs.teslaris.core.exporter.model.common.ExportPersonName;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.exporter.model.common.ExportPublisher;
 import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
@@ -42,7 +45,7 @@ import rs.teslaris.core.model.document.Thesis;
 
 public class ExportDocumentConverter extends ExportConverterBase {
 
-    public static ExportDocument toCommonExportModel(Dataset dataset) {
+    public static ExportDocument toCommonExportModel(Dataset dataset, boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.DATASET);
 
@@ -51,7 +54,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, dataset);
+        setCommonFields(commonExportDocument, dataset, computeRelations);
 
         commonExportDocument.setNumber(dataset.getInternalNumber());
         if (Objects.nonNull(dataset.getPublisher())) {
@@ -63,7 +66,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(Software software) {
+    public static ExportDocument toCommonExportModel(Software software, boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.SOFTWARE);
 
@@ -72,7 +75,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, software);
+        setCommonFields(commonExportDocument, software, computeRelations);
 
         commonExportDocument.setNumber(software.getInternalNumber());
         if (Objects.nonNull(software.getPublisher())) {
@@ -84,7 +87,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(Patent patent) {
+    public static ExportDocument toCommonExportModel(Patent patent, boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.PATENT);
 
@@ -93,7 +96,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, patent);
+        setCommonFields(commonExportDocument, patent, computeRelations);
 
         commonExportDocument.setNumber(patent.getNumber());
         if (Objects.nonNull(patent.getPublisher())) {
@@ -105,7 +108,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(JournalPublication journalPublication) {
+    public static ExportDocument toCommonExportModel(JournalPublication journalPublication,
+                                                     boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.JOURNAL_PUBLICATION);
 
@@ -114,7 +118,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, journalPublication);
+        setCommonFields(commonExportDocument, journalPublication, computeRelations);
 
         commonExportDocument.setJournalPublicationType(
             journalPublication.getJournalPublicationType());
@@ -125,13 +129,14 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setIssue(journalPublication.getIssue());
         if (Objects.nonNull(journalPublication.getJournal())) {
             commonExportDocument.setJournal(ExportPublicationSeriesConverter.toCommonExportModel(
-                journalPublication.getJournal()));
+                journalPublication.getJournal(), false));
         }
 
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(Proceedings proceedings) {
+    public static ExportDocument toCommonExportModel(Proceedings proceedings,
+                                                     boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.PROCEEDINGS);
 
@@ -140,7 +145,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, proceedings);
+        setCommonFields(commonExportDocument, proceedings, computeRelations);
 
         commonExportDocument.setEIsbn(proceedings.getEISBN());
         commonExportDocument.setPrintIsbn(proceedings.getPrintISBN());
@@ -152,7 +157,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             commonExportDocument.setJournal(ExportPublicationSeriesConverter.toCommonExportModel(
-                proceedings.getPublicationSeries()));
+                proceedings.getPublicationSeries(), false));
             commonExportDocument.setEdition(proceedings.getPublicationSeries().getTitle().stream()
                 .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get().getContent());
         }
@@ -166,7 +171,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
     }
 
     public static ExportDocument toCommonExportModel(
-        ProceedingsPublication proceedingsPublication) {
+        ProceedingsPublication proceedingsPublication, boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.PROCEEDINGS_PUBLICATION);
 
@@ -175,7 +180,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, proceedingsPublication);
+        setCommonFields(commonExportDocument, proceedingsPublication, computeRelations);
 
         commonExportDocument.setProceedingsPublicationType(
             proceedingsPublication.getProceedingsPublicationType());
@@ -184,13 +189,14 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setNumber(proceedingsPublication.getArticleNumber());
         if (Objects.nonNull(proceedingsPublication.getProceedings())) {
             commonExportDocument.setProceedings(ExportDocumentConverter.toCommonExportModel(
-                proceedingsPublication.getProceedings()));
+                proceedingsPublication.getProceedings(), false));
         }
 
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(Monograph monograph) {
+    public static ExportDocument toCommonExportModel(Monograph monograph,
+                                                     boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.MONOGRAPH);
 
@@ -199,7 +205,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, monograph);
+        setCommonFields(commonExportDocument, monograph, computeRelations);
 
         commonExportDocument.setMonographType(monograph.getMonographType());
         commonExportDocument.setEIsbn(monograph.getEISBN());
@@ -209,7 +215,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {
             commonExportDocument.setJournal(ExportPublicationSeriesConverter.toCommonExportModel(
-                monograph.getPublicationSeries()));
+                monograph.getPublicationSeries(), false));
             commonExportDocument.setEdition(monograph.getPublicationSeries().getTitle().stream()
                 .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get().getContent());
         }
@@ -221,7 +227,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(MonographPublication monographPublication) {
+    public static ExportDocument toCommonExportModel(MonographPublication monographPublication,
+                                                     boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.MONOGRAPH_PUBLICATION);
 
@@ -230,7 +237,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, monographPublication);
+        setCommonFields(commonExportDocument, monographPublication, computeRelations);
 
         commonExportDocument.setMonographPublicationType(
             monographPublication.getMonographPublicationType());
@@ -240,13 +247,14 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (Objects.nonNull(monographPublication.getMonograph())) {
             commonExportDocument.setMonograph(
-                ExportDocumentConverter.toCommonExportModel(monographPublication.getMonograph()));
+                ExportDocumentConverter.toCommonExportModel(monographPublication.getMonograph(),
+                    false));
         }
 
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(Thesis thesis) {
+    public static ExportDocument toCommonExportModel(Thesis thesis, boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
         commonExportDocument.setType(ExportPublicationType.THESIS);
 
@@ -255,11 +263,12 @@ public class ExportDocumentConverter extends ExportConverterBase {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, thesis);
+        setCommonFields(commonExportDocument, thesis, computeRelations);
 
         commonExportDocument.setThesisType(thesis.getThesisType());
         commonExportDocument.setThesisGrantor(
-            ExportOrganisationUnitConverter.toCommonExportModel(thesis.getOrganisationUnit()));
+            ExportOrganisationUnitConverter.toCommonExportModel(thesis.getOrganisationUnit(),
+                false));
 
         thesis.getLanguages().forEach(languageTag -> {
             commonExportDocument.getLanguageTags().add(languageTag.getLanguageTag());
@@ -274,7 +283,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return commonExportDocument;
     }
 
-    private static void setCommonFields(ExportDocument commonExportDocument, Document document) {
+    private static void setCommonFields(ExportDocument commonExportDocument, Document document,
+                                        boolean computeRelations) {
         commonExportDocument.setTitle(
             ExportMultilingualContentConverter.toCommonExportModel(document.getTitle()));
         commonExportDocument.setSubtitle(
@@ -306,14 +316,19 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setOldId(document.getOldId());
 
         if (Objects.nonNull(document.getEvent())) {
-            commonExportDocument.setEvent(
-                ExportEventConverter.toCommonExportModel(document.getEvent()));
+//            commonExportDocument.setEvent(
+//                ExportEventConverter.toCommonExportModel(document.getEvent(), false));
+            var event = new ExportEvent();
+            event.setDatabaseId(document.getEvent().getId());
+            event.setName(ExportMultilingualContentConverter.toCommonExportModel(
+                document.getEvent().getName()));
         }
 
-        commonExportDocument.getRelatedInstitutionIds()
-            .addAll(getRelatedInstitutions(document, false));
-        commonExportDocument.getActivelyRelatedInstitutionIds()
-            .addAll(getRelatedInstitutions(document, true));
+        if (computeRelations) {
+            var relations = getRelatedInstitutions(document);
+            commonExportDocument.getRelatedInstitutionIds().addAll(relations);
+            commonExportDocument.getActivelyRelatedInstitutionIds().addAll(relations);
+        }
 
         commonExportDocument.setOpenAccess(false);
         document.getFileItems().forEach(file -> {
@@ -330,20 +345,25 @@ public class ExportDocumentConverter extends ExportConverterBase {
         exportContribution.setDisplayName(
             contribution.getAffiliationStatement().getDisplayPersonName().toString());
         if (Objects.nonNull(contribution.getPerson())) {
-            exportContribution.setPerson(
-                ExportPersonConverter.toCommonExportModel(contribution.getPerson()));
+//            exportContribution.setPerson(
+//                ExportPersonConverter.toCommonExportModel(contribution.getPerson(), false));
+            var person = new ExportPerson();
+            person.setDatabaseId(contribution.getPerson().getId());
+            person.setName(new ExportPersonName(contribution.getPerson().getName().getFirstname(),
+                contribution.getPerson().getName().getOtherName(),
+                contribution.getPerson().getName().getLastname()));
+            exportContribution.setPerson(person);
         }
 
         return exportContribution;
     }
 
-    private static Set<Integer> getRelatedInstitutions(Document document, boolean onlyActive) {
+    private static Set<Integer> getRelatedInstitutions(Document document) {
         var relations = new HashSet<Integer>();
         document.getContributors().forEach(contribution -> {
-            if (Objects.nonNull(contribution.getPerson())) {
-                relations.addAll(ExportPersonConverter.getRelatedInstitutions(
-                    contribution.getPerson(), onlyActive));
-            }
+            contribution.getInstitutions().forEach(institution -> {
+                relations.add(institution.getId());
+            });
         });
         return relations;
     }

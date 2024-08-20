@@ -4,7 +4,6 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
@@ -15,7 +14,7 @@ import rs.teslaris.core.model.document.Event;
 
 public class ExportEventConverter extends ExportConverterBase {
 
-    public static ExportEvent toCommonExportModel(Conference event) {
+    public static ExportEvent toCommonExportModel(Conference event, boolean computeRelations) {
         var commonExportEvent = new ExportEvent();
 
         setBaseFields(commonExportEvent, event);
@@ -23,13 +22,13 @@ public class ExportEventConverter extends ExportConverterBase {
             return commonExportEvent;
         }
 
-        setCommonFields(commonExportEvent, event);
+        setCommonFields(commonExportEvent, event, computeRelations);
         commonExportEvent.setConfId(event.getConfId());
 
         return commonExportEvent;
     }
 
-    public static ExportEvent toCommonExportModel(Event event) {
+    public static ExportEvent toCommonExportModel(Event event, boolean computeRelations) {
         var commonExportEvent = new ExportEvent();
 
         setBaseFields(commonExportEvent, event);
@@ -37,12 +36,13 @@ public class ExportEventConverter extends ExportConverterBase {
             return commonExportEvent;
         }
 
-        setCommonFields(commonExportEvent, event);
+        setCommonFields(commonExportEvent, event, computeRelations);
 
         return commonExportEvent;
     }
 
-    private static void setCommonFields(ExportEvent commonExportEvent, Event event) {
+    private static void setCommonFields(ExportEvent commonExportEvent, Event event,
+                                        boolean computeRelations) {
         commonExportEvent.setName(
             ExportMultilingualContentConverter.toCommonExportModel(event.getName()));
         commonExportEvent.setNameAbbreviation(
@@ -59,19 +59,21 @@ public class ExportEventConverter extends ExportConverterBase {
         commonExportEvent.setPlace(
             ExportMultilingualContentConverter.toCommonExportModel(event.getPlace()));
 
-        commonExportEvent.getRelatedInstitutionIds().addAll(getRelatedInstitutions(event, false));
-        commonExportEvent.getActivelyRelatedInstitutionIds()
-            .addAll(getRelatedInstitutions(event, true));
+        if (computeRelations) {
+            var relations = getRelatedInstitutions(event);
+            commonExportEvent.getRelatedInstitutionIds().addAll(relations);
+            commonExportEvent.getActivelyRelatedInstitutionIds().addAll(relations);
+        }
+
         commonExportEvent.setOldId(event.getOldId());
     }
 
-    private static Set<Integer> getRelatedInstitutions(Event event, boolean onlyActive) {
+    private static Set<Integer> getRelatedInstitutions(Event event) {
         var relations = new HashSet<Integer>();
         event.getContributions().forEach(contribution -> {
-            if (Objects.nonNull(contribution.getPerson())) {
-                relations.addAll(ExportPersonConverter.getRelatedInstitutions(
-                    contribution.getPerson(), onlyActive));
-            }
+            contribution.getInstitutions().forEach(institution -> {
+                relations.add(institution.getId());
+            });
         });
         return relations;
     }

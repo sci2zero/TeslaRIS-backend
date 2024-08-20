@@ -29,7 +29,7 @@ public class ExportPersonConverter extends ExportConverterBase {
         ExportPersonConverter.documentRepository = documentRepository;
     }
 
-    public static ExportPerson toCommonExportModel(Person person) {
+    public static ExportPerson toCommonExportModel(Person person, boolean computeRelations) {
         var commonExportPerson = new ExportPerson();
 
         setBaseFields(commonExportPerson, person);
@@ -57,18 +57,20 @@ public class ExportPersonConverter extends ExportConverterBase {
                 involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) {
                 commonExportPerson.getEmploymentInstitutions().add(
                     ExportOrganisationUnitConverter.toCommonExportModel(
-                        involvement.getOrganisationUnit()));
+                        involvement.getOrganisationUnit(), false));
             }
         });
 
-        commonExportPerson.getRelatedInstitutionIds()
-            .addAll(getRelatedInstitutions(person, false));
-        commonExportPerson.getActivelyRelatedInstitutionIds()
-            .addAll(getRelatedInstitutions(person, true));
+        if (computeRelations) {
+            commonExportPerson.getRelatedInstitutionIds()
+                .addAll(getRelatedInstitutions(person, false));
+            commonExportPerson.getActivelyRelatedInstitutionIds()
+                .addAll(getRelatedInstitutions(person, true));
+        }
         return commonExportPerson;
     }
 
-    public static Set<Integer> getRelatedInstitutions(Person person, boolean onlyActive) {
+    private static Set<Integer> getRelatedInstitutions(Person person, boolean onlyActive) {
         var relations = new HashSet<Integer>();
         person.getInvolvements().forEach(involvement -> {
             if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
@@ -136,8 +138,14 @@ public class ExportPersonConverter extends ExportConverterBase {
                     exportPerson.getDatabaseId());
         });
 
-        dcPerson.getTitle().add(exportPerson.getName().getFirstName() + " " +
-            exportPerson.getName().getMiddleName() + " " + exportPerson.getName().getLastName());
+        if (Objects.nonNull(exportPerson.getName().getMiddleName())) {
+            dcPerson.getTitle().add(exportPerson.getName().getFirstName() + " " +
+                exportPerson.getName().getMiddleName() + " " +
+                exportPerson.getName().getLastName());
+        } else {
+            dcPerson.getTitle().add(
+                exportPerson.getName().getFirstName() + " " + exportPerson.getName().getLastName());
+        }
 
         addContentToList(
             exportPerson.getEmploymentInstitutions(),
