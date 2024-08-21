@@ -36,18 +36,18 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     public SoftwareServiceImpl(MultilingualContentService multilingualContentService,
                                DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                SearchService<DocumentPublicationIndex> searchService,
+                               OrganisationUnitService organisationUnitService,
                                DocumentRepository documentRepository,
                                DocumentFileService documentFileService,
                                PersonContributionService personContributionService,
                                ExpressionTransformer expressionTransformer,
                                EventService eventService,
-                               OrganisationUnitService organisationUnitService,
                                SoftwareJPAServiceImpl softwareJPAService,
                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            documentRepository, documentFileService, personContributionService,
-            expressionTransformer,
-            eventService, organisationUnitService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }

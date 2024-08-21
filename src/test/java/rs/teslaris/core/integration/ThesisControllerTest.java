@@ -7,7 +7,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -16,27 +19,30 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
-import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.ThesisType;
 
 @SpringBootTest
-public class ProceedingsControllerTest extends BaseTest {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class ThesisControllerTest extends BaseTest {
 
     @Autowired
     private ObjectMapper objectMapper;
 
-
-    private ProceedingsDTO getTestPayload() {
+    private ThesisDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        var proceedingsDTO = new ProceedingsDTO();
-        proceedingsDTO.setTitle(dummyMC);
-        proceedingsDTO.setSubTitle(dummyMC);
-        proceedingsDTO.setDescription(dummyMC);
-        proceedingsDTO.setKeywords(dummyMC);
-        proceedingsDTO.setDocumentDate("2004-11-06");
-        proceedingsDTO.setEventId(1);
+        var thesisDTO = new ThesisDTO();
+        thesisDTO.setTitle(dummyMC);
+        thesisDTO.setSubTitle(dummyMC);
+        thesisDTO.setDescription(dummyMC);
+        thesisDTO.setKeywords(dummyMC);
+        thesisDTO.setDocumentDate("2004-11-06");
+        thesisDTO.setLanguageTagIds(new ArrayList<>());
+        thesisDTO.setThesisType(ThesisType.PHD);
+        thesisDTO.setOrganisationUnitId(1);
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
@@ -46,80 +52,60 @@ public class ProceedingsControllerTest extends BaseTest {
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
             new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
-        proceedingsDTO.setContributions(List.of(contribution));
-        proceedingsDTO.setUris(new HashSet<>());
-        proceedingsDTO.setLanguageTagIds(new ArrayList<>());
+        thesisDTO.setContributions(List.of(contribution));
+        thesisDTO.setUris(new HashSet<>());
 
-        return proceedingsDTO;
+        return thesisDTO;
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadProceedings() throws Exception {
+    public void testReadThesis() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.get("http://localhost:8081/api/proceedings/{documentId}", 1)
-                    .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-            .andExpect(jsonPath("$.eisbn").value("MOCK_eISBN1"));
-    }
-
-    @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadProceedingsForBookSeries() throws Exception {
-        mockMvc.perform(
-            MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/proceedings/book-series/{bookSeriesId}", 2)
+            MockMvcRequestBuilders.get("http://localhost:8081/api/thesis/{thesisId}", 10)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadProceedingsForEvent() throws Exception {
-        mockMvc.perform(
-                MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/proceedings/for-event/{documentId}", 1)
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
-    }
-
-    @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testCreateProceedings() throws Exception {
+    public void testCreateThesis() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var proceedingsDTO = getTestPayload();
+        var thesisDTO = getTestPayload();
 
-        String requestBody = objectMapper.writeValueAsString(proceedingsDTO);
-        mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/proceedings")
+        String requestBody = objectMapper.writeValueAsString(thesisDTO);
+        mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/thesis")
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY_PROCEEDINGS"))
+                .header("Idempotency-Key", "MOCK_KEY_THESIS"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testUpdateProceedings() throws Exception {
+    public void testUpdateThesis() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var proceedingsDTO = getTestPayload();
+        var thesisDTO = getTestPayload();
 
-        String requestBody = objectMapper.writeValueAsString(proceedingsDTO);
+        String requestBody = objectMapper.writeValueAsString(thesisDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/proceedings/{documentId}", 1)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/thesis/{thesisId}", 10)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
 
     @Test
+    @Order(Integer.MAX_VALUE)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testDeleteProceedings() throws Exception {
+    public void testDeleteThesis() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("http://localhost:8081/api/proceedings/{documentId}",
-                        2).contentType(MediaType.APPLICATION_JSON)
+                MockMvcRequestBuilders.delete("http://localhost:8081/api/thesis/{thesisId}",
+                        11).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

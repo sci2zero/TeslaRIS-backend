@@ -37,7 +37,7 @@ public class MonographPublicationControllerTest extends BaseTest {
         monographPublicationDTO.setDescription(dummyMC);
         monographPublicationDTO.setKeywords(dummyMC);
         monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
-        monographPublicationDTO.setDocumentDate("31.01.2000.");
+        monographPublicationDTO.setDocumentDate("2004-11-06");
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
@@ -76,7 +76,7 @@ public class MonographPublicationControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_MONOGRAPH"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("31.01.2000."));
+            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
     }
 
     @Test

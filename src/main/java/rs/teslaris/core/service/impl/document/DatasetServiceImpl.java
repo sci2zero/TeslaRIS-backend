@@ -36,18 +36,18 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     public DatasetServiceImpl(MultilingualContentService multilingualContentService,
                               DocumentPublicationIndexRepository documentPublicationIndexRepository,
                               SearchService<DocumentPublicationIndex> searchService,
+                              OrganisationUnitService organisationUnitService,
                               DocumentRepository documentRepository,
                               DocumentFileService documentFileService,
                               PersonContributionService personContributionService,
                               ExpressionTransformer expressionTransformer,
                               EventService eventService,
-                              OrganisationUnitService organisationUnitService,
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            documentRepository, documentFileService, personContributionService,
-            expressionTransformer,
-            eventService, organisationUnitService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }

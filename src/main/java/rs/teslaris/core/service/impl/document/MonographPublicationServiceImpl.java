@@ -41,18 +41,18 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     public MonographPublicationServiceImpl(MultilingualContentService multilingualContentService,
                                            DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                            SearchService<DocumentPublicationIndex> searchService,
+                                           OrganisationUnitService organisationUnitService,
                                            DocumentRepository documentRepository,
                                            DocumentFileService documentFileService,
                                            PersonContributionService personContributionService,
                                            ExpressionTransformer expressionTransformer,
                                            EventService eventService,
-                                           OrganisationUnitService organisationUnitService,
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            documentRepository, documentFileService, personContributionService,
-            expressionTransformer,
-            eventService, organisationUnitService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
     }

@@ -44,19 +44,19 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                          SearchService<DocumentPublicationIndex> searchService,
+                                         OrganisationUnitService organisationUnitService,
                                          DocumentRepository documentRepository,
                                          DocumentFileService documentFileService,
                                          PersonContributionService personContributionService,
                                          ExpressionTransformer expressionTransformer,
                                          EventService eventService,
-                                         OrganisationUnitService organisationUnitService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            documentRepository, documentFileService, personContributionService,
-            expressionTransformer,
-            eventService, organisationUnitService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;

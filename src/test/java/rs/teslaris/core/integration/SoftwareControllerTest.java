@@ -37,7 +37,7 @@ public class SoftwareControllerTest extends BaseTest {
         softwareDTO.setSubTitle(dummyMC);
         softwareDTO.setDescription(dummyMC);
         softwareDTO.setKeywords(dummyMC);
-        softwareDTO.setDocumentDate("31.01.2000.");
+        softwareDTO.setDocumentDate("2004-11-06");
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
@@ -74,7 +74,7 @@ public class SoftwareControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_SOFTWARE"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("31.01.2000."));
+            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
     }
 
     @Test

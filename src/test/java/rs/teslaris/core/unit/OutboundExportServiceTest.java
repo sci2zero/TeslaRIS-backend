@@ -4,10 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import rs.teslaris.core.exporter.model.converter.ExportConverterBase;
 import rs.teslaris.core.exporter.service.impl.OutboundExportServiceImpl;
 import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 
 @SpringBootTest
 public class OutboundExportServiceTest {
@@ -41,14 +43,14 @@ public class OutboundExportServiceTest {
     @BeforeAll
     public static void setup() {
         var handler =
-            new ExportHandlersConfigurationLoader.Handler("identifier", "1", "name", "description",
+            new ExportHandlersConfigurationLoader.Handler("handler", "1", "name", "description",
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
                     null)), List.of("oai_cerif_openaire", "oai_dim"), false, null);
 
         var mocked = mockStatic(ExportHandlersConfigurationLoader.class);
-        mocked.when(() -> ExportHandlersConfigurationLoader.getHandlerByIdentifier(anyString()))
+        mocked.when(() -> ExportHandlersConfigurationLoader.getHandlerByIdentifier("handler"))
             .thenReturn(
                 Optional.of(handler));
     }
@@ -60,6 +62,9 @@ public class OutboundExportServiceTest {
             "test://test.test");
         ReflectionTestUtils.setField(ExportConverterBase.class, "clientLanguages",
             new ArrayList<>());
+        ReflectionTestUtils.setField(outboundExportService, "baseUrl", "test://test.test");
+        ReflectionTestUtils.setField(outboundExportService, "repositoryName", "CRIS UNS");
+        ReflectionTestUtils.setField(outboundExportService, "adminEmail", "admin@test.com");
     }
 
     @Test
@@ -132,5 +137,60 @@ public class OutboundExportServiceTest {
         // Then
         assertNull(result);
         assertEquals("idDoesNotExist", response.getError().getCode());
+    }
+
+    @Test
+    void shouldIdentifyHandler() {
+        // Given
+        var earliestDocument = new ExportDocument();
+        earliestDocument.setDocumentDate("2023-01-01");
+        when(mongoTemplate.findOne(any(Query.class), eq(ExportDocument.class))).thenReturn(
+            earliestDocument);
+
+        // When
+        var result = outboundExportService.identifyHandler("handler");
+
+        // Then
+        assertNotNull(result);
+        assertEquals("test://test.test/handler", result.getBaseURL());
+        assertEquals("CRIS UNS", result.getRepositoryName());
+        assertEquals("2.0", result.getProtocolVersion());
+        assertEquals("admin@test.com", result.getAdminEmail());
+        assertEquals("2023-01-01", result.getEarliestDatestamp());
+        assertEquals("persistent", result.getDeletedRecord());
+        assertEquals("YYYY-MM-DD", result.getGranularity());
+        assertEquals(3, result.getDescriptions().size());
+        verify(mongoTemplate).findOne(any(Query.class), eq(ExportDocument.class));
+    }
+
+    @Test
+    void shouldThrowLoadingExceptionWhenIdentifyingNonExistingHandler() {
+        // When
+        assertThrows(LoadingException.class,
+            () -> outboundExportService.identifyHandler("invalidHandlerId"));
+
+        // Then (LoadingException should be thrown)
+    }
+
+    @Test
+    void testListMetadataFormatsForHandler() {
+        // When
+        var result = outboundExportService.listMetadataFormatsForHandler("handler");
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.getMetadataFormats().size());
+        assertEquals("oai_cerif_openaire",
+            result.getMetadataFormats().getFirst().getMetadataPrefix());
+        assertEquals("oai_dim", result.getMetadataFormats().get(1).getMetadataPrefix());
+    }
+
+    @Test
+    void testListMetadataFormatsForHandlerThrowsException() {
+        // When
+        assertThrows(LoadingException.class,
+            () -> outboundExportService.listMetadataFormatsForHandler("invalidHandlerId"));
+
+        // Then (LoadingException should be thrown)
     }
 }

@@ -48,19 +48,19 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     public ProceedingsPublicationServiceImpl(MultilingualContentService multilingualContentService,
                                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                              SearchService<DocumentPublicationIndex> searchService,
+                                             OrganisationUnitService organisationUnitService,
                                              DocumentRepository documentRepository,
                                              DocumentFileService documentFileService,
                                              PersonContributionService personContributionService,
                                              ExpressionTransformer expressionTransformer,
                                              EventService eventService,
-                                             OrganisationUnitService organisationUnitService,
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            documentRepository, documentFileService, personContributionService,
-            expressionTransformer,
-            eventService, organisationUnitService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;

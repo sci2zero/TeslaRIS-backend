@@ -67,6 +67,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected final SearchService<DocumentPublicationIndex> searchService;
 
+    protected final OrganisationUnitService organisationUnitService;
+
     private final DocumentRepository documentRepository;
 
     private final DocumentFileService documentFileService;
@@ -76,8 +78,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final ExpressionTransformer expressionTransformer;
 
     private final EventService eventService;
-
-    private final OrganisationUnitService organisationUnitService;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;

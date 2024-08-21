@@ -22,6 +22,7 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationServic
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -64,6 +65,8 @@ public class ReindexServiceImpl implements ReindexService {
     private final MonographService monographService;
 
     private final MonographPublicationService monographPublicationService;
+
+    private final ThesisService thesisService;
 
 
     @Override
@@ -141,6 +144,7 @@ public class ReindexServiceImpl implements ReindexService {
             monographService.reindexMonographs();
             monographPublicationService.reindexMonographPublications();
             proceedingsService.reindexProceedings();
+            thesisService.reindexTheses();
         });
 
         reindexPublicationsThread.start();

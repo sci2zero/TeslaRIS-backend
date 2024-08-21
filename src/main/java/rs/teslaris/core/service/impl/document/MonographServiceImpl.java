@@ -55,12 +55,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public MonographServiceImpl(MultilingualContentService multilingualContentService,
                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                 SearchService<DocumentPublicationIndex> searchService,
+                                OrganisationUnitService organisationUnitService,
                                 DocumentRepository documentRepository,
                                 DocumentFileService documentFileService,
                                 PersonContributionService personContributionService,
                                 ExpressionTransformer expressionTransformer,
                                 EventService eventService,
-                                OrganisationUnitService organisationUnitService,
                                 MonographJPAServiceImpl monographJPAService,
                                 LanguageTagService languageTagService,
                                 JournalService journalService,
@@ -68,9 +68,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 ResearchAreaService researchAreaService,
                                 MonographRepository monographRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            documentRepository, documentFileService, personContributionService,
-            expressionTransformer,
-            eventService, organisationUnitService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
         this.journalService = journalService;

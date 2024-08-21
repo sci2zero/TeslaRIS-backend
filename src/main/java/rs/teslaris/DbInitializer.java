@@ -626,6 +626,16 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
         thesisRepository.save(thesis1);
 
+        var thesis2 = new Thesis();
+        thesis2.setApproveStatus(ApproveStatus.APPROVED);
+        thesis2.setThesisType(ThesisType.MASTER);
+        thesis2.setDocumentDate("2023-03-09");
+        thesis2.setOrganisationUnit(dummyOU2);
+        thesis2.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Master rad", 1)));
+        thesisRepository.save(thesis2);
+
+
         var croatianTag = new LanguageTag(LanguageAbbreviations.CROATIAN, "Croatian");
         languageTagRepository.save(croatianTag);
         var croatianLanguage = new Language();

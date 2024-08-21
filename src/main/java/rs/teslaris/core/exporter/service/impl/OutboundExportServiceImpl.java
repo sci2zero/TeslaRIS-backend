@@ -85,7 +85,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     private String adminEmail;
 
     @Value("${client.address}")
-    private String frontendURL;
+    private String frontendUrl;
 
 
     @Override
@@ -484,7 +484,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         service.setAcronym(repositoryName);
         service.setName(handler.handlerName());
         service.setDescription(handler.handlerDescription());
-        service.setWebsiteURL(frontendURL);
+        service.setWebsiteURL(frontendUrl);
         service.setOaiPMHBaseURL(identify.getBaseURL());
         return service;
     }

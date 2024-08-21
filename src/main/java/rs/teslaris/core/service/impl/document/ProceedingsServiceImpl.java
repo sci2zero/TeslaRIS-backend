@@ -62,12 +62,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                   SearchService<DocumentPublicationIndex> searchService,
+                                  OrganisationUnitService organisationUnitService,
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
                                   ExpressionTransformer expressionTransformer,
                                   EventService eventService,
-                                  OrganisationUnitService organisationUnitService,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
@@ -76,9 +76,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            documentRepository, documentFileService, personContributionService,
-            expressionTransformer,
-            eventService, organisationUnitService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
