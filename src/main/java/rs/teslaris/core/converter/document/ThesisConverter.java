@@ -24,9 +24,12 @@ public class ThesisConverter extends DocumentPublicationConverter {
         thesisDTO.setThesisType(thesis.getThesisType());
         thesisDTO.setNumberOfPages(thesis.getNumberOfPages());
 
+        thesisDTO.setLanguageTagIds(new ArrayList<>());
         thesisDTO.setLanguageTagNames(new ArrayList<>());
-        thesis.getLanguages().forEach(languageTag -> thesisDTO.getLanguageTagNames().add(
-            languageTag.getLanguageTag()));
+        thesis.getLanguages().forEach(languageTag -> {
+            thesisDTO.getLanguageTagNames().add(languageTag.getLanguageTag());
+            thesisDTO.getLanguageTagIds().add(languageTag.getId());
+        });
 
         if (Objects.nonNull(thesis.getResearchArea())) {
             thesisDTO.setResearchAreaId(thesis.getResearchArea().getId());

@@ -611,7 +611,7 @@ public class DbInitializer implements ApplicationRunner {
 
         var monographPublication2 = new MonographPublication();
         monographPublication2.setApproveStatus(ApproveStatus.APPROVED);
-        monographPublication2.setDocumentDate("2024-03-15");
+        monographPublication2.setDocumentDate("2024");
         monographPublication2.setMonograph(monograph1);
         monographPublication2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Rad u monografiji 2", 1)));
@@ -620,16 +620,17 @@ public class DbInitializer implements ApplicationRunner {
         var thesis1 = new Thesis();
         thesis1.setApproveStatus(ApproveStatus.APPROVED);
         thesis1.setThesisType(ThesisType.PHD);
-        thesis1.setDocumentDate("2021-05-17");
+        thesis1.setDocumentDate("2021");
         thesis1.setOrganisationUnit(dummyOU2);
         thesis1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
+        thesis1.getLanguages().addAll(List.of(serbianTag, englishTag));
         thesisRepository.save(thesis1);
 
         var thesis2 = new Thesis();
         thesis2.setApproveStatus(ApproveStatus.APPROVED);
         thesis2.setThesisType(ThesisType.MASTER);
-        thesis2.setDocumentDate("2023-03-09");
+        thesis2.setDocumentDate("2023");
         thesis2.setOrganisationUnit(dummyOU2);
         thesis2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Master rad", 1)));
