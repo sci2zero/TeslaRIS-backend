@@ -133,12 +133,12 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         return notificationRepository.save(notification);
     }
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "${notifications.schedule.daily}")
     protected void sendDailyNotifications() {
         sendNotifications(UserNotificationPeriod.DAILY);
     }
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "${notifications.schedule.weekly}")
     protected void sendWeeklyNotifications() {
         sendNotifications(UserNotificationPeriod.WEEKLY);
     }
@@ -182,7 +182,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     private Locale getLocale(List<Notification> notifications) {
         var language =
-            notifications.get(0).getUser().getPreferredLanguage().getLanguageCode().toLowerCase();
+            notifications.getFirst().getUser().getPreferredLanguage().getLanguageCode()
+                .toLowerCase();
         return Locale.forLanguageTag(language);
     }
 

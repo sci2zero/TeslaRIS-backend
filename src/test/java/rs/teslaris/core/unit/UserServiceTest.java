@@ -57,6 +57,7 @@ import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
+import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
@@ -135,7 +136,7 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null,
-                new Authority("RESEARCHER", null), null, null);
+                new Authority("RESEARCHER", null), null, null, UserNotificationPeriod.NEVER);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -155,7 +156,7 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null,
-                new Authority("ADMIN", null), null, null);
+                new Authority("ADMIN", null), null, null, UserNotificationPeriod.NEVER);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -209,7 +210,7 @@ public class UserServiceTest {
             Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
         var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit);
+            false, language, authority, null, organisationUnit, UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -255,7 +256,7 @@ public class UserServiceTest {
 
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit);
+            false, language, authority, null, organisationUnit, UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -314,7 +315,7 @@ public class UserServiceTest {
         UserAccountActivation accountActivation = new UserAccountActivation(activationTokenValue,
             new User("johndoe@example.com", "password123", "",
                 "John", "Doe", true,
-                true, new Language(), new Authority(), null, null));
+                true, new Language(), new Authority(), null, null, UserNotificationPeriod.NEVER));
         when(
             userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
             Optional.of(accountActivation));
@@ -367,6 +368,7 @@ public class UserServiceTest {
         requestDTO.setFirstname("JOHN");
         requestDTO.setPreferredLanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
+        requestDTO.setNotificationPeriod(UserNotificationPeriod.WEEKLY);
 
         var user = new User();
         user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
@@ -422,6 +424,7 @@ public class UserServiceTest {
         requestDTO.setLastName("SMITH");
         requestDTO.setPreferredLanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
+        requestDTO.setNotificationPeriod(UserNotificationPeriod.DAILY);
 
         var user = new User();
         user.setAuthority(new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), null));
@@ -486,6 +489,8 @@ public class UserServiceTest {
         // given
         var requestDTO = new UserUpdateRequestDTO();
         requestDTO.setOldPassword("wrongPassword");
+        requestDTO.setNotificationPeriod(UserNotificationPeriod.WEEKLY);
+        requestDTO.setEmail("new.email@example.com");
         var user = new User();
         user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setPassword("currentPassword");
