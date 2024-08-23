@@ -2,18 +2,27 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
+import rs.teslaris.core.indexmodel.UserAccountIndex;
+import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.commontypes.NotificationType;
+import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
 import rs.teslaris.core.util.notificationhandling.NotificationConfiguration;
@@ -26,11 +35,20 @@ import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotifi
 public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     implements NotificationService {
 
+    private final MessageSource messageSource;
+
     private final NotificationRepository notificationRepository;
 
     private final NewOtherNameNotificationHandler newOtherNameNotificationHandler;
 
     private final AddedToPublicationNotificationHandler addedToPublicationNotificationHandler;
+
+    private final UserAccountIndexRepository userAccountIndexRepository;
+
+    private final EmailUtil emailUtil;
+
+    @Value("${client.address}")
+    private String clientAppAddress;
 
 
     @Override
@@ -113,5 +131,90 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         }
 
         return notificationRepository.save(notification);
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    protected void sendDailyNotifications() {
+        sendNotifications(UserNotificationPeriod.DAILY);
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    protected void sendWeeklyNotifications() {
+        sendNotifications(UserNotificationPeriod.WEEKLY);
+    }
+
+    private void sendNotifications(UserNotificationPeriod notificationPeriod) {
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            List<UserAccountIndex> chunk = userAccountIndexRepository
+                .findAll(PageRequest.of(pageNumber, chunkSize))
+                .getContent();
+
+            chunk.forEach(accountIndex -> {
+                var notifications = fetchNotifications(notificationPeriod, accountIndex);
+
+                if (notifications.isEmpty()) {
+                    return;
+                }
+
+                var locale = getLocale(notifications);
+                var emailContent = buildEmailContent(notificationPeriod, notifications, locale);
+                var subject =
+                    messageSource.getMessage(getSubjectKey(notificationPeriod), null, locale);
+
+                emailUtil.sendSimpleEmail(accountIndex.getEmail(), subject, emailContent);
+            });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+    }
+
+    private List<Notification> fetchNotifications(UserNotificationPeriod notificationPeriod,
+                                                  UserAccountIndex accountIndex) {
+        return notificationPeriod == UserNotificationPeriod.DAILY
+            ? notificationRepository.getDailyNotifications(accountIndex.getDatabaseId())
+            : notificationRepository.getWeeklyNotifications(accountIndex.getDatabaseId());
+    }
+
+    private Locale getLocale(List<Notification> notifications) {
+        var language =
+            notifications.get(0).getUser().getPreferredLanguage().getLanguageCode().toLowerCase();
+        return Locale.forLanguageTag(language);
+    }
+
+    private String buildEmailContent(UserNotificationPeriod notificationPeriod,
+                                     List<Notification> notifications, Locale locale) {
+        var stringBuilder = new StringBuilder();
+
+        stringBuilder.append(
+                messageSource.getMessage(getStartKey(notificationPeriod), null, locale))
+            .append("\n\n");
+
+        notifications.forEach(notification -> {
+            stringBuilder.append(notification.getNotificationText()).append("\n\n");
+        });
+
+        stringBuilder.append(
+                messageSource.getMessage("notification.forMoreInfoMailEnd", null, locale))
+            .append(" ")
+            .append(clientAppAddress);
+
+        return stringBuilder.toString();
+    }
+
+    private String getStartKey(UserNotificationPeriod notificationPeriod) {
+        return notificationPeriod == UserNotificationPeriod.DAILY
+            ? "notification.dailyMailStart"
+            : "notification.weeklyMailStart";
+    }
+
+    private String getSubjectKey(UserNotificationPeriod notificationPeriod) {
+        return notificationPeriod == UserNotificationPeriod.DAILY
+            ? "notification.dailyMailSubject"
+            : "notification.weeklyMailSubject";
     }
 }
