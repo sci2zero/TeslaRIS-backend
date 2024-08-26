@@ -423,8 +423,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         try {
             var user = (User) loadUserByUsername(userEmail);
             var resetToken = UUID.randomUUID().toString();
+            var language = user.getPreferredLanguage().getLanguageCode().toLowerCase();
             String resetLink =
-                clientAppAddress + user.getPreferredLanguage().getLanguageCode().toLowerCase() +
+                clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
                     "/reset-password/" + resetToken;
             String emailSubject = "Account Password Reset";
             String emailBody =

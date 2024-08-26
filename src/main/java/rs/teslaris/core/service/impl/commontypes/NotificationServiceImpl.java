@@ -202,7 +202,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         stringBuilder.append(
                 messageSource.getMessage("notification.forMoreInfoMailEnd", null, locale))
             .append(" ")
-            .append(clientAppAddress);
+            .append(clientAppAddress)
+            .append(clientAppAddress.endsWith("/") ? locale.toLanguageTag().toLowerCase() :
+                "/" + locale.toLanguageTag().toLowerCase()).append("/notifications");
 
         return stringBuilder.toString();
     }
