@@ -29,8 +29,8 @@ public class DeduplicationServiceImpl {
         var duplicatesFound = new ArrayList<Integer>();
 
         while (hasNextPage) {
-            List<DocumentPublicationIndex> chunk = documentPublicationIndexRepository.findByType(
-                DocumentPublicationType.MONOGRAPH.name(),
+            List<DocumentPublicationIndex> chunk = documentPublicationIndexRepository.findByTypeIn(
+                List.of(DocumentPublicationType.MONOGRAPH.name()),
                 PageRequest.of(pageNumber, chunkSize)).getContent();
 
             for (var publication : chunk) {
