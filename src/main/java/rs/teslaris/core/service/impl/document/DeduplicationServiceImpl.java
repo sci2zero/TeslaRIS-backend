@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -11,18 +12,26 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 
 @Service
 @RequiredArgsConstructor
-public class DeduplicationServiceImpl {
+@Slf4j
+public class DeduplicationServiceImpl implements DeduplicationService {
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final SearchService<DocumentPublicationIndex> searchService;
 
+    public void startDeduplicationProcessBeforeSchedule() {
+        log.info("Deduplication started ahead of time.");
+        performScheduledDeduplication();
+    }
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "${deduplication.schedule}")
     protected void performScheduledDeduplication() {
+        log.info("Deduplication started.");
+
         int pageNumber = 0;
         int chunkSize = 20;
         boolean hasNextPage = true;
@@ -30,7 +39,12 @@ public class DeduplicationServiceImpl {
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> chunk = documentPublicationIndexRepository.findByTypeIn(
-                List.of(DocumentPublicationType.MONOGRAPH.name()),
+                List.of(DocumentPublicationType.MONOGRAPH.name(),
+                    DocumentPublicationType.PROCEEDINGS.name(),
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
+                    DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                    DocumentPublicationType.PATENT.name(), DocumentPublicationType.SOFTWARE.name(),
+                    DocumentPublicationType.DATASET.name()),
                 PageRequest.of(pageNumber, chunkSize)).getContent();
 
             for (var publication : chunk) {
@@ -50,7 +64,7 @@ public class DeduplicationServiceImpl {
                         return bq;
                     });
                     b.must(sb -> sb.match(
-                        m -> m.field("type").query(DocumentPublicationType.MONOGRAPH.name())));
+                        m -> m.field("type").query(publication.getType())));
                     b.mustNot(sb -> sb.match(
                         m -> m.field("database_id").query(publication.getDatabaseId())));
                     return b;
@@ -71,6 +85,8 @@ public class DeduplicationServiceImpl {
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+
+        log.info("Deduplication process completed.");
     }
 
     private void handleDuplicate(DocumentPublicationIndex publication,
