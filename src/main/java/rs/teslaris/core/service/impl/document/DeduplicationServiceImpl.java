@@ -47,9 +47,9 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     DocumentPublicationType.DATASET.name()),
                 PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            for (var publication : chunk) {
+            chunk.forEach(publication -> {
                 if (duplicatesFound.contains(publication.getDatabaseId())) {
-                    continue;
+                    return;
                 }
 
                 var deduplicationQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -80,7 +80,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 if (!similarPublications.isEmpty()) {
                     handleDuplicate(publication, similarPublications, duplicatesFound);
                 }
-            }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
