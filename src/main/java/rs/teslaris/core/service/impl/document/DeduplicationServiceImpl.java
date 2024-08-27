@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.commontypes.DeduplicationSuggestion;
+import rs.teslaris.core.repository.commontypes.DeduplicationSuggestionRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 
@@ -19,17 +21,28 @@ import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 @Slf4j
 public class DeduplicationServiceImpl implements DeduplicationService {
 
+    private static boolean deduplicationLock = false;
+
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final SearchService<DocumentPublicationIndex> searchService;
 
+    private final DeduplicationSuggestionRepository deduplicationSuggestionRepository;
+
+
     public void startDeduplicationProcessBeforeSchedule() {
-        log.info("Deduplication started ahead of time.");
+        log.info("Trying to start deduplication ahead of time.");
         performScheduledDeduplication();
     }
 
     @Scheduled(cron = "${deduplication.schedule}")
     protected void performScheduledDeduplication() {
+        if (deduplicationLock) {
+            log.info("Deduplication startup aborted due to process already running.");
+            return;
+        }
+
+        deduplicationLock = true;
         log.info("Deduplication started.");
 
         int pageNumber = 0;
@@ -87,6 +100,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
         }
 
         log.info("Deduplication process completed.");
+        deduplicationLock = false;
     }
 
     private void handleDuplicate(DocumentPublicationIndex publication,
@@ -94,7 +108,11 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                                  ArrayList<Integer> foundDuplicates) {
         for (var similarPublication : similarPublications) {
             foundDuplicates.add(similarPublication.getDatabaseId());
-            System.out.println(similarPublication.getTitleSr());
+            log.debug("Found potential duplicate: {} ({}) == {} ({})", publication.getTitleSr(),
+                publication.getTitleOther(), similarPublication.getTitleSr(),
+                similarPublication.getTitleOther());
+
+            deduplicationSuggestionRepository.save(new DeduplicationSuggestion());
         }
     }
 }
