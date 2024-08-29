@@ -20,6 +20,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -72,6 +73,9 @@ public class ReindexServiceTest {
 
     @Mock
     private DatasetService datasetService;
+
+    @Mock
+    private MonographService monographService;
 
     @InjectMocks
     private ReindexServiceImpl reindexService;
