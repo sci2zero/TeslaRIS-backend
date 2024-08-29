@@ -27,8 +27,8 @@ public class EventsRelationControllerTest extends BaseTest {
         var eventsRelationDTO = new EventsRelationDTO();
 
         eventsRelationDTO.setEventsRelationType(EventsRelationType.COLLOCATED_WITH);
-        eventsRelationDTO.setSourceId(2);
-        eventsRelationDTO.setTargetId(4);
+        eventsRelationDTO.setSourceId(4);
+        eventsRelationDTO.setTargetId(1);
 
         return eventsRelationDTO;
     }
