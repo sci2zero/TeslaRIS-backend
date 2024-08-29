@@ -19,6 +19,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -60,6 +61,9 @@ public class ReindexServiceTest {
 
     @Mock
     private ProceedingsPublicationService proceedingsPublicationService;
+
+    @Mock
+    private PatentService patentService;
 
     @InjectMocks
     private ReindexServiceImpl reindexService;
