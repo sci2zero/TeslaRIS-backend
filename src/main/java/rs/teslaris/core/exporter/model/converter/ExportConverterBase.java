@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.BaseExportEntity;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.exporter.util.ExportDataFormat;
+import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
 import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
@@ -100,20 +101,25 @@ public class ExportConverterBase {
      * Performs exceptional handling of converted entities for specific export data formats and sets.
      * <p>
      * This method modifies the {@code convertedEntity} directly by clearing and re-adding specific fields
-     * using hard-coded values and other workarounds
-     * is a last resort and should be avoided unless absolutely necessary.
+     * using hard-coded values and other workarounds. It is a last resort and should be avoided unless absolutely necessary.
      * <p>
      * Every addition or modification to this method should be thoroughly discussed and reviewed,
      * as this is considered a "budževina" (Serbian term for a workaround or patch that is often
      * suboptimal or hacky in nature).
+     * <p>
+     * The method takes a handler parameter, which is used to access specific configuration or additional
+     * logic that might be needed for exceptional handling based on the export data format or set.
      *
      * @param convertedEntity The entity that has been converted and may need exceptional handling.
      * @param format          The export data format being used (e.g., Dublin Core).
      * @param set             The specific set within the export data format, such as "oai_cerif_publications".
+     * @param handler         The handler used to manage export configurations and apply any additional
+     *                        logic necessary for handling specific cases, based on the export data format or set.
      */
     public static void performExceptionalHandlingWhereAbsolutelyNecessary(Object convertedEntity,
                                                                           ExportDataFormat format,
-                                                                          String set) {
+                                                                          String set,
+                                                                          ExportHandlersConfigurationLoader.Handler handler) {
         if (format.equals(ExportDataFormat.DUBLIN_CORE) && set.equals("oai_cerif_publications")) {
             ((DC) convertedEntity).getType().clear();
             ((DC) convertedEntity).getType().add("info:eu-repo/semantics/doctoralThesis");

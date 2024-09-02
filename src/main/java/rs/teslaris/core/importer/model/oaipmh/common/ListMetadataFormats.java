@@ -15,7 +15,7 @@ import lombok.ToString;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "TListMetadataFormats", propOrder = {
-    "metadataFormats"
+    "metadataFormat"
 })
 @XmlRootElement(name = "ListMetadataFormats")
 @Getter
@@ -26,6 +26,6 @@ import lombok.ToString;
 public class ListMetadataFormats {
 
     @XmlElement(required = true)
-    private List<MetadataFormat> metadataFormats = new ArrayList<>();
+    private List<MetadataFormat> metadataFormat = new ArrayList<>();
 
 }

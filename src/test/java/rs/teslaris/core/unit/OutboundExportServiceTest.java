@@ -11,7 +11,9 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeAll;
@@ -143,7 +145,8 @@ public class OutboundExportServiceTest {
     void shouldIdentifyHandler() {
         // Given
         var earliestDocument = new ExportDocument();
-        earliestDocument.setDocumentDate("2023-01-01");
+        var earliestDate = new Date();
+        earliestDocument.setLastUpdated(earliestDate);
         when(mongoTemplate.findOne(any(Query.class), eq(ExportDocument.class))).thenReturn(
             earliestDocument);
 
@@ -152,14 +155,16 @@ public class OutboundExportServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals("test://test.test/handler", result.getBaseURL());
+        assertEquals("test://test.test/api/export/handler", result.getBaseURL());
         assertEquals("CRIS UNS", result.getRepositoryName());
         assertEquals("2.0", result.getProtocolVersion());
         assertEquals("admin@test.com", result.getAdminEmail());
-        assertEquals("2023-01-01", result.getEarliestDatestamp());
+        assertEquals(
+            earliestDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString(),
+            result.getEarliestDatestamp());
         assertEquals("persistent", result.getDeletedRecord());
         assertEquals("YYYY-MM-DD", result.getGranularity());
-        assertEquals(3, result.getDescriptions().size());
+        assertEquals(3, result.getDescription().size());
         verify(mongoTemplate).findOne(any(Query.class), eq(ExportDocument.class));
     }
 
@@ -179,10 +184,10 @@ public class OutboundExportServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(2, result.getMetadataFormats().size());
+        assertEquals(2, result.getMetadataFormat().size());
         assertEquals("oai_cerif_openaire",
-            result.getMetadataFormats().getFirst().getMetadataPrefix());
-        assertEquals("oai_dim", result.getMetadataFormats().get(1).getMetadataPrefix());
+            result.getMetadataFormat().getFirst().getMetadataPrefix());
+        assertEquals("oai_dim", result.getMetadataFormat().get(1).getMetadataPrefix());
     }
 
     @Test

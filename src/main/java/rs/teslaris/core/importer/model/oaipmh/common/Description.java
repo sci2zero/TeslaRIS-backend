@@ -22,7 +22,7 @@ public class Description {
     @XmlElement(name = "Service")
     private ServiceDescription service;
 
-    @XmlElement(name = "oai-identifier")
+    @XmlElement(name = "oai-identifier", namespace = "http://www.openarchives.org/OAI/2.0/oai-identifier")
     private OAIIdentifier oaiIdentifier;
 
     @XmlElement(name = "toolkit")

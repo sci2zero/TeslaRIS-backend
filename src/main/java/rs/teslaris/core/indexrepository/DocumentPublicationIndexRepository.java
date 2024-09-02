@@ -47,12 +47,8 @@ public interface DocumentPublicationIndexRepository extends
         "]}}")
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
-    @Query("{\"bool\": " +
-        "{\"must\": [" +
-        "{\"terms\": {\"organisation_unit_ids\": [\"?0\"]}}" +
-        "]}}")
-    Page<DocumentPublicationIndex> findByOrganisationUnitIds(Integer organisationUnitId,
-                                                             Pageable pageable);
+    Page<DocumentPublicationIndex> findByOrganisationUnitIdsIn(List<Integer> organisationUnitIds,
+                                                               Pageable pageable);
 
     @Query("{\"bool\": " +
         "{\"must\": [" +

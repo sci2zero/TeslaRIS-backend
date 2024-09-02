@@ -60,11 +60,12 @@ public class PersonContributionConverter {
         }
         contribution.setPersonId(person.getId());
 
+        // Bottleneck, don't know how to speed this up...
         contribution.setInstitutionIds(new ArrayList<>());
         person.getInvolvements().forEach(involvement -> {
             if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) {
-                contribution.getInstitutionIds().add(involvement.getId());
+                contribution.getInstitutionIds().add(involvement.getOrganisationUnit().getId());
             }
         });
 

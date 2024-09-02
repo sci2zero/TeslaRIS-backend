@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -119,16 +118,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var allOUIdsFromSubHierarchy =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
-        var combinedResults = new ArrayList<DocumentPublicationIndex>();
-        allOUIdsFromSubHierarchy.forEach((id) -> {
-            var resultsPage =
-                documentPublicationIndexRepository.findByOrganisationUnitIds(id, pageable);
-            combinedResults.addAll(resultsPage.getContent());
-        });
-
-        // TEMPORARY FIX
-        // TODO: Update this as soon as we update spring-data-elasticsearch version
-        return new PageImpl<>(combinedResults, pageable, combinedResults.size());
+        return documentPublicationIndexRepository.findByOrganisationUnitIdsIn(
+            allOUIdsFromSubHierarchy, pageable);
     }
 
     @Override
@@ -242,8 +233,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         Objects.toString(contributorDisplayName.getLastname(), "")).trim();
 
                 organisationUnitIds.addAll(
-                    contribution.getInstitutions().stream().map((BaseEntity::getId)).collect(
-                        Collectors.toList()));
+                    contribution.getInstitutions().stream().map((BaseEntity::getId)).toList());
 
                 switch (contribution.getContributionType()) {
                     case AUTHOR:

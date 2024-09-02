@@ -5,6 +5,7 @@
         @jakarta.xml.bind.annotation.XmlNs(prefix = "xsi", namespaceURI = "http://www.w3.org/2001/XMLSchema-instance"),
         @jakarta.xml.bind.annotation.XmlNs(prefix = "xml", namespaceURI = "http://www.w3.org/XML/1998/namespace"),
         @jakarta.xml.bind.annotation.XmlNs(prefix = "xs", namespaceURI = "http://www.w3.org/2001/XMLSchema"),
+        @jakarta.xml.bind.annotation.XmlNs(prefix = "oai-identifier", namespaceURI = "http://www.openarchives.org/OAI/2.0/oai-identifier"),
         @jakarta.xml.bind.annotation.XmlNs(prefix = "", namespaceURI = "http://www.openarchives.org/OAI/2.0/"),
     }
 )

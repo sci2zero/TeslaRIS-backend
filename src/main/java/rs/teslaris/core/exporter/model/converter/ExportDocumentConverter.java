@@ -515,6 +515,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getAuthors().forEach(author -> {
             var field = new DimField();
+            if (Objects.nonNull(author.getPerson().getOrcid()) &&
+                !author.getPerson().getOrcid().isBlank()) {
+                field.setAuthority(author.getPerson().getOrcid());
+            }
             field.setMdschema("dc");
             field.setElement("creator");
             field.setValue(author.getDisplayName());
@@ -523,6 +527,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getEditors().forEach(editor -> {
             var field = new DimField();
+            if (Objects.nonNull(editor.getPerson().getOrcid()) &&
+                !editor.getPerson().getOrcid().isBlank()) {
+                field.setAuthority(editor.getPerson().getOrcid());
+            }
             field.setMdschema("dc");
             field.setElement("contributor");
             field.setQualifier("editor");
@@ -563,6 +571,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             var field = new DimField();
             field.setMdschema("dc");
             field.setElement("language");
+            field.setQualifier("iso");
             field.setValue(languageTag);
             dimPublication.getFields().add(field);
         });
@@ -597,6 +606,21 @@ public class ExportDocumentConverter extends ExportConverterBase {
                         exportDocument.getDatabaseId()));
         });
 
+        if (Objects.nonNull(exportDocument.getEIssn()) && !exportDocument.getEIssn().isBlank()) {
+            dimPublication.getFields()
+                .add(new DimField("dc", "identifier", "issn", null, null, null,
+                    exportDocument.getEIssn()));
+        }
+
+        dimPublication.getFields().add(new DimField("dc", "citation", "spage", null, null, null,
+            exportDocument.getStartPage()));
+        dimPublication.getFields().add(new DimField("dc", "citation", "epage", null, null, null,
+            exportDocument.getEndPage()));
+        dimPublication.getFields().add(new DimField("dc", "citation", "volume", null, null, null,
+            exportDocument.getVolume()));
+
+        // TODO: add rank when (e.g. M21) we add support for it!
+
         return dimPublication;
     }
 
@@ -607,7 +631,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         dcPublication.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
         // TODO: support other identifiers (if applicable)
 
-        dcPublication.getType().add("text"); // TODO: support PHD dissertations when we add them
+        dcPublication.getType().add("text");
 
         clientLanguages.forEach(lang -> {
             dcPublication.getIdentifier()

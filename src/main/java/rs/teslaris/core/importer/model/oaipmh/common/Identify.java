@@ -3,7 +3,6 @@ package rs.teslaris.core.importer.model.oaipmh.common;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
@@ -24,7 +23,7 @@ import lombok.ToString;
     "deletedRecord",
     "granularity",
     "compression",
-    "descriptions"
+    "description"
 })
 @XmlRootElement(name = "Identify")
 @Getter
@@ -58,8 +57,7 @@ public class Identify {
     @XmlElement(required = true)
     private List<String> compression;
 
-    @XmlElementWrapper(name = "descriptions")
     @XmlElement(name = "description")
-    private List<Description> descriptions = new ArrayList<>();
+    private List<Description> description = new ArrayList<>();
 
 }

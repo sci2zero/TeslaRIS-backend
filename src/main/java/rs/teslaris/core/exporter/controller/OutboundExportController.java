@@ -5,26 +5,28 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.exporter.service.interfaces.OutboundExportService;
+import rs.teslaris.core.exporter.util.ExportDataFormat;
 import rs.teslaris.core.exporter.util.OAIErrorFactory;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.Request;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 
 @RestController
-@RequestMapping
+@RequestMapping("/api/export")
 @RequiredArgsConstructor
 public class OutboundExportController {
 
     private final OutboundExportService outboundExportService;
 
-    @Value("export.base.url")
+    @Value("${export.base.url}")
     private String baseUrl;
 
-    @GetMapping(value = "/OAIHandlerOpenAIRECRIS", produces = "application/xml")
+    @GetMapping(value = "/{handlerName}", produces = "application/xml")
     public OAIPMHResponse handleOAIOpenAIRECRIS(@RequestParam String verb,
                                                 @RequestParam(required = false)
                                                 String metadataPrefix,
@@ -33,8 +35,9 @@ public class OutboundExportController {
                                                 @RequestParam(required = false) String set,
                                                 @RequestParam(required = false) String identifier,
                                                 @RequestParam(required = false)
-                                                String resumptionToken) {
-        return performExport("OAIHandlerOpenAIRECRIS", verb, metadataPrefix, from, until, set,
+                                                String resumptionToken,
+                                                @PathVariable String handlerName) {
+        return performExport(handlerName, verb, metadataPrefix, from, until, set,
             identifier, resumptionToken);
     }
 
@@ -48,7 +51,22 @@ public class OutboundExportController {
                                          String resumptionToken) {
         var response = new OAIPMHResponse();
         response.setResponseDate(new Date());
-        response.setRequest(new Request(verb, set, metadataPrefix, baseUrl + "/" + handlerName));
+        response.setRequest(
+            new Request(verb, set, metadataPrefix, baseUrl + "/api/export/" + handlerName));
+
+        if (Objects.nonNull(metadataPrefix)) {
+            metadataPrefix = metadataPrefix.toLowerCase();
+        } else {
+            metadataPrefix = ExportDataFormat.DUBLIN_CORE.name();
+        }
+
+        if (Objects.isNull(from)) {
+            from = "1000-01-01";
+        }
+
+        if (Objects.isNull(until)) {
+            until = "3000-12-31";
+        }
 
         switch (verb) {
             case "Identify":

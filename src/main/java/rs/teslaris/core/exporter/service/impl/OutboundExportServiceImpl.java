@@ -164,7 +164,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             var metadata = new Metadata();
 
             record.setHeader(constructOaiResponseHeader(handlerConfiguration.get(),
-                (BaseExportEntity) fetchedRecordEntity, ("oai:" + repositoryName + ":") +
+                (BaseExportEntity) fetchedRecordEntity,
+                ("oai:" + repositoryName.replace(" ", ".") + ":") +
                     (!matchedSet.get().identifierSetSpec().isBlank() ?
                         (matchedSet.get().identifierSetSpec() + "/") : "") + "(TESLARIS)" +
                     ((BaseExportEntity) fetchedRecordEntity).getDatabaseId(),
@@ -180,7 +181,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                     setMetadataFieldsInGivenFormat(matchedSet.get().identifierSetSpec(),
                         recordClass,
                         converterClass, ExportDataFormat.fromStringValue(metadataPrefix), metadata,
-                        fetchedRecordEntity);
+                        fetchedRecordEntity, handlerConfiguration.get());
                 } catch (ConverterDoesNotExistException e) {
                     response.setError(OAIErrorFactory.constructNoRecordsMatchError());
                     return null;
@@ -281,8 +282,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         try {
             setMetadataFieldsInGivenFormat(set, recordClass, converterClass, metadataFormat,
-                metadata,
-                requestedRecordOptional.get());
+                metadata, requestedRecordOptional.get(), handlerConfiguration.get());
         } catch (ConverterDoesNotExistException e) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
             return null;
@@ -315,7 +315,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     private <E> void setMetadataFieldsInGivenFormat(String set, Class<?> recordClass,
                                                     Class<?> converterClass,
                                                     ExportDataFormat metadataFormat,
-                                                    Metadata metadata, E requestedRecord)
+                                                    Metadata metadata, E requestedRecord,
+                                                    ExportHandlersConfigurationLoader.Handler handler)
         throws ConverterDoesNotExistException {
         var conversionFunctionName = switch (metadataFormat) {
             case OAI_CERIF_OPENAIRE -> "toOpenaireModel";
@@ -330,7 +331,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
             // TODO: discuss this
             ExportConverterBase.performExceptionalHandlingWhereAbsolutelyNecessary(convertedEntity,
-                metadataFormat, set);
+                metadataFormat, set, handler);
 
             switch (set) {
                 case "Publications":
@@ -423,7 +424,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         }
 
         var identify = new Identify();
-        identify.setBaseURL(baseUrl + "/" + handler);
+        identify.setBaseURL(baseUrl + "/api/export/" + handler);
         identify.setRepositoryName(repositoryName);
         identify.setProtocolVersion("2.0");
         identify.setAdminEmail(adminEmail);
@@ -431,7 +432,9 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var earliestDocument = findEarliestDocument(
             Integer.parseInt(handlerConfiguration.get().internalInstitutionId()));
         earliestDocument.ifPresent(
-            exportDocument -> identify.setEarliestDatestamp(exportDocument.getDocumentDate()));
+            exportDocument -> identify.setEarliestDatestamp(
+                exportDocument.getLastUpdated().toInstant().atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDate().toString()));
 
         identify.setDeletedRecord("persistent");
         identify.setGranularity("YYYY-MM-DD");
@@ -441,7 +444,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         var oaiIdentifier = new OAIIdentifier();
         oaiIdentifier.setScheme("oai");
-        oaiIdentifier.setRepositoryIdentifier(repositoryName);
+        oaiIdentifier.setRepositoryIdentifier(repositoryName.replace(" ", "."));
         oaiIdentifier.setDelimiter(":");
         oaiIdentifier.setSampleIdentifier(
             "oai:" + repositoryName.replace(" ", ".") + ":Publications/(TESLARIS)1000");
@@ -459,7 +462,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var toolkitDescription = new Description();
         toolkitDescription.setToolkit(toolkit);
 
-        identify.getDescriptions()
+        identify.getDescription()
             .addAll(List.of(serviceDescription, identifierDescription, toolkitDescription));
 
         return identify;
@@ -468,7 +471,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     private Optional<ExportDocument> findEarliestDocument(int internalInstitutionId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("relatedInstitutionIds").in(internalInstitutionId));
-        query.with(Sort.by(Sort.Direction.ASC, "documentDate"));
+        query.with(Sort.by(Sort.Direction.ASC, "last_updated"));
         query.limit(1);
 
         ExportDocument earliestDocument = mongoTemplate.findOne(query, ExportDocument.class);
@@ -521,7 +524,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             var newMetadataFormat = new MetadataFormat();
             newMetadataFormat.setMetadataPrefix(format);
             setCommonMetadataFormatFields(format, newMetadataFormat);
-            listMetadataFormats.getMetadataFormats().add(newMetadataFormat);
+            listMetadataFormats.getMetadataFormat().add(newMetadataFormat);
         });
 
         return listMetadataFormats;
