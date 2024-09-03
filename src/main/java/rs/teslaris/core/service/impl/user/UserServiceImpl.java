@@ -46,6 +46,7 @@ import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
+import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
@@ -103,7 +104,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final Cache<String, Byte> passwordResetRequestCacheStore;
 
-    @Value("${client.address}")
+    @Value("${frontend.application.address}")
     private String clientAppAddress;
 
 
@@ -293,7 +294,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
                 languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
-                person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null);
+                person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
+                UserNotificationPeriod.NEVER);
         var savedUser = userRepository.save(newUser);
 
         indexUser(savedUser, new UserAccountIndex());
@@ -327,7 +329,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 registrationRequest.getNote(),
                 registrationRequest.getName(), registrationRequest.getSurname(), true, false,
                 languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
-                null, organisationUnit);
+                null, organisationUnit, UserNotificationPeriod.NEVER);
         var savedUser = userRepository.save(newUser);
 
         indexUser(savedUser, new UserAccountIndex());
@@ -376,6 +378,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
         userToUpdate.setPreferredLanguage(preferredLanguage);
+        userToUpdate.setUserNotificationPeriod(userUpdateRequest.getNotificationPeriod());
+
+        if (!userToUpdate.getUserNotificationPeriod().equals(UserNotificationPeriod.NEVER) &&
+            userToUpdate.getEmail().isBlank()) {
+            throw new IllegalArgumentException(
+                "You have to setup username before you can receive email notifications.");
+        }
 
         if (!userUpdateRequest.getOldPassword().isEmpty() &&
             passwordEncoder.matches(userUpdateRequest.getOldPassword(),
@@ -414,8 +423,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         try {
             var user = (User) loadUserByUsername(userEmail);
             var resetToken = UUID.randomUUID().toString();
+            var language = user.getPreferredLanguage().getLanguageCode().toLowerCase();
             String resetLink =
-                clientAppAddress + user.getPreferredLanguage().getLanguageCode().toLowerCase() +
+                clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
                     "/reset-password/" + resetToken;
             String emailSubject = "Account Password Reset";
             String emailBody =

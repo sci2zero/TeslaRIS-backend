@@ -22,6 +22,7 @@ public class UserConverter {
             user.getLastName(), user.getLocked(), user.getCanTakeRole(),
             user.getPreferredLanguage().getLanguageCode(),
             organisationUnitId,
-            MultilingualContentConverter.getMultilingualContentDTO(organisationUnitName));
+            MultilingualContentConverter.getMultilingualContentDTO(organisationUnitName),
+            user.getUserNotificationPeriod());
     }
 }

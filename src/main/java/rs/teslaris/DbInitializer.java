@@ -55,6 +55,7 @@ import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
@@ -206,11 +207,12 @@ public class DbInitializer implements ApplicationRunner {
 
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage, adminAuthority, null, null);
+                "Markovic", false, false, serbianLanguage, adminAuthority, null, null,
+                UserNotificationPeriod.DAILY);
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
                 "Janko", "Jankovic", false, false, serbianLanguage, researcherAuthority, person1,
-                null);
+                null, UserNotificationPeriod.DAILY);
         userRepository.save(adminUser);
         userRepository.save(researcherUser);
 
@@ -525,7 +527,7 @@ public class DbInitializer implements ApplicationRunner {
         var researcherUser2 =
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
                 "Schöpfel", "Joachim", false, false, germanLanguage, researcherAuthority, person2,
-                null);
+                null, UserNotificationPeriod.WEEKLY);
         userRepository.save(researcherUser2);
 
         var person3 = new Person();
@@ -591,5 +593,12 @@ public class DbInitializer implements ApplicationRunner {
         eventsRelation2.setTarget(conferenceEvent3);
         eventsRelation2.setEventsRelationType(EventsRelationType.BELONGS_TO_SERIES);
         eventsRelationRepository.save(eventsRelation2);
+
+        var conferenceEvent4 = new Conference();
+        conferenceEvent4.setName(Set.of(new MultiLingualContent(englishTag, "EURO CRIS", 1)));
+        conferenceEvent4.setDateFrom(LocalDate.of(2023, 5, 12));
+        conferenceEvent4.setDateTo(LocalDate.of(2023, 5, 17));
+        conferenceEvent4.setSerialEvent(false);
+        conferenceRepository.save(conferenceEvent4);
     }
 }
