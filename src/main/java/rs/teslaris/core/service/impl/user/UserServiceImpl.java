@@ -104,7 +104,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final Cache<String, Byte> passwordResetRequestCacheStore;
 
-    @Value("${client.address}")
+    @Value("${frontend.application.address}")
     private String clientAppAddress;
 
 

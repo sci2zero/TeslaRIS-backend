@@ -47,7 +47,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     private final EmailUtil emailUtil;
 
-    @Value("${client.address}")
+    @Value("${frontend.application.address}")
     private String clientAppAddress;
 
 
