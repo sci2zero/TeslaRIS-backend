@@ -21,6 +21,7 @@ import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
 import rs.teslaris.core.importer.model.oaipmh.dspaceinternal.Dim;
 import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Component
 public class ExportConverterBase {
@@ -124,19 +125,33 @@ public class ExportConverterBase {
                                                                           ExportHandlersConfigurationLoader.Handler handler) {
         if (format.equals(ExportDataFormat.DUBLIN_CORE) &&
             recordClass.equals(ExportDocument.class)) {
-            var typeKey = ((DC) convertedEntity).getType().getFirst();
-            ((DC) convertedEntity).getType().clear();
-            ((DC) convertedEntity).getType().add(handler.typeMappings().get(typeKey));
-
             ((DC) convertedEntity).getRights().clear();
             ((DC) convertedEntity).getRights().add("info:eu-repo/semantics/openAccess");
             ((DC) convertedEntity).getRights()
                 .add("http://creativecommons.org/licenses/by-sa/2.0/uk/");
+        }
+    }
+
+    public static void applyCustomMappings(Object convertedEntity, ExportDataFormat format,
+                                           Class<?> recordClass,
+                                           ExportHandlersConfigurationLoader.Handler handler) {
+        if (format.equals(ExportDataFormat.DUBLIN_CORE) &&
+            recordClass.equals(ExportDocument.class)) {
+            var typeKey = ((DC) convertedEntity).getType().getFirst();
+
+            ((DC) convertedEntity).getType().clear();
+            ((DC) convertedEntity).getType().add(handler.typeMappings().get(typeKey));
+
         } else if (format.equals(ExportDataFormat.DSPACE_INTERNAL_MODEL) &&
             recordClass.equals(ExportDocument.class)) {
             var typeElement = ((Dim) convertedEntity).getFields().stream()
-                .filter(field -> field.getElement().equals("type")).findFirst().get();
-            typeElement.setValue(handler.typeMappings().get(typeElement.getValue()));
+                .filter(field -> field.getElement().equals("type")).findFirst();
+
+            if (typeElement.isEmpty()) {
+                throw new NotFoundException("Fatal error. No type found for document.");
+            }
+
+            typeElement.get().setValue(handler.typeMappings().get(typeElement.get().getValue()));
         }
     }
 

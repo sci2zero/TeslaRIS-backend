@@ -329,7 +329,9 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             var conversionMethod = converterClass.getMethod(conversionFunctionName, recordClass);
             Object convertedEntity = conversionMethod.invoke(null, requestedRecord);
 
-            // TODO: discuss this
+            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat, recordClass,
+                handler);
+
             ExportConverterBase.performExceptionalHandlingWhereAbsolutelyNecessary(convertedEntity,
                 metadataFormat, recordClass, handler);
 
