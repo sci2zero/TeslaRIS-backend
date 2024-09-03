@@ -126,7 +126,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(), null, null);
+            newUser.getPreferredLanguage().getLanguageCode(), null, null,
+            newUser.getUserNotificationPeriod());
     }
 
     @PostMapping("/register-institution-admin")
@@ -140,7 +141,7 @@ public class UserController {
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
             newUser.getPreferredLanguage().getLanguageCode(),
-            registrationRequest.getOrganisationUnitId(), null);
+            registrationRequest.getOrganisationUnitId(), null, newUser.getUserNotificationPeriod());
     }
 
     @PutMapping

@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,11 @@ public class EmailUtil {
     private String universalEditorAddress;
 
     @Async
+    @Retryable(
+        retryFor = {Exception.class},
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 5000)
+    )
     public void sendSimpleEmail(String to, String subject, String text) {
         var message = new SimpleMailMessage();
         message.setFrom(emailAddress);

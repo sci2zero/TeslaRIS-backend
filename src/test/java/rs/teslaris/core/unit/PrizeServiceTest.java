@@ -104,7 +104,7 @@ public class PrizeServiceTest {
         prizeService.deletePrize(1, 1);
 
         // Then
-        assertTrue(person.getExpertisesAndSkills().isEmpty());
+        assertTrue(person.getPrizes().isEmpty());
     }
 
     @Test

@@ -242,7 +242,6 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
     }
 
-
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
         var organisationUnit =
             organisationUnitService.findOrganisationUnitById(

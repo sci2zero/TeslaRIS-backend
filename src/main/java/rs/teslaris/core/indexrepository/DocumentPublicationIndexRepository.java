@@ -21,6 +21,9 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> findByTypeAndEventId(String type, Integer eventId,
                                                         Pageable pageable);
 
+    Page<DocumentPublicationIndex> findByTypeAndProceedingsId(String type, Integer proceedingsId,
+                                                              Pageable pageable);
+
     @Query("{\"bool\": " +
         "{\"must\": [" +
         "{\"term\": {\"type\": \"?0\"}}, " +

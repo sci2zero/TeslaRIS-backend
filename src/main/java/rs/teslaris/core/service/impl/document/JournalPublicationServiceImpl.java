@@ -138,6 +138,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         this.delete(journalPublicationId);
     }
 
+    @Override
     public void indexJournalPublication(JournalPublication publication,
                                         DocumentPublicationIndex index) {
         indexCommonFields(publication, index);

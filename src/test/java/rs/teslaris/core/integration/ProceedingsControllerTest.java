@@ -59,7 +59,7 @@ public class ProceedingsControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.get("http://localhost:8081/api/proceedings/{documentId}", 1)
                     .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-            .andExpect(jsonPath("$.eisbn").value("MOCK_eISBN1"));
+            .andExpect(jsonPath("$.eISBN").value("978-3-16-148410-0"));
     }
 
     @Test

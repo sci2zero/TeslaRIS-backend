@@ -23,7 +23,7 @@ import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
-@RequestMapping("api/file")
+@RequestMapping("/api/file")
 @RequiredArgsConstructor
 public class FileController {
 

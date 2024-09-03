@@ -58,6 +58,7 @@ import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
@@ -156,19 +157,29 @@ public class DbInitializer implements ApplicationRunner {
         var editPublicationSeries = new Privilege("EDIT_PUBLICATION_SERIES");
         var editConferences = new Privilege("EDIT_CONFERENCES");
         var editEventRelations = new Privilege("EDIT_EVENT_RELATIONS");
+        var mergeJournalPublications = new Privilege("MERGE_JOURNAL_PUBLICATIONS");
+        var mergePersonPublications = new Privilege("MERGE_PERSON_PUBLICATIONS");
+        var mergePersonMetadata = new Privilege("MERGE_PERSON_METADATA");
+        var mergeOUEmployments = new Privilege("MERGE_OU_EMPLOYMENTS");
+        var mergeConferenceProceedings = new Privilege("MERGE_CONFERENCE_PROCEEDINGS");
+        var mergeProceedingsPublications = new Privilege("MERGE_PROCEEDINGS_PUBLICATIONS");
         var prepareExportData = new Privilege("PREPARE_EXPORT_DATA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
                 createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
                 editResearchAreas, approvePublication, editOURelations, editPublishers,
-                editPublicationSeries, editConferences, editEventRelations, prepareExportData));
+                editPublicationSeries, editConferences, editEventRelations, mergeOUEmployments,
+                mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
+                mergeConferenceProceedings, mergeProceedingsPublications, prepareExportData));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
                 createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
                 editOURelations, approvePublication, editPublishers, editPublicationSeries,
-                editConferences, editEventRelations, prepareExportData)));
+                editConferences, editEventRelations, mergeJournalPublications,
+                mergePersonPublications, mergePersonMetadata, mergeOUEmployments,
+                mergeConferenceProceedings, mergeProceedingsPublications, prepareExportData)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
@@ -206,11 +217,12 @@ public class DbInitializer implements ApplicationRunner {
 
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage, adminAuthority, null, null);
+                "Markovic", false, false, serbianLanguage, adminAuthority, null, null,
+                UserNotificationPeriod.DAILY);
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
                 "Janko", "Jankovic", false, false, serbianLanguage, researcherAuthority, person1,
-                null);
+                null, UserNotificationPeriod.DAILY);
         userRepository.save(adminUser);
         userRepository.save(researcherUser);
 
@@ -262,7 +274,7 @@ public class DbInitializer implements ApplicationRunner {
         var proceedings1 = new Proceedings();
         proceedings1.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 1", 1));
         proceedings1.setApproveStatus(ApproveStatus.APPROVED);
-        proceedings1.setEISBN("MOCK_eISBN1");
+        proceedings1.setEISBN("978-3-16-148410-0");
         proceedings1.setDocumentDate("2021");
         proceedings1.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings1);
@@ -270,7 +282,7 @@ public class DbInitializer implements ApplicationRunner {
         var proceedings2 = new Proceedings();
         proceedings2.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 2", 1));
         proceedings2.setApproveStatus(ApproveStatus.REQUESTED);
-        proceedings2.setEISBN("MOCK_eISBN2");
+        proceedings2.setEISBN("978-3-16-145410-0");
         proceedings2.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings2);
 
@@ -527,7 +539,7 @@ public class DbInitializer implements ApplicationRunner {
         var researcherUser2 =
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
                 "Schöpfel", "Joachim", false, false, germanLanguage, researcherAuthority, person2,
-                null);
+                null, UserNotificationPeriod.WEEKLY);
         userRepository.save(researcherUser2);
 
         var person3 = new Person();
@@ -594,13 +606,6 @@ public class DbInitializer implements ApplicationRunner {
         eventsRelation2.setEventsRelationType(EventsRelationType.BELONGS_TO_SERIES);
         eventsRelationRepository.save(eventsRelation2);
 
-        var conferenceEvent4 = new Conference();
-        conferenceEvent4.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija4", 1)));
-        conferenceEvent4.setDateFrom(LocalDate.of(2022, 7, 17));
-        conferenceEvent4.setDateTo(LocalDate.of(2022, 7, 22));
-        conferenceEvent4.setSerialEvent(false);
-        conferenceRepository.save(conferenceEvent4);
-
         var monographPublication1 = new MonographPublication();
         monographPublication1.setApproveStatus(ApproveStatus.APPROVED);
         monographPublication1.setDocumentDate("2024");
@@ -654,5 +659,12 @@ public class DbInitializer implements ApplicationRunner {
         var slovenianLanguage = new Language();
         slovenianLanguage.setLanguageCode(LanguageAbbreviations.SLOVENIAN);
         languageRepository.save(slovenianLanguage);
+
+        var conferenceEvent4 = new Conference();
+        conferenceEvent4.setName(Set.of(new MultiLingualContent(englishTag, "EURO CRIS", 1)));
+        conferenceEvent4.setDateFrom(LocalDate.of(2023, 5, 12));
+        conferenceEvent4.setDateTo(LocalDate.of(2023, 5, 17));
+        conferenceEvent4.setSerialEvent(false);
+        conferenceRepository.save(conferenceEvent4);
     }
 }

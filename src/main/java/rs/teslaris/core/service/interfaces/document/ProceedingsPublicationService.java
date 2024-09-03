@@ -17,6 +17,9 @@ public interface ProceedingsPublicationService {
     List<ProceedingsPublicationResponseDTO> findAuthorsProceedingsForEvent(Integer eventId,
                                                                            Integer authorId);
 
+    Page<DocumentPublicationIndex> findPublicationsInProceedings(Integer proceedingsId,
+                                                                 Pageable pageable);
+
     ProceedingsPublication createProceedingsPublication(
         ProceedingsPublicationDTO proceedingsPublicationDTO, Boolean index);
 
@@ -28,4 +31,7 @@ public interface ProceedingsPublicationService {
     Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId, Pageable pageable);
 
     void reindexProceedingsPublications();
+
+    void indexProceedingsPublication(ProceedingsPublication publication,
+                                     DocumentPublicationIndex index);
 }

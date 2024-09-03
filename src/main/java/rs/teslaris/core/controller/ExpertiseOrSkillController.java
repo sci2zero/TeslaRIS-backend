@@ -76,12 +76,12 @@ public class ExpertiseOrSkillController {
         return expertiseOrSkillService.updateProof(proof);
     }
 
-    @DeleteMapping("/{personId}/{expertiseOrSillId}/{proofId}")
+    @DeleteMapping("/{personId}/{expertiseOrSkillId}/{proofId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @PersonEditCheck
-    public void deleteExpertiseOrSkillProof(@PathVariable Integer expertiseOrSillId,
+    public void deleteExpertiseOrSkillProof(@PathVariable Integer expertiseOrSkillId,
                                             @PathVariable Integer proofId) {
-        expertiseOrSkillService.deleteProof(proofId, expertiseOrSillId);
+        expertiseOrSkillService.deleteProof(proofId, expertiseOrSkillId);
     }
 }
