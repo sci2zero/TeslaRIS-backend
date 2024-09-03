@@ -35,6 +35,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceCo
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
+import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
 
@@ -264,11 +265,20 @@ public class ErrorHandlerConfiguration {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(OrganisationUnitReferenceConstraintViolationException.class)
     @ResponseBody
     ErrorObject handleOrganisationUnitReferenceConstraintViolationException(
         HttpServletRequest request,
         OrganisationUnitReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(TypeNotAllowedException.class)
+    @ResponseBody
+    ErrorObject handleTypeNotAllowedException(HttpServletRequest request,
+                                              TypeNotAllowedException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

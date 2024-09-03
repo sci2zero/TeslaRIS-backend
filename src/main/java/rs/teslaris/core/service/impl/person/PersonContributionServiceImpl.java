@@ -18,12 +18,14 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -36,6 +38,7 @@ import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
@@ -66,6 +69,12 @@ public class PersonContributionServiceImpl implements PersonContributionService 
         documentDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonDocumentContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
+
+            if (contributionDTO.getContributionType()
+                .equals(DocumentContributionType.BOARD_MEMBER) && !(document instanceof Thesis)) {
+                throw new TypeNotAllowedException(
+                    "Only thesis can have a board member contributor type.");
+            }
 
             contribution.setContributionType(contributionDTO.getContributionType());
             contribution.setIsMainContributor(contributionDTO.getIsMainContributor());
