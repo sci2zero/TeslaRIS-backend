@@ -19,6 +19,7 @@ import rs.teslaris.core.exporter.model.common.ExportPublisher;
 import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.importer.model.oaipmh.dspaceinternal.Dim;
 import rs.teslaris.core.importer.model.oaipmh.dspaceinternal.DimField;
+import rs.teslaris.core.importer.model.oaipmh.dublincore.Contributor;
 import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.importer.model.oaipmh.etdms.Degree;
 import rs.teslaris.core.importer.model.oaipmh.etdms.ETDMSThesis;
@@ -306,6 +307,14 @@ public class ExportDocumentConverter extends ExportConverterBase {
                         commonExportDocument.getEditors()
                             .add(createExportContribution(contributor));
                         break;
+                    case ADVISOR:
+                        commonExportDocument.getAdvisors()
+                            .add(createExportContribution(contributor));
+                        break;
+                    case BOARD_MEMBER:
+                        commonExportDocument.getBoardMembers()
+                            .add(createExportContribution(contributor));
+                        break;
                 }
             });
 
@@ -538,6 +547,32 @@ public class ExportDocumentConverter extends ExportConverterBase {
             dimPublication.getFields().add(field);
         });
 
+        exportDocument.getAdvisors().forEach(advisor -> {
+            var field = new DimField();
+            if (Objects.nonNull(advisor.getPerson().getOrcid()) &&
+                !advisor.getPerson().getOrcid().isBlank()) {
+                field.setAuthority(advisor.getPerson().getOrcid());
+            }
+            field.setMdschema("dc");
+            field.setElement("contributor");
+            field.setQualifier("advisor");
+            field.setValue(advisor.getDisplayName());
+            dimPublication.getFields().add(field);
+        });
+
+        exportDocument.getBoardMembers().forEach(boardMember -> {
+            var field = new DimField();
+            if (Objects.nonNull(boardMember.getPerson().getOrcid()) &&
+                !boardMember.getPerson().getOrcid().isBlank()) {
+                field.setAuthority(boardMember.getPerson().getOrcid());
+            }
+            field.setMdschema("dc");
+            field.setElement("contributor");
+            field.setQualifier("board member");
+            field.setValue(boardMember.getDisplayName());
+            dimPublication.getFields().add(field);
+        });
+
         exportDocument.getKeywords().forEach(mc -> {
             var field = new DimField();
             field.setMdschema("dc");
@@ -631,7 +666,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         dcPublication.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
         // TODO: support other identifiers (if applicable)
 
-        dcPublication.getType().add("text");
+        dcPublication.getType().add(exportDocument.getType().name());
 
         clientLanguages.forEach(lang -> {
             dcPublication.getIdentifier()
@@ -655,7 +690,19 @@ public class ExportDocumentConverter extends ExportConverterBase {
         addContentToList(
             exportDocument.getEditors(),
             ExportContribution::getDisplayName,
-            content -> dcPublication.getContributor().add(content)
+            content -> dcPublication.getContributor().add(new Contributor(content, "editor"))
+        );
+
+        addContentToList(
+            exportDocument.getAdvisors(),
+            ExportContribution::getDisplayName,
+            content -> dcPublication.getContributor().add(new Contributor(content, "advisor"))
+        );
+
+        addContentToList(
+            exportDocument.getBoardMembers(),
+            ExportContribution::getDisplayName,
+            content -> dcPublication.getContributor().add(new Contributor(content, "board_member"))
         );
 
         addContentToList(

@@ -331,7 +331,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
             // TODO: discuss this
             ExportConverterBase.performExceptionalHandlingWhereAbsolutelyNecessary(convertedEntity,
-                metadataFormat, set, handler);
+                metadataFormat, recordClass, handler);
 
             switch (set) {
                 case "Publications":

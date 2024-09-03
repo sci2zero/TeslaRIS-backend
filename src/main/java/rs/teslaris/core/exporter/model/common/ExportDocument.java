@@ -102,6 +102,12 @@ public class ExportDocument extends BaseExportEntity {
     @Field("editors")
     private List<ExportContribution> editors = new ArrayList<>();
 
+    @Field("advisors")
+    private List<ExportContribution> advisors = new ArrayList<>();
+
+    @Field("board_members")
+    private List<ExportContribution> boardMembers = new ArrayList<>();
+
     @Field("publishers")
     private List<ExportPublisher> publishers = new ArrayList<>();
 

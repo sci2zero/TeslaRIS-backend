@@ -268,6 +268,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         index.setReviewerNames(StringUtil.removeLeadingColonSpace(
                             index.getReviewerNames() + "; " + contributorName));
                         break;
+                    case BOARD_MEMBER:
+                        if (personExists) {
+                            index.getBoardMemberIds().add(contribution.getPerson().getId());
+                        }
+                        index.setBoardMemberNames(StringUtil.removeLeadingColonSpace(
+                            index.getBoardMemberNames() + "; " + contributorName));
+                        break;
                 }
             });
         index.setAuthorNamesSortable(index.getAuthorNames());

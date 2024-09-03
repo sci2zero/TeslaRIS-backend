@@ -73,7 +73,19 @@
         "oai_cerif_openaire",
         "oai_dim",
         "oai_etdms"
-      ]
+      ],
+      "typeMappings": {
+        "PROCEEDINGS": "test_proc",
+        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
+        "MONOGRAPH": "test_mon",
+        "MONOGRAPH_PUBLICATION": "test_mon_pub",
+        "JOURNAL": "test_jour",
+        "JOURNAL_PUBLICATION": "test_jour_pub",
+        "THESIS": "test_the",
+        "SOFTWARE": "test_sof",
+        "DATASET": "test_dat",
+        "PATENT": "test_pat"
+      }
     }
   ]
 }

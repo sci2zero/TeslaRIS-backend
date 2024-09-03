@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,7 @@ public class OutboundExportServiceTest {
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-                    null)), List.of("oai_cerif_openaire", "oai_dim"), false, null);
+                    null)), List.of("oai_cerif_openaire", "oai_dim"), false, null, Map.of());
 
         var mocked = mockStatic(ExportHandlersConfigurationLoader.class);
         mocked.when(() -> ExportHandlersConfigurationLoader.getHandlerByIdentifier("handler"))

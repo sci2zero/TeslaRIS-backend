@@ -14,9 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.BaseExportEntity;
+import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.exporter.util.ExportDataFormat;
 import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
+import rs.teslaris.core.importer.model.oaipmh.dspaceinternal.Dim;
 import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 
@@ -112,23 +114,29 @@ public class ExportConverterBase {
      *
      * @param convertedEntity The entity that has been converted and may need exceptional handling.
      * @param format          The export data format being used (e.g., Dublin Core).
-     * @param set             The specific set within the export data format, such as "oai_cerif_publications".
+     * @param recordClass     Common export class of the requested resource.
      * @param handler         The handler used to manage export configurations and apply any additional
      *                        logic necessary for handling specific cases, based on the export data format or set.
      */
     public static void performExceptionalHandlingWhereAbsolutelyNecessary(Object convertedEntity,
                                                                           ExportDataFormat format,
-                                                                          String set,
+                                                                          Class<?> recordClass,
                                                                           ExportHandlersConfigurationLoader.Handler handler) {
-        if (format.equals(ExportDataFormat.DUBLIN_CORE) && set.equals("oai_cerif_publications")) {
+        if (format.equals(ExportDataFormat.DUBLIN_CORE) &&
+            recordClass.equals(ExportDocument.class)) {
+            var typeKey = ((DC) convertedEntity).getType().getFirst();
             ((DC) convertedEntity).getType().clear();
-            ((DC) convertedEntity).getType().add("info:eu-repo/semantics/doctoralThesis");
-            ((DC) convertedEntity).getType().add("info:eu-repo/semantics/publishedVersion");
+            ((DC) convertedEntity).getType().add(handler.typeMappings().get(typeKey));
 
             ((DC) convertedEntity).getRights().clear();
             ((DC) convertedEntity).getRights().add("info:eu-repo/semantics/openAccess");
             ((DC) convertedEntity).getRights()
                 .add("http://creativecommons.org/licenses/by-sa/2.0/uk/");
+        } else if (format.equals(ExportDataFormat.DSPACE_INTERNAL_MODEL) &&
+            recordClass.equals(ExportDocument.class)) {
+            var typeElement = ((Dim) convertedEntity).getFields().stream()
+                .filter(field -> field.getElement().equals("type")).findFirst().get();
+            typeElement.setValue(handler.typeMappings().get(typeElement.getValue()));
         }
     }
 

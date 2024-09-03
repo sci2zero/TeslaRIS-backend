@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -56,7 +57,8 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty(value = "sets", required = true) List<Set> sets,
         @JsonProperty(value = "metadataFormats", required = true) List<String> metadataFormats,
         @JsonProperty(value = "exportOnlyActiveEmployees", required = true) Boolean exportOnlyActiveEmployees,
-        @JsonProperty(value = "tokenExpirationTimeMinutes", required = true) Integer tokenExpirationTimeMinutes
+        @JsonProperty(value = "tokenExpirationTimeMinutes", required = true) Integer tokenExpirationTimeMinutes,
+        @JsonProperty(value = "typeMappings", required = true) Map<String, String> typeMappings
     ) {
     }
 

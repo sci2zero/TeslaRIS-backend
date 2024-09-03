@@ -47,7 +47,7 @@ public class DC implements PublicationConvertable, EventConvertable, OrgUnitConv
     private List<String> publisher = new ArrayList<>();
 
     @XmlElement(name = "contributor", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> contributor = new ArrayList<>();
+    private List<Contributor> contributor = new ArrayList<>();
 
     @XmlElement(name = "date", namespace = "http://purl.org/dc/elements/1.1/")
     private List<String> date = new ArrayList<>();
