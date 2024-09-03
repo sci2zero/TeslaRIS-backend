@@ -666,5 +666,12 @@ public class DbInitializer implements ApplicationRunner {
         conferenceEvent4.setDateTo(LocalDate.of(2023, 5, 17));
         conferenceEvent4.setSerialEvent(false);
         conferenceRepository.save(conferenceEvent4);
+
+        var monograph3 = new Monograph();
+        monograph3.setApproveStatus(ApproveStatus.APPROVED);
+        monograph3.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Dummy Translation", 1)));
+        monograph3.setMonographType(MonographType.TRANSLATION);
+        monographRepository.save(monograph3);
     }
 }
