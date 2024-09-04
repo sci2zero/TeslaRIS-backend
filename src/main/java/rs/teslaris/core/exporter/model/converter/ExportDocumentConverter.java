@@ -379,7 +379,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static Publication toOpenaireModel(ExportDocument exportDocument) {
         var openairePublication = new Publication();
-        openairePublication.setOldId("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+        openairePublication.setOldId("Publications/(TESLARIS)" + exportDocument.getDatabaseId());
         openairePublication.setTitle(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
         openairePublication.setSubtitle(

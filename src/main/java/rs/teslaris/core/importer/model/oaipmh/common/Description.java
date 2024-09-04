@@ -19,12 +19,12 @@ import lombok.ToString;
 @ToString
 public class Description {
 
-    @XmlElement(name = "Service")
+    @XmlElement(name = "Service", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private ServiceDescription service;
 
     @XmlElement(name = "oai-identifier", namespace = "http://www.openarchives.org/OAI/2.0/oai-identifier")
     private OAIIdentifier oaiIdentifier;
 
-    @XmlElement(name = "toolkit")
+    @XmlElement(name = "toolkit", namespace = "http://oai.dlib.vt.edu/OAI/metadata/toolkit")
     private Toolkit toolkit;
 }

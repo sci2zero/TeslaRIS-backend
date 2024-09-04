@@ -3,34 +3,26 @@ package rs.teslaris.core.importer.model.oaipmh.common;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
-import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.XmlValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-@XmlType(name = "THeader")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "header")
+@XmlRootElement(name = "Description", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Header {
+public class ServiceDescriptionContent {
 
-    @XmlAttribute(name = "status")
-    private String status;
+    @XmlAttribute(name = "lang", namespace = "http://www.w3.org/XML/1998/namespace")
+    private String lang;
 
-    @XmlElement(name = "identifier")
-    private String identifier;
-
-    @XmlElement(name = "datestamp")
-    private String datestamp;
-
-    @XmlElement(name = "setSpec")
-    private String setSpec;
+    @XmlValue
+    private String value;
 }

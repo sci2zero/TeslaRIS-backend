@@ -14,17 +14,22 @@ import rs.teslaris.core.importer.model.oaipmh.organisationunit.PartOf;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 
 @Component
 public class ExportOrganisationUnitConverter extends ExportConverterBase {
 
     private static OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
+    private static OrganisationUnitService organisationUnitService;
+
     @Autowired
     public ExportOrganisationUnitConverter(
-        OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
+        OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
+        OrganisationUnitService organisationUnitService) {
         ExportOrganisationUnitConverter.organisationUnitsRelationRepository =
             organisationUnitsRelationRepository;
+        ExportOrganisationUnitConverter.organisationUnitService = organisationUnitService;
     }
 
     public static ExportOrganisationUnit toCommonExportModel(OrganisationUnit organisationUnit,
@@ -48,7 +53,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
                 organisationUnitsRelation.getTargetOrganisationUnit(), false)));
 
         if (computeRelations) {
-            var topLevelIds = getTopLevelOrganisationUnitIds(organisationUnit.getId());
+            var topLevelIds = getOrganisationUnitRelationIds(organisationUnit.getId());
             commonExportOU.getRelatedInstitutionIds().addAll(topLevelIds);
             commonExportOU.getActivelyRelatedInstitutionIds().addAll(topLevelIds);
         }
@@ -56,7 +61,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         return commonExportOU;
     }
 
-    private static Set<Integer> getTopLevelOrganisationUnitIds(Integer organisationUnitId) {
+    private static Set<Integer> getOrganisationUnitRelationIds(Integer organisationUnitId) {
         var relations = new HashSet<Integer>();
         Integer currentId;
         Optional<OrganisationUnitsRelation> superRelation = Optional.empty();
@@ -69,12 +74,21 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             superRelation = organisationUnitsRelationRepository.getSuperOU(currentId);
         } while (superRelation.isPresent());
 
+        var subUnits = organisationUnitsRelationRepository.getOuSubUnits(organisationUnitId);
+
+        for (var subUnit : subUnits) {
+            var childrenSubUnits =
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                    subUnit.getSourceOrganisationUnit().getId());
+            relations.addAll(childrenSubUnits);
+        }
+
         return relations;
     }
 
     public static OrgUnit toOpenaireModel(ExportOrganisationUnit organisationUnit) {
         var orgUnit = new OrgUnit();
-        orgUnit.setOldId("TESLARIS(" + organisationUnit.getDatabaseId() + ")");
+        orgUnit.setOldId("Orgunits/(TESLARIS)" + organisationUnit.getDatabaseId());
         orgUnit.setName(
             ExportMultilingualContentConverter.toOpenaireModel(organisationUnit.getName()));
         if (Objects.nonNull(organisationUnit.getSuperOU())) {

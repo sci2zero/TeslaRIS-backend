@@ -16,7 +16,7 @@ public class ExportProductConverter extends ExportConverterBase {
     public static Product toOpenaireModel(
         ExportDocument exportDocument) {
         var openaireProduct = new Product();
-        openaireProduct.setOldId("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+        openaireProduct.setOldId("Products/(TESLARIS)" + exportDocument.getDatabaseId());
         openaireProduct.setName(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
         openaireProduct.setDescription(

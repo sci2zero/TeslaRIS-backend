@@ -81,7 +81,7 @@ public class ExportEventConverter extends ExportConverterBase {
     public static rs.teslaris.core.importer.model.oaipmh.event.Event toOpenaireModel(
         ExportEvent exportEvent) {
         var openaireEvent = new rs.teslaris.core.importer.model.oaipmh.event.Event();
-        openaireEvent.setOldId("TESLARIS(" + exportEvent.getDatabaseId() + ")");
+        openaireEvent.setOldId("Events/(TESLARIS)" + exportEvent.getDatabaseId());
         openaireEvent.setEventName(
             ExportMultilingualContentConverter.toOpenaireModel(exportEvent.getName()));
 

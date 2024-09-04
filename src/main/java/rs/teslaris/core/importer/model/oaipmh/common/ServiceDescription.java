@@ -22,18 +22,18 @@ public class ServiceDescription {
     @XmlElement(name = "Compatibility", namespace = "https://www.openaire.eu/cerif-profile/vocab/OpenAIRE_Service_Compatibility")
     private String compatibility;
 
-    @XmlElement(name = "Acronym")
+    @XmlElement(name = "Acronym", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private String acronym;
 
-    @XmlElement(name = "Name")
-    private String name;
+    @XmlElement(name = "Name", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    private Name name;
 
-    @XmlElement(name = "Description")
-    private String description;
+    @XmlElement(name = "Description", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
+    private ServiceDescriptionContent description;
 
-    @XmlElement(name = "WebsiteURL")
+    @XmlElement(name = "WebsiteURL", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private String websiteURL;
 
-    @XmlElement(name = "OAIPMHBaseURL")
+    @XmlElement(name = "OAIPMHBaseURL", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private String oaiPMHBaseURL;
 }

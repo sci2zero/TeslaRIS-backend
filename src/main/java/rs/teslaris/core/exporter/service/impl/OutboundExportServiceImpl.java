@@ -45,11 +45,13 @@ import rs.teslaris.core.importer.model.oaipmh.common.ListRecords;
 import rs.teslaris.core.importer.model.oaipmh.common.ListSets;
 import rs.teslaris.core.importer.model.oaipmh.common.Metadata;
 import rs.teslaris.core.importer.model.oaipmh.common.MetadataFormat;
+import rs.teslaris.core.importer.model.oaipmh.common.Name;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIIdentifier;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.importer.model.oaipmh.common.Record;
 import rs.teslaris.core.importer.model.oaipmh.common.ResumptionToken;
 import rs.teslaris.core.importer.model.oaipmh.common.ServiceDescription;
+import rs.teslaris.core.importer.model.oaipmh.common.ServiceDescriptionContent;
 import rs.teslaris.core.importer.model.oaipmh.common.Set;
 import rs.teslaris.core.importer.model.oaipmh.common.Toolkit;
 import rs.teslaris.core.importer.model.oaipmh.event.EventConvertable;
@@ -84,7 +86,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     @Value("${export.admin.email}")
     private String adminEmail;
 
-    @Value("${client.address}")
+    @Value("${frontend.application.address}")
     private String frontendUrl;
 
 
@@ -117,7 +119,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             .filter(set -> set.setSpec().equals(requestedSet))
             .findFirst();
 
-        if (matchedSet.isEmpty() || matchedSet.get().commonEntityClass().equals("NONE")) {
+        if (matchedSet.isEmpty() || Objects.isNull(matchedSet.get().commonEntityClass()) ||
+            matchedSet.get().commonEntityClass().equals("NONE")) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
             return null;
         }
@@ -300,7 +303,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             header.setStatus("deleted");
         }
         header.setIdentifier(identifier);
-        header.setDatestamp(exportEntity.getLastUpdated()); // TODO: is this right
+        header.setDatestamp(DateTimeFormatter.ISO_INSTANT.format(
+            exportEntity.getLastUpdated().toInstant()));
 
         handlerConfig.sets().forEach(setConfigs -> {
             if (setConfigs.identifierSetSpec().equals(identifierSetSpec) ||
@@ -486,9 +490,10 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var service = new ServiceDescription();
         service.setCompatibility(
             "https://www.openaire.eu/cerif-profile/vocab/OpenAIRE_Service_Compatibility#1.1");
-        service.setAcronym(repositoryName);
-        service.setName(handler.handlerName());
-        service.setDescription(handler.handlerDescription());
+        service.setAcronym(repositoryName.replace(" ", "."));
+        service.setName(new Name(handler.handlerLanguage(), handler.handlerName()));
+        service.setDescription(
+            new ServiceDescriptionContent(handler.handlerLanguage(), handler.handlerDescription()));
         service.setWebsiteURL(frontendUrl);
         service.setOaiPMHBaseURL(identify.getBaseURL());
         return service;

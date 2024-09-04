@@ -15,7 +15,6 @@ import rs.teslaris.core.importer.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.importer.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.repository.document.DocumentRepository;
 
 @Component
@@ -97,9 +96,10 @@ public class ExportPersonConverter extends ExportConverterBase {
     public static rs.teslaris.core.importer.model.oaipmh.person.Person toOpenaireModel(
         ExportPerson exportPerson) {
         var openairePerson = new rs.teslaris.core.importer.model.oaipmh.person.Person();
-        openairePerson.setOldId("TESLARIS(" + exportPerson.getDatabaseId() + ")");
+        openairePerson.setOldId("Persons/(TESLARIS)" + exportPerson.getDatabaseId());
         openairePerson.setScopusAuthorId(exportPerson.getScopusAuthorId());
-        openairePerson.setOrcid(exportPerson.getOrcid());
+        openairePerson.setOrcid(
+            "https://orcid.org/" + exportPerson.getOrcid().replace("https://orcid.org/", ""));
         openairePerson.setPersonName(new PersonName(exportPerson.getName().getLastName(),
             exportPerson.getName().getFirstName()));
 
@@ -107,10 +107,6 @@ public class ExportPersonConverter extends ExportConverterBase {
         exportPerson.getElectronicAddresses().forEach(elAddress -> {
             openairePerson.getElectronicAddresses().add(elAddress);
         });
-
-        if (Objects.nonNull(exportPerson.getSex())) {
-            openairePerson.setGender(exportPerson.getSex().equals(Sex.MALE) ? "M" : "F");
-        }
 
         if (!exportPerson.getEmploymentInstitutions().isEmpty()) {
             openairePerson.setAffiliation(new Affiliation(new ArrayList<>()));

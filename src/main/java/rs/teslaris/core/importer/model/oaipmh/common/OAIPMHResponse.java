@@ -5,7 +5,6 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
-import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -51,7 +50,7 @@ public class OAIPMHResponse {
     private GetRecord getRecord;
 
     @XmlElement(name = "responseDate")
-    private Date responseDate;
+    private String responseDate;
 
     @XmlElement(name = "request")
     private Request request;

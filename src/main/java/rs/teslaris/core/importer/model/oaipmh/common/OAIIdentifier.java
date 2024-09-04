@@ -19,15 +19,15 @@ import lombok.ToString;
 @ToString
 public class OAIIdentifier {
 
-    @XmlElement(name = "scheme", required = true)
+    @XmlElement(name = "scheme", required = true, namespace = "http://www.openarchives.org/OAI/2.0/oai-identifier")
     private String scheme;
 
-    @XmlElement(name = "repositoryIdentifier", required = true)
+    @XmlElement(name = "repositoryIdentifier", required = true, namespace = "http://www.openarchives.org/OAI/2.0/oai-identifier")
     private String repositoryIdentifier;
 
-    @XmlElement(name = "delimiter", required = true)
+    @XmlElement(name = "delimiter", required = true, namespace = "http://www.openarchives.org/OAI/2.0/oai-identifier")
     private String delimiter;
 
-    @XmlElement(name = "sampleIdentifier", required = true)
+    @XmlElement(name = "sampleIdentifier", required = true, namespace = "http://www.openarchives.org/OAI/2.0/oai-identifier")
     private String sampleIdentifier;
 }

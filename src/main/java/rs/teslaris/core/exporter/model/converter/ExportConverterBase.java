@@ -173,7 +173,7 @@ public class ExportConverterBase {
     @PostConstruct
     public void init() {
         repositoryName = environment.getProperty("export.repo.name");
-        baseFrontendUrl = environment.getProperty("client.address");
+        baseFrontendUrl = environment.getProperty("frontend.application.address");
         clientLanguages.clear();
         clientLanguages.addAll(Arrays.asList(
             Objects.requireNonNull(environment.getProperty("client.localization.languages"))

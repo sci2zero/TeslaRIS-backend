@@ -5,6 +5,7 @@
       "internalInstitutionId": "18",
       "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
       "handlerDescription": "CERIF compliant CRIS system developed by Science 2.0 Alliance for Faculty of Sciences, University of Novi Sad",
+      "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
       "sets": [

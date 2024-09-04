@@ -54,6 +54,7 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty(value = "internalInstitutionId", required = true) String internalInstitutionId,
         @JsonProperty(value = "handlerName", required = true) String handlerName,
         @JsonProperty(value = "handlerDescription", required = true) String handlerDescription,
+        @JsonProperty(value = "handlerLanguage", required = true) String handlerLanguage,
         @JsonProperty(value = "sets", required = true) List<Set> sets,
         @JsonProperty(value = "metadataFormats", required = true) List<String> metadataFormats,
         @JsonProperty(value = "exportOnlyActiveEmployees", required = true) Boolean exportOnlyActiveEmployees,

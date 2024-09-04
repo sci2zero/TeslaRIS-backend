@@ -1,7 +1,9 @@
 package rs.teslaris.core.exporter.controller;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.TimeZone;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +52,10 @@ public class OutboundExportController {
                                          String identifier,
                                          String resumptionToken) {
         var response = new OAIPMHResponse();
-        response.setResponseDate(new Date());
+
+        var utcDateTime = ZonedDateTime.now(TimeZone.getTimeZone("UTC").toZoneId());
+        response.setResponseDate(utcDateTime.format(DateTimeFormatter.ISO_INSTANT));
+
         response.setRequest(
             new Request(verb, set, metadataPrefix, baseUrl + "/api/export/" + handlerName));
 

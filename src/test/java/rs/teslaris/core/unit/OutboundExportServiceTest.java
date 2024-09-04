@@ -46,7 +46,8 @@ public class OutboundExportServiceTest {
     @BeforeAll
     public static void setup() {
         var handler =
-            new ExportHandlersConfigurationLoader.Handler("handler", "1", "name", "description",
+            new ExportHandlersConfigurationLoader.Handler("handler", "1",
+                "name", "description", "en",
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
@@ -75,6 +76,7 @@ public class OutboundExportServiceTest {
         // Given
         var document = new ExportDocument();
         document.setOpenAccess(true);
+        document.setLastUpdated(new Date());
         document.setType(ExportPublicationType.JOURNAL_PUBLICATION);
         when(mongoTemplate.find(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(List.of(document));
@@ -110,6 +112,7 @@ public class OutboundExportServiceTest {
         // Given
         var document = new ExportDocument();
         document.setOpenAccess(true);
+        document.setLastUpdated(new Date());
         document.setType(ExportPublicationType.JOURNAL_PUBLICATION);
         when(mongoTemplate.findOne(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(document);
