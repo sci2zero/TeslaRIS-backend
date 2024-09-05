@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 
@@ -132,5 +133,16 @@ public class MergeController {
                                           @RequestBody
                                           PersonCollectionEntitySwitchListDTO prizeSwitchList) {
         mergeService.switchPrizes(prizeSwitchList.getEntityIds(), sourcePersonId, targetPersonId);
+    }
+
+    @PatchMapping("/proceedings/metadata/{leftProceedingsId}/{rightProceedingsId}")
+    @PreAuthorize("hasAuthority('MERGE_PROCEEDINGS_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedProceedingsMetadata(
+        @PathVariable Integer leftProceedingsId,
+        @PathVariable Integer rightProceedingsId,
+        @RequestBody MergedProceedingsDTO mergedProceedings) {
+        mergeService.saveMergedProceedingsMetadata(leftProceedingsId, rightProceedingsId,
+            mergedProceedings.getLeftProceedings(), mergedProceedings.getRightProceedings());
     }
 }

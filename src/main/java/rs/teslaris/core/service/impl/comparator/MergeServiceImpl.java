@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -223,6 +224,22 @@ public class MergeServiceImpl implements MergeService {
 
         personService.save(sourcePerson);
         personService.save(targetPerson);
+    }
+
+    @Override
+    public void saveMergedProceedingsMetadata(Integer leftId, Integer rightId,
+                                              ProceedingsDTO leftData, ProceedingsDTO rightData) {
+        var originalLeftEISBN = leftData.getEISBN();
+        var originalLeftPrintISBNHold = leftData.getPrintISBN();
+        leftData.setEISBN("");
+        leftData.setPrintISBN("");
+
+        proceedingsService.updateProceedings(leftId, leftData);
+        proceedingsService.updateProceedings(rightId, rightData);
+
+        leftData.setEISBN(originalLeftEISBN);
+        leftData.setPrintISBN(originalLeftPrintISBNHold);
+        proceedingsService.updateProceedings(leftId, leftData);
     }
 
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,

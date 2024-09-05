@@ -155,6 +155,7 @@ public class DbInitializer implements ApplicationRunner {
         var mergeConferenceProceedings = new Privilege("MERGE_CONFERENCE_PROCEEDINGS");
         var mergeProceedingsPublications = new Privilege("MERGE_PROCEEDINGS_PUBLICATIONS");
         var startDeduplicationProcess = new Privilege("START_DEDUPLICATION_PROCESS");
+        var performDeduplication = new Privilege("PERFORM_DEDUPLICATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -163,7 +164,7 @@ public class DbInitializer implements ApplicationRunner {
                 editPublicationSeries, editConferences, editEventRelations, mergeOUEmployments,
                 mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
                 mergeConferenceProceedings, mergeProceedingsPublications,
-                startDeduplicationProcess));
+                startDeduplicationProcess, performDeduplication));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
@@ -172,7 +173,7 @@ public class DbInitializer implements ApplicationRunner {
                 editConferences, editEventRelations, mergeJournalPublications,
                 mergePersonPublications, mergePersonMetadata, mergeOUEmployments,
                 mergeConferenceProceedings, mergeProceedingsPublications,
-                startDeduplicationProcess)));
+                startDeduplicationProcess, performDeduplication)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,

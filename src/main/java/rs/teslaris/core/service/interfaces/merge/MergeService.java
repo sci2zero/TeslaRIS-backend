@@ -2,6 +2,7 @@ package rs.teslaris.core.service.interfaces.merge;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.ProceedingsDTO;
 
 @Service
 public interface MergeService {
@@ -35,4 +36,7 @@ public interface MergeService {
     void switchSkills(List<Integer> skillIds, Integer sourcePersonId, Integer targetPersonId);
 
     void switchPrizes(List<Integer> prizeIds, Integer sourcePersonId, Integer targetPersonId);
+
+    void saveMergedProceedingsMetadata(Integer leftId, Integer rightId, ProceedingsDTO leftData,
+                                       ProceedingsDTO rightData);
 }

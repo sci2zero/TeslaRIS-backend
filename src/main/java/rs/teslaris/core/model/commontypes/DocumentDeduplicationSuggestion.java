@@ -19,9 +19,9 @@ import rs.teslaris.core.model.document.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "deduplication_suggestions")
+@Table(name = "document_deduplication_suggestions")
 @SQLRestriction("deleted=false")
-public class DeduplicationSuggestion extends BaseEntity {
+public class DocumentDeduplicationSuggestion extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "left_document_id", nullable = false)

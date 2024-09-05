@@ -3,40 +3,108 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.DocumentDeduplicationSuggestionConverter;
+import rs.teslaris.core.dto.commontypes.DocumentDeduplicationSuggestionDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.commontypes.DeduplicationSuggestion;
-import rs.teslaris.core.repository.commontypes.DeduplicationSuggestionRepository;
+import rs.teslaris.core.model.commontypes.DocumentDeduplicationBlacklist;
+import rs.teslaris.core.model.commontypes.DocumentDeduplicationSuggestion;
+import rs.teslaris.core.repository.commontypes.DocumentDeduplicationBlacklistRepository;
+import rs.teslaris.core.repository.commontypes.DocumentDeduplicationSuggestionRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class DeduplicationServiceImpl implements DeduplicationService {
 
-    private static boolean deduplicationLock = false;
+    private static volatile boolean deduplicationLock = false;
+    private static Integer currentSessionCounter = 0;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final SearchService<DocumentPublicationIndex> searchService;
 
-    private final DeduplicationSuggestionRepository deduplicationSuggestionRepository;
+    private final DocumentDeduplicationSuggestionRepository deduplicationSuggestionRepository;
+
+    private final DocumentPublicationService documentPublicationService;
+
+    private final DocumentDeduplicationBlacklistRepository documentDeduplicationBlacklistRepository;
 
 
-    public void startDeduplicationProcessBeforeSchedule() {
+    @Override
+    public boolean startDocumentDeduplicationProcessBeforeSchedule() {
         log.info("Trying to start deduplication ahead of time.");
-        performScheduledDeduplication();
+        if (deduplicationLock) {
+            return false;
+        }
+
+        startDeduplicationAsync();
+        return true;
+    }
+
+    @Override
+    public void deleteDocumentSuggestion(Integer suggestionId) {
+        deduplicationSuggestionRepository.delete(
+            findDocumentDeduplicationSuggestionById(suggestionId));
+    }
+
+    @Override
+    public void flagDocumentAsNotDuplicate(Integer suggestionId) {
+        var suggestion = findDocumentDeduplicationSuggestionById(suggestionId);
+
+        var blacklistEntry =
+            documentDeduplicationBlacklistRepository.findByLeftDocumentIdAndRightDocumentId(
+                suggestion.getLeftDocument().getId(), suggestion.getRightDocument().getId());
+
+        if (blacklistEntry.isEmpty()) {
+            documentDeduplicationBlacklistRepository.save(
+                new DocumentDeduplicationBlacklist(suggestion.getLeftDocument().getId(),
+                    suggestion.getRightDocument().getId()));
+        }
+
+        deleteDocumentSuggestion(suggestionId);
+    }
+
+    @Override
+    public Page<DocumentDeduplicationSuggestionDTO> getDeduplicationSuggestions(Pageable pageable) {
+        var suggestionsPage = deduplicationSuggestionRepository.findAll(pageable);
+
+        var dtoList = suggestionsPage
+            .stream()
+            .map(DocumentDeduplicationSuggestionConverter::toDTO)
+            .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, suggestionsPage.getTotalElements());
+    }
+
+    @Async
+    private void startDeduplicationAsync() {
+        try {
+            performScheduledDocumentDeduplication();
+        } finally {
+            deduplicationLock = false;
+        }
     }
 
     @Scheduled(cron = "${deduplication.schedule}")
-    protected void performScheduledDeduplication() {
+    protected void performScheduledDocumentDeduplication() {
         if (deduplicationLock) {
             log.info(
                 "Deduplication of publications startup aborted due to process already running.");
@@ -45,6 +113,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
         deduplicationLock = true;
         log.info("Deduplication of publications started.");
+        deduplicationSuggestionRepository.deleteAll(); // TODO: Should we clean everything or check for duplicate suggestions at the time of saving?
 
         int pageNumber = 0;
         int chunkSize = 20;
@@ -100,7 +169,9 @@ public class DeduplicationServiceImpl implements DeduplicationService {
             hasNextPage = chunk.size() == chunkSize;
         }
 
-        log.info("Deduplication of publications process completed.");
+        log.info("Deduplication of publications process completed. Total suggestions found: {}.",
+            currentSessionCounter);
+        currentSessionCounter = 0;
         deduplicationLock = false;
     }
 
@@ -108,13 +179,35 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                                  List<DocumentPublicationIndex> similarPublications,
                                  ArrayList<Integer> foundDuplicates) {
         for (var similarPublication : similarPublications) {
+            var leftDocument = documentPublicationService.findDocumentById(
+                publication.getDatabaseId());
+            var rightDocument =
+                documentPublicationService.findDocumentById(similarPublication.getDatabaseId());
+
+            var blacklistEntry =
+                documentDeduplicationBlacklistRepository.findByLeftDocumentIdAndRightDocumentId(
+                    leftDocument.getId(), rightDocument.getId());
+
+            if (blacklistEntry.isPresent()) {
+                continue;
+            }
+
             foundDuplicates.add(similarPublication.getDatabaseId());
-            log.debug("Found potential publication duplicate: {} ({}) == {} ({})",
+            log.info("Found potential publication duplicate: {} ({}) == {} ({})",
                 publication.getTitleSr(),
                 publication.getTitleOther(), similarPublication.getTitleSr(),
                 similarPublication.getTitleOther());
 
-            deduplicationSuggestionRepository.save(new DeduplicationSuggestion());
+            currentSessionCounter++;
+            deduplicationSuggestionRepository.save(
+                new DocumentDeduplicationSuggestion(leftDocument, rightDocument,
+                    DocumentPublicationType.valueOf(publication.getType())));
         }
+    }
+
+    private DocumentDeduplicationSuggestion findDocumentDeduplicationSuggestionById(
+        Integer suggestionId) {
+        return deduplicationSuggestionRepository.findById(suggestionId)
+            .orElseThrow(() -> new NotFoundException("Suggestion with given ID does not exist."));
     }
 }
