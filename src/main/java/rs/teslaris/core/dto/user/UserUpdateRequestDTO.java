@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.model.user.UserNotificationPeriod;
 
 @Getter
 @Setter
@@ -32,4 +33,7 @@ public class UserUpdateRequestDTO {
     private Integer preferredLanguageId;
 
     private Integer organisationalUnitId;
+
+    @NotNull(message = "User notification period cannot be null.")
+    private UserNotificationPeriod notificationPeriod;
 }

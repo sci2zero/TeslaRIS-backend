@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.user.UserNotificationPeriod;
 
 @Getter
 @Setter
@@ -30,4 +31,6 @@ public class UserResponseDTO {
     private Integer organisationUnitId;
 
     private List<MultilingualContentDTO> organisationUnitName;
+
+    private UserNotificationPeriod notificationPeriod;
 }

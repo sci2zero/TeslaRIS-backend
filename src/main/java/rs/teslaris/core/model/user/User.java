@@ -67,6 +67,9 @@ public class User extends BaseEntity implements UserDetails {
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 
+    @Column(name = "user_notification_period", nullable = false)
+    private UserNotificationPeriod userNotificationPeriod = UserNotificationPeriod.NEVER;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.authority.getPrivileges();
