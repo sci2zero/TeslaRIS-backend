@@ -38,12 +38,13 @@ public class DeduplicationServiceImpl implements DeduplicationService {
     @Scheduled(cron = "${deduplication.schedule}")
     protected void performScheduledDeduplication() {
         if (deduplicationLock) {
-            log.info("Deduplication startup aborted due to process already running.");
+            log.info(
+                "Deduplication of publications startup aborted due to process already running.");
             return;
         }
 
         deduplicationLock = true;
-        log.info("Deduplication started.");
+        log.info("Deduplication of publications started.");
 
         int pageNumber = 0;
         int chunkSize = 20;
@@ -99,7 +100,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
             hasNextPage = chunk.size() == chunkSize;
         }
 
-        log.info("Deduplication process completed.");
+        log.info("Deduplication of publications process completed.");
         deduplicationLock = false;
     }
 
@@ -108,7 +109,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                                  ArrayList<Integer> foundDuplicates) {
         for (var similarPublication : similarPublications) {
             foundDuplicates.add(similarPublication.getDatabaseId());
-            log.debug("Found potential duplicate: {} ({}) == {} ({})", publication.getTitleSr(),
+            log.debug("Found potential publication duplicate: {} ({}) == {} ({})",
+                publication.getTitleSr(),
                 publication.getTitleOther(), similarPublication.getTitleSr(),
                 similarPublication.getTitleOther());
 
