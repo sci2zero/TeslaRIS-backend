@@ -1,6 +1,7 @@
 package rs.teslaris.core.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -9,7 +10,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
+import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
+import rs.teslaris.core.dto.deduplication.MergedJournalsDTO;
+import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
+import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
+import rs.teslaris.core.dto.deduplication.MergedSoftwareDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 
@@ -110,7 +117,7 @@ public class MergeController {
     @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
     public void switchInvolvementsToOtherPerson(@PathVariable Integer sourcePersonId,
                                                 @PathVariable Integer targetPersonId,
-                                                @RequestBody
+                                                @NotNull @RequestBody
                                                 PersonCollectionEntitySwitchListDTO involvementSwitchList) {
         mergeService.switchInvolvements(involvementSwitchList.getEntityIds(),
             sourcePersonId, targetPersonId);
@@ -120,7 +127,7 @@ public class MergeController {
     @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
     public void switchSkillsToOtherPerson(@PathVariable Integer sourcePersonId,
                                           @PathVariable Integer targetPersonId,
-                                          @RequestBody
+                                          @NotNull @RequestBody
                                           PersonCollectionEntitySwitchListDTO skillSwitchList) {
         mergeService.switchSkills(skillSwitchList.getEntityIds(), sourcePersonId,
             targetPersonId);
@@ -130,19 +137,85 @@ public class MergeController {
     @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
     public void switchPrizesToOtherPerson(@PathVariable Integer sourcePersonId,
                                           @PathVariable Integer targetPersonId,
-                                          @RequestBody
+                                          @NotNull @RequestBody
                                           PersonCollectionEntitySwitchListDTO prizeSwitchList) {
         mergeService.switchPrizes(prizeSwitchList.getEntityIds(), sourcePersonId, targetPersonId);
     }
 
     @PatchMapping("/proceedings/metadata/{leftProceedingsId}/{rightProceedingsId}")
-    @PreAuthorize("hasAuthority('MERGE_PROCEEDINGS_PUBLICATIONS')")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedProceedingsMetadata(
         @PathVariable Integer leftProceedingsId,
         @PathVariable Integer rightProceedingsId,
-        @RequestBody MergedProceedingsDTO mergedProceedings) {
+        @NotNull @RequestBody MergedProceedingsDTO mergedProceedings) {
         mergeService.saveMergedProceedingsMetadata(leftProceedingsId, rightProceedingsId,
             mergedProceedings.getLeftProceedings(), mergedProceedings.getRightProceedings());
+    }
+
+    @PatchMapping("/person/metadata/{leftPersonId}/{rightPersonId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedPersonsMetadata(
+        @PathVariable Integer leftPersonId,
+        @PathVariable Integer rightPersonId,
+        @NotNull @RequestBody MergedPersonsDTO mergedPersons) {
+        mergeService.saveMergedPersonsMetadata(leftPersonId, rightPersonId,
+            mergedPersons.getLeftPerson(), mergedPersons.getRightPerson());
+    }
+
+    @PatchMapping("/conference/metadata/{leftConferenceId}/{rightConferenceId}")
+    @PreAuthorize("hasAuthority('MERGE_EVENT_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedConferencesMetadata(
+        @PathVariable Integer leftConferenceId,
+        @PathVariable Integer rightConferenceId,
+        @NotNull @RequestBody MergedConferenceDTO mergedConference) {
+        mergeService.saveMergedConferencesMetadata(leftConferenceId, rightConferenceId,
+            mergedConference.getLeftConference(), mergedConference.getRightConference());
+    }
+
+    @PatchMapping("/journal/metadata/{leftJournalId}/{rightJournalId}")
+    @PreAuthorize("hasAuthority('MERGE_JOURNAL_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedJournalsMetadata(
+        @PathVariable Integer leftJournalId,
+        @PathVariable Integer rightJournalId,
+        @NotNull @RequestBody MergedJournalsDTO mergedJournals) {
+        mergeService.saveMergedJournalsMetadata(leftJournalId, rightJournalId,
+            mergedJournals.getLeftJournal(), mergedJournals.getRightJournal());
+    }
+
+    @PatchMapping("/software/metadata/{leftSoftwareId}/{rightSoftwareId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedSoftwareMetadata(
+        @PathVariable Integer leftSoftwareId,
+        @PathVariable Integer rightSoftwareId,
+        @NotNull @RequestBody MergedSoftwareDTO mergedSoftware) {
+        mergeService.saveMergedSoftwareMetadata(leftSoftwareId, rightSoftwareId,
+            mergedSoftware.getLeftSoftware(), mergedSoftware.getRightSoftware());
+    }
+
+    @PatchMapping("/dataset/metadata/{leftDatasetId}/{rightDatasetId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedDatasetsMetadata(
+        @PathVariable Integer leftDatasetId,
+        @PathVariable Integer rightDatasetId,
+        @NotNull @RequestBody MergedDatasetsDTO mergedDatasets) {
+        mergeService.saveMergedDatasetsMetadata(leftDatasetId, rightDatasetId,
+            mergedDatasets.getLeftDataset(), mergedDatasets.getRightDataset());
+    }
+
+    @PatchMapping("/patent/metadata/{leftPatentId}/{rightPatentId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedPatentsMetadata(
+        @PathVariable Integer leftPatentId,
+        @PathVariable Integer rightPatentId,
+        @NotNull @RequestBody MergedPatentsDTO mergedPatents) {
+        mergeService.saveMergedPatentsMetadata(leftPatentId, rightPatentId,
+            mergedPatents.getLeftPatent(), mergedPatents.getRightPatent());
     }
 }

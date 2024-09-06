@@ -20,7 +20,14 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
+import rs.teslaris.core.dto.document.SoftwareDTO;
+import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -46,11 +53,14 @@ import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.impl.comparator.MergeServiceImpl;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -108,6 +118,15 @@ public class MergeServiceTest {
 
     @Mock
     private InvolvementService involvementService;
+
+    @Mock
+    private SoftwareService softwareService;
+
+    @Mock
+    private DatasetService datasetService;
+
+    @Mock
+    private PatentService patentService;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -543,5 +562,124 @@ public class MergeServiceTest {
         });
         verify(personService).save(sourcePerson);
         verify(personService).save(targetPerson);
+    }
+
+    @Test
+    public void saveMergedProceedingsMetadataTest() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ProceedingsDTO();
+        var rightData = new ProceedingsDTO();
+
+        // when
+        mergeService.saveMergedProceedingsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(proceedingsService, atLeastOnce()).updateProceedings(leftId, leftData);
+        verify(proceedingsService).updateProceedings(rightId, rightData);
+        verify(proceedingsService, times(2)).updateProceedings(leftId, leftData);
+    }
+
+    @Test
+    public void saveMergedPersonsMetadataTest() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new PersonalInfoDTO();
+        var rightData = new PersonalInfoDTO();
+
+        // when
+        mergeService.saveMergedPersonsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(personService, atLeastOnce()).updatePersonalInfo(leftData, leftId);
+        verify(personService).updatePersonalInfo(rightData, rightId);
+        verify(personService, times(2)).updatePersonalInfo(leftData, leftId);
+    }
+
+    @Test
+    public void saveMergedJournalsMetadataTest() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new JournalDTO();
+        var rightData = new JournalDTO();
+
+        // when
+        mergeService.saveMergedJournalsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(journalService, atLeastOnce()).updateJournal(leftData, leftId);
+        verify(journalService).updateJournal(rightData, rightId);
+        verify(journalService, times(2)).updateJournal(leftData, leftId);
+    }
+
+    @Test
+    public void saveMergedConferencesMetadataTest() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ConferenceDTO();
+        var rightData = new ConferenceDTO();
+
+        // when
+        mergeService.saveMergedConferencesMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(conferenceService, atLeastOnce()).updateConference(leftData, leftId);
+        verify(conferenceService).updateConference(rightData, rightId);
+        verify(conferenceService, times(2)).updateConference(leftData, leftId);
+    }
+
+    @Test
+    public void saveMergedSoftwareMetadataTest() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new SoftwareDTO();
+        var rightData = new SoftwareDTO();
+
+        // when
+        mergeService.saveMergedSoftwareMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(softwareService, atLeastOnce()).editSoftware(leftId, leftData);
+        verify(softwareService).editSoftware(rightId, rightData);
+        verify(softwareService, times(2)).editSoftware(leftId, leftData);
+    }
+
+    @Test
+    public void saveMergedDatasetsMetadataTest() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new DatasetDTO();
+        var rightData = new DatasetDTO();
+
+        // when
+        mergeService.saveMergedDatasetsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(datasetService, atLeastOnce()).editDataset(leftId, leftData);
+        verify(datasetService).editDataset(rightId, rightData);
+        verify(datasetService, times(2)).editDataset(leftId, leftData);
+    }
+
+    @Test
+    public void saveMergedPatentsMetadataTest() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new PatentDTO();
+        var rightData = new PatentDTO();
+
+        // when
+        mergeService.saveMergedPatentsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(patentService, atLeastOnce()).editPatent(leftId, leftData);
+        verify(patentService).editPatent(rightId, rightData);
+        verify(patentService, times(2)).editPatent(leftId, leftData);
     }
 }

@@ -2,7 +2,13 @@ package rs.teslaris.core.service.interfaces.merge;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.SoftwareDTO;
+import rs.teslaris.core.dto.person.PersonalInfoDTO;
 
 @Service
 public interface MergeService {
@@ -39,4 +45,22 @@ public interface MergeService {
 
     void saveMergedProceedingsMetadata(Integer leftId, Integer rightId, ProceedingsDTO leftData,
                                        ProceedingsDTO rightData);
+
+    void saveMergedPersonsMetadata(Integer leftId, Integer rightId, PersonalInfoDTO leftData,
+                                   PersonalInfoDTO rightData);
+
+    void saveMergedJournalsMetadata(Integer leftId, Integer rightId, JournalDTO leftData,
+                                    JournalDTO rightData);
+
+    void saveMergedConferencesMetadata(Integer leftId, Integer rightId, ConferenceDTO leftData,
+                                       ConferenceDTO rightData);
+
+    void saveMergedSoftwareMetadata(Integer leftId, Integer rightId, SoftwareDTO leftData,
+                                    SoftwareDTO rightData);
+
+    void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
+                                    DatasetDTO rightData);
+
+    void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
+                                   PatentDTO rightData);
 }

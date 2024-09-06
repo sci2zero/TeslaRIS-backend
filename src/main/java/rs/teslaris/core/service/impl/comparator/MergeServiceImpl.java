@@ -8,7 +8,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.SoftwareDTO;
+import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -17,11 +23,14 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
@@ -69,6 +78,12 @@ public class MergeServiceImpl implements MergeService {
     private final ExpertiseOrSkillService expertiseOrSkillService;
 
     private final InvolvementService involvementService;
+
+    private final SoftwareService softwareService;
+
+    private final DatasetService datasetService;
+
+    private final PatentService patentService;
 
 
     @Override
@@ -230,16 +245,133 @@ public class MergeServiceImpl implements MergeService {
     public void saveMergedProceedingsMetadata(Integer leftId, Integer rightId,
                                               ProceedingsDTO leftData, ProceedingsDTO rightData) {
         var originalLeftEISBN = leftData.getEISBN();
-        var originalLeftPrintISBNHold = leftData.getPrintISBN();
+        var originalLeftPrintISBN = leftData.getPrintISBN();
+        var originalLeftDoi = leftData.getDoi();
+        var originalLeftScopusId = leftData.getScopusId();
         leftData.setEISBN("");
         leftData.setPrintISBN("");
+        leftData.setDoi("");
+        leftData.setScopusId("");
 
         proceedingsService.updateProceedings(leftId, leftData);
         proceedingsService.updateProceedings(rightId, rightData);
 
         leftData.setEISBN(originalLeftEISBN);
-        leftData.setPrintISBN(originalLeftPrintISBNHold);
+        leftData.setPrintISBN(originalLeftPrintISBN);
+        leftData.setDoi(originalLeftDoi);
+        leftData.setScopusId(originalLeftScopusId);
         proceedingsService.updateProceedings(leftId, leftData);
+    }
+
+    @Override
+    public void saveMergedPersonsMetadata(Integer leftId, Integer rightId,
+                                          PersonalInfoDTO leftData, PersonalInfoDTO rightData) {
+        var originalLeftApvnt = leftData.getApvnt();
+        var originalLeftEcris = leftData.getECrisId();
+        var originalLeftEnauka = leftData.getENaukaId();
+        var originalLeftScopusAuthorId = leftData.getScopusAuthorId();
+        var originalLeftOrcid = leftData.getOrcid();
+        leftData.setApvnt("");
+        leftData.setECrisId("");
+        leftData.setENaukaId("");
+        leftData.setScopusAuthorId("");
+        leftData.setOrcid("");
+
+        personService.updatePersonalInfo(leftData, leftId);
+        personService.updatePersonalInfo(rightData, rightId);
+
+        leftData.setApvnt(originalLeftApvnt);
+        leftData.setECrisId(originalLeftEcris);
+        leftData.setENaukaId(originalLeftEnauka);
+        leftData.setScopusAuthorId(originalLeftScopusAuthorId);
+        leftData.setOrcid(originalLeftOrcid);
+        personService.updatePersonalInfo(leftData, leftId);
+    }
+
+    @Override
+    public void saveMergedJournalsMetadata(Integer leftId, Integer rightId, JournalDTO leftData,
+                                           JournalDTO rightData) {
+        var originalLeftEISSN = leftData.getEissn();
+        var originalLeftPrintISSN = leftData.getPrintISSN();
+        leftData.setEissn("");
+        leftData.setPrintISSN("");
+
+        journalService.updateJournal(leftData, leftId);
+        journalService.updateJournal(rightData, rightId);
+
+        leftData.setEissn(originalLeftEISSN);
+        leftData.setPrintISSN(originalLeftPrintISSN);
+        journalService.updateJournal(leftData, leftId);
+    }
+
+    @Override
+    public void saveMergedConferencesMetadata(Integer leftId, Integer rightId,
+                                              ConferenceDTO leftData, ConferenceDTO rightData) {
+        var originalLeftConfId = leftData.getConfId();
+        leftData.setConfId("");
+
+        conferenceService.updateConference(leftData, leftId);
+        conferenceService.updateConference(rightData, rightId);
+
+        leftData.setConfId(originalLeftConfId);
+        conferenceService.updateConference(leftData, leftId);
+    }
+
+    @Override
+    public void saveMergedSoftwareMetadata(Integer leftId, Integer rightId, SoftwareDTO leftData,
+                                           SoftwareDTO rightData) {
+        var originalLeftInternalNumber = leftData.getInternalNumber();
+        var originalLeftDoi = leftData.getDoi();
+        var originalLeftScopusId = leftData.getScopusId();
+        leftData.setInternalNumber("");
+        leftData.setDoi("");
+        leftData.setScopusId("");
+
+        softwareService.editSoftware(leftId, leftData);
+        softwareService.editSoftware(rightId, rightData);
+
+        leftData.setInternalNumber(originalLeftInternalNumber);
+        leftData.setDoi(originalLeftDoi);
+        leftData.setScopusId(originalLeftScopusId);
+        softwareService.editSoftware(leftId, leftData);
+    }
+
+    @Override
+    public void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
+                                           DatasetDTO rightData) {
+        var originalLeftInternalNumber = leftData.getInternalNumber();
+        var originalLeftDoi = leftData.getDoi();
+        var originalLeftScopusId = leftData.getScopusId();
+        leftData.setInternalNumber("");
+        leftData.setDoi("");
+        leftData.setScopusId("");
+
+        datasetService.editDataset(leftId, leftData);
+        datasetService.editDataset(rightId, rightData);
+
+        leftData.setInternalNumber(originalLeftInternalNumber);
+        leftData.setDoi(originalLeftDoi);
+        leftData.setScopusId(originalLeftScopusId);
+        datasetService.editDataset(leftId, leftData);
+    }
+
+    @Override
+    public void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
+                                          PatentDTO rightData) {
+        var originalLeftInternalNumber = leftData.getNumber();
+        var originalLeftDoi = leftData.getDoi();
+        var originalLeftScopusId = leftData.getScopusId();
+        leftData.setNumber("");
+        leftData.setDoi("");
+        leftData.setScopusId("");
+
+        patentService.editPatent(leftId, leftData);
+        patentService.editPatent(rightId, rightData);
+
+        leftData.setNumber(originalLeftInternalNumber);
+        leftData.setDoi(originalLeftDoi);
+        leftData.setScopusId(originalLeftScopusId);
+        patentService.editPatent(leftId, leftData);
     }
 
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,
