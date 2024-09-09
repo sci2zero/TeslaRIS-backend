@@ -1,6 +1,8 @@
 package rs.teslaris.core.repository.person;
 
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -55,4 +57,8 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Person p WHERE p.scopusAuthorId = :scopusAuthorId AND p.id <> :id")
     boolean existsByScopusAuthorId(String scopusAuthorId, Integer id);
+
+    @Query(value = "SELECT * FROM persons p WHERE " +
+        "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
+    Page<Person> findAllModifiedInLast24Hours(Pageable pageable);
 }

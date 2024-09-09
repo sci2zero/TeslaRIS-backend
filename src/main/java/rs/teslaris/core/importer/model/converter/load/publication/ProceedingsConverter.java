@@ -42,26 +42,42 @@ public class ProceedingsConverter extends DocumentConverter
 
         dto.setEISBN(record.getIsbn());
 
-        var languageTagValue = record.getLanguage().trim().toUpperCase();
-        if (languageTagValue.isEmpty()) {
-            languageTagValue = LanguageAbbreviations.ENGLISH;
-        }
-        var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
-        dto.setLanguageTagIds(List.of(languageTag.getId()));
+        if (Objects.nonNull(record.getLanguage())) {
+            var languageTagValue = record.getLanguage().trim().toUpperCase();
+            if (languageTagValue.isEmpty()) {
+                languageTagValue = LanguageAbbreviations.ENGLISH;
+            }
 
-        var event = eventService.findEventByOldId(
-            OAIPMHParseUtility.parseBISISID(record.getOutputFrom().getEvent().getOldId()));
-        if (Objects.nonNull(event)) {
-            dto.setEventId(event.getId());
+            var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
+            if (Objects.nonNull(languageTag.getId())) {
+                dto.setLanguageTagIds(List.of(languageTag.getId()));
+            } else {
+                log.warn("No saved language with tag: " + languageTagValue);
+                return null;
+            }
         } else {
-            log.warn("No saved event with id: " + record.getOutputFrom().getEvent().getOldId());
-            return null;
+            dto.setLanguageTagIds(List.of());
         }
 
-        if (dto.getTitle().isEmpty()) {
-            dto.setTitle(
-                rs.teslaris.core.converter.commontypes.MultilingualContentConverter.getMultilingualContentDTO(
-                    event.getName()));
+        if (Objects.nonNull(record.getOutputFrom().getEvent().getOldId()) &&
+            !record.getOutputFrom().getEvent().getOldId().equals("null")) {
+            var event = eventService.findEventByOldId(
+                OAIPMHParseUtility.parseBISISID(record.getOutputFrom().getEvent().getOldId()));
+            if (Objects.nonNull(event)) {
+                dto.setEventId(event.getId());
+            } else {
+                log.warn("No saved event with id: " + record.getOutputFrom().getEvent().getOldId());
+                return null;
+            }
+
+            if (dto.getTitle().isEmpty()) {
+                dto.setTitle(
+                    rs.teslaris.core.converter.commontypes.MultilingualContentConverter.getMultilingualContentDTO(
+                        event.getName()));
+            }
+        } else {
+            log.warn("Could not load, no event specified: " + record.getOldId());
+            return null;
         }
 
         return dto;

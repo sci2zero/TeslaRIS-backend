@@ -6,7 +6,6 @@ import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
-import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,7 +29,7 @@ public class Header {
     private String identifier;
 
     @XmlElement(name = "datestamp")
-    private Date datestamp;
+    private String datestamp;
 
     @XmlElement(name = "setSpec")
     private String setSpec;

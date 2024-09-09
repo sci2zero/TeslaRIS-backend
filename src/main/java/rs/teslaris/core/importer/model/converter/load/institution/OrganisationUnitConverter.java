@@ -31,7 +31,7 @@ public class OrganisationUnitConverter
         var dto = new OrganisationUnitWizardDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(organisationUnit.getOldId()));
 
-        dto.setName(multilingualContentConverter.toDTO(organisationUnit.getMultilingualContent()));
+        dto.setName(multilingualContentConverter.toDTO(organisationUnit.getName()));
 
         dto.setNameAbbreviation("");
 
@@ -46,7 +46,7 @@ public class OrganisationUnitConverter
                 OAIPMHParseUtility.parseBISISID(
                     organisationUnit.getPartOf().getOrgUnit().getOldId()));
             dto.setSuperOrganisationUnitName(multilingualContentConverter.toDTO(
-                organisationUnit.getPartOf().getOrgUnit().getMultilingualContent()));
+                organisationUnit.getPartOf().getOrgUnit().getName()));
         }
         return dto;
     }

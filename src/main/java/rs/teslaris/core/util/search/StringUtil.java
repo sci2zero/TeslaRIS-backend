@@ -9,9 +9,14 @@ public class StringUtil {
                                                    StringBuilder contentOther) {
         if (contentSr.toString().endsWith(" | ")) {
             contentSr.delete(contentSr.length() - 3, contentSr.length());
+        } else if (contentSr.toString().endsWith(" | ;")) {
+            contentSr.delete(contentSr.length() - 4, contentSr.length());
         }
+
         if (contentOther.toString().endsWith(" | ")) {
             contentOther.delete(contentOther.length() - 3, contentOther.length());
+        } else if (contentOther.toString().endsWith(" | ;")) {
+            contentOther.delete(contentOther.length() - 4, contentOther.length());
         }
     }
 

@@ -36,4 +36,8 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
         "FROM OrganisationUnit ou WHERE ou.scopusAfid = :scopusAfid AND ou.id <> :id")
     boolean existsByScopusAfid(String scopusAfid, Integer id);
+
+    @Query(value = "SELECT * FROM organisation_units ou WHERE " +
+        "ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
+    Page<OrganisationUnit> findAllModifiedInLast24Hours(Pageable pageable);
 }

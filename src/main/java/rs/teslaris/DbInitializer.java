@@ -30,6 +30,7 @@ import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -37,6 +38,8 @@ import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Education;
@@ -66,12 +69,14 @@ import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.document.SoftwareRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
@@ -128,6 +133,10 @@ public class DbInitializer implements ApplicationRunner {
 
     private final EventsRelationRepository eventsRelationRepository;
 
+    private final MonographPublicationRepository monographPublicationRepository;
+
+    private final ThesisRepository thesisRepository;
+
 
     @Override
     @Transactional
@@ -154,6 +163,7 @@ public class DbInitializer implements ApplicationRunner {
         var mergeOUEmployments = new Privilege("MERGE_OU_EMPLOYMENTS");
         var mergeConferenceProceedings = new Privilege("MERGE_CONFERENCE_PROCEEDINGS");
         var mergeProceedingsPublications = new Privilege("MERGE_PROCEEDINGS_PUBLICATIONS");
+        var prepareExportData = new Privilege("PREPARE_EXPORT_DATA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -161,7 +171,7 @@ public class DbInitializer implements ApplicationRunner {
                 editResearchAreas, approvePublication, editOURelations, editPublishers,
                 editPublicationSeries, editConferences, editEventRelations, mergeOUEmployments,
                 mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
-                mergeConferenceProceedings, mergeProceedingsPublications));
+                mergeConferenceProceedings, mergeProceedingsPublications, prepareExportData));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
@@ -169,7 +179,7 @@ public class DbInitializer implements ApplicationRunner {
                 editOURelations, approvePublication, editPublishers, editPublicationSeries,
                 editConferences, editEventRelations, mergeJournalPublications,
                 mergePersonPublications, mergePersonMetadata, mergeOUEmployments,
-                mergeConferenceProceedings, mergeProceedingsPublications)));
+                mergeConferenceProceedings, mergeProceedingsPublications, prepareExportData)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
@@ -186,7 +196,7 @@ public class DbInitializer implements ApplicationRunner {
         languageRepository.save(englishLanguage);
 
         var yuLanguage = new Language();
-        yuLanguage.setLanguageCode(LanguageAbbreviations.CROATIAN);
+        yuLanguage.setLanguageCode(LanguageAbbreviations.YUGOSLAV);
         yuLanguage.setDeleted(true);
         languageRepository.save(yuLanguage);
 
@@ -394,6 +404,7 @@ public class DbInitializer implements ApplicationRunner {
         var dataset = new Dataset();
         dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));
         dataset.setApproveStatus(ApproveStatus.APPROVED);
+        dataset.setDocumentDate("2020-01-01");
 
         var datasetContribution = new PersonDocumentContribution();
         datasetContribution.setPerson(person1);
@@ -522,6 +533,7 @@ public class DbInitializer implements ApplicationRunner {
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
         monograph2.setMonographType(MonographType.RESEARCH_MONOGRAPH);
+        monograph2.setDocumentDate("2024");
         monographRepository.save(monograph2);
 
         var researcherUser2 =
@@ -594,11 +606,72 @@ public class DbInitializer implements ApplicationRunner {
         eventsRelation2.setEventsRelationType(EventsRelationType.BELONGS_TO_SERIES);
         eventsRelationRepository.save(eventsRelation2);
 
+        var monographPublication1 = new MonographPublication();
+        monographPublication1.setApproveStatus(ApproveStatus.APPROVED);
+        monographPublication1.setDocumentDate("2024");
+        monographPublication1.setMonograph(monograph1);
+        monographPublication1.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Monograph Publication 1", 1)));
+        monographPublicationRepository.save(monographPublication1);
+
+        var monographPublication2 = new MonographPublication();
+        monographPublication2.setApproveStatus(ApproveStatus.APPROVED);
+        monographPublication2.setDocumentDate("2024");
+        monographPublication2.setMonograph(monograph1);
+        monographPublication2.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Rad u monografiji 2", 1)));
+        monographPublicationRepository.save(monographPublication2);
+
+        var thesis1 = new Thesis();
+        thesis1.setApproveStatus(ApproveStatus.APPROVED);
+        thesis1.setThesisType(ThesisType.PHD);
+        thesis1.setDocumentDate("2021");
+        thesis1.setOrganisationUnit(dummyOU2);
+        thesis1.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
+        thesis1.getLanguages().addAll(List.of(serbianTag, englishTag));
+        thesisRepository.save(thesis1);
+
+        var thesis2 = new Thesis();
+        thesis2.setApproveStatus(ApproveStatus.APPROVED);
+        thesis2.setThesisType(ThesisType.MASTER);
+        thesis2.setDocumentDate("2023");
+        thesis2.setOrganisationUnit(dummyOU2);
+        thesis2.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Master rad", 1)));
+        thesisRepository.save(thesis2);
+
+
+        var croatianTag = new LanguageTag(LanguageAbbreviations.CROATIAN, "Croatian");
+        languageTagRepository.save(croatianTag);
+        var croatianLanguage = new Language();
+        croatianLanguage.setLanguageCode(LanguageAbbreviations.CROATIAN);
+        languageRepository.save(croatianLanguage);
+
+        var italianTag = new LanguageTag(LanguageAbbreviations.ITALIAN, "Italian");
+        languageTagRepository.save(italianTag);
+        var italianLanguage = new Language();
+        italianLanguage.setLanguageCode(LanguageAbbreviations.ITALIAN);
+        languageRepository.save(italianLanguage);
+
+        var slovenianTag = new LanguageTag(LanguageAbbreviations.SLOVENIAN, "Slovenian");
+        languageTagRepository.save(slovenianTag);
+        var slovenianLanguage = new Language();
+        slovenianLanguage.setLanguageCode(LanguageAbbreviations.SLOVENIAN);
+        languageRepository.save(slovenianLanguage);
+
         var conferenceEvent4 = new Conference();
         conferenceEvent4.setName(Set.of(new MultiLingualContent(englishTag, "EURO CRIS", 1)));
         conferenceEvent4.setDateFrom(LocalDate.of(2023, 5, 12));
         conferenceEvent4.setDateTo(LocalDate.of(2023, 5, 17));
         conferenceEvent4.setSerialEvent(false);
         conferenceRepository.save(conferenceEvent4);
+
+        var monograph3 = new Monograph();
+        monograph3.setApproveStatus(ApproveStatus.APPROVED);
+        monograph3.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Dummy Translation", 1)));
+        monograph3.setMonographType(MonographType.TRANSLATION);
+        monographRepository.save(monograph3);
     }
 }

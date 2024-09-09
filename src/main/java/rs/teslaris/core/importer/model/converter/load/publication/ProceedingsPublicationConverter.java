@@ -48,6 +48,11 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
 
         dto.setArticleNumber(record.getNumber());
         dto.setStartPage(record.getStartPage());
+
+        if (Objects.nonNull(dto.getStartPage()) && dto.getStartPage().contains("\\")) {
+            dto.setStartPage(dto.getStartPage().replace("\\", ""));
+        }
+
         dto.setEndPage(record.getEndPage());
 
         var proceedings = documentPublicationService.findDocumentByOldId(

@@ -37,7 +37,7 @@ public class PatentControllerTest extends BaseTest {
         patentDTO.setSubTitle(dummyMC);
         patentDTO.setDescription(dummyMC);
         patentDTO.setKeywords(dummyMC);
-        patentDTO.setDocumentDate("31.01.2000.");
+        patentDTO.setDocumentDate("2004-11-06");
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
@@ -74,7 +74,7 @@ public class PatentControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_PATENT"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("31.01.2000."));
+            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
     }
 
     @Test

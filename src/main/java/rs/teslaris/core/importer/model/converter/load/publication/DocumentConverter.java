@@ -1,5 +1,6 @@
 package rs.teslaris.core.importer.model.converter.load.publication;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
@@ -45,7 +46,9 @@ public abstract class DocumentConverter {
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
         dto.setSubTitle(multilingualContentConverter.toDTO(record.getSubtitle()));
         if (Objects.nonNull(record.getPublicationDate())) {
-            dto.setDocumentDate(record.getPublicationDate().toString());
+            dto.setDocumentDate(String.valueOf(
+                record.getPublicationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                    .getYear()));
         }
 
         if (Objects.nonNull(record.getKeywords())) {
@@ -59,7 +62,7 @@ public abstract class DocumentConverter {
             dto.setUris(new HashSet<>(record.getUrl()));
         }
 
-        dto.setDoi(record.getDoi());
+        dto.setDoi(Objects.nonNull(record.getDoi()) ? record.getDoi().replace("|", "") : null);
         dto.setScopusId(record.getScpNumber());
         dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
 

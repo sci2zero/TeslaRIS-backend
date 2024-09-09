@@ -30,5 +30,8 @@ public class ResumptionToken {
     private Date expirationDate;
 
     @XmlAttribute(name = "cursor")
-    private String cursor;
+    private Integer cursor;
+
+    @XmlAttribute(name = "completeListSize")
+    private Long completeListSize;
 }

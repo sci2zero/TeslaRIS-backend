@@ -15,12 +15,14 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -61,6 +63,10 @@ public class ReindexServiceImpl implements ReindexService {
     private final DatasetService datasetService;
 
     private final MonographService monographService;
+
+    private final MonographPublicationService monographPublicationService;
+
+    private final ThesisService thesisService;
 
 
     @Override
@@ -136,7 +142,9 @@ public class ReindexServiceImpl implements ReindexService {
             softwareService.reindexSoftware();
             datasetService.reindexDatasets();
             monographService.reindexMonographs();
+            monographPublicationService.reindexMonographPublications();
             proceedingsService.reindexProceedings();
+            thesisService.reindexTheses();
         });
 
         reindexPublicationsThread.start();

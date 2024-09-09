@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.importer.model.oaipmh.product.Product;
@@ -13,6 +14,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
 
     private final MultilingualContentConverter multilingualContentConverter;

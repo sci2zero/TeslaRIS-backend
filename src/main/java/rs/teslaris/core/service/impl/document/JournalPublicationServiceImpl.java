@@ -43,19 +43,20 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     @Autowired
     public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                         SearchService<DocumentPublicationIndex> searchService,
+                                         OrganisationUnitService organisationUnitService,
                                          DocumentRepository documentRepository,
                                          DocumentFileService documentFileService,
                                          PersonContributionService personContributionService,
-                                         SearchService<DocumentPublicationIndex> searchService,
                                          ExpressionTransformer expressionTransformer,
                                          EventService eventService,
-                                         OrganisationUnitService organisationUnitService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
-        super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService, expressionTransformer,
-            eventService, organisationUnitService);
+        super(multilingualContentService, documentPublicationIndexRepository, searchService,
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;

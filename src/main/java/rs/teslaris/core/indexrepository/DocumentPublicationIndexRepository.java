@@ -36,23 +36,22 @@ public interface DocumentPublicationIndexRepository extends
 
     @Query("{\"bool\": " +
         "{\"must\": [" +
+        "{\"term\": {\"type\": \"?0\"}}, " +
+        "{\"term\": {\"monograph_id\": \"?1\"}}, " +
+        "{\"terms\": {\"author_ids\": [\"?2\"]}}" +
+        "]}}")
+    List<DocumentPublicationIndex> findByTypeAndMonographIdAndAuthorIds(String type,
+                                                                        Integer monographId,
+                                                                        Integer authorId);
+
+    @Query("{\"bool\": " +
+        "{\"must\": [" +
         "{\"terms\": {\"author_ids\": [\"?0\"]}}" +
         "]}}")
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
-//    @Query("{\"bool\": " +
-//        "{\"must\": [" +
-//        "{\"terms\": {\"organisation_unit_ids\": ?0}}" +
-//        "]}}")
-//    Page<DocumentPublicationIndex> findByOrganisationUnitIds(JsonArray organisationUnitIds,
-//                                                             Pageable pageable);
-
-    @Query("{\"bool\": " +
-        "{\"must\": [" +
-        "{\"terms\": {\"organisation_unit_ids\": [\"?0\"]}}" +
-        "]}}")
-    Page<DocumentPublicationIndex> findByOrganisationUnitIds(Integer organisationUnitId,
-                                                             Pageable pageable);
+    Page<DocumentPublicationIndex> findByOrganisationUnitIdsIn(List<Integer> organisationUnitIds,
+                                                               Pageable pageable);
 
     @Query("{\"bool\": " +
         "{\"must\": [" +
@@ -61,6 +60,14 @@ public interface DocumentPublicationIndexRepository extends
         "]}}")
     Page<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId,
                                                           Pageable pageable);
+
+    @Query("{\"bool\": " +
+        "{\"must\": [" +
+        "{\"term\": {\"type\": \"?0\"}}, " +
+        "{\"term\": {\"monograph_id\": \"?1\"}}, " +
+        "]}}")
+    Page<DocumentPublicationIndex> findByTypeAndMonographId(String type, Integer monographId,
+                                                            Pageable pageable);
 
     @Query("{\"bool\": " +
         "{\"must\": [" +
