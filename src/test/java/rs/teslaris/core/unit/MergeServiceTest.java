@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +27,7 @@ import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -34,6 +37,8 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -427,7 +432,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    void testSwitchInvolvements() {
+    void shouldSwitchInvolvements() {
         // Given
         var sourcePersonId = 1;
         var targetPersonId = 2;
@@ -475,7 +480,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    void testSwitchSkills() {
+    void shouldSwitchSkills() {
         // Given
         var sourcePersonId = 1;
         var targetPersonId = 2;
@@ -520,7 +525,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    void testSwitchPrizes() {
+    void shouldSwitchPrizes() {
         // Given
         var sourcePersonId = 1;
         var targetPersonId = 2;
@@ -565,7 +570,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void saveMergedProceedingsMetadataTest() {
+    public void shouldSaveMergedProceedingsMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
@@ -582,7 +587,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void saveMergedPersonsMetadataTest() {
+    public void shouldSaveMergedPersonsMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
@@ -599,7 +604,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void saveMergedJournalsMetadataTest() {
+    public void shouldSaveMergedJournalsMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
@@ -616,7 +621,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void saveMergedConferencesMetadataTest() {
+    public void shouldSaveMergedConferencesMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
@@ -633,7 +638,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void saveMergedSoftwareMetadataTest() {
+    public void shouldSaveMergedSoftwareMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
@@ -650,7 +655,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void saveMergedDatasetsMetadataTest() {
+    public void shouldSaveMergedDatasetsMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
@@ -667,7 +672,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void saveMergedPatentsMetadataTest() {
+    public void shouldSaveMergedPatentsMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
@@ -681,5 +686,70 @@ public class MergeServiceTest {
         verify(patentService, atLeastOnce()).editPatent(leftId, leftData);
         verify(patentService).editPatent(rightId, rightData);
         verify(patentService, times(2)).editPatent(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedDocumentFiles() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftProofs = List.of(101, 102);
+        var rightProofs = List.of(201, 202);
+        var leftFileItems = new ArrayList<Integer>();
+        var rightFileItems = new ArrayList<Integer>();
+
+        var leftDocument = new Dataset();
+        var rightDocument = new Dataset();
+
+        var leftProof1 = new DocumentFile();
+        leftProof1.setId(101);
+        var leftProof2 = new DocumentFile();
+        leftProof2.setId(102);
+        var rightProof1 = new DocumentFile();
+        rightProof1.setId(201);
+        var rightProof2 = new DocumentFile();
+        rightProof2.setId(202);
+
+        leftDocument.setProofs(new HashSet<>(List.of(leftProof1, leftProof2)));
+        rightDocument.setProofs(new HashSet<>(List.of(rightProof1, rightProof2)));
+
+        when(documentPublicationService.findDocumentById(leftId)).thenReturn(leftDocument);
+        when(documentPublicationService.findDocumentById(rightId)).thenReturn(rightDocument);
+
+        // when
+        mergeService.saveMergedDocumentFiles(leftId, rightId, leftProofs, rightProofs,
+            leftFileItems, rightFileItems);
+
+        // then
+        verify(documentPublicationService).findDocumentById(leftId);
+        verify(documentPublicationService).findDocumentById(rightId);
+        verify(documentPublicationService, times(1)).findDocumentById(leftId);
+        verify(documentPublicationService, times(1)).findDocumentById(rightId);
+    }
+
+    @Test
+    public void shouldSaveMergedProceedingsPublicationMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ProceedingsPublicationDTO();
+        var rightData = new ProceedingsPublicationDTO();
+
+        leftData.setDoi("10.1000/xyz123");
+        leftData.setScopusId("");
+
+        // when
+        mergeService.saveMergedProceedingsPublicationMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(proceedingsPublicationService, times(2)).editProceedingsPublication(leftId,
+            leftData);
+        verify(proceedingsPublicationService).editProceedingsPublication(rightId, rightData);
+        verify(proceedingsPublicationService, times(3)).editProceedingsPublication(anyInt(),
+            any(ProceedingsPublicationDTO.class));
+        assertEquals("10.1000/xyz123", leftData.getDoi());
+        assertEquals("", leftData.getScopusId());
+        verify(proceedingsPublicationService, times(2)).editProceedingsPublication(eq(leftId),
+            any(ProceedingsPublicationDTO.class));
     }
 }

@@ -7,6 +7,7 @@ import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 
@@ -43,6 +44,12 @@ public interface MergeService {
 
     void switchPrizes(List<Integer> prizeIds, Integer sourcePersonId, Integer targetPersonId);
 
+    void saveMergedDocumentFiles(Integer leftId, Integer rightId,
+                                 List<Integer> leftProofs,
+                                 List<Integer> rightProofs,
+                                 List<Integer> leftFileItems,
+                                 List<Integer> rightFileItems);
+
     void saveMergedProceedingsMetadata(Integer leftId, Integer rightId, ProceedingsDTO leftData,
                                        ProceedingsDTO rightData);
 
@@ -63,4 +70,8 @@ public interface MergeService {
 
     void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
                                    PatentDTO rightData);
+
+    void saveMergedProceedingsPublicationMetadata(Integer leftId, Integer rightId,
+                                                  ProceedingsPublicationDTO leftData,
+                                                  ProceedingsPublicationDTO rightData);
 }

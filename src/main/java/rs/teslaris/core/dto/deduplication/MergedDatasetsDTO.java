@@ -10,7 +10,7 @@ import rs.teslaris.core.dto.document.DatasetDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MergedDatasetsDTO {
+public class MergedDatasetsDTO extends MergedDocumentsDTO {
 
     private DatasetDTO leftDataset;
 

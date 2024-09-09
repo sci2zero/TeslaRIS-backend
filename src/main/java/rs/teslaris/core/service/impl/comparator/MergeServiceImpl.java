@@ -13,11 +13,13 @@ import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -242,6 +244,48 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
+    public void saveMergedDocumentFiles(Integer leftId, Integer rightId,
+                                        List<Integer> leftProofs,
+                                        List<Integer> rightProofs,
+                                        List<Integer> leftFileItems,
+                                        List<Integer> rightFileItems) {
+
+        var leftDocument = documentPublicationService.findDocumentById(leftId);
+        var rightDocument = documentPublicationService.findDocumentById(rightId);
+
+        // Merge proofs
+        mergeDocumentFiles(leftDocument, rightDocument, leftProofs, rightProofs);
+
+        // Merge fileItems
+        mergeDocumentFiles(leftDocument, rightDocument, leftFileItems, rightFileItems);
+    }
+
+    private void mergeDocumentFiles(Document leftDocument, Document rightDocument,
+                                    List<Integer> leftFileIds, List<Integer> rightFileIds) {
+        mergeFiles(leftDocument, rightDocument, leftFileIds);
+        mergeFiles(rightDocument, leftDocument, rightFileIds);
+    }
+
+    private void mergeFiles(Document sourceDocument, Document targetDocument,
+                            List<Integer> sourceFileIds) {
+        sourceFileIds.forEach(fileId -> {
+            if (sourceDocument.getProofs().stream()
+                .noneMatch(file -> file.getId().equals(fileId))) {
+                var fileForMerging = targetDocument.getProofs().stream()
+                    .filter(file -> file.getId().equals(fileId)).findFirst();
+
+                if (fileForMerging.isEmpty()) {
+                    throw new NotFoundException(
+                        "Non-existing document file specified for merging.");
+                }
+
+                targetDocument.getProofs().remove(fileForMerging.get());
+                sourceDocument.getProofs().add(fileForMerging.get());
+            }
+        });
+    }
+
+    @Override
     public void saveMergedProceedingsMetadata(Integer leftId, Integer rightId,
                                               ProceedingsDTO leftData, ProceedingsDTO rightData) {
         var originalLeftEISBN = leftData.getEISBN();
@@ -372,6 +416,23 @@ public class MergeServiceImpl implements MergeService {
         leftData.setDoi(originalLeftDoi);
         leftData.setScopusId(originalLeftScopusId);
         patentService.editPatent(leftId, leftData);
+    }
+
+    @Override
+    public void saveMergedProceedingsPublicationMetadata(Integer leftId, Integer rightId,
+                                                         ProceedingsPublicationDTO leftData,
+                                                         ProceedingsPublicationDTO rightData) {
+        var originalLeftDoi = leftData.getDoi();
+        var originalLeftScopusId = leftData.getScopusId();
+        leftData.setDoi("");
+        leftData.setScopusId("");
+
+        proceedingsPublicationService.editProceedingsPublication(leftId, leftData);
+        proceedingsPublicationService.editProceedingsPublication(rightId, rightData);
+
+        leftData.setDoi(originalLeftDoi);
+        leftData.setScopusId(originalLeftScopusId);
+        proceedingsPublicationService.editProceedingsPublication(leftId, leftData);
     }
 
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,

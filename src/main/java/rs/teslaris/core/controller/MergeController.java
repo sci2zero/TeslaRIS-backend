@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
+import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
+import rs.teslaris.core.dto.deduplication.MergedProceedingsPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedSoftwareDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
@@ -151,6 +153,8 @@ public class MergeController {
         @NotNull @RequestBody MergedProceedingsDTO mergedProceedings) {
         mergeService.saveMergedProceedingsMetadata(leftProceedingsId, rightProceedingsId,
             mergedProceedings.getLeftProceedings(), mergedProceedings.getRightProceedings());
+
+        mergeDocumentFiles(leftProceedingsId, rightProceedingsId, mergedProceedings);
     }
 
     @PatchMapping("/person/metadata/{leftPersonId}/{rightPersonId}")
@@ -195,6 +199,8 @@ public class MergeController {
         @NotNull @RequestBody MergedSoftwareDTO mergedSoftware) {
         mergeService.saveMergedSoftwareMetadata(leftSoftwareId, rightSoftwareId,
             mergedSoftware.getLeftSoftware(), mergedSoftware.getRightSoftware());
+
+        mergeDocumentFiles(leftSoftwareId, rightSoftwareId, mergedSoftware);
     }
 
     @PatchMapping("/dataset/metadata/{leftDatasetId}/{rightDatasetId}")
@@ -206,6 +212,8 @@ public class MergeController {
         @NotNull @RequestBody MergedDatasetsDTO mergedDatasets) {
         mergeService.saveMergedDatasetsMetadata(leftDatasetId, rightDatasetId,
             mergedDatasets.getLeftDataset(), mergedDatasets.getRightDataset());
+
+        mergeDocumentFiles(leftDatasetId, rightDatasetId, mergedDatasets);
     }
 
     @PatchMapping("/patent/metadata/{leftPatentId}/{rightPatentId}")
@@ -217,5 +225,30 @@ public class MergeController {
         @NotNull @RequestBody MergedPatentsDTO mergedPatents) {
         mergeService.saveMergedPatentsMetadata(leftPatentId, rightPatentId,
             mergedPatents.getLeftPatent(), mergedPatents.getRightPatent());
+
+        mergeDocumentFiles(leftPatentId, rightPatentId, mergedPatents);
+    }
+
+    @PatchMapping("/patent/proceedings-publication/{leftProceedingsPublicationId}/{rightProceedingsPublicationId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedProceedingsPublicationsMetadata(
+        @PathVariable Integer leftProceedingsPublicationId,
+        @PathVariable Integer rightProceedingsPublicationId,
+        @NotNull @RequestBody MergedProceedingsPublicationsDTO mergedProceedingsPublications) {
+        mergeService.saveMergedProceedingsPublicationMetadata(leftProceedingsPublicationId,
+            rightProceedingsPublicationId,
+            mergedProceedingsPublications.getLeftProceedingsPublication(),
+            mergedProceedingsPublications.getRightProceedingsPublication());
+
+        mergeDocumentFiles(leftProceedingsPublicationId, rightProceedingsPublicationId,
+            mergedProceedingsPublications);
+    }
+
+    private void mergeDocumentFiles(Integer leftId, Integer rightId,
+                                    MergedDocumentsDTO mergedDocuments) {
+        mergeService.saveMergedDocumentFiles(leftId, rightId,
+            mergedDocuments.getLeftProofs(), mergedDocuments.getRightProofs(),
+            mergedDocuments.getLeftFileItems(), mergedDocuments.getRightFileItems());
     }
 }

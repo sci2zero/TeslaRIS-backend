@@ -10,7 +10,7 @@ import rs.teslaris.core.dto.document.PatentDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MergedPatentsDTO {
+public class MergedPatentsDTO extends MergedDocumentsDTO {
 
     private PatentDTO leftPatent;
 

@@ -10,7 +10,7 @@ import rs.teslaris.core.dto.document.SoftwareDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MergedSoftwareDTO {
+public class MergedSoftwareDTO extends MergedDocumentsDTO {
 
     private SoftwareDTO leftSoftware;
 

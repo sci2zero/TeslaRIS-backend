@@ -10,7 +10,7 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MergedProceedingsDTO {
+public class MergedProceedingsDTO extends MergedDocumentsDTO {
 
     private ProceedingsDTO leftProceedings;
 
