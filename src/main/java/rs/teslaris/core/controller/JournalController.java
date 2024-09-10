@@ -90,7 +90,7 @@ public class JournalController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     public void updateJournal(@RequestBody @Valid PublicationSeriesDTO journalDTO,
                               @PathVariable Integer journalId) {
-        journalService.updateJournal(journalDTO, journalId);
+        journalService.updateJournal(journalId, journalDTO);
     }
 
     @DeleteMapping("/{journalId}")

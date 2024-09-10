@@ -93,6 +93,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             case ADDED_TO_PUBLICATION:
                 addedToPublicationNotificationHandler.handle(notification, notificationAction);
                 break;
+            case DEDUPLICATION_SCAN_FINISHED:
+                // Redirection to deduplication page done by frontend logic.
+                break;
         }
 
         delete(notificationId);

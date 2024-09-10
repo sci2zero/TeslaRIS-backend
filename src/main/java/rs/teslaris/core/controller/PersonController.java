@@ -159,7 +159,7 @@ public class PersonController {
     @PersonEditCheck
     public void updatePersonalInfo(@RequestBody @Valid PersonalInfoDTO personalInfo,
                                    @PathVariable Integer personId) {
-        personService.updatePersonalInfo(personalInfo, personId);
+        personService.updatePersonalInfo(personId, personalInfo);
     }
 
     @PatchMapping("/approve/{personId}")

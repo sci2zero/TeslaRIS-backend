@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
+import rs.teslaris.core.dto.deduplication.MergedJournalPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedSoftwareDTO;
+import rs.teslaris.core.dto.deduplication.MergedThesesDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 
@@ -229,7 +231,7 @@ public class MergeController {
         mergeDocumentFiles(leftPatentId, rightPatentId, mergedPatents);
     }
 
-    @PatchMapping("/patent/proceedings-publication/{leftProceedingsPublicationId}/{rightProceedingsPublicationId}")
+    @PatchMapping("/proceedings-publication/metadata/{leftProceedingsPublicationId}/{rightProceedingsPublicationId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedProceedingsPublicationsMetadata(
@@ -243,6 +245,36 @@ public class MergeController {
 
         mergeDocumentFiles(leftProceedingsPublicationId, rightProceedingsPublicationId,
             mergedProceedingsPublications);
+    }
+
+    @PatchMapping("/thesis/metadata/{leftThesisId}/{rightThesisId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedThesesMetadata(
+        @PathVariable Integer leftThesisId,
+        @PathVariable Integer rightThesisId,
+        @NotNull @RequestBody MergedThesesDTO mergedTheses) {
+        mergeService.saveMergedThesesMetadata(leftThesisId, rightThesisId,
+            mergedTheses.getLeftThesis(), mergedTheses.getRightThesis());
+
+        mergeDocumentFiles(leftThesisId, rightThesisId,
+            mergedTheses);
+    }
+
+    @PatchMapping("/journal-publication/metadata/{leftJournalPublicationId}/{rightJournalPublicationId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedProceedingsPublicationsMetadata(
+        @PathVariable Integer leftJournalPublicationId,
+        @PathVariable Integer rightJournalPublicationId,
+        @NotNull @RequestBody MergedJournalPublicationsDTO mergedJournalPublications) {
+        mergeService.saveMergedJournalPublicationMetadata(leftJournalPublicationId,
+            rightJournalPublicationId,
+            mergedJournalPublications.getLeftJournalPublication(),
+            mergedJournalPublications.getRightJournalPublication());
+
+        mergeDocumentFiles(leftJournalPublicationId, rightJournalPublicationId,
+            mergedJournalPublications);
     }
 
     private void mergeDocumentFiles(Integer leftId, Integer rightId,

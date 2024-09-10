@@ -5,10 +5,12 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 
 @Service
@@ -74,4 +76,12 @@ public interface MergeService {
     void saveMergedProceedingsPublicationMetadata(Integer leftId, Integer rightId,
                                                   ProceedingsPublicationDTO leftData,
                                                   ProceedingsPublicationDTO rightData);
+
+    void saveMergedJournalPublicationMetadata(Integer leftId, Integer rightId,
+                                              JournalPublicationDTO leftData,
+                                              JournalPublicationDTO rightData);
+
+    void saveMergedThesesMetadata(Integer leftId, Integer rightId,
+                                  ThesisDTO leftData,
+                                  ThesisDTO rightData);
 }

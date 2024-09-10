@@ -25,11 +25,13 @@ import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -66,6 +68,7 @@ import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -132,6 +135,9 @@ public class MergeServiceTest {
 
     @Mock
     private PatentService patentService;
+
+    @Mock
+    private ThesisService thesisService;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -598,9 +604,9 @@ public class MergeServiceTest {
         mergeService.saveMergedPersonsMetadata(leftId, rightId, leftData, rightData);
 
         // then
-        verify(personService, atLeastOnce()).updatePersonalInfo(leftData, leftId);
-        verify(personService).updatePersonalInfo(rightData, rightId);
-        verify(personService, times(2)).updatePersonalInfo(leftData, leftId);
+        verify(personService, atLeastOnce()).updatePersonalInfo(leftId, leftData);
+        verify(personService).updatePersonalInfo(rightId, rightData);
+        verify(personService, times(2)).updatePersonalInfo(leftId, leftData);
     }
 
     @Test
@@ -615,9 +621,9 @@ public class MergeServiceTest {
         mergeService.saveMergedJournalsMetadata(leftId, rightId, leftData, rightData);
 
         // then
-        verify(journalService, atLeastOnce()).updateJournal(leftData, leftId);
-        verify(journalService).updateJournal(rightData, rightId);
-        verify(journalService, times(2)).updateJournal(leftData, leftId);
+        verify(journalService, atLeastOnce()).updateJournal(leftId, leftData);
+        verify(journalService).updateJournal(rightId, rightData);
+        verify(journalService, times(2)).updateJournal(leftId, leftData);
     }
 
     @Test
@@ -632,9 +638,9 @@ public class MergeServiceTest {
         mergeService.saveMergedConferencesMetadata(leftId, rightId, leftData, rightData);
 
         // then
-        verify(conferenceService, atLeastOnce()).updateConference(leftData, leftId);
-        verify(conferenceService).updateConference(rightData, rightId);
-        verify(conferenceService, times(2)).updateConference(leftData, leftId);
+        verify(conferenceService, atLeastOnce()).updateConference(leftId, leftData);
+        verify(conferenceService).updateConference(rightId, rightData);
+        verify(conferenceService, times(2)).updateConference(leftId, leftData);
     }
 
     @Test
@@ -751,5 +757,48 @@ public class MergeServiceTest {
         assertEquals("", leftData.getScopusId());
         verify(proceedingsPublicationService, times(2)).editProceedingsPublication(eq(leftId),
             any(ProceedingsPublicationDTO.class));
+    }
+
+    @Test
+    public void shouldSaveMergedThesesMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ThesisDTO();
+        var rightData = new ThesisDTO();
+
+        // when
+        mergeService.saveMergedThesesMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(thesisService, atLeastOnce()).editThesis(leftId, leftData);
+        verify(thesisService).editThesis(rightId, rightData);
+        verify(thesisService, times(2)).editThesis(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedJournalPublicationMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new JournalPublicationDTO();
+        var rightData = new JournalPublicationDTO();
+
+        leftData.setDoi("10.1000/xyz123");
+        leftData.setScopusId("");
+
+        // when
+        mergeService.saveMergedJournalPublicationMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(journalPublicationService, times(2)).editJournalPublication(leftId,
+            leftData);
+        verify(journalPublicationService).editJournalPublication(rightId, rightData);
+        verify(journalPublicationService, times(3)).editJournalPublication(anyInt(),
+            any(JournalPublicationDTO.class));
+        assertEquals("10.1000/xyz123", leftData.getDoi());
+        assertEquals("", leftData.getScopusId());
+        verify(journalPublicationService, times(2)).editJournalPublication(eq(leftId),
+            any(JournalPublicationDTO.class));
     }
 }

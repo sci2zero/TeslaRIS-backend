@@ -268,7 +268,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
-    public void updatePersonalInfo(PersonalInfoDTO personalInfo, Integer personId) {
+    public void updatePersonalInfo(Integer personId, PersonalInfoDTO personalInfo) {
         var personToUpdate = findOne(personId);
         setAllPersonIdentifiers(personToUpdate, personalInfo);
 

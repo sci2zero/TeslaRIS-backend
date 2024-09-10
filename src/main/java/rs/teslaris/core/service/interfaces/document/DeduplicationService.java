@@ -10,7 +10,7 @@ public interface DeduplicationService {
 
     Page<DocumentDeduplicationSuggestionDTO> getDeduplicationSuggestions(Pageable pageable);
 
-    boolean startDocumentDeduplicationProcessBeforeSchedule();
+    boolean startDocumentDeduplicationProcessBeforeSchedule(Integer initiatingUserId);
 
     void deleteDocumentSuggestion(Integer suggestionId);
 

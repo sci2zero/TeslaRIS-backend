@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +22,16 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.DocumentDeduplicationBlacklist;
 import rs.teslaris.core.model.commontypes.DocumentDeduplicationSuggestion;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.repository.commontypes.DocumentDeduplicationBlacklistRepository;
 import rs.teslaris.core.repository.commontypes.DocumentDeduplicationSuggestionRepository;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -47,15 +52,19 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private final DocumentDeduplicationBlacklistRepository documentDeduplicationBlacklistRepository;
 
+    private final UserService userService;
+
+    private final NotificationService notificationService;
+
 
     @Override
-    public boolean startDocumentDeduplicationProcessBeforeSchedule() {
+    public boolean startDocumentDeduplicationProcessBeforeSchedule(Integer initiatingUserId) {
         log.info("Trying to start deduplication ahead of time.");
         if (deduplicationLock) {
             return false;
         }
 
-        startDeduplicationAsync();
+        startDeduplicationAsync(initiatingUserId);
         return true;
     }
 
@@ -95,16 +104,26 @@ public class DeduplicationServiceImpl implements DeduplicationService {
     }
 
     @Async
-    private void startDeduplicationAsync() {
+    private void startDeduplicationAsync(Integer initiatingUserId) {
+        var interrupted = false;
         try {
             performScheduledDocumentDeduplication();
+        } catch (Exception e) {
+            interrupted = true;
         } finally {
+            if (!interrupted) {
+                notificationService.createNotification(
+                    NotificationFactory.contructNewDeduplicationScanFinishedNotification(
+                        Map.of("duplicateCount", currentSessionCounter.toString()),
+                        userService.findOne(initiatingUserId))
+                );
+            }
             deduplicationLock = false;
         }
     }
 
     @Scheduled(cron = "${deduplication.schedule}")
-    protected void performScheduledDocumentDeduplication() {
+    protected synchronized void performScheduledDocumentDeduplication() {
         if (deduplicationLock) {
             log.info(
                 "Deduplication of publications startup aborted due to process already running.");
@@ -112,6 +131,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
         }
 
         deduplicationLock = true;
+        currentSessionCounter = 0;
         log.info("Deduplication of publications started.");
         deduplicationSuggestionRepository.deleteAll(); // TODO: Should we clean everything or check for duplicate suggestions at the time of saving?
 
@@ -122,12 +142,16 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> chunk = documentPublicationIndexRepository.findByTypeIn(
-                List.of(DocumentPublicationType.MONOGRAPH.name(),
+                List.of(
+                    DocumentPublicationType.MONOGRAPH.name(),
+                    DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
                     DocumentPublicationType.PROCEEDINGS.name(),
                     DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(),
                     DocumentPublicationType.PATENT.name(), DocumentPublicationType.SOFTWARE.name(),
-                    DocumentPublicationType.DATASET.name()),
+                    DocumentPublicationType.DATASET.name(),
+                    DocumentPublicationType.THESIS.name()
+                ),
                 PageRequest.of(pageNumber, chunkSize)).getContent();
 
             chunk.forEach(publication -> {
@@ -171,7 +195,6 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
         log.info("Deduplication of publications process completed. Total suggestions found: {}.",
             currentSessionCounter);
-        currentSessionCounter = 0;
         deduplicationLock = false;
     }
 
@@ -179,10 +202,17 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                                  List<DocumentPublicationIndex> similarPublications,
                                  ArrayList<Integer> foundDuplicates) {
         for (var similarPublication : similarPublications) {
-            var leftDocument = documentPublicationService.findDocumentById(
-                publication.getDatabaseId());
-            var rightDocument =
-                documentPublicationService.findDocumentById(similarPublication.getDatabaseId());
+            Document leftDocument, rightDocument;
+            try {
+                leftDocument = documentPublicationService.findDocumentById(
+                    publication.getDatabaseId());
+                rightDocument =
+                    documentPublicationService.findDocumentById(similarPublication.getDatabaseId());
+            } catch (NotFoundException e) {
+                log.error(
+                    "Indexed document not found in database when performing deduplication, index rebuilding is advised.");
+                continue;
+            }
 
             var blacklistEntry =
                 documentDeduplicationBlacklistRepository.findByLeftDocumentIdAndRightDocumentId(

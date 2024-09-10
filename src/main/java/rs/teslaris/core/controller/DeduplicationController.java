@@ -9,11 +9,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.commontypes.DocumentDeduplicationSuggestionDTO;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/deduplication")
@@ -21,6 +23,8 @@ import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 public class DeduplicationController {
 
     private final DeduplicationService deduplicationService;
+
+    private final JwtUtil tokenUtil;
 
     @GetMapping("/documents")
     @PreAuthorize("hasAuthority('PERFORM_DEDUPLICATION')")
@@ -31,8 +35,10 @@ public class DeduplicationController {
     @PostMapping("/deduplicate-ahead-of-time")
     @PreAuthorize("hasAuthority('START_DEDUPLICATION_PROCESS')")
     @Idempotent
-    public boolean performDeduplicationScan() {
-        return deduplicationService.startDocumentDeduplicationProcessBeforeSchedule();
+    public boolean performDeduplicationScan(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return deduplicationService.startDocumentDeduplicationProcessBeforeSchedule(
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @PatchMapping("/document/{suggestionId}")

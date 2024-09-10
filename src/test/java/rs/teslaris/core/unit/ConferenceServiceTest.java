@@ -222,7 +222,7 @@ public class ConferenceServiceTest {
         when(conferenceJPAService.save(any())).thenReturn(new Conference());
 
         // when
-        conferenceService.updateConference(conferenceDTO, 1);
+        conferenceService.updateConference(1, conferenceDTO);
 
         // then
         verify(conferenceJPAService, times(1)).save(any());
