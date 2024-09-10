@@ -7,8 +7,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +25,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.MonographType;
 
 @SpringBootTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class MonographControllerTest extends BaseTest {
 
     @Autowired
@@ -38,7 +41,7 @@ public class MonographControllerTest extends BaseTest {
         monographDTO.setKeywords(dummyMC);
         monographDTO.setLanguageTagIds(new ArrayList<>());
         monographDTO.setMonographType(MonographType.RESEARCH_MONOGRAPH);
-        monographDTO.setDocumentDate("31.01.2000.");
+        monographDTO.setDocumentDate("2004-11-06");
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
@@ -73,9 +76,9 @@ public class MonographControllerTest extends BaseTest {
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/monograph")
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY_MONOGRAPH"))
+                .header("Idempotency-Key", "MOCK_KEY_MONOGRAPH_PUBLICATION"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("31.01.2000."));
+            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
     }
 
     @Test
@@ -101,7 +104,7 @@ public class MonographControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/monograph/{monographId}",
-                        5).contentType(MediaType.APPLICATION_JSON)
+                        12).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

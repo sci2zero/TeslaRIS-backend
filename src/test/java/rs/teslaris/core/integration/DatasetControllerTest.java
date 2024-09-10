@@ -37,7 +37,7 @@ public class DatasetControllerTest extends BaseTest {
         datasetDTO.setSubTitle(dummyMC);
         datasetDTO.setDescription(dummyMC);
         datasetDTO.setKeywords(dummyMC);
-        datasetDTO.setDocumentDate("31.01.2000.");
+        datasetDTO.setDocumentDate("2004-11-06");
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
@@ -74,7 +74,7 @@ public class DatasetControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_DATASET"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("31.01.2000."));
+            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
     }
 
     @Test

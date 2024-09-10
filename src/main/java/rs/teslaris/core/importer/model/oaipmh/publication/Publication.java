@@ -25,10 +25,11 @@ import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Publication {
+public class Publication implements PublicationConvertable {
 
     @XmlElement(name = "Keyword")
-    List<String> keywords;
+    private List<String> keywords;
+
     private String id;
 
     @XmlAttribute(name = "id")

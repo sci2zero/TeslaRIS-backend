@@ -62,7 +62,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolation;
+import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.search.SearchRequestType;
 
@@ -554,7 +554,7 @@ public class OrganisationUnitServiceTest {
 
         // When
         var exception = assertThrows(
-            OrganisationUnitReferenceConstraintViolation.class,
+            OrganisationUnitReferenceConstraintViolationException.class,
             () -> organisationUnitService.deleteOrganisationUnit(organisationUnitId)
         );
 

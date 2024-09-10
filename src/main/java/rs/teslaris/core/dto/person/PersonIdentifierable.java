@@ -10,5 +10,7 @@ public interface PersonIdentifierable {
 
     String getOrcid();
 
+    void setOrcid(String orcid);
+
     String getScopusAuthorId();
 }

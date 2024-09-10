@@ -35,7 +35,7 @@ public class ProceedingsControllerTest extends BaseTest {
         proceedingsDTO.setSubTitle(dummyMC);
         proceedingsDTO.setDescription(dummyMC);
         proceedingsDTO.setKeywords(dummyMC);
-        proceedingsDTO.setDocumentDate("31.01.2000.");
+        proceedingsDTO.setDocumentDate("2004-11-06");
         proceedingsDTO.setEventId(1);
 
         var contribution =
@@ -94,7 +94,7 @@ public class ProceedingsControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_PROCEEDINGS"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("31.01.2000."));
+            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
     }
 
     @Test

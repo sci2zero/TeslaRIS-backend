@@ -54,7 +54,7 @@ public class Involvement extends BaseEntity {
     private Set<MultiLingualContent> affiliationStatement = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "person_id")
+    @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false)
     private Person personInvolved;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -23,8 +23,8 @@ import rs.teslaris.core.importer.model.oaipmh.common.MultilingualContent;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-@EqualsAndHashCode
-public class OrgUnit {
+@EqualsAndHashCode(callSuper = false)
+public class OrgUnit implements OrgUnitConvertable {
 
     private String id;
 
@@ -32,7 +32,7 @@ public class OrgUnit {
     private String oldId;
 
     @XmlElement(name = "Name")
-    private List<MultilingualContent> multilingualContent;
+    private List<MultilingualContent> name;
 
     @XmlElement(name = "PartOf")
     private PartOf partOf;

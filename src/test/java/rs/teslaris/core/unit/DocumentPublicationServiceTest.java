@@ -30,6 +30,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -80,7 +81,7 @@ public class DocumentPublicationServiceTest {
     @Test
     public void shouldReturnDocumentWhenItExists() {
         // given
-        var expected = new JournalPublication();
+        var expected = new MonographPublication();
         when(documentRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when

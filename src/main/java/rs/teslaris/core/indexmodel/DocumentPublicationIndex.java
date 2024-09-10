@@ -72,8 +72,14 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "reviewer_ids", store = true)
     private List<Integer> reviewerIds = new ArrayList<>();
 
+    @Field(type = FieldType.Integer, name = "board_member_ids", store = true)
+    private List<Integer> boardMemberIds = new ArrayList<>();
+
     @Field(type = FieldType.Text, name = "reviewer_names", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String reviewerNames = "";
+
+    @Field(type = FieldType.Text, name = "board_member_names", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String boardMemberNames = "";
 
     @Field(type = FieldType.Integer, name = "advisor_ids", store = true)
     private List<Integer> advisorIds = new ArrayList<>();
@@ -101,6 +107,9 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Integer, name = "journal_id", store = true)
     private Integer journalId;
+
+    @Field(type = FieldType.Integer, name = "monograph_id", store = true)
+    private Integer monographId;
 
     @Field(type = FieldType.Integer, name = "database_id", store = true)
     private Integer databaseId;

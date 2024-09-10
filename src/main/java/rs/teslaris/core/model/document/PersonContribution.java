@@ -36,7 +36,7 @@ import rs.teslaris.core.model.person.Person;
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class PersonContribution extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "person_id")
     private Person person;
 

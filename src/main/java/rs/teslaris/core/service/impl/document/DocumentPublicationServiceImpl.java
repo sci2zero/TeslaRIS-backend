@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -66,19 +65,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    protected final SearchService<DocumentPublicationIndex> searchService;
+
+    protected final OrganisationUnitService organisationUnitService;
+
     private final DocumentRepository documentRepository;
 
     private final DocumentFileService documentFileService;
 
     private final PersonContributionService personContributionService;
 
-    private final SearchService<DocumentPublicationIndex> searchService;
-
     private final ExpressionTransformer expressionTransformer;
 
     private final EventService eventService;
-
-    private final OrganisationUnitService organisationUnitService;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -120,16 +119,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var allOUIdsFromSubHierarchy =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
-        var combinedResults = new ArrayList<DocumentPublicationIndex>();
-        allOUIdsFromSubHierarchy.forEach((id) -> {
-            var resultsPage =
-                documentPublicationIndexRepository.findByOrganisationUnitIds(id, pageable);
-            combinedResults.addAll(resultsPage.getContent());
-        });
-
-        // TEMPORARY FIX
-        // TODO: Update this as soon as we update spring-data-elasticsearch version
-        return new PageImpl<>(combinedResults, pageable, combinedResults.size());
+        return documentPublicationIndexRepository.findByOrganisationUnitIdsIn(
+            allOUIdsFromSubHierarchy, pageable);
     }
 
     @Override
@@ -244,8 +235,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         Objects.toString(contributorDisplayName.getLastname(), "")).trim();
 
                 organisationUnitIds.addAll(
-                    contribution.getInstitutions().stream().map((BaseEntity::getId)).collect(
-                        Collectors.toList()));
+                    contribution.getInstitutions().stream().map((BaseEntity::getId)).toList());
 
                 switch (contribution.getContributionType()) {
                     case AUTHOR:
@@ -279,6 +269,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         }
                         index.setReviewerNames(StringUtil.removeLeadingColonSpace(
                             index.getReviewerNames() + "; " + contributorName));
+                        break;
+                    case BOARD_MEMBER:
+                        if (personExists) {
+                            index.getBoardMemberIds().add(contribution.getPerson().getId());
+                        }
+                        index.setBoardMemberNames(StringUtil.removeLeadingColonSpace(
+                            index.getBoardMemberNames() + "; " + contributorName));
                         break;
                 }
             });
@@ -416,7 +413,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         IdentifierUtil.validateAndSetIdentifier(
             documentDTO.getDoi(),
             document.getId(),
-            "^10\\.\\d{4,9}/[-._;()/:A-Z0-9]+$",
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
             documentRepository::existsByDoi,
             document::setDoi,
             "doiFormatError",

@@ -61,13 +61,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Autowired
     public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                  SearchService<DocumentPublicationIndex> searchService,
+                                  OrganisationUnitService organisationUnitService,
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
-                                  SearchService<DocumentPublicationIndex> searchService,
                                   ExpressionTransformer expressionTransformer,
                                   EventService eventService,
-                                  OrganisationUnitService organisationUnitService,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
@@ -75,9 +75,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   BookSeriesService bookSeriesService, EventService eventService1,
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
-        super(multilingualContentService, documentPublicationIndexRepository, documentRepository,
-            documentFileService, personContributionService, searchService, expressionTransformer,
-            eventService, organisationUnitService);
+        super(multilingualContentService, documentPublicationIndexRepository, searchService,
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
@@ -214,7 +215,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private void setProceedingsRelatedFields(Proceedings proceedings,
                                              ProceedingsDTO proceedingsDTO) {
-
         setCommonIdentifiers(proceedings, proceedingsDTO);
 
         proceedings.setNumberOfPages(proceedingsDTO.getNumberOfPages());
