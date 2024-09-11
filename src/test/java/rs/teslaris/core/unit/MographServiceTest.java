@@ -206,7 +206,7 @@ public class MographServiceTest {
             monographId)).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
-        monographService.updateMonograph(monographId, monographDTO);
+        monographService.editMonograph(monographId, monographDTO);
 
         // Then
         verify(monographJPAService, times(1)).findOne(monographId);
@@ -226,7 +226,7 @@ public class MographServiceTest {
         when(monographJPAService.findOne(monographId)).thenReturn(monographToUpdate);
 
         // When
-        monographService.updateMonograph(monographId, monographDTO);
+        monographService.editMonograph(monographId, monographDTO);
 
         // Then
         verify(monographJPAService, times(1)).findOne(monographId);

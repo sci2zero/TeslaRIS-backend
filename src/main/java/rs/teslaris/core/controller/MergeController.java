@@ -15,6 +15,8 @@ import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalsDTO;
+import rs.teslaris.core.dto.deduplication.MergedMonographPublicationsDTO;
+import rs.teslaris.core.dto.deduplication.MergedMonographsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
@@ -30,6 +32,7 @@ import rs.teslaris.core.service.interfaces.merge.MergeService;
 public class MergeController {
 
     private final MergeService mergeService;
+
 
     @PatchMapping("/journal/{targetJournalId}/publication/{publicationId}")
     @PreAuthorize("hasAuthority('MERGE_JOURNAL_PUBLICATIONS')")
@@ -115,6 +118,22 @@ public class MergeController {
         @PathVariable Integer targetProceedingsId) {
         mergeService.switchAllPublicationsToOtherProceedings(sourceProceedingsId,
             targetProceedingsId);
+    }
+
+    @PatchMapping("/monograph/{targetMonographId}/publication/{publicationId}")
+    @PreAuthorize("hasAuthority('MERGE_MONOGRAPH_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchMonographPublicationToOtherMonograph(@PathVariable Integer targetMonographId,
+                                                           @PathVariable Integer publicationId) {
+        mergeService.switchPublicationToOtherMonograph(targetMonographId, publicationId);
+    }
+
+    @PatchMapping("/monograph/source/{sourceMonographId}/target/{targetMonographId}")
+    @PreAuthorize("hasAuthority('MERGE_MONOGRAPH_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllPublicationsToOtherMonograph(@PathVariable Integer sourceMonographId,
+                                                      @PathVariable Integer targetMonographId) {
+        mergeService.switchAllPublicationsToOtherMonograph(sourceMonographId, targetMonographId);
     }
 
     @PatchMapping("/person/involvements/source/{sourcePersonId}/target/{targetPersonId}")
@@ -275,6 +294,38 @@ public class MergeController {
 
         mergeDocumentFiles(leftJournalPublicationId, rightJournalPublicationId,
             mergedJournalPublications);
+    }
+
+    @PatchMapping("/monograph/metadata/{leftMonographId}/{rightMonographId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedMonographsMetadata(@PathVariable Integer leftMonographId,
+                                             @PathVariable Integer rightMonographId,
+                                             @NotNull @RequestBody
+                                             MergedMonographsDTO mergedMonographs) {
+        mergeService.saveMergedMonographsMetadata(leftMonographId,
+            rightMonographId,
+            mergedMonographs.getLeftMonograph(),
+            mergedMonographs.getRightMonograph());
+
+        mergeDocumentFiles(leftMonographId, rightMonographId,
+            mergedMonographs);
+    }
+
+    @PatchMapping("/monograph-publication/metadata/{leftMonographPublicationId}/{rightMonographPublicationId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedMonographPublicationsMetadata(
+        @PathVariable Integer leftMonographPublicationId,
+        @PathVariable Integer rightMonographPublicationId,
+        @NotNull @RequestBody MergedMonographPublicationsDTO mergedMonographPublications) {
+        mergeService.saveMergedMonographPublicationsMetadata(leftMonographPublicationId,
+            rightMonographPublicationId,
+            mergedMonographPublications.getLeftMonographPublication(),
+            mergedMonographPublications.getRightMonographPublication());
+
+        mergeDocumentFiles(leftMonographPublicationId, rightMonographPublicationId,
+            mergedMonographPublications);
     }
 
     private void mergeDocumentFiles(Integer leftId, Integer rightId,

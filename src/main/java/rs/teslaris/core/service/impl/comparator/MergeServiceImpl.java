@@ -13,6 +13,8 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MonographDTO;
+import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -32,6 +34,8 @@ import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
+import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -92,6 +96,10 @@ public class MergeServiceImpl implements MergeService {
     private final PatentService patentService;
 
     private final ThesisService thesisService;
+
+    private final MonographService monographService;
+
+    private final MonographPublicationService monographPublicationService;
 
 
     @Override
@@ -266,31 +274,6 @@ public class MergeServiceImpl implements MergeService {
         mergeDocumentFiles(leftDocument, rightDocument, leftFileItems, rightFileItems);
     }
 
-    private void mergeDocumentFiles(Document leftDocument, Document rightDocument,
-                                    List<Integer> leftFileIds, List<Integer> rightFileIds) {
-        mergeFiles(leftDocument, rightDocument, leftFileIds);
-        mergeFiles(rightDocument, leftDocument, rightFileIds);
-    }
-
-    private void mergeFiles(Document sourceDocument, Document targetDocument,
-                            List<Integer> sourceFileIds) {
-        sourceFileIds.forEach(fileId -> {
-            if (sourceDocument.getProofs().stream()
-                .noneMatch(file -> file.getId().equals(fileId))) {
-                var fileForMerging = targetDocument.getProofs().stream()
-                    .filter(file -> file.getId().equals(fileId)).findFirst();
-
-                if (fileForMerging.isEmpty()) {
-                    throw new NotFoundException(
-                        "Non-existing document file specified for merging.");
-                }
-
-                targetDocument.getProofs().remove(fileForMerging.get());
-                sourceDocument.getProofs().add(fileForMerging.get());
-            }
-        });
-    }
-
     @Override
     public void saveMergedProceedingsMetadata(Integer leftId, Integer rightId,
                                               ProceedingsDTO leftData, ProceedingsDTO rightData) {
@@ -417,22 +400,65 @@ public class MergeServiceImpl implements MergeService {
             });
     }
 
-    private <T> void updateAndRestoreMetadata(BiConsumer<Integer, T> updateMethod,
-                                              Integer leftId, Integer rightId,
-                                              T leftData, T rightData,
-                                              Function<T, String[]> originalValuesExtractor,
-                                              BiConsumer<T, String[]> restoreValues) {
-        String[] originalValues = originalValuesExtractor.apply(leftData);
+    @Override
+    public void switchPublicationToOtherMonograph(Integer targetMonographId,
+                                                  Integer publicationId) {
+        performMonographPublicationSwitch(targetMonographId, publicationId);
+    }
 
-        String[] emptyValues = new String[originalValues.length];
-        Arrays.fill(emptyValues, "");
-        restoreValues.accept(leftData, emptyValues);
+    @Override
+    public void switchAllPublicationsToOtherMonograph(Integer sourceMonographId,
+                                                      Integer targetMonographId) {
+        processChunks(
+            sourceMonographId,
+            (srcId, monographPublicationIndex) -> performMonographPublicationSwitch(
+                targetMonographId, monographPublicationIndex.getDatabaseId()),
+            pageRequest -> documentPublicationIndexRepository.findByTypeAndMonographId(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), sourceMonographId,
+                pageRequest).getContent()
+        );
+    }
 
-        updateMethod.accept(leftId, leftData);
-        updateMethod.accept(rightId, rightData);
+    @Override
+    public void saveMergedMonographsMetadata(Integer leftId, Integer rightId, MonographDTO leftData,
+                                             MonographDTO rightData) {
+        updateAndRestoreMetadata(monographService::editMonograph, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getPrintISBN(),
+                dto.getEisbn()},
+            (dto, values) -> {
+                dto.setDoi(values[0]);
+                dto.setScopusId(values[1]);
+                dto.setPrintISBN(values[2]);
+                dto.setEisbn(values[3]);
+            });
+    }
 
-        restoreValues.accept(leftData, originalValues);
-        updateMethod.accept(leftId, leftData);
+    @Override
+    public void saveMergedMonographPublicationsMetadata(Integer leftId, Integer rightId,
+                                                        MonographPublicationDTO leftData,
+                                                        MonographPublicationDTO rightData) {
+        updateAndRestoreMetadata(monographPublicationService::editMonographPublication, leftId,
+            rightId,
+            leftData, rightData,
+            dto -> new String[] {dto.getDoi(), dto.getScopusId()},
+            (dto, values) -> {
+                dto.setDoi(values[0]);
+                dto.setScopusId(values[1]);
+            });
+    }
+
+    private void performMonographPublicationSwitch(Integer targetMonographId,
+                                                   Integer monographPublicationId) {
+        var targetMonograph = monographService.findMonographById(targetMonographId);
+        var monographPublication =
+            monographPublicationService.findMonographPublicationById(monographPublicationId);
+
+        monographPublication.setMonograph(targetMonograph);
+
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            monographPublicationId).orElse(new DocumentPublicationIndex());
+        monographPublicationService.indexMonographPublication(monographPublication, index);
     }
 
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,
@@ -565,5 +591,48 @@ public class MergeServiceImpl implements MergeService {
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+    }
+
+    private void mergeDocumentFiles(Document leftDocument, Document rightDocument,
+                                    List<Integer> leftFileIds, List<Integer> rightFileIds) {
+        mergeFiles(leftDocument, rightDocument, leftFileIds);
+        mergeFiles(rightDocument, leftDocument, rightFileIds);
+    }
+
+    private void mergeFiles(Document sourceDocument, Document targetDocument,
+                            List<Integer> sourceFileIds) {
+        sourceFileIds.forEach(fileId -> {
+            if (sourceDocument.getProofs().stream()
+                .noneMatch(file -> file.getId().equals(fileId))) {
+                var fileForMerging = targetDocument.getProofs().stream()
+                    .filter(file -> file.getId().equals(fileId)).findFirst();
+
+                if (fileForMerging.isEmpty()) {
+                    throw new NotFoundException(
+                        "Non-existing document file specified for merging.");
+                }
+
+                targetDocument.getProofs().remove(fileForMerging.get());
+                sourceDocument.getProofs().add(fileForMerging.get());
+            }
+        });
+    }
+
+    private <T> void updateAndRestoreMetadata(BiConsumer<Integer, T> updateMethod,
+                                              Integer leftId, Integer rightId,
+                                              T leftData, T rightData,
+                                              Function<T, String[]> originalValuesExtractor,
+                                              BiConsumer<T, String[]> restoreValues) {
+        String[] originalValues = originalValuesExtractor.apply(leftData);
+
+        String[] emptyValues = new String[originalValues.length];
+        Arrays.fill(emptyValues, "");
+        restoreValues.accept(leftData, emptyValues);
+
+        updateMethod.accept(leftId, leftData);
+        updateMethod.accept(rightId, rightData);
+
+        restoreValues.accept(leftData, originalValues);
+        updateMethod.accept(leftId, leftData);
     }
 }

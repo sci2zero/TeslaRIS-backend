@@ -26,6 +26,8 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MonographDTO;
+import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -43,6 +45,8 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -64,6 +68,8 @@ import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
+import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -138,6 +144,12 @@ public class MergeServiceTest {
 
     @Mock
     private ThesisService thesisService;
+
+    @Mock
+    private MonographService monographService;
+
+    @Mock
+    private MonographPublicationService monographPublicationService;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -800,5 +812,102 @@ public class MergeServiceTest {
         assertEquals("", leftData.getScopusId());
         verify(journalPublicationService, times(2)).editJournalPublication(eq(leftId),
             any(JournalPublicationDTO.class));
+    }
+
+    @Test
+    public void shouldSaveMergedMonographsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new MonographDTO();
+        var rightData = new MonographDTO();
+
+        // when
+        mergeService.saveMergedMonographsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(monographService, atLeastOnce()).editMonograph(leftId, leftData);
+        verify(monographService).editMonograph(rightId, rightData);
+        verify(monographService, times(2)).editMonograph(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedMonographPublicationsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new MonographPublicationDTO();
+        var rightData = new MonographPublicationDTO();
+
+        leftData.setDoi("10.1000/xyz123");
+
+        // when
+        mergeService.saveMergedMonographPublicationsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(monographPublicationService, times(2)).editMonographPublication(leftId,
+            leftData);
+        verify(monographPublicationService).editMonographPublication(rightId, rightData);
+        verify(monographPublicationService, times(3)).editMonographPublication(anyInt(),
+            any(MonographPublicationDTO.class));
+        assertEquals("10.1000/xyz123", leftData.getDoi());
+        assertEquals(null, leftData.getScopusId());
+        verify(monographPublicationService, times(2)).editMonographPublication(eq(leftId),
+            any(MonographPublicationDTO.class));
+    }
+
+    @Test
+    void shouldSwitchMonographPublicationToOtherMonograph() {
+        var targetMonographId = 1;
+        var publicationId = 2;
+
+        var publication = new MonographPublication();
+        when(monographPublicationService.findMonographPublicationById(publicationId)).thenReturn(
+            publication);
+        var targetMonograph = new Monograph();
+        when(monographService.findMonographById(targetMonographId)).thenReturn(targetMonograph);
+
+        mergeService.switchPublicationToOtherMonograph(targetMonographId, publicationId);
+
+        verify(monographPublicationService).findMonographPublicationById(publicationId);
+        verify(monographService).findMonographById(targetMonographId);
+        assertEquals(targetMonograph, publication.getMonograph());
+    }
+
+    @Test
+    void shouldSwitchAllPublicationsToOtherMonograph() {
+        var sourceId = 1;
+        var targetId = 2;
+
+        var publicationIndex1 = new DocumentPublicationIndex();
+        publicationIndex1.setDatabaseId(1);
+        var publicationIndex2 = new DocumentPublicationIndex();
+        publicationIndex2.setDatabaseId(2);
+        var page1 = new PageImpl<>(
+            List.of(publicationIndex1, publicationIndex2));
+        var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
+
+        when(documentPublicationIndexRepository.findByTypeAndMonographId(
+            DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), sourceId,
+            PageRequest.of(0, 10)))
+            .thenReturn(page1);
+        when(documentPublicationIndexRepository.findByTypeAndJournalId(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(1, 10)))
+            .thenReturn(page2);
+
+        var publication1 = new MonographPublication();
+        var publication2 = new MonographPublication();
+        when(monographPublicationService.findMonographPublicationById(
+            publicationIndex1.getDatabaseId())).thenReturn(publication1);
+        when(monographPublicationService.findMonographPublicationById(
+            publicationIndex2.getDatabaseId())).thenReturn(publication2);
+
+        var targetMonograph = new Monograph();
+        when(monographService.findMonographById(targetId)).thenReturn(targetMonograph);
+
+        mergeService.switchAllPublicationsToOtherMonograph(sourceId, targetId);
+
+        assertEquals(targetMonograph, publication1.getMonograph());
+        assertEquals(targetMonograph, publication2.getMonograph());
     }
 }

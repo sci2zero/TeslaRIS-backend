@@ -219,7 +219,7 @@ public class MonographPublicationServiceTest {
             monographPublicationId)).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
         // When
-        monographPublicationService.updateMonographPublication(monographPublicationId,
+        monographPublicationService.editMonographPublication(monographPublicationId,
             monographPublicationDTO);
 
         // Then
@@ -240,7 +240,7 @@ public class MonographPublicationServiceTest {
             monographPublicationToUpdate);
 
         // When
-        monographPublicationService.updateMonographPublication(monographPublicationId,
+        monographPublicationService.editMonographPublication(monographPublicationId,
             monographPublicationDTO);
 
         // Then

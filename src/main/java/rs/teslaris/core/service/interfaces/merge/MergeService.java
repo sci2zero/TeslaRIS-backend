@@ -6,6 +6,8 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MonographDTO;
+import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -84,4 +86,17 @@ public interface MergeService {
     void saveMergedThesesMetadata(Integer leftId, Integer rightId,
                                   ThesisDTO leftData,
                                   ThesisDTO rightData);
+
+    void switchPublicationToOtherMonograph(Integer targetMonographId, Integer publicationId);
+
+    void switchAllPublicationsToOtherMonograph(Integer sourceMonographId,
+                                               Integer targetMonographId);
+
+    void saveMergedMonographsMetadata(Integer leftId, Integer rightId,
+                                      MonographDTO leftData,
+                                      MonographDTO rightData);
+
+    void saveMergedMonographPublicationsMetadata(Integer leftId, Integer rightId,
+                                                 MonographPublicationDTO leftData,
+                                                 MonographPublicationDTO rightData);
 }

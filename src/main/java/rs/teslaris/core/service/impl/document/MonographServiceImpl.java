@@ -123,7 +123,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
-    public void updateMonograph(Integer monographId, MonographDTO monographDTO) {
+    public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
         monographToUpdate.getLanguages().clear();

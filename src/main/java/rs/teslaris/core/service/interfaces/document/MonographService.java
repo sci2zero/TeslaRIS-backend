@@ -18,7 +18,7 @@ public interface MonographService {
 
     Monograph createMonograph(MonographDTO monographDTO, Boolean index);
 
-    void updateMonograph(Integer monographId, MonographDTO monographDTO);
+    void editMonograph(Integer monographId, MonographDTO monographDTO);
 
     void deleteMonograph(Integer monographId);
 
