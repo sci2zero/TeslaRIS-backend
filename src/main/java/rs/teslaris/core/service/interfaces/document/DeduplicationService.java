@@ -3,16 +3,17 @@ package rs.teslaris.core.service.interfaces.document;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.DocumentDeduplicationSuggestionDTO;
+import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.deduplication.DeduplicationSuggestion;
 
 @Service
 public interface DeduplicationService {
 
-    Page<DocumentDeduplicationSuggestionDTO> getDeduplicationSuggestions(Pageable pageable);
+    Page<DeduplicationSuggestion> getDeduplicationSuggestions(Pageable pageable, IndexType type);
 
-    boolean startDocumentDeduplicationProcessBeforeSchedule(Integer initiatingUserId);
+    boolean startDeduplicationProcessBeforeSchedule(Integer initiatingUserId);
 
-    void deleteDocumentSuggestion(Integer suggestionId);
+    void deleteSuggestion(String suggestionId);
 
-    void flagDocumentAsNotDuplicate(Integer suggestionId);
+    void flagAsNotDuplicate(String suggestionId);
 }

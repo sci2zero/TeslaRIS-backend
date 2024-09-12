@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
-import rs.teslaris.core.dto.commontypes.DocumentDeduplicationSuggestionDTO;
+import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.deduplication.DeduplicationSuggestion;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -26,10 +27,22 @@ public class DeduplicationController {
 
     private final JwtUtil tokenUtil;
 
-    @GetMapping("/documents")
+    @GetMapping("/{resultSet}")
     @PreAuthorize("hasAuthority('PERFORM_DEDUPLICATION')")
-    public Page<DocumentDeduplicationSuggestionDTO> fetchDocumentSuggestions(Pageable pageable) {
-        return deduplicationService.getDeduplicationSuggestions(pageable);
+    public Page<DeduplicationSuggestion> fetchDocumentSuggestions(@PathVariable IndexType resultSet,
+                                                                  Pageable pageable) {
+        return switch (resultSet) {
+            case PUBLICATION ->
+                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.PUBLICATION);
+            case JOURNAL ->
+                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.JOURNAL);
+            case EVENT ->
+                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.EVENT);
+            case PERSON ->
+                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.PERSON);
+            default -> null;
+        };
+
     }
 
     @PostMapping("/deduplicate-ahead-of-time")
@@ -37,19 +50,19 @@ public class DeduplicationController {
     @Idempotent
     public boolean performDeduplicationScan(
         @RequestHeader(value = "Authorization") String bearerToken) {
-        return deduplicationService.startDocumentDeduplicationProcessBeforeSchedule(
+        return deduplicationService.startDeduplicationProcessBeforeSchedule(
             tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
-    @PatchMapping("/document/{suggestionId}")
+    @PatchMapping("/suggestion/{suggestionId}")
     @PreAuthorize("hasAuthority('PERFORM_DEDUPLICATION')")
-    public void flagDocumentAsNotDuplicate(@PathVariable Integer suggestionId) {
-        deduplicationService.flagDocumentAsNotDuplicate(suggestionId);
+    public void flagAsNotDuplicate(@PathVariable String suggestionId) {
+        deduplicationService.flagAsNotDuplicate(suggestionId);
     }
 
-    @DeleteMapping("/document/{suggestionId}")
+    @DeleteMapping("/suggestion/{suggestionId}")
     @PreAuthorize("hasAuthority('PERFORM_DEDUPLICATION')")
-    public void deleteDocumentSuggestion(@PathVariable Integer suggestionId) {
-        deduplicationService.deleteDocumentSuggestion(suggestionId);
+    public void deleteDeduplicationSuggestion(@PathVariable String suggestionId) {
+        deduplicationService.deleteSuggestion(suggestionId);
     }
 }

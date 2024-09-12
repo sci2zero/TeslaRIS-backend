@@ -16,15 +16,22 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexmodel.deduplication.DeduplicationBlacklist;
+import rs.teslaris.core.indexmodel.deduplication.DeduplicationSuggestion;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.commontypes.DocumentDeduplicationBlacklist;
-import rs.teslaris.core.model.commontypes.DocumentDeduplicationSuggestion;
-import rs.teslaris.core.model.document.Monograph;
-import rs.teslaris.core.repository.commontypes.DocumentDeduplicationBlacklistRepository;
-import rs.teslaris.core.repository.commontypes.DocumentDeduplicationSuggestionRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.indexrepository.deduplication.DocumentDeduplicationBlacklistRepository;
+import rs.teslaris.core.indexrepository.deduplication.DocumentDeduplicationSuggestionRepository;
 import rs.teslaris.core.service.impl.document.DeduplicationServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
-import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 
 @SpringBootTest
 public class DeduplicationServiceTest {
@@ -33,29 +40,51 @@ public class DeduplicationServiceTest {
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Mock
-    private SearchService<DocumentPublicationIndex> searchService;
+    private JournalIndexRepository journalIndexRepository;
+
+    @Mock
+    private EventIndexRepository eventIndexRepository;
+
+    @Mock
+    private PersonIndexRepository personIndexRepository;
 
     @Mock
     private DocumentDeduplicationSuggestionRepository deduplicationSuggestionRepository;
 
     @Mock
-    private DocumentPublicationService documentPublicationService;
+    private DocumentDeduplicationBlacklistRepository documentDeduplicationBlacklistRepository;
 
     @Mock
-    private DocumentDeduplicationBlacklistRepository documentDeduplicationBlacklistRepository;
+    private UserService userService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private SearchService<DocumentPublicationIndex> documentSearchService;
+
+    @Mock
+    private SearchService<JournalIndex> journalSearchService;
+
+    @Mock
+    private SearchService<EventIndex> eventSearchService;
+
+    @Mock
+    private SearchService<PersonIndex> personSearchService;
 
     @InjectMocks
     private DeduplicationServiceImpl deduplicationService;
 
 
     @Test
-    public void shouldDeleteDocumentSuggestionWhenSuggestionExists() {
+    public void shouldDeleteSuggestionWhenSuggestionExists() {
         // given
-        var suggestion = new DocumentDeduplicationSuggestion();
-        when(deduplicationSuggestionRepository.findById(1)).thenReturn(Optional.of(suggestion));
+        var suggestion = new DeduplicationSuggestion();
+        when(deduplicationSuggestionRepository.findById("testId")).thenReturn(
+            Optional.of(suggestion));
 
         // when
-        deduplicationService.deleteDocumentSuggestion(1);
+        deduplicationService.deleteSuggestion("testId");
 
         // then
         verify(deduplicationSuggestionRepository).delete(suggestion);
@@ -64,22 +93,21 @@ public class DeduplicationServiceTest {
     @Test
     public void shouldFlagDocumentAsNotDuplicateWhenSuggestionExistsAndNotInBlacklist() {
         // given
-        var suggestion = new DocumentDeduplicationSuggestion();
-        var leftDocument = new Monograph();
-        var rightDocument = new Monograph();
-        suggestion.setLeftDocument(leftDocument);
-        suggestion.setRightDocument(rightDocument);
+        var suggestion = new DeduplicationSuggestion();
+        suggestion.setLeftEntityId(1);
+        suggestion.setRightEntityId(2);
+        suggestion.setEntityType(IndexType.PUBLICATION);
 
-        when(deduplicationSuggestionRepository.findById(1)).thenReturn(Optional.of(suggestion));
-        when(documentDeduplicationBlacklistRepository.findByLeftDocumentIdAndRightDocumentId(
-            leftDocument.getId(), rightDocument.getId())).thenReturn(Optional.empty());
+        when(deduplicationSuggestionRepository.findById("testId")).thenReturn(
+            Optional.of(suggestion));
+        when(documentDeduplicationBlacklistRepository.findByEntityIdsAndEntityType(1, 2,
+            IndexType.PUBLICATION.name())).thenReturn(Optional.empty());
 
         // when
-        deduplicationService.flagDocumentAsNotDuplicate(1);
+        deduplicationService.flagAsNotDuplicate("testId");
 
         // then
-        verify(documentDeduplicationBlacklistRepository).save(
-            any(DocumentDeduplicationBlacklist.class));
+        verify(documentDeduplicationBlacklistRepository).save(any(DeduplicationBlacklist.class));
         verify(deduplicationSuggestionRepository).delete(suggestion);
     }
 
@@ -87,16 +115,18 @@ public class DeduplicationServiceTest {
     public void shouldReturnPageOfSuggestionsWhenSuggestionsExist() {
         // given
         var pageable = PageRequest.of(0, 10);
-        var suggestion = new DocumentDeduplicationSuggestion();
-        suggestion.setLeftDocument(new Monograph());
-        suggestion.setRightDocument(new Monograph());
+        var suggestion = new DeduplicationSuggestion();
+        suggestion.setLeftEntityId(1);
+        suggestion.setRightEntityId(2);
         var suggestions = List.of(suggestion);
         var page = new PageImpl<>(suggestions, pageable, suggestions.size());
 
-        when(deduplicationSuggestionRepository.findAll(pageable)).thenReturn(page);
+        when(deduplicationSuggestionRepository.findByEntityType(IndexType.PUBLICATION.name(),
+            pageable)).thenReturn(page);
 
         // when
-        var result = deduplicationService.getDeduplicationSuggestions(pageable);
+        var result =
+            deduplicationService.getDeduplicationSuggestions(pageable, IndexType.PUBLICATION);
 
         // then
         assertEquals(suggestions.size(), result.getTotalElements());
@@ -108,7 +138,7 @@ public class DeduplicationServiceTest {
         ReflectionTestUtils.setField(deduplicationService, "deduplicationLock", true);
 
         // when
-        boolean result = deduplicationService.startDocumentDeduplicationProcessBeforeSchedule(1);
+        boolean result = deduplicationService.startDeduplicationProcessBeforeSchedule(1);
 
         // then
         assertFalse(result);

@@ -42,6 +42,6 @@ public class DocumentFileIndex {
     @Field(type = FieldType.Text, store = true, name = "server_filename", index = false)
     private String serverFilename;
 
-    @Field(type = FieldType.Integer, store = true, name = "database_id")
+    @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
 }
