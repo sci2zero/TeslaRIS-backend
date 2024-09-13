@@ -26,7 +26,7 @@ public class DeduplicationSuggestion {
     @Field(type = FieldType.Integer, store = true, name = "left_entity_database_id")
     private Integer leftEntityId;
 
-    @Field(type = FieldType.Integer, store = true, name = "right_entity_id")
+    @Field(type = FieldType.Integer, store = true, name = "right_entity_database_id")
     private Integer rightEntityId;
 
     @Field(type = FieldType.Text, store = true, name = "left_title_sr", analyzer = "serbian", searchAnalyzer = "serbian")

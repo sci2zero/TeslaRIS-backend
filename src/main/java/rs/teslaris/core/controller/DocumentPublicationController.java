@@ -24,6 +24,8 @@ import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
@@ -34,6 +36,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class DocumentPublicationController {
 
     private final DocumentPublicationService documentPublicationService;
+
+    private final DeduplicationService deduplicationService;
 
 
     @GetMapping("/{documentId}/can-edit")
@@ -124,6 +128,7 @@ public class DocumentPublicationController {
     @PublicationEditCheck
     void deleteDocumentPublication(@PathVariable Integer documentId) {
         documentPublicationService.deleteDocumentPublication(documentId);
+        deduplicationService.deleteSuggestion(documentId, IndexType.PUBLICATION);
     }
 
     @PatchMapping("/{documentId}/reorder-contribution/{contributionId}")

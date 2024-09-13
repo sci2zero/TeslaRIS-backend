@@ -22,7 +22,9 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -32,6 +34,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class JournalController {
 
     private final JournalService journalService;
+
+    private final DeduplicationService deduplicationService;
 
 
     @GetMapping("/{journalId}/can-edit")
@@ -98,5 +102,6 @@ public class JournalController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     public void deleteJournal(@PathVariable Integer journalId) {
         journalService.deleteJournal(journalId);
+        deduplicationService.deleteSuggestion(journalId, IndexType.JOURNAL);
     }
 }

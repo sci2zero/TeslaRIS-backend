@@ -143,4 +143,28 @@ public class DeduplicationServiceTest {
         // then
         assertFalse(result);
     }
+
+    @Test
+    public void shouldDeleteSuggestionsWhenSuggestionsExist() {
+        // given
+        var deletedEntityId = 1;
+        var entityType = IndexType.PUBLICATION;
+
+        var suggestion = new DeduplicationSuggestion();
+        suggestion.setLeftEntityId(deletedEntityId);
+        suggestion.setRightEntityId(2);
+
+        var suggestions = List.of(suggestion);
+
+        // Mock repository behavior
+        when(deduplicationSuggestionRepository.findByEntityIdAndEntityType(deletedEntityId,
+            entityType.name()))
+            .thenReturn(suggestions);
+
+        // when
+        deduplicationService.deleteSuggestion(deletedEntityId, entityType);
+
+        // then
+        verify(deduplicationSuggestionRepository).deleteAll(suggestions);
+    }
 }

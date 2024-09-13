@@ -1,9 +1,12 @@
 package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,17 +17,21 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexmodel.deduplication.DeduplicationBlacklist;
 import rs.teslaris.core.indexmodel.deduplication.DeduplicationSuggestion;
+import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.indexrepository.deduplication.DocumentDeduplicationBlacklistRepository;
 import rs.teslaris.core.indexrepository.deduplication.DocumentDeduplicationSuggestionRepository;
@@ -41,8 +48,9 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @Transactional
 public class DeduplicationServiceImpl implements DeduplicationService {
 
+    private static final Integer CHUNK_SIZE = 20;
     private static volatile boolean deduplicationLock = false;
-    private static Integer currentSessionCounter = 0;
+    private final AtomicInteger currentSessionCounter = new AtomicInteger(0);
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
@@ -64,6 +72,14 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private final SearchService<JournalIndex> journalSearchService;
 
+    private final SearchService<BookSeriesIndex> bookSeriesSearchService;
+
+    private final BookSeriesIndexRepository bookSeriesIndexRepository;
+
+    private final SearchService<OrganisationUnitIndex> organisationUnitSearchService;
+
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
+
     private final SearchService<EventIndex> eventSearchService;
 
     private final SearchService<PersonIndex> personSearchService;
@@ -84,6 +100,13 @@ public class DeduplicationServiceImpl implements DeduplicationService {
     public void deleteSuggestion(String suggestionId) {
         deduplicationSuggestionRepository.delete(
             findDeduplicationSuggestionById(suggestionId));
+    }
+
+    @Override
+    public void deleteSuggestion(Integer deletedEntityId, IndexType entityType) {
+        deduplicationSuggestionRepository.deleteAll(
+            deduplicationSuggestionRepository.findByEntityIdAndEntityType(deletedEntityId,
+                entityType.name()));
     }
 
     @Override
@@ -137,226 +160,220 @@ public class DeduplicationServiceImpl implements DeduplicationService {
         }
 
         deduplicationLock = true;
-        currentSessionCounter = 0;
+        currentSessionCounter.set(0);
 
         log.info("Starting all deduplication processes.");
 
-        performScheduledDocumentDeduplication();
-        performScheduledJournalDeduplication();
-        performScheduledEventDeduplication();
-        performScheduledPersonDeduplication();
+        try {
+            var futures = List.of(
+                CompletableFuture.runAsync(this::performScheduledDocumentDeduplication),
+                CompletableFuture.runAsync(this::performScheduledJournalDeduplication),
+                CompletableFuture.runAsync(this::performScheduledEventDeduplication),
+                CompletableFuture.runAsync(this::performScheduledPersonDeduplication),
+                CompletableFuture.runAsync(this::performScheduledBookSeriesDeduplication),
+                CompletableFuture.runAsync(this::performScheduledOrganisationUnitsDeduplication)
+            );
 
-        deduplicationLock = false;
-
-        log.info("All deduplication processes. Total duplicates found: {}.",
-            currentSessionCounter);
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } finally {
+            deduplicationLock = false;
+            log.info("All deduplication processes completed. Total duplicates found: {}.",
+                currentSessionCounter);
+        }
     }
 
-    protected synchronized void performScheduledDocumentDeduplication() {
-        log.info("Deduplication of publications started.");
-        deduplicationSuggestionRepository.deleteByEntityType(IndexType.PUBLICATION.name());
-
-        int pageNumber = 0;
-        int chunkSize = 20;
-        boolean hasNextPage = true;
-        var duplicatesFound = new ArrayList<Integer>();
-
-        while (hasNextPage) {
-            List<DocumentPublicationIndex> chunk = documentPublicationIndexRepository.findByTypeIn(
+    private void performScheduledDocumentDeduplication() {
+        performScheduledDeduplication(
+            IndexType.PUBLICATION.name(),
+            (pageNumber) -> documentPublicationIndexRepository.findByTypeIn(
                 List.of(
                     DocumentPublicationType.MONOGRAPH.name(),
                     DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
                     DocumentPublicationType.PROCEEDINGS.name(),
                     DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(),
-                    DocumentPublicationType.PATENT.name(), DocumentPublicationType.SOFTWARE.name(),
+                    DocumentPublicationType.PATENT.name(),
+                    DocumentPublicationType.SOFTWARE.name(),
                     DocumentPublicationType.DATASET.name(),
                     DocumentPublicationType.THESIS.name()
                 ),
-                PageRequest.of(pageNumber, chunkSize)).getContent();
+                PageRequest.of(pageNumber, CHUNK_SIZE)).getContent(),
+            documentSearchService,
+            item -> BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+                b.must(bq -> {
+                    bq.bool(eq -> {
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_sr").query((item).getTitleSr())));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_other").query((item).getTitleOther())));
+                        return eq;
+                    });
+                    return bq;
+                });
+                b.must(sb -> sb.match(
+                    m -> m.field("type").query((item).getType())));
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("databaseId").query((item).getDatabaseId())));
+                return b;
+            }))),
+            DocumentPublicationIndex::getDatabaseId,
+            DocumentPublicationIndex::getTitleSr,
+            DocumentPublicationIndex::getTitleOther,
+            DocumentPublicationIndex::getType,
+            "document_publication"
+        );
+    }
 
-            chunk.forEach(publication -> {
-                if (duplicatesFound.contains(publication.getDatabaseId())) {
-                    return;
-                }
+    private void performScheduledJournalDeduplication() {
+        performScheduledDeduplication(
+            IndexType.JOURNAL.name(),
+            (pageNumber) -> journalIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE))
+                .getContent(),
+            journalSearchService,
+            item -> BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+                b.must(bq -> {
+                    bq.bool(eq -> {
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_sr").query((item).getTitleSr())));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_other").query((item).getTitleOther())));
+                        return eq;
+                    });
+                    return bq;
+                });
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("databaseId").query((item).getDatabaseId())));
+                return b;
+            }))),
+            JournalIndex::getDatabaseId,
+            JournalIndex::getTitleSr,
+            JournalIndex::getTitleOther,
+            null,
+            "journal"
+        );
+    }
 
-                var deduplicationQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+    private void performScheduledBookSeriesDeduplication() {
+        performScheduledDeduplication(
+            IndexType.BOOK_SERIES.name(),
+            (pageNumber) -> bookSeriesIndexRepository.findAll(
+                PageRequest.of(pageNumber, CHUNK_SIZE)).getContent(),
+            bookSeriesSearchService,
+            item -> BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+                b.must(bq -> {
+                    bq.bool(eq -> {
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_sr").query((item).getTitleSr())));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_other").query((item).getTitleOther())));
+                        return eq;
+                    });
+                    return bq;
+                });
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("databaseId").query((item).getDatabaseId())));
+                return b;
+            }))),
+            BookSeriesIndex::getDatabaseId,
+            BookSeriesIndex::getTitleSr,
+            BookSeriesIndex::getTitleOther,
+            null,
+            "book_series"
+        );
+    }
+
+    private void performScheduledOrganisationUnitsDeduplication() {
+        performScheduledDeduplication(
+            IndexType.ORGANISATION_UNIT.name(),
+            (pageNumber) -> organisationUnitIndexRepository.findAll(
+                PageRequest.of(pageNumber, CHUNK_SIZE)).getContent(),
+            organisationUnitSearchService,
+            item -> BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+                b.must(bq -> {
+                    bq.bool(eq -> {
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("name_sr").query((item).getNameSr())));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("name_other").query((item).getNameOther())));
+                        return eq;
+                    });
+                    return bq;
+                });
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("databaseId").query((item).getDatabaseId())));
+
+                if (Objects.nonNull(item.getSuperOUNameSr()) &&
+                    Objects.nonNull(item.getSuperOUNameOther())) {
                     b.must(bq -> {
                         bq.bool(eq -> {
-                            eq.should(sb -> sb.matchPhrase(
-                                m -> m.field("title_sr").query(publication.getTitleSr())));
-                            eq.should(sb -> sb.matchPhrase(
-                                m -> m.field("title_other").query(publication.getTitleOther())));
+                            eq.should(sb -> sb.match(
+                                m -> m.field("super_ou_name_sr").query((item).getSuperOUNameSr())));
+                            eq.should(sb -> sb.match(
+                                m -> m.field("super_ou_name_other")
+                                    .query((item).getSuperOUNameOther())));
                             return eq;
                         });
                         return bq;
                     });
-                    b.must(sb -> sb.match(
-                        m -> m.field("type").query(publication.getType())));
-                    b.mustNot(sb -> sb.match(
-                        m -> m.field("databaseId").query(publication.getDatabaseId())));
-                    return b;
-                })));
-
-                var similarPublications = documentSearchService.runQuery(
-                    deduplicationQuery._toQuery(),
-                    PageRequest.of(0, 2),
-                    DocumentPublicationIndex.class,
-                    "document_publication"
-                ).getContent();
-
-                if (!similarPublications.isEmpty()) {
-                    handleDuplicate(publication, similarPublications, duplicatesFound,
-                        IndexType.PUBLICATION, DocumentPublicationIndex::getDatabaseId,
-                        DocumentPublicationIndex::getTitleSr,
-                        DocumentPublicationIndex::getTitleOther, DocumentPublicationIndex::getType
-                    );
                 }
-            });
 
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+                return b;
+            }))),
+            OrganisationUnitIndex::getDatabaseId,
+            OrganisationUnitIndex::getNameSr,
+            OrganisationUnitIndex::getNameOther,
+            null,
+            "organisation_unit"
+        );
     }
 
-    protected synchronized void performScheduledJournalDeduplication() {
-        log.info("Deduplication of journals started.");
-        deduplicationSuggestionRepository.deleteByEntityType(IndexType.JOURNAL.name());
-
-        int pageNumber = 0;
-        int chunkSize = 20;
-        boolean hasNextPage = true;
-        var duplicatesFound = new ArrayList<Integer>();
-
-        while (hasNextPage) {
-            List<JournalIndex> chunk =
-                journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
-
-            chunk.forEach(journal -> {
-                if (duplicatesFound.contains(journal.getDatabaseId())) {
-                    return;
-                }
-
-                var deduplicationQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-                    b.must(bq -> {
-                        bq.bool(eq -> {
-                            eq.should(sb -> sb.matchPhrase(
-                                m -> m.field("title_sr").query(journal.getTitleSr())));
-                            eq.should(sb -> sb.matchPhrase(
-                                m -> m.field("title_other").query(journal.getTitleOther())));
-                            return eq;
-                        });
-                        return bq;
+    private void performScheduledEventDeduplication() {
+        performScheduledDeduplication(
+            IndexType.EVENT.name(),
+            (pageNumber) -> eventIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE))
+                .getContent(),
+            eventSearchService,
+            item -> BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+                b.must(bq -> {
+                    bq.bool(eq -> {
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_sr").query((item).getNameSr())));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("title_other").query((item).getNameOther())));
+                        return eq;
                     });
-                    b.mustNot(sb -> sb.match(
-                        m -> m.field("databaseId").query(journal.getDatabaseId())));
-                    return b;
-                })));
-
-                var similarJournals = journalSearchService.runQuery(
-                    deduplicationQuery._toQuery(),
-                    PageRequest.of(0, 2),
-                    JournalIndex.class,
-                    "journal"
-                ).getContent();
-
-                if (!similarJournals.isEmpty()) {
-                    handleDuplicate(
-                        journal, similarJournals, duplicatesFound, IndexType.JOURNAL,
-                        JournalIndex::getDatabaseId, JournalIndex::getTitleSr,
-                        JournalIndex::getTitleOther, null
-                    );
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+                    return bq;
+                });
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("databaseId").query((item).getDatabaseId())));
+                return b;
+            }))),
+            EventIndex::getDatabaseId,
+            EventIndex::getNameSr,
+            EventIndex::getNameOther,
+            null,
+            "events"
+        );
     }
 
-    protected synchronized void performScheduledEventDeduplication() {
-        log.info("Deduplication of events started.");
-        deduplicationSuggestionRepository.deleteByEntityType(IndexType.EVENT.name());
-
-        int pageNumber = 0;
-        int chunkSize = 20;
-        boolean hasNextPage = true;
-        var duplicatesFound = new ArrayList<Integer>();
-
-        while (hasNextPage) {
-            List<EventIndex> chunk =
-                eventIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
-
-            chunk.forEach(event -> {
-                if (duplicatesFound.contains(event.getDatabaseId())) {
-                    return;
-                }
-
-                var deduplicationQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-                    b.must(bq -> {
-                        bq.bool(eq -> {
-                            eq.should(sb -> sb.matchPhrase(
-                                m -> m.field("title_sr").query(event.getNameSr())));
-                            eq.should(sb -> sb.matchPhrase(
-                                m -> m.field("title_other").query(event.getNameOther())));
-                            return eq;
-                        });
-                        return bq;
-                    });
-                    b.mustNot(sb -> sb.match(
-                        m -> m.field("databaseId").query(event.getDatabaseId())));
-                    return b;
-                })));
-
-                var similarEvents = eventSearchService.runQuery(
-                    deduplicationQuery._toQuery(),
-                    PageRequest.of(0, 2),
-                    EventIndex.class,
-                    "events"
-                ).getContent();
-
-                if (!similarEvents.isEmpty()) {
-                    handleDuplicate(
-                        event, similarEvents, duplicatesFound, IndexType.EVENT,
-                        EventIndex::getDatabaseId, EventIndex::getNameSr,
-                        EventIndex::getNameOther, null
-                    );
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
-    }
-
-    protected synchronized void performScheduledPersonDeduplication() {
-        log.info("Deduplication of persons started.");
-        deduplicationSuggestionRepository.deleteByEntityType(IndexType.PERSON.name());
-
-        int pageNumber = 0;
-        int chunkSize = 20;
-        boolean hasNextPage = true;
-        var duplicatesFound = new ArrayList<Integer>();
-
-        while (hasNextPage) {
-            List<PersonIndex> chunk =
-                personIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
-
-            chunk.forEach(person -> {
-                if (duplicatesFound.contains(person.getDatabaseId())) {
-                    return;
-                }
-
+    private void performScheduledPersonDeduplication() {
+        performScheduledDeduplication(
+            IndexType.PERSON.name(),
+            (pageNumber) -> personIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE))
+                .getContent(),
+            personSearchService,
+            item -> {
+                var person = (PersonIndex) item;
                 var tokens = List.of(person.getName().trim().split(" "));
                 var minShouldMatch = (int) Math.ceil(tokens.size() * 0.6);
 
-                var deduplicationQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+                return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
                     b.must(bq -> {
                         bq.bool(eq -> {
                             tokens.forEach(
-                                token -> {
-                                    eq.should(sb -> sb.match(m -> m.field("name").query(token)));
-                                });
+                                token -> eq.should(
+                                    sb -> sb.match(m -> m.field("name").query(token)))
+                            );
                             eq.should(sb -> sb.match(
                                 m -> m.field("birthdate").query(person.getBirthdate())));
                             return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
@@ -367,32 +384,67 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                         m -> m.field("databaseId").query(person.getDatabaseId())));
                     return b;
                 })));
+            },
+            PersonIndex::getDatabaseId,
+            PersonIndex::getName,
+            PersonIndex::getName,
+            null,
+            "person"
+        );
+    }
 
-                var similarPersons = personSearchService.runQuery(
+    private <T> void performScheduledDeduplication(
+        String indexType,
+        Function<Integer, List<T>> fetchChunk,
+        SearchService<T> searchService,
+        Function<T, BoolQuery> constructQuery,
+        Function<T, Integer> getDatabaseId,
+        Function<T, String> getTitleSr,
+        Function<T, String> getTitleOther,
+        Function<T, String> getType,
+        String collection
+    ) {
+        log.info("Deduplication of {} started.", indexType);
+        deduplicationSuggestionRepository.deleteByEntityType(indexType);
+
+        int pageNumber = 0;
+        boolean hasNextPage = true;
+        var duplicatesFound = new ConcurrentSkipListSet<Integer>();
+
+        while (hasNextPage) {
+            List<T> chunk = fetchChunk.apply(pageNumber);
+
+            chunk.forEach(item -> {
+                if (duplicatesFound.contains(getDatabaseId.apply(item))) {
+                    return;
+                }
+
+                var deduplicationQuery = constructQuery.apply(item);
+                var similarItems = searchService.runQuery(
                     deduplicationQuery._toQuery(),
                     PageRequest.of(0, 2),
-                    PersonIndex.class,
-                    "person"
+                    (Class<T>) item.getClass(),
+                    collection
                 ).getContent();
 
-                if (!similarPersons.isEmpty()) {
+                if (!similarItems.isEmpty()) {
                     handleDuplicate(
-                        person, similarPersons, duplicatesFound, IndexType.PERSON,
-                        PersonIndex::getDatabaseId, PersonIndex::getName,
-                        PersonIndex::getName, null
+                        item, similarItems, duplicatesFound,
+                        IndexType.valueOf(indexType.toUpperCase()),
+                        getDatabaseId, getTitleSr, getTitleOther, getType
                     );
                 }
             });
 
             pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
+            hasNextPage = chunk.size() == CHUNK_SIZE;
         }
     }
 
     private <T> void handleDuplicate(
         T entity,
         List<T> similarEntities,
-        ArrayList<Integer> foundDuplicates,
+        ConcurrentSkipListSet<Integer> foundDuplicates,
         IndexType indexType,
         Function<T, Integer> getIdFunction,
         Function<T, String> getTitleSrFunction,
@@ -419,7 +471,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 getTitleSrFunction.apply(similarEntity),
                 getTitleOtherFunction.apply(similarEntity));
 
-            currentSessionCounter++;
+            currentSessionCounter.incrementAndGet();
             deduplicationSuggestionRepository.save(
                 new DeduplicationSuggestion(
                     getIdFunction.apply(entity),
@@ -436,7 +488,6 @@ public class DeduplicationServiceImpl implements DeduplicationService {
             );
         }
     }
-
 
     private DeduplicationSuggestion findDeduplicationSuggestionById(
         String suggestionId) {

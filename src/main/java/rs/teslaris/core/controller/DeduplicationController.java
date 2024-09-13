@@ -36,11 +36,15 @@ public class DeduplicationController {
                 deduplicationService.getDeduplicationSuggestions(pageable, IndexType.PUBLICATION);
             case JOURNAL ->
                 deduplicationService.getDeduplicationSuggestions(pageable, IndexType.JOURNAL);
+            case BOOK_SERIES ->
+                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.BOOK_SERIES);
             case EVENT ->
                 deduplicationService.getDeduplicationSuggestions(pageable, IndexType.EVENT);
             case PERSON ->
                 deduplicationService.getDeduplicationSuggestions(pageable, IndexType.PERSON);
-            default -> null;
+            case ORGANISATION_UNIT -> deduplicationService.getDeduplicationSuggestions(pageable,
+                IndexType.ORGANISATION_UNIT);
+            default -> Page.empty();
         };
 
     }

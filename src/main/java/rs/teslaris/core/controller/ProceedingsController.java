@@ -20,6 +20,8 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 
 @RestController
@@ -28,6 +30,8 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 public class ProceedingsController {
 
     private final ProceedingsService proceedingsService;
+
+    private final DeduplicationService deduplicationService;
 
 
     @GetMapping("/{documentId}")
@@ -68,5 +72,6 @@ public class ProceedingsController {
     @PublicationEditCheck
     public void deleteProceedings(@PathVariable Integer documentId) {
         proceedingsService.deleteProceedings(documentId);
+        deduplicationService.deleteSuggestion(documentId, IndexType.PUBLICATION);
     }
 }

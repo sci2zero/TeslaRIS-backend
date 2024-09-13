@@ -23,8 +23,10 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
+import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
@@ -35,6 +37,9 @@ import rs.teslaris.core.util.search.StringUtil;
 public class OrganisationUnitController {
 
     private final OrganisationUnitService organisationUnitService;
+
+    private final DeduplicationService deduplicationService;
+
 
     @GetMapping("/{organisationUnitId}/can-edit")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
@@ -121,5 +126,6 @@ public class OrganisationUnitController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
         organisationUnitService.deleteOrganisationUnit(organisationUnitId);
+        deduplicationService.deleteSuggestion(organisationUnitId, IndexType.ORGANISATION_UNIT);
     }
 }

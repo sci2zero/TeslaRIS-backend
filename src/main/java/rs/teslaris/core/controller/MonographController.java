@@ -20,6 +20,8 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -29,6 +31,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class MonographController {
 
     private final MonographService monographService;
+
+    private final DeduplicationService deduplicationService;
 
 
     @GetMapping("/{documentId}")
@@ -67,5 +71,6 @@ public class MonographController {
     @PublicationEditCheck
     public void deleteMonograph(@PathVariable Integer documentId) {
         monographService.deleteMonograph(documentId);
+        deduplicationService.deleteSuggestion(documentId, IndexType.PUBLICATION);
     }
 }

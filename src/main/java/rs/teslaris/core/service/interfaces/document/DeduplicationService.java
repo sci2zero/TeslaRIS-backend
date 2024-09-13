@@ -15,5 +15,7 @@ public interface DeduplicationService {
 
     void deleteSuggestion(String suggestionId);
 
+    void deleteSuggestion(Integer deletedEntityId, IndexType entityType);
+
     void flagAsNotDuplicate(String suggestionId);
 }

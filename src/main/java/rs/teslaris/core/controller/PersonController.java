@@ -29,7 +29,9 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
+import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -43,6 +45,8 @@ public class PersonController {
     private final PersonService personService;
 
     private final JwtUtil tokenUtil;
+
+    private final DeduplicationService deduplicationService;
 
 
     @GetMapping("/{personId}/can-edit")
@@ -175,6 +179,7 @@ public class PersonController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePerson(@PathVariable Integer personId) {
         personService.deletePerson(personId);
+        deduplicationService.deleteSuggestion(personId, IndexType.PERSON);
     }
 
     @GetMapping("/{personId}/latest-involvement")

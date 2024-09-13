@@ -129,12 +129,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(buildSimpleSearchQuery(tokens),
                 pageable,
-                OrganisationUnitIndex.class, "organisation-unit");
+                OrganisationUnitIndex.class, "organisation_unit");
         }
 
         return searchService.runQuery(
             expressionTransformer.parseAdvancedQuery(tokens), pageable,
-            OrganisationUnitIndex.class, "organisation-unit");
+            OrganisationUnitIndex.class, "organisation_unit");
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
