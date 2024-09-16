@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -24,11 +25,17 @@ import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.document.BookSeriesPublishable;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -101,6 +108,12 @@ public class MergeServiceImpl implements MergeService {
 
     private final MonographPublicationService monographPublicationService;
 
+    private final ProceedingsRepository proceedingsRepository;
+
+    private final MonographRepository monographRepository;
+
+    private final BookSeriesService bookSeriesService;
+
 
     @Override
     public void switchJournalPublicationToOtherJournal(Integer targetJournalId,
@@ -122,6 +135,25 @@ public class MergeServiceImpl implements MergeService {
                 journalPublicationIndex.getDatabaseId()),
             pageRequest -> documentPublicationIndexRepository.findByTypeAndJournalId(
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, pageRequest)
+                .getContent()
+        );
+    }
+
+    @Override
+    public void switchPublicationToOtherBookSeries(Integer targetBookSeriesId,
+                                                   Integer publicationId) {
+        performBookSeriesPublicationSwitch(targetBookSeriesId, publicationId);
+    }
+
+    @Override
+    public void switchAllPublicationsToOtherBookSeries(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, publicationIndex) -> performBookSeriesPublicationSwitch(targetId,
+                publicationIndex.getDatabaseId()),
+            pageRequest -> documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+                    List.of(DocumentPublicationType.MONOGRAPH.name(),
+                        DocumentPublicationType.PROCEEDINGS.name()), sourceId, pageRequest)
                 .getContent()
         );
     }
@@ -309,6 +341,19 @@ public class MergeServiceImpl implements MergeService {
     public void saveMergedJournalsMetadata(Integer leftId, Integer rightId, JournalDTO leftData,
                                            JournalDTO rightData) {
         updateAndRestoreMetadata(journalService::updateJournal, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getEissn(), dto.getPrintISSN()},
+            (dto, values) -> {
+                dto.setEissn(values[0]);
+                dto.setPrintISSN(values[1]);
+            });
+    }
+
+    @Override
+    public void saveMergedBookSeriesMetadata(Integer leftId, Integer rightId,
+                                             BookSeriesDTO leftData,
+                                             BookSeriesDTO rightData) {
+        updateAndRestoreMetadata(bookSeriesService::updateBookSeries, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getEissn(), dto.getPrintISSN()},
             (dto, values) -> {
@@ -523,6 +568,37 @@ public class MergeServiceImpl implements MergeService {
         var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             publicationId).orElse(new DocumentPublicationIndex());
         journalPublicationService.indexJournalPublication(publication.get(), index);
+    }
+
+    private void performBookSeriesPublicationSwitch(Integer targetBookSeriesId,
+                                                    Integer publicationId) {
+        BookSeriesPublishable publication;
+        var proceedings = proceedingsRepository.findById(publicationId);
+
+        if (proceedings.isEmpty()) {
+            var monograph = monographRepository.findById(publicationId);
+            if (monograph.isEmpty()) {
+                throw new NotFoundException("Publication does not exist.");
+            } else {
+                publication = monograph.get();
+            }
+        } else {
+            publication = proceedings.get();
+        }
+
+        var targetBookSeries = bookSeriesService.findBookSeriesById(targetBookSeriesId);
+
+        publication.setPublicationSeries(targetBookSeries);
+
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            publicationId).orElse(new DocumentPublicationIndex());
+        if (publication instanceof Proceedings) {
+            proceedingsRepository.save((Proceedings) publication);
+            proceedingsService.indexProceedings((Proceedings) publication, index);
+        } else {
+            monographRepository.save((Monograph) publication);
+            monographService.indexMonograph((Monograph) publication, index);
+        }
     }
 
     private void performProceedingsPublicationSwitch(Integer targetProceedingsId,

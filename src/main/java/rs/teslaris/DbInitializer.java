@@ -167,9 +167,10 @@ public class DbInitializer implements ApplicationRunner {
         var performDeduplication = new Privilege("PERFORM_DEDUPLICATION");
         var mergeDocumentsMetadata = new Privilege("MERGE_DOCUMENTS_METADATA");
         var mergeEventMetadata = new Privilege("MERGE_EVENT_METADATA");
-        var mergeJournalMetadata = new Privilege("MERGE_JOURNAL_METADATA");
+        var mergePublicationSeriesMetadata = new Privilege("MERGE_PUBLICATION_SERIES_METADATA");
         var mergeMonographPublications = new Privilege("MERGE_MONOGRAPH_PUBLICATIONS");
         var prepareExportData = new Privilege("PREPARE_EXPORT_DATA");
+        var mergeBookSeriesPublications = new Privilege("MERGE_BOOK_SERIES_PUBLICATIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -179,8 +180,8 @@ public class DbInitializer implements ApplicationRunner {
                 mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
                 mergeConferenceProceedings, mergeProceedingsPublications,
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
-                mergeEventMetadata, mergeJournalMetadata, mergeMonographPublications,
-                prepareExportData));
+                mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
+                prepareExportData, mergeBookSeriesPublications));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
@@ -190,8 +191,8 @@ public class DbInitializer implements ApplicationRunner {
                 mergePersonPublications, mergePersonMetadata, mergeOUEmployments,
                 mergeConferenceProceedings, mergeProceedingsPublications,
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
-                mergeEventMetadata, mergeJournalMetadata, mergeMonographPublications,
-                prepareExportData)));
+                mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
+                prepareExportData, mergeBookSeriesPublications)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,

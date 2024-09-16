@@ -64,15 +64,6 @@ public class ProceedingsControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadProceedingsForBookSeries() throws Exception {
-        mockMvc.perform(
-            MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/proceedings/book-series/{bookSeriesId}", 2)
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
-    }
-
-    @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadProceedingsForEvent() throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(

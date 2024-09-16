@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -22,6 +23,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -40,6 +42,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
+import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -61,8 +64,11 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.impl.comparator.MergeServiceImpl;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -151,6 +157,15 @@ public class MergeServiceTest {
     @Mock
     private MonographPublicationService monographPublicationService;
 
+    @Mock
+    private ProceedingsRepository proceedingsRepository;
+
+    @Mock
+    private MonographRepository monographRepository;
+
+    @Mock
+    private BookSeriesService bookSeriesService;
+
     @InjectMocks
     private MergeServiceImpl mergeService;
 
@@ -212,6 +227,63 @@ public class MergeServiceTest {
             any(PageRequest.class));
         assertEquals(targetJournal, publication1.getJournal());
         assertEquals(targetJournal, publication2.getJournal());
+    }
+
+    @Test
+    void switchPublicationToOtherBookSeries_shouldPerformSwitch() {
+        var targetBookSeriesId = 1;
+        var publicationId = 2;
+
+        var publication = new Monograph();
+        when(monographRepository.findById(publicationId)).thenReturn(
+            Optional.of(publication));
+        var targetBookSeries = new BookSeries();
+        when(bookSeriesService.findBookSeriesById(targetBookSeriesId)).thenReturn(targetBookSeries);
+
+        mergeService.switchPublicationToOtherBookSeries(targetBookSeriesId, publicationId);
+
+        verify(monographRepository).findById(publicationId);
+        verify(bookSeriesService).findBookSeriesById(targetBookSeriesId);
+        verify(monographRepository).save(publication);
+        assertEquals(targetBookSeries, publication.getPublicationSeries());
+    }
+
+    @Test
+    void switchAllPublicationsToOtherBookSeries_shouldPerformSwitchForAll() {
+        var sourceId = 1;
+        var targetId = 2;
+
+        var publicationIndex1 = new DocumentPublicationIndex();
+        publicationIndex1.setDatabaseId(1);
+        var publicationIndex2 = new DocumentPublicationIndex();
+        publicationIndex2.setDatabaseId(2);
+        var page1 = new PageImpl<>(
+            List.of(publicationIndex1, publicationIndex2));
+        var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
+
+        when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+            List.of(DocumentPublicationType.MONOGRAPH.name(),
+                DocumentPublicationType.PROCEEDINGS.name()), sourceId,
+            PageRequest.of(0, 10))).thenReturn(page1);
+        when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+            List.of(DocumentPublicationType.MONOGRAPH.name(),
+                DocumentPublicationType.PROCEEDINGS.name()), sourceId,
+            PageRequest.of(1, 10))).thenReturn(page2);
+
+        var publication1 = new Monograph();
+        var publication2 = new Proceedings();
+        when(monographRepository.findById(publicationIndex1.getDatabaseId())).thenReturn(
+            Optional.of(publication1));
+        when(proceedingsRepository.findById(publicationIndex2.getDatabaseId())).thenReturn(
+            Optional.of(publication2));
+
+        var targetBookSeries = new BookSeries();
+        when(bookSeriesService.findBookSeriesById(targetId)).thenReturn(targetBookSeries);
+
+        mergeService.switchAllPublicationsToOtherBookSeries(sourceId, targetId);
+
+        assertEquals(targetBookSeries, publication1.getPublicationSeries());
+        assertEquals(targetBookSeries, publication2.getPublicationSeries());
     }
 
     @Test
@@ -639,6 +711,23 @@ public class MergeServiceTest {
     }
 
     @Test
+    public void shouldSaveMergedBookSeriesMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new BookSeriesDTO();
+        var rightData = new BookSeriesDTO();
+
+        // when
+        mergeService.saveMergedBookSeriesMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(bookSeriesService, atLeastOnce()).updateBookSeries(leftId, leftData);
+        verify(bookSeriesService).updateBookSeries(rightId, rightData);
+        verify(bookSeriesService, times(2)).updateBookSeries(leftId, leftData);
+    }
+
+    @Test
     public void shouldSaveMergedConferencesMetadata() {
         // given
         var leftId = 1;
@@ -851,7 +940,7 @@ public class MergeServiceTest {
         verify(monographPublicationService, times(3)).editMonographPublication(anyInt(),
             any(MonographPublicationDTO.class));
         assertEquals("10.1000/xyz123", leftData.getDoi());
-        assertEquals(null, leftData.getScopusId());
+        assertNull(leftData.getScopusId());
         verify(monographPublicationService, times(2)).editMonographPublication(eq(leftId),
             any(MonographPublicationDTO.class));
     }

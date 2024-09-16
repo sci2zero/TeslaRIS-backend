@@ -2,6 +2,7 @@ package rs.teslaris.core.service.interfaces.merge;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -21,6 +22,11 @@ public interface MergeService {
     void switchJournalPublicationToOtherJournal(Integer targetJournalId, Integer publicationId);
 
     void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId);
+
+    void switchPublicationToOtherBookSeries(Integer targetJournalId,
+                                            Integer publicationId);
+
+    void switchAllPublicationsToOtherBookSeries(Integer sourceId, Integer targetId);
 
     void switchProceedingsPublicationToOtherProceedings(Integer targetProceedingsId,
                                                         Integer publicationId);
@@ -62,6 +68,9 @@ public interface MergeService {
 
     void saveMergedJournalsMetadata(Integer leftId, Integer rightId, JournalDTO leftData,
                                     JournalDTO rightData);
+
+    void saveMergedBookSeriesMetadata(Integer leftId, Integer rightId, BookSeriesDTO leftData,
+                                      BookSeriesDTO rightData);
 
     void saveMergedConferencesMetadata(Integer leftId, Integer rightId, ConferenceDTO leftData,
                                        ConferenceDTO rightData);

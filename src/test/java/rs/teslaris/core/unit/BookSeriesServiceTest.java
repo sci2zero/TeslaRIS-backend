@@ -3,6 +3,7 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
@@ -22,7 +23,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
@@ -61,6 +65,9 @@ public class BookSeriesServiceTest {
 
     @Mock
     private PublicationSeriesRepository publicationSeriesRepository;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @InjectMocks
     private BookSeriesServiceImpl bookSeriesService;
@@ -137,7 +144,7 @@ public class BookSeriesServiceTest {
             Optional.empty());
 
         // when
-        bookSeriesService.updateBookSeries(bookSeriesDTO, bookSeriesId);
+        bookSeriesService.updateBookSeries(bookSeriesId, bookSeriesDTO);
 
         // then
         verify(bookSeriesJPAService, times(1)).save(any());
@@ -255,5 +262,25 @@ public class BookSeriesServiceTest {
         verify(bookSeriesIndexRepository, times(1)).deleteAll();
         verify(bookSeriesJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(bookSeriesIndexRepository, atLeastOnce()).save(any(BookSeriesIndex.class));
+    }
+
+    @Test
+    void shouldFindPublicationsForBookSeries() {
+        // Given
+        var bookSeriesId = 123;
+        var pageable = Pageable.ofSize(10).withPage(0);
+
+        when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+            List.of(DocumentPublicationType.PROCEEDINGS.name(),
+                DocumentPublicationType.MONOGRAPH.name()), bookSeriesId, pageable))
+            .thenReturn(new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+
+        // When
+        var result = bookSeriesService.findPublicationsForBookSeries(bookSeriesId, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.getSize() >= 2);
     }
 }

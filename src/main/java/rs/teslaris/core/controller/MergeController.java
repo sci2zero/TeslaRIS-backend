@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.deduplication.MergedBookSeriesDTO;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
@@ -48,6 +49,22 @@ public class MergeController {
     public void switchAllPublicationsToOtherJournal(@PathVariable Integer sourceJournalId,
                                                     @PathVariable Integer targetJournalId) {
         mergeService.switchAllPublicationsToOtherJournal(sourceJournalId, targetJournalId);
+    }
+
+    @PatchMapping("/book-series/{targetBookSeriesId}/publication/{publicationId}")
+    @PreAuthorize("hasAuthority('MERGE_BOOK_SERIES_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchPublicationToOtherBookSeries(@PathVariable Integer targetBookSeriesId,
+                                                   @PathVariable Integer publicationId) {
+        mergeService.switchPublicationToOtherBookSeries(targetBookSeriesId, publicationId);
+    }
+
+    @PatchMapping("/book-series/source/{sourceBookSeriesId}/target/{targetBookSeriesId}")
+    @PreAuthorize("hasAuthority('MERGE_BOOK_SERIES_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllPublicationsToOtherBookSeries(@PathVariable Integer sourceBookSeriesId,
+                                                       @PathVariable Integer targetBookSeriesId) {
+        mergeService.switchAllPublicationsToOtherBookSeries(sourceBookSeriesId, targetBookSeriesId);
     }
 
     @PatchMapping("/person/{sourcePersonId}/target/{targetPersonId}/publication/{publicationId}")
@@ -201,7 +218,7 @@ public class MergeController {
     }
 
     @PatchMapping("/journal/metadata/{leftJournalId}/{rightJournalId}")
-    @PreAuthorize("hasAuthority('MERGE_JOURNAL_METADATA')")
+    @PreAuthorize("hasAuthority('MERGE_PUBLICATION_SERIES_METADATA')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedJournalsMetadata(
         @PathVariable Integer leftJournalId,
@@ -209,6 +226,17 @@ public class MergeController {
         @NotNull @RequestBody MergedJournalsDTO mergedJournals) {
         mergeService.saveMergedJournalsMetadata(leftJournalId, rightJournalId,
             mergedJournals.getLeftJournal(), mergedJournals.getRightJournal());
+    }
+
+    @PatchMapping("/book-series/metadata/{leftBookSeriesId}/{rightBookSeriesId}")
+    @PreAuthorize("hasAuthority('MERGE_PUBLICATION_SERIES_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedJournalsMetadata(
+        @PathVariable Integer leftBookSeriesId,
+        @PathVariable Integer rightBookSeriesId,
+        @NotNull @RequestBody MergedBookSeriesDTO mergedBookSeries) {
+        mergeService.saveMergedBookSeriesMetadata(leftBookSeriesId, rightBookSeriesId,
+            mergedBookSeries.getLeftBookSeries(), mergedBookSeries.getRightBookSeries());
     }
 
     @PatchMapping("/software/metadata/{leftSoftwareId}/{rightSoftwareId}")

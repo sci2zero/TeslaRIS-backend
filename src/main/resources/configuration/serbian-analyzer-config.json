@@ -1,8 +1,20 @@
 {
   "analysis": {
+    "char_filter": {
+      "serbian_char_filter": {
+        "type": "mapping",
+        "mappings": [
+          "Đ => Dj",
+          "đ => dj",
+          "Ђ => Dj",
+          "ђ => dj"
+        ]
+      }
+    },
     "analyzer": {
       "serbian": {
         "type": "custom",
+        "char_filter": ["serbian_char_filter"],
         "tokenizer": "icu_tokenizer",
         "filter": [
           "lowercase",
@@ -13,6 +25,7 @@
       },
       "serbian_simple": {
         "type": "custom",
+        "char_filter": ["serbian_char_filter"],
         "tokenizer": "standard",
         "filter": [
           "lowercase",

@@ -100,6 +100,8 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/document/for-organisation-unit/{organisationUnitId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/book-series/publications/{bookSeriesId}")
+                .permitAll()
 
                 // PROCEEDINGS
                 .requestMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()
@@ -129,6 +131,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/patent/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/monograph/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/journal/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/book-series/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/proceedings/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/thesis/{documentId}").permitAll()
 

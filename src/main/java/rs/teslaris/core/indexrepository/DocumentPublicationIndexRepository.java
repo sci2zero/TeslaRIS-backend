@@ -39,6 +39,10 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId,
                                                           Pageable pageable);
 
+    Page<DocumentPublicationIndex> findByTypeInAndPublicationSeriesId(List<String> types,
+                                                                      Integer publicationSeriesId,
+                                                                      Pageable pageable);
+
     Page<DocumentPublicationIndex> findByTypeAndMonographId(String type, Integer monographId,
                                                             Pageable pageable);
 

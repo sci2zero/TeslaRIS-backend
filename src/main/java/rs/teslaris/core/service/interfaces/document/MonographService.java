@@ -23,4 +23,6 @@ public interface MonographService {
     void deleteMonograph(Integer monographId);
 
     void reindexMonographs();
+
+    void indexMonograph(Monograph monograph, DocumentPublicationIndex index);
 }
