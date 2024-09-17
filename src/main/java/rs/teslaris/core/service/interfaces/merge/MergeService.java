@@ -14,6 +14,7 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 
 @Service
@@ -41,6 +42,9 @@ public interface MergeService {
     void switchPersonToOtherOU(Integer sourceOUId, Integer targetOUId, Integer personId);
 
     void switchAllPersonsToOtherOU(Integer sourceOUId, Integer targetOUId);
+
+    void saveMergedOUsMetadata(Integer leftId, Integer rightId, OrganisationUnitRequestDTO leftData,
+                               OrganisationUnitRequestDTO rightData);
 
     void switchProceedingsToOtherConference(Integer targetConferenceId, Integer proceedingsId);
 

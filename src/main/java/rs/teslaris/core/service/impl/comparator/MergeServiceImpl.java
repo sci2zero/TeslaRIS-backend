@@ -21,6 +21,7 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -334,6 +335,19 @@ public class MergeServiceImpl implements MergeService {
                 dto.setENaukaId(values[2]);
                 dto.setScopusAuthorId(values[3]);
                 dto.setOrcid(values[4]);
+            });
+    }
+
+    @Override
+    public void saveMergedOUsMetadata(Integer leftId, Integer rightId,
+                                      OrganisationUnitRequestDTO leftData,
+                                      OrganisationUnitRequestDTO rightData) {
+        updateAndRestoreMetadata(organisationUnitService::editOrganisationUnit, leftId, rightId,
+            leftData,
+            rightData,
+            dto -> new String[] {dto.getScopusAfid()},
+            (dto, values) -> {
+                dto.setScopusAfid(values[0]);
             });
     }
 

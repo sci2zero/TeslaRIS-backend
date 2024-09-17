@@ -36,6 +36,7 @@ import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -998,5 +999,23 @@ public class MergeServiceTest {
 
         assertEquals(targetMonograph, publication1.getMonograph());
         assertEquals(targetMonograph, publication2.getMonograph());
+    }
+
+    @Test
+    public void shouldSaveMergedOUsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new OrganisationUnitRequestDTO();
+        leftData.setScopusAfid("60000765");
+        var rightData = new OrganisationUnitRequestDTO();
+
+        // when
+        mergeService.saveMergedOUsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(organisationUnitService, atLeastOnce()).editOrganisationUnit(leftId, leftData);
+        verify(organisationUnitService).editOrganisationUnit(rightId, rightData);
+        verify(organisationUnitService, times(2)).editOrganisationUnit(leftId, leftData);
     }
 }

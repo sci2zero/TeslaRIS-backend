@@ -104,8 +104,8 @@ public class OrganisationUnitController {
         @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitRequestDTO,
         @PathVariable Integer organisationUnitId) {
         var organisationUnit =
-            organisationUnitService.editOrganisationUnit(organisationUnitRequestDTO,
-                organisationUnitId);
+            organisationUnitService.editOrganisationUnit(organisationUnitId,
+                organisationUnitRequestDTO);
         return OrganisationUnitConverter.toDTO(organisationUnit);
     }
 

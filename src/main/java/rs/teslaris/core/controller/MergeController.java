@@ -18,6 +18,7 @@ import rs.teslaris.core.dto.deduplication.MergedJournalPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalsDTO;
 import rs.teslaris.core.dto.deduplication.MergedMonographPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedMonographsDTO;
+import rs.teslaris.core.dto.deduplication.MergedOrganisationUnitsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
@@ -99,6 +100,18 @@ public class MergeController {
     public void switchAllEmployeesToOtherOrganisationUnit(@PathVariable Integer sourceOUId,
                                                           @PathVariable Integer targetOUId) {
         mergeService.switchAllPersonsToOtherOU(sourceOUId, targetOUId);
+    }
+
+    @PatchMapping("/organisation-unit/metadata/{leftOrganisationUnitId}/{rightOrganisationUnitId}")
+    @PreAuthorize("hasAuthority('MERGE_OU_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedOrganisationUnitsMetadata(
+        @PathVariable Integer leftOrganisationUnitId,
+        @PathVariable Integer rightOrganisationUnitId,
+        @NotNull @RequestBody MergedOrganisationUnitsDTO mergedOrganisationUnits) {
+        mergeService.saveMergedOUsMetadata(leftOrganisationUnitId, rightOrganisationUnitId,
+            mergedOrganisationUnits.getLeftOrganisationUnit(),
+            mergedOrganisationUnits.getRightOrganisationUnit());
     }
 
     @PatchMapping("/conference/{targetConferenceId}/proceedings/{proceedingsId}")

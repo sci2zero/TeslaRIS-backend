@@ -276,8 +276,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    public OrganisationUnit editOrganisationUnit(
-        OrganisationUnitRequestDTO organisationUnitDTORequest, Integer organisationUnitId) {
+    public OrganisationUnit editOrganisationUnit(Integer organisationUnitId,
+                                                 OrganisationUnitRequestDTO organisationUnitDTORequest) {
 
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
 
