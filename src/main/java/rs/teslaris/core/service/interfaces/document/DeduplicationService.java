@@ -11,7 +11,9 @@ public interface DeduplicationService {
 
     Page<DeduplicationSuggestion> getDeduplicationSuggestions(Pageable pageable, IndexType type);
 
-    boolean startDeduplicationProcessBeforeSchedule(Integer initiatingUserId);
+    boolean canPerformDeduplication();
+
+    void startDeduplicationAsync(Integer initiatingUserId);
 
     void deleteSuggestion(String suggestionId);
 

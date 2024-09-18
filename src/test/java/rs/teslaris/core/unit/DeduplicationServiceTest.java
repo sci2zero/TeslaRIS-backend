@@ -138,7 +138,7 @@ public class DeduplicationServiceTest {
         ReflectionTestUtils.setField(deduplicationService, "deduplicationLock", true);
 
         // when
-        boolean result = deduplicationService.startDeduplicationProcessBeforeSchedule(1);
+        boolean result = deduplicationService.canPerformDeduplication();
 
         // then
         assertFalse(result);

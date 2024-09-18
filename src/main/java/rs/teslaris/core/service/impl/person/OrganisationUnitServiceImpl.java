@@ -328,7 +328,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setLocation(
             GeoLocationConverter.fromDTO(organisationUnitDTO.getLocation()));
 
-
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
     }

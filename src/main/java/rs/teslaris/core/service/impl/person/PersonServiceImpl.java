@@ -425,6 +425,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personRepository.findPersonIdForUserId(userId).orElse(null);
     }
 
+    @Override
+    public List<Integer> findInstitutionIdsForPerson(Integer personId) {
+        return personRepository.findInstitutionIdsForPerson(personId);
+    }
+
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
         return personIndexRepository.findByDatabaseId(personDatabaseId).orElse(new PersonIndex());
     }

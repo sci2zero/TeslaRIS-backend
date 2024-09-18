@@ -6,13 +6,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Event;
+import rs.teslaris.core.repository.document.EventRepository;
 
+@Component
 public class ExportEventConverter extends ExportConverterBase {
+
+    private static EventRepository eventRepository;
+
+    @Autowired
+    public ExportEventConverter(
+        EventRepository eventRepository) {
+        ExportEventConverter.eventRepository = eventRepository;
+    }
 
     public static ExportEvent toCommonExportModel(Conference event, boolean computeRelations) {
         var commonExportEvent = new ExportEvent();
@@ -75,6 +87,8 @@ public class ExportEventConverter extends ExportConverterBase {
                 relations.add(institution.getId());
             });
         });
+        relations.addAll(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
+            event.getId()));
         return relations;
     }
 

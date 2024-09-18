@@ -1,6 +1,7 @@
 package rs.teslaris.core.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +22,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("/api/deduplication")
 @RequiredArgsConstructor
+@Slf4j
 public class DeduplicationController {
 
     private final DeduplicationService deduplicationService;
@@ -54,8 +56,14 @@ public class DeduplicationController {
     @Idempotent
     public boolean performDeduplicationScan(
         @RequestHeader(value = "Authorization") String bearerToken) {
-        return deduplicationService.startDeduplicationProcessBeforeSchedule(
-            tokenUtil.extractUserIdFromToken(bearerToken));
+        log.info("Trying to start deduplication ahead of time.");
+        if (!deduplicationService.canPerformDeduplication()) {
+            return false;
+        }
+
+        deduplicationService.startDeduplicationAsync(tokenUtil.extractUserIdFromToken(bearerToken));
+
+        return true;
     }
 
     @PatchMapping("/suggestion/{suggestionId}")

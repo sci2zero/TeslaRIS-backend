@@ -49,7 +49,9 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 public class DeduplicationServiceImpl implements DeduplicationService {
 
     private static final Integer CHUNK_SIZE = 20;
+
     private static volatile boolean deduplicationLock = false;
+
     private final AtomicInteger currentSessionCounter = new AtomicInteger(0);
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
@@ -84,17 +86,6 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private final SearchService<PersonIndex> personSearchService;
 
-
-    @Override
-    public boolean startDeduplicationProcessBeforeSchedule(Integer initiatingUserId) {
-        log.info("Trying to start deduplication ahead of time.");
-        if (deduplicationLock) {
-            return false;
-        }
-
-        startDeduplicationAsync(initiatingUserId);
-        return true;
-    }
 
     @Override
     public void deleteSuggestion(String suggestionId) {
@@ -133,21 +124,23 @@ public class DeduplicationServiceImpl implements DeduplicationService {
         return deduplicationSuggestionRepository.findByEntityType(type.name(), pageable);
     }
 
-    @Async
-    private void startDeduplicationAsync(Integer initiatingUserId) {
-        var interrupted = false;
+    @Override
+    public boolean canPerformDeduplication() {
+        return !DeduplicationServiceImpl.deduplicationLock;
+    }
+
+    @Async("taskExecutor")
+    public void startDeduplicationAsync(Integer initiatingUserId) {
         try {
             performAllScheduledDeduplicationProcesses();
         } catch (Exception e) {
-            interrupted = true;
+            log.error(e.getMessage());
         } finally {
-            if (!interrupted) {
-                notificationService.createNotification(
-                    NotificationFactory.contructNewDeduplicationScanFinishedNotification(
-                        Map.of("duplicateCount", currentSessionCounter.toString()),
-                        userService.findOne(initiatingUserId))
-                );
-            }
+            notificationService.createNotification(
+                NotificationFactory.contructNewDeduplicationScanFinishedNotification(
+                    Map.of("duplicateCount", currentSessionCounter.toString()),
+                    userService.findOne(initiatingUserId))
+            );
             deduplicationLock = false;
         }
     }
@@ -203,17 +196,23 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 b.must(bq -> {
                     bq.bool(eq -> {
                         eq.should(sb -> sb.matchPhrase(
-                            m -> m.field("title_sr").query((item).getTitleSr())));
+                            m -> m.field("title_sr").query(item.getTitleSr())));
                         eq.should(sb -> sb.matchPhrase(
-                            m -> m.field("title_other").query((item).getTitleOther())));
+                            m -> m.field("title_other").query(item.getTitleOther())));
                         return eq;
                     });
                     return bq;
                 });
+
+                if (item.getType().equals("PROCEEDINGS")) {
+                    b.must(sb -> sb.term(
+                        m -> m.field("event_id").value(item.getEventId())));
+                }
+
                 b.must(sb -> sb.match(
-                    m -> m.field("type").query((item).getType())));
+                    m -> m.field("type").query(item.getType())));
                 b.mustNot(sb -> sb.match(
-                    m -> m.field("databaseId").query((item).getDatabaseId())));
+                    m -> m.field("databaseId").query(item.getDatabaseId())));
                 return b;
             }))),
             DocumentPublicationIndex::getDatabaseId,
@@ -365,7 +364,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
             item -> {
                 var person = (PersonIndex) item;
                 var tokens = List.of(person.getName().trim().split(" "));
-                var minShouldMatch = (int) Math.ceil(tokens.size() * 0.6);
+                var minShouldMatch = (int) Math.ceil(tokens.size() * 0.9);
 
                 return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
                     b.must(bq -> {
@@ -374,8 +373,13 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                                 token -> eq.should(
                                     sb -> sb.match(m -> m.field("name").query(token)))
                             );
-                            eq.should(sb -> sb.match(
-                                m -> m.field("birthdate").query(person.getBirthdate())));
+
+                            if (Objects.nonNull(person.getBirthdate()) &&
+                                !person.getBirthdate().isBlank()) {
+                                eq.should(sb -> sb.match(
+                                    m -> m.field("birthdate").query(person.getBirthdate())));
+                            }
+
                             return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
                         });
                         return bq;

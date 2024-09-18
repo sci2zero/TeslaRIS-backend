@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.person;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -61,4 +62,7 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     @Query(value = "SELECT * FROM persons p WHERE " +
         "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Person> findAllModifiedInLast24Hours(Pageable pageable);
+
+    @Query("SELECT i.organisationUnit.id FROM Involvement i WHERE i.personInvolved.id = :personId AND (i.involvementType = 4 OR i.involvementType = 5)")
+    List<Integer> findInstitutionIdsForPerson(Integer personId);
 }
