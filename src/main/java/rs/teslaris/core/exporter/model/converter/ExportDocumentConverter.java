@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
@@ -43,8 +45,17 @@ import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.repository.document.DocumentRepository;
 
+@Component
 public class ExportDocumentConverter extends ExportConverterBase {
+
+    private static DocumentRepository documentRepository;
+
+    @Autowired
+    public ExportDocumentConverter(DocumentRepository documentRepository) {
+        ExportDocumentConverter.documentRepository = documentRepository;
+    }
 
     public static ExportDocument toCommonExportModel(Dataset dataset, boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
@@ -325,8 +336,6 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setOldId(document.getOldId());
 
         if (Objects.nonNull(document.getEvent())) {
-//            commonExportDocument.setEvent(
-//                ExportEventConverter.toCommonExportModel(document.getEvent(), false));
             var event = new ExportEvent();
             event.setDatabaseId(document.getEvent().getId());
             event.setName(ExportMultilingualContentConverter.toCommonExportModel(
@@ -354,8 +363,6 @@ public class ExportDocumentConverter extends ExportConverterBase {
         exportContribution.setDisplayName(
             contribution.getAffiliationStatement().getDisplayPersonName().toString());
         if (Objects.nonNull(contribution.getPerson())) {
-//            exportContribution.setPerson(
-//                ExportPersonConverter.toCommonExportModel(contribution.getPerson(), false));
             var person = new ExportPerson();
             person.setDatabaseId(contribution.getPerson().getId());
             person.setName(new ExportPersonName(contribution.getPerson().getName().getFirstname(),
@@ -374,6 +381,16 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 relations.add(institution.getId());
             });
         });
+
+        if (document instanceof Proceedings) {
+            relations.addAll(
+                documentRepository.findInstitutionIdsByProceedingsIdAndAuthorContribution(
+                    document.getId()));
+        } else if (document instanceof Monograph) {
+            documentRepository.findInstitutionIdsByMonographIdAndAuthorContribution(
+                document.getId());
+        }
+
         return relations;
     }
 

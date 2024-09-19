@@ -1,15 +1,17 @@
 package rs.teslaris.core.exporter.model.converter;
 
 import java.time.ZoneId;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.ExportEvent;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
+import rs.teslaris.core.importer.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.importer.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Event;
@@ -111,22 +113,22 @@ public class ExportEventConverter extends ExportConverterBase {
             openaireEvent::setCountry
         );
 
-        ExportMultilingualContentConverter.setFieldFromPriorityContent(
-            exportEvent.getDescription().stream(),
-            Function.identity(),
-            openaireEvent::setDescription
-        );
+        exportEvent.getDescription().stream()
+            .min(Comparator.comparingInt(ExportMultilingualContent::getPriority))
+            .map(mc -> new MultilingualContent(mc.getLanguageTag(), mc.getContent())).ifPresent(
+                openaireEvent::setDescription);
 
-        ExportMultilingualContentConverter.setFieldFromPriorityContent(
-            exportEvent.getKeywords().stream(),
-            content -> List.of(content.split("\n")),
-            openaireEvent::setKeywords
-        );
+        openaireEvent.setKeywords(new ArrayList<>());
+        exportEvent.getKeywords().forEach(mc -> {
+            openaireEvent.getKeywords()
+                .add(new MultilingualContent(mc.getLanguageTag(),
+                    mc.getContent().replace("\n", ";")));
+        });
 
-        openaireEvent.setStartDate(
-            Date.from(exportEvent.getDateFrom().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        openaireEvent.setEndDate(
-            Date.from(exportEvent.getDateTo().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        openaireEvent.setStartDate(DateTimeFormatter.ISO_LOCAL_DATE.format(
+            exportEvent.getDateFrom().atStartOfDay(ZoneId.systemDefault()).toLocalDate()));
+        openaireEvent.setEndDate(DateTimeFormatter.ISO_LOCAL_DATE.format(
+            exportEvent.getDateTo().atStartOfDay(ZoneId.systemDefault()).toLocalDate()));
 
 
         return openaireEvent;
