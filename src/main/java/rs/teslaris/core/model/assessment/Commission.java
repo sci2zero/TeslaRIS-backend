@@ -1,7 +1,9 @@
 package rs.teslaris.core.model.assessment;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -25,13 +27,16 @@ import rs.teslaris.core.model.person.Person;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "comissions")
+@Table(name = "commissions")
 @SQLRestriction("deleted=false")
-public class Comission extends OrganisationUnit {
+public class Commission extends OrganisationUnit {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "commission_sources", joinColumns = @JoinColumn(name = "commission_id"))
+    @Column(name = "source", nullable = false)
     private Set<String> sources;
 
     @Column(name = "assessment_date_from")
@@ -53,6 +58,6 @@ public class Comission extends OrganisationUnit {
     private String formalDescriptionOfRule;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "super_comission")
-    private Comission superComission;
+    @JoinColumn(name = "super_commission")
+    private Commission superComission;
 }

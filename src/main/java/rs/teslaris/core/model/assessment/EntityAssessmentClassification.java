@@ -33,8 +33,8 @@ public class EntityAssessmentClassification extends BaseEntity {
     private Boolean manual;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comission_id")
-    private Comission comission;
+    @JoinColumn(name = "commission_id")
+    private Commission commission;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assessment_classification_id")
