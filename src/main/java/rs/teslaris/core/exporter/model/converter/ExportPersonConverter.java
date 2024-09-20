@@ -98,8 +98,12 @@ public class ExportPersonConverter extends ExportConverterBase {
         var openairePerson = new rs.teslaris.core.importer.model.oaipmh.person.Person();
         openairePerson.setOldId("Persons/(TESLARIS)" + exportPerson.getDatabaseId());
         openairePerson.setScopusAuthorId(exportPerson.getScopusAuthorId());
-        openairePerson.setOrcid(
-            "https://orcid.org/" + exportPerson.getOrcid().replace("https://orcid.org/", ""));
+
+        if (Objects.nonNull(exportPerson.getOrcid())) {
+            openairePerson.setOrcid(
+                "https://orcid.org/" + exportPerson.getOrcid().replace("https://orcid.org/", ""));
+        }
+
         openairePerson.setPersonName(new PersonName(exportPerson.getName().getLastName(),
             exportPerson.getName().getFirstName()));
 

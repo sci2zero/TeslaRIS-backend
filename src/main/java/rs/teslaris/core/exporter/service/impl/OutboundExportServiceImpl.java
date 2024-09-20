@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -61,6 +62,8 @@ import rs.teslaris.core.importer.model.oaipmh.person.PersonConvertable;
 import rs.teslaris.core.importer.model.oaipmh.product.ProductConvertable;
 import rs.teslaris.core.importer.model.oaipmh.publication.PublicationConvertable;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 
@@ -69,6 +72,10 @@ import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 public class OutboundExportServiceImpl implements OutboundExportService {
 
     private final MongoTemplate mongoTemplate;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
     private final int PAGE_SIZE = 10;
 
@@ -379,10 +386,12 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         if (handlerConfiguration.exportOnlyActiveEmployees()) {
             query.addCriteria(Criteria.where("activelyRelatedInstitutionIds")
-                .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+                .in(getAllOUSubUnitsIds(
+                    Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         } else {
             query.addCriteria(Criteria.where("relatedInstitutionIds")
-                .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+                .in(getAllOUSubUnitsIds(
+                    Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         }
         query.limit(1);
 
@@ -402,10 +411,12 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         if (handlerConfiguration.exportOnlyActiveEmployees()) {
             query.addCriteria(Criteria.where("activelyRelatedInstitutionIds")
-                .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+                .in(getAllOUSubUnitsIds(
+                    Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         } else {
             query.addCriteria(Criteria.where("relatedInstitutionIds")
-                .in(Integer.parseInt(handlerConfiguration.internalInstitutionId())));
+                .in(getAllOUSubUnitsIds(
+                    Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         }
 
         if (!publicationTypeFilters.isEmpty()) {
@@ -419,6 +430,22 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var records = mongoTemplate.find(query, entityClass);
 
         return new PageImpl<>(records, pageRequest, totalCount);
+    }
+
+    private HashSet<Integer> getAllOUSubUnitsIds(Integer organisationUnitId) {
+        var relations = new HashSet<Integer>();
+        relations.add(organisationUnitId);
+
+        var subUnits = organisationUnitsRelationRepository.getOuSubUnits(organisationUnitId);
+
+        for (var subUnit : subUnits) {
+            var childrenSubUnits =
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                    subUnit.getSourceOrganisationUnit().getId());
+            relations.addAll(childrenSubUnits);
+        }
+
+        return relations;
     }
 
     @Override

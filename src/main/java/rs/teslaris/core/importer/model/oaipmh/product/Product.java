@@ -26,9 +26,11 @@ import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 @ToString
 public class Product implements ProductConvertable {
 
-    @XmlElement(name = "Keyword")
-    List<String> keywords;
     private String id;
+
+    @XmlElement(name = "Keyword")
+    private List<String> keywords;
+
     @XmlAttribute(name = "id")
     private String oldId;
 
@@ -47,12 +49,12 @@ public class Product implements ProductConvertable {
     @XmlElement(name = "Description")
     private List<MultilingualContent> description;
 
-    @XmlElement(name = "Access")
-    private String access;
-
     @XmlElementWrapper(name = "Creators")
     @XmlElement(name = "Creator")
     private List<PersonAttributes> creators;
+
+    @XmlElement(name = "Access", namespace = "http://purl.org/coar/access_right")
+    private String access;
 
     private List<Integer> importUserId;
 

@@ -34,7 +34,8 @@ public class ExportProductConverter extends ExportConverterBase {
             openaireProduct.setLanguage(exportDocument.getLanguageTags().getFirst());
         }
 
-        openaireProduct.setUrl(exportDocument.getUris());
+        // Validator complains where there are more than 1 urls
+        openaireProduct.setUrl(List.of(exportDocument.getUris().getFirst()));
         openaireProduct.setAccess(
             exportDocument.getOpenAccess() ? "http://purl.org/coar/access_right/c_abf2" :
                 "http://purl.org/coar/access_right/c_14cb");
