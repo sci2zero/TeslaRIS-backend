@@ -3,6 +3,7 @@ package rs.teslaris.core.exporter.model.converter;
 import com.google.common.base.Functions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.model.common.ExportMultilingualContent;
@@ -37,7 +38,8 @@ public class ExportProductConverter extends ExportConverterBase {
         // Validator complains where there are more than 1 urls
         openaireProduct.setUrl(List.of(exportDocument.getUris().getFirst()));
         openaireProduct.setAccess(
-            exportDocument.getOpenAccess() ? "http://purl.org/coar/access_right/c_abf2" :
+            (Objects.nonNull(exportDocument.getOpenAccess()) && exportDocument.getOpenAccess()) ?
+                "http://purl.org/coar/access_right/c_abf2" :
                 "http://purl.org/coar/access_right/c_14cb");
 
         openaireProduct.setCreators(new ArrayList<>());
@@ -96,7 +98,8 @@ public class ExportProductConverter extends ExportConverterBase {
         );
 
         dcProduct.getRights().add(
-            exportDocument.getOpenAccess() ? "info:eu-repo/semantics/openAccess" :
+            (Objects.nonNull(exportDocument.getOpenAccess()) && exportDocument.getOpenAccess()) ?
+                "info:eu-repo/semantics/openAccess" :
                 "info:eu-repo/semantics/metadataOnlyAccess");
         dcProduct.getRights().add("http://creativecommons.org/publicdomain/zero/1.0/");
 
