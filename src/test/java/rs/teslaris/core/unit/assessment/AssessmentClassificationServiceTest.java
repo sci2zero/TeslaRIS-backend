@@ -1,7 +1,8 @@
-package rs.teslaris.core.unit;
+package rs.teslaris.core.unit.assessment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.assessment.AssessmentClassificationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.assessment.AssessmentClassification;
@@ -21,6 +25,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.assessment.AssessmentClassificationRepository;
 import rs.teslaris.core.service.impl.assessment.AssessmentClassificationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
 
 @SpringBootTest
 public class AssessmentClassificationServiceTest {
@@ -34,7 +39,27 @@ public class AssessmentClassificationServiceTest {
     @InjectMocks
     private AssessmentClassificationServiceImpl assessmentClassificationService;
 
-    
+
+    @Test
+    void shouldReadAllAssessmentClassifications() {
+        var assessmentClassification1 = new AssessmentClassification();
+        assessmentClassification1.setCode("code1");
+        assessmentClassification1.setFormalDescriptionOfRule("rule1");
+
+        var assessmentClassification2 = new AssessmentClassification();
+        assessmentClassification2.setCode("code2");
+        assessmentClassification2.setFormalDescriptionOfRule("rule2");
+
+        when(assessmentClassificationRepository.findAll(any(Pageable.class))).thenReturn(
+            new PageImpl<>(List.of(assessmentClassification1, assessmentClassification2)));
+
+        var response =
+            assessmentClassificationService.readAllAssessmentClassifications(PageRequest.of(0, 10));
+
+        assertNotNull(response);
+        assertEquals(2, response.getSize());
+    }
+
     @Test
     void shouldReadAssessmentClassification() {
         var assessmentClassificationId = 1;
@@ -63,7 +88,7 @@ public class AssessmentClassificationServiceTest {
         when(assessmentClassificationRepository.save(any(AssessmentClassification.class)))
             .thenReturn(newAssessmentClassification);
 
-        var result = assessmentClassificationService.createAssessmentCLassification(
+        var result = assessmentClassificationService.createAssessmentClassification(
             assessmentClassificationDTO);
 
         assertNotNull(result);
@@ -85,5 +110,39 @@ public class AssessmentClassificationServiceTest {
 
         verify(assessmentClassificationRepository).findById(assessmentClassificationId);
         verify(assessmentClassificationRepository).save(existingAssessmentClassification);
+    }
+
+    @Test
+    void shouldDeleteAssessmentClassification() {
+        // Given
+        var assessmentClassificationId = 1;
+
+        when(assessmentClassificationRepository.isInUse(assessmentClassificationId))
+            .thenReturn(false);
+
+        when(assessmentClassificationRepository.findById(assessmentClassificationId)).thenReturn(
+            Optional.of(new AssessmentClassification()));
+
+        // When
+        assessmentClassificationService.deleteAssessmentClassification(assessmentClassificationId);
+
+        // Then
+        verify(assessmentClassificationRepository).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingAssessmentClassificationInUse() {
+        // Given
+        var assessmentClassificationId = 1;
+
+        when(assessmentClassificationRepository.isInUse(assessmentClassificationId))
+            .thenReturn(true);
+
+        // When
+        assertThrows(AssessmentClassificationReferenceConstraintViolationException.class, () ->
+            assessmentClassificationService.deleteAssessmentClassification(
+                assessmentClassificationId));
+
+        // Then (AssessmentClassificationReferenceConstraintViolationException should be thrown)
     }
 }

@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -55,12 +56,12 @@ public class EntityIndicator extends BaseEntity {
     private LocalDate toDate;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<DocumentFile> proofs;
+    private Set<DocumentFile> proofs = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "assessment_document_urls", joinColumns = @JoinColumn(name = "document_id"))
     @Column(name = "url", nullable = false)
-    private Set<String> urls;
+    private Set<String> urls = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "indicator_id")

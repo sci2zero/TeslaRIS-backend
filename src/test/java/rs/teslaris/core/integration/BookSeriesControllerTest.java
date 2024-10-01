@@ -53,7 +53,7 @@ public class BookSeriesControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadAllBookSeriess() throws Exception {
+    public void testReadAllBookSeries() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get("http://localhost:8081/api/book-series?page=0&size=5")
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());

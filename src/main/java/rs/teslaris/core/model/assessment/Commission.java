@@ -11,12 +11,14 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -29,15 +31,15 @@ import rs.teslaris.core.model.person.Person;
 @Entity
 @Table(name = "commissions")
 @SQLRestriction("deleted=false")
-public class Commission extends OrganisationUnit {
+public class Commission extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "commission_sources", joinColumns = @JoinColumn(name = "commission_id"))
     @Column(name = "source", nullable = false)
-    private Set<String> sources;
+    private Set<String> sources = new HashSet<>();
 
     @Column(name = "assessment_date_from")
     private LocalDate assessmentDateFrom;
@@ -46,13 +48,13 @@ public class Commission extends OrganisationUnit {
     private LocalDate assessmentDateTo;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<Document> documentsForAssessment;
+    private Set<Document> documentsForAssessment = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<Person> personsForAssessment;
+    private Set<Person> personsForAssessment = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<OrganisationUnit> organisationUnitsForAssessment;
+    private Set<OrganisationUnit> organisationUnitsForAssessment = new HashSet<>();
 
     @Column(name = "formal_description_of_rule")
     private String formalDescriptionOfRule;

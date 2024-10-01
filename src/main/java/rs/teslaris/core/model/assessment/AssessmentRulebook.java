@@ -9,6 +9,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,10 +31,10 @@ import rs.teslaris.core.model.document.Publisher;
 public class AssessmentRulebook extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> name;
+    private Set<MultiLingualContent> name = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> description;
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @Column(name = "issue_date")
     private LocalDate issueDate;

@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,5 +32,5 @@ public class AssessmentClassification extends BaseEntity {
     private String code;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> title;
+    private Set<MultiLingualContent> title = new HashSet<>();
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,9 +31,9 @@ public class AssessmentMeasure extends BaseEntity {
     @Column(name = "code")
     private String code;
 
-    @Column(name = "refresh_token_value")
-    private Double refreshTokenValue;
+    @Column(name = "value")
+    private Double value;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> title;
+    private Set<MultiLingualContent> title = new HashSet<>();
 }

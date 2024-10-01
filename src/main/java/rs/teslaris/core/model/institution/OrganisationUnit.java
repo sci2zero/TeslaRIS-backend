@@ -5,8 +5,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -31,7 +29,6 @@ import rs.teslaris.core.model.person.Contact;
 @Entity
 @Table(name = "organisation_units")
 @SQLRestriction("deleted=false")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public class OrganisationUnit extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

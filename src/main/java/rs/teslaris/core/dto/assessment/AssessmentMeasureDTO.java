@@ -6,16 +6,19 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
-public record AssessmentClassificationDTO(
+public record AssessmentMeasureDTO(
 
     @NotBlank(message = "You have to provide formal rule description.")
     String formalDescriptionOfRule,
 
-    @NotBlank(message = "You have to provide assessment classification code.")
+    @NotBlank(message = "You have to provide assessment measure code.")
     String code,
 
+    @NotNull(message = "You have to provide the reward value.")
+    Double value,
+
     @Valid
-    @NotNull(message = "You have to provide assessment classification title.")
+    @NotNull(message = "You have to provide assessment measure title.")
     List<MultilingualContentDTO> title
 ) {
 }

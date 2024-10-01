@@ -12,6 +12,9 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.model.assessment.AssessmentClassification;
+import rs.teslaris.core.model.assessment.AssessmentMeasure;
+import rs.teslaris.core.model.assessment.Indicator;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
@@ -60,6 +63,9 @@ import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.assessment.AssessmentClassificationRepository;
+import rs.teslaris.core.repository.assessment.AssessmentMeasureRepository;
+import rs.teslaris.core.repository.assessment.IndicatorRepository;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
@@ -136,6 +142,14 @@ public class DbInitializer implements ApplicationRunner {
     private final MonographPublicationRepository monographPublicationRepository;
 
     private final ThesisRepository thesisRepository;
+
+    private final AssessmentClassificationRepository assessmentClassificationRepository;
+
+
+    private final AssessmentMeasureRepository assessmentMeasureRepository;
+
+
+    private final IndicatorRepository indicatorRepository;
 
 
     @Override
@@ -673,5 +687,50 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(englishTag, "Dummy Translation", 1)));
         monograph3.setMonographType(MonographType.TRANSLATION);
         monographRepository.save(monograph3);
+
+        var indicator1 = new Indicator();
+        indicator1.setCode("Code 1");
+        indicator1.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 1", 1)));
+        indicator1.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Indicator 1 description", 1)));
+
+        var indicator2 = new Indicator();
+        indicator2.setCode("Code 2");
+        indicator2.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 2", 1)));
+        indicator2.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Indicator 2 description", 1)));
+
+        indicatorRepository.saveAll(List.of(indicator1, indicator2));
+
+        var assessmentClassification1 = new AssessmentClassification();
+        assessmentClassification1.setFormalDescriptionOfRule("Rule 1");
+        assessmentClassification1.setCode("Code 1");
+        assessmentClassification1.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Classification 1", 1)));
+
+        var assessmentClassification2 = new AssessmentClassification();
+        assessmentClassification2.setFormalDescriptionOfRule("Rule 2");
+        assessmentClassification2.setCode("Code 2");
+        assessmentClassification2.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Classification 2", 1)));
+
+        assessmentClassificationRepository.saveAll(
+            List.of(assessmentClassification1, assessmentClassification2));
+
+        var assessmentMeasure1 = new AssessmentMeasure();
+        assessmentMeasure1.setFormalDescriptionOfRule("Rule 1");
+        assessmentMeasure1.setCode("Code 1");
+        assessmentMeasure1.setValue(2d);
+        assessmentMeasure1.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Measure 1", 1)));
+
+        var assessmentMeasure2 = new AssessmentMeasure();
+        assessmentMeasure2.setFormalDescriptionOfRule("Rule 2");
+        assessmentMeasure2.setCode("Code 2");
+        assessmentMeasure2.setValue(4d);
+        assessmentMeasure2.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Measure 2", 1)));
+
+        assessmentMeasureRepository.saveAll(List.of(assessmentMeasure1, assessmentMeasure2));
     }
 }
