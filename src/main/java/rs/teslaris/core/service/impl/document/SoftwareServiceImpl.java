@@ -66,7 +66,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         newSoftware.setInternalNumber(softwareDTO.getInternalNumber());
         if (Objects.nonNull(softwareDTO.getPublisherId())) {
             newSoftware.setPublisher(
-                publisherService.findPublisherById(softwareDTO.getPublisherId()));
+                publisherService.findOne(softwareDTO.getPublisherId()));
         }
 
         newSoftware.setApproveStatus(
@@ -93,7 +93,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         softwareToUpdate.setInternalNumber(softwareDTO.getInternalNumber());
         if (Objects.nonNull(softwareDTO.getPublisherId())) {
             softwareToUpdate.setPublisher(
-                publisherService.findPublisherById(softwareDTO.getPublisherId()));
+                publisherService.findOne(softwareDTO.getPublisherId()));
         }
 
         softwareJPAService.save(softwareToUpdate);

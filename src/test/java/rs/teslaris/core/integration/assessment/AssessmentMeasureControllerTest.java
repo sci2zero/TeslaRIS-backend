@@ -25,7 +25,7 @@ public class AssessmentMeasureControllerTest extends BaseTest {
     private AssessmentMeasureDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        return new AssessmentMeasureDTO("rule", "code", 5d, dummyMC);
+        return new AssessmentMeasureDTO(null, "rule", "code", 5d, dummyMC);
     }
 
     @Test
@@ -61,7 +61,8 @@ public class AssessmentMeasureControllerTest extends BaseTest {
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                    .header("Idempotency-Key", "MOCK_KEY_BOOK_SERIES")).andExpect(status().isCreated())
+                    .header("Idempotency-Key", "MOCK_KEY_ASSESSMENT_MEASURE"))
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.formalDescriptionOfRule").value("rule"))
             .andExpect(jsonPath("$.value").value(5d))
             .andExpect(jsonPath("$.code").value("code"));

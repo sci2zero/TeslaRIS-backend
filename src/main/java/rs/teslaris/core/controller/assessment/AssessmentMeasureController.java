@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.assessment.AssessmentMeasureConverter;
 import rs.teslaris.core.dto.assessment.AssessmentMeasureDTO;
 import rs.teslaris.core.service.interfaces.assessment.AssessmentMeasureService;
@@ -37,6 +38,7 @@ public class AssessmentMeasureController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
     public AssessmentMeasureDTO createAssessmentMeasure(
         @RequestBody AssessmentMeasureDTO assessmentMeasureDTO) {
         var createdAssessmentMeasure =

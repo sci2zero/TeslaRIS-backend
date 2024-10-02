@@ -25,7 +25,7 @@ public class IndicatorControllerTest extends BaseTest {
     private IndicatorDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        return new IndicatorDTO("code", dummyMC, dummyMC);
+        return new IndicatorDTO(null, "code", dummyMC, dummyMC);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class IndicatorControllerTest extends BaseTest {
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                    .header("Idempotency-Key", "MOCK_KEY_BOOK_SERIES")).andExpect(status().isCreated())
+                    .header("Idempotency-Key", "MOCK_KEY_INDICATOR")).andExpect(status().isCreated())
             .andExpect(jsonPath("$.code").value("code"));
     }
 

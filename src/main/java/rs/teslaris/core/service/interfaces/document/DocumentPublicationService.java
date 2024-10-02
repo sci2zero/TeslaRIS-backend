@@ -30,7 +30,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved);
 
-    DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO documentFiles,
+    DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO documentFile,
                                             Boolean isProof);
 
     void deleteDocumentFile(Integer documentId, Integer documentFileId);

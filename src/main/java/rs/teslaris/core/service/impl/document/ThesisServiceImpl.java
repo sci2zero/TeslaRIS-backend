@@ -143,7 +143,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             organisationUnitService.findOrganisationUnitById(thesisDTO.getOrganisationUnitId()));
 
         if (Objects.nonNull(thesisDTO.getPublisherId())) {
-            thesis.setPublisher(publisherService.findPublisherById(thesisDTO.getPublisherId()));
+            thesis.setPublisher(publisherService.findOne(thesisDTO.getPublisherId()));
         }
 
         if (Objects.nonNull(thesisDTO.getResearchAreaId())) {

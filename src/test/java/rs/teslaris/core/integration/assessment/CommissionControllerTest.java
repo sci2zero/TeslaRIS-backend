@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,73 +13,70 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.dto.assessment.AssessmentClassificationDTO;
+import rs.teslaris.core.dto.assessment.CommissionDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.integration.BaseTest;
 
 @SpringBootTest
-public class AssessmentClassificationControllerTest extends BaseTest {
+public class CommissionControllerTest extends BaseTest {
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private AssessmentClassificationDTO getTestPayload() {
+    private CommissionDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        return new AssessmentClassificationDTO(null, "rule", "code", dummyMC);
+        return new CommissionDTO(null, dummyMC, List.of("source1", "source2"),
+            LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2),
+            List.of(1, 2), List.of(1, 2), "rule", 1);
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadAllAssessmentClassifications() throws Exception {
+    public void testReadAllCommissions() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/assessment-classification?page=0&size=10")
+                    "http://localhost:8081/api/assessment/commission?page=0&size=10")
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadAssessmentClassification() throws Exception {
+    public void testReadCommission() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/assessment-classification/{assessmentClassificationId}",
-                    1)
+                    "http://localhost:8081/api/assessment/commission/{commissionId}", 1)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testCreateAssessmentClassification() throws Exception {
+    public void testCreateCommission() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var assessmentClassificationDTO = getTestPayload();
+        var commissionDTO = getTestPayload();
 
-        String requestBody = objectMapper.writeValueAsString(assessmentClassificationDTO);
+        String requestBody = objectMapper.writeValueAsString(commissionDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post(
-                        "http://localhost:8081/api/assessment/assessment-classification")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/assessment/commission")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                    .header("Idempotency-Key", "MOCK_KEY_ASSESSMENT_CLASSIFICATION"))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.formalDescriptionOfRule").value("rule"))
-            .andExpect(jsonPath("$.code").value("code"));
+                    .header("Idempotency-Key", "MOCK_KEY_COMMISSION")).andExpect(status().isCreated())
+            .andExpect(jsonPath("$.formalDescriptionOfRule").value("rule"));
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testUpdateAssessmentClassification() throws Exception {
+    public void testUpdateCommission() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var assessmentClassificationDTO = getTestPayload();
+        var commissionDTO = getTestPayload();
 
-        String requestBody = objectMapper.writeValueAsString(assessmentClassificationDTO);
+        String requestBody = objectMapper.writeValueAsString(commissionDTO);
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
-                        "http://localhost:8081/api/assessment/assessment-classification/{assessmentClassificationId}",
-                        1)
+                        "http://localhost:8081/api/assessment/commission/{commissionId}", 1)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -86,12 +84,12 @@ public class AssessmentClassificationControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testDeleteAssessmentClassification() throws Exception {
+    public void testDeleteCommission() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete(
-                        "http://localhost:8081/api/assessment/assessment-classification/{assessmentClassificationId}",
+                        "http://localhost:8081/api/assessment/commission/{commissionId}",
                         2)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))

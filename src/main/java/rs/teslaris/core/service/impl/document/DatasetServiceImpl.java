@@ -66,7 +66,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         newDataset.setInternalNumber(datasetDTO.getInternalNumber());
         if (Objects.nonNull(datasetDTO.getPublisherId())) {
             newDataset.setPublisher(
-                publisherService.findPublisherById(datasetDTO.getPublisherId()));
+                publisherService.findOne(datasetDTO.getPublisherId()));
         }
 
         newDataset.setApproveStatus(
@@ -93,7 +93,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         datasetToUpdate.setInternalNumber(datasetDTO.getInternalNumber());
         if (Objects.nonNull(datasetDTO.getPublisherId())) {
             datasetToUpdate.setPublisher(
-                publisherService.findPublisherById(datasetDTO.getPublisherId()));
+                publisherService.findOne(datasetDTO.getPublisherId()));
         }
 
         datasetJPAService.save(datasetToUpdate);

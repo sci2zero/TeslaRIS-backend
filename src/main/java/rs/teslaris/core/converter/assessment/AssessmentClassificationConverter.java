@@ -9,6 +9,7 @@ public class AssessmentClassificationConverter {
     public static AssessmentClassificationDTO toDTO(
         AssessmentClassification assessmentClassification) {
         return new AssessmentClassificationDTO(
+            assessmentClassification.getId(),
             assessmentClassification.getFormalDescriptionOfRule(),
             assessmentClassification.getCode(),
             MultilingualContentConverter.getMultilingualContentDTO(

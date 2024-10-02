@@ -242,7 +242,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         if (proceedingsDTO.getPublisherId() != null) {
             proceedings.setPublisher(
-                publisherService.findPublisherById(proceedingsDTO.getPublisherId()));
+                publisherService.findOne(proceedingsDTO.getPublisherId()));
         }
     }
 

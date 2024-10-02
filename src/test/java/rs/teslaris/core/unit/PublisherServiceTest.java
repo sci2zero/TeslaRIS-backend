@@ -134,7 +134,7 @@ public class PublisherServiceTest {
         when(publisherRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var result = publisherService.findPublisherById(1);
+        var result = publisherService.findOne(1);
 
         // then
         assertEquals(expected, result);
@@ -146,7 +146,7 @@ public class PublisherServiceTest {
         when(publisherRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> publisherService.findPublisherById(1));
+        assertThrows(NotFoundException.class, () -> publisherService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }

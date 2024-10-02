@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.assessment.AssessmentClassification;
 import rs.teslaris.core.model.assessment.AssessmentMeasure;
+import rs.teslaris.core.model.assessment.AssessmentRulebook;
+import rs.teslaris.core.model.assessment.Commission;
 import rs.teslaris.core.model.assessment.Indicator;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -65,6 +67,8 @@ import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.assessment.AssessmentClassificationRepository;
 import rs.teslaris.core.repository.assessment.AssessmentMeasureRepository;
+import rs.teslaris.core.repository.assessment.AssessmentRulebookRepository;
+import rs.teslaris.core.repository.assessment.CommissionRepository;
 import rs.teslaris.core.repository.assessment.IndicatorRepository;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
@@ -145,11 +149,13 @@ public class DbInitializer implements ApplicationRunner {
 
     private final AssessmentClassificationRepository assessmentClassificationRepository;
 
-
     private final AssessmentMeasureRepository assessmentMeasureRepository;
 
-
     private final IndicatorRepository indicatorRepository;
+
+    private final CommissionRepository commissionRepository;
+
+    private final AssessmentRulebookRepository assessmentRulebookRepository;
 
 
     @Override
@@ -732,5 +738,28 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(englishTag, "Assessment Measure 2", 1)));
 
         assessmentMeasureRepository.saveAll(List.of(assessmentMeasure1, assessmentMeasure2));
+
+        var commission1 = new Commission();
+        commission1.setFormalDescriptionOfRule("Rule 1");
+
+        var commission2 = new Commission();
+        commission2.setFormalDescriptionOfRule("Rule 2");
+        commission2.setSuperComission(commission1);
+
+        commissionRepository.saveAll(List.of(commission1, commission2));
+
+        var assessmentRulebook1 = new AssessmentRulebook();
+        assessmentRulebook1.setName(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 1", 1)));
+        assessmentRulebook1.setIssueDate(LocalDate.of(2023, 10, 1));
+
+        var assessmentRulebook2 = new AssessmentRulebook();
+        assessmentRulebook2.setName(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 2", 1)));
+        assessmentRulebook2.setIssueDate(LocalDate.of(2023, 10, 1));
+        assessmentRulebook2.setPublisher(publisher1);
+        assessmentRulebook2.setAssessmentMeasure(assessmentMeasure1);
+
+        assessmentRulebookRepository.saveAll(List.of(assessmentRulebook1, assessmentRulebook2));
     }
 }

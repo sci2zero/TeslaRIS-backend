@@ -8,6 +8,8 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 public record AssessmentClassificationDTO(
 
+    Integer id,
+
     @NotBlank(message = "You have to provide formal rule description.")
     String formalDescriptionOfRule,
 

@@ -71,7 +71,7 @@ public class IndicatorServiceTest {
         when(indicatorRepository.findById(indicatorId))
             .thenReturn(Optional.of(indicator));
 
-        var dto = new IndicatorDTO(null, null,
+        var dto = new IndicatorDTO(null, null, null,
             List.of(new MultilingualContentDTO(null, null, "Content", 1)));
 
         var result = indicatorService.readIndicatorById(indicatorId);
@@ -82,7 +82,7 @@ public class IndicatorServiceTest {
 
     @Test
     void shouldCreateIndicator() {
-        var indicatorDTO = new IndicatorDTO("rule", List.of(new MultilingualContentDTO()),
+        var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
             List.of(new MultilingualContentDTO()));
         var newIndicator = new Indicator();
 
@@ -99,7 +99,7 @@ public class IndicatorServiceTest {
     @Test
     void shouldUpdateIndicator() {
         var indicatorId = 1;
-        var indicatorDTO = new IndicatorDTO("rule", List.of(new MultilingualContentDTO()),
+        var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
             List.of(new MultilingualContentDTO()));
         var existingIndicator = new Indicator();
 
@@ -114,7 +114,7 @@ public class IndicatorServiceTest {
     }
 
     @Test
-    void shouldDeleteAssessmentClassification() {
+    void shouldDeleteIndicator() {
         // Given
         var indicatorId = 1;
 
@@ -129,7 +129,7 @@ public class IndicatorServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenDeletingAssessmentClassificationInUse() {
+    void shouldThrowExceptionWhenDeletingIndicatorInUse() {
         // Given
         var indicatorId = 1;
 

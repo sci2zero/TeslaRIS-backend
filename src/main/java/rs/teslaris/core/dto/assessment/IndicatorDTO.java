@@ -8,6 +8,8 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 public record IndicatorDTO(
 
+    Integer id,
+
     @NotBlank(message = "You have to provide indicator code.")
     String code,
 

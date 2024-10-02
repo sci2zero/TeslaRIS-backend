@@ -7,7 +7,9 @@ import rs.teslaris.core.model.assessment.AssessmentMeasure;
 public class AssessmentMeasureConverter {
 
     public static AssessmentMeasureDTO toDTO(AssessmentMeasure assessmentMeasure) {
-        return new AssessmentMeasureDTO(assessmentMeasure.getFormalDescriptionOfRule(),
+        return new AssessmentMeasureDTO(
+            assessmentMeasure.getId(),
+            assessmentMeasure.getFormalDescriptionOfRule(),
             assessmentMeasure.getCode(), assessmentMeasure.getValue(),
             MultilingualContentConverter.getMultilingualContentDTO(assessmentMeasure.getTitle()));
     }

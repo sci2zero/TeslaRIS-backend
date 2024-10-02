@@ -66,7 +66,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         newPatent.setNumber(patentDTO.getNumber());
         if (Objects.nonNull(patentDTO.getPublisherId())) {
-            newPatent.setPublisher(publisherService.findPublisherById(patentDTO.getPublisherId()));
+            newPatent.setPublisher(publisherService.findOne(patentDTO.getPublisherId()));
         }
 
         newPatent.setApproveStatus(
@@ -93,7 +93,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         patentToUpdate.setNumber(patentDTO.getNumber());
         if (Objects.nonNull(patentDTO.getPublisherId())) {
             patentToUpdate.setPublisher(
-                publisherService.findPublisherById(patentDTO.getPublisherId()));
+                publisherService.findOne(patentDTO.getPublisherId()));
         }
 
         var updatedPatent = patentJPAService.save(patentToUpdate);

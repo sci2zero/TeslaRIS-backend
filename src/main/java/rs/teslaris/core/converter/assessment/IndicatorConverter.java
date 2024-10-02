@@ -7,7 +7,8 @@ import rs.teslaris.core.model.assessment.Indicator;
 public class IndicatorConverter {
 
     public static IndicatorDTO toDTO(Indicator indicator) {
-        return new IndicatorDTO(indicator.getCode(),
+        return new IndicatorDTO(
+            indicator.getId(), indicator.getCode(),
             MultilingualContentConverter.getMultilingualContentDTO(indicator.getTitle()),
             MultilingualContentConverter.getMultilingualContentDTO(indicator.getDescription()));
     }

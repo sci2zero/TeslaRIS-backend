@@ -56,12 +56,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
     @Override
     public PublisherDTO readPublisherById(Integer publisherId) {
-        return PublisherConverter.toDTO(findPublisherById(publisherId));
-    }
-
-    @Override
-    public Publisher findPublisherById(Integer publisherId) {
-        return this.findOne(publisherId);
+        return PublisherConverter.toDTO(findOne(publisherId));
     }
 
     @Override
@@ -104,7 +99,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
     @Override
     public void updatePublisher(PublisherDTO publisherDTO, Integer publisherId) {
-        var publisherToUpdate = findPublisherById(publisherId);
+        var publisherToUpdate = findOne(publisherId);
 
         setCommonFields(publisherToUpdate, publisherDTO);
 

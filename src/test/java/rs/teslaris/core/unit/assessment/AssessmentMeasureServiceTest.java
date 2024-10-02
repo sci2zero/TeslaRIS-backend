@@ -69,7 +69,7 @@ public class AssessmentMeasureServiceTest {
         when(assessmentMeasureRepository.findById(assessmentMeasureId))
             .thenReturn(Optional.of(assessmentMeasure));
 
-        var dto = new AssessmentMeasureDTO(null, null, null,
+        var dto = new AssessmentMeasureDTO(null, null, null, null,
             List.of(new MultilingualContentDTO(null, null, "Content", 1)));
 
         var result = assessmentMeasureService.readAssessmentMeasureById(
@@ -81,7 +81,7 @@ public class AssessmentMeasureServiceTest {
 
     @Test
     void shouldCreateAssessmentMeasure() {
-        var assessmentMeasureDTO = new AssessmentMeasureDTO("rule", "M22", 1d,
+        var assessmentMeasureDTO = new AssessmentMeasureDTO(null, "rule", "M22", 1d,
             List.of(new MultilingualContentDTO()));
         var newAssessmentMeasure = new AssessmentMeasure();
 
@@ -98,7 +98,7 @@ public class AssessmentMeasureServiceTest {
     @Test
     void shouldUpdateAssessmentMeasure() {
         var assessmentMeasureId = 1;
-        var assessmentMeasureDTO = new AssessmentMeasureDTO("rule", "M21", 2d,
+        var assessmentMeasureDTO = new AssessmentMeasureDTO(null, "rule", "M21", 2d,
             List.of(new MultilingualContentDTO()));
         var existingAssessmentMeasure = new AssessmentMeasure();
 

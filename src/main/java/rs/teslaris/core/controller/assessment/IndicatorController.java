@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.assessment.IndicatorConverter;
 import rs.teslaris.core.dto.assessment.IndicatorDTO;
 import rs.teslaris.core.service.interfaces.assessment.IndicatorService;
@@ -37,6 +38,7 @@ public class IndicatorController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
     public IndicatorDTO createIndicator(@RequestBody IndicatorDTO indicatorDTO) {
         var createdIndicator = indicatorService.createIndicator(indicatorDTO);
 

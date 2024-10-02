@@ -69,7 +69,7 @@ public class AssessmentClassificationServiceTest {
         when(assessmentClassificationRepository.findById(assessmentClassificationId))
             .thenReturn(Optional.of(assessmentClassification));
 
-        var dto = new AssessmentClassificationDTO(null, null,
+        var dto = new AssessmentClassificationDTO(null, null, null,
             List.of(new MultilingualContentDTO(null, null, "Content", 1)));
 
         var result = assessmentClassificationService.readAssessmentClassification(
@@ -81,7 +81,7 @@ public class AssessmentClassificationServiceTest {
 
     @Test
     void shouldCreateAssessmentClassification() {
-        var assessmentClassificationDTO = new AssessmentClassificationDTO("rule", "M22",
+        var assessmentClassificationDTO = new AssessmentClassificationDTO(null, "rule", "M22",
             List.of(new MultilingualContentDTO()));
         var newAssessmentClassification = new AssessmentClassification();
 
@@ -98,7 +98,7 @@ public class AssessmentClassificationServiceTest {
     @Test
     void shouldUpdateAssessmentClassification() {
         var assessmentClassificationId = 1;
-        var assessmentClassificationDTO = new AssessmentClassificationDTO("rule", "M21",
+        var assessmentClassificationDTO = new AssessmentClassificationDTO(null, "rule", "M21",
             List.of(new MultilingualContentDTO()));
         var existingAssessmentClassification = new AssessmentClassification();
 

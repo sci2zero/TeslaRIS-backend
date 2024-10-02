@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.assessment.AssessmentClassificationConverter;
 import rs.teslaris.core.dto.assessment.AssessmentClassificationDTO;
 import rs.teslaris.core.service.interfaces.assessment.AssessmentClassificationService;
@@ -39,6 +40,7 @@ public class AssessmentClassificationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
     public AssessmentClassificationDTO createAssessmentClassification(
         @RequestBody AssessmentClassificationDTO assessmentClassificationDTO) {
         var createdAssessmentClassification =
