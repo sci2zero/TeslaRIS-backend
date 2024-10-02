@@ -14,7 +14,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "organisation-unit")
+@Document(indexName = "organisation_unit")
 @Setting(settingPath = "/configuration/serbian-analyzer-config.json")
 public class OrganisationUnitIndex {
 

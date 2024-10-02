@@ -8,11 +8,11 @@ public class GeoLocationConverter {
     public static GeoLocation fromDTO(GeoLocationDTO geoLocationDTO) {
         var geoLocation = new GeoLocation();
         geoLocation.setLongitude(
-            (Objects.nonNull(geoLocation.getLongitude()) && geoLocationDTO.getLongitude() != 0) ?
-                geoLocation.getLongitude() : null);
+            (Objects.nonNull(geoLocationDTO.getLongitude()) && geoLocationDTO.getLongitude() != 0) ?
+                geoLocationDTO.getLongitude() : null);
         geoLocation.setLatitude(
-            (Objects.nonNull(geoLocation.getLatitude()) && geoLocationDTO.getLatitude() != 0) ?
-                geoLocation.getLatitude() : null);
+            (Objects.nonNull(geoLocationDTO.getLatitude()) && geoLocationDTO.getLatitude() != 0) ?
+                geoLocationDTO.getLatitude() : null);
 
         if (Objects.nonNull(geoLocationDTO.getAddress())) {
             if (geoLocationDTO.getAddress().isBlank() ||

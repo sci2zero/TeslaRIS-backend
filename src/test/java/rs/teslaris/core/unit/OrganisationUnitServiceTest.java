@@ -400,6 +400,7 @@ public class OrganisationUnitServiceTest {
 
     @Test
     void shouldEditOrganisationUnits() {
+        // given
         var organisationUnitDTORequest = new OrganisationUnitRequestDTO();
         organisationUnitDTORequest.setName(List.of(new MultilingualContentDTO()));
         organisationUnitDTORequest.setKeyword(List.of(new MultilingualContentDTO()));
@@ -430,12 +431,12 @@ public class OrganisationUnitServiceTest {
         when(organisationUnitRepository.save(any(OrganisationUnit.class))).thenReturn(
             organisationUnit);
 
-        // Act
+        // when
         OrganisationUnit editedOrganisationUnit =
-            organisationUnitService.editOrganisationUnit(organisationUnitDTORequest,
-                organisationUnitId);
+            organisationUnitService.editOrganisationUnit(organisationUnitId,
+                organisationUnitDTORequest);
 
-        // Assert
+        // then
         assertNotNull(editedOrganisationUnit);
         assertEquals(organisationUnit, editedOrganisationUnit);
 //        assertEquals(organisationUnitDTORequest.getName().stream().findFirst().get().getContent(),

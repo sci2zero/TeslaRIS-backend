@@ -22,7 +22,10 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
@@ -31,6 +34,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class BookSeriesController {
 
     private final BookSeriesService bookSeriesService;
+
+    private final DeduplicationService deduplicationService;
 
 
     @GetMapping("/{bookSeriesId}/can-edit")
@@ -73,7 +78,7 @@ public class BookSeriesController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     public void updateBookSeries(@RequestBody @Valid BookSeriesDTO bookSeriesDTO,
                                  @PathVariable Integer bookSeriesId) {
-        bookSeriesService.updateBookSeries(bookSeriesDTO, bookSeriesId);
+        bookSeriesService.updateBookSeries(bookSeriesId, bookSeriesDTO);
     }
 
     @DeleteMapping("/{bookSeriesId}")
@@ -81,5 +86,12 @@ public class BookSeriesController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     public void deleteBookSeries(@PathVariable Integer bookSeriesId) {
         bookSeriesService.deleteBookSeries(bookSeriesId);
+        deduplicationService.deleteSuggestion(bookSeriesId, IndexType.BOOK_SERIES);
+    }
+
+    @GetMapping("/publications/{bookSeriesId}")
+    public Page<DocumentPublicationIndex> findProceedingsForBookSeries(
+        @PathVariable Integer bookSeriesId, Pageable pageable) {
+        return bookSeriesService.findPublicationsForBookSeries(bookSeriesId, pageable);
     }
 }

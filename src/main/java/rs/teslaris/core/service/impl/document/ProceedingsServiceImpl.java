@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
@@ -16,6 +14,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -105,13 +104,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
-    public Page<DocumentPublicationIndex> findProceedingsForBookSeries(Integer bookSeriesId,
-                                                                       Pageable pageable) {
-        return documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.PROCEEDINGS.name(), bookSeriesId, pageable);
-    }
-
-    @Override
     public Proceedings findProceedingsById(Integer proceedingsId) {
         return proceedingsJPAService.findOne(proceedingsId);
     }
@@ -186,7 +178,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             index.setPublicationSeriesId(proceedings.getPublicationSeries().getId());
-            index.setJournalId(proceedings.getPublicationSeries().getId());
+            if (proceedings.getPublicationSeries() instanceof Journal journal) {
+                index.setJournalId(journal.getId());
+            }
         }
 
         documentPublicationIndexRepository.save(index);

@@ -1,5 +1,6 @@
 package rs.teslaris.core.configuration;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
+import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
@@ -280,5 +282,20 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleTypeNotAllowedException(HttpServletRequest request,
                                               TypeNotAllowedException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(MonographReferenceConstraintViolationException.class)
+    @ResponseBody
+    ErrorObject handleMonographReferenceConstraintViolationException(HttpServletRequest request,
+                                                                     MonographReferenceConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(ExpiredJwtException.class)
+    @ResponseBody
+    ErrorObject handleExpiredJwtException(HttpServletRequest request, ExpiredJwtException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }

@@ -2,6 +2,7 @@ package rs.teslaris.core.exporter.model.converter;
 
 import com.google.common.base.Functions;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.function.Function;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
@@ -29,7 +30,8 @@ public class ExportPatentConverter extends ExportConverterBase {
         setDocumentDate(exportDocument.getDocumentDate(), openairePatent::setApprovalDate);
         openairePatent.setPatentNumber(exportDocument.getNumber());
         openairePatent.setAccess(
-            exportDocument.getOpenAccess() ? "http://purl.org/coar/access_right/c_abf2" :
+            (Objects.nonNull(exportDocument.getOpenAccess()) && exportDocument.getOpenAccess()) ?
+                "http://purl.org/coar/access_right/c_abf2" :
                 "http://purl.org/coar/access_right/c_14cb");
 
         openairePatent.setInventor(new ArrayList<>());
@@ -84,7 +86,8 @@ public class ExportPatentConverter extends ExportConverterBase {
         );
 
         dcPatent.getRights().add(
-            exportDocument.getOpenAccess() ? "info:eu-repo/semantics/openAccess" :
+            (Objects.nonNull(exportDocument.getOpenAccess()) && exportDocument.getOpenAccess()) ?
+                "info:eu-repo/semantics/openAccess" :
                 "info:eu-repo/semantics/metadataOnlyAccess");
         dcPatent.getRights().add("http://creativecommons.org/publicdomain/zero/1.0/");
 

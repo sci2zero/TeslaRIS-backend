@@ -150,7 +150,7 @@ public class JournalServiceTest {
             Optional.of(journalIndex));
 
         // when
-        journalService.updateJournal(journalDTO, journalId);
+        journalService.updateJournal(journalId, journalDTO);
 
         // then
         verify(journalJPAService, times(1)).save(any());
@@ -176,7 +176,7 @@ public class JournalServiceTest {
             Optional.empty());
 
         // when
-        journalService.updateJournal(journalDTO, journalId);
+        journalService.updateJournal(journalId, journalDTO);
 
         // then
         verify(journalJPAService, times(1)).save(any());

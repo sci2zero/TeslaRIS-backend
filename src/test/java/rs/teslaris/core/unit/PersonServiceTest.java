@@ -388,7 +388,7 @@ public class PersonServiceTest {
             Optional.of(new PersonIndex()));
 
         // when
-        personService.updatePersonalInfo(personalInfoDTO, personId);
+        personService.updatePersonalInfo(personId, personalInfoDTO);
 
         // then
         verify(personRepository, times(1)).findById(personId);
@@ -418,7 +418,7 @@ public class PersonServiceTest {
 
         // when
         assertThrows(NotFoundException.class, () -> {
-            personService.updatePersonalInfo(personalInfoDTO, personId);
+            personService.updatePersonalInfo(personId, personalInfoDTO);
         });
 
         // then (NotFoundException should be thrown)

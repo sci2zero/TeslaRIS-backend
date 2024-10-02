@@ -2,6 +2,7 @@ package rs.teslaris.core.repository.document;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -25,4 +26,22 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         "join fetch d.contributors " +
         "where dc.person.id = :authorId")
     List<Document> getDocumentsForAuthorId(Integer authorId);
+
+    @Query("SELECT DISTINCT inst.id " +
+        "FROM ProceedingsPublication pp " +
+        "JOIN pp.proceedings p " +
+        "JOIN pp.contributors pc " +
+        "JOIN pc.institutions inst " +
+        "WHERE p.id = :proceedingsId " +
+        "AND pc.contributionType = 0")
+    Set<Integer> findInstitutionIdsByProceedingsIdAndAuthorContribution(Integer proceedingsId);
+
+    @Query("SELECT DISTINCT inst.id " +
+        "FROM MonographPublication mp " +
+        "JOIN mp.monograph m " +
+        "JOIN mp.contributors pc " +
+        "JOIN pc.institutions inst " +
+        "WHERE m.id = :monographId " +
+        "AND pc.contributionType = 0")
+    Set<Integer> findInstitutionIdsByMonographIdAndAuthorContribution(Integer monographId);
 }

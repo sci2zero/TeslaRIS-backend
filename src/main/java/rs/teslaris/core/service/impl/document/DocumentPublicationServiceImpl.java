@@ -22,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
@@ -140,6 +141,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
                                                    Boolean isProof) {
         var document = findOne(documentId);
@@ -151,7 +153,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
         documentRepository.save(document);
 
-        if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
+        if (!isProof && document.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
@@ -293,6 +295,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setFullTextSr("");
         index.setFullTextOther("");
         document.getFileItems().forEach(documentFile -> {
+            if (!documentFile.getMimeType().contains("pdf")) {
+                return;
+            }
             var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
             index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
             index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());

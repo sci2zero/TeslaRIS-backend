@@ -1,6 +1,7 @@
 package rs.teslaris.core.repository.document;
 
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,4 +20,13 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
     @Query(value = "SELECT * FROM journals j WHERE " +
         "j.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Journal> findAllModifiedInLast24Hours(Pageable pageable);
+
+    @Query("SELECT DISTINCT inst.id " +
+        "FROM JournalPublication jp " +
+        "JOIN jp.journal j " +
+        "JOIN jp.contributors pc " +
+        "JOIN pc.institutions inst " +
+        "WHERE j.id = :journalId " +
+        "AND pc.contributionType = 0")
+    Set<Integer> findInstitutionIdsByJournalIdAndAuthorContribution(Integer journalId);
 }

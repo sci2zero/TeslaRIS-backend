@@ -13,7 +13,6 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.model.document.DocumentContributionType;
-import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Component
@@ -60,14 +59,9 @@ public class PersonContributionConverter {
         }
         contribution.setPersonId(person.getId());
 
-        // Bottleneck, don't know how to speed this up...
         contribution.setInstitutionIds(new ArrayList<>());
-        person.getInvolvements().forEach(involvement -> {
-            if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) {
-                contribution.getInstitutionIds().add(involvement.getOrganisationUnit().getId());
-            }
-        });
+        contribution.getInstitutionIds()
+            .addAll(personService.findInstitutionIdsForPerson(person.getId()));
 
         if (Objects.nonNull(contributor.getDisplayName())) {
             contribution.setPersonName(

@@ -14,6 +14,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
@@ -123,7 +124,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
-    public void updateMonograph(Integer monographId, MonographDTO monographDTO) {
+    public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
         monographToUpdate.getLanguages().clear();
@@ -213,11 +214,15 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         }
     }
 
-    private void indexMonograph(Monograph monograph, DocumentPublicationIndex index) {
+    @Override
+    public void indexMonograph(Monograph monograph, DocumentPublicationIndex index) {
         indexCommonFields(monograph, index);
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {
             index.setPublicationSeriesId(monograph.getPublicationSeries().getId());
+            if (monograph.getPublicationSeries() instanceof Journal journal) {
+                index.setJournalId(journal.getId());
+            }
         }
 
         index.setType(DocumentPublicationType.MONOGRAPH.name());

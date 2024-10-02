@@ -46,8 +46,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index);
 
-    OrganisationUnit editOrganisationUnit(OrganisationUnitRequestDTO organisationUnitDTORequest,
-                                          Integer organisationUnitId);
+    OrganisationUnit editOrganisationUnit(Integer organisationUnitId,
+                                          OrganisationUnitRequestDTO organisationUnitDTORequest);
 
     OrganisationUnit editOrganisationalUnitApproveStatus(ApproveStatus approveStatus,
                                                          Integer organisationUnitId);

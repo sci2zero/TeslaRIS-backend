@@ -97,7 +97,7 @@ public class ConferenceController {
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     public void updateConference(@PathVariable Integer conferenceId,
                                  @RequestBody @Valid ConferenceDTO conferenceDTO) {
-        conferenceService.updateConference(conferenceDTO, conferenceId);
+        conferenceService.updateConference(conferenceId, conferenceDTO);
     }
 
     @DeleteMapping("/{conferenceId}")

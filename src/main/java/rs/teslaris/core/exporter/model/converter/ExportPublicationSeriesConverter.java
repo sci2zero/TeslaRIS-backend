@@ -3,13 +3,24 @@ package rs.teslaris.core.exporter.model.converter;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.exporter.model.common.ExportContribution;
 import rs.teslaris.core.exporter.model.common.ExportDocument;
 import rs.teslaris.core.exporter.model.common.ExportPublicationType;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
+import rs.teslaris.core.repository.document.JournalRepository;
 
+@Component
 public class ExportPublicationSeriesConverter extends ExportConverterBase {
+
+    private static JournalRepository journalRepository;
+
+    @Autowired
+    public ExportPublicationSeriesConverter(JournalRepository journalRepository) {
+        ExportPublicationSeriesConverter.journalRepository = journalRepository;
+    }
 
     public static ExportDocument toCommonExportModel(
         PublicationSeries publicationSeries, boolean computeRelations) {
@@ -65,6 +76,10 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
                 relations.add(institution.getId());
             });
         });
+
+        relations.addAll(journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(
+            publicationSeries.getId()));
+
         return relations;
     }
 }

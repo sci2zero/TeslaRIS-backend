@@ -73,7 +73,7 @@ public class MonographPublicationController {
     public void editMonographPublication(@PathVariable Integer documentId,
                                          @RequestBody
                                          @Valid MonographPublicationDTO monographPublicationDTO) {
-        monographPublicationService.updateMonographPublication(documentId, monographPublicationDTO);
+        monographPublicationService.editMonographPublication(documentId, monographPublicationDTO);
     }
 
     @DeleteMapping("/{documentId}")

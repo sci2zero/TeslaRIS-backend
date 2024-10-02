@@ -268,7 +268,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
-    public void updatePersonalInfo(PersonalInfoDTO personalInfo, Integer personId) {
+    public void updatePersonalInfo(Integer personId, PersonalInfoDTO personalInfo) {
         var personToUpdate = findOne(personId);
         setAllPersonIdentifiers(personToUpdate, personalInfo);
 
@@ -423,6 +423,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     public Integer getPersonIdForUserId(Integer userId) {
         return personRepository.findPersonIdForUserId(userId).orElse(null);
+    }
+
+    @Override
+    public List<Integer> findInstitutionIdsForPerson(Integer personId) {
+        return personRepository.findInstitutionIdsForPerson(personId);
     }
 
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {

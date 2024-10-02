@@ -78,6 +78,24 @@ public class NotificationFactory {
             user);
     }
 
+    public static Notification contructNewDeduplicationScanFinishedNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("duplicateCount")};
+        try {
+            message = messageSource.getMessage(
+                "notification.deduplicationScanFinished",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.DEDUPLICATION_SCAN_FINISHED, user);
+    }
+
     private static String fallbackToDefaultLocale(Object[] args) {
         return messageSource.getMessage(
             "notification.addedToPublication",
