@@ -665,6 +665,195 @@ package project {
     USED
   }
 
+  class AssessmentRulebook {
+    MultiLingualContent title
+    MultiLingualContent description
+    LocalDate issueDate
+    DocumentFile pdf
+  }
+
+  AssessmentRulebook "0..*" --> "1" Publisher
+
+  AssessmentRulebook "0..*" --> "0..*" AssessmentMeasure
+
+  class AssessmentMeasure {
+    String code
+    ' M28b
+    ' M22
+    Double refreshTokenValue
+    ' 2.5
+    MultiLingualContent title
+    ' examples of Serbian rule book:
+    ' Uređivanje istaknutog međunarodnog naučnog   M28b  2,5  2,5  2,5  2,5  časopisa (gost urednik) ili publikacije sa monografskim delima kategorije M14
+    ' Autor rada u istaknutom međunarodnom časopisu
+    String formalDescriptionOfRule
+    ' rule is based on assessment classification and commission properties
+  }
+
+  class AssessmentClassification {
+    String code
+    ' international journal
+    ' leading international journal
+    MultiLingualContent title
+    String formalDescriptionOfRule
+    ' rule is based on indicators and commission properties
+  }
+
+  class Commission extends OrganisationUnit {
+    MultiLingualContent description
+    ' it might be description of the commission goal, for instance comission for promotion to higher position, or Faculty of Sciences commission, or national/Serbian ministry of science commission
+    Set<String> sources
+    LocalDate assessmentDateFrom
+    LocalDate assessmentDateTo
+    Set<Document> documentsForAssessment
+    Set<Person> personsForAssessment
+    Set<OrganisationUnit> organisationUnitsForAssessment
+    String formalDescriptionOfRule
+    ' it additionally defining rules for automatic determination of assessment classification, for instance all research areas are taken into account and the best classification is taken into account
+    ' we should consider whether researchAreas (inherited from OrganisationUnit), sources, assessmentDateFrom and assessmentDateTo can be specified through formal description
+  }
+
+  Commission "0..*" --> "0..* super" Commission
+
+  class Document_AssessmentClassification {
+    LocalDateTime timestamp
+    Boolean manual
+  }
+
+  Document_AssessmentClassification "0..*" --> "1" Commission
+  Document_AssessmentClassification "0..*" --> "1" Document
+  Document_AssessmentClassification "0..*" --> "1" AssessmentClassification
+
+  class Event_AssessmentClassification {
+    LocalDateTime timestamp
+    Boolean manual
+  }
+
+  Event_AssessmentClassification "0..*" --> "1" Commission
+  Event_AssessmentClassification "0..*" --> "1" Event
+  Event_AssessmentClassification "0..*" --> "1" AssessmentClassification
+
+  class PublicationSeries_AssessmentClassification {
+    LocalDateTime timestamp
+    Boolean manual
+  }
+
+  PublicationSeries_AssessmentClassification "0..*" --> "1" Commission
+  PublicationSeries_AssessmentClassification "0..*" --> "1" PublicationSeries
+  PublicationSeries_AssessmentClassification "0..*" --> "1" AssessmentClassification
+
+  class Person_AssessmentClassification {
+    LocalDateTime timestamp
+    Boolean manual
+  }
+
+  Person_AssessmentClassification "0..*" --> "1" Commission
+  Person_AssessmentClassification "0..*" --> "1" Person
+  Person_AssessmentClassification "0..*" --> "1" AssessmentClassification
+
+  class OrganisationUnit_AssessmentClassification {
+    LocalDateTime timestamp
+    Boolean manual
+  }
+
+  OrganisationUnit_AssessmentClassification "0..*" --> "1" Commission
+  OrganisationUnit_AssessmentClassification "0..*" --> "1" OrganisationUnit
+  OrganisationUnit_AssessmentClassification "0..*" --> "1" AssessmentClassification
+
+  class Indicator {
+    String code
+    MultiLingualContent title
+    ' h-index
+    ' two years impact factor (numeric value in PublicationSeries_Indicator - 1.138)
+    ' two years impact factor position (number value in PublicationSeries_Indicator - 56, meaning a journal is 56th in the list according to two years impact factor )
+    ' two years impact factor fraction (number value in PublicationSeries_Indicator - 0.17, meaning a journal belongs to 17% of the best journals in a research field)
+    ' AMS journal (boolean value in PublicationSeries_Indicator, true - journal belongs to AMS list, false - not belongs to the list)
+    ' etc.
+    MultiLingualContent description
+  }
+
+  class Document_Indicator {
+    Double numericValue
+    Boolean booleanValue
+    String textualValue
+    LocalDateTime timestamp
+    String source
+    LocalDate fromDate
+    LocalDate toDate
+    Set<DocumentFile> proofs
+    Set<String> urls
+  }
+
+  Document_Indicator "0..*" --> "1" Indicator
+  Document_Indicator "0..*" --> "1" Document
+  Document_Indicator "0..*" --> "0" User
+  ' in some cases there won't be user, it will be the result of importing journal impact factors for example
+  ' can we record also those different automatic scripts in some Document_Indicator field?
+
+  class Event_Indicator {
+    Double numericValue
+    Boolean booleanValue
+    String textualValue
+    LocalDateTime timestamp
+    String source
+    LocalDate fromDate
+    LocalDate toDate
+    Set<DocumentFile> proofs
+    Set<String> urls
+  }
+
+  Event_Indicator "0..*" --> "1" Indicator
+  Event_Indicator "0..*" --> "1" Event
+  Event_Indicator "0..*" --> "0" User
+
+  class PublicationSeries_Indicator {
+    Double numericValue
+    Boolean booleanValue
+    String textualValue
+    LocalDateTime timestamp
+    String source
+    LocalDate fromDate
+    LocalDate toDate
+    Set<DocumentFile> proofs
+    Set<String> urls
+  }
+
+  PublicationSeries_Indicator "0..*" --> "1" Indicator
+  PublicationSeries_Indicator "0..*" --> "1" PublicationSeries
+  PublicationSeries_Indicator "0..*" --> "0" User
+
+  class Person_Indicator {
+    Double numericValue
+    Boolean booleanValue
+    String textualValue
+    LocalDateTime timestamp
+    String source
+    LocalDate fromDate
+    LocalDate toDate
+    Set<DocumentFile> proofs
+    Set<String> urls
+  }
+
+  Person_Indicator "0..*" --> "1" Indicator
+  Person_Indicator "0..*" --> "1" Person
+  Person_Indicator "0..*" --> "0" User
+
+  class OrganisationUnit_Indicator {
+    Double numericValue
+    Boolean booleanValue
+    String textualValue
+    LocalDateTime timestamp
+    String source
+    LocalDate fromDate
+    LocalDate toDate
+    Set<DocumentFile> proofs
+    Set<String> urls
+  }
+
+  OrganisationUnit_Indicator "0..*" --> "1" Indicator
+  OrganisationUnit_Indicator "0..*" --> "1" OrganisationUnit
+  OrganisationUnit_Indicator "0..*" --> "0" User
+
 }
 
 @enduml
