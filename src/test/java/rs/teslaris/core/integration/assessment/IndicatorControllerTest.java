@@ -12,7 +12,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.dto.assessment.IndicatorDTO;
+import rs.teslaris.core.assessment.dto.IndicatorDTO;
+import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.integration.BaseTest;
 
@@ -22,10 +23,10 @@ public class IndicatorControllerTest extends BaseTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private IndicatorDTO getTestPayload() {
+    private IndicatorDTO getTestPayload(String code) {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        return new IndicatorDTO(null, "code", dummyMC, dummyMC);
+        return new IndicatorDTO(null, code, dummyMC, dummyMC, IndicatorAccessLevel.OPEN);
     }
 
     @Test
@@ -51,7 +52,7 @@ public class IndicatorControllerTest extends BaseTest {
     public void testCreateIndicator() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var indicatorDTO = getTestPayload();
+        var indicatorDTO = getTestPayload("new_code");
 
         String requestBody = objectMapper.writeValueAsString(indicatorDTO);
         mockMvc.perform(
@@ -60,7 +61,7 @@ public class IndicatorControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_INDICATOR")).andExpect(status().isCreated())
-            .andExpect(jsonPath("$.code").value("code"));
+            .andExpect(jsonPath("$.code").value("new_code"));
     }
 
     @Test
@@ -68,7 +69,7 @@ public class IndicatorControllerTest extends BaseTest {
     public void testUpdateIndicator() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var indicatorDTO = getTestPayload();
+        var indicatorDTO = getTestPayload("code");
 
         String requestBody = objectMapper.writeValueAsString(indicatorDTO);
         mockMvc.perform(

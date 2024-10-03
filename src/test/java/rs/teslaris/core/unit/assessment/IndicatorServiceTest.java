@@ -17,13 +17,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import rs.teslaris.core.dto.assessment.IndicatorDTO;
+import rs.teslaris.core.assessment.dto.IndicatorDTO;
+import rs.teslaris.core.assessment.model.Indicator;
+import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
+import rs.teslaris.core.assessment.repository.IndicatorRepository;
+import rs.teslaris.core.assessment.service.impl.IndicatorServiceImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.model.assessment.Indicator;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.repository.assessment.IndicatorRepository;
-import rs.teslaris.core.service.impl.assessment.IndicatorServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
 
@@ -68,22 +69,21 @@ public class IndicatorServiceTest {
             Set.of(new MultiLingualContent(new LanguageTag(), "Title", 1)));
         indicator.setDescription(
             Set.of(new MultiLingualContent(new LanguageTag(), "Description", 1)));
+        indicator.setCode("code");
+
         when(indicatorRepository.findById(indicatorId))
             .thenReturn(Optional.of(indicator));
 
-        var dto = new IndicatorDTO(null, null, null,
-            List.of(new MultilingualContentDTO(null, null, "Content", 1)));
-
         var result = indicatorService.readIndicatorById(indicatorId);
 
-        assertEquals(dto.code(), result.code());
+        assertEquals("code", result.code());
         verify(indicatorRepository).findById(indicatorId);
     }
 
     @Test
     void shouldCreateIndicator() {
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
-            List.of(new MultilingualContentDTO()));
+            List.of(new MultilingualContentDTO()), IndicatorAccessLevel.CLOSED);
         var newIndicator = new Indicator();
 
         when(indicatorRepository.save(any(Indicator.class)))
@@ -100,7 +100,7 @@ public class IndicatorServiceTest {
     void shouldUpdateIndicator() {
         var indicatorId = 1;
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
-            List.of(new MultilingualContentDTO()));
+            List.of(new MultilingualContentDTO()), IndicatorAccessLevel.CLOSED);
         var existingIndicator = new Indicator();
 
         when(indicatorRepository.findById(indicatorId))

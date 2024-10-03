@@ -17,13 +17,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import rs.teslaris.core.dto.assessment.AssessmentRulebookDTO;
+import rs.teslaris.core.assessment.dto.AssessmentRulebookDTO;
+import rs.teslaris.core.assessment.model.AssessmentRulebook;
+import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
+import rs.teslaris.core.assessment.service.impl.AssessmentRulebookServiceImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.model.assessment.AssessmentRulebook;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.repository.assessment.AssessmentRulebookRepository;
-import rs.teslaris.core.service.impl.assessment.AssessmentRulebookServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 
 @SpringBootTest

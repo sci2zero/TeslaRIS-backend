@@ -12,11 +12,16 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.model.assessment.AssessmentClassification;
-import rs.teslaris.core.model.assessment.AssessmentMeasure;
-import rs.teslaris.core.model.assessment.AssessmentRulebook;
-import rs.teslaris.core.model.assessment.Commission;
-import rs.teslaris.core.model.assessment.Indicator;
+import rs.teslaris.core.assessment.model.AssessmentClassification;
+import rs.teslaris.core.assessment.model.AssessmentMeasure;
+import rs.teslaris.core.assessment.model.AssessmentRulebook;
+import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.assessment.model.Indicator;
+import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
+import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
+import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
@@ -65,11 +70,6 @@ import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.assessment.AssessmentClassificationRepository;
-import rs.teslaris.core.repository.assessment.AssessmentMeasureRepository;
-import rs.teslaris.core.repository.assessment.AssessmentRulebookRepository;
-import rs.teslaris.core.repository.assessment.CommissionRepository;
-import rs.teslaris.core.repository.assessment.IndicatorRepository;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
@@ -168,7 +168,7 @@ public class DbInitializer implements ApplicationRunner {
         var createUserBasic = new Privilege("REGISTER_PERSON");
         var editPersonalInfo = new Privilege("EDIT_PERSON_INFORMATION");
         var approvePerson = new Privilege("APPROVE_PERSON");
-        var editProofs = new Privilege("EDIT_DOCUMENT_PROOFS");
+        var editDocumentFiles = new Privilege("EDIT_DOCUMENT_FILES");
         var approvePublication = new Privilege("APPROVE_PUBLICATION");
         var editResearchAreas = new Privilege("EDIT_RESEARCH_AREAS");
         var editOrganisationUnit = new Privilege("EDIT_ORGANISATION_UNITS");
@@ -184,26 +184,36 @@ public class DbInitializer implements ApplicationRunner {
         var mergeConferenceProceedings = new Privilege("MERGE_CONFERENCE_PROCEEDINGS");
         var mergeProceedingsPublications = new Privilege("MERGE_PROCEEDINGS_PUBLICATIONS");
         var prepareExportData = new Privilege("PREPARE_EXPORT_DATA");
+        var editIndicators = new Privilege("EDIT_INDICATORS");
+        var editAssessmentClassifications = new Privilege("EDIT_ASSESSMENT_CLASSIFICATIONS");
+        var editAssessmentMeasures = new Privilege("EDIT_ASSESSMENT_MEASURES");
+        var editAssessmentRulebooks = new Privilege("EDIT_ASSESSMENT_RULEBOOKS");
+        var editDocumentIndicators = new Privilege("EDIT_DOCUMENT_INDICATORS");
+        var editCommissions = new Privilege("EDIT_COMMISSIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
-                createUserBasic, editPersonalInfo, approvePerson, editProofs, editOrganisationUnit,
-                editResearchAreas, approvePublication, editOURelations, editPublishers,
-                editPublicationSeries, editConferences, editEventRelations, mergeOUEmployments,
-                mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
-                mergeConferenceProceedings, mergeProceedingsPublications, prepareExportData));
+                createUserBasic, editPersonalInfo, approvePerson, editDocumentFiles,
+                editOrganisationUnit, editResearchAreas, approvePublication, editOURelations,
+                editPublishers, editPublicationSeries, editConferences, editEventRelations,
+                mergeOUEmployments, mergeJournalPublications, mergePersonPublications,
+                mergePersonMetadata, mergeConferenceProceedings, mergeProceedingsPublications,
+                prepareExportData, editIndicators, editAssessmentClassifications, editCommissions,
+                editAssessmentMeasures, editAssessmentRulebooks, editDocumentIndicators));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
-                createUserBasic, approvePerson, editProofs, editOrganisationUnit, editResearchAreas,
-                editOURelations, approvePublication, editPublishers, editPublicationSeries,
-                editConferences, editEventRelations, mergeJournalPublications,
-                mergePersonPublications, mergePersonMetadata, mergeOUEmployments,
-                mergeConferenceProceedings, mergeProceedingsPublications, prepareExportData)));
+                createUserBasic, approvePerson, editDocumentFiles, editOrganisationUnit,
+                editResearchAreas, editOURelations, approvePublication, editPublishers,
+                editPublicationSeries, editConferences, editEventRelations, editCommissions,
+                mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
+                mergeOUEmployments, mergeConferenceProceedings, mergeProceedingsPublications,
+                prepareExportData, editIndicators, editAssessmentClassifications,
+                editAssessmentMeasures, editAssessmentRulebooks, editDocumentIndicators)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
-                createUserBasic, editProofs})));
+                createUserBasic, editDocumentFiles, editDocumentIndicators})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(researcherAuthority);
 

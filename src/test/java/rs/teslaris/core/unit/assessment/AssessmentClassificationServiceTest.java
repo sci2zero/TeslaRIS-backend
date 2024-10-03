@@ -17,13 +17,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import rs.teslaris.core.dto.assessment.AssessmentClassificationDTO;
+import rs.teslaris.core.assessment.dto.AssessmentClassificationDTO;
+import rs.teslaris.core.assessment.model.AssessmentClassification;
+import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
+import rs.teslaris.core.assessment.service.impl.AssessmentClassificationServiceImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.model.assessment.AssessmentClassification;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.repository.assessment.AssessmentClassificationRepository;
-import rs.teslaris.core.service.impl.assessment.AssessmentClassificationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
 
