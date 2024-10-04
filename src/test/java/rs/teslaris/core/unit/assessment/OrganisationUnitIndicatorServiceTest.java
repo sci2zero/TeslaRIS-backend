@@ -11,10 +11,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.model.Indicator;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.model.OrganisationUnitIndicator;
 import rs.teslaris.core.assessment.repository.OrganisationUnitIndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.OrganisationUnitIndicatorServiceImpl;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 
 @SpringBootTest
 public class OrganisationUnitIndicatorServiceTest {
@@ -27,14 +27,14 @@ public class OrganisationUnitIndicatorServiceTest {
 
 
     @ParameterizedTest
-    @EnumSource(value = IndicatorAccessLevel.class, names = {"OPEN", "CLOSED", "ADMIN_ONLY"})
+    @EnumSource(value = AccessLevel.class, names = {"OPEN", "CLOSED", "ADMIN_ONLY"})
     void shouldReadAllOrganisationUnitIndicatorsForOrganisationUnit(
-        IndicatorAccessLevel accessLevel) {
+        AccessLevel accessLevel) {
         // Given
         var organisationUnitId = 1;
 
         var indicator = new Indicator();
-        indicator.setAccessLevel(IndicatorAccessLevel.OPEN);
+        indicator.setAccessLevel(AccessLevel.OPEN);
 
         var organisationUnitIndicator1 = new OrganisationUnitIndicator();
         organisationUnitIndicator1.setNumericValue(12d);

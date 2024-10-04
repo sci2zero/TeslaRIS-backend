@@ -4,8 +4,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.model.OrganisationUnitIndicator;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 
 @Repository
 public interface OrganisationUnitIndicatorRepository
@@ -16,5 +16,5 @@ public interface OrganisationUnitIndicatorRepository
         "oui.indicator.accessLevel <= :accessLevel")
     List<OrganisationUnitIndicator> findIndicatorsForOrganisationUnitAndIndicatorAccessLevel(
         Integer organisationUnitId,
-        IndicatorAccessLevel accessLevel);
+        AccessLevel accessLevel);
 }

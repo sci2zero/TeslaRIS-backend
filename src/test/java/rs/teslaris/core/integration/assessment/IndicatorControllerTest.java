@@ -13,9 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.assessment.dto.IndicatorDTO;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.integration.BaseTest;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 
 @SpringBootTest
 public class IndicatorControllerTest extends BaseTest {
@@ -26,7 +26,7 @@ public class IndicatorControllerTest extends BaseTest {
     private IndicatorDTO getTestPayload(String code) {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        return new IndicatorDTO(null, code, dummyMC, dummyMC, IndicatorAccessLevel.OPEN);
+        return new IndicatorDTO(null, code, dummyMC, dummyMC, AccessLevel.OPEN);
     }
 
     @Test

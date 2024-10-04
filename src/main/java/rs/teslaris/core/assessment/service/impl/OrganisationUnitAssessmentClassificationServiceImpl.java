@@ -1,0 +1,42 @@
+package rs.teslaris.core.assessment.service.impl;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
+import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.OrganisationUnitAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.assessment.service.interfaces.OrganisationUnitAssessmentClassificationService;
+
+@Service
+public class OrganisationUnitAssessmentClassificationServiceImpl
+    extends EntityAssessmentClassificationServiceImpl implements
+    OrganisationUnitAssessmentClassificationService {
+
+    private final OrganisationUnitAssessmentClassificationRepository
+        organisationUnitAssessmentClassificationRepository;
+
+    @Autowired
+    public OrganisationUnitAssessmentClassificationServiceImpl(
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
+        CommissionService commissionService,
+        AssessmentClassificationService assessmentClassificationService,
+        OrganisationUnitAssessmentClassificationRepository organisationUnitAssessmentClassificationRepository) {
+        super(entityAssessmentClassificationRepository, commissionService,
+            assessmentClassificationService);
+        this.organisationUnitAssessmentClassificationRepository =
+            organisationUnitAssessmentClassificationRepository;
+    }
+
+    @Override
+    public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForOrganisationUnit(
+        Integer organisationUnitId) {
+        return organisationUnitAssessmentClassificationRepository.findAssessmentClassificationsForOrganisationUnit(
+                organisationUnitId).stream().map(EntityAssessmentClassificationConverter::toDTO)
+            .collect(Collectors.toList());
+    }
+}

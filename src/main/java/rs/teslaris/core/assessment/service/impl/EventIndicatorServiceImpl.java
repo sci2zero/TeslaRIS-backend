@@ -6,11 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.core.assessment.dto.EntityIndicatorResponseDTO;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.core.assessment.repository.EventIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.EventIndicatorService;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 
 @Service
@@ -30,7 +30,7 @@ public class EventIndicatorServiceImpl extends EntityIndicatorServiceImpl
 
     @Override
     public List<EntityIndicatorResponseDTO> getIndicatorsForEvent(Integer eventId,
-                                                                  IndicatorAccessLevel accessLevel) {
+                                                                  AccessLevel accessLevel) {
         return eventIndicatorRepository.findIndicatorsForEventAndIndicatorAccessLevel(eventId,
             accessLevel).stream().map(
             EntityIndicatorConverter::toDTO).collect(Collectors.toList());

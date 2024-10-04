@@ -1,9 +1,8 @@
 package rs.teslaris.core.assessment.service.impl;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,11 +11,14 @@ import rs.teslaris.core.assessment.model.EntityIndicator;
 import rs.teslaris.core.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.EntityIndicatorService;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 @Transactional
 public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> implements
@@ -30,15 +32,30 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
 
 
     @Override
-    public void addEntityIndicatorProof(List<DocumentFileDTO> proofs,
-                                        Integer entityIndicatorId) {
+    public EntityIndicator findByUserId(Integer userId) {
+        return entityIndicatorRepository.findByUserId(userId);
+    }
+
+    @Override
+    public boolean isUserTheOwnerOfEntityIndicator(Integer userId, Integer entityIndicatorId) {
+        return entityIndicatorRepository.isUserTheOwnerOfEntityIndicator(userId, entityIndicatorId);
+    }
+
+    @Override
+    public DocumentFileResponseDTO addEntityIndicatorProof(DocumentFileDTO proof,
+                                                           Integer entityIndicatorId) {
         var entityIndicator = findOne(entityIndicatorId);
-        proofs.forEach(proof -> {
-            var documentFile = documentFileService.saveNewDocument(proof, false);
-            entityIndicator.getProofs().add(documentFile);
-        });
+        var documentFile = documentFileService.saveNewDocument(proof, false);
+        entityIndicator.getProofs().add(documentFile);
 
         save(entityIndicator);
+
+        return DocumentFileConverter.toDTO(documentFile);
+    }
+
+    @Override
+    public DocumentFileResponseDTO updateEntityIndicatorProof(DocumentFileDTO updatedProof) {
+        return documentFileService.editDocumentFile(updatedProof, false);
     }
 
     @Override
@@ -69,8 +86,6 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
         entityIndicator.setTextualValue(entityIndicatorDTO.getTextualValue());
         entityIndicator.setFromDate(entityIndicatorDTO.getFromDate());
         entityIndicator.setToDate(entityIndicatorDTO.getToDate());
-
-        entityIndicator.setUrls(new HashSet<>(entityIndicatorDTO.getUrls()));
 
         entityIndicator.setIndicator(indicatorService.findOne(entityIndicatorDTO.getIndicatorId()));
     }

@@ -123,7 +123,7 @@ public class ProceedingsPublicationServiceTest {
         when(documentRepository.save(any())).thenReturn(document);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
-        when(eventService.findEventById(publicationDTO.getProceedingsId())).thenReturn(
+        when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(
             new Conference());
         when(proceedingPublicationJPAService.save(any())).thenReturn(document);
 
@@ -158,7 +158,7 @@ public class ProceedingsPublicationServiceTest {
             publicationToUpdate);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
-        when(eventService.findEventById(publicationDTO.getProceedingsId())).thenReturn(
+        when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(
             new Conference());
         when(proceedingPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
 

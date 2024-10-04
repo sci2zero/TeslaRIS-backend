@@ -12,9 +12,9 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.model.EventIndicator;
 import rs.teslaris.core.assessment.model.Indicator;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.repository.EventIndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.EventIndicatorServiceImpl;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 
 @SpringBootTest
 public class EventIndicatorServiceTest {
@@ -27,13 +27,13 @@ public class EventIndicatorServiceTest {
 
 
     @ParameterizedTest
-    @EnumSource(value = IndicatorAccessLevel.class, names = {"OPEN", "CLOSED", "ADMIN_ONLY"})
-    void shouldReadAllEventIndicatorsForEvent(IndicatorAccessLevel accessLevel) {
+    @EnumSource(value = AccessLevel.class, names = {"OPEN", "CLOSED", "ADMIN_ONLY"})
+    void shouldReadAllEventIndicatorsForEvent(AccessLevel accessLevel) {
         // Given
         var eventId = 1;
 
         var indicator = new Indicator();
-        indicator.setAccessLevel(IndicatorAccessLevel.OPEN);
+        indicator.setAccessLevel(AccessLevel.OPEN);
 
         var eventIndicator1 = new EventIndicator();
         eventIndicator1.setNumericValue(12d);

@@ -11,10 +11,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.model.Indicator;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.model.PublicationSeriesIndicator;
 import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.PublicationSeriesIndicatorServiceImpl;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 
 @SpringBootTest
 public class PublicationSeriesIndicatorServiceTest {
@@ -27,14 +27,14 @@ public class PublicationSeriesIndicatorServiceTest {
 
 
     @ParameterizedTest
-    @EnumSource(value = IndicatorAccessLevel.class, names = {"OPEN", "CLOSED", "ADMIN_ONLY"})
+    @EnumSource(value = AccessLevel.class, names = {"OPEN", "CLOSED", "ADMIN_ONLY"})
     void shouldReadAllPublicationSeriesIndicatorsForPublicationSeries(
-        IndicatorAccessLevel accessLevel) {
+        AccessLevel accessLevel) {
         // Given
         var publicationSeriesId = 1;
 
         var indicator = new Indicator();
-        indicator.setAccessLevel(IndicatorAccessLevel.OPEN);
+        indicator.setAccessLevel(AccessLevel.OPEN);
 
         var publicationSeriesIndicator1 = new PublicationSeriesIndicator();
         publicationSeriesIndicator1.setNumericValue(12d);

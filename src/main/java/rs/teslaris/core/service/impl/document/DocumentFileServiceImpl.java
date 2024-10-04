@@ -29,6 +29,7 @@ import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -115,6 +116,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         setCommonFields(newDocumentFile, documentFile);
 
+        if (!index) {
+            documentFile.setResourceType(
+                ResourceType.SUPPLEMENT); // Save every non-indexed (proof) as supplement
+        }
+
         var serverFilename =
             fileService.store(documentFile.getFile(), UUID.randomUUID().toString());
         newDocumentFile.setServerFilename(serverFilename);
@@ -136,6 +142,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
 
         setCommonFields(documentFileToEdit, documentFile);
+
+        if (!index) {
+            documentFile.setResourceType(
+                ResourceType.SUPPLEMENT); // Save every non-indexed (proof) as supplement
+        }
 
         if (documentFile.getFile().getSize() > 0) {
             var serverFilename =

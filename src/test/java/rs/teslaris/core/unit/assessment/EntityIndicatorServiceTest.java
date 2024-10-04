@@ -6,7 +6,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -45,8 +44,7 @@ public class EntityIndicatorServiceTest {
             documentFile);
 
         // When
-        entityIndicatorService.addEntityIndicatorProof(List.of(new DocumentFileDTO()),
-            entityIndicatorId);
+        entityIndicatorService.addEntityIndicatorProof(new DocumentFileDTO(), entityIndicatorId);
 
         // Then
         verify(entityIndicatorRepository, times(1)).save(entityIndicator);

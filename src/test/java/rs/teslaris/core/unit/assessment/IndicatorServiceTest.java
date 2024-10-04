@@ -19,10 +19,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.assessment.dto.IndicatorDTO;
 import rs.teslaris.core.assessment.model.Indicator;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.IndicatorServiceImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -83,7 +83,7 @@ public class IndicatorServiceTest {
     @Test
     void shouldCreateIndicator() {
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
-            List.of(new MultilingualContentDTO()), IndicatorAccessLevel.CLOSED);
+            List.of(new MultilingualContentDTO()), AccessLevel.CLOSED);
         var newIndicator = new Indicator();
 
         when(indicatorRepository.save(any(Indicator.class)))
@@ -100,7 +100,7 @@ public class IndicatorServiceTest {
     void shouldUpdateIndicator() {
         var indicatorId = 1;
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
-            List.of(new MultilingualContentDTO()), IndicatorAccessLevel.CLOSED);
+            List.of(new MultilingualContentDTO()), AccessLevel.CLOSED);
         var existingIndicator = new Indicator();
 
         when(indicatorRepository.findById(indicatorId))

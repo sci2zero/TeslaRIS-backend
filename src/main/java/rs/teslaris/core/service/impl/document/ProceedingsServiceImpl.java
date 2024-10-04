@@ -225,7 +225,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             proceedings.getLanguages().add(languageTagService.findLanguageTagById(id));
         });
 
-        proceedings.setEvent(eventService.findEventById(proceedingsDTO.getEventId()));
+        proceedings.setEvent(eventService.findOne(proceedingsDTO.getEventId()));
 
         if (proceedingsDTO.getPublicationSeriesId() != null) {
             var optionalJournal =

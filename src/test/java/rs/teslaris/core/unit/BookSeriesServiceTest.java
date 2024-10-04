@@ -73,7 +73,7 @@ public class BookSeriesServiceTest {
         when(publicationSeriesRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var result = bookSeriesService.findPublicationSeriesById(1);
+        var result = bookSeriesService.findOne(1);
 
         // then
         assertEquals(expected, result);

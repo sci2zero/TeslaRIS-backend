@@ -9,7 +9,6 @@ public class EntityIndicatorConverter {
         return new EntityIndicatorResponseDTO(entityIndicator.getNumericValue(),
             entityIndicator.getBooleanValue(),
             entityIndicator.getTextualValue(), entityIndicator.getFromDate(),
-            entityIndicator.getToDate(), entityIndicator.getUrls().stream().toList(),
-            IndicatorConverter.toDTO(entityIndicator.getIndicator()));
+            entityIndicator.getToDate(), IndicatorConverter.toDTO(entityIndicator.getIndicator()));
     }
 }

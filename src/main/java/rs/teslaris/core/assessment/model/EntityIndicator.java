@@ -1,10 +1,9 @@
 package rs.teslaris.core.assessment.model;
 
-import jakarta.persistence.CollectionTable;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
@@ -56,13 +55,8 @@ public abstract class EntityIndicator extends BaseEntity {
     @Column(name = "to_date")
     private LocalDate toDate;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<DocumentFile> proofs = new HashSet<>();
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "assessment_document_urls", joinColumns = @JoinColumn(name = "document_id"))
-    @Column(name = "url", nullable = false)
-    private Set<String> urls = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "indicator_id")

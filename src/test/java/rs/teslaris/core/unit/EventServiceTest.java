@@ -81,7 +81,7 @@ public class EventServiceTest {
         when(eventRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var result = eventService.findEventById(1);
+        var result = eventService.findOne(1);
 
         // then
         assertEquals(expected, result);
@@ -93,7 +93,7 @@ public class EventServiceTest {
         when(eventRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> eventService.findEventById(1));
+        assertThrows(NotFoundException.class, () -> eventService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }

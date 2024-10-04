@@ -65,12 +65,6 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
 
     @Override
-    public Event findEventById(Integer eventId) {
-        return eventRepository.findById(eventId)
-            .orElseThrow(() -> new NotFoundException("Event with given ID does not exist."));
-    }
-
-    @Override
     @Nullable
     public Event findEventByOldId(Integer eventId) {
         return eventRepository.findEventByOldId(eventId).orElse(null);

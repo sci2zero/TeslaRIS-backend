@@ -6,11 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.core.assessment.dto.EntityIndicatorResponseDTO;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesIndicatorService;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 
 @Service
@@ -32,7 +32,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     @Override
     public List<EntityIndicatorResponseDTO> getIndicatorsForPublicationSeries(
         Integer publicationSeriesId,
-        IndicatorAccessLevel accessLevel) {
+        AccessLevel accessLevel) {
         return publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndIndicatorAccessLevel(
             publicationSeriesId,
             accessLevel).stream().map(

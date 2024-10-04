@@ -8,14 +8,15 @@ import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.core.assessment.dto.DocumentIndicatorDTO;
 import rs.teslaris.core.assessment.dto.EntityIndicatorResponseDTO;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.core.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.cruddelegate.DocumentIndicatorJPAServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.DocumentIndicatorService;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service
 public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
@@ -27,6 +28,8 @@ public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final UserService userService;
+
 
     @Autowired
     public DocumentIndicatorServiceImpl(
@@ -35,26 +38,29 @@ public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
         IndicatorService indicatorService,
         DocumentIndicatorJPAServiceImpl documentIndicatorJPAService,
         DocumentIndicatorRepository documentIndicatorRepository,
-        DocumentPublicationService documentPublicationService) {
+        DocumentPublicationService documentPublicationService, UserService userService) {
         super(entityIndicatorRepository, documentFileService, indicatorService);
         this.documentIndicatorJPAService = documentIndicatorJPAService;
         this.documentIndicatorRepository = documentIndicatorRepository;
         this.documentPublicationService = documentPublicationService;
+        this.userService = userService;
     }
 
     @Override
     public List<EntityIndicatorResponseDTO> getIndicatorsForDocument(Integer documentId,
-                                                                     IndicatorAccessLevel accessLevel) {
+                                                                     AccessLevel accessLevel) {
         return documentIndicatorRepository.findIndicatorsForDocumentAndIndicatorAccessLevel(
             documentId, accessLevel).stream().map(
             EntityIndicatorConverter::toDTO).collect(Collectors.toList());
     }
 
     @Override
-    public DocumentIndicator createDocumentIndicator(DocumentIndicatorDTO documentIndicatorDTO) {
+    public DocumentIndicator createDocumentIndicator(DocumentIndicatorDTO documentIndicatorDTO,
+                                                     Integer userId) {
         var newDocumentIndicator = new DocumentIndicator();
 
         setCommonFields(newDocumentIndicator, documentIndicatorDTO);
+        newDocumentIndicator.setUser(userService.findOne(userId));
 
         newDocumentIndicator.setDocument(
             documentPublicationService.findOne(documentIndicatorDTO.getDocumentId()));

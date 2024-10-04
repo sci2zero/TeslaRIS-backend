@@ -16,12 +16,15 @@ import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
+import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
@@ -157,6 +160,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final AssessmentRulebookRepository assessmentRulebookRepository;
 
+    private final DocumentIndicatorRepository documentIndicatorRepository;
+
 
     @Override
     @Transactional
@@ -190,6 +195,7 @@ public class DbInitializer implements ApplicationRunner {
         var editAssessmentRulebooks = new Privilege("EDIT_ASSESSMENT_RULEBOOKS");
         var editDocumentIndicators = new Privilege("EDIT_DOCUMENT_INDICATORS");
         var editCommissions = new Privilege("EDIT_COMMISSIONS");
+        var editEntityIndicatorProofs = new Privilege("EDIT_ENTITY_INDICATOR_PROOFS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -199,7 +205,8 @@ public class DbInitializer implements ApplicationRunner {
                 mergeOUEmployments, mergeJournalPublications, mergePersonPublications,
                 mergePersonMetadata, mergeConferenceProceedings, mergeProceedingsPublications,
                 prepareExportData, editIndicators, editAssessmentClassifications, editCommissions,
-                editAssessmentMeasures, editAssessmentRulebooks, editDocumentIndicators));
+                editAssessmentMeasures, editAssessmentRulebooks, editDocumentIndicators,
+                editEntityIndicatorProofs));
 
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
             List.of(takeRoleOfUser, deactivateUser, updateProfile, editPersonalInfo,
@@ -209,11 +216,13 @@ public class DbInitializer implements ApplicationRunner {
                 mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
                 mergeOUEmployments, mergeConferenceProceedings, mergeProceedingsPublications,
                 prepareExportData, editIndicators, editAssessmentClassifications,
-                editAssessmentMeasures, editAssessmentRulebooks, editDocumentIndicators)));
+                editAssessmentMeasures, editAssessmentRulebooks, editDocumentIndicators,
+                editEntityIndicatorProofs)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
-                createUserBasic, editDocumentFiles, editDocumentIndicators})));
+                createUserBasic, editDocumentFiles, editDocumentIndicators,
+                editEntityIndicatorProofs})));
         authorityRepository.save(adminAuthority);
         authorityRepository.save(researcherAuthority);
 
@@ -709,6 +718,7 @@ public class DbInitializer implements ApplicationRunner {
         indicator1.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 1", 1)));
         indicator1.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Indicator 1 description", 1)));
+        indicator1.setAccessLevel(AccessLevel.OPEN);
 
         var indicator2 = new Indicator();
         indicator2.setCode("Code 2");
@@ -716,7 +726,21 @@ public class DbInitializer implements ApplicationRunner {
         indicator2.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Indicator 2 description", 1)));
 
-        indicatorRepository.saveAll(List.of(indicator1, indicator2));
+        var indicator3 = new Indicator();
+        indicator3.setCode("Code 3");
+        indicator3.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 3", 1)));
+        indicator3.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Indicator 3 description", 1)));
+        indicator3.setAccessLevel(AccessLevel.CLOSED);
+
+        var indicator4 = new Indicator();
+        indicator4.setCode("Code 4");
+        indicator4.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 4", 1)));
+        indicator4.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Indicator 4 description", 1)));
+        indicator4.setAccessLevel(AccessLevel.ADMIN_ONLY);
+
+        indicatorRepository.saveAll(List.of(indicator1, indicator2, indicator3, indicator4));
 
         var assessmentClassification1 = new AssessmentClassification();
         assessmentClassification1.setFormalDescriptionOfRule("Rule 1");
@@ -771,5 +795,28 @@ public class DbInitializer implements ApplicationRunner {
         assessmentRulebook2.setAssessmentMeasure(assessmentMeasure1);
 
         assessmentRulebookRepository.saveAll(List.of(assessmentRulebook1, assessmentRulebook2));
+
+        var documentIndicator1 = new DocumentIndicator();
+        documentIndicator1.setTextualValue("ADMIN ACCESS INDICATOR");
+        documentIndicator1.setIndicator(indicator4);
+        documentIndicator1.setDocument(dataset);
+
+        var documentIndicator2 = new DocumentIndicator();
+        documentIndicator2.setTextualValue("CLOSED ACCESS INDICATOR");
+        documentIndicator2.setIndicator(indicator3);
+        documentIndicator2.setDocument(dataset);
+
+        var documentIndicator3 = new DocumentIndicator();
+        documentIndicator3.setTextualValue("OPEN ACCESS INDICATOR");
+        documentIndicator3.setIndicator(indicator1);
+        documentIndicator3.setDocument(dataset);
+
+        documentIndicatorRepository.saveAll(
+            List.of(documentIndicator1, documentIndicator2, documentIndicator3));
+
+        documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
+            new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
+            License.OPEN_ACCESS, ApproveStatus.APPROVED));
+        documentIndicatorRepository.save(documentIndicator1);
     }
 }

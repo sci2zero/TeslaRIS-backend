@@ -125,7 +125,7 @@ public class JournalPublicationServiceTest {
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
         when(journalPublicationJPAService.save(any())).thenReturn(document);
-        when(eventService.findEventById(1)).thenReturn(new Conference());
+        when(eventService.findOne(1)).thenReturn(new Conference());
 
         var authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
@@ -154,7 +154,7 @@ public class JournalPublicationServiceTest {
 
         when(documentRepository.findById(publicationId)).thenReturn(
             Optional.of(publicationToUpdate));
-        when(eventService.findEventById(1)).thenReturn(new Conference());
+        when(eventService.findOne(1)).thenReturn(new Conference());
         when(journalPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
 
         var authentication = mock(Authentication.class);

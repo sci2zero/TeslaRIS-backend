@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
@@ -29,7 +30,7 @@ public class Indicator extends BaseEntity {
     private String code;
 
     @Column(name = "access_level")
-    private IndicatorAccessLevel accessLevel;
+    private AccessLevel accessLevel;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();

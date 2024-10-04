@@ -1,5 +1,6 @@
 package rs.teslaris.core.configuration;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -180,6 +181,13 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(MalformedJwtException.class)
     @ResponseBody
     ErrorObject handleMalformedJwtException(HttpServletRequest request, MalformedJwtException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(ExpiredJwtException.class)
+    @ResponseBody
+    ErrorObject handleExpiredJwtException(HttpServletRequest request, ExpiredJwtException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 

@@ -35,6 +35,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -393,7 +394,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setScopusId(documentDTO.getScopusId());
 
         if (Objects.nonNull(documentDTO.getEventId())) {
-            var event = eventService.findEventById(documentDTO.getEventId());
+            var event = eventService.findOne(documentDTO.getEventId());
 
             if (event.getSerialEvent()) {
                 throw new ProceedingsReferenceConstraintViolationException(

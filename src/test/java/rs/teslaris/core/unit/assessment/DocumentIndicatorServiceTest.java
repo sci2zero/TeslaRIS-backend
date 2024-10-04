@@ -17,13 +17,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.dto.DocumentIndicatorDTO;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.Indicator;
-import rs.teslaris.core.assessment.model.IndicatorAccessLevel;
 import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.DocumentIndicatorServiceImpl;
 import rs.teslaris.core.assessment.service.impl.cruddelegate.DocumentIndicatorJPAServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 
 @SpringBootTest
 public class DocumentIndicatorServiceTest {
@@ -40,18 +42,21 @@ public class DocumentIndicatorServiceTest {
     @Mock
     private DocumentPublicationService documentPublicationService;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private DocumentIndicatorServiceImpl documentIndicatorService;
 
 
     @ParameterizedTest
-    @EnumSource(value = IndicatorAccessLevel.class, names = {"OPEN", "CLOSED", "ADMIN_ONLY"})
-    void shouldReadAllDocumentIndicatorsForDocument(IndicatorAccessLevel accessLevel) {
+    @EnumSource(value = AccessLevel.class, names = {"OPEN", "CLOSED", "ADMIN_ONLY"})
+    void shouldReadAllDocumentIndicatorsForDocument(AccessLevel accessLevel) {
         // Given
         var documentId = 1;
 
         var indicator = new Indicator();
-        indicator.setAccessLevel(IndicatorAccessLevel.OPEN);
+        indicator.setAccessLevel(AccessLevel.OPEN);
 
         var documentIndicator1 = new DocumentIndicator();
         documentIndicator1.setNumericValue(12d);
@@ -92,12 +97,14 @@ public class DocumentIndicatorServiceTest {
         when(documentIndicatorJPAService.save(any(DocumentIndicator.class)))
             .thenReturn(newDocumentIndicator);
         when(indicatorService.findOne(1)).thenReturn(new Indicator());
+        when(userService.findOne(1)).thenReturn(new User());
 
         var result = documentIndicatorService.createDocumentIndicator(
-            documentIndicatorDTO);
+            documentIndicatorDTO, 1);
 
         assertNotNull(result);
         verify(documentIndicatorJPAService).save(any(DocumentIndicator.class));
+        verify(userService).findOne(1);
     }
 
     @Test
