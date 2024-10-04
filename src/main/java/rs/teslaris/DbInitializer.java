@@ -780,7 +780,10 @@ public class DbInitializer implements ApplicationRunner {
         commission2.setFormalDescriptionOfRule("Rule 2");
         commission2.setSuperComission(commission1);
 
-        commissionRepository.saveAll(List.of(commission1, commission2));
+        var commission3 = new Commission();
+        commission3.setFormalDescriptionOfRule("Rule 3");
+
+        commissionRepository.saveAll(List.of(commission1, commission2, commission3));
 
         var assessmentRulebook1 = new AssessmentRulebook();
         assessmentRulebook1.setName(

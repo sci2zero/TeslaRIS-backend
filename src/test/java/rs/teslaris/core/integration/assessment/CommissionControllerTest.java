@@ -76,7 +76,7 @@ public class CommissionControllerTest extends BaseTest {
         String requestBody = objectMapper.writeValueAsString(commissionDTO);
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
-                        "http://localhost:8081/api/assessment/commission/{commissionId}", 1)
+                        "http://localhost:8081/api/assessment/commission/{commissionId}", 2)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -90,7 +90,7 @@ public class CommissionControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.delete(
                         "http://localhost:8081/api/assessment/commission/{commissionId}",
-                        2)
+                        3)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
