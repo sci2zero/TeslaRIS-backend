@@ -18,7 +18,7 @@ public class JournalPublicationControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @WithMockUser(username = "test.author@test.com", password = "testAuthor")
+    @WithMockUser(username = "author@author.com", password = "author")
     public void testFindMyPublicationsInJournal() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
 
