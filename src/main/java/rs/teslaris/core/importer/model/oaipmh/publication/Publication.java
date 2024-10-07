@@ -5,6 +5,7 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import java.util.Date;
@@ -27,9 +28,6 @@ import rs.teslaris.core.importer.model.oaipmh.common.PersonAttributes;
 @ToString
 public class Publication implements PublicationConvertable {
 
-    @XmlElement(name = "Keyword")
-    private List<String> keywords;
-
     private String id;
 
     @XmlAttribute(name = "id")
@@ -43,6 +41,9 @@ public class Publication implements PublicationConvertable {
 
     @XmlElement(name = "Title")
     private List<MultilingualContent> title;
+
+    @XmlElement(name = "PublishedIn")
+    private PublishedIn publishedIn;
 
     @XmlElement(name = "Subtitle")
     private List<MultilingualContent> subtitle;
@@ -71,9 +72,6 @@ public class Publication implements PublicationConvertable {
     @XmlElement(name = "EndPage")
     private String endPage;
 
-    @XmlElement(name = "URL")
-    private List<String> url;
-
     @XmlElement(name = "DOI")
     private String doi;
 
@@ -86,11 +84,8 @@ public class Publication implements PublicationConvertable {
     @XmlElement(name = "ISBN")
     private String isbn;
 
-    @XmlElement(name = "Abstract")
-    private String _abstract;
-
-    @XmlElement(name = "Access")
-    private String access;
+    @XmlElement(name = "URL")
+    private List<String> url;
 
     @XmlElementWrapper(name = "Authors")
     @XmlElement(name = "Author")
@@ -104,11 +99,20 @@ public class Publication implements PublicationConvertable {
     @XmlElement(name = "Publisher")
     private List<Publisher> publishers;
 
-    @XmlElement(name = "PublishedIn")
-    private PublishedIn publishedIn;
+    @XmlElements({
+        @XmlElement(name = "Keyword", type = MultilingualContent.class),
+        @XmlElement(name = "Keyword", type = String.class)
+    })
+    private List<Object> keywords;
+
+    @XmlElement(name = "Abstract")
+    private PublicationAbstract _abstract;
 
     @XmlElement(name = "PartOf")
     private PartOf partOf;
+
+    @XmlElement(name = "Access", namespace = "http://purl.org/coar/access_right")
+    private String access;
 
     private List<Integer> importUserId;
 

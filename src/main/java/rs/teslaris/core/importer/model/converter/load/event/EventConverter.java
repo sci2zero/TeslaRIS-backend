@@ -1,5 +1,8 @@
 package rs.teslaris.core.importer.model.converter.load.event;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -30,14 +33,34 @@ public class EventConverter implements RecordConverter<Event, ConferenceDTO> {
         dto.setName(multilingualContentConverter.toDTO(record.getEventName()));
         dto.setPlace(multilingualContentConverter.toDTO(record.getPlace()));
         dto.setState(multilingualContentConverter.toDTO(record.getCountry()));
-        dto.setDescription(multilingualContentConverter.toDTO(record.getDescription()));
-        dto.setKeywords(
-            multilingualContentConverter.toDTO(String.join(", ",
-                Objects.requireNonNullElse(record.getKeywords(), new ArrayList<>()))));
+        dto.setDescription(multilingualContentConverter.toDTO((String) record.getDescription()));
 
-        dto.setDateFrom(
-            record.getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        dto.setDateTo(record.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        if (Objects.nonNull(record.getKeywords())) {
+            var keywordBuilder = new StringBuilder();
+            record.getKeywords().stream()
+                .map(Object::toString)
+                .forEach(keyword -> {
+                    if (!keywordBuilder.isEmpty()) {
+                        keywordBuilder.append(", ");
+                    }
+                    keywordBuilder.append(keyword);
+                });
+            dto.setKeywords(multilingualContentConverter.toDTO(keywordBuilder.toString()));
+        } else {
+            dto.setKeywords(new ArrayList<>());
+        }
+
+        var formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
+        try {
+            dto.setDateFrom(
+                LocalDate.ofInstant(formatter.parse(record.getStartDate()).toInstant(),
+                    ZoneId.systemDefault()));
+            dto.setDateTo(
+                LocalDate.ofInstant(formatter.parse(record.getEndDate()).toInstant(),
+                    ZoneId.systemDefault()));
+        } catch (ParseException e) {
+            // pass
+        }
 
         dto.setNameAbbreviation(new ArrayList<>());
         dto.setSerialEvent(false);

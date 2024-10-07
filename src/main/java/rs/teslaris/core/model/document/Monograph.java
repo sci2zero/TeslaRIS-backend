@@ -23,7 +23,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @Entity
 @Table(name = "monographs")
 @SQLRestriction("deleted=false")
-public class Monograph extends Document {
+public non-sealed class Monograph extends Document implements BookSeriesPublishable {
 
     @Column(name = "monograph_type", nullable = false)
     @ColumnDefault("0")

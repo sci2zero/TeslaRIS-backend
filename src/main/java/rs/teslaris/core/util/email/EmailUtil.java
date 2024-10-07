@@ -23,7 +23,7 @@ public class EmailUtil {
     @Value("${mail.universal-editor.address}")
     private String universalEditorAddress;
 
-    @Async
+    @Async("taskExecutor")
     @Retryable(
         retryFor = {Exception.class},
         maxAttempts = 2,
@@ -42,7 +42,7 @@ public class EmailUtil {
         }
     }
 
-    @Async
+    @Async("taskExecutor")
     public void notifyInstitutionalEditor(Integer entityId, String entityType) {
         // TODO: Ovo treba da se salje INSTITUTIONAL_EDITOR-u a da fallback bude ovo!
         sendSimpleEmail(universalEditorAddress, "New " + entityType + " added",

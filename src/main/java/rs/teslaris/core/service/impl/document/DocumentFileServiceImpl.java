@@ -127,14 +127,14 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         newDocumentFile.setApproveStatus(
             documentFileApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-        newDocumentFile = save(newDocumentFile);
+        var savedDocumentFile = save(newDocumentFile);
 
         if (index && newDocumentFile.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(), serverFilename,
                 new DocumentFileIndex());
         }
 
-        return newDocumentFile;
+        return savedDocumentFile;
     }
 
     @Override
@@ -334,5 +334,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         documentIndex.setServerFilename(serverFilename);
         documentIndex.setDatabaseId(documentFile.getId());
+
+        documentFileIndexRepository.save(documentIndex);
     }
 }

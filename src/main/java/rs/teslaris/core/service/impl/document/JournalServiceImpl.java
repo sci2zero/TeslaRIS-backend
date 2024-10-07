@@ -133,7 +133,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
-    public void updateJournal(PublicationSeriesDTO journalDTO, Integer journalId) {
+    public void updateJournal(Integer journalId, PublicationSeriesDTO journalDTO) {
         var journalToUpdate = journalJPAService.findOne(journalId);
         journalToUpdate.getLanguages().clear();
 

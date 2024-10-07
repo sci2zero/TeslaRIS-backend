@@ -71,9 +71,640 @@
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_cerif_openaire",
-        "oai_dim",
+        "oai_cerif_openaire"
+      ],
+      "typeMappings": {
+        "PROCEEDINGS": "test_proc",
+        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
+        "MONOGRAPH": "test_mon",
+        "MONOGRAPH_PUBLICATION": "test_mon_pub",
+        "JOURNAL": "test_jour",
+        "JOURNAL_PUBLICATION": "test_jour_pub",
+        "THESIS": "test_the",
+        "SOFTWARE": "test_sof",
+        "DATASET": "test_dat",
+        "PATENT": "test_pat"
+      }
+    },
+    {
+      "identifier": "OAIHandlerDOISerbia",
+      "internalInstitutionId": "18",
+      "handlerName": "DOI Serbia OAI Handler",
+      "handlerDescription": "OAI handler for DOI Serbia",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerOATDPA",
+      "internalInstitutionId": "18",
+      "handlerName": "DOI Serbia OAI Handler for University Business Academy",
+      "handlerDescription": "OAI handler for University Business Academy for DOI Serbia",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerDARTEurope",
+      "internalInstitutionId": "18",
+      "handlerName": "DART Europe OAI Handler",
+      "handlerDescription": "OAI handler for DART Europe",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerDARTEurope",
+      "internalInstitutionId": "18",
+      "handlerName": "DART Europe OAI Handler",
+      "handlerDescription": "OAI handler for DART Europe",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerDARTEuropePA",
+      "internalInstitutionId": "18",
+      "handlerName": "DART Europe Business Academy OAI Handler",
+      "handlerDescription": "OAI handler for Business Academy for DART Europe",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerDARTEuropePA",
+      "internalInstitutionId": "18",
+      "handlerName": "DART Europe Business Academy OAI Handler",
+      "handlerDescription": "OAI handler for Business Academy for DART Europe",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerNDLTD",
+      "internalInstitutionId": "18",
+      "handlerName": "NDLTD OAI Handler",
+      "handlerDescription": "OAI handler for NDLTD",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
         "oai_etdms"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerNDLTDPA",
+      "internalInstitutionId": "18",
+      "handlerName": "NDLTD Business Academy OAI Handler",
+      "handlerDescription": "OAI handler for Business Academy for NDLTD",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_etdms"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerOATD",
+      "internalInstitutionId": "18",
+      "handlerName": "OATD OAI Handler",
+      "handlerDescription": "OAI handler for OATD",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_etdms"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerOATDPA",
+      "internalInstitutionId": "18",
+      "handlerName": "OATD Business Academy OAI Handler",
+      "handlerDescription": "OAI handler for Business Academy for OATD",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_etdms"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerNaRDuS",
+      "internalInstitutionId": "18",
+      "handlerName": "NaRDuS Business Academy OAI Handler",
+      "handlerDescription": "OAI handler for Business Academy for NaRDuS",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_dim"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerProQuest",
+      "internalInstitutionId": "18",
+      "handlerName": "ProQuest OAI Handler",
+      "handlerDescription": "OAI handler for ProQuest",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc"
+      ],
+      "typeMappings": {
+        "THESIS": "test_the"
+      }
+    },
+    {
+      "identifier": "OAIHandlerBEOPEN",
+      "internalInstitutionId": "18",
+      "handlerName": "BEOPEN OAI Handler",
+      "handlerDescription": "OAI handler for BEOPEN",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "Theses",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        },
+        {
+          "setSpec": "publications",
+          "setName": "publications",
+          "identifierSetSpec": "Publications",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_dim"
+      ],
+      "typeMappings": {
+        "PROCEEDINGS": "test_proc",
+        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
+        "MONOGRAPH": "test_mon",
+        "MONOGRAPH_PUBLICATION": "test_mon_pub",
+        "JOURNAL": "test_jour",
+        "JOURNAL_PUBLICATION": "test_jour_pub",
+        "THESIS": "test_the",
+        "SOFTWARE": "test_sof",
+        "DATASET": "test_dat",
+        "PATENT": "test_pat"
+      }
+    },
+    {
+      "identifier": "OAIHandlerBEOPENILFE",
+      "internalInstitutionId": "18",
+      "handlerName": "BEOPENILFE OAI Handler",
+      "handlerDescription": "OAI handler for ILFE for BEOPEN",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "theses",
+          "setName": "theses",
+          "identifierSetSpec": "Theses",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "THESIS"
+        },
+        {
+          "setSpec": "publications",
+          "setName": "publications",
+          "identifierSetSpec": "Publications",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_dim"
+      ],
+      "typeMappings": {
+        "PROCEEDINGS": "test_proc",
+        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
+        "MONOGRAPH": "test_mon",
+        "MONOGRAPH_PUBLICATION": "test_mon_pub",
+        "JOURNAL": "test_jour",
+        "JOURNAL_PUBLICATION": "test_jour_pub",
+        "THESIS": "test_the",
+        "SOFTWARE": "test_sof",
+        "DATASET": "test_dat",
+        "PATENT": "test_pat"
+      }
+    },
+    {
+      "identifier": "OAIHandlerENauka",
+      "internalInstitutionId": "18",
+      "handlerName": "ENauka OAI Handler",
+      "handlerDescription": "OAI Handler for Enauka",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "openaire_cris_equipments",
+          "setName": "OpenAIRE_CRIS_equipments",
+          "identifierSetSpec": "Equipments",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_events",
+          "setName": "OpenAIRE_CRIS_events",
+          "identifierSetSpec": "Events",
+          "commonEntityClass": "ExportEvent"
+        },
+        {
+          "setSpec": "openaire_cris_funding",
+          "setName": "OpenAIRE_CRIS_funding",
+          "identifierSetSpec": "Funding",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_orgunits",
+          "setName": "OpenAIRE_CRIS_orgunits",
+          "identifierSetSpec": "Orgunits",
+          "commonEntityClass": "ExportOrganisationUnit"
+        },
+        {
+          "setSpec": "openaire_cris_patents",
+          "setName": "OpenAIRE_CRIS_patents",
+          "identifierSetSpec": "Patents",
+          "commonEntityClass": "ExportDocument",
+          "converterClass": "ExportPatentConverter",
+          "publicationTypes": "PATENT"
+        },
+        {
+          "setSpec": "openaire_cris_persons",
+          "setName": "OpenAIRE_CRIS_persons",
+          "identifierSetSpec": "Persons",
+          "commonEntityClass": "ExportPerson"
+        },
+        {
+          "setSpec": "openaire_cris_products",
+          "setName": "OpenAIRE_CRIS_products",
+          "identifierSetSpec": "Products",
+          "commonEntityClass": "ExportDocument",
+          "converterClass": "ExportProductConverter",
+          "publicationTypes": "SOFTWARE,DATASET"
+        },
+        {
+          "setSpec": "openaire_cris_projects",
+          "setName": "OpenAIRE_CRIS_projects",
+          "identifierSetSpec": "Projects",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_publications",
+          "setName": "OpenAIRE_CRIS_publications",
+          "identifierSetSpec": "Publications",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_dim"
+      ],
+      "typeMappings": {
+        "PROCEEDINGS": "test_proc",
+        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
+        "MONOGRAPH": "test_mon",
+        "MONOGRAPH_PUBLICATION": "test_mon_pub",
+        "JOURNAL": "test_jour",
+        "JOURNAL_PUBLICATION": "test_jour_pub",
+        "THESIS": "test_the",
+        "SOFTWARE": "test_sof",
+        "DATASET": "test_dat",
+        "PATENT": "test_pat"
+      }
+    },
+    {
+      "identifier": "OAIHandlerENaukaILFE",
+      "internalInstitutionId": "18",
+      "handlerName": "ENaukaILFE OAI Handler",
+      "handlerDescription": "OAI Handler for ILFE for Enauka",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "openaire_cris_equipments",
+          "setName": "OpenAIRE_CRIS_equipments",
+          "identifierSetSpec": "Equipments",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_events",
+          "setName": "OpenAIRE_CRIS_events",
+          "identifierSetSpec": "Events",
+          "commonEntityClass": "ExportEvent"
+        },
+        {
+          "setSpec": "openaire_cris_funding",
+          "setName": "OpenAIRE_CRIS_funding",
+          "identifierSetSpec": "Funding",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_orgunits",
+          "setName": "OpenAIRE_CRIS_orgunits",
+          "identifierSetSpec": "Orgunits",
+          "commonEntityClass": "ExportOrganisationUnit"
+        },
+        {
+          "setSpec": "openaire_cris_patents",
+          "setName": "OpenAIRE_CRIS_patents",
+          "identifierSetSpec": "Patents",
+          "commonEntityClass": "ExportDocument",
+          "converterClass": "ExportPatentConverter",
+          "publicationTypes": "PATENT"
+        },
+        {
+          "setSpec": "openaire_cris_persons",
+          "setName": "OpenAIRE_CRIS_persons",
+          "identifierSetSpec": "Persons",
+          "commonEntityClass": "ExportPerson"
+        },
+        {
+          "setSpec": "openaire_cris_products",
+          "setName": "OpenAIRE_CRIS_products",
+          "identifierSetSpec": "Products",
+          "commonEntityClass": "ExportDocument",
+          "converterClass": "ExportProductConverter",
+          "publicationTypes": "SOFTWARE,DATASET"
+        },
+        {
+          "setSpec": "openaire_cris_projects",
+          "setName": "OpenAIRE_CRIS_projects",
+          "identifierSetSpec": "Projects",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_publications",
+          "setName": "OpenAIRE_CRIS_publications",
+          "identifierSetSpec": "Publications",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_dim"
+      ],
+      "typeMappings": {
+        "PROCEEDINGS": "test_proc",
+        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
+        "MONOGRAPH": "test_mon",
+        "MONOGRAPH_PUBLICATION": "test_mon_pub",
+        "JOURNAL": "test_jour",
+        "JOURNAL_PUBLICATION": "test_jour_pub",
+        "THESIS": "test_the",
+        "SOFTWARE": "test_sof",
+        "DATASET": "test_dat",
+        "PATENT": "test_pat"
+      }
+    },
+    {
+      "identifier": "OAIHandlerENaukaUPAFarmacija",
+      "internalInstitutionId": "18",
+      "handlerName": "ENauka UPA Farmacija OAI Handler",
+      "handlerDescription": "OAI Handler for UPA Farmacija for ENauka",
+      "handlerLanguage": "sr",
+      "exportOnlyActiveEmployees": false,
+      "tokenExpirationTimeMinutes": 60,
+      "sets": [
+        {
+          "setSpec": "openaire_cris_equipments",
+          "setName": "OpenAIRE_CRIS_equipments",
+          "identifierSetSpec": "Equipments",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_events",
+          "setName": "OpenAIRE_CRIS_events",
+          "identifierSetSpec": "Events",
+          "commonEntityClass": "ExportEvent"
+        },
+        {
+          "setSpec": "openaire_cris_funding",
+          "setName": "OpenAIRE_CRIS_funding",
+          "identifierSetSpec": "Funding",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_orgunits",
+          "setName": "OpenAIRE_CRIS_orgunits",
+          "identifierSetSpec": "Orgunits",
+          "commonEntityClass": "ExportOrganisationUnit"
+        },
+        {
+          "setSpec": "openaire_cris_patents",
+          "setName": "OpenAIRE_CRIS_patents",
+          "identifierSetSpec": "Patents",
+          "commonEntityClass": "ExportDocument",
+          "converterClass": "ExportPatentConverter",
+          "publicationTypes": "PATENT"
+        },
+        {
+          "setSpec": "openaire_cris_persons",
+          "setName": "OpenAIRE_CRIS_persons",
+          "identifierSetSpec": "Persons",
+          "commonEntityClass": "ExportPerson"
+        },
+        {
+          "setSpec": "openaire_cris_products",
+          "setName": "OpenAIRE_CRIS_products",
+          "identifierSetSpec": "Products",
+          "commonEntityClass": "ExportDocument",
+          "converterClass": "ExportProductConverter",
+          "publicationTypes": "SOFTWARE,DATASET"
+        },
+        {
+          "setSpec": "openaire_cris_projects",
+          "setName": "OpenAIRE_CRIS_projects",
+          "identifierSetSpec": "Projects",
+          "commonEntityClass": null
+        },
+        {
+          "setSpec": "openaire_cris_publications",
+          "setName": "OpenAIRE_CRIS_publications",
+          "identifierSetSpec": "Publications",
+          "commonEntityClass": "ExportDocument",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS"
+        }
+      ],
+      "metadataFormats": [
+        "oai_dc",
+        "oai_dim"
       ],
       "typeMappings": {
         "PROCEEDINGS": "test_proc",

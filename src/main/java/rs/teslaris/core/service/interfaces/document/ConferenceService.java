@@ -27,7 +27,7 @@ public interface ConferenceService {
 
     Conference createConference(ConferenceBasicAdditionDTO conferenceDTO);
 
-    void updateConference(ConferenceDTO conferenceDTO, Integer conferenceId);
+    void updateConference(Integer conferenceId, ConferenceDTO conferenceDTO);
 
     void deleteConference(Integer conferenceId);
 

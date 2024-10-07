@@ -32,6 +32,8 @@ import rs.teslaris.core.exporter.model.converter.ExportConverterBase;
 import rs.teslaris.core.exporter.service.impl.OutboundExportServiceImpl;
 import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
 import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 
 @SpringBootTest
@@ -39,6 +41,12 @@ public class OutboundExportServiceTest {
 
     @Mock
     private MongoTemplate mongoTemplate;
+
+    @Mock
+    private OrganisationUnitService organisationUnitService;
+
+    @Mock
+    private OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
     @InjectMocks
     private OutboundExportServiceImpl outboundExportService;

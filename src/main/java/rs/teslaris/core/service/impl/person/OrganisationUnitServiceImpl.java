@@ -129,12 +129,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(buildSimpleSearchQuery(tokens),
                 pageable,
-                OrganisationUnitIndex.class, "organisation-unit");
+                OrganisationUnitIndex.class, "organisation_unit");
         }
 
         return searchService.runQuery(
             expressionTransformer.parseAdvancedQuery(tokens), pageable,
-            OrganisationUnitIndex.class, "organisation-unit");
+            OrganisationUnitIndex.class, "organisation_unit");
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
@@ -276,8 +276,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    public OrganisationUnit editOrganisationUnit(
-        OrganisationUnitRequestDTO organisationUnitDTORequest, Integer organisationUnitId) {
+    public OrganisationUnit editOrganisationUnit(Integer organisationUnitId,
+                                                 OrganisationUnitRequestDTO organisationUnitDTORequest) {
 
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
 
@@ -327,7 +327,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         organisationUnit.setLocation(
             GeoLocationConverter.fromDTO(organisationUnitDTO.getLocation()));
-
 
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));

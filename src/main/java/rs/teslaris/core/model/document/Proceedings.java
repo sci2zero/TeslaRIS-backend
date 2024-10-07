@@ -19,7 +19,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 @Entity
 @Table(name = "proceedings")
 @SQLRestriction("deleted=false")
-public class Proceedings extends Document {
+public non-sealed class Proceedings extends Document implements BookSeriesPublishable {
 
     @Column(name = "e_isbn")
     private String eISBN;

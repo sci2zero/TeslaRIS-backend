@@ -4,9 +4,9 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
-import java.util.Date;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -43,16 +43,22 @@ public class Event implements EventConvertable {
     private String country;
 
     @XmlElement(name = "StartDate")
-    private Date startDate;
+    private String startDate;
 
     @XmlElement(name = "EndDate")
-    private Date endDate;
+    private String endDate;
 
-    @XmlElement(name = "Description")
-    private String description;
+    @XmlElements({
+        @XmlElement(name = "Description", type = MultilingualContent.class),
+        @XmlElement(name = "Description", type = String.class)
+    })
+    private Object description;
 
-    @XmlElement(name = "Keyword")
-    private List<String> keywords;
+    @XmlElements({
+        @XmlElement(name = "Keyword", type = MultilingualContent.class),
+        @XmlElement(name = "Keyword", type = String.class)
+    })
+    private List<Object> keywords;
 
     private List<Integer> importUserId;
 

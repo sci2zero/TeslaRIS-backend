@@ -31,14 +31,14 @@ public class Person implements PersonConvertable {
     @XmlElement(name = "PersonName")
     private PersonName personName;
 
+    @XmlElement(name = "ORCID")
+    private String orcid;
+
     @XmlElement(name = "ScopusAuthorID")
     private String scopusAuthorId;
 
     @XmlElement(name = "Gender")
     private String gender;
-
-    @XmlElement(name = "ORCID")
-    private String orcid;
 
     @XmlElement(name = "ElectronicAddress")
     private List<String> electronicAddresses;

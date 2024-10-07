@@ -2,14 +2,17 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -20,15 +23,34 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.dto.document.BookSeriesDTO;
+import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MonographDTO;
+import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
+import rs.teslaris.core.dto.document.SoftwareDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
+import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
+import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -43,14 +65,23 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.service.impl.comparator.MergeServiceImpl;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
+import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -108,6 +139,33 @@ public class MergeServiceTest {
 
     @Mock
     private InvolvementService involvementService;
+
+    @Mock
+    private SoftwareService softwareService;
+
+    @Mock
+    private DatasetService datasetService;
+
+    @Mock
+    private PatentService patentService;
+
+    @Mock
+    private ThesisService thesisService;
+
+    @Mock
+    private MonographService monographService;
+
+    @Mock
+    private MonographPublicationService monographPublicationService;
+
+    @Mock
+    private ProceedingsRepository proceedingsRepository;
+
+    @Mock
+    private MonographRepository monographRepository;
+
+    @Mock
+    private BookSeriesService bookSeriesService;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -170,6 +228,63 @@ public class MergeServiceTest {
             any(PageRequest.class));
         assertEquals(targetJournal, publication1.getJournal());
         assertEquals(targetJournal, publication2.getJournal());
+    }
+
+    @Test
+    void switchPublicationToOtherBookSeries_shouldPerformSwitch() {
+        var targetBookSeriesId = 1;
+        var publicationId = 2;
+
+        var publication = new Monograph();
+        when(monographRepository.findById(publicationId)).thenReturn(
+            Optional.of(publication));
+        var targetBookSeries = new BookSeries();
+        when(bookSeriesService.findBookSeriesById(targetBookSeriesId)).thenReturn(targetBookSeries);
+
+        mergeService.switchPublicationToOtherBookSeries(targetBookSeriesId, publicationId);
+
+        verify(monographRepository).findById(publicationId);
+        verify(bookSeriesService).findBookSeriesById(targetBookSeriesId);
+        verify(monographRepository).save(publication);
+        assertEquals(targetBookSeries, publication.getPublicationSeries());
+    }
+
+    @Test
+    void switchAllPublicationsToOtherBookSeries_shouldPerformSwitchForAll() {
+        var sourceId = 1;
+        var targetId = 2;
+
+        var publicationIndex1 = new DocumentPublicationIndex();
+        publicationIndex1.setDatabaseId(1);
+        var publicationIndex2 = new DocumentPublicationIndex();
+        publicationIndex2.setDatabaseId(2);
+        var page1 = new PageImpl<>(
+            List.of(publicationIndex1, publicationIndex2));
+        var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
+
+        when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+            List.of(DocumentPublicationType.MONOGRAPH.name(),
+                DocumentPublicationType.PROCEEDINGS.name()), sourceId,
+            PageRequest.of(0, 10))).thenReturn(page1);
+        when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+            List.of(DocumentPublicationType.MONOGRAPH.name(),
+                DocumentPublicationType.PROCEEDINGS.name()), sourceId,
+            PageRequest.of(1, 10))).thenReturn(page2);
+
+        var publication1 = new Monograph();
+        var publication2 = new Proceedings();
+        when(monographRepository.findById(publicationIndex1.getDatabaseId())).thenReturn(
+            Optional.of(publication1));
+        when(proceedingsRepository.findById(publicationIndex2.getDatabaseId())).thenReturn(
+            Optional.of(publication2));
+
+        var targetBookSeries = new BookSeries();
+        when(bookSeriesService.findBookSeriesById(targetId)).thenReturn(targetBookSeries);
+
+        mergeService.switchAllPublicationsToOtherBookSeries(sourceId, targetId);
+
+        assertEquals(targetBookSeries, publication1.getPublicationSeries());
+        assertEquals(targetBookSeries, publication2.getPublicationSeries());
     }
 
     @Test
@@ -408,7 +523,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    void testSwitchInvolvements() {
+    void shouldSwitchInvolvements() {
         // Given
         var sourcePersonId = 1;
         var targetPersonId = 2;
@@ -456,7 +571,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    void testSwitchSkills() {
+    void shouldSwitchSkills() {
         // Given
         var sourcePersonId = 1;
         var targetPersonId = 2;
@@ -501,7 +616,7 @@ public class MergeServiceTest {
     }
 
     @Test
-    void testSwitchPrizes() {
+    void shouldSwitchPrizes() {
         // Given
         var sourcePersonId = 1;
         var targetPersonId = 2;
@@ -543,5 +658,364 @@ public class MergeServiceTest {
         });
         verify(personService).save(sourcePerson);
         verify(personService).save(targetPerson);
+    }
+
+    @Test
+    public void shouldSaveMergedProceedingsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ProceedingsDTO();
+        var rightData = new ProceedingsDTO();
+
+        // when
+        mergeService.saveMergedProceedingsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(proceedingsService, atLeastOnce()).updateProceedings(leftId, leftData);
+        verify(proceedingsService).updateProceedings(rightId, rightData);
+        verify(proceedingsService, times(2)).updateProceedings(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedPersonsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new PersonalInfoDTO();
+        var rightData = new PersonalInfoDTO();
+
+        // when
+        mergeService.saveMergedPersonsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(personService, atLeastOnce()).updatePersonalInfo(leftId, leftData);
+        verify(personService).updatePersonalInfo(rightId, rightData);
+        verify(personService, times(2)).updatePersonalInfo(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedJournalsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new JournalDTO();
+        var rightData = new JournalDTO();
+
+        // when
+        mergeService.saveMergedJournalsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(journalService, atLeastOnce()).updateJournal(leftId, leftData);
+        verify(journalService).updateJournal(rightId, rightData);
+        verify(journalService, times(2)).updateJournal(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedBookSeriesMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new BookSeriesDTO();
+        var rightData = new BookSeriesDTO();
+
+        // when
+        mergeService.saveMergedBookSeriesMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(bookSeriesService, atLeastOnce()).updateBookSeries(leftId, leftData);
+        verify(bookSeriesService).updateBookSeries(rightId, rightData);
+        verify(bookSeriesService, times(2)).updateBookSeries(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedConferencesMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ConferenceDTO();
+        var rightData = new ConferenceDTO();
+
+        // when
+        mergeService.saveMergedConferencesMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(conferenceService, atLeastOnce()).updateConference(leftId, leftData);
+        verify(conferenceService).updateConference(rightId, rightData);
+        verify(conferenceService, times(2)).updateConference(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedSoftwareMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new SoftwareDTO();
+        var rightData = new SoftwareDTO();
+
+        // when
+        mergeService.saveMergedSoftwareMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(softwareService, atLeastOnce()).editSoftware(leftId, leftData);
+        verify(softwareService).editSoftware(rightId, rightData);
+        verify(softwareService, times(2)).editSoftware(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedDatasetsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new DatasetDTO();
+        var rightData = new DatasetDTO();
+
+        // when
+        mergeService.saveMergedDatasetsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(datasetService, atLeastOnce()).editDataset(leftId, leftData);
+        verify(datasetService).editDataset(rightId, rightData);
+        verify(datasetService, times(2)).editDataset(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedPatentsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new PatentDTO();
+        var rightData = new PatentDTO();
+
+        // when
+        mergeService.saveMergedPatentsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(patentService, atLeastOnce()).editPatent(leftId, leftData);
+        verify(patentService).editPatent(rightId, rightData);
+        verify(patentService, times(2)).editPatent(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedDocumentFiles() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftProofs = List.of(101, 102);
+        var rightProofs = List.of(201, 202);
+        var leftFileItems = new ArrayList<Integer>();
+        var rightFileItems = new ArrayList<Integer>();
+
+        var leftDocument = new Dataset();
+        var rightDocument = new Dataset();
+
+        var leftProof1 = new DocumentFile();
+        leftProof1.setId(101);
+        var leftProof2 = new DocumentFile();
+        leftProof2.setId(102);
+        var rightProof1 = new DocumentFile();
+        rightProof1.setId(201);
+        var rightProof2 = new DocumentFile();
+        rightProof2.setId(202);
+
+        leftDocument.setProofs(new HashSet<>(List.of(leftProof1, leftProof2)));
+        rightDocument.setProofs(new HashSet<>(List.of(rightProof1, rightProof2)));
+
+        when(documentPublicationService.findDocumentById(leftId)).thenReturn(leftDocument);
+        when(documentPublicationService.findDocumentById(rightId)).thenReturn(rightDocument);
+
+        // when
+        mergeService.saveMergedDocumentFiles(leftId, rightId, leftProofs, rightProofs,
+            leftFileItems, rightFileItems);
+
+        // then
+        verify(documentPublicationService).findDocumentById(leftId);
+        verify(documentPublicationService).findDocumentById(rightId);
+        verify(documentPublicationService, times(1)).findDocumentById(leftId);
+        verify(documentPublicationService, times(1)).findDocumentById(rightId);
+    }
+
+    @Test
+    public void shouldSaveMergedProceedingsPublicationMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ProceedingsPublicationDTO();
+        var rightData = new ProceedingsPublicationDTO();
+
+        leftData.setDoi("10.1000/xyz123");
+        leftData.setScopusId("");
+
+        // when
+        mergeService.saveMergedProceedingsPublicationMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(proceedingsPublicationService, times(2)).editProceedingsPublication(leftId,
+            leftData);
+        verify(proceedingsPublicationService).editProceedingsPublication(rightId, rightData);
+        verify(proceedingsPublicationService, times(3)).editProceedingsPublication(anyInt(),
+            any(ProceedingsPublicationDTO.class));
+        assertEquals("10.1000/xyz123", leftData.getDoi());
+        assertEquals("", leftData.getScopusId());
+        verify(proceedingsPublicationService, times(2)).editProceedingsPublication(eq(leftId),
+            any(ProceedingsPublicationDTO.class));
+    }
+
+    @Test
+    public void shouldSaveMergedThesesMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ThesisDTO();
+        var rightData = new ThesisDTO();
+
+        // when
+        mergeService.saveMergedThesesMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(thesisService, atLeastOnce()).editThesis(leftId, leftData);
+        verify(thesisService).editThesis(rightId, rightData);
+        verify(thesisService, times(2)).editThesis(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedJournalPublicationMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new JournalPublicationDTO();
+        var rightData = new JournalPublicationDTO();
+
+        leftData.setDoi("10.1000/xyz123");
+        leftData.setScopusId("");
+
+        // when
+        mergeService.saveMergedJournalPublicationMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(journalPublicationService, times(2)).editJournalPublication(leftId,
+            leftData);
+        verify(journalPublicationService).editJournalPublication(rightId, rightData);
+        verify(journalPublicationService, times(3)).editJournalPublication(anyInt(),
+            any(JournalPublicationDTO.class));
+        assertEquals("10.1000/xyz123", leftData.getDoi());
+        assertEquals("", leftData.getScopusId());
+        verify(journalPublicationService, times(2)).editJournalPublication(eq(leftId),
+            any(JournalPublicationDTO.class));
+    }
+
+    @Test
+    public void shouldSaveMergedMonographsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new MonographDTO();
+        var rightData = new MonographDTO();
+
+        // when
+        mergeService.saveMergedMonographsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(monographService, atLeastOnce()).editMonograph(leftId, leftData);
+        verify(monographService).editMonograph(rightId, rightData);
+        verify(monographService, times(2)).editMonograph(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedMonographPublicationsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new MonographPublicationDTO();
+        var rightData = new MonographPublicationDTO();
+
+        leftData.setDoi("10.1000/xyz123");
+
+        // when
+        mergeService.saveMergedMonographPublicationsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(monographPublicationService, times(2)).editMonographPublication(leftId,
+            leftData);
+        verify(monographPublicationService).editMonographPublication(rightId, rightData);
+        verify(monographPublicationService, times(3)).editMonographPublication(anyInt(),
+            any(MonographPublicationDTO.class));
+        assertEquals("10.1000/xyz123", leftData.getDoi());
+        assertNull(leftData.getScopusId());
+        verify(monographPublicationService, times(2)).editMonographPublication(eq(leftId),
+            any(MonographPublicationDTO.class));
+    }
+
+    @Test
+    void shouldSwitchMonographPublicationToOtherMonograph() {
+        var targetMonographId = 1;
+        var publicationId = 2;
+
+        var publication = new MonographPublication();
+        when(monographPublicationService.findMonographPublicationById(publicationId)).thenReturn(
+            publication);
+        var targetMonograph = new Monograph();
+        when(monographService.findMonographById(targetMonographId)).thenReturn(targetMonograph);
+
+        mergeService.switchPublicationToOtherMonograph(targetMonographId, publicationId);
+
+        verify(monographPublicationService).findMonographPublicationById(publicationId);
+        verify(monographService).findMonographById(targetMonographId);
+        assertEquals(targetMonograph, publication.getMonograph());
+    }
+
+    @Test
+    void shouldSwitchAllPublicationsToOtherMonograph() {
+        var sourceId = 1;
+        var targetId = 2;
+
+        var publicationIndex1 = new DocumentPublicationIndex();
+        publicationIndex1.setDatabaseId(1);
+        var publicationIndex2 = new DocumentPublicationIndex();
+        publicationIndex2.setDatabaseId(2);
+        var page1 = new PageImpl<>(
+            List.of(publicationIndex1, publicationIndex2));
+        var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
+
+        when(documentPublicationIndexRepository.findByTypeAndMonographId(
+            DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), sourceId,
+            PageRequest.of(0, 10)))
+            .thenReturn(page1);
+        when(documentPublicationIndexRepository.findByTypeAndJournalId(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(1, 10)))
+            .thenReturn(page2);
+
+        var publication1 = new MonographPublication();
+        var publication2 = new MonographPublication();
+        when(monographPublicationService.findMonographPublicationById(
+            publicationIndex1.getDatabaseId())).thenReturn(publication1);
+        when(monographPublicationService.findMonographPublicationById(
+            publicationIndex2.getDatabaseId())).thenReturn(publication2);
+
+        var targetMonograph = new Monograph();
+        when(monographService.findMonographById(targetId)).thenReturn(targetMonograph);
+
+        mergeService.switchAllPublicationsToOtherMonograph(sourceId, targetId);
+
+        assertEquals(targetMonograph, publication1.getMonograph());
+        assertEquals(targetMonograph, publication2.getMonograph());
+    }
+
+    @Test
+    public void shouldSaveMergedOUsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new OrganisationUnitRequestDTO();
+        leftData.setScopusAfid("60000765");
+        var rightData = new OrganisationUnitRequestDTO();
+
+        // when
+        mergeService.saveMergedOUsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(organisationUnitService, atLeastOnce()).editOrganisationUnit(leftId, leftData);
+        verify(organisationUnitService).editOrganisationUnit(rightId, rightData);
+        verify(organisationUnitService, times(2)).editOrganisationUnit(leftId, leftData);
     }
 }

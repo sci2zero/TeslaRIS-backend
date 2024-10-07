@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 
@@ -24,54 +23,30 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> findByTypeAndProceedingsId(String type, Integer proceedingsId,
                                                               Pageable pageable);
 
-    @Query("{\"bool\": " +
-        "{\"must\": [" +
-        "{\"term\": {\"type\": \"?0\"}}, " +
-        "{\"term\": {\"journal_id\": \"?1\"}}, " +
-        "{\"terms\": {\"author_ids\": [\"?2\"]}}" +
-        "]}}")
     List<DocumentPublicationIndex> findByTypeAndJournalIdAndAuthorIds(String type,
                                                                       Integer journalId,
                                                                       Integer authorId);
 
-    @Query("{\"bool\": " +
-        "{\"must\": [" +
-        "{\"term\": {\"type\": \"?0\"}}, " +
-        "{\"term\": {\"monograph_id\": \"?1\"}}, " +
-        "{\"terms\": {\"author_ids\": [\"?2\"]}}" +
-        "]}}")
     List<DocumentPublicationIndex> findByTypeAndMonographIdAndAuthorIds(String type,
                                                                         Integer monographId,
                                                                         Integer authorId);
 
-    @Query("{\"bool\": " +
-        "{\"must\": [" +
-        "{\"terms\": {\"author_ids\": [\"?0\"]}}" +
-        "]}}")
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
     Page<DocumentPublicationIndex> findByOrganisationUnitIdsIn(List<Integer> organisationUnitIds,
                                                                Pageable pageable);
 
-    @Query("{\"bool\": " +
-        "{\"must\": [" +
-        "{\"term\": {\"type\": \"?0\"}}, " +
-        "{\"term\": {\"journal_id\": \"?1\"}}, " +
-        "]}}")
     Page<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId,
                                                           Pageable pageable);
 
-    @Query("{\"bool\": " +
-        "{\"must\": [" +
-        "{\"term\": {\"type\": \"?0\"}}, " +
-        "{\"term\": {\"monograph_id\": \"?1\"}}, " +
-        "]}}")
+    Page<DocumentPublicationIndex> findByTypeInAndPublicationSeriesId(List<String> types,
+                                                                      Integer publicationSeriesId,
+                                                                      Pageable pageable);
+
     Page<DocumentPublicationIndex> findByTypeAndMonographId(String type, Integer monographId,
                                                             Pageable pageable);
 
-    @Query("{\"bool\": " +
-        "{\"must\": [" +
-        "{\"term\": {\"publisher_id\": \"?0\"}}, " +
-        "]}}")
     Page<DocumentPublicationIndex> findByPublisherId(Integer publisherId, Pageable pageable);
+
+    Page<DocumentPublicationIndex> findByTypeIn(List<String> types, Pageable pageable);
 }

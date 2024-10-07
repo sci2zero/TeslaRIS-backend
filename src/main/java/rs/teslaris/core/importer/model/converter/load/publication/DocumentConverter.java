@@ -52,8 +52,16 @@ public abstract class DocumentConverter {
         }
 
         if (Objects.nonNull(record.getKeywords())) {
-            dto.setKeywords(
-                multilingualContentConverter.toDTO(String.join("\n", record.getKeywords())));
+            var keywordBuilder = new StringBuilder();
+            record.getKeywords().stream()
+                .map(Object::toString)
+                .forEach(keyword -> {
+                    if (!keywordBuilder.isEmpty()) {
+                        keywordBuilder.append(", ");
+                    }
+                    keywordBuilder.append(keyword);
+                });
+            dto.setKeywords(multilingualContentConverter.toDTO(keywordBuilder.toString()));
         } else {
             dto.setKeywords(new ArrayList<>());
         }
@@ -64,7 +72,7 @@ public abstract class DocumentConverter {
 
         dto.setDoi(Objects.nonNull(record.getDoi()) ? record.getDoi().replace("|", "") : null);
         dto.setScopusId(record.getScpNumber());
-        dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
+        dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract().getValue()));
 
         setContributionInformation(record, dto);
     }

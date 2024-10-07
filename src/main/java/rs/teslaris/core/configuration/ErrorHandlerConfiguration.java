@@ -27,6 +27,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConst
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
+import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
@@ -317,6 +318,14 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleIndicatorReferenceConstraintViolationException(
         HttpServletRequest request,
         IndicatorReferenceConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(MonographReferenceConstraintViolationException.class)
+    @ResponseBody
+    ErrorObject handleMonographReferenceConstraintViolationException(HttpServletRequest request,
+                                                                     MonographReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

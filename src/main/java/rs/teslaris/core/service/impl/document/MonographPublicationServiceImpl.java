@@ -58,6 +58,11 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    public MonographPublication findMonographPublicationById(Integer monographPublicationId) {
+        return monographPublicationJPAService.findOne(monographPublicationId);
+    }
+
+    @Override
     public MonographPublicationDTO readMonographPublicationById(Integer monographPublicationId) {
         var monographPublication = monographPublicationJPAService.findOne(monographPublicationId);
 
@@ -107,8 +112,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
-    public void updateMonographPublication(Integer monographPublicationId,
-                                           MonographPublicationDTO monographPublicationDTO) {
+    public void editMonographPublication(Integer monographPublicationId,
+                                         MonographPublicationDTO monographPublicationDTO) {
         var monographPublicationToUpdate =
             monographPublicationJPAService.findOne(monographPublicationId);
 
@@ -173,8 +178,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             monographService.findMonographById(monographPublicationDTO.getMonographId()));
     }
 
-    private void indexMonographPublication(MonographPublication monographPublication,
-                                           DocumentPublicationIndex index) {
+    @Override
+    public void indexMonographPublication(MonographPublication monographPublication,
+                                          DocumentPublicationIndex index) {
         indexCommonFields(monographPublication, index);
 
         index.setType(DocumentPublicationType.MONOGRAPH_PUBLICATION.name());

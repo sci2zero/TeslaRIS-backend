@@ -14,7 +14,10 @@ import rs.teslaris.core.converter.document.BookSeriesConverter;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.BookSeriesJPAServiceImpl;
@@ -38,6 +41,8 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
     private final SearchService<BookSeriesIndex> searchService;
 
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
 
     @Autowired
     public BookSeriesServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
@@ -46,12 +51,14 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                                  PersonContributionService personContributionService,
                                  EmailUtil emailUtil, BookSeriesJPAServiceImpl bookSeriesJPAService,
                                  BookSeriesIndexRepository bookSeriesIndexRepository,
-                                 SearchService<BookSeriesIndex> searchService) {
+                                 SearchService<BookSeriesIndex> searchService,
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
             personContributionService, emailUtil);
         this.bookSeriesJPAService = bookSeriesJPAService;
         this.bookSeriesIndexRepository = bookSeriesIndexRepository;
         this.searchService = searchService;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
 
     @Override
@@ -64,6 +71,14 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         return searchService.runQuery(buildSimpleSearchQuery(tokens), pageable,
             BookSeriesIndex.class,
             "book_series");
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findPublicationsForBookSeries(Integer bookSeriesId,
+                                                                        Pageable pageable) {
+        return documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+            List.of(DocumentPublicationType.PROCEEDINGS.name(),
+                DocumentPublicationType.MONOGRAPH.name()), bookSeriesId, pageable);
     }
 
     @Override
@@ -93,7 +108,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
-    public void updateBookSeries(BookSeriesDTO bookSeriesDTO, Integer bookSeriesId) {
+    public void updateBookSeries(Integer bookSeriesId, BookSeriesDTO bookSeriesDTO) {
         var bookSeriesToUpdate = bookSeriesJPAService.findOne(bookSeriesId);
         bookSeriesToUpdate.getLanguages().clear();
 

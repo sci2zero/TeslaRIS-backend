@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.comparator;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -8,19 +9,46 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.document.BookSeriesDTO;
+import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MonographDTO;
+import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.dto.document.SoftwareDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
+import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.document.BookSeriesPublishable;
+import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
+import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
@@ -69,6 +97,24 @@ public class MergeServiceImpl implements MergeService {
 
     private final InvolvementService involvementService;
 
+    private final SoftwareService softwareService;
+
+    private final DatasetService datasetService;
+
+    private final PatentService patentService;
+
+    private final ThesisService thesisService;
+
+    private final MonographService monographService;
+
+    private final MonographPublicationService monographPublicationService;
+
+    private final ProceedingsRepository proceedingsRepository;
+
+    private final MonographRepository monographRepository;
+
+    private final BookSeriesService bookSeriesService;
+
 
     @Override
     public void switchJournalPublicationToOtherJournal(Integer targetJournalId,
@@ -90,6 +136,25 @@ public class MergeServiceImpl implements MergeService {
                 journalPublicationIndex.getDatabaseId()),
             pageRequest -> documentPublicationIndexRepository.findByTypeAndJournalId(
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, pageRequest)
+                .getContent()
+        );
+    }
+
+    @Override
+    public void switchPublicationToOtherBookSeries(Integer targetBookSeriesId,
+                                                   Integer publicationId) {
+        performBookSeriesPublicationSwitch(targetBookSeriesId, publicationId);
+    }
+
+    @Override
+    public void switchAllPublicationsToOtherBookSeries(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, publicationIndex) -> performBookSeriesPublicationSwitch(targetId,
+                publicationIndex.getDatabaseId()),
+            pageRequest -> documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+                    List.of(DocumentPublicationType.MONOGRAPH.name(),
+                        DocumentPublicationType.PROCEEDINGS.name()), sourceId, pageRequest)
                 .getContent()
         );
     }
@@ -225,6 +290,236 @@ public class MergeServiceImpl implements MergeService {
         personService.save(targetPerson);
     }
 
+    @Override
+    public void saveMergedDocumentFiles(Integer leftId, Integer rightId,
+                                        List<Integer> leftProofs,
+                                        List<Integer> rightProofs,
+                                        List<Integer> leftFileItems,
+                                        List<Integer> rightFileItems) {
+
+        var leftDocument = documentPublicationService.findDocumentById(leftId);
+        var rightDocument = documentPublicationService.findDocumentById(rightId);
+
+        // Merge proofs
+        mergeDocumentFiles(leftDocument, rightDocument, leftProofs, rightProofs);
+
+        // Merge fileItems
+        mergeDocumentFiles(leftDocument, rightDocument, leftFileItems, rightFileItems);
+    }
+
+    @Override
+    public void saveMergedProceedingsMetadata(Integer leftId, Integer rightId,
+                                              ProceedingsDTO leftData, ProceedingsDTO rightData) {
+        updateAndRestoreMetadata(proceedingsService::updateProceedings, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getEISBN(), dto.getPrintISBN(), dto.getDoi(),
+                dto.getScopusId()},
+            (dto, values) -> {
+                dto.setEISBN(values[0]);
+                dto.setPrintISBN(values[1]);
+                dto.setDoi(values[2]);
+                dto.setScopusId(values[3]);
+            });
+    }
+
+    @Override
+    public void saveMergedPersonsMetadata(Integer leftId, Integer rightId,
+                                          PersonalInfoDTO leftData, PersonalInfoDTO rightData) {
+        updateAndRestoreMetadata(personService::updatePersonalInfo, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getApvnt(), dto.getECrisId(), dto.getENaukaId(),
+                dto.getScopusAuthorId(), dto.getOrcid()},
+            (dto, values) -> {
+                dto.setApvnt(values[0]);
+                dto.setECrisId(values[1]);
+                dto.setENaukaId(values[2]);
+                dto.setScopusAuthorId(values[3]);
+                dto.setOrcid(values[4]);
+            });
+    }
+
+    @Override
+    public void saveMergedOUsMetadata(Integer leftId, Integer rightId,
+                                      OrganisationUnitRequestDTO leftData,
+                                      OrganisationUnitRequestDTO rightData) {
+        updateAndRestoreMetadata(organisationUnitService::editOrganisationUnit, leftId, rightId,
+            leftData,
+            rightData,
+            dto -> new String[] {dto.getScopusAfid()},
+            (dto, values) -> {
+                dto.setScopusAfid(values[0]);
+            });
+    }
+
+    @Override
+    public void saveMergedJournalsMetadata(Integer leftId, Integer rightId, JournalDTO leftData,
+                                           JournalDTO rightData) {
+        updateAndRestoreMetadata(journalService::updateJournal, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getEissn(), dto.getPrintISSN()},
+            (dto, values) -> {
+                dto.setEissn(values[0]);
+                dto.setPrintISSN(values[1]);
+            });
+    }
+
+    @Override
+    public void saveMergedBookSeriesMetadata(Integer leftId, Integer rightId,
+                                             BookSeriesDTO leftData,
+                                             BookSeriesDTO rightData) {
+        updateAndRestoreMetadata(bookSeriesService::updateBookSeries, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getEissn(), dto.getPrintISSN()},
+            (dto, values) -> {
+                dto.setEissn(values[0]);
+                dto.setPrintISSN(values[1]);
+            });
+    }
+
+    @Override
+    public void saveMergedConferencesMetadata(Integer leftId, Integer rightId,
+                                              ConferenceDTO leftData, ConferenceDTO rightData) {
+        updateAndRestoreMetadata(conferenceService::updateConference, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getConfId()},
+            (dto, values) -> dto.setConfId(values[0]));
+    }
+
+    @Override
+    public void saveMergedSoftwareMetadata(Integer leftId, Integer rightId, SoftwareDTO leftData,
+                                           SoftwareDTO rightData) {
+        updateAndRestoreMetadata(softwareService::editSoftware, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId()},
+            (dto, values) -> {
+                dto.setInternalNumber(values[0]);
+                dto.setDoi(values[1]);
+                dto.setScopusId(values[2]);
+            });
+    }
+
+    @Override
+    public void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
+                                           DatasetDTO rightData) {
+        updateAndRestoreMetadata(datasetService::editDataset, leftId, rightId, leftData, rightData,
+            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId()},
+            (dto, values) -> {
+                dto.setInternalNumber(values[0]);
+                dto.setDoi(values[1]);
+                dto.setScopusId(values[2]);
+            });
+    }
+
+    @Override
+    public void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
+                                          PatentDTO rightData) {
+        updateAndRestoreMetadata(patentService::editPatent, leftId, rightId, leftData, rightData,
+            dto -> new String[] {dto.getNumber(), dto.getDoi(), dto.getScopusId()},
+            (dto, values) -> {
+                dto.setNumber(values[0]);
+                dto.setDoi(values[1]);
+                dto.setScopusId(values[2]);
+            });
+    }
+
+    @Override
+    public void saveMergedProceedingsPublicationMetadata(Integer leftId, Integer rightId,
+                                                         ProceedingsPublicationDTO leftData,
+                                                         ProceedingsPublicationDTO rightData) {
+        updateAndRestoreMetadata(proceedingsPublicationService::editProceedingsPublication, leftId,
+            rightId, leftData, rightData,
+            dto -> new String[] {dto.getDoi(), dto.getScopusId()},
+            (dto, values) -> {
+                dto.setDoi(values[0]);
+                dto.setScopusId(values[1]);
+            });
+    }
+
+    @Override
+    public void saveMergedJournalPublicationMetadata(Integer leftId, Integer rightId,
+                                                     JournalPublicationDTO leftData,
+                                                     JournalPublicationDTO rightData) {
+        updateAndRestoreMetadata(journalPublicationService::editJournalPublication, leftId, rightId,
+            leftData, rightData,
+            dto -> new String[] {dto.getDoi(), dto.getScopusId()},
+            (dto, values) -> {
+                dto.setDoi(values[0]);
+                dto.setScopusId(values[1]);
+            });
+    }
+
+    @Override
+    public void saveMergedThesesMetadata(Integer leftId, Integer rightId, ThesisDTO leftData,
+                                         ThesisDTO rightData) {
+        updateAndRestoreMetadata(thesisService::editThesis, leftId, rightId, leftData, rightData,
+            dto -> new String[] {dto.getDoi(), dto.getScopusId()},
+            (dto, values) -> {
+                dto.setDoi(values[0]);
+                dto.setScopusId(values[1]);
+            });
+    }
+
+    @Override
+    public void switchPublicationToOtherMonograph(Integer targetMonographId,
+                                                  Integer publicationId) {
+        performMonographPublicationSwitch(targetMonographId, publicationId);
+    }
+
+    @Override
+    public void switchAllPublicationsToOtherMonograph(Integer sourceMonographId,
+                                                      Integer targetMonographId) {
+        processChunks(
+            sourceMonographId,
+            (srcId, monographPublicationIndex) -> performMonographPublicationSwitch(
+                targetMonographId, monographPublicationIndex.getDatabaseId()),
+            pageRequest -> documentPublicationIndexRepository.findByTypeAndMonographId(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), sourceMonographId,
+                pageRequest).getContent()
+        );
+    }
+
+    @Override
+    public void saveMergedMonographsMetadata(Integer leftId, Integer rightId, MonographDTO leftData,
+                                             MonographDTO rightData) {
+        updateAndRestoreMetadata(monographService::editMonograph, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getPrintISBN(),
+                dto.getEisbn()},
+            (dto, values) -> {
+                dto.setDoi(values[0]);
+                dto.setScopusId(values[1]);
+                dto.setPrintISBN(values[2]);
+                dto.setEisbn(values[3]);
+            });
+    }
+
+    @Override
+    public void saveMergedMonographPublicationsMetadata(Integer leftId, Integer rightId,
+                                                        MonographPublicationDTO leftData,
+                                                        MonographPublicationDTO rightData) {
+        updateAndRestoreMetadata(monographPublicationService::editMonographPublication, leftId,
+            rightId,
+            leftData, rightData,
+            dto -> new String[] {dto.getDoi(), dto.getScopusId()},
+            (dto, values) -> {
+                dto.setDoi(values[0]);
+                dto.setScopusId(values[1]);
+            });
+    }
+
+    private void performMonographPublicationSwitch(Integer targetMonographId,
+                                                   Integer monographPublicationId) {
+        var targetMonograph = monographService.findMonographById(targetMonographId);
+        var monographPublication =
+            monographPublicationService.findMonographPublicationById(monographPublicationId);
+
+        monographPublication.setMonograph(targetMonograph);
+
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            monographPublicationId).orElse(new DocumentPublicationIndex());
+        monographPublicationService.indexMonographPublication(monographPublication, index);
+    }
+
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,
                                                 Integer publicationId,
                                                 boolean skipCoauthoredPublications) {
@@ -287,6 +582,37 @@ public class MergeServiceImpl implements MergeService {
         var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             publicationId).orElse(new DocumentPublicationIndex());
         journalPublicationService.indexJournalPublication(publication.get(), index);
+    }
+
+    private void performBookSeriesPublicationSwitch(Integer targetBookSeriesId,
+                                                    Integer publicationId) {
+        BookSeriesPublishable publication;
+        var proceedings = proceedingsRepository.findById(publicationId);
+
+        if (proceedings.isEmpty()) {
+            var monograph = monographRepository.findById(publicationId);
+            if (monograph.isEmpty()) {
+                throw new NotFoundException("Publication does not exist.");
+            } else {
+                publication = monograph.get();
+            }
+        } else {
+            publication = proceedings.get();
+        }
+
+        var targetBookSeries = bookSeriesService.findBookSeriesById(targetBookSeriesId);
+
+        publication.setPublicationSeries(targetBookSeries);
+
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            publicationId).orElse(new DocumentPublicationIndex());
+        if (publication instanceof Proceedings) {
+            proceedingsRepository.save((Proceedings) publication);
+            proceedingsService.indexProceedings((Proceedings) publication, index);
+        } else {
+            monographRepository.save((Monograph) publication);
+            monographService.indexMonograph((Monograph) publication, index);
+        }
     }
 
     private void performProceedingsPublicationSwitch(Integer targetProceedingsId,
@@ -355,5 +681,48 @@ public class MergeServiceImpl implements MergeService {
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+    }
+
+    private void mergeDocumentFiles(Document leftDocument, Document rightDocument,
+                                    List<Integer> leftFileIds, List<Integer> rightFileIds) {
+        mergeFiles(leftDocument, rightDocument, leftFileIds);
+        mergeFiles(rightDocument, leftDocument, rightFileIds);
+    }
+
+    private void mergeFiles(Document sourceDocument, Document targetDocument,
+                            List<Integer> sourceFileIds) {
+        sourceFileIds.forEach(fileId -> {
+            if (sourceDocument.getProofs().stream()
+                .noneMatch(file -> file.getId().equals(fileId))) {
+                var fileForMerging = targetDocument.getProofs().stream()
+                    .filter(file -> file.getId().equals(fileId)).findFirst();
+
+                if (fileForMerging.isEmpty()) {
+                    throw new NotFoundException(
+                        "Non-existing document file specified for merging.");
+                }
+
+                targetDocument.getProofs().remove(fileForMerging.get());
+                sourceDocument.getProofs().add(fileForMerging.get());
+            }
+        });
+    }
+
+    private <T> void updateAndRestoreMetadata(BiConsumer<Integer, T> updateMethod,
+                                              Integer leftId, Integer rightId,
+                                              T leftData, T rightData,
+                                              Function<T, String[]> originalValuesExtractor,
+                                              BiConsumer<T, String[]> restoreValues) {
+        String[] originalValues = originalValuesExtractor.apply(leftData);
+
+        String[] emptyValues = new String[originalValues.length];
+        Arrays.fill(emptyValues, "");
+        restoreValues.accept(leftData, emptyValues);
+
+        updateMethod.accept(leftId, leftData);
+        updateMethod.accept(rightId, rightData);
+
+        restoreValues.accept(leftData, originalValues);
+        updateMethod.accept(leftId, leftData);
     }
 }

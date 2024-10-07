@@ -11,6 +11,8 @@ import rs.teslaris.core.model.document.MonographPublication;
 @Service
 public interface MonographPublicationService {
 
+    MonographPublication findMonographPublicationById(Integer monographPublicationId);
+
     MonographPublicationDTO readMonographPublicationById(Integer monographPublicationId);
 
     MonographPublication createMonographPublication(MonographPublicationDTO monographPublicationDTO,
@@ -22,10 +24,13 @@ public interface MonographPublicationService {
     Page<DocumentPublicationIndex> findAllPublicationsForMonograph(Integer monographId,
                                                                    Pageable pageable);
 
-    void updateMonographPublication(Integer monographId,
-                                    MonographPublicationDTO monographPublicationDTO);
+    void editMonographPublication(Integer monographId,
+                                  MonographPublicationDTO monographPublicationDTO);
 
     void deleteMonographPublication(Integer monographPublicationId);
 
     void reindexMonographPublications();
+
+    void indexMonographPublication(MonographPublication monographPublication,
+                                   DocumentPublicationIndex index);
 }

@@ -16,5 +16,7 @@ public class NotificationConfiguration {
         allowedActions.put(NotificationType.NEW_PAPER_HARVESTED, List.of());
         allowedActions.put(NotificationType.ADDED_TO_PUBLICATION,
             List.of(NotificationAction.REMOVE_FROM_PUBLICATION));
+        allowedActions.put(NotificationType.DEDUPLICATION_SCAN_FINISHED,
+            List.of(NotificationAction.PERFORM_DEDUPLICATION));
     }
 }

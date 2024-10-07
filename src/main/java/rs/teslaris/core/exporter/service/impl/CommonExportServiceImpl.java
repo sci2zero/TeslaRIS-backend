@@ -201,7 +201,7 @@ public class CommonExportServiceImpl implements CommonExportService {
         ).join();
     }
 
-    @Async
+    @Async("taskExecutor")
     public <T, E> CompletableFuture<Void> exportEntitiesAsync(
         Function<Pageable, Page<T>> repositoryFunction,
         BiFunction<T, Boolean, E> converter,

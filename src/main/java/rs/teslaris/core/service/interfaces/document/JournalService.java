@@ -32,7 +32,7 @@ public interface JournalService {
 
     Journal createJournal(JournalBasicAdditionDTO journalDTO);
 
-    void updateJournal(PublicationSeriesDTO journalDTO, Integer journalId);
+    void updateJournal(Integer journalId, PublicationSeriesDTO journalDTO);
 
     void deleteJournal(Integer journalId);
 

@@ -109,7 +109,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
-    public void updateConference(ConferenceDTO conferenceDTO, Integer conferenceId) {
+    public void updateConference(Integer conferenceId, ConferenceDTO conferenceDTO) {
         var conferenceToUpdate = findConferenceById(conferenceId);
 
         clearEventCommonFields(conferenceToUpdate);
