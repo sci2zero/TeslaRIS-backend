@@ -8,10 +8,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -74,6 +76,8 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl extends JPAServiceImpl<User> implements UserService {
+
+    private final MessageSource messageSource;
 
     private final JwtUtil tokenUtil;
 
@@ -309,9 +313,23 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        // Email message should be localised and customized
-        emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
-            "Your activation code is: " + activationToken.getActivationToken());
+        var language = savedUser.getPreferredLanguage().getLanguageCode().toLowerCase();
+        String activationLink =
+            clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
+                "/activate-account/" + activationToken.getActivationToken();
+
+        var subject = messageSource.getMessage(
+            "accountActivation.mailSubject",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        var message = messageSource.getMessage(
+            "accountActivation.mailBodyResearcher",
+            new Object[] {activationLink},
+            Locale.forLanguageTag(language)
+        );
+        emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
 
         return savedUser;
     }
@@ -344,10 +362,23 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        // Email message should be localised and customized
-        emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
-            "Your activation code is: " + activationToken.getActivationToken() +
-                "\n\nYour password is: " + new String(generatedPassword));
+        var language = savedUser.getPreferredLanguage().getLanguageCode().toLowerCase();
+        String activationLink =
+            clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
+                "/activate-account/" + activationToken.getActivationToken();
+
+        var subject = messageSource.getMessage(
+            "accountActivation.mailSubject",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        var message = messageSource.getMessage(
+            "accountActivation.mailBodyEmployee",
+            new Object[] {activationLink, new String(generatedPassword)},
+            Locale.forLanguageTag(language)
+        );
+        emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
 
         Arrays.fill(generatedPassword, '\0');
         return savedUser;
@@ -434,13 +465,21 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             var user = (User) loadUserByUsername(userEmail);
             var resetToken = UUID.randomUUID().toString();
             var language = user.getPreferredLanguage().getLanguageCode().toLowerCase();
+
             String resetLink =
                 clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
                     "/reset-password/" + resetToken;
-            String emailSubject = "Account Password Reset";
-            String emailBody =
-                String.format("To reset your password, go to: %s\n\nThis token will last a week.",
-                    resetLink);
+            String emailSubject = messageSource.getMessage(
+                "resetPassword.mailSubject",
+                new Object[] {},
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+            String emailBody = messageSource.getMessage(
+                "resetPassword.mailBody",
+                new Object[] {resetLink},
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+
             emailUtil.sendSimpleEmail(user.getEmail(), emailSubject, emailBody);
             passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
         } catch (UsernameNotFoundException ignored) {

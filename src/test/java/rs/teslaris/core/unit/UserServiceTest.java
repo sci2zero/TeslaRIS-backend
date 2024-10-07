@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -127,6 +128,9 @@ public class UserServiceTest {
     @Mock
     private Cache<String, Byte> passwordResetRequestCacheStore;
 
+    @Mock
+    private MessageSource messageSource;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -199,6 +203,7 @@ public class UserServiceTest {
         registrationRequest.setPersonId(1);
 
         var language = new Language();
+        language.setLanguageCode("SR");
         when(languageService.findOne(1)).thenReturn(language);
 
         Authority authority = new Authority();
@@ -251,6 +256,7 @@ public class UserServiceTest {
         registrationRequest.setSurname("Surname");
 
         var language = new Language();
+        language.setLanguageCode("SR");
         when(languageService.findOne(1)).thenReturn(language);
 
         var authority = new Authority();
@@ -680,7 +686,7 @@ public class UserServiceTest {
         // Then
         verify(passwordResetTokenRepository, times(1)).save(
             any(PasswordResetToken.class));
-        verify(emailUtil, times(1)).sendSimpleEmail(anyString(), anyString(), anyString());
+        verify(emailUtil, times(1)).sendSimpleEmail(any(), any(), any());
     }
 
     @Test
