@@ -18,7 +18,7 @@ public class EmployeeRegistrationRequestDTO {
     @NotBlank(message = "Name cannot be blank.")
     private String name;
 
-    @NotBlank(message = "Surname cannot be blank.")
+    @NotNull(message = "You have to provide surname, leave it blank if you don't want to provide a value.")
     private String surname;
 
     @NotNull(message = "Email cannot be null.")

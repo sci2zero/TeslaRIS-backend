@@ -109,6 +109,17 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    public OrganisationUnitDTO readOrganisationUnitForOldId(Integer oldId) {
+        var ouToReturn = findOrganisationUnitByOldId(oldId);
+
+        if (Objects.isNull(ouToReturn)) {
+            throw new NotFoundException("Organisation unit with given 'OLD ID' does not exist.");
+        }
+
+        return OrganisationUnitConverter.toDTO(ouToReturn);
+    }
+
+    @Override
     public OrganisationUnit findOne(Integer id) {
         return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id)
             .orElseThrow(

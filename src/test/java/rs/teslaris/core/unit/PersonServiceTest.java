@@ -128,6 +128,36 @@ public class PersonServiceTest {
     }
 
     @Test
+    public void shouldReturnPersonByOldIdWhenPersonExists() {
+        // given
+        var expectedPerson = new Person();
+        expectedPerson.setId(10);
+        expectedPerson.setName(new PersonName());
+        var personalInfo = new PersonalInfo();
+        personalInfo.setPostalAddress(new PostalAddress());
+        expectedPerson.setPersonalInfo(personalInfo);
+
+        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.of(expectedPerson));
+
+        // when
+        var actualPerson = personService.readPersonWithBasicInfoForOldId(1);
+
+        // then
+        verify(personRepository, times(1)).findPersonByOldId(1);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenPersonDoesNotExistWithOldId() {
+        // given
+        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class, () -> personService.readPersonWithBasicInfoForOldId(1));
+
+        // then (NotFoundException should be thrown)
+    }
+
+    @Test
     public void shouldReadPersonWhenPersonIsApproved() {
         // given
         var expectedPerson = new Person();

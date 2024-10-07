@@ -247,6 +247,8 @@ public class UserServiceTest {
         registrationRequest.setNote("note note note");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setOrganisationUnitId(1);
+        registrationRequest.setName("Name");
+        registrationRequest.setSurname("Surname");
 
         var language = new Language();
         when(languageService.findOne(1)).thenReturn(language);

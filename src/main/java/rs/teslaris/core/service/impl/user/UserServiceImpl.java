@@ -65,6 +65,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
+import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -272,8 +273,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        Person person = null;
+        Person person;
         if (registrationRequest.getPersonId() != null) {
+            if (userRepository.personAlreadyBinded(registrationRequest.getPersonId())) {
+                throw new PersonReferenceConstraintViolationException(
+                    "Person you have selected is already assigned to a user.");
+            }
+
             person = personService.findOne(registrationRequest.getPersonId());
         } else {
 
@@ -327,7 +333,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new User(registrationRequest.getEmail(),
                 passwordEncoder.encode(new String(generatedPassword)),
                 registrationRequest.getNote(),
-                registrationRequest.getName(), registrationRequest.getSurname(), true, false,
+                registrationRequest.getName().trim(), registrationRequest.getSurname().trim(),
+                true, false,
                 languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
                 null, organisationUnit, UserNotificationPeriod.NEVER);
         var savedUser = userRepository.save(newUser);
@@ -374,6 +381,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             var orgUnit =
                 organisationUnitService.findOne(userUpdateRequest.getOrganisationalUnitId());
             userToUpdate.setOrganisationUnit(orgUnit);
+        } else if (userToUpdate.getAuthority().getName().equals(UserRole.ADMIN.toString())) {
+            userToUpdate.setFirstname(userUpdateRequest.getFirstname());
+            userToUpdate.setLastName(userUpdateRequest.getLastName());
         }
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());

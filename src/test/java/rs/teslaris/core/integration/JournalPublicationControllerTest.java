@@ -18,9 +18,9 @@ public class JournalPublicationControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    @WithMockUser(username = "test.author@test.com", password = "testAuthor")
     public void testFindMyPublicationsInJournal() throws Exception {
-        String jwtToken = authenticateAdminAndGetToken();
+        String jwtToken = authenticateResearcherAndGetToken();
 
         mockMvc.perform(MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/journal-publication/journal/{journalId}/my-publications", 1)

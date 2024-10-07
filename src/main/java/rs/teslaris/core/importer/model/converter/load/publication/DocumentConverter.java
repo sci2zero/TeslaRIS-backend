@@ -72,7 +72,12 @@ public abstract class DocumentConverter {
 
         dto.setDoi(Objects.nonNull(record.getDoi()) ? record.getDoi().replace("|", "") : null);
         dto.setScopusId(record.getScpNumber());
-        dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract().getValue()));
+
+        if (Objects.nonNull(record.get_abstract())) {
+            dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract().toString()));
+        } else {
+            dto.setDescription(new ArrayList<>());
+        }
 
         setContributionInformation(record, dto);
     }

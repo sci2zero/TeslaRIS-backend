@@ -123,6 +123,18 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
+    public PersonResponseDTO readPersonWithBasicInfoForOldId(Integer oldId) {
+        var personToReturn = findPersonByOldId(oldId);
+
+        if (Objects.isNull(personToReturn)) {
+            throw new NotFoundException("Person with given 'OLD ID' does not exist.");
+        }
+
+        return PersonConverter.toDTO(personToReturn);
+    }
+
+    @Override
+    @Transactional
     public PersonUserResponseDTO readPersonWithUser(Integer id) {
         var person = personRepository.findApprovedPersonByIdWithUser(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));

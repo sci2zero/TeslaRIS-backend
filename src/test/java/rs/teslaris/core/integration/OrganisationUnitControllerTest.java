@@ -29,6 +29,19 @@ public class OrganisationUnitControllerTest extends BaseTest {
     }
 
     @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadOUForOldId() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/organisation-unit/old-id/{organisationUnitOldId}", 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
     public void testCountAll() throws Exception {
         var resultActions = mockMvc.perform(
                 MockMvcRequestBuilders.get(
