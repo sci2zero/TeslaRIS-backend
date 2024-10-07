@@ -152,7 +152,8 @@ public class PersonServiceTest {
         when(personRepository.findPersonByOldId(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> personService.readPersonWithBasicInfoForOldId(1));
+        assertThrows(NotFoundException.class,
+            () -> personService.readPersonWithBasicInfoForOldId(1));
 
         // then (NotFoundException should be thrown)
     }

@@ -74,7 +74,8 @@ public abstract class DocumentConverter {
         dto.setScopusId(record.getScpNumber());
 
         if (Objects.nonNull(record.get_abstract())) {
-            dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract().toString()));
+            dto.setDescription(
+                multilingualContentConverter.toDTO(record.get_abstract().toString()));
         } else {
             dto.setDescription(new ArrayList<>());
         }

@@ -3,6 +3,7 @@ package rs.teslaris.core.integration;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +21,7 @@ public class JournalPublicationControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "author@author.com", password = "author")
     public void testFindMyPublicationsInJournal() throws Exception {
+        TimeUnit.SECONDS.sleep(5);
         String jwtToken = authenticateResearcherAndGetToken();
 
         mockMvc.perform(MockMvcRequestBuilders.get(
