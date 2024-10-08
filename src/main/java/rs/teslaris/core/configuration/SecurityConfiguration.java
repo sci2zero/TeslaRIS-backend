@@ -74,6 +74,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/old-id/{personOldId}").permitAll()
 
                 // COUNTRY
                 .requestMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
@@ -82,6 +83,8 @@ public class SecurityConfiguration {
                 // ORGANISATION UNIT
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/{organisationUnitId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/old-id/{organisationUnitOldId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit-relation/{leafId}")
