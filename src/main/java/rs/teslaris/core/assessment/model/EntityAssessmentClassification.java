@@ -22,7 +22,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "document_assessment_classifications")
+@Table(name = "entity_assessment_classifications")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "entity_type", discriminatorType = DiscriminatorType.STRING)
 public class EntityAssessmentClassification extends BaseEntity {

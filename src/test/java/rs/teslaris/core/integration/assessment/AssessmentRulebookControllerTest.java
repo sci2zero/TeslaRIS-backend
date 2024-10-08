@@ -27,7 +27,7 @@ public class AssessmentRulebookControllerTest extends BaseTest {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         return new AssessmentRulebookDTO(dummyMC, dummyMC,
-            LocalDate.of(2023, 1, 1), null, 2, 1);
+            LocalDate.of(2023, 1, 1), null, null, 1);
     }
 
     @Test
@@ -64,7 +64,6 @@ public class AssessmentRulebookControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_ASSESSMENT_RULEBOOK"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.publisherId").value(2))
             .andExpect(jsonPath("$.assessmentMeasureId").value(1));
     }
 

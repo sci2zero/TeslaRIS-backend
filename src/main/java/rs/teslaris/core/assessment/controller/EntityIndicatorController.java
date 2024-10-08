@@ -95,4 +95,12 @@ public class EntityIndicatorController {
                                            @PathVariable Integer proofId) {
         entityIndicatorService.deleteEntityIndicatorProof(entityIndicatorId, proofId);
     }
+
+    @DeleteMapping("/{entityIndicatorId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('EDIT_ENTITY_INDICATOR')")
+    @EntityIndicatorEditCheck
+    public void deleteEntityIndicator(@PathVariable Integer entityIndicatorId) {
+        entityIndicatorService.deleteEntityIndicator(entityIndicatorId);
+    }
 }

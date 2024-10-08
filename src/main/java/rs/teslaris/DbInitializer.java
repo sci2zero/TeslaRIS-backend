@@ -17,13 +17,17 @@ import rs.teslaris.core.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
+import rs.teslaris.core.assessment.model.EventAssessmentClassification;
 import rs.teslaris.core.assessment.model.Indicator;
+import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
+import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
+import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -162,6 +166,11 @@ public class DbInitializer implements ApplicationRunner {
 
     private final DocumentIndicatorRepository documentIndicatorRepository;
 
+    private final EventAssessmentClassificationRepository eventAssessmentClassificationRepository;
+
+    private final PublicationSeriesAssessmentClassificationRepository
+        publicationSeriesAssessmentClassificationRepository;
+
 
     @Override
     @Transactional
@@ -206,11 +215,14 @@ public class DbInitializer implements ApplicationRunner {
         var editDocumentIndicators = new Privilege("EDIT_DOCUMENT_INDICATORS");
         var editCommissions = new Privilege("EDIT_COMMISSIONS");
         var editEntityIndicatorProofs = new Privilege("EDIT_ENTITY_INDICATOR_PROOFS");
+        var editEntityIndicators = new Privilege("EDIT_ENTITY_INDICATOR");
         var listMyJournalPublications = new Privilege("LIST_MY_JOURNAL_PUBLICATIONS");
         var deletePerson = new Privilege("DELETE_PERSON");
         var registerEmployee = new Privilege("REGISTER_EMPLOYEE");
         var reindexPrivilege = new Privilege("REINDEX_DATABASE");
         var mergeBookSeriesPublications = new Privilege("MERGE_BOOK_SERIES_PUBLICATIONS");
+        var editEntityAssessmentClassifications =
+            new Privilege("EDIT_ENTITY_ASSESSMENT_CLASSIFICATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -225,7 +237,7 @@ public class DbInitializer implements ApplicationRunner {
                 registerEmployee, reindexPrivilege, startDeduplicationProcess, performDeduplication,
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
-                mergeOUMetadata));
+                mergeOUMetadata, editEntityIndicators, editEntityAssessmentClassifications));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -240,13 +252,14 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, deletePerson, registerEmployee, reindexPrivilege,
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
-                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata
+                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata,
+                editEntityIndicators, editEntityAssessmentClassifications
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editDocumentFiles, editDocumentIndicators,
-                editEntityIndicatorProofs, listMyJournalPublications})));
+                editEntityIndicatorProofs, listMyJournalPublications, editEntityIndicators})));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -320,8 +333,8 @@ public class DbInitializer implements ApplicationRunner {
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
 
         ///////////////////// TESTING DATA /////////////////////
-//        initializeIntegrationTestingData(serbianTag, serbianLanguage, englishTag, germanLanguage,
-//            researchArea3, researcherAuthority);
+        initializeIntegrationTestingData(serbianTag, serbianLanguage, englishTag, germanLanguage,
+            researchArea3, researcherAuthority);
     }
 
     private void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -801,12 +814,33 @@ public class DbInitializer implements ApplicationRunner {
         documentIndicator3.setIndicator(indicator1);
         documentIndicator3.setDocument(dataset);
 
+        var documentIndicatorToDelete = new DocumentIndicator();
+        documentIndicatorToDelete.setTextualValue("OPEN ACCESS INDICATOR");
+        documentIndicatorToDelete.setIndicator(indicator1);
+        documentIndicatorToDelete.setDocument(dataset);
+
         documentIndicatorRepository.saveAll(
-            List.of(documentIndicator1, documentIndicator2, documentIndicator3));
+            List.of(documentIndicator1, documentIndicator2, documentIndicator3,
+                documentIndicatorToDelete));
 
         documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
             new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
             License.OPEN_ACCESS, ApproveStatus.APPROVED));
         documentIndicatorRepository.save(documentIndicator1);
+
+        var eventAssessmentClassification = new EventAssessmentClassification();
+        eventAssessmentClassification.setEvent(conferenceEvent1);
+        eventAssessmentClassification.setAssessmentClassification(assessmentClassification1);
+
+        eventAssessmentClassificationRepository.saveAll(List.of(eventAssessmentClassification));
+
+        var publicationSeriesAssessmentClassification =
+            new PublicationSeriesAssessmentClassification();
+        publicationSeriesAssessmentClassification.setPublicationSeries(dummyJournal);
+        publicationSeriesAssessmentClassification.setAssessmentClassification(
+            assessmentClassification1);
+
+        publicationSeriesAssessmentClassificationRepository.saveAll(
+            List.of(publicationSeriesAssessmentClassification));
     }
 }
