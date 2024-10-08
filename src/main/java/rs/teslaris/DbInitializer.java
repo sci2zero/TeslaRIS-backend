@@ -215,8 +215,7 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, deletePerson, registerEmployee, reindexPrivilege,
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
-                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata,
-                listMyJournalPublications
+                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
