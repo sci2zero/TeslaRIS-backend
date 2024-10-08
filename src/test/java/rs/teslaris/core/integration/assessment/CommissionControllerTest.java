@@ -27,7 +27,7 @@ public class CommissionControllerTest extends BaseTest {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         return new CommissionDTO(null, dummyMC, List.of("source1", "source2"),
-            LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2),
+            LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1),
             List.of(1, 2), List.of(1, 2), "rule", 2);
     }
 

@@ -828,11 +828,16 @@ public class DbInitializer implements ApplicationRunner {
             License.OPEN_ACCESS, ApproveStatus.APPROVED));
         documentIndicatorRepository.save(documentIndicator1);
 
-        var eventAssessmentClassification = new EventAssessmentClassification();
-        eventAssessmentClassification.setEvent(conferenceEvent1);
-        eventAssessmentClassification.setAssessmentClassification(assessmentClassification1);
+        var eventAssessmentClassification1 = new EventAssessmentClassification();
+        eventAssessmentClassification1.setEvent(conferenceEvent1);
+        eventAssessmentClassification1.setAssessmentClassification(assessmentClassification1);
 
-        eventAssessmentClassificationRepository.saveAll(List.of(eventAssessmentClassification));
+        var eventAssessmentClassification2 = new EventAssessmentClassification();
+        eventAssessmentClassification2.setEvent(conferenceEvent1);
+        eventAssessmentClassification2.setAssessmentClassification(assessmentClassification1);
+
+        eventAssessmentClassificationRepository.saveAll(
+            List.of(eventAssessmentClassification1, eventAssessmentClassification2));
 
         var publicationSeriesAssessmentClassification =
             new PublicationSeriesAssessmentClassification();

@@ -69,7 +69,7 @@ public class PublicationSeriesAssessmentClassificationControllerTest extends Bas
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
                         "http://localhost:8081/api/assessment/publication-series-assessment-classification/{entityAssessmentClassificationId}",
-                        2)
+                        3)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

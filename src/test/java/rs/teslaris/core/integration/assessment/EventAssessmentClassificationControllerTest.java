@@ -65,7 +65,7 @@ public class EventAssessmentClassificationControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
                         "http://localhost:8081/api/assessment/event-assessment-classification/{entityAssessmentClassificationId}",
-                        1)
+                        2)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
