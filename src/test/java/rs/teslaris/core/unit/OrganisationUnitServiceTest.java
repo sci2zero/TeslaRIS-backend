@@ -120,7 +120,36 @@ public class OrganisationUnitServiceTest {
         // then
         assertEquals(organisationUnit, result);
         verify(organisationUnitRepository, times(1)).findByIdWithLangDataAndResearchArea(id);
+    }
 
+    @Test
+    public void shouldThrowNotFoundExceptionWhenOrganisationUnitDoesNotExistForOldId() {
+        // given
+        Integer id = 1;
+
+        // when
+        when(organisationUnitRepository.findOrganisationUnitByOldId(id)).thenReturn(
+            Optional.empty());
+
+        // then (NotFoundException should be thrown)
+        assertThrows(NotFoundException.class,
+            () -> organisationUnitService.readOrganisationUnitForOldId(id));
+    }
+
+    @Test
+    public void shouldReturnOrganisationUnitForOldIdWhenItExists() {
+        // given
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(21);
+
+        when(organisationUnitRepository.findOrganisationUnitByOldId(12))
+            .thenReturn(Optional.of(organisationUnit));
+
+        // when
+        var result = organisationUnitService.readOrganisationUnitForOldId(12);
+
+        // then
+        assertEquals(organisationUnit.getId(), result.getId());
     }
 
     @Test

@@ -35,7 +35,7 @@ public abstract class BaseTest {
     protected String authenticateResearcherAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
-                    .content("{\"email\": \"author@author.com\", \"password\": \"author\"}")
+                    .content("{\"email\": \"author2@author.com\", \"password\": \"author2\"}")
                     .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn()
             .getResponse().getContentAsString();
 

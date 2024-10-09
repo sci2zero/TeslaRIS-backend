@@ -44,6 +44,8 @@ public interface PersonService extends JPAService<Person> {
 
     PersonResponseDTO readPersonWithBasicInfo(Integer id);
 
+    PersonResponseDTO readPersonWithBasicInfoForOldId(Integer oldId);
+
     PersonUserResponseDTO readPersonWithUser(Integer id);
 
     boolean isPersonEmployedInOrganisationUnit(Integer personId, Integer organisationUnitId);
