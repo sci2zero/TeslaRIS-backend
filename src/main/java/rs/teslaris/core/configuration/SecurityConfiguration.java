@@ -84,7 +84,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/{organisationUnitId}")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/old-id/{organisationUnitOldId}")
+                .requestMatchers(HttpMethod.GET,
+                    "/api/organisation-unit/old-id/{organisationUnitOldId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit-relation/{leafId}")
