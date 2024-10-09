@@ -13,4 +13,6 @@ public interface IndicatorRepository extends JpaRepository<Indicator, Integer> {
 
     @Query("select count(i) > 0 from Indicator i where i.code = :code and i.id != :indicatorId")
     boolean indicatorCodeInUse(String code, Integer indicatorId);
+
+    Indicator findByCode(String code);
 }

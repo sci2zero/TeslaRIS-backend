@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -77,6 +78,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final PersonNameService personNameService;
 
+    private final StatisticsIndexService statisticsIndexService;
+
 
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
@@ -118,6 +121,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public PersonResponseDTO readPersonWithBasicInfo(Integer id) {
         var person = personRepository.findApprovedPersonById(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
+
+        statisticsIndexService.savePersonView(id);
         return PersonConverter.toDTO(person);
     }
 

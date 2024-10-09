@@ -335,6 +335,9 @@ public class DbInitializer implements ApplicationRunner {
         ///////////////////// TESTING DATA /////////////////////
         initializeIntegrationTestingData(serbianTag, serbianLanguage, englishTag, germanLanguage,
             researchArea3, researcherAuthority);
+
+        ///////////////////// ASSESSMENTS DATA /////////////////////
+        initializeIndicators(englishTag);
     }
 
     private void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -847,5 +850,40 @@ public class DbInitializer implements ApplicationRunner {
 
         publicationSeriesAssessmentClassificationRepository.saveAll(
             List.of(publicationSeriesAssessmentClassification));
+    }
+
+    void initializeIndicators(LanguageTag englishTag) {
+        var totalViews = new Indicator();
+        totalViews.setCode("viewsTotal");
+        totalViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1)));
+        totalViews.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Total number of views.", 1)));
+        totalViews.setAccessLevel(AccessLevel.OPEN);
+
+        var dailyViews = new Indicator();
+        dailyViews.setCode("viewsDay");
+        dailyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Daily views", 1)));
+        dailyViews.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of views in the last 24h.", 1)));
+        dailyViews.setAccessLevel(AccessLevel.OPEN);
+
+        var weeklyViews = new Indicator();
+        weeklyViews.setCode("viewsWeek");
+        weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1)));
+        weeklyViews.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
+                1)));
+        weeklyViews.setAccessLevel(AccessLevel.OPEN);
+
+        var monthlyViews = new Indicator();
+        monthlyViews.setCode("viewsMonth");
+        monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1)));
+        monthlyViews.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Total number of views in the last month.",
+                1)));
+        monthlyViews.setAccessLevel(AccessLevel.OPEN);
+
+        indicatorRepository.saveAll(List.of(totalViews, dailyViews, weeklyViews, monthlyViews));
     }
 }

@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,6 +84,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Override
     public License getDocumentAccessLevel(String serverFilename) {
         return documentFileRepository.getReferenceByServerFilename(serverFilename).getLicense();
+    }
+
+    @Override
+    public ResourceType getDocumentResourceType(String serverFilename) {
+        return documentFileRepository.getReferenceByServerFilename(serverFilename)
+            .getResourceType();
     }
 
     @Override
@@ -247,6 +254,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Override
     public void deleteIndexes() {
         documentFileIndexRepository.deleteAll();
+    }
+
+    @Override
+    @Nullable
+    public Integer findDocumentIdForFilename(String filename) {
+        return documentFileRepository.getDocumentIdByFilename(filename);
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {

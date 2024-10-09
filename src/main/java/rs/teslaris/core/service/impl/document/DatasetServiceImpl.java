@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.DatasetConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -22,6 +23,7 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
@@ -38,6 +40,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               SearchService<DocumentPublicationIndex> searchService,
                               OrganisationUnitService organisationUnitService,
                               DocumentRepository documentRepository,
+                              StatisticsIndexService statisticsIndexService,
                               DocumentFileService documentFileService,
                               PersonContributionService personContributionService,
                               ExpressionTransformer expressionTransformer,
@@ -45,16 +48,22 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            organisationUnitService, statisticsIndexService, documentRepository,
+            documentFileService, personContributionService, expressionTransformer, eventService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }
 
     @Override
     public DatasetDTO readDatasetById(Integer datasetId) {
-        return DatasetConverter.toDTO(datasetJPAService.findOne(datasetId));
+        var dataset = datasetJPAService.findOne(datasetId);
+        if (!dataset.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        statisticsIndexService.saveDocumentView(datasetId);
+
+        return DatasetConverter.toDTO(dataset);
     }
 
     @Override

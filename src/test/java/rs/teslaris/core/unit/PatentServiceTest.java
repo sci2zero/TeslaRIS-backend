@@ -29,6 +29,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -74,6 +75,9 @@ public class PatentServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private StatisticsIndexService statisticsIndexService;
 
     @InjectMocks
     private PatentServiceImpl patentService;
@@ -157,8 +161,8 @@ public class PatentServiceTest {
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldReadJournalPublication(DocumentContributionType type, Boolean isMainAuthor,
-                                             Boolean isCorrespondingAuthor, Country country) {
+    public void shouldReadPatent(DocumentContributionType type, Boolean isMainAuthor,
+                                 Boolean isCorrespondingAuthor, Country country) {
         // Given
         var patentId = 1;
         var patent = new Patent();
@@ -189,7 +193,7 @@ public class PatentServiceTest {
     }
 
     @Test
-    public void shouldReindexJournalPublications() {
+    public void shouldReindexPatents() {
         // Given
         var patent = new Patent();
         patent.setDocumentDate("2024");

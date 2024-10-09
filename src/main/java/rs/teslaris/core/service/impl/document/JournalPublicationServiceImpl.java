@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -46,6 +47,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          SearchService<DocumentPublicationIndex> searchService,
                                          OrganisationUnitService organisationUnitService,
                                          DocumentRepository documentRepository,
+                                         StatisticsIndexService statisticsIndexService,
                                          DocumentFileService documentFileService,
                                          PersonContributionService personContributionService,
                                          ExpressionTransformer expressionTransformer,
@@ -54,9 +56,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            organisationUnitService, statisticsIndexService, documentRepository,
+            documentFileService, personContributionService, expressionTransformer, eventService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
@@ -68,6 +69,9 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
+
+        statisticsIndexService.saveDocumentView(publicationId);
+
         return JournalPublicationConverter.toDTO(publication);
     }
 

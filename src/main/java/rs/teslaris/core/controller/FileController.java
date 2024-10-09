@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -34,6 +36,8 @@ public class FileController {
     private final JwtUtil tokenUtil;
 
     private final UserService userService;
+
+    private final StatisticsIndexService statisticsIndexService;
 
 
     @GetMapping("/{filename}")
@@ -71,12 +75,19 @@ public class FileController {
             }
         }
 
+        var resourceType = documentFileService.getDocumentResourceType(filename);
+        if (resourceType.equals(ResourceType.OFFICIAL_PUBLICATION) ||
+            resourceType.equals(ResourceType.PREPRINT)) {
+            var documentId = documentFileService.findDocumentIdForFilename(filename);
+            if (Objects.nonNull(documentId)) {
+                statisticsIndexService.saveDocumentDownload(documentId);
+            }
+        }
+
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment; filename=\"" + file.getFilename() + "\"")
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
             .body(file);
     }
-
-
 }

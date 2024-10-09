@@ -43,6 +43,11 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     }
 
     @Override
+    public Indicator getIndicatorByCode(String code) {
+        return indicatorRepository.findByCode(code);
+    }
+
+    @Override
     public Indicator createIndicator(IndicatorDTO indicator) {
         var newIndicator = new Indicator();
 

@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -49,6 +50,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                              SearchService<DocumentPublicationIndex> searchService,
                                              OrganisationUnitService organisationUnitService,
+                                             StatisticsIndexService statisticsIndexService,
                                              DocumentRepository documentRepository,
                                              DocumentFileService documentFileService,
                                              PersonContributionService personContributionService,
@@ -58,20 +60,22 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            organisationUnitService, statisticsIndexService, documentRepository,
+            documentFileService,
+            personContributionService, expressionTransformer, eventService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }
 
     @Override
-    public ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId) {
-        var publication = (ProceedingsPublication) this.findOne(proceedingsId);
+    public ProceedingsPublicationDTO readProceedingsPublicationById(Integer publicationId) {
+        var publication = proceedingPublicationJPAService.findOne(publicationId);
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
+
+        statisticsIndexService.saveDocumentView(publicationId);
         return ProceedingsPublicationConverter.toDTO(publication);
     }
 

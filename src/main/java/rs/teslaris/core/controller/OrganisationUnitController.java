@@ -59,8 +59,7 @@ public class OrganisationUnitController {
 
     @GetMapping("/{organisationUnitId}")
     public OrganisationUnitDTO getOrganisationUnit(@PathVariable Integer organisationUnitId) {
-        return OrganisationUnitConverter.toDTO(
-            organisationUnitService.findOrganisationUnitById(organisationUnitId));
+        return organisationUnitService.readOrganisationUnitById(organisationUnitId);
     }
 
     @GetMapping("/scopus-afid/{scopusAfid}")

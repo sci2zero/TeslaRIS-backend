@@ -1,0 +1,8 @@
+{
+  "mappings": {
+    "updateTotalViews": "viewsTotal",
+    "updateDailyViews": "viewsDay",
+    "updateWeeklyViews": "viewsWeek",
+    "updateMonthlyViews": "viewsMonth"
+  }
+}

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.PatentConverter;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -23,6 +24,7 @@ import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
@@ -39,23 +41,31 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
                              SearchService<DocumentPublicationIndex> searchService,
                              OrganisationUnitService organisationUnitService,
+                             StatisticsIndexService statisticsIndexService,
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              PersonContributionService personContributionService,
-                             ExpressionTransformer expressionTransformer, EventService eventService,
-                             PatentJPAServiceImpl patentJPAService,
+                             ExpressionTransformer expressionTransformer,
+                             EventService eventService, PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            organisationUnitService, statisticsIndexService, documentRepository,
+            documentFileService,
+            personContributionService, expressionTransformer, eventService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
     }
 
     @Override
     public PatentDTO readPatentById(Integer patentId) {
-        return PatentConverter.toDTO(patentJPAService.findOne(patentId));
+        var patent = patentJPAService.findOne(patentId);
+        if (!patent.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        statisticsIndexService.saveDocumentView(patentId);
+
+        return PatentConverter.toDTO(patent);
     }
 
     @Override

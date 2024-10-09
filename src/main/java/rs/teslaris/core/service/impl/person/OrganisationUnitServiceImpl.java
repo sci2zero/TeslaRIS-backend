@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
@@ -78,6 +79,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     private final ExpressionTransformer expressionTransformer;
 
+    private final StatisticsIndexService statisticsIndexService;
+
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
 
@@ -93,6 +96,18 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     public OrganisationUnit findOrganisationUnitById(Integer id) {
         return findOne(id);
+    }
+
+    @Override
+    public OrganisationUnitDTO readOrganisationUnitById(Integer id) {
+        var ou = findOne(id);
+
+        if (!ou.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("OrganisationUnit with given ID does not exist.");
+        }
+
+        statisticsIndexService.saveOrganisationUnitView(id);
+        return OrganisationUnitConverter.toDTO(ou);
     }
 
     @Override

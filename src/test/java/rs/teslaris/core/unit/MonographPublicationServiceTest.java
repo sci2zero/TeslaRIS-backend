@@ -25,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -81,6 +82,9 @@ public class MonographPublicationServiceTest {
 
     @Mock
     private MonographService monographService;
+
+    @Mock
+    private StatisticsIndexService statisticsIndexService;
 
     @InjectMocks
     private MonographPublicationServiceImpl monographPublicationService;

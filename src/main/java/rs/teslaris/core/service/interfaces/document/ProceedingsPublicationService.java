@@ -12,7 +12,7 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 @Service
 public interface ProceedingsPublicationService {
 
-    ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId);
+    ProceedingsPublicationDTO readProceedingsPublicationById(Integer publicationId);
 
     List<ProceedingsPublicationResponseDTO> findAuthorsProceedingsForEvent(Integer eventId,
                                                                            Integer authorId);
