@@ -1,6 +1,7 @@
 package rs.teslaris.core.assessment.repository;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -15,5 +16,5 @@ public interface DocumentIndicatorRepository extends JpaRepository<DocumentIndic
                                                                              AccessLevel accessLevel);
 
     @Query("select di from DocumentIndicator di where di.indicator.code = :code and di.document.id = :documentId")
-    DocumentIndicator findIndicatorForCodeAndDocumentId(String code, Integer documentId);
+    Optional<DocumentIndicator> findIndicatorForCodeAndDocumentId(String code, Integer documentId);
 }

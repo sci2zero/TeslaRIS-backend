@@ -1,6 +1,7 @@
 package rs.teslaris.core.assessment.repository;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -17,4 +18,8 @@ public interface OrganisationUnitIndicatorRepository
     List<OrganisationUnitIndicator> findIndicatorsForOrganisationUnitAndIndicatorAccessLevel(
         Integer organisationUnitId,
         AccessLevel accessLevel);
+
+    @Query("select oui from OrganisationUnitIndicator oui where oui.indicator.code = :code and oui.organisationUnit.id = :organisationUnitId")
+    Optional<OrganisationUnitIndicator> findIndicatorForCodeAndOrganisationUnitId(String code,
+                                                                                  Integer organisationUnitId);
 }
