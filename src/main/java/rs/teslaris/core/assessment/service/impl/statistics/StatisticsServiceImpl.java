@@ -44,6 +44,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -74,13 +75,6 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
-    static <T> void forEachWithCounter(Iterable<T> source, BiConsumer<Integer, T> consumer) {
-        int i = 0;
-        for (T item : source) {
-            consumer.accept(i, item);
-            i++;
-        }
-    }
 
     @Override
     public void savePersonView(Integer personId) {
@@ -314,7 +308,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             chunk.forEach(entity -> {
                 Integer entityId = getEntityId.apply(entity);
 
-                forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
+                FunctionalUtil.forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
                     Integer statisticsCount = countFunction.apply(startPeriods.get(i), entity);
 
                     updateIndicator(entityId,
