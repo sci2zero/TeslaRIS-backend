@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -63,7 +62,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                   SearchService<DocumentPublicationIndex> searchService,
                                   OrganisationUnitService organisationUnitService,
-                                  StatisticsIndexService statisticsIndexService,
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
                                   PersonContributionService personContributionService,
@@ -77,8 +75,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, statisticsIndexService, documentRepository,
-            documentFileService,
+            organisationUnitService, documentRepository, documentFileService,
             personContributionService, expressionTransformer, eventService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
@@ -97,7 +94,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }
 
-        statisticsIndexService.saveDocumentView(proceedingsId);
         return ProceedingsConverter.toDTO(proceedings);
     }
 

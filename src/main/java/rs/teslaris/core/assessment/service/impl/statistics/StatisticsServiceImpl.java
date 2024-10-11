@@ -1,6 +1,7 @@
 package rs.teslaris.core.assessment.service.impl.statistics;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,7 +27,7 @@ import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.core.assessment.repository.OrganisationUnitIndicatorRepository;
 import rs.teslaris.core.assessment.repository.PersonIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.core.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
@@ -43,12 +44,13 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class StatisticsIndexServiceImpl implements StatisticsIndexService {
+public class StatisticsServiceImpl implements StatisticsService {
 
     private final StatisticsIndexRepository statisticsIndexRepository;
 
@@ -72,6 +74,13 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
+    static <T> void forEachWithCounter(Iterable<T> source, BiConsumer<Integer, T> consumer) {
+        int i = 0;
+        for (T item : source) {
+            consumer.accept(i, item);
+            i++;
+        }
+    }
 
     @Override
     public void savePersonView(Integer personId) {
@@ -114,15 +123,17 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
     private void save(StatisticsIndex index) {
         index.setTimestamp(LocalDateTime.now());
 
-        updateTotalViews(index);
+        updateTotalCount(index);
 
         statisticsIndexRepository.save(index);
     }
 
-    protected void updateTotalViews(StatisticsIndex index) {
-        var indicatorCode = IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
-            "updateTotalViews");
-        var indicator = indicatorService.getIndicatorByCode(indicatorCode);
+    protected void updateTotalCount(StatisticsIndex index) {
+        var indicatorCodes =
+            IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
+                index.getType().equals(StatisticsType.VIEW.name()) ? "updateTotalViews" :
+                    "updateTotalDownloads");
+        var indicator = indicatorService.getIndicatorByCode(indicatorCodes.getFirst());
 
         if (Objects.isNull(indicator)) {
             log.error("Indicator not configured for loader: {}", "updateDailyViews");
@@ -131,79 +142,97 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
 
         if (Objects.nonNull(index.getDocumentId())) {
             updateIndicator(index.getDocumentId(),
-                indicatorCode,
+                indicator.getCode(),
                 documentRepository::findById,
                 documentIndicatorRepository::findIndicatorForCodeAndDocumentId,
                 (id) -> new DocumentIndicator(),
-                documentIndicatorRepository::save);
+                entityIndicator -> {
+                    entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
+                    entityIndicator.setTimestamp(LocalDateTime.now());
+                    documentIndicatorRepository.save(entityIndicator);
+                });
         } else if (Objects.nonNull(index.getPersonId())) {
             updateIndicator(index.getPersonId(),
-                indicatorCode,
+                indicator.getCode(),
                 personRepository::findById,
                 personIndicatorRepository::findIndicatorForCodeAndPersonId,
                 (id) -> new PersonIndicator(),
-                personIndicatorRepository::save);
+                entityIndicator -> {
+                    entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
+                    entityIndicator.setTimestamp(LocalDateTime.now());
+                    personIndicatorRepository.save(entityIndicator);
+                });
         } else if (Objects.nonNull(index.getOrganisationUnitId())) {
             updateIndicator(index.getOrganisationUnitId(),
-                indicatorCode,
+                indicator.getCode(),
                 organisationUnitRepository::findById,
                 organisationUnitIndicatorRepository::findIndicatorForCodeAndOrganisationUnitId,
                 (id) -> new OrganisationUnitIndicator(),
-                organisationUnitIndicatorRepository::save);
+                entityIndicator -> {
+                    entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
+                    entityIndicator.setTimestamp(LocalDateTime.now());
+                    organisationUnitIndicatorRepository.save(entityIndicator);
+                });
         }
     }
 
-    @Scheduled(cron = "${statistics.schedule.dailyViews}")
-    protected void updateDailyViews() {
-        var indicatorCode = IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
-            "updateDailyViews");
-        var indicator = indicatorService.getIndicatorByCode(indicatorCode);
+    @Scheduled(cron = "${statistics.schedule.views}")
+    protected void updatePeriodViews() {
+        var indicatorCodes =
+            IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
+                "updatePeriodViews");
 
-        if (Objects.isNull(indicator)) {
-            log.error("Indicator not configured for loader: {}", "updateDailyViews");
-            return;
-        }
+        var startPeriods = loadStartPeriodsForIndicators(indicatorCodes);
 
-        updateStatisticsFromPeriod(LocalDateTime.now().minusHours(24), indicatorCode,
+        updateStatisticsFromPeriod(startPeriods, indicatorCodes,
             StatisticsType.VIEW);
     }
 
-    @Scheduled(cron = "${statistics.schedule.weeklyViews}")
-    protected void updateWeeklyViews() {
-        var indicatorCode = IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
-            "updateWeeklyViews");
-        var indicator = indicatorService.getIndicatorByCode(indicatorCode);
+    @Scheduled(cron = "${statistics.schedule.downloads}")
+    protected void updatePeriodDownloads() {
+        var indicatorCodes =
+            IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
+                "updatePeriodDownloads");
 
-        if (Objects.isNull(indicator)) {
-            log.error("Indicator not configured for loader: {}", "updateWeeklyViews");
-            return;
-        }
+        var startPeriods = loadStartPeriodsForIndicators(indicatorCodes);
 
-        updateStatisticsFromPeriod(LocalDateTime.now().minusDays(7), indicatorCode,
-            StatisticsType.VIEW);
+        updateStatisticsFromPeriod(startPeriods, indicatorCodes,
+            StatisticsType.DOWNLOAD);
     }
 
-    @Scheduled(cron = "${statistics.schedule.monthlyViews}")
-    protected void updateMonthlyViews() {
-        var indicatorCode = IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
-            "updateWeeklyViews");
-        var indicator = indicatorService.getIndicatorByCode(indicatorCode);
+    private List<LocalDateTime> loadStartPeriodsForIndicators(List<String> indicatorCodes) {
+        List<LocalDateTime> startPeriods = new ArrayList<>();
+        indicatorCodes.forEach(code -> {
+            var indicator = indicatorService.getIndicatorByCode(code);
 
-        if (Objects.isNull(indicator)) {
-            log.error("Indicator not configured for loader: {}", "updateWeeklyViews");
-            return;
-        }
+            if (Objects.isNull(indicator)) {
+                log.error("Indicator not configured for loader: {}", "updateWeeklyViews");
+                throw new NotFoundException("Missing indicator for code: " + code);
+            }
 
-        updateStatisticsFromPeriod(LocalDateTime.now().minusDays(30), indicatorCode,
-            StatisticsType.VIEW); // is this ok
+            setStartPeriodBasedOnIndicatorCode(code, startPeriods);
+        });
+
+        return startPeriods;
     }
 
-    private void updateStatisticsFromPeriod(LocalDateTime startPeriod, String indicatorCode,
+    private void setStartPeriodBasedOnIndicatorCode(String code, List<LocalDateTime> startPeriods) {
+        if (code.contains("Day")) {
+            startPeriods.add(LocalDateTime.now().minusHours(24));
+        } else if (code.contains("Week")) {
+            startPeriods.add(LocalDateTime.now().minusDays(7));
+        } else if (code.contains("Month")) {
+            startPeriods.add(LocalDateTime.now().minusDays(30));
+        }
+    }
+
+    private void updateStatisticsFromPeriod(List<LocalDateTime> startPeriods,
+                                            List<String> indicatorCodes,
                                             StatisticsType statisticsType) {
         CompletableFuture<Void> documentTask = CompletableFuture.runAsync(() -> {
             updateEntityStatisticInPeriod(
-                startPeriod,
-                indicatorCode,
+                startPeriods,
+                indicatorCodes,
                 documentPublicationIndexRepository,
                 documentRepository,
                 (start, document) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndDocumentId(
@@ -213,14 +242,15 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
                 documentIndicatorRepository::findIndicatorForCodeAndDocumentId,
                 id -> new DocumentIndicator(),
                 (entityIndicator, document) -> entityIndicator.setDocument(
-                    documentRepository.findById(document.getDatabaseId()).orElseThrow())
+                    documentRepository.findById(document.getDatabaseId()).orElseThrow()),
+                documentIndicatorRepository
             );
         });
 
         CompletableFuture<Void> personTask = CompletableFuture.runAsync(() -> {
             updateEntityStatisticInPeriod(
-                startPeriod,
-                indicatorCode,
+                startPeriods,
+                indicatorCodes,
                 personIndexRepository,
                 personRepository,
                 (start, person) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndPersonId(
@@ -229,14 +259,15 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
                 personIndicatorRepository::findIndicatorForCodeAndPersonId,
                 id -> new PersonIndicator(),
                 (entityIndicator, person) -> entityIndicator.setPerson(
-                    personRepository.findById(person.getDatabaseId()).orElseThrow())
+                    personRepository.findById(person.getDatabaseId()).orElseThrow()),
+                personIndicatorRepository
             );
         });
 
         CompletableFuture<Void> organisationTask = CompletableFuture.runAsync(() -> {
             updateEntityStatisticInPeriod(
-                startPeriod,
-                indicatorCode,
+                startPeriods,
+                indicatorCodes,
                 organisationUnitIndexRepository,
                 organisationUnitRepository,
                 (start, ou) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndOrganisationUnitId(
@@ -245,7 +276,8 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
                 organisationUnitIndicatorRepository::findIndicatorForCodeAndOrganisationUnitId,
                 id -> new OrganisationUnitIndicator(),
                 (entityIndicator, ou) -> entityIndicator.setOrganisationUnit(
-                    organisationUnitRepository.findById(ou.getDatabaseId()).orElseThrow())
+                    organisationUnitRepository.findById(ou.getDatabaseId()).orElseThrow()),
+                organisationUnitIndicatorRepository
             );
         });
 
@@ -254,22 +286,22 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
         try {
             allTasks.get();
         } catch (InterruptedException | ExecutionException e) {
-            log.error("Error while updating statistics from " + startPeriod + ". Indicator code: " +
-                indicatorCode, e);
+            log.error("Error while updating statistics for " + statisticsType.name(), e);
             Thread.currentThread().interrupt();
         }
     }
 
     private <T, D, I extends EntityIndicator> void updateEntityStatisticInPeriod(
-        LocalDateTime start,
-        String indicatorCode,
+        List<LocalDateTime> startPeriods,
+        List<String> indicatorCodes,
         ElasticsearchRepository<T, String> indexRepository,
         JpaRepository<D, Integer> entityRepository,
-        BiFunction<LocalDateTime, T, Integer> countStatisticsInPeriod,
+        BiFunction<LocalDateTime, T, Integer> countFunction,
         Function<T, Integer> getEntityId,
         BiFunction<String, Integer, Optional<I>> findIndicatorByEntityId,
         Function<Integer, I> createNewIndicator,
-        BiConsumer<I, T> setEntity) {
+        BiConsumer<I, T> setEntity,
+        JpaRepository<I, Integer> entityIndicatorRepository) {
 
         int pageNumber = 0;
         int chunkSize = 50;
@@ -281,21 +313,26 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
 
             chunk.forEach(entity -> {
                 Integer entityId = getEntityId.apply(entity);
-                Integer statisticsCount = countStatisticsInPeriod.apply(start, entity);
 
-                updateIndicator(entityId,
-                    indicatorCode,
-                    entityRepository::findById,
-                    findIndicatorByEntityId,
-                    id -> {
-                        I indicator = createNewIndicator.apply(id);
-                        setEntity.accept(indicator, entity);
-                        return indicator;
-                    },
-                    indicator -> {
-                        indicator.setNumericValue(Double.valueOf(statisticsCount));
-                        indicator.setTimestamp(LocalDateTime.now());
-                    });
+                forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
+                    Integer statisticsCount = countFunction.apply(startPeriods.get(i), entity);
+
+                    updateIndicator(entityId,
+                        indicatorCode,
+                        entityRepository::findById,
+                        findIndicatorByEntityId,
+                        id -> {
+                            I indicator = createNewIndicator.apply(id);
+                            setEntity.accept(indicator, entity);
+                            return indicator;
+                        },
+                        entityIndicator -> {
+                            entityIndicator.setNumericValue(Double.valueOf(statisticsCount));
+                            entityIndicator.setTimestamp(LocalDateTime.now());
+                            entityIndicatorRepository.save(entityIndicator);
+                        });
+                });
+
             });
 
             pageNumber++;
@@ -308,7 +345,7 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
                                         Function<Integer, Optional<T>> findEntityById,
                                         BiFunction<String, Integer, Optional<R>> findIndicator,
                                         Function<Integer, R> createIndicator,
-                                        Consumer<R> saveIndicator) {
+                                        Consumer<R> updateAndSaveIndicatorValue) {
 
         var optionalIndicator = findIndicator.apply(indicatorCode, id);
         R indicatorEntity;
@@ -316,13 +353,13 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
             indicatorEntity = createIndicator.apply(id);
             if (indicatorEntity instanceof DocumentIndicator) {
                 ((DocumentIndicator) indicatorEntity).setDocument(
-                    (Document) findEntityById.apply(id).get());
+                    (Document) findEntityById.apply(id).orElseThrow());
             } else if (indicatorEntity instanceof PersonIndicator) {
                 ((PersonIndicator) indicatorEntity).setPerson(
-                    (Person) findEntityById.apply(id).get());
+                    (Person) findEntityById.apply(id).orElseThrow());
             } else if (indicatorEntity instanceof OrganisationUnitIndicator) {
                 ((OrganisationUnitIndicator) indicatorEntity).setOrganisationUnit(
-                    (OrganisationUnit) findEntityById.apply(id).get());
+                    (OrganisationUnit) findEntityById.apply(id).orElseThrow());
             }
             ((EntityIndicator) indicatorEntity).setIndicator(
                 indicatorService.getIndicatorByCode(indicatorCode));
@@ -331,9 +368,6 @@ public class StatisticsIndexServiceImpl implements StatisticsIndexService {
             indicatorEntity = optionalIndicator.get();
         }
 
-        ((EntityIndicator) indicatorEntity).setNumericValue(
-            ((EntityIndicator) indicatorEntity).getNumericValue());
-
-        saveIndicator.accept(indicatorEntity);
+        updateAndSaveIndicatorValue.accept(indicatorEntity);
     }
 }

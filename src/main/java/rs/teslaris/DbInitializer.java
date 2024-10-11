@@ -870,7 +870,7 @@ public class DbInitializer implements ApplicationRunner {
 
         var weeklyViews = new Indicator();
         weeklyViews.setCode("viewsWeek");
-        weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1)));
+        weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Weekly views", 1)));
         weeklyViews.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
                 1)));
@@ -878,12 +878,50 @@ public class DbInitializer implements ApplicationRunner {
 
         var monthlyViews = new Indicator();
         monthlyViews.setCode("viewsMonth");
-        monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1)));
+        monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Monthly views", 1)));
         monthlyViews.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Total number of views in the last month.",
                 1)));
         monthlyViews.setAccessLevel(AccessLevel.OPEN);
 
-        indicatorRepository.saveAll(List.of(totalViews, dailyViews, weeklyViews, monthlyViews));
+        var totalDownloads = new Indicator();
+        totalDownloads.setCode("downloadsTotal");
+        totalDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Total downloads", 1)));
+        totalDownloads.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Total number of downloads.", 1)));
+        totalDownloads.setAccessLevel(AccessLevel.OPEN);
+
+        var dailyDownloads = new Indicator();
+        dailyDownloads.setCode("downloadsDay");
+        dailyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Daily downloads", 1)));
+        dailyDownloads.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of downloads in the last 24h.",
+                    1)));
+        dailyDownloads.setAccessLevel(AccessLevel.OPEN);
+
+        var weeklyDownloads = new Indicator();
+        weeklyDownloads.setCode("downloadsWeek");
+        weeklyDownloads.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Weekly downloads", 1)));
+        weeklyDownloads.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of downloads in the last 7 days.",
+                    1)));
+        weeklyDownloads.setAccessLevel(AccessLevel.OPEN);
+
+        var monthlyDownloads = new Indicator();
+        monthlyDownloads.setCode("downloadsMonth");
+        monthlyDownloads.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Monthly downloads", 1)));
+        monthlyDownloads.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of downloads in the last month.",
+                    1)));
+        monthlyDownloads.setAccessLevel(AccessLevel.OPEN);
+
+        indicatorRepository.saveAll(
+            List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads,
+                dailyDownloads, weeklyDownloads, monthlyDownloads));
     }
 }

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -33,12 +35,12 @@ public class IndicatorMappingConfigurationLoader {
         );
     }
 
-    public static String getIndicatorNameForLoaderMethodName(String methodName) {
-        return indicatorMappingConfiguration.mappings.getOrDefault(methodName, null);
+    public static List<String> getIndicatorNameForLoaderMethodName(String methodName) {
+        return indicatorMappingConfiguration.mappings.getOrDefault(methodName, new ArrayList<>());
     }
 
     private record IndicatorMappingConfiguration(
-        @JsonProperty(value = "mappings", required = true) Map<String, String> mappings
+        @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings
     ) {
     }
 }

@@ -9,7 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -50,7 +49,6 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                              SearchService<DocumentPublicationIndex> searchService,
                                              OrganisationUnitService organisationUnitService,
-                                             StatisticsIndexService statisticsIndexService,
                                              DocumentRepository documentRepository,
                                              DocumentFileService documentFileService,
                                              PersonContributionService personContributionService,
@@ -60,8 +58,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, statisticsIndexService, documentRepository,
-            documentFileService,
+            organisationUnitService, documentRepository, documentFileService,
             personContributionService, expressionTransformer, eventService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
@@ -75,7 +72,6 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             throw new NotFoundException("Document with given id does not exist.");
         }
 
-        statisticsIndexService.saveDocumentView(publicationId);
         return ProceedingsPublicationConverter.toDTO(publication);
     }
 

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -37,7 +37,7 @@ public class FileController {
 
     private final UserService userService;
 
-    private final StatisticsIndexService statisticsIndexService;
+    private final StatisticsService statisticsIndexService;
 
 
     @GetMapping("/{filename}")

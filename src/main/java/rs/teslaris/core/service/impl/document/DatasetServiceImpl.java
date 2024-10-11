@@ -5,7 +5,6 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.DatasetConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -40,7 +39,6 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               SearchService<DocumentPublicationIndex> searchService,
                               OrganisationUnitService organisationUnitService,
                               DocumentRepository documentRepository,
-                              StatisticsIndexService statisticsIndexService,
                               DocumentFileService documentFileService,
                               PersonContributionService personContributionService,
                               ExpressionTransformer expressionTransformer,
@@ -48,7 +46,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, statisticsIndexService, documentRepository,
+            organisationUnitService, documentRepository,
             documentFileService, personContributionService, expressionTransformer, eventService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
@@ -60,8 +58,6 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         if (!dataset.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
-
-        statisticsIndexService.saveDocumentView(datasetId);
 
         return DatasetConverter.toDTO(dataset);
     }

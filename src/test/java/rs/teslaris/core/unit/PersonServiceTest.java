@@ -32,7 +32,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -93,9 +92,6 @@ public class PersonServiceTest {
 
     @Mock
     private ExpressionTransformer expressionTransformer;
-
-    @Mock
-    private StatisticsIndexService statisticsIndexService;
 
     @InjectMocks
     private PersonServiceImpl personService;

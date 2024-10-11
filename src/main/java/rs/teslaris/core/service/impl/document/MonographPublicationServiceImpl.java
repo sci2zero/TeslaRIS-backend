@@ -7,7 +7,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.MonographPublicationConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -43,7 +42,6 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                            SearchService<DocumentPublicationIndex> searchService,
                                            OrganisationUnitService organisationUnitService,
-                                           StatisticsIndexService statisticsIndexService,
                                            DocumentRepository documentRepository,
                                            DocumentFileService documentFileService,
                                            PersonContributionService personContributionService,
@@ -52,7 +50,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, statisticsIndexService, documentRepository,
+            organisationUnitService, documentRepository,
             documentFileService, personContributionService, expressionTransformer, eventService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
@@ -72,7 +70,6 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                 "Monograph with ID " + monographPublicationId + " does not exist.");
         }
 
-        statisticsIndexService.saveDocumentView(monographPublicationId);
         return MonographPublicationConverter.toDTO(monographPublication);
     }
 

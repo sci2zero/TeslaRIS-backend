@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.PatentConverter;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -41,7 +40,6 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
                              SearchService<DocumentPublicationIndex> searchService,
                              OrganisationUnitService organisationUnitService,
-                             StatisticsIndexService statisticsIndexService,
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              PersonContributionService personContributionService,
@@ -49,8 +47,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              EventService eventService, PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, statisticsIndexService, documentRepository,
-            documentFileService,
+            organisationUnitService, documentRepository, documentFileService,
             personContributionService, expressionTransformer, eventService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
@@ -62,8 +59,6 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         if (!patent.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
-
-        statisticsIndexService.saveDocumentView(patentId);
 
         return PatentConverter.toDTO(patent);
     }

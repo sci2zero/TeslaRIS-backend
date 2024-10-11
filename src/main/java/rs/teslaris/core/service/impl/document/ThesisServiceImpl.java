@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
@@ -48,7 +48,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
                              SearchService<DocumentPublicationIndex> searchService,
                              OrganisationUnitService organisationUnitService,
-                             StatisticsIndexService statisticsIndexService,
+                             StatisticsService statisticsIndexService,
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              PersonContributionService personContributionService,
@@ -58,8 +58,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              ResearchAreaService researchAreaService,
                              LanguageTagService languageService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, statisticsIndexService, documentRepository,
-            documentFileService,
+            organisationUnitService, documentRepository, documentFileService,
             personContributionService, expressionTransformer, eventService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
@@ -73,8 +72,6 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         if (!thesis.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
-
-        statisticsIndexService.saveDocumentView(thesisId);
 
         return ThesisConverter.toDTO(thesis);
     }

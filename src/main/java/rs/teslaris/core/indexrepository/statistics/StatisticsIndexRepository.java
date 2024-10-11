@@ -13,9 +13,11 @@ public interface StatisticsIndexRepository
                                                         String type, Integer documentId);
 
     Integer countByTimestampBetweenAndTypeAndPersonId(LocalDateTime from, LocalDateTime to,
-                                                        String type, Integer personId);
+                                                      String type, Integer personId);
 
-    Integer countByTimestampBetweenAndTypeAndOrganisationUnitId(LocalDateTime from, LocalDateTime to,
-                                                      String type, Integer organisationUnitId);
+    Integer countByTimestampBetweenAndTypeAndOrganisationUnitId(LocalDateTime from,
+                                                                LocalDateTime to,
+                                                                String type,
+                                                                Integer organisationUnitId);
 
 }

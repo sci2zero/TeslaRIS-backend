@@ -3,7 +3,7 @@ package rs.teslaris.core.assessment.service.interfaces.statistics;
 import org.springframework.stereotype.Service;
 
 @Service
-public interface StatisticsIndexService {
+public interface StatisticsService {
 
     void savePersonView(Integer personId);
 

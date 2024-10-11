@@ -24,7 +24,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -69,8 +68,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     protected final SearchService<DocumentPublicationIndex> searchService;
 
     protected final OrganisationUnitService organisationUnitService;
-
-    protected final StatisticsIndexService statisticsIndexService;
 
     private final DocumentRepository documentRepository;
 

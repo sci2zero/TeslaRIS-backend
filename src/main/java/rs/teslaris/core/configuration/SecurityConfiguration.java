@@ -180,6 +180,13 @@ public class SecurityConfiguration {
                     "/api/assessment/publication-series-indicator/{documentId}")
                 .permitAll()
 
+                // STATISTICS
+                .requestMatchers(HttpMethod.POST, "/api/statistics/person/{personId}").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/statistics/organisation-unit/{organisationUnitId}").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/statistics/document/{documentId}")
+                .permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

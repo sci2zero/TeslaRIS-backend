@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.assessment.service.impl.statistics.StatisticsIndexServiceImpl;
+import rs.teslaris.core.assessment.service.impl.statistics.StatisticsServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.core.indexmodel.statistics.StatisticsIndex;
 import rs.teslaris.core.indexrepository.statistics.StatisticsIndexRepository;
@@ -23,7 +23,7 @@ public class StatisticsIndexServiceTest {
     private StatisticsIndexRepository statisticsIndexRepository;
 
     @InjectMocks
-    private StatisticsIndexServiceImpl statisticsIndexService;
+    private StatisticsServiceImpl statisticsIndexService;
 
 
     @Test

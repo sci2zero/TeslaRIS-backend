@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsIndexService;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -58,7 +57,6 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                 SearchService<DocumentPublicationIndex> searchService,
                                 OrganisationUnitService organisationUnitService,
-                                StatisticsIndexService statisticsIndexService,
                                 DocumentRepository documentRepository,
                                 DocumentFileService documentFileService,
                                 PersonContributionService personContributionService,
@@ -70,8 +68,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 ResearchAreaService researchAreaService,
                                 MonographRepository monographRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, statisticsIndexService, documentRepository,
-            documentFileService,
+            organisationUnitService, documentRepository, documentFileService,
             personContributionService, expressionTransformer, eventService);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
@@ -100,7 +97,6 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             throw new NotFoundException("Monograph with ID " + monographId + " does not exist.");
         }
 
-        statisticsIndexService.saveDocumentView(monographId);
         return MonographConverter.toDTO(monograph);
     }
 
