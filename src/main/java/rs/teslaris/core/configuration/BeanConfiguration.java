@@ -2,11 +2,14 @@ package rs.teslaris.core.configuration;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
 import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.tika.language.detect.LanguageDetector;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +23,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Configuration
 public class BeanConfiguration {
+    @Value("${frontend.application.address}")
+    private String frontendUrl;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -40,17 +45,17 @@ public class BeanConfiguration {
     @Bean
     public Cache<String, Byte> idempotencyCacheStore() {
         return CacheBuilder.newBuilder()
-            .maximumSize(10000)
-            .expireAfterWrite(5, TimeUnit.SECONDS)
-            .build();
+                .maximumSize(10000)
+                .expireAfterWrite(5, TimeUnit.SECONDS)
+                .build();
     }
 
     @Bean
     public Cache<String, Byte> passwordResetRequestCacheStore() {
         return CacheBuilder.newBuilder()
-            .maximumSize(10000)
-            .expireAfterWrite(10, TimeUnit.MINUTES)
-            .build();
+                .maximumSize(10000)
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .build();
     }
 
     @Bean
@@ -59,10 +64,10 @@ public class BeanConfiguration {
             @Override
             public void addCorsMappings(@NotNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                    .allowCredentials(true)
-                    .allowedOrigins("http://127.0.0.1:5173", "http://localhost:5173",
-                        "http://0.0.0.0:5173")
-                    .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH");
+                        .allowCredentials(true)
+                        .allowedOriginPatterns("sameOrigin")
+                        .allowedOrigins(frontendUrl)
+                        .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH");
             }
         };
     }
