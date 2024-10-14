@@ -175,6 +175,7 @@ public class ScopusImportUtility {
             try {
                 return objectMapper.readValue(responseEntity.getBody(), responseType);
             } catch (JsonProcessingException e) {
+                System.out.println(responseEntity.getBody());
                 log.error("Exception occurred during document deserialization: {}", e.getMessage());
             }
         } else {
@@ -276,7 +277,7 @@ public class ScopusImportUtility {
         @JsonProperty("prism:publicationName") String publicationName,
         @JsonProperty("prism:issn") String issn,
         @JsonProperty("prism:eIssn") String eIssn,
-        @JsonProperty("prism:isbn") String isbn,
+        @JsonProperty("prism:isbn") List<Isbn> isbn,
         @JsonProperty("prism:pageRange") String pageRange,
         @JsonProperty("prism:coverDate") String coverDate,
         @JsonProperty("prism:coverDisplayDate") String coverDisplayDate,
@@ -296,6 +297,12 @@ public class ScopusImportUtility {
         @JsonProperty("fund-sponsor") String fundSponsor,
         @JsonProperty("openaccess") String openAccess,
         @JsonProperty("openaccessFlag") boolean openAccessFlag
+    ) {
+    }
+
+    public record Isbn(
+        @JsonProperty("@_fa") boolean fa,
+        @JsonProperty("$") String value
     ) {
     }
 
