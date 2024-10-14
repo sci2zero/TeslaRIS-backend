@@ -40,6 +40,19 @@ public class IndicatorControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadAccessLevelForIndicators() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/assessment/indicator/access-level/{indicatorId}", 1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadIndicator() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(

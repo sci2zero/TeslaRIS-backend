@@ -81,6 +81,21 @@ public class IndicatorServiceTest {
     }
 
     @Test
+    void shouldReadAccessLevelForIndicator() {
+        var indicatorId = 1;
+        var indicator = new Indicator();
+        indicator.setAccessLevel(AccessLevel.CLOSED);
+
+        when(indicatorRepository.findById(indicatorId))
+            .thenReturn(Optional.of(indicator));
+
+        var result = indicatorService.readIndicatorAccessLEvel(indicatorId);
+
+        assertEquals(AccessLevel.CLOSED, result);
+        verify(indicatorRepository).findById(indicatorId);
+    }
+
+    @Test
     void shouldCreateIndicator() {
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
             List.of(new MultilingualContentDTO()), AccessLevel.CLOSED);

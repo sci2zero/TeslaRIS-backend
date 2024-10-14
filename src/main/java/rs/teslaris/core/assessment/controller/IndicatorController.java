@@ -38,6 +38,12 @@ public class IndicatorController {
         return indicatorService.readIndicatorById(indicatorId);
     }
 
+    @GetMapping("/access-level/{indicatorId}")
+    @PreAuthorize("hasAuthority('EDIT_INDICATORS')")
+    public String readIndicatorAccessLevel(@PathVariable Integer indicatorId) {
+        return indicatorService.readIndicatorAccessLEvel(indicatorId).name();
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_INDICATORS')")
     @ResponseStatus(HttpStatus.CREATED)

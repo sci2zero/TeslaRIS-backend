@@ -11,6 +11,7 @@ import rs.teslaris.core.assessment.dto.IndicatorResponseDTO;
 import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorCodeInUseException;
@@ -40,6 +41,11 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     public IndicatorResponseDTO readIndicatorById(
         Integer indicatorId) {
         return IndicatorConverter.toDTO(findOne(indicatorId));
+    }
+
+    @Override
+    public AccessLevel readIndicatorAccessLEvel(Integer indicatorId) {
+        return findOne(indicatorId).getAccessLevel();
     }
 
     @Override
