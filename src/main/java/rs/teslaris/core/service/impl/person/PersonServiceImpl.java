@@ -518,12 +518,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 institutionNameOther).append("; ");
         }
 
-        StringUtil.removeTrailingPipeDelimiter(employmentsSr, employmentsOther);
+        StringUtil.removeTrailingDelimiters(employmentsSr, employmentsOther);
         personIndex.setEmploymentsSr(
-            employmentsSr.length() > 0 ? employmentsSr.toString() : employmentsOther.toString());
+            !employmentsSr.isEmpty() ? employmentsSr.toString() : employmentsOther.toString());
         personIndex.setEmploymentsSrSortable(personIndex.getEmploymentsSr());
         personIndex.setEmploymentsOther(
-            employmentsOther.length() > 0 ? employmentsOther.toString() :
+            !employmentsOther.isEmpty() ? employmentsOther.toString() :
                 employmentsSr.toString());
         personIndex.setEmploymentsOtherSortable(personIndex.getEmploymentsOther());
         setPersonIndexKeywords(personIndex, savedPerson);

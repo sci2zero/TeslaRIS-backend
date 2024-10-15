@@ -309,11 +309,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentOther = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(contentSr, contentOther,
-            document.getTitle());
+            document.getTitle(), true);
         multilingualContentService.buildLanguageStrings(contentSr, contentOther,
-            document.getSubTitle());
+            document.getSubTitle(), false);
 
-        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setTitleSr(contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
         index.setTitleOther(
             contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
@@ -324,9 +324,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentOther = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(contentSr, contentOther,
-            document.getDescription());
+            document.getDescription(), false);
 
-        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setDescriptionSr(
             contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
         index.setDescriptionOther(
@@ -338,9 +338,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentOther = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(contentSr, contentOther,
-            document.getKeywords());
+            document.getKeywords(), false);
 
-        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setKeywordsSr(
             contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
         index.setKeywordsOther(

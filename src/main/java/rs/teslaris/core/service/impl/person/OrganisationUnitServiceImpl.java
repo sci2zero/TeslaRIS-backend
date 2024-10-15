@@ -371,9 +371,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.getResearchAreas().forEach(
             researchArea -> multilingualContentService.buildLanguageStrings(researchAreaSrContent,
                 researchAreaOtherContent,
-                researchArea.getName()));
+                researchArea.getName(), true));
 
-        StringUtil.removeTrailingPipeDelimiter(researchAreaSrContent, researchAreaOtherContent);
+        StringUtil.removeTrailingDelimiters(researchAreaSrContent, researchAreaOtherContent);
         index.setResearchAreasSr(
             researchAreaSrContent.length() > 0 ? researchAreaSrContent.toString() :
                 researchAreaOtherContent.toString());
@@ -405,9 +405,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
 
-        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList);
+        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList, true);
 
-        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,
             srContent.length() > 0 ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
