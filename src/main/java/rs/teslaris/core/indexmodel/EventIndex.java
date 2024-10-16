@@ -2,6 +2,8 @@ package rs.teslaris.core.indexmodel;
 
 import jakarta.persistence.Id;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -78,4 +80,7 @@ public class EventIndex {
 
     @Field(type = FieldType.Boolean, name = "is_serial_event", store = true)
     private Boolean serialEvent;
+
+    @Field(type = FieldType.Integer, name = "related_institution_ids", store = true)
+    private List<Integer> relatedInstitutionIds = new ArrayList<>();
 }

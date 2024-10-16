@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.service.impl.statistics;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.codehaus.janino.ExpressionEvaluator;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -77,6 +79,11 @@ public class StatisticsServiceImpl implements StatisticsService {
 
 
     @Override
+    public List<String> fetchStatisticsTypeIndicators(StatisticsType statisticsType) {
+        return IndicatorMappingConfigurationLoader.fetchStatisticsTypeIndicators(statisticsType);
+    }
+
+    @Override
     public void savePersonView(Integer personId) {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setPersonId(personId);
@@ -123,14 +130,14 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     protected void updateTotalCount(StatisticsIndex index) {
+        var loaderName = index.getType().equals(StatisticsType.VIEW.name()) ? "updateTotalViews" :
+            "updateTotalDownloads";
         var indicatorCodes =
-            IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
-                index.getType().equals(StatisticsType.VIEW.name()) ? "updateTotalViews" :
-                    "updateTotalDownloads");
+            IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(loaderName);
         var indicator = indicatorService.getIndicatorByCode(indicatorCodes.getFirst());
 
         if (Objects.isNull(indicator)) {
-            log.error("Indicator not configured for loader: {}", "updateDailyViews");
+            log.error("Indicator not configured for loader: {}", loaderName);
             return;
         }
 
@@ -176,7 +183,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
                 "updatePeriodViews");
 
-        var startPeriods = loadStartPeriodsForIndicators(indicatorCodes);
+        var startPeriods = loadStartPeriodsForIndicators(indicatorCodes, StatisticsType.VIEW);
 
         updateStatisticsFromPeriod(startPeriods, indicatorCodes,
             StatisticsType.VIEW);
@@ -188,42 +195,57 @@ public class StatisticsServiceImpl implements StatisticsService {
             IndicatorMappingConfigurationLoader.getIndicatorNameForLoaderMethodName(
                 "updatePeriodDownloads");
 
-        var startPeriods = loadStartPeriodsForIndicators(indicatorCodes);
+        var startPeriods = loadStartPeriodsForIndicators(indicatorCodes, StatisticsType.DOWNLOAD);
 
         updateStatisticsFromPeriod(startPeriods, indicatorCodes,
             StatisticsType.DOWNLOAD);
     }
 
-    private List<LocalDateTime> loadStartPeriodsForIndicators(List<String> indicatorCodes) {
+    private List<LocalDateTime> loadStartPeriodsForIndicators(List<String> indicatorCodes,
+                                                              StatisticsType statisticsType) {
         List<LocalDateTime> startPeriods = new ArrayList<>();
+
         indicatorCodes.forEach(code -> {
             var indicator = indicatorService.getIndicatorByCode(code);
 
             if (Objects.isNull(indicator)) {
-                log.error("Indicator not configured for loader: {}", "updateWeeklyViews");
+                log.error("Indicator not configured for loader: {}", code);
                 throw new NotFoundException("Missing indicator for code: " + code);
             }
 
-            setStartPeriodBasedOnIndicatorCode(code, startPeriods);
+            try {
+                var expression =
+                    IndicatorMappingConfigurationLoader.getLocaleOffsetForStatisticsPeriod(
+                        statisticsType, code);
+
+                if (Objects.isNull(expression)) {
+                    return; // continue loop
+                }
+
+                var fullExpression =
+                    "import java.time.LocalDateTime;" + expression
+                        .replace("import", "")
+                        .replaceAll("[^a-zA-Z0-9().\\s]", "");
+
+                var ee = new ExpressionEvaluator();
+                ee.setReturnType(LocalDateTime.class);
+
+                ee.cook(fullExpression);
+
+                startPeriods.add((LocalDateTime) ee.evaluate(new Object[0]));
+            } catch (Exception e) {
+                log.error("Offset expression failed to run. Reason: {}", e.getMessage());
+                throw new RuntimeException(e);
+            }
         });
 
         return startPeriods;
     }
 
-    private void setStartPeriodBasedOnIndicatorCode(String code, List<LocalDateTime> startPeriods) {
-        if (code.contains("Day")) {
-            startPeriods.add(LocalDateTime.now().minusHours(24));
-        } else if (code.contains("Week")) {
-            startPeriods.add(LocalDateTime.now().minusDays(7));
-        } else if (code.contains("Month")) {
-            startPeriods.add(LocalDateTime.now().minusDays(30));
-        }
-    }
-
     private void updateStatisticsFromPeriod(List<LocalDateTime> startPeriods,
                                             List<String> indicatorCodes,
                                             StatisticsType statisticsType) {
-        CompletableFuture<Void> documentTask = CompletableFuture.runAsync(() -> {
+        var documentTask = CompletableFuture.runAsync(() -> {
             updateEntityStatisticInPeriod(
                 startPeriods,
                 indicatorCodes,
@@ -241,7 +263,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             );
         });
 
-        CompletableFuture<Void> personTask = CompletableFuture.runAsync(() -> {
+        var personTask = CompletableFuture.runAsync(() -> {
             updateEntityStatisticInPeriod(
                 startPeriods,
                 indicatorCodes,
@@ -258,7 +280,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             );
         });
 
-        CompletableFuture<Void> organisationTask = CompletableFuture.runAsync(() -> {
+        var organisationTask = CompletableFuture.runAsync(() -> {
             updateEntityStatisticInPeriod(
                 startPeriods,
                 indicatorCodes,
@@ -323,6 +345,8 @@ public class StatisticsServiceImpl implements StatisticsService {
                         entityIndicator -> {
                             entityIndicator.setNumericValue(Double.valueOf(statisticsCount));
                             entityIndicator.setTimestamp(LocalDateTime.now());
+                            entityIndicator.setFromDate(startPeriods.get(i).toLocalDate());
+                            entityIndicator.setToDate(LocalDate.now());
                             entityIndicatorRepository.save(entityIndicator);
                         });
                 });

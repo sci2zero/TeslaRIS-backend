@@ -4,15 +4,18 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import java.time.Duration;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
+import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 
 @RestController
 @RequestMapping("/api/statistics")
@@ -29,6 +32,11 @@ public class StatisticsController {
         this.bucket = Bucket.builder()
             .addLimit(limit)
             .build();
+    }
+
+    @GetMapping("/{statisticsType}")
+    public List<String> fetchStatisticsTypeIndicators(@PathVariable StatisticsType statisticsType) {
+        return statisticsService.fetchStatisticsTypeIndicators(statisticsType);
     }
 
     @PostMapping("/person/{personId}")

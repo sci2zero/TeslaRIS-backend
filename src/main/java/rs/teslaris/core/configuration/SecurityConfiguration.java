@@ -181,6 +181,7 @@ public class SecurityConfiguration {
                 .permitAll()
 
                 // STATISTICS
+                .requestMatchers(HttpMethod.GET, "/api/statistics/{statisticsType}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/statistics/person/{personId}").permitAll()
                 .requestMatchers(HttpMethod.POST,
                     "/api/statistics/organisation-unit/{organisationUnitId}").permitAll()

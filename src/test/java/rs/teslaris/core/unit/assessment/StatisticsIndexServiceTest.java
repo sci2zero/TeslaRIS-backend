@@ -1,16 +1,20 @@
 package rs.teslaris.core.unit.assessment;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.service.impl.statistics.StatisticsServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.core.indexmodel.statistics.StatisticsIndex;
+import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.indexrepository.statistics.StatisticsIndexRepository;
 
 @SpringBootTest
@@ -40,6 +44,16 @@ public class StatisticsIndexServiceTest {
         verify(statisticsIndexRepository, times(1)).save(argThat(statistics ->
             statistics.getPersonId().equals(personId)
         ));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = StatisticsType.class, names = {"VIEW", "DOWNLOAD"})
+    void shouldFetchStatisticsTypeIndicators(StatisticsType type) {
+        // Given & When
+        var result = statisticsIndexService.fetchStatisticsTypeIndicators(type);
+
+        // Then
+        assertNotNull(result);
     }
 
     @Test

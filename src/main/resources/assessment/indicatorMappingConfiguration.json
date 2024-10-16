@@ -4,5 +4,17 @@
     "updateTotalDownloads": ["downloadsTotal"],
     "updatePeriodViews": ["viewsDay", "viewsWeek", "viewsMonth"],
     "updatePeriodDownloads": ["downloadsDay", "downloadsWeek", "downloadsMonth"]
+  },
+  "offsets": {
+    "views": {
+      "viewsDay": "LocalDateTime.now().minusHours(24)",
+      "viewsWeek": "LocalDateTime.now().minusDays(7)",
+      "viewsMonth": "LocalDateTime.now().minusDays(30)"
+    },
+    "downloads": {
+      "downloadsDay": "LocalDateTime.now().minusHours(24)",
+      "downloadsWeek": "LocalDateTime.now().minusDays(7)",
+      "downloadsMonth": "LocalDateTime.now().minusDays(30)"
+    }
   }
 }

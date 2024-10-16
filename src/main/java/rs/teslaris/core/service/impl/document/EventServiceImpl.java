@@ -136,9 +136,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
-                                         EventType eventType, Boolean returnOnlyNonSerialEvents) {
+                                         EventType eventType, Boolean returnOnlyNonSerialEvents,
+                                         Integer commissionInstitutionId) {
         return searchService.runQuery(
-            buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents),
+            buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
+                commissionInstitutionId),
             pageable, EventIndex.class, "events");
     }
 
@@ -255,7 +257,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
-                                         Boolean returnOnlyNonSerialEvents) {
+                                         Boolean returnOnlyNonSerialEvents,
+                                         Integer commissionInstitutionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -302,6 +305,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     sb.match(m -> m.field("is_serial_event").query(false));
                 }
 
+                if (Objects.nonNull(commissionInstitutionId)) {
+                    sb.match(
+                        m -> m.field("related_institution_ids").query(commissionInstitutionId));
+                }
+
                 return sb;
             });
             return b;
@@ -340,6 +348,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         index.setSerialEvent(event.getSerialEvent());
+        index.getRelatedInstitutionIds()
+            .addAll(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
+                event.getId()));
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,

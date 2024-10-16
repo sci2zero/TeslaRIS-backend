@@ -13,6 +13,6 @@ public record EntityIndicatorResponseDTO(
 
     LocalDate toDate,
 
-    IndicatorResponseDTO indicatorResponseDTO
+    IndicatorResponseDTO indicatorResponse
 ) {
 }

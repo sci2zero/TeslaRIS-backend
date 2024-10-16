@@ -337,7 +337,7 @@ public class DbInitializer implements ApplicationRunner {
             researchArea3, researcherAuthority);
 
         ///////////////////// ASSESSMENTS DATA /////////////////////
-        initializeIndicators(englishTag);
+        initializeIndicators(englishTag, serbianTag);
     }
 
     private void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -852,10 +852,11 @@ public class DbInitializer implements ApplicationRunner {
             List.of(publicationSeriesAssessmentClassification));
     }
 
-    void initializeIndicators(LanguageTag englishTag) {
+    void initializeIndicators(LanguageTag englishTag, LanguageTag serbianTag) {
         var totalViews = new Indicator();
         totalViews.setCode("viewsTotal");
-        totalViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1)));
+        totalViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1),
+            new MultiLingualContent(serbianTag, "Ukupno pregleda", 2)));
         totalViews.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Total number of views.", 1)));
         totalViews.setAccessLevel(AccessLevel.OPEN);

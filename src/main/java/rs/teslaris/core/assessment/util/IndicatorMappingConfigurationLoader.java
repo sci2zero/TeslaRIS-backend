@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
@@ -39,8 +41,34 @@ public class IndicatorMappingConfigurationLoader {
         return indicatorMappingConfiguration.mappings.getOrDefault(methodName, new ArrayList<>());
     }
 
+    @Nullable
+    public static String getLocaleOffsetForStatisticsPeriod(StatisticsType statisticsType,
+                                                            String indicatorCode) {
+        return switch (statisticsType) {
+            case VIEW ->
+                indicatorMappingConfiguration.offsets.views.getOrDefault(indicatorCode, null);
+            case DOWNLOAD ->
+                indicatorMappingConfiguration.offsets.downloads.getOrDefault(indicatorCode, null);
+        };
+    }
+
+    public static List<String> fetchStatisticsTypeIndicators(StatisticsType statisticsType) {
+        return switch (statisticsType) {
+            case VIEW -> indicatorMappingConfiguration.offsets.views.keySet().stream().toList();
+            case DOWNLOAD ->
+                indicatorMappingConfiguration.offsets.downloads.keySet().stream().toList();
+        };
+    }
+
     private record IndicatorMappingConfiguration(
-        @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings
+        @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings,
+        @JsonProperty(value = "offsets", required = true) Offsets offsets
+    ) {
+    }
+
+    private record Offsets(
+        @JsonProperty(value = "views", required = true) Map<String, String> views,
+        @JsonProperty(value = "downloads", required = true) Map<String, String> downloads
     ) {
     }
 }
