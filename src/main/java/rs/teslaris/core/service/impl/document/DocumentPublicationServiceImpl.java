@@ -576,11 +576,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
                         eq.should(sb -> sb.wildcard(
-                            m -> m.field("title_sr").value(token).caseInsensitive(true)));
+                            m -> m.field("title_sr").value(token + "*").caseInsensitive(true)));
                         eq.should(sb -> sb.match(
                             m -> m.field("title_sr").query(token)));
                         eq.should(sb -> sb.wildcard(
-                            m -> m.field("title_other").value(token).caseInsensitive(true)));
+                            m -> m.field("title_other").value(token + "*").caseInsensitive(true)));
                         eq.should(sb -> sb.match(
                             m -> m.field("description_sr").query(token)));
                         eq.should(sb -> sb.match(

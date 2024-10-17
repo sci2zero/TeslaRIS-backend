@@ -584,7 +584,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     tokens.forEach(
                         token -> {
                             b.should(sb -> sb.wildcard(
-                                m -> m.field("name").value(token).caseInsensitive(true)));
+                                m -> m.field("name").value(token + "*").caseInsensitive(true)));
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
