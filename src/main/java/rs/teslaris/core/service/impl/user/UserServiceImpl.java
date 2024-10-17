@@ -8,10 +8,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -65,6 +67,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
+import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -73,6 +76,8 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl extends JPAServiceImpl<User> implements UserService {
+
+    private final MessageSource messageSource;
 
     private final JwtUtil tokenUtil;
 
@@ -272,11 +277,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        Person person = null;
+        Person person;
         if (registrationRequest.getPersonId() != null) {
+            if (userRepository.personAlreadyBinded(registrationRequest.getPersonId())) {
+                throw new PersonReferenceConstraintViolationException(
+                    "Person you have selected is already assigned to a user.");
+            }
+
             person = personService.findOne(registrationRequest.getPersonId());
         } else {
-
             BasicPersonDTO basicPersonDTO = new BasicPersonDTO();
             PersonNameDTO personNameDTO = new PersonNameDTO();
             personNameDTO.setFirstname(registrationRequest.getFirstName());
@@ -303,9 +312,23 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        // Email message should be localised and customized
-        emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
-            "Your activation code is: " + activationToken.getActivationToken());
+        var language = savedUser.getPreferredLanguage().getLanguageCode().toLowerCase();
+        String activationLink =
+            clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
+                "/activate-account/" + activationToken.getActivationToken();
+
+        var subject = messageSource.getMessage(
+            "accountActivation.mailSubject",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        var message = messageSource.getMessage(
+            "accountActivation.mailBodyResearcher",
+            new Object[] {activationLink},
+            Locale.forLanguageTag(language)
+        );
+        emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
 
         return savedUser;
     }
@@ -327,7 +350,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new User(registrationRequest.getEmail(),
                 passwordEncoder.encode(new String(generatedPassword)),
                 registrationRequest.getNote(),
-                registrationRequest.getName(), registrationRequest.getSurname(), true, false,
+                registrationRequest.getName().trim(), registrationRequest.getSurname().trim(),
+                true, false,
                 languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
                 null, organisationUnit, UserNotificationPeriod.NEVER);
         var savedUser = userRepository.save(newUser);
@@ -337,10 +361,23 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        // Email message should be localised and customized
-        emailUtil.sendSimpleEmail(newUser.getEmail(), "Account activation",
-            "Your activation code is: " + activationToken.getActivationToken() +
-                "\n\nYour password is: " + new String(generatedPassword));
+        var language = savedUser.getPreferredLanguage().getLanguageCode().toLowerCase();
+        String activationLink =
+            clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
+                "/activate-account/" + activationToken.getActivationToken();
+
+        var subject = messageSource.getMessage(
+            "accountActivation.mailSubject",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        var message = messageSource.getMessage(
+            "accountActivation.mailBodyEmployee",
+            new Object[] {activationLink, new String(generatedPassword)},
+            Locale.forLanguageTag(language)
+        );
+        emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
 
         Arrays.fill(generatedPassword, '\0');
         return savedUser;
@@ -374,6 +411,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             var orgUnit =
                 organisationUnitService.findOne(userUpdateRequest.getOrganisationalUnitId());
             userToUpdate.setOrganisationUnit(orgUnit);
+        } else if (userToUpdate.getAuthority().getName().equals(UserRole.ADMIN.toString())) {
+            userToUpdate.setFirstname(userUpdateRequest.getFirstname());
+            userToUpdate.setLastName(userUpdateRequest.getLastName());
         }
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
@@ -424,13 +464,21 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             var user = (User) loadUserByUsername(userEmail);
             var resetToken = UUID.randomUUID().toString();
             var language = user.getPreferredLanguage().getLanguageCode().toLowerCase();
+
             String resetLink =
                 clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
                     "/reset-password/" + resetToken;
-            String emailSubject = "Account Password Reset";
-            String emailBody =
-                String.format("To reset your password, go to: %s\n\nThis token will last a week.",
-                    resetLink);
+            String emailSubject = messageSource.getMessage(
+                "resetPassword.mailSubject",
+                new Object[] {},
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+            String emailBody = messageSource.getMessage(
+                "resetPassword.mailBody",
+                new Object[] {resetLink},
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+
             emailUtil.sendSimpleEmail(user.getEmail(), emailSubject, emailBody);
             passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
         } catch (UsernameNotFoundException ignored) {
@@ -518,10 +566,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var orgUnitNameOther = new StringBuilder();
         if (Objects.nonNull(employment)) {
             multilingualContentService.buildLanguageStrings(orgUnitNameSr, orgUnitNameOther,
-                employment.getName());
+                employment.getName(), true);
         }
 
-        StringUtil.removeTrailingPipeDelimiter(orgUnitNameSr, orgUnitNameOther);
+        StringUtil.removeTrailingDelimiters(orgUnitNameSr, orgUnitNameOther);
         index.setOrganisationUnitNameSr(
             orgUnitNameSr.length() > 0 ? orgUnitNameSr.toString() : orgUnitNameOther.toString());
         index.setOrganisationUnitNameOther(

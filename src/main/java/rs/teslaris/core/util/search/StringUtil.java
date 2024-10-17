@@ -5,18 +5,20 @@ import org.apache.lucene.queryparser.classic.QueryParserBase;
 
 public class StringUtil {
 
-    public static void removeTrailingPipeDelimiter(StringBuilder contentSr,
-                                                   StringBuilder contentOther) {
-        if (contentSr.toString().endsWith(" | ")) {
-            contentSr.delete(contentSr.length() - 3, contentSr.length());
-        } else if (contentSr.toString().endsWith(" | ;")) {
-            contentSr.delete(contentSr.length() - 4, contentSr.length());
-        }
+    public static void removeTrailingDelimiters(StringBuilder contentSr,
+                                                StringBuilder contentOther) {
+        removeTrailingDelimitersHelper(contentSr);
+        removeTrailingDelimitersHelper(contentOther);
+    }
 
-        if (contentOther.toString().endsWith(" | ")) {
-            contentOther.delete(contentOther.length() - 3, contentOther.length());
-        } else if (contentOther.toString().endsWith(" | ;")) {
-            contentOther.delete(contentOther.length() - 4, contentOther.length());
+    private static void removeTrailingDelimitersHelper(StringBuilder content) {
+        String[] delimiters = {" | ", " | ;", " | ; ", "; "};
+
+        for (String delimiter : delimiters) {
+            if (content.toString().endsWith(delimiter)) {
+                content.delete(content.length() - delimiter.length(), content.length());
+                break;
+            }
         }
     }
 

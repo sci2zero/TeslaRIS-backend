@@ -29,7 +29,6 @@ import rs.teslaris.core.importer.model.oaipmh.etdms.LevelType;
 import rs.teslaris.core.importer.model.oaipmh.etdms.ThesisType;
 import rs.teslaris.core.importer.model.oaipmh.publication.PartOf;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publication;
-import rs.teslaris.core.importer.model.oaipmh.publication.PublicationAbstract;
 import rs.teslaris.core.importer.model.oaipmh.publication.PublishedIn;
 import rs.teslaris.core.importer.model.oaipmh.publication.Publisher;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -467,7 +466,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getDescription().stream()
             .min(Comparator.comparingInt(ExportMultilingualContent::getPriority))
-            .map(mc -> new PublicationAbstract(mc.getLanguageTag(), mc.getContent())).ifPresent(
+            .map(mc -> new MultilingualContent(mc.getLanguageTag(), mc.getContent())).ifPresent(
                 openairePublication::set_abstract);
 
         openairePublication.setKeywords(new ArrayList<>());

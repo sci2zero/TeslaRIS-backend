@@ -17,4 +17,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("select u from User u join u.person p where p.id = :personId")
     Optional<User> findForResearcher(Integer personId);
 
+    @Query("select count(u) > 0 from User u where u.person.id = :personId")
+    boolean personAlreadyBinded(Integer personId);
 }

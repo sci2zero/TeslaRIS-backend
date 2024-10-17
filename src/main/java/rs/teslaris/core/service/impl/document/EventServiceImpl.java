@@ -356,9 +356,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
-        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList);
+        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList, true);
 
-        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,
             !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,

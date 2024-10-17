@@ -175,11 +175,11 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            bookSeries.getTitle());
+            bookSeries.getTitle(), true);
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            bookSeries.getNameAbbreviation());
+            bookSeries.getNameAbbreviation(), false);
 
-        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setTitleSr(srContent.length() > 0 ? srContent.toString() : otherContent.toString());
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOther(

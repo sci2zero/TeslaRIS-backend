@@ -16,5 +16,6 @@ public interface MultilingualContentService {
 
     void buildLanguageStrings(StringBuilder serbianBuilder,
                               StringBuilder otherLanguagesBuilder,
-                              Set<MultiLingualContent> contentList);
+                              Set<MultiLingualContent> contentList,
+                              boolean popEnglishFirst);
 }

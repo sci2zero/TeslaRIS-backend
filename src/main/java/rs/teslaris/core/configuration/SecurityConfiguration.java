@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,7 +20,7 @@ import rs.teslaris.core.util.jwt.JwtFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
+@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfiguration {
 
     private final JwtFilter jwtTokenFilter;
@@ -74,6 +74,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/old-id/{personOldId}").permitAll()
 
                 // COUNTRY
                 .requestMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
@@ -82,6 +83,9 @@ public class SecurityConfiguration {
                 // ORGANISATION UNIT
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/{organisationUnitId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/organisation-unit/old-id/{organisationUnitOldId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit-relation/{leafId}")

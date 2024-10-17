@@ -26,7 +26,7 @@ public class PasswordResetToken extends BaseEntity {
     @Column(name = "password_reset_token")
     private String passwordResetToken;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
     @JoinColumn(name = "user_id")
     private User user;
 }

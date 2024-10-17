@@ -26,6 +26,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnit findOrganisationUnitByOldId(Integer oldId);
 
+    OrganisationUnitDTO readOrganisationUnitForOldId(Integer oldId);
+
     OrganisationUnit getReferenceToOrganisationUnitById(Integer id);
 
     Long getOrganisationUnitsCount();

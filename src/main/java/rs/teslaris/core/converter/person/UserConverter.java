@@ -13,6 +13,9 @@ public class UserConverter {
         var organisationUnitId =
             Objects.nonNull(user.getOrganisationUnit()) ? user.getOrganisationUnit().getId() : -1;
 
+        var personId =
+            Objects.nonNull(user.getPerson()) ? user.getPerson().getId() : -1;
+
         var organisationUnitName =
             Objects.nonNull(user.getOrganisationUnit()) ? user.getOrganisationUnit().getName() :
                 new HashSet<MultiLingualContent>();
@@ -22,6 +25,7 @@ public class UserConverter {
             user.getLastName(), user.getLocked(), user.getCanTakeRole(),
             user.getPreferredLanguage().getLanguageCode(),
             organisationUnitId,
+            personId,
             MultilingualContentConverter.getMultilingualContentDTO(organisationUnitName),
             user.getUserNotificationPeriod());
     }
