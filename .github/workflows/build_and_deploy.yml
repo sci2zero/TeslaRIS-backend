@@ -25,7 +25,7 @@ jobs:
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest] # CONTAINER SERVICE ARE NOT SUPPORTED FOR MACOS AND WINDOWS
         os: [ubuntu-latest]
-        java: [22]
+        java: [22] # If you change make sure taht this version is set as default in "Upload primary build artifact to teslaris.jar" step
     runs-on: ${{ matrix.os }}
 
     services:
@@ -83,7 +83,8 @@ jobs:
 
 
       - uses: actions/upload-artifact@v4
-        if: runner.os == 'Linux' && matrix.java == 21
+        name: Upload primary build artifact to teslaris.jar
+        if: runner.os == 'Linux' && matrix.java == 22
         with:
           name: teslaris
           path: target/teslaris-*.jar
