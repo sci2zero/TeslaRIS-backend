@@ -17,7 +17,6 @@ on:
         type: boolean
   push:
     branches:
-      - feature/deploy
       - main
 
 jobs:
