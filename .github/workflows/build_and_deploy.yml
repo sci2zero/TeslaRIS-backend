@@ -1,0 +1,150 @@
+name: TeslaRIS Backend Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip running tests'
+        default: false
+        type: boolean
+      environment:
+        description: 'Deploy environment'
+        type: environment
+        required: false
+      without_deploy:
+        description: 'Only build (without deploy)'
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+
+jobs:
+  build-backend:
+    strategy:
+      matrix:
+        # os: [ubuntu-latest, macos-latest, windows-latest] # CONTAINER SERVICE IS NOT SUPPORTED FOR MACOS AND WINDOWS
+        os: [ubuntu-latest]
+        java: [22] # If you change make sure taht this version is set as default in "Upload primary build artifact to teslaris.jar" step
+    runs-on: ${{ matrix.os }}
+
+    services:
+      postgres:
+        image: postgres:13.3
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: TeslaRISDB
+        ports:
+          - 5432:5432
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.4.3
+        options: >-
+          --name "elasticsearch"
+        env:
+          discovery.type: single-node
+          ES_JAVA_OPTS: -Xms1g -Xmx1g
+          xpack.security.enabled: false
+        ports:
+          - 9200:9200
+      minio:
+        image: minio/minio
+        env:
+          MINIO_ACCESS_KEY: minio-access-key
+          MINIO_SECRET_KEY: minio-secret-key
+        ports:
+          - 9000:9000
+      mongo:
+        image: mongo:7.0.2
+        ports:
+          - 27017:27017
+    steps:
+    
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{matrix.java}}
+        uses: actions/setup-java@v3
+        with:
+          java-version: "${{matrix.java}}"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Install Elasticsearch plugin
+        run: |
+          #!/bin/bash
+          docker ps
+          docker exec elasticsearch bash -c "bin/elasticsearch-plugin install analysis-icu"
+          docker restart elasticsearch
+
+      - name: Build and package with Maven ${{ inputs.skip_tests && '(WITHOUT TESTS)' || '' }}
+        run: mvn clean package ${{ inputs.skip_tests && '-DskipTests' || '' }}
+        env:
+          DB_PASSWORD: postgres
+
+
+      - uses: actions/upload-artifact@v4
+        name: Upload primary build artifact to teslaris.jar
+        if: runner.os == 'Linux' && matrix.java == 22
+        with:
+          name: teslaris
+          path: target/teslaris-*.jar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: teslaris-${{ matrix.os }}-JDK_${{ matrix.java }}
+          path: target/teslaris-*.jar
+
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    if : ${{ !inputs.without_deploy }}
+
+    needs: build-backend
+    environment:
+      name: ${{ inputs.environment || 'test' }}
+
+    steps:
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: teslaris
+          path: teslaris
+
+      - name: Copy files to Server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_PRIVATE_KEY }}
+          source: "teslaris.jar"
+          target: "tmp/github-backend"
+
+
+      - name: Deploy application to blue node
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_PRIVATE_KEY }}
+          script: |
+            chmod +x /opt/teslaris/deploy-script.sh
+            /opt/teslaris/deploy-script.sh deploy-blue
+
+  start-new-backend:
+    runs-on: ubuntu-latest
+    if : ${{ !inputs.without_deploy }}
+
+    needs: deploy-backend
+    environment:
+      name: ${{ inputs.environment || 'test' }}
+
+    steps:
+      - name: Apply blue node
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_PRIVATE_KEY }}
+          script: |
+            chmod +x /opt/teslaris/deploy-script.sh
+            /opt/teslaris/deploy-script.sh apply-blue
