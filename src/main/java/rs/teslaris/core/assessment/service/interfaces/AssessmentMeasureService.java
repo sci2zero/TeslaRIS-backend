@@ -10,7 +10,7 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface AssessmentMeasureService extends JPAService<AssessmentMeasure> {
 
-    Page<AssessmentMeasureDTO> readAllAssessmentMeasures(Pageable pageable);
+    Page<AssessmentMeasureDTO> searchAssessmentMeasures(Pageable pageable, String searchExpression);
 
     AssessmentMeasureDTO readAssessmentMeasureById(Integer assessmentMeasureId);
 

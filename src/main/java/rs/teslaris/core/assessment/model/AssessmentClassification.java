@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
@@ -30,6 +31,9 @@ public class AssessmentClassification extends BaseEntity {
 
     @Column(name = "code")
     private String code;
+
+    @Column(name = "applicable_entity_type")
+    private EntityType applicableEntityType;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();

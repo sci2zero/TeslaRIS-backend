@@ -774,7 +774,15 @@ public class DbInitializer implements ApplicationRunner {
         assessmentMeasure2.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Assessment Measure 2", 1)));
 
-        assessmentMeasureRepository.saveAll(List.of(assessmentMeasure1, assessmentMeasure2));
+        var assessmentMeasure3 = new AssessmentMeasure();
+        assessmentMeasure3.setFormalDescriptionOfRule("Rule 3");
+        assessmentMeasure3.setCode("Code 3");
+        assessmentMeasure3.setValue(4d);
+        assessmentMeasure3.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Measure 3", 1)));
+
+        assessmentMeasureRepository.saveAll(
+            List.of(assessmentMeasure1, assessmentMeasure2, assessmentMeasure3));
 
         var commission1 = new Commission();
         commission1.setFormalDescriptionOfRule("Rule 1");
@@ -797,8 +805,7 @@ public class DbInitializer implements ApplicationRunner {
         assessmentRulebook2.setName(
             Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 2", 1)));
         assessmentRulebook2.setIssueDate(LocalDate.of(2023, 10, 1));
-        assessmentRulebook2.setPublisher(publisher1);
-        assessmentRulebook2.setAssessmentMeasure(assessmentMeasure1);
+        assessmentRulebook2.setAssessmentMeasures(List.of(assessmentMeasure3));
 
         assessmentRulebookRepository.saveAll(List.of(assessmentRulebook1, assessmentRulebook2));
 

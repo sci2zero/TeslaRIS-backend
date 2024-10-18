@@ -25,8 +25,10 @@ public class AssessmentMeasureServiceImpl extends JPAServiceImpl<AssessmentMeasu
 
 
     @Override
-    public Page<AssessmentMeasureDTO> readAllAssessmentMeasures(Pageable pageable) {
-        return assessmentMeasureRepository.findAll(pageable).map(AssessmentMeasureConverter::toDTO);
+    public Page<AssessmentMeasureDTO> searchAssessmentMeasures(Pageable pageable,
+                                                               String searchExpression) {
+        return assessmentMeasureRepository.searchAssessmentMeasures(pageable, searchExpression)
+            .map(AssessmentMeasureConverter::toDTO);
     }
 
     @Override

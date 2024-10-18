@@ -62,7 +62,7 @@ public class IndicatorMappingConfigurationLoader {
 
     private record IndicatorMappingConfiguration(
         @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings,
-        @JsonProperty(value = "offsets", required = true) Offsets offsets
+        @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets
     ) {
     }
 

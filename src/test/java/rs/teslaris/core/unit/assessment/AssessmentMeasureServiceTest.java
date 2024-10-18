@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,11 +51,12 @@ public class AssessmentMeasureServiceTest {
         assessmentMeasure2.setCode("code2");
         assessmentMeasure2.setFormalDescriptionOfRule("rule2");
 
-        when(assessmentMeasureRepository.findAll(any(Pageable.class))).thenReturn(
+        when(assessmentMeasureRepository.searchAssessmentMeasures(any(Pageable.class),
+            anyString())).thenReturn(
             new PageImpl<>(List.of(assessmentMeasure1, assessmentMeasure2)));
 
         var response =
-            assessmentMeasureService.readAllAssessmentMeasures(PageRequest.of(0, 10));
+            assessmentMeasureService.searchAssessmentMeasures(PageRequest.of(0, 10), "code");
 
         assertNotNull(response);
         assertEquals(2, response.getSize());

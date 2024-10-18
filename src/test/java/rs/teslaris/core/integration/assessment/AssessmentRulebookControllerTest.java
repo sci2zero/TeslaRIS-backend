@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +24,11 @@ public class AssessmentRulebookControllerTest extends BaseTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private AssessmentRulebookDTO getTestPayload() {
+    private AssessmentRulebookDTO getTestPayload(boolean create) {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         return new AssessmentRulebookDTO(dummyMC, dummyMC,
-            LocalDate.of(2023, 1, 1), null, null, 1);
+            LocalDate.of(2023, 1, 1), null, create ? List.of(1) : new ArrayList<>());
     }
 
     @Test
@@ -54,7 +55,7 @@ public class AssessmentRulebookControllerTest extends BaseTest {
     public void testCreateAssessmentRulebook() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var assessmentRulebookDTO = getTestPayload();
+        var assessmentRulebookDTO = getTestPayload(true);
 
         String requestBody = objectMapper.writeValueAsString(assessmentRulebookDTO);
         mockMvc.perform(
@@ -64,7 +65,7 @@ public class AssessmentRulebookControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_ASSESSMENT_RULEBOOK"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.assessmentMeasureId").value(1));
+            .andExpect(jsonPath("$.assessmentMeasures[0].id").value(1));
     }
 
     @Test
@@ -72,7 +73,7 @@ public class AssessmentRulebookControllerTest extends BaseTest {
     public void testUpdateAssessmentRulebook() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var assessmentRulebookDTO = getTestPayload();
+        var assessmentRulebookDTO = getTestPayload(false);
 
         String requestBody = objectMapper.writeValueAsString(assessmentRulebookDTO);
         mockMvc.perform(

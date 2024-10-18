@@ -8,7 +8,7 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 public record AssessmentRulebookResponseDTO(
     Integer id,
 
-    List<MultilingualContentDTO> title,
+    List<MultilingualContentDTO> name,
 
     List<MultilingualContentDTO> description,
 
@@ -18,6 +18,8 @@ public record AssessmentRulebookResponseDTO(
 
     Integer publisherId,
 
-    Integer assessmentMeasureId
+    List<MultilingualContentDTO> publisherName,
+
+    List<AssessmentMeasureDTO> assessmentMeasures
 ) {
 }

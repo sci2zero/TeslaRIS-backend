@@ -33,7 +33,7 @@ public class AssessmentMeasureControllerTest extends BaseTest {
     public void testReadAllAssessmentMeasures() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/assessment-measure?page=0&size=10")
+                    "http://localhost:8081/api/assessment/assessment-measure?page=0&size=10&searchExpression=code")
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 

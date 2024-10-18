@@ -23,7 +23,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.search.StringUtil;
@@ -86,7 +86,7 @@ public class BookSeriesController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     public void deleteBookSeries(@PathVariable Integer bookSeriesId) {
         bookSeriesService.deleteBookSeries(bookSeriesId);
-        deduplicationService.deleteSuggestion(bookSeriesId, IndexType.BOOK_SERIES);
+        deduplicationService.deleteSuggestion(bookSeriesId, EntityType.BOOK_SERIES);
     }
 
     @GetMapping("/publications/{bookSeriesId}")

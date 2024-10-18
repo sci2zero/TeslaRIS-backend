@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.List;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.document.DocumentFileDTO;
 
 public record AssessmentRulebookDTO(
 
@@ -20,14 +19,10 @@ public record AssessmentRulebookDTO(
     @NotNull(message = "You have to provide an issue date.")
     LocalDate issueDate,
 
-    @Valid
-    DocumentFileDTO pdfFile,
-
     @Positive(message = "Publisher ID must be > 0")
     Integer publisherId,
 
-    @NotNull(message = "You have to provide an assessment measure ID.")
-    @Positive(message = "Assessment measure ID must be > 0")
-    Integer assessmentMeasureId
+    @NotNull(message = "You have to provide a list of assessment measure IDs.")
+    List<Integer> assessmentMeasureIds
 ) {
 }

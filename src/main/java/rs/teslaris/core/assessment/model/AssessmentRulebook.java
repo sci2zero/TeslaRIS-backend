@@ -9,7 +9,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -47,7 +49,6 @@ public class AssessmentRulebook extends BaseEntity {
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assessment_measure")
-    private AssessmentMeasure assessmentMeasure;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
+    private List<AssessmentMeasure> assessmentMeasures = new ArrayList<>();
 }

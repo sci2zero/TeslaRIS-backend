@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.deduplication.DeduplicationSuggestion;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -31,21 +31,22 @@ public class DeduplicationController {
 
     @GetMapping("/{resultSet}")
     @PreAuthorize("hasAuthority('PERFORM_DEDUPLICATION')")
-    public Page<DeduplicationSuggestion> fetchDocumentSuggestions(@PathVariable IndexType resultSet,
-                                                                  Pageable pageable) {
+    public Page<DeduplicationSuggestion> fetchDocumentSuggestions(
+        @PathVariable EntityType resultSet,
+        Pageable pageable) {
         return switch (resultSet) {
             case PUBLICATION ->
-                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.PUBLICATION);
+                deduplicationService.getDeduplicationSuggestions(pageable, EntityType.PUBLICATION);
             case JOURNAL ->
-                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.JOURNAL);
+                deduplicationService.getDeduplicationSuggestions(pageable, EntityType.JOURNAL);
             case BOOK_SERIES ->
-                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.BOOK_SERIES);
+                deduplicationService.getDeduplicationSuggestions(pageable, EntityType.BOOK_SERIES);
             case EVENT ->
-                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.EVENT);
+                deduplicationService.getDeduplicationSuggestions(pageable, EntityType.EVENT);
             case PERSON ->
-                deduplicationService.getDeduplicationSuggestions(pageable, IndexType.PERSON);
+                deduplicationService.getDeduplicationSuggestions(pageable, EntityType.PERSON);
             case ORGANISATION_UNIT -> deduplicationService.getDeduplicationSuggestions(pageable,
-                IndexType.ORGANISATION_UNIT);
+                EntityType.ORGANISATION_UNIT);
             default -> Page.empty();
         };
 

@@ -1,6 +1,7 @@
 package rs.teslaris.core.util;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
@@ -31,6 +32,20 @@ public class IdentifierUtil {
             } else {
                 throw new IdentifierException(formatError);
             }
+        }
+    }
+
+    public static void setUris(Set<String> uriSet, Set<String> dtoUriSet) {
+        var uriPattern =
+            "^(?:(?:http|https)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?$";
+        var pattern = Pattern.compile(uriPattern, Pattern.CASE_INSENSITIVE);
+
+        if (Objects.nonNull(dtoUriSet)) {
+            dtoUriSet.forEach(str -> {
+                if (str.length() <= 2048 && pattern.matcher(str).matches()) {
+                    uriSet.add(str);
+                }
+            });
         }
     }
 }

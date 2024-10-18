@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.AssessmentRulebookConverter;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookDTO;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookResponseDTO;
@@ -13,6 +14,9 @@ import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentMeasureService;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentRulebookService;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -20,6 +24,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRulebook> implements
     AssessmentRulebookService {
 
@@ -61,6 +66,29 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
     }
 
     @Override
+    public DocumentFileResponseDTO addPDFFile(Integer assessmentRulebookId,
+                                              DocumentFileDTO file) {
+        var assessmentRulebook = findOne(assessmentRulebookId);
+        var documentFile = documentFileService.saveNewDocument(file, false);
+
+        assessmentRulebook.setPdfFile(documentFile);
+        assessmentRulebookRepository.save(assessmentRulebook);
+
+        return DocumentFileConverter.toDTO(documentFile);
+    }
+
+    @Override
+    public void deletePDFFile(Integer assessmentRulebookId, Integer documentFileId) {
+        var assessmentRulebook = findOne(assessmentRulebookId);
+        var documentFile = documentFileService.findOne(documentFileId);
+
+        assessmentRulebook.setPdfFile(null);
+        documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+
+        assessmentRulebookRepository.save(assessmentRulebook);
+    }
+
+    @Override
     public void updateAssessmentRulebook(Integer assessmentRulebookId,
                                          AssessmentRulebookDTO assessmentRulebookDTO) {
         var assessmentRulebookToUpdate = findOne(assessmentRulebookId);
@@ -87,18 +115,14 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
                 assessmentRulebook.getPdfFile().getServerFilename());
         }
 
-        if (Objects.nonNull(dto.pdfFile())) {
-            assessmentRulebook.setPdfFile(
-                documentFileService.saveNewDocument(dto.pdfFile(), false));
-        }
-
         if (Objects.nonNull(dto.publisherId())) {
             assessmentRulebook.setPublisher(publisherService.findOne(dto.publisherId()));
         }
 
-        if (Objects.nonNull(dto.assessmentMeasureId())) {
-            assessmentRulebook.setAssessmentMeasure(assessmentMeasureService.findOne(
-                dto.assessmentMeasureId()));
-        }
+        assessmentRulebook.getAssessmentMeasures().clear();
+        dto.assessmentMeasureIds().forEach(assessmentMeasureId -> {
+            assessmentRulebook.getAssessmentMeasures()
+                .add(assessmentMeasureService.findOne(assessmentMeasureId));
+        });
     }
 }

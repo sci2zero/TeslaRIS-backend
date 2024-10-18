@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.impl.commontypes.ReindexServiceImpl;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -93,22 +93,22 @@ public class ReindexServiceTest {
     private ReindexServiceImpl reindexService;
 
 
-    static Stream<IndexType> indexTypeProvider() {
+    static Stream<EntityType> indexTypeProvider() {
         return Stream.of(
-            IndexType.USER_ACCOUNT,
-            IndexType.JOURNAL,
-            IndexType.PUBLISHER,
-            IndexType.PERSON,
-            IndexType.ORGANISATION_UNIT,
-            IndexType.BOOK_SERIES,
-            IndexType.EVENT,
-            IndexType.PUBLICATION
+            EntityType.USER_ACCOUNT,
+            EntityType.JOURNAL,
+            EntityType.PUBLISHER,
+            EntityType.PERSON,
+            EntityType.ORGANISATION_UNIT,
+            EntityType.BOOK_SERIES,
+            EntityType.EVENT,
+            EntityType.PUBLICATION
         );
     }
 
     @ParameterizedTest
     @MethodSource("indexTypeProvider")
-    void testReindexDatabase(IndexType indexType) {
+    void testReindexDatabase(EntityType indexType) {
         // Given
         var indexesToRepopulate = List.of(indexType);
 
@@ -117,26 +117,26 @@ public class ReindexServiceTest {
 
         // Then
         verify(userService,
-            indexType.equals(IndexType.USER_ACCOUNT) ? times(1) : never()).reindexUsers();
+            indexType.equals(EntityType.USER_ACCOUNT) ? times(1) : never()).reindexUsers();
         verify(publisherService,
-            indexType.equals(IndexType.PUBLISHER) ? times(1) : never()).reindexPublishers();
+            indexType.equals(EntityType.PUBLISHER) ? times(1) : never()).reindexPublishers();
         verify(personService,
-            indexType.equals(IndexType.PERSON) ? times(1) : never()).reindexPersons();
-        verify(organisationUnitService, indexType.equals(IndexType.ORGANISATION_UNIT) ? times(1) :
+            indexType.equals(EntityType.PERSON) ? times(1) : never()).reindexPersons();
+        verify(organisationUnitService, indexType.equals(EntityType.ORGANISATION_UNIT) ? times(1) :
             never()).reindexOrganisationUnits();
         verify(journalService,
-            indexType.equals(IndexType.JOURNAL) ? times(1) : never()).reindexJournals();
+            indexType.equals(EntityType.JOURNAL) ? times(1) : never()).reindexJournals();
         verify(bookSeriesService,
-            indexType.equals(IndexType.BOOK_SERIES) ? times(1) : never()).reindexBookSeries();
+            indexType.equals(EntityType.BOOK_SERIES) ? times(1) : never()).reindexBookSeries();
         verify(conferenceService,
-            indexType.equals(IndexType.EVENT) ? times(1) : never()).reindexConferences();
+            indexType.equals(EntityType.EVENT) ? times(1) : never()).reindexConferences();
         verify(documentFileService,
-            indexType.equals(IndexType.PUBLICATION) ? times(1) : never()).deleteIndexes();
+            indexType.equals(EntityType.PUBLICATION) ? times(1) : never()).deleteIndexes();
         verify(documentPublicationService,
-            indexType.equals(IndexType.PUBLICATION) ? times(1) : never()).deleteIndexes();
-        verify(journalPublicationService, indexType.equals(IndexType.PUBLICATION) ? times(1) :
+            indexType.equals(EntityType.PUBLICATION) ? times(1) : never()).deleteIndexes();
+        verify(journalPublicationService, indexType.equals(EntityType.PUBLICATION) ? times(1) :
             never()).reindexJournalPublications();
-        verify(proceedingsPublicationService, indexType.equals(IndexType.PUBLICATION) ? times(1) :
+        verify(proceedingsPublicationService, indexType.equals(EntityType.PUBLICATION) ? times(1) :
             never()).reindexProceedingsPublications();
     }
 

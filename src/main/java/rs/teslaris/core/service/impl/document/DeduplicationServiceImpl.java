@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
-import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -94,7 +94,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
     }
 
     @Override
-    public void deleteSuggestion(Integer deletedEntityId, IndexType entityType) {
+    public void deleteSuggestion(Integer deletedEntityId, EntityType entityType) {
         deduplicationSuggestionRepository.deleteAll(
             deduplicationSuggestionRepository.findByEntityIdAndEntityType(deletedEntityId,
                 entityType.name()));
@@ -120,7 +120,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     @Override
     public Page<DeduplicationSuggestion> getDeduplicationSuggestions(Pageable pageable,
-                                                                     IndexType type) {
+                                                                     EntityType type) {
         return deduplicationSuggestionRepository.findByEntityType(type.name(), pageable);
     }
 
@@ -177,7 +177,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private void performScheduledDocumentDeduplication() {
         performScheduledDeduplication(
-            IndexType.PUBLICATION.name(),
+            EntityType.PUBLICATION.name(),
             (pageNumber) -> documentPublicationIndexRepository.findByTypeIn(
                 List.of(
                     DocumentPublicationType.MONOGRAPH.name(),
@@ -225,7 +225,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private void performScheduledJournalDeduplication() {
         performScheduledDeduplication(
-            IndexType.JOURNAL.name(),
+            EntityType.JOURNAL.name(),
             (pageNumber) -> journalIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE))
                 .getContent(),
             journalSearchService,
@@ -254,7 +254,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private void performScheduledBookSeriesDeduplication() {
         performScheduledDeduplication(
-            IndexType.BOOK_SERIES.name(),
+            EntityType.BOOK_SERIES.name(),
             (pageNumber) -> bookSeriesIndexRepository.findAll(
                 PageRequest.of(pageNumber, CHUNK_SIZE)).getContent(),
             bookSeriesSearchService,
@@ -283,7 +283,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private void performScheduledOrganisationUnitsDeduplication() {
         performScheduledDeduplication(
-            IndexType.ORGANISATION_UNIT.name(),
+            EntityType.ORGANISATION_UNIT.name(),
             (pageNumber) -> organisationUnitIndexRepository.findAll(
                 PageRequest.of(pageNumber, CHUNK_SIZE)).getContent(),
             organisationUnitSearchService,
@@ -328,7 +328,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private void performScheduledEventDeduplication() {
         performScheduledDeduplication(
-            IndexType.EVENT.name(),
+            EntityType.EVENT.name(),
             (pageNumber) -> eventIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE))
                 .getContent(),
             eventSearchService,
@@ -357,7 +357,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private void performScheduledPersonDeduplication() {
         performScheduledDeduplication(
-            IndexType.PERSON.name(),
+            EntityType.PERSON.name(),
             (pageNumber) -> personIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE))
                 .getContent(),
             personSearchService,
@@ -434,7 +434,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 if (!similarItems.isEmpty()) {
                     handleDuplicate(
                         item, similarItems, duplicatesFound,
-                        IndexType.valueOf(indexType.toUpperCase()),
+                        EntityType.valueOf(indexType.toUpperCase()),
                         getDatabaseId, getTitleSr, getTitleOther, getType
                     );
                 }
@@ -449,7 +449,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
         T entity,
         List<T> similarEntities,
         ConcurrentSkipListSet<Integer> foundDuplicates,
-        IndexType indexType,
+        EntityType indexType,
         Function<T, Integer> getIdFunction,
         Function<T, String> getTitleSrFunction,
         Function<T, String> getTitleOtherFunction,
@@ -484,7 +484,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     getTitleOtherFunction.apply(entity),
                     getTitleSrFunction.apply(similarEntity),
                     getTitleOtherFunction.apply(similarEntity),
-                    indexType == IndexType.PUBLICATION ?
+                    indexType == EntityType.PUBLICATION ?
                         DocumentPublicationType.valueOf(getTypeFunction.apply(entity)) :
                         null,
                     indexType

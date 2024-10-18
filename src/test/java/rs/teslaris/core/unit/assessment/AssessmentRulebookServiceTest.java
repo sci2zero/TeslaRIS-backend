@@ -3,6 +3,8 @@ package rs.teslaris.core.unit.assessment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,18 +24,25 @@ import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.service.impl.AssessmentRulebookServiceImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 
 @SpringBootTest
-public class AssessmentRulebookTest {
+public class AssessmentRulebookServiceTest {
 
     @Mock
     private MultilingualContentService multilingualContentService;
 
     @Mock
     private AssessmentRulebookRepository assessmentRulebookRepository;
+
+    @Mock
+    private DocumentFileService documentFileService;
 
     @InjectMocks
     private AssessmentRulebookServiceImpl assessmentRulebookService;
@@ -84,7 +93,7 @@ public class AssessmentRulebookTest {
     void shouldCreateAssessmentRulebook() {
         var assessmentRulebookDTO =
             new AssessmentRulebookDTO(List.of(new MultilingualContentDTO()),
-                List.of(new MultilingualContentDTO()), LocalDate.of(2024, 10, 2), null, null, null);
+                List.of(new MultilingualContentDTO()), LocalDate.of(2024, 10, 2), null, List.of());
         var newAssessmentRulebook = new AssessmentRulebook();
 
         when(assessmentRulebookRepository.save(any(AssessmentRulebook.class)))
@@ -102,7 +111,7 @@ public class AssessmentRulebookTest {
         var assessmentRulebookId = 1;
         var assessmentRulebookDTO =
             new AssessmentRulebookDTO(List.of(new MultilingualContentDTO()),
-                List.of(new MultilingualContentDTO()), LocalDate.of(2024, 10, 2), null, null, null);
+                List.of(new MultilingualContentDTO()), LocalDate.of(2024, 10, 2), null, List.of());
         var existingAssessmentRulebook = new AssessmentRulebook();
 
         when(assessmentRulebookRepository.findById(assessmentRulebookId))
@@ -128,5 +137,44 @@ public class AssessmentRulebookTest {
 
         // Then
         verify(assessmentRulebookRepository).save(any());
+    }
+
+    @Test
+    public void shouldAddPdfFile() {
+        // Given
+        var rulebookId = 1;
+        var rulebook = new AssessmentRulebook();
+        var documentFile = new DocumentFile();
+        documentFile.setId(1);
+
+        when(assessmentRulebookRepository.findById(rulebookId)).thenReturn(Optional.of(rulebook));
+        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
+            documentFile);
+        when(documentFileService.findDocumentFileIndexByDatabaseId(any())).thenReturn(
+            new DocumentFileIndex());
+
+        // When
+        assessmentRulebookService.addPDFFile(rulebookId, new DocumentFileDTO());
+
+        // Then
+        verify(assessmentRulebookRepository, times(1)).save(rulebook);
+    }
+
+    @Test
+    public void shouldDeleteDocumentFileWithProof() {
+        // Given
+        var rulebookId = 1;
+        var documentFileId = 1;
+        var rulebook = new AssessmentRulebook();
+        var documentFile = new DocumentFile();
+
+        when(assessmentRulebookRepository.findById(rulebookId)).thenReturn(Optional.of(rulebook));
+        when(documentFileService.findOne(documentFileId)).thenReturn(documentFile);
+
+        // When
+        assessmentRulebookService.deletePDFFile(rulebookId, documentFileId);
+
+        // Then
+        verify(documentFileService, times(1)).deleteDocumentFile(any());
     }
 }

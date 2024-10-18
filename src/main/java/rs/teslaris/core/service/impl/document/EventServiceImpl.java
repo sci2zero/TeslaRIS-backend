@@ -36,6 +36,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -96,6 +97,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         event.setOldId(eventDTO.getOldId());
+        IdentifierUtil.setUris(event.getUris(), eventDTO.getUris());
 
         if (Objects.nonNull(eventDTO.getContributions())) {
             personContributionService.setPersonEventContributionForEvent(event, eventDTO);
@@ -292,7 +294,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                         eq.should(sb -> sb.match(
                             m -> m.field("place_other").query(token)));
                         eq.should(sb -> sb.wildcard(
-                            m -> m.field("date_from_to").value(token)));
+                            m -> m.field("date_from_to").value("*" + token + "*")));
                     });
                     return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
                 });

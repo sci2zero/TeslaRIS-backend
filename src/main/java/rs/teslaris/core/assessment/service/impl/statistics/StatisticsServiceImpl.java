@@ -225,7 +225,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                 var fullExpression =
                     "import java.time.LocalDateTime;" + expression
                         .replace("import", "")
-                        .replaceAll("[^a-zA-Z0-9().\\s]", "");
+                        .replaceAll("[^a-zA-Z0-9(),.\\s]", "");
 
                 var ee = new ExpressionEvaluator();
                 ee.setReturnType(LocalDateTime.class);
