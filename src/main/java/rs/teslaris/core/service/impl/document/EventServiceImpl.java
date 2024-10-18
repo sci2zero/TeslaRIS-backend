@@ -140,6 +140,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
                                          EventType eventType, Boolean returnOnlyNonSerialEvents,
                                          Integer commissionInstitutionId) {
+        System.out.println(buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
+            commissionInstitutionId).toString());
         return searchService.runQuery(
             buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
                 commissionInstitutionId),
@@ -261,7 +263,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
                                          Boolean returnOnlyNonSerialEvents,
                                          Integer commissionInstitutionId) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        boolean onlyYearTokens = tokens.stream().allMatch(token -> token.matches("\\d{4}"));
+
+        // If only searching by years, disable minimum_should_match, otherwise set it
+        var minShouldMatch = onlyYearTokens ? 1 : (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
