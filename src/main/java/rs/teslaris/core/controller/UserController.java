@@ -126,7 +126,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(), null, null,
+            newUser.getPreferredLanguage().getLanguageCode(), null, newUser.getPerson().getId(),
+            null,
             newUser.getUserNotificationPeriod());
     }
 
@@ -141,7 +142,8 @@ public class UserController {
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
             newUser.getPreferredLanguage().getLanguageCode(),
-            registrationRequest.getOrganisationUnitId(), null, newUser.getUserNotificationPeriod());
+            registrationRequest.getOrganisationUnitId(), null, null,
+            newUser.getUserNotificationPeriod());
     }
 
     @PutMapping

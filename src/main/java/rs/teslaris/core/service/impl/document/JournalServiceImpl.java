@@ -200,11 +200,11 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            journal.getTitle());
+            journal.getTitle(), true);
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            journal.getNameAbbreviation());
+            journal.getNameAbbreviation(), false);
 
-        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setTitleSr(srContent.length() > 0 ? srContent.toString() : otherContent.toString());
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOther(

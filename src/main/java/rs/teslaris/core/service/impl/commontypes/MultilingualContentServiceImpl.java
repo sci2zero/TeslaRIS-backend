@@ -50,12 +50,14 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
     @Override
     public void buildLanguageStrings(StringBuilder serbianBuilder,
                                      StringBuilder otherLanguagesBuilder,
-                                     Set<MultiLingualContent> contentList) {
+                                     Set<MultiLingualContent> contentList,
+                                     boolean popEnglishFirst) {
         contentList.forEach(content -> {
             if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
                 serbianBuilder.append(content.getContent()).append(" | ");
             } else {
-                if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH)) {
+                if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH) &&
+                    popEnglishFirst) {
                     otherLanguagesBuilder.insert(0, " | ").insert(0, content.getContent());
                 } else {
                     otherLanguagesBuilder.append(content.getContent()).append(" | ");

@@ -28,7 +28,10 @@ public class ResearcherRegistrationRequestDTO {
     @Positive(message = "Person ID must be a positive number.")
     private Integer personId;
 
+    @NotNull(message = "You have to provide first name, leave it blank if you don't want to provide a value.")
     private String firstName;
+
+    @NotNull(message = "You have to provide last name, leave it blank if you don't want to provide a value.")
     private String lastName;
 
     @Positive(message = "Organisation Unit ID must be a positive number.")
