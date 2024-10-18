@@ -23,7 +23,7 @@ jobs:
       name: ${{ inputs.environment || 'test' }}
 
     steps:
-      - name: Run script
+      - name: Run script - ${{ inputs.script_name }}.sh
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
