@@ -808,6 +808,7 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 2", 1)));
         assessmentRulebook2.setIssueDate(LocalDate.of(2023, 10, 1));
         assessmentRulebook2.setAssessmentMeasures(List.of(assessmentMeasure3));
+        assessmentMeasure3.setRulebook(assessmentRulebook2);
 
         assessmentRulebookRepository.saveAll(List.of(assessmentRulebook1, assessmentRulebook2));
 

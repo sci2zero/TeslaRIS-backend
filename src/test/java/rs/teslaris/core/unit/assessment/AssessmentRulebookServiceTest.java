@@ -3,6 +3,7 @@ package rs.teslaris.core.unit.assessment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookDTO;
+import rs.teslaris.core.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.service.impl.AssessmentRulebookServiceImpl;
@@ -177,4 +179,29 @@ public class AssessmentRulebookServiceTest {
         // Then
         verify(documentFileService, times(1)).deleteDocumentFile(any());
     }
+
+    @Test
+    void shouldReadAllAssessmentMeasuresForRulebook() {
+        // given
+        var assessmentMeasure1 = new AssessmentMeasure();
+        assessmentMeasure1.setCode("code1");
+        assessmentMeasure1.setFormalDescriptionOfRule("rule1");
+
+        var assessmentMeasure2 = new AssessmentMeasure();
+        assessmentMeasure2.setCode("code2");
+        assessmentMeasure2.setFormalDescriptionOfRule("rule2");
+
+        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(Pageable.class),
+            anyInt()))
+            .thenReturn(new PageImpl<>(List.of(assessmentMeasure1, assessmentMeasure2)));
+
+        // when
+        var response =
+            assessmentRulebookService.readAssessmentMeasuresForRulebook(PageRequest.of(0, 10), 1);
+
+        // then
+        assertNotNull(response);
+        assertEquals(2, response.getSize());
+    }
+
 }

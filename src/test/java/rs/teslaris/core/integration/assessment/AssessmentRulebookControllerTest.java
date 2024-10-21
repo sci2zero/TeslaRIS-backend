@@ -42,6 +42,16 @@ public class AssessmentRulebookControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadAllAssessmentMeasuresForRulebook() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/assessment/assessment-rulebook/{rulebookId}/measures?page=0&size=10",
+                    1)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAssessmentRulebook() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(

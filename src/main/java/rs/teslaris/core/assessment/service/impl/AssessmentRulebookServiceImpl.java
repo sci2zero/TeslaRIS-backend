@@ -7,7 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.converter.AssessmentMeasureConverter;
 import rs.teslaris.core.assessment.converter.AssessmentRulebookConverter;
+import rs.teslaris.core.assessment.dto.AssessmentMeasureDTO;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookDTO;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookResponseDTO;
 import rs.teslaris.core.assessment.model.AssessmentRulebook;
@@ -48,6 +50,13 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
     public Page<AssessmentRulebookResponseDTO> readAllAssessmentRulebooks(Pageable pageable) {
         return assessmentRulebookRepository.findAll(pageable)
             .map(AssessmentRulebookConverter::toDTO);
+    }
+
+    @Override
+    public Page<AssessmentMeasureDTO> readAssessmentMeasuresForRulebook(Pageable pageable,
+                                                                        Integer rulebookId) {
+        return assessmentRulebookRepository.readAssessmentMeasuresForRulebook(pageable, rulebookId)
+            .map(AssessmentMeasureConverter::toDTO);
     }
 
     @Override
@@ -125,8 +134,10 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
 
         assessmentRulebook.getAssessmentMeasures().clear();
         dto.assessmentMeasureIds().forEach(assessmentMeasureId -> {
+            var measure = assessmentMeasureService.findOne(assessmentMeasureId);
             assessmentRulebook.getAssessmentMeasures()
-                .add(assessmentMeasureService.findOne(assessmentMeasureId));
+                .add(measure);
+            measure.setRulebook(assessmentRulebook);
         });
     }
 }

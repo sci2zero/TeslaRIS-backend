@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.converter.AssessmentRulebookConverter;
+import rs.teslaris.core.assessment.dto.AssessmentMeasureDTO;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookDTO;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookResponseDTO;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentRulebookService;
@@ -36,6 +37,14 @@ public class AssessmentRulebookController {
     @GetMapping
     public Page<AssessmentRulebookResponseDTO> readAssessmentRulebooks(Pageable pageable) {
         return assessmentRulebookService.readAllAssessmentRulebooks(pageable);
+    }
+
+    @GetMapping("/{assessmentRulebookId}/measures")
+    public Page<AssessmentMeasureDTO> readAssessmentMeasuresForRulebook(Pageable pageable,
+                                                                        @PathVariable
+                                                                        Integer assessmentRulebookId) {
+        return assessmentRulebookService.readAssessmentMeasuresForRulebook(pageable,
+            assessmentRulebookId);
     }
 
     @GetMapping("/{assessmentRulebookId}")

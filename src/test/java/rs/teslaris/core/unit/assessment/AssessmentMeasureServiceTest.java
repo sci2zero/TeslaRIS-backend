@@ -43,6 +43,7 @@ public class AssessmentMeasureServiceTest {
 
     @Test
     void shouldReadAllAssessmentMeasures() {
+        // given
         var assessmentMeasure1 = new AssessmentMeasure();
         assessmentMeasure1.setCode("code1");
         assessmentMeasure1.setFormalDescriptionOfRule("rule1");
@@ -55,15 +56,18 @@ public class AssessmentMeasureServiceTest {
             anyString())).thenReturn(
             new PageImpl<>(List.of(assessmentMeasure1, assessmentMeasure2)));
 
+        // when
         var response =
             assessmentMeasureService.searchAssessmentMeasures(PageRequest.of(0, 10), "code");
 
+        // then
         assertNotNull(response);
         assertEquals(2, response.getSize());
     }
 
     @Test
     void shouldReadAssessmentMeasure() {
+        // given
         var assessmentMeasureId = 1;
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setTitle(
@@ -74,15 +78,18 @@ public class AssessmentMeasureServiceTest {
         var dto = new AssessmentMeasureDTO(null, null, null, null,
             List.of(new MultilingualContentDTO(null, null, "Content", 1)));
 
+        // when
         var result = assessmentMeasureService.readAssessmentMeasureById(
             assessmentMeasureId);
 
+        // then
         assertEquals(dto.code(), result.code());
         verify(assessmentMeasureRepository).findById(assessmentMeasureId);
     }
 
     @Test
     void shouldCreateAssessmentMeasure() {
+        // given
         var assessmentMeasureDTO = new AssessmentMeasureDTO(null, "rule", "M22", 1d,
             List.of(new MultilingualContentDTO()));
         var newAssessmentMeasure = new AssessmentMeasure();
@@ -90,15 +97,18 @@ public class AssessmentMeasureServiceTest {
         when(assessmentMeasureRepository.save(any(AssessmentMeasure.class)))
             .thenReturn(newAssessmentMeasure);
 
+        // when
         var result = assessmentMeasureService.createAssessmentMeasure(
             assessmentMeasureDTO);
 
+        // then
         assertNotNull(result);
         verify(assessmentMeasureRepository).save(any(AssessmentMeasure.class));
     }
 
     @Test
     void shouldUpdateAssessmentMeasure() {
+        // given
         var assessmentMeasureId = 1;
         var assessmentMeasureDTO = new AssessmentMeasureDTO(null, "rule", "M21", 2d,
             List.of(new MultilingualContentDTO()));
@@ -107,9 +117,11 @@ public class AssessmentMeasureServiceTest {
         when(assessmentMeasureRepository.findById(assessmentMeasureId))
             .thenReturn(Optional.of(existingAssessmentMeasure));
 
+        // when
         assessmentMeasureService.updateAssessmentMeasure(assessmentMeasureId,
             assessmentMeasureDTO);
 
+        // then
         verify(assessmentMeasureRepository).findById(assessmentMeasureId);
         verify(assessmentMeasureRepository).save(existingAssessmentMeasure);
     }
