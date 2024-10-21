@@ -105,8 +105,11 @@ public class Publication implements PublicationConvertable {
     })
     private List<Object> keywords;
 
-    @XmlElement(name = "Abstract")
-    private PublicationAbstract _abstract;
+    @XmlElements({
+        @XmlElement(name = "Abstract", type = MultilingualContent.class),
+        @XmlElement(name = "Abstract", type = String.class)
+    })
+    private Object _abstract;
 
     @XmlElement(name = "PartOf")
     private PartOf partOf;

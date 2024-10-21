@@ -308,11 +308,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentOther = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(contentSr, contentOther,
-            document.getTitle());
+            document.getTitle(), true);
         multilingualContentService.buildLanguageStrings(contentSr, contentOther,
-            document.getSubTitle());
+            document.getSubTitle(), false);
 
-        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setTitleSr(contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
         index.setTitleOther(
             contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
@@ -323,9 +323,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentOther = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(contentSr, contentOther,
-            document.getDescription());
+            document.getDescription(), false);
 
-        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setDescriptionSr(
             contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
         index.setDescriptionOther(
@@ -337,9 +337,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contentOther = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(contentSr, contentOther,
-            document.getKeywords());
+            document.getKeywords(), false);
 
-        StringUtil.removeTrailingPipeDelimiter(contentSr, contentOther);
+        StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setKeywordsSr(
             contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
         index.setKeywordsOther(
@@ -561,11 +561,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
                         eq.should(sb -> sb.wildcard(
-                            m -> m.field("title_sr").value(token).caseInsensitive(true)));
+                            m -> m.field("title_sr").value(token + "*").caseInsensitive(true)));
                         eq.should(sb -> sb.match(
                             m -> m.field("title_sr").query(token)));
                         eq.should(sb -> sb.wildcard(
-                            m -> m.field("title_other").value(token).caseInsensitive(true)));
+                            m -> m.field("title_other").value(token + "*").caseInsensitive(true)));
                         eq.should(sb -> sb.match(
                             m -> m.field("description_sr").query(token)));
                         eq.should(sb -> sb.match(

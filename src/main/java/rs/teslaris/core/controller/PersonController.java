@@ -71,6 +71,11 @@ public class PersonController {
         return personService.readPersonWithBasicInfo(personId);
     }
 
+    @GetMapping("/old-id/{personOldId}")
+    public PersonResponseDTO readPersonWithBasicInfoForOldId(@PathVariable Integer personOldId) {
+        return personService.readPersonWithBasicInfoForOldId(personOldId);
+    }
+
     @GetMapping("/{personId}/person-user")
     public PersonUserResponseDTO readPersonWithUser(@PathVariable Integer personId) {
         return personService.readPersonWithUser(personId);

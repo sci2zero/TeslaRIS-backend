@@ -123,6 +123,18 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
+    public PersonResponseDTO readPersonWithBasicInfoForOldId(Integer oldId) {
+        var personToReturn = findPersonByOldId(oldId);
+
+        if (Objects.isNull(personToReturn)) {
+            throw new NotFoundException("Person with given 'OLD ID' does not exist.");
+        }
+
+        return PersonConverter.toDTO(personToReturn);
+    }
+
+    @Override
+    @Transactional
     public PersonUserResponseDTO readPersonWithUser(Integer id) {
         var person = personRepository.findApprovedPersonByIdWithUser(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
@@ -506,12 +518,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 institutionNameOther).append("; ");
         }
 
-        StringUtil.removeTrailingPipeDelimiter(employmentsSr, employmentsOther);
+        StringUtil.removeTrailingDelimiters(employmentsSr, employmentsOther);
         personIndex.setEmploymentsSr(
-            employmentsSr.length() > 0 ? employmentsSr.toString() : employmentsOther.toString());
+            !employmentsSr.isEmpty() ? employmentsSr.toString() : employmentsOther.toString());
         personIndex.setEmploymentsSrSortable(personIndex.getEmploymentsSr());
         personIndex.setEmploymentsOther(
-            employmentsOther.length() > 0 ? employmentsOther.toString() :
+            !employmentsOther.isEmpty() ? employmentsOther.toString() :
                 employmentsSr.toString());
         personIndex.setEmploymentsOtherSortable(personIndex.getEmploymentsOther());
         setPersonIndexKeywords(personIndex, savedPerson);
@@ -572,7 +584,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     tokens.forEach(
                         token -> {
                             b.should(sb -> sb.wildcard(
-                                m -> m.field("name").value(token).caseInsensitive(true)));
+                                m -> m.field("name").value(token + "*").caseInsensitive(true)));
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));

@@ -32,9 +32,19 @@ public class ScopusConverter {
         setCommonFields(entry, document);
 
         document.setScopusId(entry.identifier().split(":")[1]); // format is SCOPUS_ID:XXX
-        document.setEIssn(entry.eIssn());
-        document.setIsbn(entry.isbn());
-        document.setPrintIssn(entry.issn());
+
+        if (Objects.nonNull(entry.eIssn())) {
+            document.setEIssn(entry.eIssn().substring(0, 4) + "-" + entry.eIssn().substring(4));
+        }
+
+        if (Objects.nonNull(entry.issn())) {
+            document.setPrintIssn(entry.issn().substring(0, 4) + "-" + entry.issn().substring(4));
+        }
+
+        if (Objects.nonNull(entry.isbn()) && !entry.isbn().isEmpty()) {
+            document.setIsbn(entry.isbn().getFirst().value());
+        }
+
         document.setDoi(entry.doi());
 
         if (Objects.nonNull(entry.pageRange())) {

@@ -7,6 +7,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,10 +22,14 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Configuration
 public class BeanConfiguration {
 
+    @Value("${frontend.application.address}")
+    private String frontendUrl;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 
     @Bean
     public LanguageDetector languageDetector() {
@@ -60,8 +65,8 @@ public class BeanConfiguration {
             public void addCorsMappings(@NotNull CorsRegistry registry) {
                 registry.addMapping("/**")
                     .allowCredentials(true)
-                    .allowedOrigins("http://127.0.0.1:5173", "http://localhost:5173",
-                        "http://0.0.0.0:5173")
+                    .allowedOriginPatterns("sameOrigin")
+                    .allowedOrigins(frontendUrl)
                     .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH");
             }
         };

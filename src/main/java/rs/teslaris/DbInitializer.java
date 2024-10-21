@@ -353,6 +353,7 @@ public class DbInitializer implements ApplicationRunner {
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666"));
         var person1 = new Person();
+        person1.setOldId(1);
         person1.setName(
             new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         person1.setApproveStatus(ApproveStatus.APPROVED);
@@ -369,6 +370,7 @@ public class DbInitializer implements ApplicationRunner {
 
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
+        dummyOU.setOldId(1);
         dummyOU.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));

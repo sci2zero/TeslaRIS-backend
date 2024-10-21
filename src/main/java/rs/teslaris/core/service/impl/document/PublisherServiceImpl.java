@@ -180,9 +180,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
-        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList);
+        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList, true);
 
-        StringUtil.removeTrailingPipeDelimiter(srContent, otherContent);
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,
             srContent.length() > 0 ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
