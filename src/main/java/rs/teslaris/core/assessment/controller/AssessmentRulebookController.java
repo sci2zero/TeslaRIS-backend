@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,6 +22,8 @@ import rs.teslaris.core.assessment.converter.AssessmentRulebookConverter;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookDTO;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookResponseDTO;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentRulebookService;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 
 @RestController
 @RequestMapping("/api/assessment/assessment-rulebook")
@@ -65,5 +70,19 @@ public class AssessmentRulebookController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAssessmentRulebook(@PathVariable Integer assessmentRulebookId) {
         assessmentRulebookService.deleteAssessmentRulebook(assessmentRulebookId);
+    }
+
+    @PatchMapping("/{assessmentRulebookId}")
+    @Idempotent
+    DocumentFileResponseDTO addPDFFile(@PathVariable Integer assessmentRulebookId,
+                                       @ModelAttribute @Valid DocumentFileDTO documentFile) {
+        return assessmentRulebookService.addPDFFile(assessmentRulebookId, documentFile);
+    }
+
+    @DeleteMapping("/{assessmentRulebookId}/{documentFileId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void addPDFFile(@PathVariable Integer assessmentRulebookId,
+                    @PathVariable Integer documentFileId) {
+        assessmentRulebookService.deletePDFFile(assessmentRulebookId, documentFileId);
     }
 }

@@ -71,6 +71,10 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
         var assessmentRulebook = findOne(assessmentRulebookId);
         var documentFile = documentFileService.saveNewDocument(file, false);
 
+        if (Objects.nonNull(assessmentRulebook.getPdfFile())) {
+            deletePDFFile(assessmentRulebookId, assessmentRulebook.getPdfFile().getId());
+        }
+
         assessmentRulebook.setPdfFile(documentFile);
         assessmentRulebookRepository.save(assessmentRulebook);
 
@@ -106,7 +110,7 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
 
     private void setCommonFields(AssessmentRulebook assessmentRulebook, AssessmentRulebookDTO dto) {
         assessmentRulebook.setName(multilingualContentService.getMultilingualContent(dto.name()));
-        assessmentRulebook.setName(
+        assessmentRulebook.setDescription(
             multilingualContentService.getMultilingualContent(dto.description()));
         assessmentRulebook.setIssueDate(dto.issueDate());
 
