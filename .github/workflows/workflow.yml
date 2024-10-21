@@ -78,7 +78,7 @@ jobs:
           docker restart elasticsearch
 
       - name: Run Tests
-        run: mvn test
+        run: mvn test -Dspring.profiles.active=test
         env:
           DB_PASSWORD: postgres
 

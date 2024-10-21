@@ -300,10 +300,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personToUpdate.getPersonalInfo().getPostalAddress().getCity().clear();
         setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
-        personalInfoToUpdate.getContact()
-            .setContactEmail(personalInfo.getContact().getContactEmail());
-        personalInfoToUpdate.getContact()
-            .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
+        if (Objects.nonNull(personalInfo.getContact())) {
+            personalInfoToUpdate.getContact()
+                .setContactEmail(personalInfo.getContact().getContactEmail());
+            personalInfoToUpdate.getContact()
+                .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
+        }
 
         save(personToUpdate);
 
