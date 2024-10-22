@@ -95,7 +95,7 @@ public class AssessmentRulebookServiceTest {
     void shouldCreateAssessmentRulebook() {
         var assessmentRulebookDTO =
             new AssessmentRulebookDTO(List.of(new MultilingualContentDTO()),
-                List.of(new MultilingualContentDTO()), LocalDate.of(2024, 10, 2), null, List.of());
+                List.of(new MultilingualContentDTO()), LocalDate.of(2024, 10, 2), null);
         var newAssessmentRulebook = new AssessmentRulebook();
 
         when(assessmentRulebookRepository.save(any(AssessmentRulebook.class)))
@@ -113,7 +113,7 @@ public class AssessmentRulebookServiceTest {
         var assessmentRulebookId = 1;
         var assessmentRulebookDTO =
             new AssessmentRulebookDTO(List.of(new MultilingualContentDTO()),
-                List.of(new MultilingualContentDTO()), LocalDate.of(2024, 10, 2), null, List.of());
+                List.of(new MultilingualContentDTO()), LocalDate.of(2024, 10, 2), null);
         var existingAssessmentRulebook = new AssessmentRulebook();
 
         when(assessmentRulebookRepository.findById(assessmentRulebookId))
@@ -186,10 +186,12 @@ public class AssessmentRulebookServiceTest {
         var assessmentMeasure1 = new AssessmentMeasure();
         assessmentMeasure1.setCode("code1");
         assessmentMeasure1.setFormalDescriptionOfRule("rule1");
+        assessmentMeasure1.setRulebook(new AssessmentRulebook());
 
         var assessmentMeasure2 = new AssessmentMeasure();
         assessmentMeasure2.setCode("code2");
         assessmentMeasure2.setFormalDescriptionOfRule("rule2");
+        assessmentMeasure2.setRulebook(new AssessmentRulebook());
 
         when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(Pageable.class),
             anyInt()))

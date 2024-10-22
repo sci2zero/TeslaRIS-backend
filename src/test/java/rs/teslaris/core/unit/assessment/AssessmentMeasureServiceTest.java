@@ -2,7 +2,6 @@ package rs.teslaris.core.unit.assessment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -20,13 +19,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.assessment.dto.AssessmentMeasureDTO;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
+import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
 import rs.teslaris.core.assessment.service.impl.AssessmentMeasureServiceImpl;
+import rs.teslaris.core.assessment.service.interfaces.AssessmentRulebookService;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.util.exceptionhandling.exception.AssessmentMeasureReferenceConstraintViolationException;
 
 @SpringBootTest
 public class AssessmentMeasureServiceTest {
@@ -36,6 +36,9 @@ public class AssessmentMeasureServiceTest {
 
     @Mock
     private AssessmentMeasureRepository assessmentMeasureRepository;
+
+    @Mock
+    private AssessmentRulebookService assessmentRulebookService;
 
     @InjectMocks
     private AssessmentMeasureServiceImpl assessmentMeasureService;
@@ -72,11 +75,13 @@ public class AssessmentMeasureServiceTest {
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setTitle(
             Set.of(new MultiLingualContent(new LanguageTag(), "Content", 1)));
+        assessmentMeasure.setRulebook(new AssessmentRulebook());
         when(assessmentMeasureRepository.findById(assessmentMeasureId))
             .thenReturn(Optional.of(assessmentMeasure));
+        when(assessmentRulebookService.findOne(1)).thenReturn(new AssessmentRulebook());
 
         var dto = new AssessmentMeasureDTO(null, null, null, null,
-            List.of(new MultilingualContentDTO(null, null, "Content", 1)));
+            List.of(new MultilingualContentDTO(null, null, "Content", 1)), 1);
 
         // when
         var result = assessmentMeasureService.readAssessmentMeasureById(
@@ -91,11 +96,13 @@ public class AssessmentMeasureServiceTest {
     void shouldCreateAssessmentMeasure() {
         // given
         var assessmentMeasureDTO = new AssessmentMeasureDTO(null, "rule", "M22", 1d,
-            List.of(new MultilingualContentDTO()));
+            List.of(new MultilingualContentDTO()), 1);
         var newAssessmentMeasure = new AssessmentMeasure();
+        newAssessmentMeasure.setRulebook(new AssessmentRulebook());
 
         when(assessmentMeasureRepository.save(any(AssessmentMeasure.class)))
             .thenReturn(newAssessmentMeasure);
+        when(assessmentRulebookService.findOne(1)).thenReturn(new AssessmentRulebook());
 
         // when
         var result = assessmentMeasureService.createAssessmentMeasure(
@@ -111,11 +118,12 @@ public class AssessmentMeasureServiceTest {
         // given
         var assessmentMeasureId = 1;
         var assessmentMeasureDTO = new AssessmentMeasureDTO(null, "rule", "M21", 2d,
-            List.of(new MultilingualContentDTO()));
+            List.of(new MultilingualContentDTO()), 1);
         var existingAssessmentMeasure = new AssessmentMeasure();
 
         when(assessmentMeasureRepository.findById(assessmentMeasureId))
             .thenReturn(Optional.of(existingAssessmentMeasure));
+        when(assessmentRulebookService.findOne(1)).thenReturn(new AssessmentRulebook());
 
         // when
         assessmentMeasureService.updateAssessmentMeasure(assessmentMeasureId,
@@ -130,33 +138,18 @@ public class AssessmentMeasureServiceTest {
     void shouldDeleteAssessmentMeasure() {
         // Given
         var assessmentMeasureId = 1;
-
-        when(assessmentMeasureRepository.isInUse(assessmentMeasureId))
-            .thenReturn(false);
+        var measure = new AssessmentMeasure();
+        var rulebook = new AssessmentRulebook();
+        rulebook.getAssessmentMeasures().add(measure);
+        measure.setRulebook(rulebook);
 
         when(assessmentMeasureRepository.findById(assessmentMeasureId)).thenReturn(
-            Optional.of(new AssessmentMeasure()));
+            Optional.of(measure));
 
         // When
         assessmentMeasureService.deleteAssessmentMeasure(assessmentMeasureId);
 
         // Then
         verify(assessmentMeasureRepository).save(any());
-    }
-
-    @Test
-    void shouldThrowExceptionWhenDeletingAssessmentMeasureInUse() {
-        // Given
-        var assessmentMeasureId = 1;
-
-        when(assessmentMeasureRepository.isInUse(assessmentMeasureId))
-            .thenReturn(true);
-
-        // When
-        assertThrows(AssessmentMeasureReferenceConstraintViolationException.class, () ->
-            assessmentMeasureService.deleteAssessmentMeasure(
-                assessmentMeasureId));
-
-        // Then (AssessmentMeasureReferenceConstraintViolationException should be thrown)
     }
 }

@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
-import rs.teslaris.core.util.exceptionhandling.exception.AssessmentMeasureReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
@@ -300,15 +299,6 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleAssessmentClassificationReferenceConstraintViolationException(
         HttpServletRequest request,
         AssessmentClassificationReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
-    }
-
-    @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(AssessmentMeasureReferenceConstraintViolationException.class)
-    @ResponseBody
-    ErrorObject handleAssessmentMeasureReferenceConstraintViolationException(
-        HttpServletRequest request,
-        AssessmentMeasureReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 

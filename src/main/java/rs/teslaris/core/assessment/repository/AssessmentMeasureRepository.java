@@ -11,9 +11,6 @@ import rs.teslaris.core.assessment.model.AssessmentMeasure;
 public interface AssessmentMeasureRepository extends
     JpaRepository<AssessmentMeasure, Integer> {
 
-    @Query("select count(ar) > 0 from AssessmentRulebook ar join ar.assessmentMeasures am where am.id = :assessmentMeasureId")
-    boolean isInUse(Integer assessmentMeasureId);
-
-    @Query("select am from AssessmentMeasure am where am.code like '%:searchExpression%'")
+    @Query("select am from AssessmentMeasure am join fetch am.title t where t.content like %:searchExpression%")
     Page<AssessmentMeasure> searchAssessmentMeasures(Pageable pageable, String searchExpression);
 }

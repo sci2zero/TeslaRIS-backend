@@ -20,9 +20,6 @@ public record AssessmentRulebookDTO(
     LocalDate issueDate,
 
     @Positive(message = "Publisher ID must be > 0")
-    Integer publisherId,
-
-    @NotNull(message = "You have to provide a list of assessment measure IDs.")
-    List<Integer> assessmentMeasureIds
+    Integer publisherId
 ) {
 }

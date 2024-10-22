@@ -787,13 +787,18 @@ public class DbInitializer implements ApplicationRunner {
             List.of(assessmentMeasure1, assessmentMeasure2, assessmentMeasure3));
 
         var commission1 = new Commission();
+        commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 1", 1)));
         commission1.setFormalDescriptionOfRule("Rule 1");
 
         var commission2 = new Commission();
+        commission2.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 2", 1)));
         commission2.setFormalDescriptionOfRule("Rule 2");
+        commission2.setAssessmentDateFrom(LocalDate.of(2022, 2, 4));
+        commission2.setAssessmentDateTo(LocalDate.of(2022, 5, 4));
         commission2.setSuperComission(commission1);
 
         var commission3 = new Commission();
+        commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1)));
         commission3.setFormalDescriptionOfRule("Rule 3");
 
         commissionRepository.saveAll(List.of(commission1, commission2, commission3));

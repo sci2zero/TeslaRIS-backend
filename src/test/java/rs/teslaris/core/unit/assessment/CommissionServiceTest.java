@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,11 +71,11 @@ public class CommissionServiceTest {
         commission2.setFormalDescriptionOfRule("rule2");
         commission2.setSuperComission(commission1);
 
-        when(commissionRepository.findAll(any(Pageable.class))).thenReturn(
+        when(commissionRepository.searchCommissions(any(Pageable.class), eq("aaa"))).thenReturn(
             new PageImpl<>(List.of(commission1, commission2)));
 
         var response =
-            commissionService.readAllCommissions(PageRequest.of(0, 10));
+            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa");
 
         assertNotNull(response);
         assertEquals(2, response.getSize());

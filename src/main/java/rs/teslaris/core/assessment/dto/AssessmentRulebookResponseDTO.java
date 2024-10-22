@@ -18,8 +18,6 @@ public record AssessmentRulebookResponseDTO(
 
     Integer publisherId,
 
-    List<MultilingualContentDTO> publisherName,
-
-    List<AssessmentMeasureDTO> assessmentMeasures
+    List<MultilingualContentDTO> publisherName
 ) {
 }

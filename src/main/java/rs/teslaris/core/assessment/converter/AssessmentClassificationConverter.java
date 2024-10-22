@@ -13,6 +13,7 @@ public class AssessmentClassificationConverter {
             assessmentClassification.getFormalDescriptionOfRule(),
             assessmentClassification.getCode(),
             MultilingualContentConverter.getMultilingualContentDTO(
-                assessmentClassification.getTitle()));
+                assessmentClassification.getTitle()),
+            assessmentClassification.getApplicableEntityType());
     }
 }

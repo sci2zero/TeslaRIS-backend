@@ -68,6 +68,8 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
         assessmentClassification.setCode(assessmentClassificationDTO.code());
         assessmentClassification.setTitle(
             multilingualContentService.getMultilingualContent(assessmentClassificationDTO.title()));
+        assessmentClassification.setApplicableEntityType(
+            assessmentClassificationDTO.applicableEntityType());
     }
 
     @Override

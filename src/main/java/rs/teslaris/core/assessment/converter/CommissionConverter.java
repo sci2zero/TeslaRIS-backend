@@ -2,7 +2,7 @@ package rs.teslaris.core.assessment.converter;
 
 import java.util.Objects;
 import java.util.stream.Collectors;
-import rs.teslaris.core.assessment.dto.CommissionDTO;
+import rs.teslaris.core.assessment.dto.CommissionResponseDTO;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.model.document.Document;
@@ -11,8 +11,8 @@ import rs.teslaris.core.model.person.Person;
 
 public class CommissionConverter {
 
-    public static CommissionDTO toDTO(Commission commission) {
-        return new CommissionDTO(commission.getId(),
+    public static CommissionResponseDTO toDTO(Commission commission) {
+        return new CommissionResponseDTO(commission.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(commission.getDescription()),
             commission.getSources().stream().toList(), commission.getAssessmentDateFrom(),
             commission.getAssessmentDateTo(),
@@ -24,6 +24,9 @@ public class CommissionConverter {
                 .collect(Collectors.toList()),
             commission.getFormalDescriptionOfRule(),
             Objects.nonNull(commission.getSuperComission()) ?
-                commission.getSuperComission().getId() : null);
+                commission.getSuperComission().getId() : null,
+            Objects.nonNull(commission.getSuperComission()) ?
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    commission.getSuperComission().getDescription()) : null);
     }
 }

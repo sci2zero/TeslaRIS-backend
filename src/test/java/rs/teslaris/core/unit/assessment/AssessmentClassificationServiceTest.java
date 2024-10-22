@@ -22,6 +22,7 @@ import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.impl.AssessmentClassificationServiceImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -70,7 +71,7 @@ public class AssessmentClassificationServiceTest {
             .thenReturn(Optional.of(assessmentClassification));
 
         var dto = new AssessmentClassificationDTO(null, null, null,
-            List.of(new MultilingualContentDTO(null, null, "Content", 1)));
+            List.of(new MultilingualContentDTO(null, null, "Content", 1)), EntityType.EVENT);
 
         var result = assessmentClassificationService.readAssessmentClassification(
             assessmentClassificationId);
@@ -82,7 +83,7 @@ public class AssessmentClassificationServiceTest {
     @Test
     void shouldCreateAssessmentClassification() {
         var assessmentClassificationDTO = new AssessmentClassificationDTO(null, "rule", "M22",
-            List.of(new MultilingualContentDTO()));
+            List.of(new MultilingualContentDTO()), EntityType.EVENT);
         var newAssessmentClassification = new AssessmentClassification();
 
         when(assessmentClassificationRepository.save(any(AssessmentClassification.class)))
@@ -99,7 +100,7 @@ public class AssessmentClassificationServiceTest {
     void shouldUpdateAssessmentClassification() {
         var assessmentClassificationId = 1;
         var assessmentClassificationDTO = new AssessmentClassificationDTO(null, "rule", "M21",
-            List.of(new MultilingualContentDTO()));
+            List.of(new MultilingualContentDTO()), EntityType.EVENT);
         var existingAssessmentClassification = new AssessmentClassification();
 
         when(assessmentClassificationRepository.findById(assessmentClassificationId))

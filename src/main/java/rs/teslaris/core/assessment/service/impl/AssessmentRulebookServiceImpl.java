@@ -14,7 +14,6 @@ import rs.teslaris.core.assessment.dto.AssessmentRulebookDTO;
 import rs.teslaris.core.assessment.dto.AssessmentRulebookResponseDTO;
 import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
-import rs.teslaris.core.assessment.service.interfaces.AssessmentMeasureService;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentRulebookService;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -37,8 +36,6 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
     private final DocumentFileService documentFileService;
 
     private final PublisherService publisherService;
-
-    private final AssessmentMeasureService assessmentMeasureService;
 
 
     @Override
@@ -131,13 +128,5 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
         if (Objects.nonNull(dto.publisherId())) {
             assessmentRulebook.setPublisher(publisherService.findOne(dto.publisherId()));
         }
-
-        assessmentRulebook.getAssessmentMeasures().clear();
-        dto.assessmentMeasureIds().forEach(assessmentMeasureId -> {
-            var measure = assessmentMeasureService.findOne(assessmentMeasureId);
-            assessmentRulebook.getAssessmentMeasures()
-                .add(measure);
-            measure.setRulebook(assessmentRulebook);
-        });
     }
 }

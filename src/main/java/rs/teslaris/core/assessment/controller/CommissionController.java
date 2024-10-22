@@ -12,11 +12,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.converter.CommissionConverter;
 import rs.teslaris.core.assessment.dto.CommissionDTO;
+import rs.teslaris.core.assessment.dto.CommissionResponseDTO;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 
 @RestController
@@ -28,12 +30,15 @@ public class CommissionController {
 
 
     @GetMapping
-    public Page<CommissionDTO> readCommissions(Pageable pageable) {
-        return commissionService.readAllCommissions(pageable);
+    public Page<CommissionResponseDTO> readCommissions(Pageable pageable,
+                                                       @RequestParam(required = false)
+                                                       String searchExpression) {
+        return commissionService.readAllCommissions(pageable, searchExpression);
     }
 
+
     @GetMapping("/{commissionId}")
-    public CommissionDTO readCommission(@PathVariable Integer commissionId) {
+    public CommissionResponseDTO readCommission(@PathVariable Integer commissionId) {
         return commissionService.readCommissionById(commissionId);
     }
 
@@ -41,7 +46,7 @@ public class CommissionController {
     @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
-    public CommissionDTO createCommission(@RequestBody CommissionDTO commissionDTO) {
+    public CommissionResponseDTO createCommission(@RequestBody CommissionDTO commissionDTO) {
         var createdCommission = commissionService.createCommission(commissionDTO);
 
         return CommissionConverter.toDTO(createdCommission);

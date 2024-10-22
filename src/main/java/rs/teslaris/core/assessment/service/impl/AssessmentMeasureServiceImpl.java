@@ -1,25 +1,30 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.AssessmentMeasureConverter;
 import rs.teslaris.core.assessment.dto.AssessmentMeasureDTO;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentMeasureService;
+import rs.teslaris.core.assessment.service.interfaces.AssessmentRulebookService;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.util.exceptionhandling.exception.AssessmentMeasureReferenceConstraintViolationException;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AssessmentMeasureServiceImpl extends JPAServiceImpl<AssessmentMeasure> implements
     AssessmentMeasureService {
 
     private final AssessmentMeasureRepository assessmentMeasureRepository;
+
+    private final AssessmentRulebookService assessmentRulebookService;
 
     private final MultilingualContentService multilingualContentService;
 
@@ -70,13 +75,22 @@ public class AssessmentMeasureServiceImpl extends JPAServiceImpl<AssessmentMeasu
         assessmentMeasure.setValue(assessmentMeasureDTO.value());
         assessmentMeasure.setTitle(
             multilingualContentService.getMultilingualContent(assessmentMeasureDTO.title()));
+
+        var rulebook =
+            assessmentRulebookService.findOne(assessmentMeasureDTO.assessmentRulebookId());
+        assessmentMeasure.setRulebook(rulebook);
+        if (!rulebook.getAssessmentMeasures().contains(assessmentMeasure)) {
+            rulebook.getAssessmentMeasures().add(assessmentMeasure);
+        }
     }
 
     @Override
     public void deleteAssessmentMeasure(Integer assessmentMeasureId) {
-        if (assessmentMeasureRepository.isInUse(assessmentMeasureId)) {
-            throw new AssessmentMeasureReferenceConstraintViolationException(
-                "assessmentMeasureInUse.");
+        var assessmentMeasureToDelete = findOne(assessmentMeasureId);
+
+        if (Objects.nonNull(assessmentMeasureToDelete.getRulebook())) {
+            assessmentMeasureToDelete.getRulebook().getAssessmentMeasures()
+                .remove(assessmentMeasureToDelete);
         }
 
         delete(assessmentMeasureId);

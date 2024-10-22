@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.CommissionConverter;
 import rs.teslaris.core.assessment.dto.CommissionDTO;
+import rs.teslaris.core.assessment.dto.CommissionResponseDTO;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
@@ -42,12 +43,18 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     @Override
-    public Page<CommissionDTO> readAllCommissions(Pageable pageable) {
-        return commissionRepository.findAll(pageable).map(CommissionConverter::toDTO);
+    public Page<CommissionResponseDTO> readAllCommissions(Pageable pageable,
+                                                          String searchExpression) {
+        if (Objects.nonNull(searchExpression)) {
+            return commissionRepository.searchCommissions(pageable, searchExpression)
+                .map(CommissionConverter::toDTO);
+        } else {
+            return commissionRepository.findAll(pageable).map(CommissionConverter::toDTO);
+        }
     }
 
     @Override
-    public CommissionDTO readCommissionById(Integer commissionId) {
+    public CommissionResponseDTO readCommissionById(Integer commissionId) {
         return CommissionConverter.toDTO(findOne(commissionId));
     }
 

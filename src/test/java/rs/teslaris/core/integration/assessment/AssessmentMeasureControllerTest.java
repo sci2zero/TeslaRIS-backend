@@ -25,7 +25,7 @@ public class AssessmentMeasureControllerTest extends BaseTest {
     private AssessmentMeasureDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        return new AssessmentMeasureDTO(null, "rule", "code", 5d, dummyMC);
+        return new AssessmentMeasureDTO(null, "rule", "code", 5d, dummyMC, 1);
     }
 
     @Test
