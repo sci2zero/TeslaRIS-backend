@@ -29,7 +29,7 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
                 multilingualContent.getLanguageTagId());
             return new MultiLingualContent(
                 languageTag,
-                multilingualContent.getContent(),
+                multilingualContent.getContent().trim(),
                 multilingualContent.getPriority()
             );
         }).collect(Collectors.toSet());
