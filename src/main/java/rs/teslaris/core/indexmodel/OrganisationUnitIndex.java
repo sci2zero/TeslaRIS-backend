@@ -54,6 +54,9 @@ public class OrganisationUnitIndex {
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
 
+    @Field(type = FieldType.Integer, store = true, name = "super_ou_id")
+    private Integer superOUId;
+
     @Field(type = FieldType.Text, store = true, name = "super_ou_name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String superOUNameSr;
 

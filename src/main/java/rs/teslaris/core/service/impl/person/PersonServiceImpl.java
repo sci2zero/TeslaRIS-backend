@@ -485,7 +485,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var employmentInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY))
-            .map(Involvement::getOrganisationUnit).collect(Collectors.toList());
+            .map(Involvement::getOrganisationUnit).toList();
 
         personIndex.setEmploymentInstitutionsId(
             employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
@@ -507,7 +507,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     if (mc.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH)) {
                         institutionNameOther.insert(0, mc.getContent());
                     } else {
-                        institutionNameOther.append(mc.getContent());
+                        institutionNameOther.append(", ").append(mc.getContent());
                     }
                 });
 

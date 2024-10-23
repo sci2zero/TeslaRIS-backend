@@ -63,6 +63,12 @@ public class OrganisationUnitController {
             organisationUnitService.findOrganisationUnitById(organisationUnitId));
     }
 
+    @GetMapping("/sub-units/{organisationUnitId}")
+    public Page<OrganisationUnitIndex> getOUSubUnits(@PathVariable Integer organisationUnitId,
+                                                     Pageable pageable) {
+        return organisationUnitService.getOUSubUnits(organisationUnitId, pageable);
+    }
+
     @GetMapping("/old-id/{organisationUnitOldId}")
     public OrganisationUnitDTO getOrganisationUnitForOldId(
         @PathVariable Integer organisationUnitOldId) {

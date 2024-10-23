@@ -254,6 +254,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    public Page<OrganisationUnitIndex> getOUSubUnits(Integer organisationUnitId,
+                                                     Pageable pageable) {
+        return organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
+            organisationUnitId, pageable);
+    }
+
+    @Override
     public OrganisationUnit getReferenceToOrganisationUnitById(Integer id) {
         return id == null ? null : organisationUnitRepository.getReferenceById(id);
     }
@@ -375,10 +382,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         StringUtil.removeTrailingDelimiters(researchAreaSrContent, researchAreaOtherContent);
         index.setResearchAreasSr(
-            researchAreaSrContent.length() > 0 ? researchAreaSrContent.toString() :
+            !researchAreaSrContent.isEmpty() ? researchAreaSrContent.toString() :
                 researchAreaOtherContent.toString());
         index.setResearchAreasOther(
-            researchAreaOtherContent.length() > 0 ? researchAreaOtherContent.toString() :
+            !researchAreaOtherContent.isEmpty() ? researchAreaOtherContent.toString() :
                 researchAreaSrContent.toString());
 
         indexBelongsToSuperOURelation(organisationUnit, index);
@@ -388,11 +395,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                OrganisationUnitIndex index) {
         var belongsToRelation =
             organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
-        belongsToRelation.ifPresent(organisationUnitsRelation -> indexMultilingualContent(index,
-            organisationUnitsRelation.getTargetOrganisationUnit(),
-            OrganisationUnit::getName,
-            OrganisationUnitIndex::setSuperOUNameSr,
-            OrganisationUnitIndex::setSuperOUNameOther));
+        belongsToRelation.ifPresent(organisationUnitsRelation -> {
+            indexMultilingualContent(index,
+                organisationUnitsRelation.getTargetOrganisationUnit(),
+                OrganisationUnit::getName,
+                OrganisationUnitIndex::setSuperOUNameSr,
+                OrganisationUnitIndex::setSuperOUNameOther);
+            index.setSuperOUId(belongsToRelation.get().getTargetOrganisationUnit().getId());
+        });
     }
 
     private void indexMultilingualContent(OrganisationUnitIndex index,

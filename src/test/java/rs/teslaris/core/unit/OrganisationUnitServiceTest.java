@@ -746,4 +746,26 @@ public class OrganisationUnitServiceTest {
         // Then
         assertNull(foundOu);
     }
+
+    @Test
+    public void testGetOUSubUnits() {
+        // Given
+        var organisationUnitId = 1;
+        var ouIndex1 = new OrganisationUnitIndex();
+        var ouIndex2 = new OrganisationUnitIndex();
+        var expectedSubUnits = new PageImpl<>(List.of(ouIndex1, ouIndex2));
+        var pageRequest = PageRequest.of(0, 10);
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
+            organisationUnitId, pageRequest))
+            .thenReturn(expectedSubUnits);
+
+        // When
+        var actualSubUnits = organisationUnitService.getOUSubUnits(organisationUnitId, pageRequest);
+
+        // Then
+        assertEquals(expectedSubUnits, actualSubUnits);
+        verify(organisationUnitIndexRepository, times(1))
+            .findOrganisationUnitIndexesBySuperOUId(organisationUnitId, pageRequest);
+    }
 }
