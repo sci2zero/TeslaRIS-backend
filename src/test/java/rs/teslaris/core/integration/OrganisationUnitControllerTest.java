@@ -71,9 +71,9 @@ public class OrganisationUnitControllerTest extends BaseTest {
     @Test
     public void testGetOrganisationUnitSubUnits() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/organisation-unit/sub-units/{organisationUnitId}?page=0&size=10",
-                        1)
-                    .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/organisation-unit/sub-units/{organisationUnitId}?page=0&size=10",
+                    1)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 }

@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.ScriptQuery;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -242,6 +243,12 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 });
                 b.mustNot(sb -> sb.match(
                     m -> m.field("databaseId").query((item).getDatabaseId())));
+                b.must(sb -> sb.script(ScriptQuery.of(sq -> sq.script(s -> s.inline(i -> i.source(
+                        "doc['title_sr_sortable'].value.length() == " + item.getTitleSr().length() +
+                            " && doc['title_other_sortable'].value.length() == " +
+                            item.getTitleOther().length())
+                    ))
+                )));
                 return b;
             }))),
             JournalIndex::getDatabaseId,
@@ -271,6 +278,12 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 });
                 b.mustNot(sb -> sb.match(
                     m -> m.field("databaseId").query((item).getDatabaseId())));
+                b.must(sb -> sb.script(ScriptQuery.of(sq -> sq.script(s -> s.inline(i -> i.source(
+                        "doc['title_sr_sortable'].value.length() == " + item.getTitleSr().length() +
+                            " && doc['title_other_sortable'].value.length() == " +
+                            item.getTitleOther().length())
+                    ))
+                )));
                 return b;
             }))),
             BookSeriesIndex::getDatabaseId,
