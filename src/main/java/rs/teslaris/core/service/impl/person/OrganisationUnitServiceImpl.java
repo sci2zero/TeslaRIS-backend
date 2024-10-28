@@ -153,6 +153,20 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
+
+                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                    b.must(mp ->
+                        mp.bool(m -> {
+                            {
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("name_sr").query(token.replace("\\\"", ""))));
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("name_other").query(token.replace("\\\"", ""))));
+                            }
+                            return m;
+                        }));
+                }
+
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
@@ -164,9 +178,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 b.should(sb -> sb.match(
                     m -> m.field("super_ou_name_other").query(token)));
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("keywords_sr").value("*" + token + "*").caseInsensitive(true)));
+                    m -> m.field("keywords_sr").value("*" + token + "*")
+                        .caseInsensitive(true)));
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("keywords_other").value("*" + token + "*").caseInsensitive(true)));
+                    m -> m.field("keywords_other").value("*" + token + "*")
+                        .caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("research_areas_sr").query(token)));
                 b.should(sb -> sb.match(
@@ -348,6 +364,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
+
+        if (Objects.nonNull(organisationUnitDTO.getUris())) {
+            organisationUnit.setUris(organisationUnitDTO.getUris());
+        }
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
@@ -419,9 +439,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,
-            srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
-            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
     @Override

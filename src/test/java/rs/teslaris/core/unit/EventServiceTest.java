@@ -69,8 +69,8 @@ public class EventServiceTest {
 
     static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery_arguments() {
         return Stream.of(
-            Arguments.of(EventType.CONFERENCE, true),
-            Arguments.of(EventType.CONFERENCE, false)
+            Arguments.of(EventType.CONFERENCE, true, true),
+            Arguments.of(EventType.CONFERENCE, false, false)
         );
     }
 
@@ -155,6 +155,7 @@ public class EventServiceTest {
     @ParameterizedTest
     @MethodSource("shouldFindConferenceWhenSearchingWithSimpleQuery_arguments")
     public void shouldFindConferenceWhenSearchingWithSimpleQuery(EventType eventType,
+                                                                 boolean returnOnlyNonSerialEvents,
                                                                  boolean returnOnlySerialEvents) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
@@ -164,7 +165,9 @@ public class EventServiceTest {
             new PageImpl<>(List.of(new EventIndex(), new EventIndex())));
 
         // When
-        var result = eventService.searchEvents(tokens, pageable, eventType, returnOnlySerialEvents);
+        var result =
+            eventService.searchEvents(tokens, pageable, eventType, returnOnlyNonSerialEvents,
+                returnOnlySerialEvents);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

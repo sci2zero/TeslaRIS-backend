@@ -52,9 +52,12 @@ public class ConferenceController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam("returnOnlyNonSerialEvents")
         @NotNull(message = "You have to provide search range.") Boolean returnOnlyNonSerialEvents,
+        @RequestParam("returnOnlySerialEvents")
+        @NotNull(message = "You have to provide search range.") Boolean returnOnlySerialEvents,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
-        return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents);
+        return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
+            returnOnlySerialEvents);
     }
 
     @GetMapping("/import-search")

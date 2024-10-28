@@ -14,27 +14,27 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 @AllArgsConstructor
 public class PersonResponseDTO {
 
-    Integer id;
+    private Integer id;
 
-    PersonNameDTO personName;
+    private PersonNameDTO personName;
 
-    List<PersonNameDTO> personOtherNames;
+    private List<PersonNameDTO> personOtherNames;
 
-    PersonalInfoDTO personalInfo;
+    private PersonalInfoDTO personalInfo;
 
-    List<MultilingualContentDTO> biography;
+    private List<MultilingualContentDTO> biography;
 
-    List<MultilingualContentDTO> keyword;
+    private List<MultilingualContentDTO> keyword;
 
-    ApproveStatus approveStatus;
+    private ApproveStatus approveStatus;
 
-    List<Integer> employmentIds;
+    private List<Integer> employmentIds;
 
-    List<Integer> educationIds;
+    private List<Integer> educationIds;
 
-    List<Integer> membershipIds;
+    private List<Integer> membershipIds;
 
-    List<ExpertiseOrSkillResponseDTO> expertisesOrSkills;
+    private List<ExpertiseOrSkillResponseDTO> expertisesOrSkills;
 
-    List<PrizeResponseDTO> prizes;
+    private List<PrizeResponseDTO> prizes;
 }

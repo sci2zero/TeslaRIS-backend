@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.institution;
 
 
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,4 +33,6 @@ public class OrganisationUnitDTO {
     private GeoLocationDTO location;
 
     private ContactDTO contact;
+
+    private Set<String> uris;
 }

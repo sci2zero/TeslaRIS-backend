@@ -142,9 +142,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
-                                         EventType eventType, Boolean returnOnlyNonSerialEvents) {
+                                         EventType eventType, Boolean returnOnlyNonSerialEvents,
+                                         Boolean returnOnlySerialEvents) {
         return searchService.runQuery(
-            buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents),
+            buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
+                returnOnlySerialEvents),
             pageable, EventIndex.class, "events");
     }
 
@@ -261,13 +263,29 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
-                                         Boolean returnOnlyNonSerialEvents) {
+                                         Boolean returnOnlyNonSerialEvents,
+                                         Boolean returnOnlySerialEvents) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
+                        if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                            b.must(mp ->
+                                mp.bool(m -> {
+                                    {
+                                        m.should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("name_sr")
+                                                .query(token.replace("\\\"", ""))));
+                                        m.should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("name_other")
+                                                .query(token.replace("\\\"", ""))));
+                                    }
+                                    return m;
+                                }));
+                        }
+
                         eq.should(sb -> sb.wildcard(
                             m -> m.field("name_sr").value("*" + token + "*")
                                 .caseInsensitive(true)));
@@ -306,6 +324,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
                 if (returnOnlyNonSerialEvents) {
                     sb.match(m -> m.field("is_serial_event").query(false));
+                }
+
+                if (returnOnlySerialEvents) {
+                    sb.match(m -> m.field("is_serial_event").query(true));
                 }
 
                 return sb;

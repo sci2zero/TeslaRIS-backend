@@ -599,6 +599,21 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
+                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                    b.must(mp ->
+                        mp.bool(m -> {
+                            {
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("org_unit_name_sr")
+                                        .query(token.replace("\\\"", ""))));
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("org_unit_name_other")
+                                        .query(token.replace("\\\"", ""))));
+                            }
+                            return m;
+                        }));
+                }
+
                 b.should(sb -> sb.wildcard(
                     m -> m.field("full_name").value(token).caseInsensitive(true)));
                 b.should(sb -> sb.match(

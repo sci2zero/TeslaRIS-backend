@@ -175,7 +175,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var personalContact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
         var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
-            new PostalAddress(null, new HashSet<>(), new HashSet<>()), personalContact);
+            new PostalAddress(null, new HashSet<>(), new HashSet<>()), personalContact,
+            personDTO.getUris());
 
         var newPerson = new Person();
         newPerson.setName(personName);
@@ -288,6 +289,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personalInfoToUpdate.setPlaceOfBrith(personalInfo.getPlaceOfBirth());
         personalInfoToUpdate.setLocalBirthDate(personalInfo.getLocalBirthDate());
         personalInfoToUpdate.setSex(personalInfo.getSex());
+        personalInfoToUpdate.setUris(personalInfo.getUris());
 
         var countryId = personalInfo.getPostalAddress().getCountryId();
 
@@ -585,10 +587,26 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             .must(mb -> mb.bool(b -> {
                     tokens.forEach(
                         token -> {
+                            if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                                b.must(mp ->
+                                    mp.bool(m -> {
+                                        {
+                                            m.should(sb -> sb.matchPhrase(
+                                                mq -> mq.field("employments_sr")
+                                                    .query(token.replace("\\\"", ""))));
+                                            m.should(sb -> sb.matchPhrase(
+                                                mq -> mq.field("employments_other")
+                                                    .query(token.replace("\\\"", ""))));
+                                        }
+                                        return m;
+                                    }));
+                            }
+
                             b.should(sb -> sb.wildcard(
                                 m -> m.field("name").value(token + "*").caseInsensitive(true)));
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
+                            b.should(
+                                sb -> sb.match(m -> m.field("employments_other").query(token)));
                             b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
                             b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
                         });

@@ -24,7 +24,8 @@ public interface EventService {
     Boolean hasCommonUsage(Integer eventId);
 
     Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
-                                  EventType eventType, Boolean returnOnlyNonSerialEvents);
+                                  EventType eventType, Boolean returnOnlyNonSerialEvents,
+                                  Boolean returnOnlySerialEvents);
 
     Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo);
 

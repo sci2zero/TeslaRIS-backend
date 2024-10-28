@@ -257,7 +257,7 @@ public class ConferenceServiceTest {
 
         // When
         var result =
-            conferenceService.searchConferences(tokens, pageable, returnOnlySerialEvents);
+            conferenceService.searchConferences(tokens, pageable, returnOnlySerialEvents, false);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

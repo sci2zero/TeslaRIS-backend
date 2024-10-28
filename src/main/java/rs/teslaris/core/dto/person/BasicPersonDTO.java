@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -50,4 +51,6 @@ public class BasicPersonDTO implements PersonIdentifierable {
     private Integer organisationUnitId;
 
     private EmploymentPosition employmentPosition;
+
+    private Set<String> uris;
 }

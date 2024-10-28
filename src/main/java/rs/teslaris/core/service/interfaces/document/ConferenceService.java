@@ -15,7 +15,8 @@ public interface ConferenceService {
     Page<ConferenceDTO> readAllConferences(Pageable pageable);
 
     Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable,
-                                       Boolean returnOnlyNonSerialEvents);
+                                       Boolean returnOnlyNonSerialEvents,
+                                       Boolean returnOnlySerialEvents);
 
     Page<EventIndex> searchConferencesForImport(List<String> names, String dateFrom, String dateTo);
 
