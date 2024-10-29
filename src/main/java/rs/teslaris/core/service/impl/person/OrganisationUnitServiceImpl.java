@@ -366,7 +366,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
 
         if (Objects.nonNull(organisationUnitDTO.getUris())) {
-            organisationUnit.setUris(organisationUnitDTO.getUris());
+            IdentifierUtil.setUris(organisationUnit.getUris(), organisationUnitDTO.getUris());
         }
     }
 

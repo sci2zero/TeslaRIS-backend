@@ -529,6 +529,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    public List<Integer> getAccountsWithRoleTakingAllowed() {
+        return userRepository.getIdsOfUsersWhoAllowedAccountTakeover();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public void reindexUsers() {
         userAccountIndexRepository.deleteAll();

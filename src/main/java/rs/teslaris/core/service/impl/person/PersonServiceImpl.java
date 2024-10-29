@@ -176,7 +176,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var personalContact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
         var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
             new PostalAddress(null, new HashSet<>(), new HashSet<>()), personalContact,
-            personDTO.getUris());
+            new HashSet<>());
 
         var newPerson = new Person();
         newPerson.setName(personName);
@@ -289,7 +289,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personalInfoToUpdate.setPlaceOfBrith(personalInfo.getPlaceOfBirth());
         personalInfoToUpdate.setLocalBirthDate(personalInfo.getLocalBirthDate());
         personalInfoToUpdate.setSex(personalInfo.getSex());
-        personalInfoToUpdate.setUris(personalInfo.getUris());
+        IdentifierUtil.setUris(personalInfoToUpdate.getUris(), personalInfo.getUris());
 
         var countryId = personalInfo.getPostalAddress().getCountryId();
 
