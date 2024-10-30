@@ -23,6 +23,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Table(name = "countries")
 @SQLRestriction("deleted=false")
 public class Country extends BaseEntity {
+
     @Column(name = "code", nullable = false, unique = true)
     private String code;
 

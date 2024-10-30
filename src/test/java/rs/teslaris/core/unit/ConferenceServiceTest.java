@@ -27,11 +27,13 @@ import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.service.impl.document.ConferenceServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -66,6 +68,9 @@ public class ConferenceServiceTest {
 
     @Mock
     private EmailUtil emailUtil;
+
+    @Mock
+    private CountryService countryService;
 
     @InjectMocks
     private ConferenceServiceImpl conferenceService;
@@ -141,7 +146,7 @@ public class ConferenceServiceTest {
         conferenceDTO.setName(new ArrayList<>());
         conferenceDTO.setNameAbbreviation(new ArrayList<>());
         conferenceDTO.setPlace(new ArrayList<>());
-        conferenceDTO.setState(new ArrayList<>());
+        conferenceDTO.setCountryId(1);
         conferenceDTO.setDateFrom(LocalDate.now());
         conferenceDTO.setDateTo(LocalDate.now());
         conferenceDTO.setContributions(new ArrayList<>());
@@ -151,6 +156,7 @@ public class ConferenceServiceTest {
         conference.setDateTo(LocalDate.now());
 
         when(conferenceJPAService.save(any())).thenReturn(conference);
+        when(countryService.findOne(1)).thenReturn(new Country());
 
         // when
         var savedConference = conferenceService.createConference(conferenceDTO, true);
@@ -167,9 +173,11 @@ public class ConferenceServiceTest {
         conferenceDTO.setName(new ArrayList<>());
         conferenceDTO.setNameAbbreviation(new ArrayList<>());
         conferenceDTO.setPlace(new ArrayList<>());
-        conferenceDTO.setState(new ArrayList<>());
         conferenceDTO.setSerialEvent(false);
         conferenceDTO.setContributions(new ArrayList<>());
+        conferenceDTO.setCountryId(1);
+
+        when(countryService.findOne(1)).thenReturn(new Country());
 
         // when & then
         assertThrows(MissingDataException.class,
@@ -213,11 +221,12 @@ public class ConferenceServiceTest {
         conferenceDTO.setDescription(new ArrayList<>());
         conferenceDTO.setKeywords(new ArrayList<>());
         conferenceDTO.setPlace(new ArrayList<>());
-        conferenceDTO.setState(new ArrayList<>());
         conferenceDTO.setDateFrom(LocalDate.now());
         conferenceDTO.setDateTo(LocalDate.now());
         conferenceDTO.setContributions(new ArrayList<>());
+        conferenceDTO.setCountryId(1);
 
+        when(countryService.findOne(1)).thenReturn(new Country());
         when(conferenceJPAService.findOne(1)).thenReturn(conference1);
         when(conferenceJPAService.save(any())).thenReturn(new Conference());
 

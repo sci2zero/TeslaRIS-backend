@@ -32,6 +32,7 @@ import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -63,6 +64,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     private final EmailUtil emailUtil;
 
+    private final CountryService countryService;
+
 
     @Override
     public Event findEventById(Integer eventId) {
@@ -85,8 +88,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             multilingualContentService.getMultilingualContent(eventDTO.getDescription()));
         event.setKeywords(
             multilingualContentService.getMultilingualContent(eventDTO.getKeywords()));
-        event.setState(multilingualContentService.getMultilingualContent(eventDTO.getState()));
         event.setPlace(multilingualContentService.getMultilingualContent(eventDTO.getPlace()));
+
+        if (Objects.nonNull(eventDTO.getCountryId())) {
+            event.setCountry(countryService.findOne(eventDTO.getCountryId()));
+        }
 
         event.setSerialEvent(
             Objects.nonNull(eventDTO.getSerialEvent()) ? eventDTO.getSerialEvent() : false);
@@ -112,10 +118,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     public void clearEventCommonFields(Event event) {
         event.getName().clear();
         event.getNameAbbreviation().clear();
-        event.getState().clear();
         event.getPlace().clear();
         event.getDescription().clear();
         event.getKeywords().clear();
+        event.setCountry(null);
 
         event.getContributions().forEach(
             contribution -> personContributionService.deleteContribution(contribution.getId()));
@@ -350,12 +356,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             EventIndex::setDescriptionOther);
         indexMultilingualContent(index, event, Event::getKeywords, EventIndex::setKeywordsSr,
             EventIndex::setKeywordsOther);
-        indexMultilingualContent(index, event, Event::getState, EventIndex::setStateSr,
-            EventIndex::setStateOther);
         index.setStateSrSortable(index.getStateSr());
         index.setStateOtherSortable(index.getStateOther());
         indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
             EventIndex::setPlaceOther);
+
+        if (Objects.nonNull(event.getCountry())) {
+            indexMultilingualContent(index, event, t -> event.getCountry().getName(),
+                EventIndex::setStateSr,
+                EventIndex::setStateOther);
+        }
 
         if (Objects.nonNull(event.getDateFrom()) && Objects.nonNull(event.getDateTo())) {
             var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");

@@ -73,7 +73,6 @@ public class PublisherServiceTest {
         var publisherDTO = new PublisherDTO();
         publisherDTO.setName(new ArrayList<>());
         publisherDTO.setPlace(new ArrayList<>());
-        publisherDTO.setState(new ArrayList<>());
 
         var publisher = new Publisher();
 
@@ -92,7 +91,6 @@ public class PublisherServiceTest {
         // given
         var publisherDTO = new PublisherBasicAdditionDTO();
         publisherDTO.setName(new ArrayList<>());
-        publisherDTO.setState(new ArrayList<>());
         var publisher = new Publisher();
         publisher.setId(1);
 
@@ -114,7 +112,6 @@ public class PublisherServiceTest {
         var publisherDTO = new PublisherDTO();
         publisherDTO.setName(new ArrayList<>());
         publisherDTO.setPlace(new ArrayList<>());
-        publisherDTO.setState(new ArrayList<>());
         var publisher = new Publisher();
 
         when(publisherRepository.findById(1)).thenReturn(Optional.of(publisher));

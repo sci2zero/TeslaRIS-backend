@@ -32,7 +32,7 @@ public class ConferenceControllerTest extends BaseTest {
         var conferenceDTO = new ConferenceDTO();
         conferenceDTO.setName(dummyMC);
         conferenceDTO.setNameAbbreviation(dummyMC);
-        conferenceDTO.setState(dummyMC);
+        conferenceDTO.setCountryId(1);
         conferenceDTO.setPlace(dummyMC);
         conferenceDTO.setDescription(dummyMC);
         conferenceDTO.setKeywords(dummyMC);

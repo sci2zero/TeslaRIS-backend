@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,10 +69,14 @@ public class ExportEventConverter extends ExportConverterBase {
         commonExportEvent.setSerialEvent(event.getSerialEvent());
         commonExportEvent.setDateFrom(event.getDateFrom());
         commonExportEvent.setDateTo(event.getDateTo());
-        commonExportEvent.setState(
-            ExportMultilingualContentConverter.toCommonExportModel(event.getState()));
         commonExportEvent.setPlace(
             ExportMultilingualContentConverter.toCommonExportModel(event.getPlace()));
+
+        if (Objects.nonNull(event.getCountry())) {
+            commonExportEvent.setState(
+                ExportMultilingualContentConverter.toCommonExportModel(
+                    event.getCountry().getName()));
+        }
 
         if (computeRelations) {
             var relations = getRelatedInstitutions(event);

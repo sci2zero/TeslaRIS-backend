@@ -30,6 +30,7 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Conference;
@@ -39,6 +40,7 @@ import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.document.EventServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -64,8 +66,12 @@ public class EventServiceTest {
     @Mock
     private EventsRelationRepository eventsRelationRepository;
 
+    @Mock
+    private CountryService countryService;
+
     @InjectMocks
     private EventServiceImpl eventService;
+
 
     static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery_arguments() {
         return Stream.of(
@@ -106,12 +112,13 @@ public class EventServiceTest {
         conferenceDTO.setName(new ArrayList<>());
         conferenceDTO.setNameAbbreviation(new ArrayList<>());
         conferenceDTO.setPlace(new ArrayList<>());
-        conferenceDTO.setState(new ArrayList<>());
+        conferenceDTO.setCountryId(1);
         conferenceDTO.setDateFrom(LocalDate.now());
         conferenceDTO.setDateTo(LocalDate.now());
         conferenceDTO.setContributions(new ArrayList<>());
 
         // when
+        when(countryService.findOne(1)).thenReturn(new Country());
         eventService.setEventCommonFields(conference, conferenceDTO);
 
         // then
@@ -128,7 +135,7 @@ public class EventServiceTest {
         conference.getDescription().add(dummyMC);
         conference.getKeywords().add(dummyMC);
         conference.getNameAbbreviation().add(dummyMC);
-        conference.getState().add(dummyMC);
+        conference.setCountry(new Country());
         conference.getPlace().add(dummyMC);
         conference.getContributions().add(new PersonEventContribution());
 
@@ -136,7 +143,7 @@ public class EventServiceTest {
 
         assertEquals(conference.getName().size(), 0);
         assertEquals(conference.getNameAbbreviation().size(), 0);
-        assertEquals(conference.getState().size(), 0);
+        assertNull(conference.getCountry());
         assertEquals(conference.getPlace().size(), 0);
         assertEquals(conference.getContributions().size(), 0);
     }

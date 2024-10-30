@@ -282,11 +282,10 @@ public class CommonLoaderImpl implements CommonLoader {
         conferenceDTO.setKeywords(new ArrayList<>());
         setMultilingualContent(conferenceDTO.getKeywords(), conference.getKeywords());
 
-        conferenceDTO.setState(new ArrayList<>());
-        setMultilingualContent(conferenceDTO.getState(), conference.getState());
-
         conferenceDTO.setPlace(new ArrayList<>());
         setMultilingualContent(conferenceDTO.getPlace(), conference.getPlace());
+
+        // TODO: do we try to set country here?
 
         conferenceDTO.setSerialEvent(conference.getSerialEvent());
         conferenceDTO.setDateFrom(conference.getDateFrom());

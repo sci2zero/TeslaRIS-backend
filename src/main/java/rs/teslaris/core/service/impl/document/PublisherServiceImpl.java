@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -23,6 +24,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -45,13 +47,15 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
     private final SearchService<PublisherIndex> searchService;
 
+    private final CountryService countryService;
+
 
     @Override
     public Page<PublisherDTO> readAllPublishers(Pageable pageable) {
         return this.findAll(pageable).map(p -> new PublisherDTO(p.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(p.getName()),
             MultilingualContentConverter.getMultilingualContentDTO(p.getPlace()),
-            MultilingualContentConverter.getMultilingualContentDTO(p.getState())));
+            p.getCountry() != null ? p.getCountry().getId() : null));
     }
 
     @Override
@@ -90,8 +94,10 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         publisher.setName(
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
-        publisher.setState(
-            multilingualContentService.getMultilingualContent(publisherDTO.getState()));
+
+        if (Objects.nonNull(publisherDTO.getCountryId())) {
+            publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
+        }
 
         var savedPublisher = this.save(publisher);
 
@@ -106,6 +112,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     public void updatePublisher(PublisherDTO publisherDTO, Integer publisherId) {
         var publisherToUpdate = findPublisherById(publisherId);
 
+        publisherToUpdate.setCountry(null);
         setCommonFields(publisherToUpdate, publisherDTO);
 
         this.save(publisherToUpdate);
@@ -157,8 +164,10 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
         publisher.setPlace(
             multilingualContentService.getMultilingualContent(publisherDTO.getPlace()));
-        publisher.setState(
-            multilingualContentService.getMultilingualContent(publisherDTO.getState()));
+
+        if (Objects.nonNull(publisherDTO.getCountryId())) {
+            publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
+        }
     }
 
     private void indexPublisher(Publisher publisher, PublisherIndex index) {
@@ -173,8 +182,13 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             PublisherIndex::setNameSr, PublisherIndex::setNameOther);
         indexMultilingualContent(publisherIndex, publisher, Publisher::getPlace,
             PublisherIndex::setPlaceSr, PublisherIndex::setPlaceOther);
-        indexMultilingualContent(publisherIndex, publisher, Publisher::getState,
-            PublisherIndex::setStateSr, PublisherIndex::setStateOther);
+
+
+        if (Objects.nonNull(publisher.getCountry())) {
+            indexMultilingualContent(publisherIndex, publisher,
+                t -> publisher.getCountry().getName(),
+                PublisherIndex::setStateSr, PublisherIndex::setStateOther);
+        }
     }
 
     private void indexMultilingualContent(PublisherIndex index, Publisher publisher,

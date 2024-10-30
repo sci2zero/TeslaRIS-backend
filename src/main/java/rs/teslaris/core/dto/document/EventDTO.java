@@ -1,6 +1,7 @@
 package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -38,8 +39,8 @@ public class EventDTO {
 
     private LocalDate dateTo;
 
-    @NotNull(message = "You have to provide state.")
-    private List<MultilingualContentDTO> state;
+    @Positive(message = "Country ID must be a positive number")
+    private Integer countryId;
 
     @NotNull(message = "You have to provide place.")
     private List<MultilingualContentDTO> place;

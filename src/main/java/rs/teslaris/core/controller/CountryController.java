@@ -2,9 +2,17 @@ package rs.teslaris.core.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
@@ -16,6 +24,7 @@ public class CountryController {
 
     private final CountryService countryService;
 
+
     @GetMapping("/{countryId}")
     public CountryDTO readCountry(@PathVariable Integer countryId) {
         return countryService.readCountryById(countryId);
@@ -24,5 +33,26 @@ public class CountryController {
     @GetMapping
     public List<CountryDTO> readAll() {
         return countryService.readAllCountries();
+    }
+
+    @GetMapping("/search")
+    public Page<CountryDTO> searchCountries(Pageable pageable,
+                                            @RequestParam("tokens") List<String> tokens) {
+        return countryService.searchCountries(pageable, Strings.join(tokens, ' '));
+    }
+
+    @PostMapping
+    public CountryDTO createCountry(@RequestBody CountryDTO countryDTO) {
+        return countryService.createCountry(countryDTO);
+    }
+
+    @PutMapping("/{countryId}")
+    public void updateCountry(@RequestBody CountryDTO countryDTO, @PathVariable Integer countryId) {
+        countryService.updateCountry(countryId, countryDTO);
+    }
+
+    @DeleteMapping("/{countryId}")
+    public void deleteCountry(@PathVariable Integer countryId) {
+        countryService.deleteCountry(countryId);
     }
 }

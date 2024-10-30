@@ -32,8 +32,9 @@ public class EventConverter implements RecordConverter<Event, ConferenceDTO> {
 
         dto.setName(multilingualContentConverter.toDTO(record.getEventName()));
         dto.setPlace(multilingualContentConverter.toDTO(record.getPlace()));
-        dto.setState(multilingualContentConverter.toDTO(record.getCountry()));
         dto.setDescription(multilingualContentConverter.toDTO((String) record.getDescription()));
+
+        // TODO: do we try to set country here?
 
         if (Objects.nonNull(record.getKeywords())) {
             var keywordBuilder = new StringBuilder();
