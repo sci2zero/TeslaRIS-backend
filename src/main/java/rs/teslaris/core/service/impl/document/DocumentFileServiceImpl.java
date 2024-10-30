@@ -125,7 +125,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         if (!index) {
             documentFile.setResourceType(
-                ResourceType.SUPPLEMENT); // Save every non-indexed (proof) as supplement
+                ResourceType.PROOF); // Save every non-indexed (proof) as supplement
         }
 
         var serverFilename =
@@ -152,7 +152,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         if (!index) {
             documentFile.setResourceType(
-                ResourceType.SUPPLEMENT); // Save every non-indexed (proof) as supplement
+                ResourceType.PROOF); // Save every non-indexed (proof) as supplement
         }
 
         if (documentFile.getFile().getSize() > 0) {

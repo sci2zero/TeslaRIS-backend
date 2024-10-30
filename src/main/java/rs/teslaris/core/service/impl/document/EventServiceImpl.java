@@ -140,8 +140,6 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
                                          EventType eventType, Boolean returnOnlyNonSerialEvents,
                                          Integer commissionInstitutionId) {
-        System.out.println(buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
-            commissionInstitutionId).toString());
         return searchService.runQuery(
             buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
                 commissionInstitutionId),
