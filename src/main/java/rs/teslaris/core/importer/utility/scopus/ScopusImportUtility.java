@@ -175,7 +175,6 @@ public class ScopusImportUtility {
             try {
                 return objectMapper.readValue(responseEntity.getBody(), responseType);
             } catch (JsonProcessingException e) {
-                System.out.println(responseEntity.getBody());
                 log.error("Exception occurred during document deserialization: {}", e.getMessage());
             }
         } else {
