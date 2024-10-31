@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -470,7 +471,8 @@ public class PersonServiceTest {
         assertEquals(expected, actual);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
     void shouldFindPeopleByNameAndEmploymentWhenProperQueryIsGiven() {
         // given
         var tokens = Arrays.asList("Ivan", "FTN");
@@ -480,7 +482,7 @@ public class PersonServiceTest {
             new PageImpl<>(List.of(new PersonIndex(), new PersonIndex())));
 
         // when
-        var result = personService.findPeopleByNameAndEmployment(tokens, pageable);
+        var result = personService.findPeopleByNameAndEmployment(tokens, pageable, false);
 
         // then
         assertEquals(result.getTotalElements(), 2L);

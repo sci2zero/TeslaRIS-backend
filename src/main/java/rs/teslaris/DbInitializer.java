@@ -188,6 +188,7 @@ public class DbInitializer implements ApplicationRunner {
         var registerEmployee = new Privilege("REGISTER_EMPLOYEE");
         var reindexPrivilege = new Privilege("REINDEX_DATABASE");
         var mergeBookSeriesPublications = new Privilege("MERGE_BOOK_SERIES_PUBLICATIONS");
+        var editCountries = new Privilege("EDIT_COUNTRIES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -202,7 +203,7 @@ public class DbInitializer implements ApplicationRunner {
                 registerEmployee, reindexPrivilege, startDeduplicationProcess, performDeduplication,
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
-                mergeOUMetadata));
+                mergeOUMetadata, editCountries));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -217,7 +218,7 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, deletePerson, registerEmployee, reindexPrivilege,
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
-                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata
+                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -306,7 +307,7 @@ public class DbInitializer implements ApplicationRunner {
                                                   ResearchArea researchArea3,
                                                   Authority researcherAuthority) {
         var country = new Country("RS", new HashSet<>());
-        country = countryRepository.save(country);
+        countryRepository.save(country);
 
         var postalAddress = new PostalAddress(country, new HashSet<>(),
             new HashSet<>());
@@ -521,7 +522,9 @@ public class DbInitializer implements ApplicationRunner {
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
-        countryRepository.save(country);
+        var country2 = new Country("ME",
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Crna Gora", 1))));
+        countryRepository.saveAll(List.of(country, country2));
 
         datasetContribution.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null));

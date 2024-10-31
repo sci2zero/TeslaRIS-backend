@@ -485,8 +485,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         var employmentInstitutions = savedPerson.getInvolvements().stream()
-            .filter(i -> i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                i.getInvolvementType().equals(InvolvementType.HIRED_BY))
+            .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                Objects.isNull(i.getDateTo()))
             .map(Involvement::getOrganisationUnit).toList();
 
         personIndex.setEmploymentInstitutionsId(
@@ -552,8 +553,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable) {
-        return searchService.runQuery(buildNameAndEmploymentQuery(tokens), pageable,
+    public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
+                                                           boolean strict) {
+        return searchService.runQuery(buildNameAndEmploymentQuery(tokens, strict), pageable,
             PersonIndex.class, "person");
     }
 
@@ -580,7 +582,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personIndexRepository.findByScopusAuthorId(scopusAuthorId).orElse(null);
     }
 
-    private Query buildNameAndEmploymentQuery(List<String> tokens) {
+    private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q
@@ -602,8 +604,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                                     }));
                             }
 
-                            b.should(sb -> sb.wildcard(
-                                m -> m.field("name").value(token + "*").caseInsensitive(true)));
+                            if (!strict) {
+                                b.should(sb -> sb.wildcard(
+                                    m -> m.field("name").value(token + "*").caseInsensitive(true)));
+                            }
+
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
                             b.should(
                                 sb -> sb.match(m -> m.field("employments_other").query(token)));

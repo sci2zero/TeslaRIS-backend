@@ -35,10 +35,12 @@ public class ExportPatentConverter extends ExportConverterBase {
                 "http://purl.org/coar/access_right/c_14cb");
 
         openairePatent.setInventor(new ArrayList<>());
-        exportDocument.getAuthors().forEach(contribution -> {
-            openairePatent.getInventor().add(new PersonAttributes(contribution.getDisplayName(),
-                ExportPersonConverter.toOpenaireModel(contribution.getPerson())));
-        });
+        exportDocument.getAuthors().stream()
+            .filter(contribution -> Objects.nonNull(contribution.getPerson()))
+            .forEach(contribution -> {
+                openairePatent.getInventor().add(new PersonAttributes(contribution.getDisplayName(),
+                    ExportPersonConverter.toOpenaireModel(contribution.getPerson())));
+            });
 
         return openairePatent;
     }

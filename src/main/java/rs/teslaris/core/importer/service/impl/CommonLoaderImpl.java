@@ -32,6 +32,7 @@ import rs.teslaris.core.importer.service.interfaces.CommonLoader;
 import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -45,24 +46,17 @@ import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedExce
 @RequiredArgsConstructor
 public class CommonLoaderImpl implements CommonLoader {
 
+    private static final Object lock = new Object();
     private final MongoTemplate mongoTemplate;
-
     private final JournalPublicationConverter journalPublicationConverter;
-
     private final ProceedingsPublicationConverter proceedingsPublicationConverter;
-
     private final OrganisationUnitService organisationUnitService;
-
     private final JournalService journalService;
-
     private final ConferenceService conferenceService;
-
     private final ProceedingsService proceedingsService;
-
     private final LanguageTagService languageTagService;
-
     private final PublicationSeriesService publicationSeriesService;
-
+    private final CountryService countryService;
 
     @Override
     public <R> R loadRecordsWizard(Integer userId) {
@@ -285,7 +279,13 @@ public class CommonLoaderImpl implements CommonLoader {
         conferenceDTO.setPlace(new ArrayList<>());
         setMultilingualContent(conferenceDTO.getPlace(), conference.getPlace());
 
-        // TODO: do we try to set country here?
+        for (var stateMC : conference.getState()) {
+            var country = countryService.findCountryByName(stateMC.getContent());
+            if (country.isPresent()) {
+                conferenceDTO.setCountryId(country.get().getId());
+                break;
+            }
+        }
 
         conferenceDTO.setSerialEvent(conference.getSerialEvent());
         conferenceDTO.setDateFrom(conference.getDateFrom());
@@ -310,6 +310,12 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private OrganisationUnitDTO createLoadedInstitution(OrganisationUnit institution) {
+        // Lock hint
+        var potentialMatch = searchPotentialMatches(institution);
+        if (Objects.nonNull(potentialMatch)) {
+            return potentialMatch;
+        }
+
         var organisationUnitDTO = new OrganisationUnitRequestDTO();
 
         organisationUnitDTO.setName(new ArrayList<>());
@@ -324,7 +330,29 @@ public class CommonLoaderImpl implements CommonLoader {
         organisationUnitDTO.setContact(new ContactDTO());
         organisationUnitDTO.setLocation(new GeoLocationDTO());
 
-        return organisationUnitService.createOrganisationUnit(organisationUnitDTO, true);
+        synchronized (lock) {
+            potentialMatch = searchPotentialMatches(institution);
+            if (Objects.nonNull(potentialMatch)) {
+                return potentialMatch;
+            }
+
+            return organisationUnitService.createOrganisationUnit(organisationUnitDTO, true);
+        }
+    }
+
+    @Nullable
+    private OrganisationUnitDTO searchPotentialMatches(OrganisationUnit institution) {
+        var potentialMatch =
+            organisationUnitService.findOrganisationUnitByScopusAfid(institution.getScopusAfid());
+        if (Objects.nonNull(potentialMatch)) {
+            var existingRecordResponse = new OrganisationUnitDTO();
+            existingRecordResponse.setName(List.of(new MultilingualContentDTO(-1, "",
+                potentialMatch.getNameSr(), 1)));
+            existingRecordResponse.setId(potentialMatch.getDatabaseId());
+            return existingRecordResponse;
+        }
+
+        return null;
     }
 
     @Nullable

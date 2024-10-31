@@ -42,4 +42,6 @@ public interface InvolvementService extends JPAService<Involvement> {
     void updateEmployment(Integer involvementId, EmploymentDTO employment);
 
     void deleteInvolvement(Integer involvementId);
+
+    void endEmployment(Integer institutionId, Integer personId);
 }

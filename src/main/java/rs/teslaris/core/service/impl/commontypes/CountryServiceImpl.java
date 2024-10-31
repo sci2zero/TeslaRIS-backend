@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import jakarta.annotation.Nullable;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,12 +31,6 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
     @Override
     protected JpaRepository<Country, Integer> getEntityRepository() {
         return countryRepository;
-    }
-
-    @Override
-    @Deprecated(forRemoval = true)
-    public Country findCountryById(Integer countryId) {
-        return this.findOne(countryId);
     }
 
     @Override
@@ -70,6 +66,12 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
         var savedCountry = save(newCountry);
 
         return CountryConverter.toDTO(savedCountry);
+    }
+
+    @Override
+    @Nullable
+    public Optional<CountryDTO> findCountryByName(String name) {
+        return countryRepository.findCountryByName(name);
     }
 
     @Override

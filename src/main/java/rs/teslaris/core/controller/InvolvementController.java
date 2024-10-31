@@ -156,4 +156,13 @@ public class InvolvementController {
     public void deleteInvolvement(@PathVariable Integer involvementId) {
         involvementService.deleteInvolvement(involvementId);
     }
+
+    @PatchMapping("/employment/{organisationUnitId}/{personId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @PersonEditCheck
+    public void terminateEmployment(@PathVariable Integer organisationUnitId,
+                                    @PathVariable Integer personId) {
+        involvementService.endEmployment(organisationUnitId, personId);
+    }
 }

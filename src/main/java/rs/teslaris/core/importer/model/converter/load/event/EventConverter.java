@@ -13,12 +13,15 @@ import rs.teslaris.core.importer.model.converter.load.commontypes.MultilingualCo
 import rs.teslaris.core.importer.model.oaipmh.event.Event;
 import rs.teslaris.core.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.core.importer.utility.RecordConverter;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 
 @Component
 @RequiredArgsConstructor
 public class EventConverter implements RecordConverter<Event, ConferenceDTO> {
 
     private final MultilingualContentConverter multilingualContentConverter;
+
+    private final CountryService countryService;
 
 
     @Override
@@ -34,7 +37,8 @@ public class EventConverter implements RecordConverter<Event, ConferenceDTO> {
         dto.setPlace(multilingualContentConverter.toDTO(record.getPlace()));
         dto.setDescription(multilingualContentConverter.toDTO((String) record.getDescription()));
 
-        // TODO: do we try to set country here?
+        var country = countryService.findCountryByName(record.getCountry());
+        country.ifPresent(countryDTO -> dto.setCountryId(countryDTO.getId()));
 
         if (Objects.nonNull(record.getKeywords())) {
             var keywordBuilder = new StringBuilder();

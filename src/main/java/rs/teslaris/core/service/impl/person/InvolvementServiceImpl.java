@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -228,6 +229,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvementRepository.save(employmentToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
             employmentToUpdate.getPersonInvolved().getId());
+        personService.indexPerson(employmentToUpdate.getPersonInvolved(),
+            employmentToUpdate.getPersonInvolved().getId());
     }
 
     @Override
@@ -240,6 +243,21 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         delete(involvementId);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+    }
+
+    @Override
+    public void endEmployment(Integer institutionId, Integer personId) {
+        var employment =
+            involvementRepository.findActiveEmploymentForPersonAndInstitution(institutionId,
+                personId);
+        if (employment.isEmpty()) {
+            throw new NotFoundException(
+                "Employment with that person and institution does not exist.");
+        }
+
+        employment.get().setDateTo(LocalDate.now());
+        employmentRepository.save(employment.get());
+        personService.indexPerson(employment.get().getPersonInvolved(), personId);
     }
 
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {

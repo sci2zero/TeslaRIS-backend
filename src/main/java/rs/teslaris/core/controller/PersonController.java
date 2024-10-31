@@ -91,10 +91,11 @@ public class PersonController {
     public Page<PersonIndex> simpleSearch(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(required = false, defaultValue = "false") boolean strict,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return personService.findPeopleByNameAndEmployment(tokens,
-            pageable);
+            pageable, strict);
     }
 
     @GetMapping("/scopus-author/{scopusId}")

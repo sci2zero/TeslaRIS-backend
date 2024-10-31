@@ -43,10 +43,13 @@ public class ExportProductConverter extends ExportConverterBase {
                 "http://purl.org/coar/access_right/c_14cb");
 
         openaireProduct.setCreators(new ArrayList<>());
-        exportDocument.getAuthors().forEach(contribution -> {
-            openaireProduct.getCreators().add(new PersonAttributes(contribution.getDisplayName(),
-                ExportPersonConverter.toOpenaireModel(contribution.getPerson())));
-        });
+        exportDocument.getAuthors().stream()
+            .filter(contribution -> Objects.nonNull(contribution.getPerson()))
+            .forEach(contribution -> {
+                openaireProduct.getCreators()
+                    .add(new PersonAttributes(contribution.getDisplayName(),
+                        ExportPersonConverter.toOpenaireModel(contribution.getPerson())));
+            });
 
         return openaireProduct;
     }
