@@ -7,9 +7,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,10 +86,11 @@ import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.seeding.CsvDataLoader;
 
 @Component
-@Profile("test")
 @RequiredArgsConstructor
+@Slf4j
 public class DbInitializer implements ApplicationRunner {
 
     private final AuthorityRepository authorityRepository;
@@ -138,6 +140,10 @@ public class DbInitializer implements ApplicationRunner {
     private final MonographPublicationRepository monographPublicationRepository;
 
     private final ThesisRepository thesisRepository;
+
+    private final CsvDataLoader csvDataLoader;
+
+    private final Environment environment;
 
 
     @Override
@@ -297,16 +303,23 @@ public class DbInitializer implements ApplicationRunner {
 
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
 
+        // COUNTRIES
+        csvDataLoader.loadData("countries.csv", this::processCountryLine);
+
         ///////////////////// TESTING DATA /////////////////////
-        initializeIntegrationTestingData(serbianTag, serbianLanguage, englishTag, germanLanguage,
-            researchArea3, researcherAuthority);
+        if (Arrays.stream(environment.getActiveProfiles())
+            .anyMatch(profile -> profile.equalsIgnoreCase("test"))) {
+            initializeIntegrationTestingData(serbianTag, serbianLanguage, englishTag,
+                germanLanguage,
+                researchArea3, researcherAuthority);
+        }
     }
 
     private void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
                                                   LanguageTag englishTag, Language germanLanguage,
                                                   ResearchArea researchArea3,
                                                   Authority researcherAuthority) {
-        var country = new Country("RS", new HashSet<>());
+        var country = new Country("SRB", new HashSet<>());
         countryRepository.save(country);
 
         var postalAddress = new PostalAddress(country, new HashSet<>(),
@@ -522,7 +535,7 @@ public class DbInitializer implements ApplicationRunner {
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
-        var country2 = new Country("ME",
+        var country2 = new Country("MNE",
             new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Crna Gora", 1))));
         countryRepository.saveAll(List.of(country, country2));
 
@@ -681,5 +694,36 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(englishTag, "Dummy Translation", 1)));
         monograph3.setMonographType(MonographType.TRANSLATION);
         monographRepository.save(monograph3);
+    }
+
+    private void processCountryLine(String[] line) {
+        var country = new Country();
+        country.setCode(line[0]);
+
+        var names = new HashSet<MultiLingualContent>();
+        var nameList = line[1].split(";");
+        for (int i = 0; i < nameList.length; i++) {
+            var nameParts = nameList[i].split("@");
+            if (nameParts.length == 2) {
+                var content = nameParts[0].trim();
+                var languageTagCode = nameParts[1].trim().toUpperCase();
+
+                var languageTag = languageTagRepository
+                    .findLanguageTagByLanguageTag(languageTagCode)
+                    .orElseGet(() -> {
+                        var newLanguageTag = new LanguageTag();
+                        newLanguageTag.setLanguageTag(languageTagCode);
+                        newLanguageTag.setDisplay(languageTagCode);
+                        log.info("Created new language tag: {}", languageTagCode);
+                        return languageTagRepository.save(newLanguageTag);
+                    });
+
+                var multilingualContent =
+                    new MultiLingualContent(languageTag, content, i + 1);
+                names.add(multilingualContent);
+            }
+        }
+        country.setName(names);
+        countryRepository.save(country);
     }
 }
