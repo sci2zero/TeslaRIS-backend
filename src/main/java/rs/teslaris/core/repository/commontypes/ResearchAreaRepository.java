@@ -1,6 +1,8 @@
 package rs.teslaris.core.repository.commontypes;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -24,4 +26,7 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
 
     @Query("select count(t) > 0 from Thesis t join t.researchArea where t.researchArea.id = :researchAreaId")
     boolean isResearchedInThesis(Integer researchAreaId);
+
+    @Query("SELECT ra FROM ResearchArea ra JOIN ra.name n WHERE LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))")
+    Page<ResearchArea> searchResearchAreas(Pageable pageable, String searchExpression);
 }

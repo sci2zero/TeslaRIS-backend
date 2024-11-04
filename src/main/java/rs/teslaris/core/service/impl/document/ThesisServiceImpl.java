@@ -73,6 +73,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public Thesis createThesis(ThesisDTO thesisDTO, Boolean index) {
         var newThesis = new Thesis();
 
+        if (Objects.nonNull(thesisDTO.getContributions()) &&
+            !thesisDTO.getContributions().isEmpty()) {
+            thesisDTO.setContributions(thesisDTO.getContributions().subList(0, 1));
+        }
+
         setCommonFields(newThesis, thesisDTO);
         setThesisRelatedFields(newThesis, thesisDTO);
 
@@ -95,6 +100,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
         clearCommonFields(thesisToUpdate);
+
+        if (Objects.nonNull(thesisDTO.getContributions()) &&
+            !thesisDTO.getContributions().isEmpty()) {
+            thesisDTO.setContributions(thesisDTO.getContributions().subList(0, 1));
+        }
+
         setCommonFields(thesisToUpdate, thesisDTO);
         setThesisRelatedFields(thesisToUpdate, thesisDTO);
 

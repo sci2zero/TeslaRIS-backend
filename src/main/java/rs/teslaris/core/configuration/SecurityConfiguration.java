@@ -152,6 +152,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/person/employed-at/{organisationUnitId}")
                 .permitAll()
 
+                // EVENTS
+                .requestMatchers(HttpMethod.GET, "/api/event/{eventId}}").permitAll()
+
                 // EVENTS RELATION
                 .requestMatchers(HttpMethod.GET, "/api/events-relation/{eventId}").permitAll()
                 .requestMatchers(HttpMethod.GET,

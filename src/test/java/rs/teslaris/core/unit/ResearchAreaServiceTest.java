@@ -20,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
@@ -215,5 +216,21 @@ public class ResearchAreaServiceTest {
         ResearchAreaDTO dto2 = result.get(1);
         assertEquals(2, dto2.getId());
         assertEquals(20, dto2.getSuperResearchAreaId());
+    }
+
+    @Test
+    public void shouldSearchCountries() {
+        // given
+        var researchAreaPage = new PageImpl<>(List.of(new ResearchArea()));
+        var pageable = PageRequest.of(0, 10);
+        when(researchAreaRepository.searchResearchAreas(pageable, "Search Term")).thenReturn(
+            researchAreaPage);
+
+        // when
+        var result = researchAreaService.searchResearchAreas(pageable, "Search Term");
+
+        // then
+        assertNotNull(result);
+        verify(researchAreaRepository).searchResearchAreas(pageable, "Search Term");
     }
 }

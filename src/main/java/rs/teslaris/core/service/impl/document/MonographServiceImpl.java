@@ -227,6 +227,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
         index.setType(DocumentPublicationType.MONOGRAPH.name());
 
+        if (Objects.nonNull(monograph.getMonographType())) {
+            index.setPublicationType(monograph.getMonographType().name());
+        }
+
         documentPublicationIndexRepository.save(index);
     }
 

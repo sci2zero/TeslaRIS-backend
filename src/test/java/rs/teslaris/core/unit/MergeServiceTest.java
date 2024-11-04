@@ -402,7 +402,9 @@ public class MergeServiceTest {
         var personIndex = new PersonIndex();
         var pageRequest = PageRequest.of(0, 10);
         var page = new PageImpl<>(List.of(personIndex));
-        when(personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest)).thenReturn(page);
+        when(
+            personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest, false)).thenReturn(
+            page);
         when(personService.findOne(any())).thenReturn(person);
 
         // when
@@ -410,7 +412,7 @@ public class MergeServiceTest {
 
         // then
         verify(personService, atLeastOnce()).findPeopleForOrganisationUnit(eq(sourceOUId),
-            any(PageRequest.class));
+            any(PageRequest.class), eq(false));
     }
 
     @Test

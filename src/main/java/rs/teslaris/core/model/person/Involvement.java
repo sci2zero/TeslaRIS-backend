@@ -73,11 +73,15 @@ public class Involvement extends BaseEntity {
             return false;
         }
         Involvement that = (Involvement) o;
-        return Objects.equals(getId(), that.getId());
+        return Objects.equals(dateFrom, that.dateFrom) &&
+            involvementType == that.involvementType &&
+            Objects.equals(personInvolved, that.personInvolved) &&
+            Objects.equals(organisationUnit, that.organisationUnit);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getId());
+        return Objects.hash(super.hashCode(), dateFrom, involvementType, personInvolved,
+            organisationUnit);
     }
 }

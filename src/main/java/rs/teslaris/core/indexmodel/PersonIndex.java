@@ -40,8 +40,11 @@ public class PersonIndex {
     @Field(type = FieldType.Keyword, store = true, name = "employments_other_sortable")
     private String employmentsOtherSortable;
 
-    @Field(type = FieldType.Integer, name = "employmentInstitutionsId", store = true)
+    @Field(type = FieldType.Integer, name = "employment_institutions_id", store = true)
     private List<Integer> employmentInstitutionsId;
+
+    @Field(type = FieldType.Integer, name = "past_employment_institution_ids", store = true)
+    private List<Integer> pastEmploymentInstitutionIds;
 
     @Field(type = FieldType.Text, store = true, name = "birthdate")
     private String birthdate;

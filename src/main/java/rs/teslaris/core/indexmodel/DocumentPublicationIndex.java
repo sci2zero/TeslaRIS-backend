@@ -93,6 +93,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "type", store = true)
     private String type;
 
+    @Field(type = FieldType.Keyword, name = "publication_type", store = true)
+    private String publicationType;
+
     @Field(type = FieldType.Integer, name = "publication_series_id", store = true)
     private Integer publicationSeriesId;
 

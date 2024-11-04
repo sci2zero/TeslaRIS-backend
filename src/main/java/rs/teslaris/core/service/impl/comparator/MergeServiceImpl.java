@@ -199,7 +199,8 @@ public class MergeServiceImpl implements MergeService {
             sourceOUId,
             (srcId, personIndex) -> performEmployeeSwitch(srcId, targetOUId,
                 personIndex.getDatabaseId()),
-            pageRequest -> personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest)
+            pageRequest -> personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest,
+                    false)
                 .getContent()
         );
     }

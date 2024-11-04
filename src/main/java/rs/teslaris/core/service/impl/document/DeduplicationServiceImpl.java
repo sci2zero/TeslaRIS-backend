@@ -210,6 +210,12 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                         m -> m.field("event_id").value(item.getEventId())));
                 }
 
+                if (item.getType().equals("PROCEEDINGS_PUBLICATION") ||
+                    item.getType().equals("JOURNAL_PUBLICATION")) {
+                    b.must(sb -> sb.term(
+                        m -> m.field("publication_type").value(item.getPublicationType())));
+                }
+
                 b.must(sb -> sb.match(
                     m -> m.field("type").query(item.getType())));
                 b.mustNot(sb -> sb.match(
@@ -349,9 +355,9 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 b.must(bq -> {
                     bq.bool(eq -> {
                         eq.should(sb -> sb.matchPhrase(
-                            m -> m.field("title_sr").query((item).getNameSr())));
+                            m -> m.field("name_sr").query((item).getNameSr())));
                         eq.should(sb -> sb.matchPhrase(
-                            m -> m.field("title_other").query((item).getNameOther())));
+                            m -> m.field("name_other").query((item).getNameOther())));
                         return eq;
                     });
                     return bq;

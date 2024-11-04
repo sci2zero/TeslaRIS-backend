@@ -105,8 +105,10 @@ public class PersonController {
 
     @GetMapping("/employed-at/{organisationUnitId}")
     public Page<PersonIndex> findEmployeesForInstitution(@PathVariable Integer organisationUnitId,
+                                                         @RequestParam Boolean fetchAlumni,
                                                          Pageable pageable) {
-        return personService.findPeopleForOrganisationUnit(organisationUnitId, pageable);
+        return personService.findPeopleForOrganisationUnit(organisationUnitId, pageable,
+            fetchAlumni);
     }
 
     @GetMapping("/advanced-search")

@@ -488,8 +488,9 @@ public class PersonServiceTest {
         assertEquals(result.getTotalElements(), 2L);
     }
 
-    @Test
-    void shouldFindPeopleForOrganisationUnitWhenGivenValidId() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldFindPeopleForOrganisationUnitWhenGivenValidId(boolean fetchAlumni) {
         // given
         var employmentInstitutionId = 123;
         var pageable = PageRequest.of(0, 10);
@@ -499,10 +500,14 @@ public class PersonServiceTest {
         when(personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
             List.of(employmentInstitutionId))).thenReturn(
             new PageImpl<>(List.of(new PersonIndex())));
+        when(personIndexRepository.findByPastEmploymentInstitutionIdsIn(pageable,
+            List.of(employmentInstitutionId))).thenReturn(
+            new PageImpl<>(List.of(new PersonIndex())));
 
         // when
         var result =
-            personService.findPeopleForOrganisationUnit(employmentInstitutionId, pageable);
+            personService.findPeopleForOrganisationUnit(employmentInstitutionId, pageable,
+                fetchAlumni);
 
         // then
         assertEquals(result.getTotalElements(), 1L);

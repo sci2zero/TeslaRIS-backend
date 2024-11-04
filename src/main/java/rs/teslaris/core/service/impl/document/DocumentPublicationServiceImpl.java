@@ -245,35 +245,50 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
                         if (personExists) {
                             index.getAuthorIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getAuthorIds().add(-1);
                         }
+
                         index.setAuthorNames(StringUtil.removeLeadingColonSpace(
                             index.getAuthorNames() + "; " + contributorName));
                         break;
                     case EDITOR:
                         if (personExists) {
                             index.getEditorIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getEditorIds().add(-1);
                         }
+
                         index.setEditorNames(StringUtil.removeLeadingColonSpace(
                             index.getEditorNames() + "; " + contributorName));
                         break;
                     case ADVISOR:
                         if (personExists) {
                             index.getAdvisorIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getAdvisorIds().add(-1);
                         }
+
                         index.setAdvisorNames(StringUtil.removeLeadingColonSpace(
                             index.getAdvisorNames() + "; " + contributorName));
                         break;
                     case REVIEWER:
                         if (personExists) {
                             index.getReviewerIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getReviewerIds().add(-1);
                         }
+
                         index.setReviewerNames(StringUtil.removeLeadingColonSpace(
                             index.getReviewerNames() + "; " + contributorName));
                         break;
                     case BOARD_MEMBER:
                         if (personExists) {
                             index.getBoardMemberIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getBoardMemberIds().add(-1);
                         }
+
                         index.setBoardMemberNames(StringUtil.removeLeadingColonSpace(
                             index.getBoardMemberNames() + "; " + contributorName));
                         break;

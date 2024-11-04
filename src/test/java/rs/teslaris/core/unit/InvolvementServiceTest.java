@@ -171,7 +171,7 @@ public class InvolvementServiceTest {
 
         // then
         assertNotNull(result);
-        verify(involvementRepository, times(1)).save(result);
+        verify(involvementRepository, times(1)).save(any());
     }
 
     @Test
@@ -191,7 +191,7 @@ public class InvolvementServiceTest {
 
         // then
         assertNotNull(result);
-        verify(involvementRepository, times(1)).save(result);
+        verify(involvementRepository, times(1)).save(any());
     }
 
     @Test

@@ -164,6 +164,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         index.setEventId(publication.getProceedings().getEvent().getId());
         index.setType(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
 
+        if (Objects.nonNull(publication.getProceedingsPublicationType())) {
+            index.setPublicationType(publication.getProceedingsPublicationType().name());
+        }
+
         if (Objects.nonNull(publication.getProceedings())) {
             index.setProceedingsId(publication.getProceedings().getId());
         }

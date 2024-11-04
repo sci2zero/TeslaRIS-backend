@@ -490,6 +490,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 Objects.isNull(i.getDateTo()))
             .map(Involvement::getOrganisationUnit).toList();
 
+        personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
+            .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                Objects.nonNull(i.getDateTo()))
+            .map(involvement -> involvement.getOrganisationUnit().getId()).toList());
+
         personIndex.setEmploymentInstitutionsId(
             employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
 
@@ -560,13 +566,17 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public Page<PersonIndex> findPeopleForOrganisationUnit(
-        Integer employmentInstitutionId,
-        Pageable pageable) {
+    public Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
+                                                           Pageable pageable, Boolean fetchAlumni) {
         var ouHierarchyIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(employmentInstitutionId);
-        return personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
-            ouHierarchyIds);
+
+        if (fetchAlumni) {
+            return personIndexRepository.findByPastEmploymentInstitutionIdsIn(pageable,
+                ouHierarchyIds);
+        }
+
+        return personIndexRepository.findByEmploymentInstitutionsIdIn(pageable, ouHierarchyIds);
     }
 
     @Override

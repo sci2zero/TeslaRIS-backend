@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -184,6 +185,11 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         indexCommonFields(monographPublication, index);
 
         index.setType(DocumentPublicationType.MONOGRAPH_PUBLICATION.name());
+
+        if (Objects.nonNull(monographPublication.getMonographPublicationType())) {
+            index.setPublicationType(monographPublication.getMonographPublicationType().name());
+        }
+
         index.setMonographId(monographPublication.getMonograph().getId());
 
         documentPublicationIndexRepository.save(index);

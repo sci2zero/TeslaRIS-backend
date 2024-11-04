@@ -33,6 +33,7 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -551,6 +552,7 @@ public class DbInitializer implements ApplicationRunner {
         softwareContribution.setOrderNumber(1);
         softwareContribution.setDocument(dataset);
         softwareContribution.setApproveStatus(ApproveStatus.APPROVED);
+        softwareContribution.getInstitutions().add(dummyOU);
         softwareContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
@@ -596,7 +598,7 @@ public class DbInitializer implements ApplicationRunner {
         personRepository.save(person3);
 
         var softwareContribution2 = new PersonDocumentContribution();
-        softwareContribution2.setPerson(person3);
+//        softwareContribution2.setPerson(person3);
         softwareContribution2.setContributionType(DocumentContributionType.AUTHOR);
         softwareContribution2.setIsMainContributor(false);
         softwareContribution2.setIsCorrespondingContributor(false);
@@ -650,6 +652,7 @@ public class DbInitializer implements ApplicationRunner {
         monographPublication1.setApproveStatus(ApproveStatus.APPROVED);
         monographPublication1.setDocumentDate("2024");
         monographPublication1.setMonograph(monograph1);
+        monographPublication1.setMonographPublicationType(MonographPublicationType.PREFACE);
         monographPublication1.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Monograph Publication 1", 1)));
         monographPublicationRepository.save(monographPublication1);
@@ -658,6 +661,7 @@ public class DbInitializer implements ApplicationRunner {
         monographPublication2.setApproveStatus(ApproveStatus.APPROVED);
         monographPublication2.setDocumentDate("2024");
         monographPublication2.setMonograph(monograph1);
+        monographPublication2.setMonographPublicationType(MonographPublicationType.CHAPTER);
         monographPublication2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Rad u monografiji 2", 1)));
         monographPublicationRepository.save(monographPublication2);

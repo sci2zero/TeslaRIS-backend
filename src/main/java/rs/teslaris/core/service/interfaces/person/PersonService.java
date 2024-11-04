@@ -29,7 +29,7 @@ public interface PersonService extends JPAService<Person> {
                                                     boolean strict);
 
     Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
-                                                    Pageable pageable);
+                                                    Pageable pageable, Boolean fetchAlumni);
 
     Page<PersonIndex> advancedSearch(List<String> tokens, Pageable pageable);
 

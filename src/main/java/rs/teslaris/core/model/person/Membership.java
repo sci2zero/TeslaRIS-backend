@@ -23,7 +23,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "memberships")
 @SQLRestriction("deleted=false")
