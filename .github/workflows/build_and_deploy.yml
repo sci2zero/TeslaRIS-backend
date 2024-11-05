@@ -110,6 +110,12 @@ jobs:
           name: teslaris
           path: teslaris
 
+      - name: Select artifact to deploy
+        run: |
+          cp teslaris/teslaris-*.jar teslaris.jar 
+          pwd
+          ls -la
+
       - name: Copy files to Server
         uses: appleboy/scp-action@v0.1.4
         with:
