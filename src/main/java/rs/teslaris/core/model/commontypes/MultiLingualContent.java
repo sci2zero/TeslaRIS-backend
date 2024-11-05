@@ -47,7 +47,8 @@ public class MultiLingualContent extends BaseEntity {
             return false;
         }
         MultiLingualContent that = (MultiLingualContent) o;
-        return Objects.equal(content, that.content);
+        return Objects.equal(content, that.content) &&
+            Objects.equal(language.getLanguageTag(), that.language.getLanguageTag());
     }
 
     @Override

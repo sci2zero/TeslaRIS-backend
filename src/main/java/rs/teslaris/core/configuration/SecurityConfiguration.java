@@ -153,7 +153,7 @@ public class SecurityConfiguration {
                 .permitAll()
 
                 // EVENTS
-                .requestMatchers(HttpMethod.GET, "/api/event/{eventId}}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/event/{eventId}").permitAll()
 
                 // EVENTS RELATION
                 .requestMatchers(HttpMethod.GET, "/api/events-relation/{eventId}").permitAll()

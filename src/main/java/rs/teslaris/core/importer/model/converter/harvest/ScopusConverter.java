@@ -28,6 +28,7 @@ public class ScopusConverter {
             var abstractData = scopusImportUtility.getAbstractData(entry.identifier());
             setConferenceInfo(abstractData, document);
         }
+        // TODO: Check Schopfel bug
 
         setCommonFields(entry, document);
 

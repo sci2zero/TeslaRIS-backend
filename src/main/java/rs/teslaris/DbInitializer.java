@@ -88,6 +88,7 @@ import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
+import rs.teslaris.core.util.seeding.SKOSLoader;
 
 @Component
 @RequiredArgsConstructor
@@ -143,6 +144,8 @@ public class DbInitializer implements ApplicationRunner {
     private final ThesisRepository thesisRepository;
 
     private final CsvDataLoader csvDataLoader;
+
+    private final SKOSLoader skosLoader;
 
     private final Environment environment;
 
@@ -306,6 +309,9 @@ public class DbInitializer implements ApplicationRunner {
 
         // COUNTRIES
         csvDataLoader.loadData("countries.csv", this::processCountryLine);
+
+        // RESEARCH AREAS
+        skosLoader.loadResearchAreas();
 
         ///////////////////// TESTING DATA /////////////////////
         if (Arrays.stream(environment.getActiveProfiles())
