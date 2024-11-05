@@ -16,7 +16,6 @@ import rs.teslaris.core.model.person.EmploymentPosition;
 @AllArgsConstructor
 public class EmploymentDTO extends InvolvementDTO {
 
-    @NotNull(message = "You must provide a valid employment position.")
     private EmploymentPosition employmentPosition;
 
     @Valid
