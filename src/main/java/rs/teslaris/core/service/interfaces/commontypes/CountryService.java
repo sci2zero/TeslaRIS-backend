@@ -20,7 +20,7 @@ public interface CountryService extends JPAService<Country> {
 
     CountryDTO createCountry(CountryDTO countryDTO);
 
-    Optional<CountryDTO> findCountryByName(String name);
+    Optional<Country> findCountryByName(String name);
 
     void updateCountry(Integer countryId, CountryDTO countryDTO);
 

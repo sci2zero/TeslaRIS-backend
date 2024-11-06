@@ -91,8 +91,14 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                     }
                 }
 
-                var documentImport =
+                var optionalDocument =
                     ScopusConverter.toCommonImportModel(entry, scopusImportUtility);
+                if (optionalDocument.isEmpty()) {
+                    log.info("Harvested entry is retracted: {}", entry.title());
+                    return;
+                }
+
+                var documentImport = optionalDocument.get();
                 documentImport.setIdentifier(entry.identifier());
 
                 if (Objects.nonNull(importedDocumentEmbedding)) {

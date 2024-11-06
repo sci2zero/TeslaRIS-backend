@@ -26,6 +26,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
@@ -100,6 +101,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
         clearCommonFields(thesisToUpdate);
+        thesisToUpdate.setOrganisationUnit(null);
 
         if (Objects.nonNull(thesisDTO.getContributions()) &&
             !thesisDTO.getContributions().isEmpty()) {
@@ -150,9 +152,6 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setThesisType(thesisDTO.getThesisType());
         thesis.setNumberOfPages(thesisDTO.getNumberOfPages());
 
-        thesis.setOrganisationUnit(
-            organisationUnitService.findOrganisationUnitById(thesisDTO.getOrganisationUnitId()));
-
         if (Objects.nonNull(thesisDTO.getPublisherId())) {
             thesis.setPublisher(publisherService.findPublisherById(thesisDTO.getPublisherId()));
         }
@@ -165,6 +164,21 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesisDTO.getLanguageTagIds().forEach(languageTagId -> {
                 thesis.getLanguages().add(languageService.findOne(languageTagId));
             });
+        }
+
+        if (Objects.nonNull(thesisDTO.getOrganisationUnitId())) {
+            thesis.setOrganisationUnit(
+                organisationUnitService.findOrganisationUnitById(
+                    thesisDTO.getOrganisationUnitId()));
+        } else {
+            if (Objects.isNull(thesisDTO.getExternalOrganisationUnitName())) {
+                throw new NotFoundException(
+                    "No organisation unit ID provided without external OU name reference.");
+            }
+
+            thesis.setExternalOrganisationUnitName(
+                multilingualContentService.getMultilingualContent(
+                    thesisDTO.getExternalOrganisationUnitName()));
         }
     }
 

@@ -27,4 +27,8 @@ public class LanguageAbbreviations {
     public static String ITALIAN = "IT";
 
     public static String SLOVENIAN = "SL";
+
+    public static String OLD_GERMAN = "GE";
+
+    public static String OLD_SPANISH = "SP";
 }

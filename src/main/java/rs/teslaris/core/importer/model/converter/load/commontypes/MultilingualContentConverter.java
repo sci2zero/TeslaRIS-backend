@@ -23,7 +23,7 @@ public class MultilingualContentConverter {
     public List<MultilingualContentDTO> toDTO(List<MultilingualContent> multilingualContent) {
         var result = new ArrayList<MultilingualContentDTO>();
 
-        if (Objects.isNull(multilingualContent)) {
+        if (Objects.isNull(multilingualContent) || multilingualContent.isEmpty()) {
             return result;
         }
 
@@ -33,9 +33,11 @@ public class MultilingualContentConverter {
 
             if (languageTagValue.isEmpty()) {
                 languageTagValue = LanguageAbbreviations.ENGLISH;
-            }
-
-            if (languageTagValue.equals(LanguageAbbreviations.CROATIAN)) {
+            } else if (languageTagValue.equals(LanguageAbbreviations.OLD_GERMAN)) {
+                languageTagValue = LanguageAbbreviations.GERMAN;
+            } else if (languageTagValue.equals(LanguageAbbreviations.OLD_SPANISH)) {
+                languageTagValue = LanguageAbbreviations.SPANISH;
+            } else if (languageTagValue.equals(LanguageAbbreviations.CROATIAN)) {
                 languageTagValue = LanguageAbbreviations.SERBIAN;
             }
 

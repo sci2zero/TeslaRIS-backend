@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -369,9 +370,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
         if (Objects.nonNull(event.getDateFrom()) && Objects.nonNull(event.getDateTo())) {
             var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
-            index.setDateFromTo(
-                event.getDateFrom().format(formatter) + " - " +
-                    event.getDateTo().format(formatter));
+
+            if (event.getDateFrom().getMonth().equals(Month.JANUARY) &&
+                event.getDateTo().getMonth().equals(Month.DECEMBER)) {
+                index.setDateFromTo(String.valueOf(event.getDateFrom().getYear()));
+            } else {
+                index.setDateFromTo(
+                    event.getDateFrom().format(formatter) + " - " +
+                        event.getDateTo().format(formatter));
+            }
+
             index.setDateSortable(event.getDateFrom());
         } else {
             index.setDateSortable(LocalDate.of(1, 1, 1)); // lowest date ES will parse

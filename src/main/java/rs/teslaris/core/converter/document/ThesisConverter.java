@@ -2,6 +2,7 @@ package rs.teslaris.core.converter.document;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.document.Thesis;
 
@@ -19,6 +20,10 @@ public class ThesisConverter extends DocumentPublicationConverter {
     private static void setThesisRelatedFields(Thesis thesis, ThesisResponseDTO thesisDTO) {
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             thesisDTO.setOrganisationUnitId(thesis.getOrganisationUnit().getId());
+        } else {
+            thesisDTO.setExternalOrganisationUnitName(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    thesis.getExternalOrganisationUnitName()));
         }
 
         thesisDTO.setThesisType(thesis.getThesisType());

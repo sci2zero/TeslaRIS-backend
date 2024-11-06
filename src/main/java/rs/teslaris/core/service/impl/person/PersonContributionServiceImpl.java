@@ -185,7 +185,8 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getPersonName().getLastname(),
             contributionDTO.getPersonName().getDateFrom(),
             contributionDTO.getPersonName().getDateTo());
-        if (personName.getFirstname().isEmpty() && personName.getLastname().isEmpty()) {
+        if (personName.getFirstname().isEmpty() && personName.getLastname().isEmpty() &&
+            Objects.nonNull(contributor)) {
             personName = new PersonName(contributor.getName().getFirstname(),
                 contributor.getName().getOtherName(),
                 contributor.getName().getLastname(),
@@ -213,13 +214,21 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
     private void setPersonContributionCommonFields(PersonContribution contribution,
                                                    PersonContributionDTO contributionDTO) {
-        var contributor = personService.findOne(contributionDTO.getPersonId());
-        contribution.setPerson(contributor);
+        if (Objects.nonNull(contributionDTO.getPersonId())) {
+            var contributor = personService.findOne(contributionDTO.getPersonId());
+            contribution.setPerson(contributor);
+            setAffiliationStatement(contribution, contributionDTO, contributor);
+        } else {
+            var affiliationStatement = new AffiliationStatement();
+            affiliationStatement.setDisplayPersonName(getPersonName(contributionDTO, null));
+            affiliationStatement.setDisplayAffiliationStatement(
+                multilingualContentService.getMultilingualContent(
+                    contributionDTO.getDisplayAffiliationStatement()));
+            contribution.setAffiliationStatement(affiliationStatement);
+        }
 
         contribution.setContributionDescription(multilingualContentService.getMultilingualContent(
             contributionDTO.getContributionDescription()));
-
-        setAffiliationStatement(contribution, contributionDTO, contributor);
 
         contribution.setInstitutions(new HashSet<>());
         if (Objects.nonNull(contributionDTO.getInstitutionIds())) {
@@ -236,7 +245,8 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
     private boolean compareContributions(PersonContribution previousContribution,
                                          PersonContribution contribution) {
-        if (Objects.nonNull(previousContribution.getPerson())) {
+        if (Objects.nonNull(previousContribution.getPerson()) &&
+            Objects.nonNull(contribution.getPerson())) {
             return previousContribution.getPerson().getId()
                 .equals(contribution.getPerson().getId());
         }

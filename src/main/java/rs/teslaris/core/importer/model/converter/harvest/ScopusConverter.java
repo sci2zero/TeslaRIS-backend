@@ -2,6 +2,7 @@ package rs.teslaris.core.importer.model.converter.harvest;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import rs.teslaris.core.importer.model.common.DocumentImport;
 import rs.teslaris.core.importer.model.common.Event;
@@ -16,19 +17,14 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 
 public class ScopusConverter {
 
-    public static DocumentImport toCommonImportModel(ScopusImportUtility.Entry entry,
-                                                     ScopusImportUtility scopusImportUtility) {
+    public static Optional<DocumentImport> toCommonImportModel(ScopusImportUtility.Entry entry,
+                                                               ScopusImportUtility scopusImportUtility) {
         var document = new DocumentImport();
 
-        if (entry.subtypeDescription().equals("Article")) {
-            document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
-        } else if (entry.subtypeDescription().equals("Conference Paper")) {
-            document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
-
-            var abstractData = scopusImportUtility.getAbstractData(entry.identifier());
-            setConferenceInfo(abstractData, document);
+        deducePublicationType(entry, document, scopusImportUtility);
+        if (Objects.isNull(document.getPublicationType())) {
+            return Optional.empty();
         }
-        // TODO: Check Schopfel bug
 
         setCommonFields(entry, document);
 
@@ -57,7 +53,30 @@ public class ScopusConverter {
             }
         }
 
-        return document;
+        return Optional.of(document);
+    }
+
+    private static void deducePublicationType(ScopusImportUtility.Entry entry,
+                                              DocumentImport document,
+                                              ScopusImportUtility scopusImportUtility) {
+        switch (entry.subtypeDescription()) {
+            case "Article":
+            case "Short Survey":
+            case "Review":
+            case "Data Paper":
+            case "Business Article":
+            case "Note":
+            case "Letter":
+            case "Editorial":
+                document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+                break;
+            case "Conference Paper":
+                document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+
+                var abstractData = scopusImportUtility.getAbstractData(entry.identifier());
+                setConferenceInfo(abstractData, document);
+                break;
+        }
     }
 
     protected static void setCommonFields(ScopusImportUtility.Entry entry,
@@ -70,7 +89,10 @@ public class ScopusConverter {
         document.setDocumentDate(entry.coverDate());
 
         document.getTitle().add(new MultilingualContent("EN", entry.title(), 1));
-        document.getDescription().add(new MultilingualContent("EN", entry.description(), 1));
+
+        if (Objects.nonNull(document.getDescription()) && !document.getDescription().isEmpty()) {
+            document.getDescription().add(new MultilingualContent("EN", entry.description(), 1));
+        }
 
         document.getPublishedIn().add(new MultilingualContent("EN", entry.publicationName(), 1));
 
@@ -155,14 +177,23 @@ public class ScopusConverter {
             var dateToObject =
                 sourceRecord.additionalSrcinfo().conferenceinfo().confevent().confdate()
                     .enddate();
+
             conference.setDateFrom(
                 LocalDate.of(Integer.parseInt(dateFromObject.year()),
                     Integer.parseInt(dateFromObject.month()),
                     Integer.parseInt(dateFromObject.day())));
-            conference.setDateTo(
-                LocalDate.of(Integer.parseInt(dateToObject.year()),
-                    Integer.parseInt(dateToObject.month()),
-                    Integer.parseInt(dateToObject.day())));
+
+            if (Objects.nonNull(dateToObject)) {
+                conference.setDateTo(
+                    LocalDate.of(Integer.parseInt(dateToObject.year()),
+                        Integer.parseInt(dateToObject.month()),
+                        Integer.parseInt(dateToObject.day())));
+            } else {
+                conference.setDateTo(
+                    LocalDate.of(Integer.parseInt(dateFromObject.year()),
+                        Integer.parseInt(dateFromObject.month()),
+                        Integer.parseInt(dateFromObject.day())));
+            }
 
             document.setEvent(conference);
         }

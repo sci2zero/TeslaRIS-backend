@@ -24,7 +24,9 @@ import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
@@ -33,6 +35,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class ConferenceController {
 
     private final ConferenceService conferenceService;
+
+    private final DeduplicationService deduplicationService;
 
 
     @GetMapping("/{conferenceId}/can-edit")
@@ -108,6 +112,7 @@ public class ConferenceController {
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     public void deleteConference(@PathVariable Integer conferenceId) {
         conferenceService.deleteConference(conferenceId);
+        deduplicationService.deleteSuggestion(conferenceId, IndexType.EVENT);
     }
 
     @PatchMapping("/{conferenceId}/reorder-contribution/{contributionId}")
