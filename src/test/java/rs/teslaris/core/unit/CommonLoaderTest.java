@@ -26,12 +26,15 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.importer.dto.JournalPublicationLoadDTO;
 import rs.teslaris.core.importer.dto.ProceedingsPublicationLoadDTO;
 import rs.teslaris.core.importer.model.common.DocumentImport;
 import rs.teslaris.core.importer.model.common.Event;
 import rs.teslaris.core.importer.model.common.OrganisationUnit;
+import rs.teslaris.core.importer.model.common.Person;
 import rs.teslaris.core.importer.model.common.PersonDocumentContribution;
+import rs.teslaris.core.importer.model.common.PersonName;
 import rs.teslaris.core.importer.model.converter.load.publication.JournalPublicationConverter;
 import rs.teslaris.core.importer.model.converter.load.publication.ProceedingsPublicationConverter;
 import rs.teslaris.core.importer.service.impl.CommonLoaderImpl;
@@ -42,12 +45,16 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.PersonalInfo;
+import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 
@@ -80,6 +87,9 @@ public class CommonLoaderTest {
 
     @Mock
     private PublicationSeriesService publicationSeriesService;
+
+    @Mock
+    private PersonService personService;
 
     @InjectMocks
     private CommonLoaderImpl commonLoader;
@@ -399,6 +409,104 @@ public class CommonLoaderTest {
         // When & Then
         assertThrows(NotFoundException.class,
             () -> commonLoader.createInstitution(scopusAfid, userId));
+    }
+
+    @Test
+    void createPersonShouldCreatePersonWhenNotExists() {
+        // Given
+        var scopusAuthorId = "12345";
+        var lastLoadedId = "54321";
+        var userId = 1;
+
+        var currentlyLoadedEntity = new DocumentImport();
+        var person = new Person();
+        person.setName(new PersonName());
+        person.setScopusAuthorId(scopusAuthorId);
+        var contribution = new PersonDocumentContribution();
+        contribution.setPerson(person);
+        currentlyLoadedEntity.setContributions(List.of(contribution));
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedId(lastLoadedId);
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            currentlyLoadedEntity);
+        when(personService.readPersonByScopusId(scopusAuthorId)).thenReturn(null);
+
+        var createdPerson = new rs.teslaris.core.model.person.Person();
+        createdPerson.setName(new rs.teslaris.core.model.person.PersonName());
+        var personalInfo = new PersonalInfo();
+        personalInfo.setPostalAddress(new PostalAddress());
+        personalInfo.setContact(new Contact());
+        createdPerson.setPersonalInfo(personalInfo);
+        when(personService.createPersonWithBasicInfo(any(), any())).thenReturn(
+            createdPerson);
+
+        // When
+        PersonResponseDTO result = commonLoader.createPerson(scopusAuthorId, userId);
+
+        // Then
+        assertNotNull(result);
+    }
+
+    @Test
+    void createPersonShouldThrowNotFoundExceptionWhenNoEntityLoaded() {
+        // Given
+        var scopusAuthorId = "12345";
+        var lastLoadedId = "54321";
+        var userId = 1;
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedId(lastLoadedId);
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").gt(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(null);
+
+        // When & Then
+        assertThrows(NotFoundException.class,
+            () -> commonLoader.createPerson(scopusAuthorId, userId));
+    }
+
+    @Test
+    void createPersonShouldThrowNotFoundExceptionWhenPersonNotLoaded() {
+        // Given
+        var scopusAuthorId = "12345";
+        var lastLoadedId = "54321";
+        var userId = 1;
+
+        var currentlyLoadedEntity = new DocumentImport();
+        currentlyLoadedEntity.setContributions(new ArrayList<>());
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedId(lastLoadedId);
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").gt(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(
+            currentlyLoadedEntity);
+
+        // When & Then
+        assertThrows(NotFoundException.class,
+            () -> commonLoader.createPerson(scopusAuthorId, userId));
     }
 
     @Test

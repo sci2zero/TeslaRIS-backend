@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -21,17 +22,24 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
+import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.importer.model.common.DocumentImport;
 import rs.teslaris.core.importer.model.common.Event;
 import rs.teslaris.core.importer.model.common.MultilingualContent;
 import rs.teslaris.core.importer.model.common.OrganisationUnit;
+import rs.teslaris.core.importer.model.common.Person;
 import rs.teslaris.core.importer.model.converter.load.publication.JournalPublicationConverter;
 import rs.teslaris.core.importer.model.converter.load.publication.ProceedingsPublicationConverter;
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
 import rs.teslaris.core.importer.utility.DataSet;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -39,6 +47,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 
@@ -57,6 +66,8 @@ public class CommonLoaderImpl implements CommonLoader {
     private final LanguageTagService languageTagService;
     private final PublicationSeriesService publicationSeriesService;
     private final CountryService countryService;
+
+    private final PersonService personService;
 
     @Override
     public <R> R loadRecordsWizard(Integer userId) {
@@ -164,6 +175,46 @@ public class CommonLoaderImpl implements CommonLoader {
         }
 
         throw new NotFoundException("Institution with given AFID is not loaded.");
+    }
+
+    @Override
+    public PersonResponseDTO createPerson(String scopusAuthorId, Integer userId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId);
+
+        if (Objects.isNull(currentlyLoadedEntity)) {
+            throw new NotFoundException("No entity is being loaded at the moment.");
+        }
+
+        for (var contribution : currentlyLoadedEntity.getContributions()) {
+            if (contribution.getPerson().getScopusAuthorId().equals(scopusAuthorId) &&
+                Objects.isNull(personService.findPersonByScopusAuthorId(scopusAuthorId))) {
+
+                var savedPerson = createLoadedPerson(contribution.getPerson());
+
+                contribution.getInstitutions().forEach(institution -> {
+                    var institutionIndex =
+                        organisationUnitService.findOrganisationUnitByScopusAfid(
+                            institution.getScopusAfid());
+
+                    if (Objects.nonNull(institutionIndex)) {
+                        var employmentInstitution =
+                            organisationUnitService.findOne(institutionIndex.getDatabaseId());
+                        var currentEmployment =
+                            new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
+                                InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                                employmentInstitution, null, new HashSet<>());
+                        savedPerson.addInvolvement(currentEmployment);
+                    }
+                });
+
+                personService.save(savedPerson);
+                personService.indexPerson(savedPerson, savedPerson.getId());
+
+                return PersonConverter.toDTO(savedPerson);
+            }
+        }
+
+        throw new NotFoundException("Person with given ScopusID is not loaded.");
     }
 
     @Override
@@ -338,6 +389,24 @@ public class CommonLoaderImpl implements CommonLoader {
 
             return organisationUnitService.createOrganisationUnit(organisationUnitDTO, true);
         }
+    }
+
+    private rs.teslaris.core.model.person.Person createLoadedPerson(Person person) {
+        var basicPersonDTO = new BasicPersonDTO();
+
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname(person.getName().getFirstName());
+        personNameDTO.setOtherName(person.getName().getMiddleName());
+        personNameDTO.setLastname(person.getName().getLastName());
+        basicPersonDTO.setPersonName(personNameDTO);
+
+        basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
+        basicPersonDTO.setECrisId(person.getECrisId());
+        basicPersonDTO.setENaukaId(person.getENaukaId());
+        basicPersonDTO.setOrcid(person.getOrcid());
+        basicPersonDTO.setApvnt(person.getApvnt());
+
+        return personService.createPersonWithBasicInfo(basicPersonDTO, true);
     }
 
     @Nullable

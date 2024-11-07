@@ -193,6 +193,12 @@ public class PersonConverter {
             userDTO = UserConverter.toUserResponseDTO(person.getUser());
         }
 
+        var contact = new ContactDTO();
+        if (Objects.nonNull(person.getPersonalInfo().getContact())) {
+            contact.setContactEmail(person.getPersonalInfo().getContact().getContactEmail());
+            contact.setPhoneNumber(person.getPersonalInfo().getContact().getPhoneNumber());
+        }
+
         return new PersonUserResponseDTO(
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
@@ -200,14 +206,9 @@ public class PersonConverter {
                 person.getName().getDateTo()), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
-                person.getPersonalInfo()
-                    .getSex(), postalAddress,
-                new ContactDTO(person.getPersonalInfo().getContact().getContactEmail(),
-                    person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
+                person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getPersonalInfo().getUris()), biography,
-            keyword,
-            person.getApproveStatus(),
-            userDTO);
+            keyword, person.getApproveStatus(), userDTO);
     }
 }

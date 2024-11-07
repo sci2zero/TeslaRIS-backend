@@ -45,7 +45,6 @@ public class BasicPersonDTO implements PersonIdentifierable {
 
     private String scopusAuthorId;
 
-    @NotNull(message = "You must provide a person employment.")
     @Positive(message = "Organisation unit id must be a positive number.")
     private Integer organisationUnitId;
 
