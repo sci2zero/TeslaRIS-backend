@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -68,6 +70,9 @@ public class JournalServiceTest {
 
     @Mock
     private PublicationSeriesRepository publicationSeriesRepository;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @InjectMocks
     private JournalServiceImpl journalService;
@@ -349,5 +354,43 @@ public class JournalServiceTest {
 
         // Then
         assertNull(foundJournal);
+    }
+
+    @Test
+    void shouldDeleteJournalAndRelatedEntitiesWhenJournalIndexIsPresent() {
+        // Given
+        var testJournalId = 1;
+        var journalIndex = new JournalIndex();
+        when(journalIndexRepository.findJournalIndexByDatabaseId(testJournalId)).thenReturn(
+            Optional.of(journalIndex));
+
+        // When
+        journalService.forceDeleteJournal(testJournalId);
+
+        // Then
+        verify(journalRepository).deleteAllPublicationsInJournal(testJournalId);
+        verify(publicationSeriesRepository).unbindProceedings(testJournalId);
+        verify(journalJPAService).delete(testJournalId);
+        verify(journalIndexRepository).delete(journalIndex);
+        verify(documentPublicationIndexRepository).deleteByJournalId(testJournalId);
+    }
+
+    @Test
+    void shouldDeleteJournalAndRelatedEntitiesWhenJournalIndexIsAbsent() {
+        // Given
+        var testJournalId = 1;
+
+        when(journalIndexRepository.findJournalIndexByDatabaseId(testJournalId)).thenReturn(
+            Optional.empty());
+
+        // When
+        journalService.forceDeleteJournal(testJournalId);
+
+        // Then
+        verify(journalRepository).deleteAllPublicationsInJournal(testJournalId);
+        verify(publicationSeriesRepository).unbindProceedings(testJournalId);
+        verify(journalJPAService).delete(testJournalId);
+        verify(journalIndexRepository, never()).delete(any());
+        verify(documentPublicationIndexRepository).deleteByJournalId(testJournalId);
     }
 }

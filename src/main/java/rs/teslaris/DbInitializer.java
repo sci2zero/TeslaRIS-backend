@@ -199,6 +199,7 @@ public class DbInitializer implements ApplicationRunner {
         var reindexPrivilege = new Privilege("REINDEX_DATABASE");
         var mergeBookSeriesPublications = new Privilege("MERGE_BOOK_SERIES_PUBLICATIONS");
         var editCountries = new Privilege("EDIT_COUNTRIES");
+        var forceDelete = new Privilege("FORCE_DELETE_ENTITIES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -213,7 +214,7 @@ public class DbInitializer implements ApplicationRunner {
                 registerEmployee, reindexPrivilege, startDeduplicationProcess, performDeduplication,
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
-                mergeOUMetadata, editCountries));
+                mergeOUMetadata, editCountries, forceDelete));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -228,7 +229,8 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, deletePerson, registerEmployee, reindexPrivilege,
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
-                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries
+                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries,
+                forceDelete
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

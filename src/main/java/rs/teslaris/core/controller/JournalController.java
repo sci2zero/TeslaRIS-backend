@@ -104,4 +104,12 @@ public class JournalController {
         journalService.deleteJournal(journalId);
         deduplicationService.deleteSuggestion(journalId, IndexType.JOURNAL);
     }
+
+    @DeleteMapping("/force/{journalId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    public void forceDeleteJournal(@PathVariable Integer journalId) {
+        journalService.forceDeleteJournal(journalId);
+        deduplicationService.deleteSuggestion(journalId, IndexType.JOURNAL);
+    }
 }

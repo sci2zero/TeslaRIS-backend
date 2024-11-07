@@ -16,6 +16,7 @@ import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -42,6 +43,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     private final JournalRepository journalRepository;
 
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
 
     @Autowired
     public JournalServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
@@ -51,13 +54,15 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               EmailUtil emailUtil, JournalJPAServiceImpl journalJPAService,
                               SearchService<JournalIndex> searchService,
                               JournalIndexRepository journalIndexRepository,
-                              JournalRepository journalRepository) {
+                              JournalRepository journalRepository,
+                              DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
             personContributionService, emailUtil);
         this.journalJPAService = journalJPAService;
         this.searchService = searchService;
         this.journalIndexRepository = journalIndexRepository;
         this.journalRepository = journalRepository;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
 
     @Override
@@ -153,12 +158,25 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         if (journalRepository.hasPublication(journalId) ||
             publicationSeriesRepository.hasProceedings(journalId)) {
             throw new JournalReferenceConstraintViolationException(
-                "PublicationSeries with given ID is allready in use.");
+                "PublicationSeries with given ID is already in use.");
         }
 
         journalJPAService.delete(journalId);
         var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
         index.ifPresent(journalIndexRepository::delete);
+    }
+
+    @Override
+    public void forceDeleteJournal(Integer journalId) {
+        journalRepository.deleteAllPublicationsInJournal(journalId);
+        publicationSeriesRepository.unbindProceedings(journalId);
+
+        journalJPAService.delete(journalId);
+
+        var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
+        index.ifPresent(journalIndexRepository::delete);
+
+        documentPublicationIndexRepository.deleteByJournalId(journalId);
     }
 
     @Override
