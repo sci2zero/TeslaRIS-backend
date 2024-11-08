@@ -473,7 +473,24 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 "Organisation unit is already in use.");
         }
 
-        this.delete(organisationUnitId);
+        delete(organisationUnitId);
+        var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            organisationUnitId);
+        index.ifPresent(organisationUnitIndexRepository::delete);
+    }
+
+    @Override
+    public void forceDeleteOrganisationUnit(Integer organisationUnitId) {
+        organisationUnitRepository.deleteInvolvementsForOrganisationUnit(organisationUnitId);
+        organisationUnitRepository.deleteRelationsForOrganisationUnit(organisationUnitId);
+
+        // TODO: Check this
+        organisationUnitRepository.deleteThesisForOrganisationUnit(organisationUnitId);
+
+        // TODO: Check this
+        organisationUnitRepository.deleteEmployeesForOrganisationUnit(organisationUnitId);
+
+        delete(organisationUnitId);
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             organisationUnitId);
         index.ifPresent(organisationUnitIndexRepository::delete);

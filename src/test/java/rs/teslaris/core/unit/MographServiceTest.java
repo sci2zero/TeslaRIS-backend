@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -332,4 +333,24 @@ public class MographServiceTest {
         // then
         assertEquals(result.getTotalElements(), 2L);
     }
+
+    @Test
+    void shouldForceDeleteMonograph() {
+        // Given
+        var monographId = 1;
+
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            monographId))
+            .thenReturn(Optional.empty());
+
+        // When
+        monographService.forceDeleteMonograph(monographId);
+
+        // Then
+        verify(monographRepository).deleteAllPublicationsInMonograph(monographId);
+        verify(monographJPAService).delete(monographId);
+        verify(documentPublicationIndexRepository).deleteByMonographId(monographId);
+        verify(documentPublicationIndexRepository, never()).delete(any());
+    }
+
 }

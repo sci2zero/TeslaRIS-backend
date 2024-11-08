@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -241,4 +242,24 @@ public class ProceedingsServiceTest {
         verify(documentPublicationIndexRepository, atLeastOnce()).save(
             any(DocumentPublicationIndex.class));
     }
+
+    @Test
+    void shouldForceDeleteProceedings() {
+        // Given
+        var proceedingsId = 1;
+
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            proceedingsId))
+            .thenReturn(Optional.empty());
+
+        // When
+        proceedingsService.forceDeleteProceedings(proceedingsId);
+
+        // Then
+        verify(proceedingsRepository).deleteAllPublicationsInProceedings(proceedingsId);
+        verify(proceedingsJPAService).delete(proceedingsId);
+        verify(documentPublicationIndexRepository).deleteByProceedingsId(proceedingsId);
+        verify(documentPublicationIndexRepository, never()).delete(any());
+    }
+
 }

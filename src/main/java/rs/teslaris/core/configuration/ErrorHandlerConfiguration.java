@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
+import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
@@ -289,6 +290,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleMonographReferenceConstraintViolationException(HttpServletRequest request,
                                                                      MonographReferenceConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(BookSeriesReferenceConstraintViolationException.class)
+    @ResponseBody
+    ErrorObject handleBookSeriesReferenceConstraintViolationException(HttpServletRequest request,
+                                                                      BookSeriesReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 

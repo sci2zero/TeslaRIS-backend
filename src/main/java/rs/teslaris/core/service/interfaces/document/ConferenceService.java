@@ -32,6 +32,8 @@ public interface ConferenceService {
 
     void deleteConference(Integer conferenceId);
 
+    void forceDeleteConference(Integer conferenceId);
+
     void reindexConferences();
 
     void reorderConferenceContributions(Integer conferenceId, Integer contributionId,

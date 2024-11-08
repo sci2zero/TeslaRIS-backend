@@ -4,6 +4,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -40,4 +41,22 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     @Query(value = "SELECT * FROM organisation_units ou WHERE " +
         "ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<OrganisationUnit> findAllModifiedInLast24Hours(Pageable pageable);
+
+    @Modifying
+    @Query("update Thesis t set t.deleted = true where t.organisationUnit.id = :organisationUnitId")
+    void deleteThesisForOrganisationUnit(Integer organisationUnitId);
+
+    @Modifying
+    @Query("update Involvement i set i.deleted = true where i.organisationUnit.id = :organisationUnitId")
+    void deleteInvolvementsForOrganisationUnit(Integer organisationUnitId);
+
+    @Modifying
+    @Query("update OrganisationUnitsRelation our set our.deleted = true " +
+        "where our.sourceOrganisationUnit.id = :organisationUnitId or " +
+        "our.targetOrganisationUnit.id = :organisationUnitId")
+    void deleteRelationsForOrganisationUnit(Integer organisationUnitId);
+
+    @Modifying
+    @Query("update User u set u.deleted = true where u.organisationUnit.id = :organisationUnitId")
+    void deleteEmployeesForOrganisationUnit(Integer organisationUnitId);
 }

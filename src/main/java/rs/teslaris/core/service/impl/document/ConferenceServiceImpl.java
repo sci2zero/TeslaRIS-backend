@@ -11,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.PersonContribution;
@@ -34,6 +36,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     private final ConferenceJPAServiceImpl conferenceJPAService;
 
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+
     @Autowired
     public ConferenceServiceImpl(EventIndexRepository eventIndexRepository,
                                  MultilingualContentService multilingualContentService,
@@ -42,10 +47,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService, EmailUtil emailUtil,
                                  CountryService countryService,
-                                 ConferenceJPAServiceImpl conferenceJPAService) {
+                                 ConferenceJPAServiceImpl conferenceJPAService,
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
             eventRepository, eventsRelationRepository, searchService, emailUtil, countryService);
         this.conferenceJPAService = conferenceJPAService;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
 
     @Override
@@ -131,16 +138,29 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     @Override
     public void deleteConference(Integer conferenceId) {
-
         if (hasCommonUsage(conferenceId)) {
             throw new ConferenceReferenceConstraintViolationException(
                 "Conference with given ID is in use and cannot be deleted.");
         }
 
-        this.conferenceJPAService.delete(conferenceId);
+        conferenceJPAService.delete(conferenceId);
 
         var index = eventIndexRepository.findByDatabaseId(conferenceId);
         index.ifPresent(eventIndexRepository::delete);
+    }
+
+    @Override
+    public void forceDeleteConference(Integer conferenceId) {
+        eventRepository.deleteAllPublicationsInEvent(conferenceId);
+        eventRepository.deleteAllProceedingsInEvent(conferenceId);
+
+        conferenceJPAService.delete(conferenceId);
+
+        var index = eventIndexRepository.findByDatabaseId(conferenceId);
+        index.ifPresent(eventIndexRepository::delete);
+
+        documentPublicationIndexRepository.deleteByEventIdAndType(conferenceId,
+            DocumentPublicationType.PROCEEDINGS.name());
     }
 
     @Override

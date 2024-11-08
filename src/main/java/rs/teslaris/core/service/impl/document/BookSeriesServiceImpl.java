@@ -136,6 +136,16 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    public void forceDeleteBookSeries(Integer bookSeriesId) {
+        publicationSeriesRepository.unbindProceedings(bookSeriesId);
+
+        bookSeriesJPAService.delete(bookSeriesId);
+
+        var index = bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId);
+        index.ifPresent(bookSeriesIndexRepository::delete);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public void reindexBookSeries() {
         bookSeriesIndexRepository.deleteAll();

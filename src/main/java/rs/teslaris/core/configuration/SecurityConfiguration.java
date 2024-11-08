@@ -121,6 +121,8 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/proceedings-publication/{documentId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/monograph/{documentId}")
+                .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/monograph-publication/{documentId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,

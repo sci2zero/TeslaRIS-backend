@@ -1,6 +1,7 @@
 package rs.teslaris.core.repository.document;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.document.Publisher;
@@ -22,4 +23,24 @@ public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
 
     @Query("select count(t) > 0 from Thesis t join t.publisher p where p.id = :publisherId")
     boolean hasPublishedThesis(Integer publisherId);
+
+    @Modifying
+    @Query("update Dataset d set d.publisher = null where d.publisher.id = :publisherId")
+    void unbindDataset(Integer publisherId);
+
+    @Modifying
+    @Query("update Patent p set p.publisher = null where p.publisher.id = :publisherId")
+    void unbindPatent(Integer publisherId);
+
+    @Modifying
+    @Query("update Proceedings p set p.publisher = null where p.publisher.id = :publisherId")
+    void unbindProceedings(Integer publisherId);
+
+    @Modifying
+    @Query("update Software s set s.publisher = null where s.publisher.id = :publisherId")
+    void unbindSoftware(Integer publisherId);
+
+    @Modifying
+    @Query("update Thesis t set t.publisher = null where t.publisher.id = :publisherId")
+    void unbindThesis(Integer publisherId);
 }

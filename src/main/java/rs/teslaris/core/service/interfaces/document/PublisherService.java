@@ -28,5 +28,7 @@ public interface PublisherService {
 
     void deletePublisher(Integer publisherId);
 
+    void forceDeletePublisher(Integer publisherId);
+
     void reindexPublishers();
 }

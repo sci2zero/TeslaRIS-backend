@@ -26,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
@@ -372,7 +373,8 @@ public class JournalServiceTest {
         verify(publicationSeriesRepository).unbindProceedings(testJournalId);
         verify(journalJPAService).delete(testJournalId);
         verify(journalIndexRepository).delete(journalIndex);
-        verify(documentPublicationIndexRepository).deleteByJournalId(testJournalId);
+        verify(documentPublicationIndexRepository).deleteByJournalIdAndType(testJournalId,
+            DocumentPublicationType.JOURNAL_PUBLICATION.name());
     }
 
     @Test
@@ -391,6 +393,7 @@ public class JournalServiceTest {
         verify(publicationSeriesRepository).unbindProceedings(testJournalId);
         verify(journalJPAService).delete(testJournalId);
         verify(journalIndexRepository, never()).delete(any());
-        verify(documentPublicationIndexRepository).deleteByJournalId(testJournalId);
+        verify(documentPublicationIndexRepository).deleteByJournalIdAndType(testJournalId,
+            DocumentPublicationType.JOURNAL_PUBLICATION.name());
     }
 }

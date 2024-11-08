@@ -89,6 +89,14 @@ public class BookSeriesController {
         deduplicationService.deleteSuggestion(bookSeriesId, IndexType.BOOK_SERIES);
     }
 
+    @DeleteMapping("/force/{bookSeriesId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    public void forceDeleteBookSeries(@PathVariable Integer bookSeriesId) {
+        bookSeriesService.forceDeleteBookSeries(bookSeriesId);
+        deduplicationService.deleteSuggestion(bookSeriesId, IndexType.BOOK_SERIES);
+    }
+
     @GetMapping("/publications/{bookSeriesId}")
     public Page<DocumentPublicationIndex> findProceedingsForBookSeries(
         @PathVariable Integer bookSeriesId, Pageable pageable) {

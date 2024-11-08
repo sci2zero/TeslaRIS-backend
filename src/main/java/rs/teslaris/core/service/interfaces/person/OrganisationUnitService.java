@@ -58,6 +58,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     void deleteOrganisationUnit(Integer organisationUnitId);
 
+    void forceDeleteOrganisationUnit(Integer organisationUnitId);
+
     OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO organisationUnitsRelation);
 

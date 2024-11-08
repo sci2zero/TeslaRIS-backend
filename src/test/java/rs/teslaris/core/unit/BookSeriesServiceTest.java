@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -282,5 +283,22 @@ public class BookSeriesServiceTest {
         // Then
         assertNotNull(result);
         assertTrue(result.getSize() >= 2);
+    }
+
+    @Test
+    void shouldForceDeleteDeleteBookSeries() {
+        // Given
+        var bookSeriesId = 1;
+
+        when(bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)).thenReturn(
+            Optional.empty());
+
+        // When
+        bookSeriesService.forceDeleteBookSeries(bookSeriesId);
+
+        // Then
+        verify(publicationSeriesRepository).unbindProceedings(bookSeriesId);
+        verify(bookSeriesJPAService).delete(bookSeriesId);
+        verify(bookSeriesIndexRepository, never()).delete(any());
     }
 }

@@ -167,6 +167,19 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    public void forceDeleteProceedings(Integer proceedingsId) {
+        proceedingsRepository.deleteAllPublicationsInProceedings(proceedingsId);
+
+        proceedingsJPAService.delete(proceedingsId);
+
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            proceedingsId);
+        index.ifPresent(documentPublicationIndexRepository::delete);
+
+        documentPublicationIndexRepository.deleteByProceedingsId(proceedingsId);
+    }
+
+    @Override
     public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
         indexCommonFields(proceedings, index);
 

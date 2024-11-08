@@ -768,4 +768,30 @@ public class OrganisationUnitServiceTest {
         verify(organisationUnitIndexRepository, times(1))
             .findOrganisationUnitIndexesBySuperOUId(organisationUnitId, pageRequest);
     }
+
+    @Test
+    void shouldForceDeleteOrganisationUnit() {
+        // Given
+        var organisationUnitId = 1;
+
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId))
+            .thenReturn(Optional.of(new OrganisationUnit()));
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            organisationUnitId))
+            .thenReturn(Optional.of(new OrganisationUnitIndex()));
+
+        // When
+        organisationUnitService.forceDeleteOrganisationUnit(organisationUnitId);
+
+        // Then
+        verify(organisationUnitRepository, times(1))
+            .deleteEmployeesForOrganisationUnit(organisationUnitId);
+        verify(organisationUnitRepository, times(1))
+            .deleteThesisForOrganisationUnit(organisationUnitId);
+        verify(organisationUnitRepository, times(1))
+            .deleteInvolvementsForOrganisationUnit(organisationUnitId);
+        verify(organisationUnitRepository, times(1))
+            .deleteRelationsForOrganisationUnit(organisationUnitId);
+    }
+
 }

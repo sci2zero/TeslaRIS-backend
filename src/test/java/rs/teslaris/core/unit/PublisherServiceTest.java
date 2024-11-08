@@ -270,4 +270,24 @@ public class PublisherServiceTest {
         // then
         assertEquals(expected.getId(), result.getId());
     }
+
+    @Test
+    void shouldForceDeletePublisher() {
+        // Given
+        var publisherId = 1;
+
+        when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(new Publisher()));
+        when(publisherIndexRepository.findByDatabaseId(publisherId)).thenReturn(
+            Optional.of(new PublisherIndex()));
+
+        // When
+        publisherService.forceDeletePublisher(publisherId);
+
+        // Then
+        verify(publisherRepository).unbindDataset(publisherId);
+        verify(publisherRepository).unbindPatent(publisherId);
+        verify(publisherRepository).unbindProceedings(publisherId);
+        verify(publisherRepository).unbindSoftware(publisherId);
+        verify(publisherRepository).unbindThesis(publisherId);
+    }
 }

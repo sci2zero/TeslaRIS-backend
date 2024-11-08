@@ -140,4 +140,12 @@ public class OrganisationUnitController {
         organisationUnitService.deleteOrganisationUnit(organisationUnitId);
         deduplicationService.deleteSuggestion(organisationUnitId, IndexType.ORGANISATION_UNIT);
     }
+
+    @DeleteMapping("/force/{organisationUnitId}")
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forceDeleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
+        organisationUnitService.forceDeleteOrganisationUnit(organisationUnitId);
+        deduplicationService.deleteSuggestion(organisationUnitId, IndexType.ORGANISATION_UNIT);
+    }
 }

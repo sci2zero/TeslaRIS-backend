@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,7 +26,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.document.Conference;
@@ -71,6 +74,9 @@ public class ConferenceServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @InjectMocks
     private ConferenceServiceImpl conferenceService;
@@ -300,4 +306,24 @@ public class ConferenceServiceTest {
         verify(conferenceJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(eventIndexRepository, atLeastOnce()).save(any(EventIndex.class));
     }
+
+    @Test
+    void shouldForceDeleteConference() {
+        // Given
+        var conferenceId = 1;
+
+        when(eventIndexRepository.findByDatabaseId(conferenceId)).thenReturn(Optional.empty());
+
+        // When
+        conferenceService.forceDeleteConference(conferenceId);
+
+        // Then
+        verify(eventRepository).deleteAllPublicationsInEvent(conferenceId);
+        verify(eventRepository).deleteAllProceedingsInEvent(conferenceId);
+        verify(conferenceJPAService).delete(conferenceId);
+        verify(documentPublicationIndexRepository).deleteByEventIdAndType(conferenceId,
+            DocumentPublicationType.PROCEEDINGS.name());
+        verify(eventIndexRepository, never()).delete(any());
+    }
+
 }

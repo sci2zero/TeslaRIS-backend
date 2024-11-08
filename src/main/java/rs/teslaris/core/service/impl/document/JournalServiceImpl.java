@@ -15,6 +15,7 @@ import rs.teslaris.core.converter.document.BookSeriesConverter;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
@@ -176,7 +177,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
         index.ifPresent(journalIndexRepository::delete);
 
-        documentPublicationIndexRepository.deleteByJournalId(journalId);
+        documentPublicationIndexRepository.deleteByJournalIdAndType(journalId,
+            DocumentPublicationType.JOURNAL_PUBLICATION.name());
     }
 
     @Override

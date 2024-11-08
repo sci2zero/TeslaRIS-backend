@@ -115,6 +115,14 @@ public class ConferenceController {
         deduplicationService.deleteSuggestion(conferenceId, IndexType.EVENT);
     }
 
+    @DeleteMapping("/force/{conferenceId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    public void forceDeleteConference(@PathVariable Integer conferenceId) {
+        conferenceService.forceDeleteConference(conferenceId);
+        deduplicationService.deleteSuggestion(conferenceId, IndexType.EVENT);
+    }
+
     @PatchMapping("/{conferenceId}/reorder-contribution/{contributionId}")
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     void reorderEventContributions(@PathVariable Integer conferenceId,

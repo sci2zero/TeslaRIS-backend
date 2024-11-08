@@ -94,4 +94,11 @@ public class PublisherController {
     public void deletePublisher(@PathVariable Integer publisherId) {
         publisherService.deletePublisher(publisherId);
     }
+
+    @DeleteMapping("/force/{publisherId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    public void forceDeletePublisher(@PathVariable Integer publisherId) {
+        publisherService.forceDeletePublisher(publisherId);
+    }
 }

@@ -141,6 +141,20 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    public void forceDeletePublisher(Integer publisherId) {
+        publisherRepository.unbindDataset(publisherId);
+        publisherRepository.unbindPatent(publisherId);
+        publisherRepository.unbindProceedings(publisherId);
+        publisherRepository.unbindSoftware(publisherId);
+        publisherRepository.unbindThesis(publisherId);
+
+        delete(publisherId);
+
+        var index = publisherIndexRepository.findByDatabaseId(publisherId);
+        index.ifPresent(publisherIndexRepository::delete);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public void reindexPublishers() {
         publisherIndexRepository.deleteAll();
@@ -203,9 +217,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,
-            srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
-            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
