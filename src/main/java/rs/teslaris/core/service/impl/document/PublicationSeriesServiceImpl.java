@@ -11,6 +11,7 @@ import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
@@ -34,6 +35,8 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     protected final PersonContributionService personContributionService;
 
     protected final EmailUtil emailUtil;
+
+    protected final IndexBulkUpdateService indexBulkUpdateService;
 
 
     @Override

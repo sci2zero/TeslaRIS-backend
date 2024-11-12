@@ -34,6 +34,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
@@ -41,6 +42,7 @@ import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -77,6 +79,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final SearchService<OrganisationUnitIndex> searchService;
 
     private final ExpressionTransformer expressionTransformer;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -484,16 +488,47 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnitRepository.deleteInvolvementsForOrganisationUnit(organisationUnitId);
         organisationUnitRepository.deleteRelationsForOrganisationUnit(organisationUnitId);
 
-        // TODO: Check this
-        organisationUnitRepository.deleteThesisForOrganisationUnit(organisationUnitId);
+        // Migrate to non-managed OU for theses
+        migrateThesesToUnmanagedOU(organisationUnitId);
 
-        // TODO: Check this
-        organisationUnitRepository.deleteEmployeesForOrganisationUnit(organisationUnitId);
+        // Delete all institutional editors
+        organisationUnitRepository.deleteInstitutionalEditorsForOrganisationUnit(
+            organisationUnitId);
 
         delete(organisationUnitId);
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             organisationUnitId);
         index.ifPresent(organisationUnitIndexRepository::delete);
+
+        indexBulkUpdateService.removeIdFromListField("document_publication",
+            "organisation_unit_ids",
+            organisationUnitId);
+    }
+
+    public void migrateThesesToUnmanagedOU(Integer organisationUnitId) {
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<Thesis> chunk =
+                organisationUnitRepository.fetchAllThesesForOU(organisationUnitId,
+                    PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((thesis) -> {
+                thesis.getOrganisationUnit().getName().forEach(mc -> {
+                    thesis.getExternalOrganisationUnitName().add(
+                        new MultiLingualContent(mc.getLanguage(), mc.getContent(),
+                            mc.getPriority()));
+                });
+
+                thesis.setOrganisationUnit(null);
+            });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 
     @Override

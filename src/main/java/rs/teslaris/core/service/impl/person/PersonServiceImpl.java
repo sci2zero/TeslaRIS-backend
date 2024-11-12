@@ -33,6 +33,9 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -42,9 +45,11 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -76,6 +81,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final LanguageTagService languageTagService;
 
     private final PersonNameService personNameService;
+
+    private final PersonContributionRepository personContributionRepository;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
 
 
     @Value("${person.approved_by_default}")
@@ -303,6 +312,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
         if (Objects.nonNull(personalInfo.getContact())) {
+            if (Objects.isNull(personalInfoToUpdate.getContact())) {
+                personalInfoToUpdate.setContact(new Contact());
+            }
+
             personalInfoToUpdate.getContact()
                 .setContactEmail(personalInfo.getContact().getContactEmail());
             personalInfoToUpdate.getContact()
@@ -337,12 +350,59 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         if (personRepository.hasContribution(personId) ||
             personRepository.isBoundToUser(personId)) {
             throw new PersonReferenceConstraintViolationException(
-                "This person is allready in use.");
+                "This person is already in use.");
         }
 
         delete(personId);
         var index = personIndexRepository.findByDatabaseId(personId);
         index.ifPresent(personIndexRepository::delete);
+    }
+
+    @Override
+    @Transactional
+    public void forceDeletePerson(Integer personId) {
+        if (personRepository.isBoundToUser(personId)) {
+            throw new PersonReferenceConstraintViolationException(
+                "This person is already in use.");
+        }
+
+        personContributionRepository.deletePersonEventContributions(personId);
+        personContributionRepository.deletePersonPublicationsSeriesContributions(personId);
+
+        deletePersonPublications(personId);
+
+        delete(personId);
+
+        var index = personIndexRepository.findByDatabaseId(personId);
+        index.ifPresent(personIndexRepository::delete);
+
+        indexBulkUpdateService.removeIdFromListAndRelatedArrayField("document_publication",
+            "author_ids", "author_names", "author_names_sortable", personId);
+    }
+
+    public void deletePersonPublications(Integer personId) {
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<PersonDocumentContribution> chunk =
+                personContributionRepository.fetchAllPersonDocumentContributions(personId,
+                    PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((contribution) -> {
+                if (contribution.getDocument() instanceof Monograph ||
+                    contribution.getDocument() instanceof Proceedings) {
+                    contribution.setDeleted(true);
+                } else {
+                    contribution.getDocument().setDeleted(true);
+                }
+            });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 
     @Nullable

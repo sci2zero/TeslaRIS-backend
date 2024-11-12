@@ -25,6 +25,7 @@ import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -48,6 +49,8 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     private final SearchService<PublisherIndex> searchService;
 
     private final CountryService countryService;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
 
 
     @Override
@@ -152,6 +155,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         var index = publisherIndexRepository.findByDatabaseId(publisherId);
         index.ifPresent(publisherIndexRepository::delete);
+
+        indexBulkUpdateService.removeIdFromRecord("document_publication", "publisher_id",
+            publisherId);
     }
 
     @Override

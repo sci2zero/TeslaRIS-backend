@@ -35,6 +35,7 @@ import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.JournalServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -74,6 +75,9 @@ public class JournalServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private JournalServiceImpl journalService;

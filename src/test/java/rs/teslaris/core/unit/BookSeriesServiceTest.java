@@ -33,6 +33,7 @@ import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.BookSeriesServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.BookSeriesJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -69,6 +70,9 @@ public class BookSeriesServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private BookSeriesServiceImpl bookSeriesService;

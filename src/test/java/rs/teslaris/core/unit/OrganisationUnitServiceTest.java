@@ -57,6 +57,7 @@ import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -92,6 +93,9 @@ public class OrganisationUnitServiceTest {
 
     @Mock
     private SearchService<OrganisationUnitIndex> searchService;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
@@ -779,15 +783,12 @@ public class OrganisationUnitServiceTest {
         when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             organisationUnitId))
             .thenReturn(Optional.of(new OrganisationUnitIndex()));
+        when(organisationUnitRepository.fetchAllThesesForOU(any(), any())).thenReturn(Page.empty());
 
         // When
         organisationUnitService.forceDeleteOrganisationUnit(organisationUnitId);
 
         // Then
-        verify(organisationUnitRepository, times(1))
-            .deleteEmployeesForOrganisationUnit(organisationUnitId);
-        verify(organisationUnitRepository, times(1))
-            .deleteThesisForOrganisationUnit(organisationUnitId);
         verify(organisationUnitRepository, times(1))
             .deleteInvolvementsForOrganisationUnit(organisationUnitId);
         verify(organisationUnitRepository, times(1))

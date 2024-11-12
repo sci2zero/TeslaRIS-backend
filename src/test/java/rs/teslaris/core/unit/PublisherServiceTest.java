@@ -31,6 +31,7 @@ import rs.teslaris.core.indexrepository.PublisherIndexRepository;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.impl.document.PublisherServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.email.EmailUtil;
@@ -54,6 +55,9 @@ public class PublisherServiceTest {
 
     @Mock
     private SearchService<PublisherIndex> searchService;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private PublisherServiceImpl publisherService;

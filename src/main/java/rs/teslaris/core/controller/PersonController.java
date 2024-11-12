@@ -190,6 +190,14 @@ public class PersonController {
         deduplicationService.deleteSuggestion(personId, IndexType.PERSON);
     }
 
+    @DeleteMapping("/force/{personId}")
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forceDeletePerson(@PathVariable Integer personId) {
+        personService.forceDeletePerson(personId);
+        deduplicationService.deleteSuggestion(personId, IndexType.PERSON);
+    }
+
     @GetMapping("/{personId}/latest-involvement")
     public InvolvementDTO getLatestInvolvementOU(@PathVariable Integer personId) {
         return personService.getLatestResearcherInvolvement(personId);

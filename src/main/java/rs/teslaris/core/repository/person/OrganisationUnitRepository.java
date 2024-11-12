@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
 @Repository
@@ -42,9 +43,8 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
         "ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<OrganisationUnit> findAllModifiedInLast24Hours(Pageable pageable);
 
-    @Modifying
-    @Query("update Thesis t set t.deleted = true where t.organisationUnit.id = :organisationUnitId")
-    void deleteThesisForOrganisationUnit(Integer organisationUnitId);
+    @Query("select t from Thesis t where t.organisationUnit.id = :organisationUnitId")
+    Page<Thesis> fetchAllThesesForOU(Integer organisationUnitId, Pageable pageable);
 
     @Modifying
     @Query("update Involvement i set i.deleted = true where i.organisationUnit.id = :organisationUnitId")
@@ -58,5 +58,5 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
 
     @Modifying
     @Query("update User u set u.deleted = true where u.organisationUnit.id = :organisationUnitId")
-    void deleteEmployeesForOrganisationUnit(Integer organisationUnitId);
+    void deleteInstitutionalEditorsForOrganisationUnit(Integer organisationUnitId);
 }

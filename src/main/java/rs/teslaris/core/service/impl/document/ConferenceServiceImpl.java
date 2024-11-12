@@ -22,6 +22,7 @@ import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -47,10 +48,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService, EmailUtil emailUtil,
                                  CountryService countryService,
+                                 IndexBulkUpdateService indexBulkUpdateService,
                                  ConferenceJPAServiceImpl conferenceJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
-            eventRepository, eventsRelationRepository, searchService, emailUtil, countryService);
+            eventRepository, indexBulkUpdateService, eventsRelationRepository, searchService,
+            emailUtil, countryService);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
@@ -161,6 +164,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         documentPublicationIndexRepository.deleteByEventIdAndType(conferenceId,
             DocumentPublicationType.PROCEEDINGS.name());
+
+        indexBulkUpdateService.removeIdFromRecord("document_publication", "event_id", conferenceId);
     }
 
     @Override

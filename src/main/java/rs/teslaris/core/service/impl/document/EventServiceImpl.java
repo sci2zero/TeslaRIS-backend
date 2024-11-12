@@ -34,6 +34,7 @@ import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -58,6 +59,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     protected final PersonContributionService personContributionService;
 
     protected final EventRepository eventRepository;
+
+    protected final IndexBulkUpdateService indexBulkUpdateService;
 
     private final EventsRelationRepository eventsRelationRepository;
 

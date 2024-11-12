@@ -23,6 +23,7 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -52,13 +53,15 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               MultilingualContentService multilingualContentService,
                               LanguageTagService languageTagService,
                               PersonContributionService personContributionService,
-                              EmailUtil emailUtil, JournalJPAServiceImpl journalJPAService,
+                              EmailUtil emailUtil,
+                              IndexBulkUpdateService indexBulkUpdateService,
+                              JournalJPAServiceImpl journalJPAService,
                               SearchService<JournalIndex> searchService,
                               JournalIndexRepository journalIndexRepository,
                               JournalRepository journalRepository,
                               DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
-            personContributionService, emailUtil);
+            personContributionService, emailUtil, indexBulkUpdateService);
         this.journalJPAService = journalJPAService;
         this.searchService = searchService;
         this.journalIndexRepository = journalIndexRepository;
@@ -179,6 +182,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
         documentPublicationIndexRepository.deleteByJournalIdAndType(journalId,
             DocumentPublicationType.JOURNAL_PUBLICATION.name());
+
+        indexBulkUpdateService.removeIdFromRecord("document_publication", "publication_series_id",
+            journalId);
     }
 
     @Override

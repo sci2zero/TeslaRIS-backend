@@ -67,6 +67,8 @@ public interface PersonService extends JPAService<Person> {
 
     void deletePerson(Integer personId);
 
+    void forceDeletePerson(Integer personId);
+
     Involvement getLatestResearcherInvolvement(Person person);
 
     InvolvementDTO getLatestResearcherInvolvement(Integer personId);

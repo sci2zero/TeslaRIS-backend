@@ -21,6 +21,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.BookSeriesJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -49,12 +50,14 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                                  MultilingualContentService multilingualContentService,
                                  LanguageTagService languageTagService,
                                  PersonContributionService personContributionService,
-                                 EmailUtil emailUtil, BookSeriesJPAServiceImpl bookSeriesJPAService,
+                                 EmailUtil emailUtil,
+                                 IndexBulkUpdateService indexBulkUpdateService,
+                                 BookSeriesJPAServiceImpl bookSeriesJPAService,
                                  BookSeriesIndexRepository bookSeriesIndexRepository,
                                  SearchService<BookSeriesIndex> searchService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
-            personContributionService, emailUtil);
+            personContributionService, emailUtil, indexBulkUpdateService);
         this.bookSeriesJPAService = bookSeriesJPAService;
         this.bookSeriesIndexRepository = bookSeriesIndexRepository;
         this.searchService = searchService;
@@ -143,6 +146,9 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
         var index = bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId);
         index.ifPresent(bookSeriesIndexRepository::delete);
+
+        indexBulkUpdateService.removeIdFromRecord("document_publication", "publication_series_id",
+            bookSeriesId);
     }
 
     @Override
