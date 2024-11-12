@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -93,6 +94,7 @@ import rs.teslaris.core.util.seeding.SKOSLoader;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Profile("test")
 public class DbInitializer implements ApplicationRunner {
 
     private final AuthorityRepository authorityRepository;
@@ -153,6 +155,7 @@ public class DbInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
+        System.out.println("DbInitializer.run");
         ///////////////////// NECESSARY DATA /////////////////////
 
         // PRIVILEGES
