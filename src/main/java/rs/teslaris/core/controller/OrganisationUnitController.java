@@ -148,4 +148,10 @@ public class OrganisationUnitController {
         organisationUnitService.forceDeleteOrganisationUnit(organisationUnitId);
         deduplicationService.deleteSuggestion(organisationUnitId, IndexType.ORGANISATION_UNIT);
     }
+
+    @GetMapping("/admin-exists/{organisationUnitId}")
+    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    public boolean doesAdminExistForOrganisationUnit(@PathVariable Integer organisationUnitId) {
+        return organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
+    }
 }

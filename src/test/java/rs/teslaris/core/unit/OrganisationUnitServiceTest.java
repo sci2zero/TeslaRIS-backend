@@ -2,9 +2,11 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -795,4 +797,31 @@ public class OrganisationUnitServiceTest {
             .deleteRelationsForOrganisationUnit(organisationUnitId);
     }
 
+    @Test
+    void shouldReturnTrueIfInstitutionalAdminsExist() {
+        // Given
+        Integer organisationUnitId = 1;
+        when(organisationUnitRepository.checkIfInstitutionalAdminsExist(organisationUnitId)).thenReturn(true);
+
+        // When
+        boolean result = organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
+
+        // Then
+        assertTrue(result, "Expected institutional admins to exist");
+        verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(organisationUnitId);
+    }
+
+    @Test
+    void shouldReturnFalseIfInstitutionalAdminsDoNotExist() {
+        // Given
+        Integer organisationUnitId = 1;
+        when(organisationUnitRepository.checkIfInstitutionalAdminsExist(organisationUnitId)).thenReturn(false);
+
+        // When
+        boolean result = organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
+
+        // Then
+        assertFalse(result, "Expected institutional admins to not exist");
+        verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(organisationUnitId);
+    }
 }

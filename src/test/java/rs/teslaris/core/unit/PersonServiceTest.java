@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -29,6 +31,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +45,7 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -56,10 +60,12 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
+import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
@@ -93,6 +99,15 @@ public class PersonServiceTest {
 
     @Mock
     private ExpressionTransformer expressionTransformer;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private PersonContributionRepository personContributionRepository;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private PersonServiceImpl personService;
@@ -697,5 +712,32 @@ public class PersonServiceTest {
 
         // Then
         assertNull(foundPerson);
+    }
+
+    @Test
+    void shouldForceDeletePerson() {
+        // Given
+        var personId = 1;
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
+        when(personRepository.isBoundToUser(personId)).thenReturn(false);
+        when(personContributionRepository.fetchAllPersonDocumentContributions(eq(personId), any()))
+            .thenReturn(Page.empty());
+        when(personIndexRepository.findByDatabaseId(personId))
+            .thenReturn(Optional.of(new PersonIndex()));
+
+        // When
+        personService.forceDeletePerson(personId);
+
+        // Then
+        verify(personRepository, times(1)).isBoundToUser(personId);
+        verify(personContributionRepository, times(1)).deletePersonEventContributions(personId);
+        verify(personContributionRepository, times(1)).deletePersonPublicationsSeriesContributions(
+            personId);
+        verify(personContributionRepository, times(1)).fetchAllPersonDocumentContributions(
+            eq(personId), any());
+        verify(personIndexRepository, times(1)).delete(any(PersonIndex.class));
+        verify(documentPublicationIndexRepository, times(7)).deleteByAuthorIdsAndType(anyInt(),
+            anyString());
     }
 }

@@ -13,6 +13,8 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @AllArgsConstructor
 public class ProceedingsPublicationResponseDTO {
 
+    private Integer publicationId;
+
     private List<MultilingualContentDTO> proceedingsTitle;
 
     private List<MultilingualContentDTO> title;

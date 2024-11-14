@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.person;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.user.User;
 
 @Repository
 public interface OrganisationUnitRepository extends JpaRepository<OrganisationUnit, Integer> {
@@ -56,7 +58,9 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
         "our.targetOrganisationUnit.id = :organisationUnitId")
     void deleteRelationsForOrganisationUnit(Integer organisationUnitId);
 
-    @Modifying
-    @Query("update User u set u.deleted = true where u.organisationUnit.id = :organisationUnitId")
-    void deleteInstitutionalEditorsForOrganisationUnit(Integer organisationUnitId);
+    @Query("select u from User u where u.organisationUnit.id = :organisationUnitId and u.authority.name = 'INSTITUTIONAL_EDITOR'")
+    List<User> fetchInstitutionalEditorsForOrganisationUnit(Integer organisationUnitId);
+
+    @Query("select count(u) > 0 from User u where u.organisationUnit.id = :organisationUnitId and u.authority.name = 'INSTITUTIONAL_EDITOR'")
+    boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId);
 }

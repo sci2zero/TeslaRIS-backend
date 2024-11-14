@@ -80,4 +80,6 @@ public interface PersonService extends JPAService<Person> {
     Integer getPersonIdForUserId(Integer userId);
 
     List<Integer> findInstitutionIdsForPerson(Integer personId);
+
+    boolean isPersonBoundToAUser(Integer personId);
 }

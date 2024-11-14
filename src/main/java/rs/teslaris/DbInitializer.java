@@ -316,7 +316,7 @@ public class DbInitializer implements ApplicationRunner {
         csvDataLoader.loadData("countries.csv", this::processCountryLine);
 
         // RESEARCH AREAS
-        skosLoader.loadResearchAreas();
+//        skosLoader.loadResearchAreas();
 
         ///////////////////// TESTING DATA /////////////////////
         if (Arrays.stream(environment.getActiveProfiles())

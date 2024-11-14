@@ -202,4 +202,10 @@ public class PersonController {
     public InvolvementDTO getLatestInvolvementOU(@PathVariable Integer personId) {
         return personService.getLatestResearcherInvolvement(personId);
     }
+
+    @GetMapping("/is-bound/{personId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    public boolean isPersonBoundToAUser(@PathVariable Integer personId) {
+        return personService.isPersonBoundToAUser(personId);
+    }
 }

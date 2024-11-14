@@ -77,5 +77,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer organisationUnitId,
                                                       Integer belongOrganisationUnit);
 
+    boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId);
+
     void reindexOrganisationUnits();
 }

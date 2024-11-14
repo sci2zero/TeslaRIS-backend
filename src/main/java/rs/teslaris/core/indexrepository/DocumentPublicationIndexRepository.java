@@ -3,6 +3,7 @@ package rs.teslaris.core.indexrepository;
 
 import java.util.List;
 import java.util.Optional;
+import org.apache.jena.riot.tokens.StringType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
@@ -57,4 +58,6 @@ public interface DocumentPublicationIndexRepository extends
     void deleteByMonographId(Integer monographId);
 
     void deleteByProceedingsId(Integer monographId);
+
+    void deleteByAuthorIdsAndType(Integer authorId, String type);
 }

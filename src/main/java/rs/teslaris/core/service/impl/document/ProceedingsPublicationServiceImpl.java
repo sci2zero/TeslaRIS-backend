@@ -84,6 +84,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         return proceedingsPublications.stream().map(publication -> {
             var responseDTO = new ProceedingsPublicationResponseDTO();
 
+            responseDTO.setPublicationId(publication.getId());
             responseDTO.setTitle(
                 MultilingualContentConverter.getMultilingualContentDTO(publication.getTitle()));
             responseDTO.setProceedingsTitle(MultilingualContentConverter.getMultilingualContentDTO(

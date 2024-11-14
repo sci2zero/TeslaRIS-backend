@@ -389,8 +389,14 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     b.must(bq -> {
                         bq.bool(eq -> {
                             tokens.forEach(
-                                token -> eq.should(
-                                    sb -> sb.match(m -> m.field("name").query(token)))
+                                token -> {
+                                    if (token.trim().isEmpty()) {
+                                        return;
+                                    }
+
+                                    eq.should(
+                                        sb -> sb.match(m -> m.field("name").query(token)));
+                                }
                             );
 
                             if (Objects.nonNull(person.getBirthdate()) &&

@@ -28,14 +28,14 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
-import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -85,6 +85,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final PersonContributionRepository personContributionRepository;
 
     private final IndexBulkUpdateService indexBulkUpdateService;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
 
     @Value("${person.approved_by_default}")
@@ -376,8 +378,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var index = personIndexRepository.findByDatabaseId(personId);
         index.ifPresent(personIndexRepository::delete);
 
-        indexBulkUpdateService.removeIdFromListAndRelatedArrayField("document_publication",
-            "author_ids", "author_names", "author_names_sortable", personId);
+        deleteOrUnbindPersonRelatedIndexes(personId);
     }
 
     public void deletePersonPublications(Integer personId) {
@@ -392,9 +393,22 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     PageRequest.of(pageNumber, chunkSize)).getContent();
 
             chunk.forEach((contribution) -> {
-                if (contribution.getDocument() instanceof Monograph ||
-                    contribution.getDocument() instanceof Proceedings) {
+                var index =
+                    documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                        contribution.getDocument().getId());
+                if (index.isEmpty()) {
+                    contribution.getDocument().setDeleted(true); // is this sound, this should never happen?
+                    return;
+                }
+
+                if (index.get().getType().equals(DocumentPublicationType.MONOGRAPH.name()) ||
+                    index.get().getType().equals(DocumentPublicationType.PROCEEDINGS.name())) {
                     contribution.setDeleted(true);
+                    contribution.getInstitutions().forEach(institution -> {
+                        index.get().getOrganisationUnitIds().remove(institution.getId());
+                    });
+
+                    documentPublicationIndexRepository.save(index.get());
                 } else {
                     contribution.getDocument().setDeleted(true);
                 }
@@ -403,6 +417,26 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+    }
+
+    public void deleteOrUnbindPersonRelatedIndexes(Integer personId) {
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.JOURNAL_PUBLICATION.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.MONOGRAPH_PUBLICATION.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.SOFTWARE.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.DATASET.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.PATENT.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.THESIS.name());
+
+        indexBulkUpdateService.removeIdFromListAndRelatedArrayField("document_publication",
+            "author_ids", "author_names", "author_names_sortable", personId);
     }
 
     @Nullable
@@ -504,6 +538,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     public List<Integer> findInstitutionIdsForPerson(Integer personId) {
         return personRepository.findInstitutionIdsForPerson(personId);
+    }
+
+    @Override
+    public boolean isPersonBoundToAUser(Integer personId) {
+        return personRepository.isBoundToUser(personId);
     }
 
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {

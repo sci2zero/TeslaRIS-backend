@@ -32,6 +32,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
+import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Thesis;
@@ -81,6 +82,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final ExpressionTransformer expressionTransformer;
 
     private final IndexBulkUpdateService indexBulkUpdateService;
+
+    private final UserAccountIndexRepository userAccountIndexRepository;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -491,9 +494,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         // Migrate to non-managed OU for theses
         migrateThesesToUnmanagedOU(organisationUnitId);
 
-        // Delete all institutional editors
-        organisationUnitRepository.deleteInstitutionalEditorsForOrganisationUnit(
-            organisationUnitId);
+        // Delete all institutional editors and their user account index
+        organisationUnitRepository.fetchInstitutionalEditorsForOrganisationUnit(organisationUnitId)
+            .forEach(user -> {
+                user.setDeleted(true);
+                userAccountIndexRepository.findByDatabaseId(user.getId())
+                    .ifPresent(userAccountIndexRepository::delete);
+            });
 
         delete(organisationUnitId);
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
@@ -651,6 +658,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
         return false;
 
+    }
+
+    @Override
+    public boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId) {
+        return organisationUnitRepository.checkIfInstitutionalAdminsExist(organisationUnitId);
     }
 
     @Override
