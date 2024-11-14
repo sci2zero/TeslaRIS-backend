@@ -801,27 +801,33 @@ public class OrganisationUnitServiceTest {
     void shouldReturnTrueIfInstitutionalAdminsExist() {
         // Given
         Integer organisationUnitId = 1;
-        when(organisationUnitRepository.checkIfInstitutionalAdminsExist(organisationUnitId)).thenReturn(true);
+        when(organisationUnitRepository.checkIfInstitutionalAdminsExist(
+            organisationUnitId)).thenReturn(true);
 
         // When
-        boolean result = organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
+        boolean result =
+            organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
 
         // Then
         assertTrue(result, "Expected institutional admins to exist");
-        verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(organisationUnitId);
+        verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(
+            organisationUnitId);
     }
 
     @Test
     void shouldReturnFalseIfInstitutionalAdminsDoNotExist() {
         // Given
         Integer organisationUnitId = 1;
-        when(organisationUnitRepository.checkIfInstitutionalAdminsExist(organisationUnitId)).thenReturn(false);
+        when(organisationUnitRepository.checkIfInstitutionalAdminsExist(
+            organisationUnitId)).thenReturn(false);
 
         // When
-        boolean result = organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
+        boolean result =
+            organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
 
         // Then
         assertFalse(result, "Expected institutional admins to not exist");
-        verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(organisationUnitId);
+        verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(
+            organisationUnitId);
     }
 }

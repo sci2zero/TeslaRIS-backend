@@ -13,7 +13,8 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 public interface PersonContributionRepository extends JpaRepository<PersonContribution, Integer> {
 
     @Query("select pdc from PersonDocumentContribution pdc join pdc.person p where p.id = :personId")
-    Page<PersonDocumentContribution> fetchAllPersonDocumentContributions(Integer personId, Pageable pageable);
+    Page<PersonDocumentContribution> fetchAllPersonDocumentContributions(Integer personId,
+                                                                         Pageable pageable);
 
     @Modifying
     @Query("update PersonEventContribution pec set pec.deleted = true where pec.person.id = :personId")

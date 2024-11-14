@@ -397,7 +397,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                         contribution.getDocument().getId());
                 if (index.isEmpty()) {
-                    contribution.getDocument().setDeleted(true); // is this sound, this should never happen?
+                    contribution.getDocument()
+                        .setDeleted(true); // is this sound, this should never happen?
                     return;
                 }
 
