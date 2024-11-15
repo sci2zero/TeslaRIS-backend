@@ -56,18 +56,29 @@ import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedExce
 public class CommonLoaderImpl implements CommonLoader {
 
     private static final Object lock = new Object();
+
     private final MongoTemplate mongoTemplate;
+
     private final JournalPublicationConverter journalPublicationConverter;
+
     private final ProceedingsPublicationConverter proceedingsPublicationConverter;
+
     private final OrganisationUnitService organisationUnitService;
+
     private final JournalService journalService;
+
     private final ConferenceService conferenceService;
+
     private final ProceedingsService proceedingsService;
+
     private final LanguageTagService languageTagService;
+
     private final PublicationSeriesService publicationSeriesService;
+
     private final CountryService countryService;
 
     private final PersonService personService;
+
 
     @Override
     public <R> R loadRecordsWizard(Integer userId) {

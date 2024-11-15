@@ -155,7 +155,6 @@ public class DbInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
-        System.out.println("DbInitializer.run");
         ///////////////////// NECESSARY DATA /////////////////////
 
         // PRIVILEGES
@@ -203,6 +202,7 @@ public class DbInitializer implements ApplicationRunner {
         var mergeBookSeriesPublications = new Privilege("MERGE_BOOK_SERIES_PUBLICATIONS");
         var editCountries = new Privilege("EDIT_COUNTRIES");
         var forceDelete = new Privilege("FORCE_DELETE_ENTITIES");
+        var switchEntityToUnmanaged = new Privilege("SWITCH_ENTITY_TO_UNMANAGED");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -217,7 +217,7 @@ public class DbInitializer implements ApplicationRunner {
                 registerEmployee, reindexPrivilege, startDeduplicationProcess, performDeduplication,
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
-                mergeOUMetadata, editCountries, forceDelete));
+                mergeOUMetadata, editCountries, forceDelete, switchEntityToUnmanaged));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -233,7 +233,7 @@ public class DbInitializer implements ApplicationRunner {
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
                 prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries,
-                forceDelete
+                forceDelete, switchEntityToUnmanaged
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

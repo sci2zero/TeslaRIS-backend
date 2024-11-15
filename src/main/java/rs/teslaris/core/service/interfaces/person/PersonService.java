@@ -82,4 +82,8 @@ public interface PersonService extends JPAService<Person> {
     List<Integer> findInstitutionIdsForPerson(Integer personId);
 
     boolean isPersonBoundToAUser(Integer personId);
+
+    boolean canPersonScanDataSources(Integer personId);
+
+    void switchToUnmanagedEntity(Integer personId);
 }

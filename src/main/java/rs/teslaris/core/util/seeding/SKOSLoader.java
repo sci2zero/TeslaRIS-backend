@@ -13,6 +13,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.SKOS;
 import org.apache.jena.vocabulary.SKOSXL;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
@@ -33,6 +34,7 @@ public class SKOSLoader {
     private final ResearchAreaService researchAreaService;
 
 
+    @Async
     public void loadResearchAreas() {
         log.info("Started loading research areas.");
 

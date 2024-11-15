@@ -35,6 +35,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceCon
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
@@ -306,5 +307,13 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleExpiredJwtException(HttpServletRequest request, ExpiredJwtException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(ScopusIdMissingException.class)
+    @ResponseBody
+    ErrorObject handleScopusIdMissingException(HttpServletRequest request,
+                                               ScopusIdMissingException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
     }
 }

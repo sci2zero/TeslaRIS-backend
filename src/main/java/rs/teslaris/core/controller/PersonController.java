@@ -208,4 +208,12 @@ public class PersonController {
     public boolean isPersonBoundToAUser(@PathVariable Integer personId) {
         return personService.isPersonBoundToAUser(personId);
     }
+
+    @PatchMapping("/unmanaged/{personId}")
+    @PreAuthorize("hasAuthority('SWITCH_ENTITY_TO_UNMANAGED')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchPersonToUnmanagedEntity(@PathVariable Integer personId) {
+        personService.switchToUnmanagedEntity(personId);
+        deduplicationService.deleteSuggestion(personId, IndexType.PERSON);
+    }
 }

@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -371,7 +373,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personContributionRepository.deletePersonEventContributions(personId);
         personContributionRepository.deletePersonPublicationsSeriesContributions(personId);
 
-        deletePersonPublications(personId);
+        deletePersonPublications(personId, false);
 
         delete(personId);
 
@@ -381,7 +383,29 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         deleteOrUnbindPersonRelatedIndexes(personId);
     }
 
-    public void deletePersonPublications(Integer personId) {
+    @Override
+    @Transactional
+    public void switchToUnmanagedEntity(Integer personId) {
+        if (personRepository.isBoundToUser(personId)) {
+            throw new PersonReferenceConstraintViolationException(
+                "This person is already in use.");
+        }
+
+        personContributionRepository.deleteInstitutionsForForPersonContributions(personId);
+        personContributionRepository
+            .makePersonEventContributionsPointToExternalContributor(personId);
+        personContributionRepository
+            .makePersonPublicationsSeriesContributionsPointToExternalContributor(personId);
+
+        deletePersonPublications(personId, true);
+
+        delete(personId);
+
+        var index = personIndexRepository.findByDatabaseId(personId);
+        index.ifPresent(personIndexRepository::delete);
+    }
+
+    public void deletePersonPublications(Integer personId, boolean switchToUnmanaged) {
         int pageNumber = 0;
         int chunkSize = 10;
         boolean hasNextPage = true;
@@ -402,12 +426,36 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     return;
                 }
 
+                if (switchToUnmanaged) {
+                    contribution.setPerson(null);
+
+                    BiConsumer<List<Integer>, Integer> replaceIdWithUnmanaged =
+                        (list, idToReplace) ->
+                            list.replaceAll(id -> id.equals(idToReplace) ? -1 : id);
+
+                    List<Supplier<List<Integer>>> idLists = List.of(
+                        index.get()::getAuthorIds,
+                        index.get()::getEditorIds,
+                        index.get()::getReviewerIds,
+                        index.get()::getBoardMemberIds,
+                        index.get()::getAdvisorIds
+                    );
+
+                    idLists.forEach(
+                        idList -> replaceIdWithUnmanaged.accept(idList.get(), personId));
+
+                    contribution.getInstitutions().clear();
+                    documentPublicationIndexRepository.save(index.get());
+                    return;
+                }
+
                 if (index.get().getType().equals(DocumentPublicationType.MONOGRAPH.name()) ||
                     index.get().getType().equals(DocumentPublicationType.PROCEEDINGS.name())) {
                     contribution.setDeleted(true);
                     contribution.getInstitutions().forEach(institution -> {
                         index.get().getOrganisationUnitIds().remove(institution.getId());
                     });
+                    contribution.getInstitutions().clear();
 
                     documentPublicationIndexRepository.save(index.get());
                 } else {
@@ -544,6 +592,16 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     public boolean isPersonBoundToAUser(Integer personId) {
         return personRepository.isBoundToUser(personId);
+    }
+
+    @Override
+    public boolean canPersonScanDataSources(Integer personId) {
+        if (Objects.isNull(personId)) {
+            return false;
+        }
+
+        var person = findOne(personId);
+        return !Objects.isNull(person.getScopusAuthorId()) && !person.getScopusAuthorId().isEmpty();
     }
 
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {

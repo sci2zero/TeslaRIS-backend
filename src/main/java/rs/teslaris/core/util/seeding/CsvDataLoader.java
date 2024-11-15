@@ -21,7 +21,7 @@ public class CsvDataLoader {
         String filePath = CSV_FILE_DIRECTORY + fileName;
 
         if (Files.notExists(Paths.get(filePath))) {
-            System.err.println("File not found: " + filePath);
+            log.error("File not found: {}", filePath);
             return;
         }
 

@@ -1,19 +1,23 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -739,5 +743,80 @@ public class PersonServiceTest {
         verify(personIndexRepository, times(1)).delete(any(PersonIndex.class));
         verify(documentPublicationIndexRepository, times(7)).deleteByAuthorIdsAndType(anyInt(),
             anyString());
+    }
+
+    @Test
+    void switchToUnmanagedEntityShouldThrowsExceptionWhenPersonIsBoundToUser() {
+        // Given
+        var personId = 1;
+
+        when(personRepository.isBoundToUser(personId)).thenReturn(true);
+
+        // When
+        var exception = assertThrows(PersonReferenceConstraintViolationException.class,
+            () -> personService.switchToUnmanagedEntity(personId));
+
+        // Then
+        assertEquals("This person is already in use.", exception.getMessage());
+        verify(personRepository, times(1)).isBoundToUser(personId);
+        verifyNoInteractions(personContributionRepository, personIndexRepository,
+            documentPublicationIndexRepository);
+    }
+
+    @Test
+    void shouldSwitchToUnmanagedEntity() {
+        // Given
+        var personId = 1;
+
+        when(personRepository.isBoundToUser(personId)).thenReturn(false);
+        when(personIndexRepository.findByDatabaseId(personId)).thenReturn(Optional.empty());
+        when(personContributionRepository.fetchAllPersonDocumentContributions(eq(1),
+            any())).thenReturn(Page.empty());
+        when(personRepository.findById(1)).thenReturn(Optional.of(new Person()));
+
+        doNothing().when(personContributionRepository)
+            .deleteInstitutionsForForPersonContributions(personId);
+        doNothing().when(personContributionRepository)
+            .makePersonEventContributionsPointToExternalContributor(personId);
+        doNothing().when(personContributionRepository)
+            .makePersonPublicationsSeriesContributionsPointToExternalContributor(personId);
+
+        // When
+        personService.switchToUnmanagedEntity(personId);
+
+        // Then
+        verify(personRepository, times(1)).isBoundToUser(personId);
+        verify(personContributionRepository, times(1)).deleteInstitutionsForForPersonContributions(
+            personId);
+        verify(personContributionRepository,
+            times(1)).makePersonEventContributionsPointToExternalContributor(personId);
+        verify(personContributionRepository,
+            times(1)).makePersonPublicationsSeriesContributionsPointToExternalContributor(personId);
+        verify(personIndexRepository, times(1)).findByDatabaseId(personId);
+        verifyNoInteractions(documentPublicationIndexRepository);
+    }
+
+    @Test
+    void shouldScanDataSourcesWhenScopusAuthorIdIsNonEmpty() {
+        var personId = 1;
+        var person = new Person();
+        person.setScopusAuthorId("1234");
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        var response = personService.canPersonScanDataSources(personId);
+
+        assertTrue(response);
+    }
+
+    @Test
+    void shouldReturnFalseWhenScopusAuthorIdIsEmpty() {
+        var personId = 1;
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
+
+        var response = personService.canPersonScanDataSources(personId);
+
+        assertFalse(response);
     }
 }
