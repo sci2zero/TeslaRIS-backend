@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -40,7 +41,7 @@ public class PersonName extends BaseEntity {
 
     @Override
     public String toString() {
-        if (otherName.isEmpty()) {
+        if (Objects.isNull(otherName) || otherName.isEmpty()) {
             return MessageFormat.format("{0} {1}", firstname, lastname);
         }
 

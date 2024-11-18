@@ -52,6 +52,18 @@ public class PersonControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testMigrateToUnmanagedPerson() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch("http://localhost:8081/api/person/unmanaged/{personId}",
+                        3).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCanEditCheckAdmin() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 

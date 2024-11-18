@@ -125,4 +125,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Integer, name = "organisation_unit_ids", store = true)
     private List<Integer> organisationUnitIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "claimer_ids", store = true)
+    private List<Integer> claimerIds = new ArrayList<>();
 }

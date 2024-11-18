@@ -59,4 +59,6 @@ public interface DocumentPublicationIndexRepository extends
     void deleteByProceedingsId(Integer monographId);
 
     void deleteByAuthorIdsAndType(Integer authorId, String type);
+
+    Page<DocumentPublicationIndex> findByClaimerIds(Integer claimerId, Pageable pageable);
 }
