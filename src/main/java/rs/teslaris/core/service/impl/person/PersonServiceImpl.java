@@ -252,6 +252,22 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
+    public void updatePersonMainName(Integer personId, PersonNameDTO personNameDTO) {
+        var personToUpdate = findOne(personId);
+
+        personToUpdate.getName().setFirstname(personNameDTO.getFirstname());
+        personToUpdate.getName().setOtherName(personNameDTO.getOtherName());
+        personToUpdate.getName().setLastname(personNameDTO.getLastname());
+
+        save(personToUpdate);
+
+        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(personToUpdate, personToUpdate.getId());
+        }
+    }
+
+    @Override
+    @Transactional
     public void setPersonMainName(Integer personNameId, Integer personId) {
         var personToUpdate = findOne(personId);
         var chosenName = personNameService.findOne(personNameId);

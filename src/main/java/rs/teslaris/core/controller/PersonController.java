@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -135,6 +136,15 @@ public class PersonController {
     public void setPersonMainName(@PathVariable Integer personId,
                                   @PathVariable Integer personNameId) {
         personService.setPersonMainName(personNameId, personId);
+    }
+
+    @PutMapping("/name/{personId}")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PersonEditCheck
+    public void updatePersonMainName(@PathVariable Integer personId,
+                                     @RequestBody PersonNameDTO personNameDTO) {
+        personService.updatePersonMainName(personId, personNameDTO);
     }
 
     @PatchMapping("/other-names/{personId}")

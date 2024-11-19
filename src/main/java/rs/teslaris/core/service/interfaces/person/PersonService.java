@@ -59,6 +59,8 @@ public interface PersonService extends JPAService<Person> {
 
     void setPersonMainName(Integer personNameId, Integer personId);
 
+    void updatePersonMainName(Integer personId, PersonNameDTO personNameDTO);
+
     void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId);
 
     void updatePersonalInfo(Integer personId, PersonalInfoDTO personalInfo);
