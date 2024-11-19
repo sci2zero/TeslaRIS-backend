@@ -96,6 +96,24 @@ public class NotificationFactory {
             NotificationType.DEDUPLICATION_SCAN_FINISHED, user);
     }
 
+    public static Notification contructNewPotentialClaimsFoundNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("potentialClaimsNumber")};
+        try {
+            message = messageSource.getMessage(
+                "notification.potentialClaimsFound",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.FOUND_POTENTIAL_CLAIMS, user);
+    }
+
     private static String fallbackToDefaultLocale(Object[] args) {
         return messageSource.getMessage(
             "notification.addedToPublication",

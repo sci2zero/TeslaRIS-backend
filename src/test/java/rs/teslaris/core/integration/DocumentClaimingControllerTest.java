@@ -14,14 +14,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @SpringBootTest
 public class DocumentClaimingControllerTest extends BaseTest {
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-
     @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
     public void testFetchPotentialClaims() throws Exception {
-        String jwtToken = authenticateAdminAndGetToken();
+        String jwtToken = authenticateResearcherAndGetToken();
 
         mockMvc.perform(
             MockMvcRequestBuilders.get("http://localhost:8081/api/document-claim")

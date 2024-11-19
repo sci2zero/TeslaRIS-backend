@@ -235,12 +235,12 @@ public class DbInitializer implements ApplicationRunner {
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
                 prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries,
-                forceDelete, switchEntityToUnmanaged, claimDocument
+                forceDelete, switchEntityToUnmanaged
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
-                createUserBasic, editDocumentFiles, editDocumentIndicators,
+                createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
                 editEntityIndicatorProofs, listMyJournalPublications})));
 
         var institutionalEditorAuthority =

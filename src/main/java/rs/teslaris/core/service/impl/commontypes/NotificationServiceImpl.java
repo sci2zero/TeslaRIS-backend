@@ -131,6 +131,10 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                     return null;
                 }
             }
+        } else if (Objects.requireNonNull(notification.getNotificationType())
+            .equals(NotificationType.FOUND_POTENTIAL_CLAIMS)) {
+            notificationRepository.deleteNewPotentialClaimsNotificationsForUser(
+                notification.getUser().getId());
         }
 
         return notificationRepository.save(notification);

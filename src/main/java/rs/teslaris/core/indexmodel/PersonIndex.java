@@ -63,4 +63,7 @@ public class PersonIndex {
 
     @Field(type = FieldType.Text, store = true, name = "keywords")
     private String keywords;
+
+    @Field(type = FieldType.Integer, store = true, name = "user_id")
+    private Integer userId;
 }

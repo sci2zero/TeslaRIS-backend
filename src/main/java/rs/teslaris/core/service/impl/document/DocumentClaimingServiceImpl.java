@@ -2,7 +2,10 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,9 +19,12 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.document.PersonDocumentContributionRepository;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentClaimingService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +38,10 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     private final PersonService personService;
 
     private final PersonDocumentContributionRepository personDocumentContributionRepository;
+
+    private final NotificationService notificationService;
+
+    private final UserService userService;
 
 
     private static int getIndexOfNthUnmanagedAuthor(List<Integer> array, int nth) {
@@ -108,8 +118,9 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
         int chunkSize = 50;
         boolean hasNextPage = true;
 
-        while (hasNextPage) {
+        var userClaimCount = new HashMap<Integer, Integer>();
 
+        while (hasNextPage) {
             List<DocumentPublicationIndex> chunk =
                 documentPublicationIndexRepository.findByAuthorIds(-1,
                     PageRequest.of(pageNumber, chunkSize)).getContent();
@@ -126,6 +137,10 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
                         Pageable.unpaged(), PersonIndex.class, "person");
                     results.getContent().forEach(person -> {
                         document.getClaimerIds().add(person.getDatabaseId());
+                        if (Objects.nonNull(person.getUserId())) {
+                            userClaimCount.put(person.getUserId(),
+                                userClaimCount.getOrDefault(person.getUserId(), 0) + 1);
+                        }
                     });
                 }
 
@@ -135,6 +150,14 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+
+        userClaimCount.forEach((key, value) -> {
+            notificationService.createNotification(
+                NotificationFactory.contructNewPotentialClaimsFoundNotification(
+                    Map.of("potentialClaimsNumber", String.valueOf(value)),
+                    userService.findOne(key))
+            );
+        });
     }
 
     private Query buildNameQuery(String authorName) {
