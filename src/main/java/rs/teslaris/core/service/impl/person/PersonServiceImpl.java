@@ -258,6 +258,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personToUpdate.getName().setFirstname(personNameDTO.getFirstname());
         personToUpdate.getName().setOtherName(personNameDTO.getOtherName());
         personToUpdate.getName().setLastname(personNameDTO.getLastname());
+        personToUpdate.getName().setDateFrom(personNameDTO.getDateFrom());
+        personToUpdate.getName().setDateTo(personNameDTO.getDateTo());
 
         save(personToUpdate);
 

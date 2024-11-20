@@ -819,4 +819,67 @@ public class PersonServiceTest {
 
         assertFalse(response);
     }
+
+    @Test
+    void shouldUpdateAndIndexPersonPrimaryNameWhenStatusIsApproved() {
+        // Given
+        var personId = 1;
+        var personNameDTO = new PersonNameDTO(null, "John", "Michael", "Doe", null, null);
+        var person = new Person();
+        person.setId(personId);
+        person.setPersonalInfo(new PersonalInfo());
+        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null));
+        person.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        // When
+        personService.updatePersonMainName(personId, personNameDTO);
+
+        // Then
+        assertEquals("John", person.getName().getFirstname());
+        assertEquals("Michael", person.getName().getOtherName());
+        assertEquals("Doe", person.getName().getLastname());
+
+        verify(personRepository).save(person);
+    }
+
+    @Test
+    void shouldUpdateButNotIndexPersonPrimaryNameWhenStatusIsNotApproved() {
+        // Given
+        var personId = 2;
+        var personNameDTO = new PersonNameDTO(null, "Jane", "Alice", "Smith", null, null);
+        var person = new Person();
+        person.setId(personId);
+        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null));
+        person.setApproveStatus(ApproveStatus.REQUESTED);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        // When
+        personService.updatePersonMainName(personId, personNameDTO);
+
+        // Then
+        assertEquals("Jane", person.getName().getFirstname());
+        assertEquals("Alice", person.getName().getOtherName());
+        assertEquals("Smith", person.getName().getLastname());
+
+        verify(personRepository).save(person);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenPersonNotFound() {
+        // Given
+        var personId = 3;
+        var personNameDTO = new PersonNameDTO(null, "Test", "User", "Test", null, null);
+        when(personRepository.findById(personId)).thenThrow(
+            new NotFoundException("Person not found"));
+
+        // When & Then
+        assertThrows(NotFoundException.class, () -> {
+            personService.updatePersonMainName(personId, personNameDTO);
+        });
+
+        verify(personRepository, never()).save(any());
+    }
 }
