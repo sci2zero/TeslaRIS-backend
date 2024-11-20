@@ -2,9 +2,12 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -21,12 +24,16 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
+import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.person.DeclinedDocumentClaim;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.document.PersonDocumentContributionRepository;
+import rs.teslaris.core.repository.person.DeclinedDocumentClaimRepository;
 import rs.teslaris.core.service.impl.document.DocumentClaimingServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @SpringBootTest
@@ -43,6 +50,12 @@ public class DocumentClaimingServiceTest {
 
     @Mock
     private PersonDocumentContributionRepository personDocumentContributionRepository;
+
+    @Mock
+    private DocumentPublicationService documentPublicationService;
+
+    @Mock
+    private DeclinedDocumentClaimRepository declinedDocumentClaimRepository;
 
     @InjectMocks
     private DocumentClaimingServiceImpl documentClaimingService;
@@ -114,5 +127,84 @@ public class DocumentClaimingServiceTest {
 
         assertFalse(document.getClaimerIds().contains(personId));
         verify(documentPublicationIndexRepository, times(1)).save(any());
+    }
+
+    @Test
+    void shouldDeclineDocumentClaimSuccessfully() {
+        // Given
+        var userId = 1;
+        var personId = 2;
+        var documentId = 3;
+
+        var person = new Person();
+        person.setId(personId);
+
+        var document = new Monograph();
+        document.setId(documentId);
+
+        DocumentPublicationIndex documentIndex = new DocumentPublicationIndex();
+        documentIndex.setDatabaseId(documentId);
+        documentIndex.setClaimerIds(new ArrayList<>(List.of(personId)));
+
+        when(personService.getPersonIdForUserId(userId)).thenReturn(personId);
+        when(personService.findOne(personId)).thenReturn(person);
+        when(documentPublicationService.findOne(documentId)).thenReturn(document);
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(documentIndex));
+
+        // When
+        documentClaimingService.declineDocumentClaim(userId, documentId);
+
+        // Then
+        verify(declinedDocumentClaimRepository).save(any());
+    }
+
+    @Test
+    void shouldHandleMissingDocumentIndexGracefully() {
+        // Given
+        var userId = 1;
+        var personId = 2;
+        var documentId = 3;
+
+        var person = new Person();
+        person.setId(personId);
+
+        var document = new Monograph();
+        document.setId(documentId);
+
+        when(personService.getPersonIdForUserId(userId)).thenReturn(personId);
+        when(personService.findOne(personId)).thenReturn(person);
+        when(documentPublicationService.findOne(documentId)).thenReturn(document);
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // When
+        documentClaimingService.declineDocumentClaim(userId, documentId);
+
+        // Then
+        verify(declinedDocumentClaimRepository).save(any(DeclinedDocumentClaim.class));
+        verify(documentPublicationIndexRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPersonServiceFails() {
+        // Given
+        var userId = 1;
+        var documentId = 3;
+
+        when(personService.getPersonIdForUserId(userId))
+            .thenThrow(new RuntimeException("Person service failed"));
+
+        // When
+        assertThrows(RuntimeException.class, () ->
+            documentClaimingService.declineDocumentClaim(userId, documentId)
+        );
+
+        // Then
+        verifyNoInteractions(declinedDocumentClaimRepository);
+        verifyNoInteractions(documentPublicationService);
+        verifyNoInteractions(documentPublicationIndexRepository);
     }
 }

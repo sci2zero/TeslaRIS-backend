@@ -8,6 +8,8 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 @Service
 public interface DocumentClaimingService {
 
+    void declineDocumentClaim(Integer userId, Integer documentId);
+
     Page<DocumentPublicationIndex> findPotentialClaimsForPerson(Integer userId,
                                                                 Pageable pageable);
 

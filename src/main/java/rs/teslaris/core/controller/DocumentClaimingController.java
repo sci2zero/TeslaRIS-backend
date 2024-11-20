@@ -5,8 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,7 +32,15 @@ public class DocumentClaimingController {
             tokenUtil.extractUserIdFromToken(bearerToken), pageable);
     }
 
-    @PostMapping("/{documentId}")
+    @PatchMapping("/decline/{documentId}")
+    @PreAuthorize("hasAuthority('CLAIM_DOCUMENT')")
+    public void declinePublicationClaim(@RequestHeader("Authorization") String bearerToken,
+                                        @PathVariable Integer documentId) {
+        documentClaimingService.declineDocumentClaim(tokenUtil.extractUserIdFromToken(bearerToken),
+            documentId);
+    }
+
+    @PatchMapping("/{documentId}")
     @PreAuthorize("hasAuthority('CLAIM_DOCUMENT')")
     public void claimPublication(@RequestHeader("Authorization") String bearerToken,
                                  @PathVariable Integer documentId) {

@@ -16,12 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.person.DeclinedDocumentClaim;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.document.PersonDocumentContributionRepository;
+import rs.teslaris.core.repository.person.DeclinedDocumentClaimRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentClaimingService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
@@ -42,6 +45,10 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     private final NotificationService notificationService;
 
     private final UserService userService;
+
+    private final DocumentPublicationService documentPublicationService;
+
+    private final DeclinedDocumentClaimRepository declinedDocumentClaimRepository;
 
 
     private static int getIndexOfNthUnmanagedAuthor(List<Integer> array, int nth) {
@@ -71,6 +78,22 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     }
 
     @Override
+    public void declineDocumentClaim(Integer userId, Integer documentId) {
+        var personId = personService.getPersonIdForUserId(userId);
+        var person = personService.findOne(personId);
+        var document = documentPublicationService.findOne(documentId);
+
+        declinedDocumentClaimRepository.save(new DeclinedDocumentClaim(person, document));
+
+        var documentIndex =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
+        documentIndex.ifPresent(index -> {
+            index.getClaimerIds().remove(personId);
+            documentPublicationIndexRepository.save(index);
+        });
+    }
+
+    @Override
     public void claimDocument(Integer userId, Integer documentId) {
         var personId = personService.getPersonIdForUserId(userId);
         var person = personService.findOne(personId);
@@ -95,7 +118,7 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
                     if (authorIndex >= 0) { // should always be true
                         document.get().getAuthorIds().set(authorIndex, personId);
                     }
-                    document.get().getClaimerIds().remove(personId);
+                    document.get().getClaimerIds().clear();
                     documentPublicationIndexRepository.save(document.get());
                 }
                 break;
@@ -136,10 +159,13 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
                     var results = personSearchService.runQuery(buildNameQuery(authorNames[i]),
                         Pageable.unpaged(), PersonIndex.class, "person");
                     results.getContent().forEach(person -> {
-                        document.getClaimerIds().add(person.getDatabaseId());
-                        if (Objects.nonNull(person.getUserId())) {
-                            userClaimCount.put(person.getUserId(),
-                                userClaimCount.getOrDefault(person.getUserId(), 0) + 1);
+                        if (declinedDocumentClaimRepository.canBeClaimedByPerson(
+                            person.getDatabaseId(), document.getDatabaseId())) {
+                            document.getClaimerIds().add(person.getDatabaseId());
+                            if (Objects.nonNull(person.getUserId())) {
+                                userClaimCount.put(person.getUserId(),
+                                    userClaimCount.getOrDefault(person.getUserId(), 0) + 1);
+                            }
                         }
                     });
                 }
