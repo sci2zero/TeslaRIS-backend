@@ -13,4 +13,7 @@ public interface IndexBulkUpdateService {
                                               String relatedArrayFieldName,
                                               String relatedSortFieldName,
                                               Integer idToRemove);
+
+    void setIdFieldForRecord(String indexName, String fieldMappingName, Integer queryValue,
+                             String idField, Integer idToSet);
 }

@@ -52,6 +52,22 @@ public class MergeController {
         mergeService.switchAllPublicationsToOtherJournal(sourceJournalId, targetJournalId);
     }
 
+    @PatchMapping("/publisher/{targetPublisherId}/publication/{publicationId}")
+    @PreAuthorize("hasAuthority('MERGE_PUBLISHER_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchPublisherPublicationToOtherPublisher(@PathVariable Integer targetPublisherId,
+                                                           @PathVariable Integer publicationId) {
+        mergeService.switchPublisherPublicationToOtherPublisher(targetPublisherId, publicationId);
+    }
+
+    @PatchMapping("/publisher/source/{sourcePublisherId}/target/{targetPublisherId}")
+    @PreAuthorize("hasAuthority('MERGE_PUBLISHER_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllPublicationsToOtherPublisher(@PathVariable Integer sourcePublisherId,
+                                                      @PathVariable Integer targetPublisherId) {
+        mergeService.switchAllPublicationsToOtherPublisher(sourcePublisherId, targetPublisherId);
+    }
+
     @PatchMapping("/book-series/{targetBookSeriesId}/publication/{publicationId}")
     @PreAuthorize("hasAuthority('MERGE_BOOK_SERIES_PUBLICATIONS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

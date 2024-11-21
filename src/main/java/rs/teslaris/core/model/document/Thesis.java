@@ -24,7 +24,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Entity
 @Table(name = "theses")
 @SQLRestriction("deleted=false")
-public class Thesis extends Document {
+public non-sealed class Thesis extends Document implements PublisherPublishable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id")

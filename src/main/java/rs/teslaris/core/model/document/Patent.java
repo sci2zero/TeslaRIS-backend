@@ -15,7 +15,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Table(name = "patents")
 @SQLRestriction("deleted=false")
-public class Patent extends Document {
+public non-sealed class Patent extends Document implements PublisherPublishable {
 
     @Column(name = "number")
     private String number;

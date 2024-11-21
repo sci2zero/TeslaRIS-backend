@@ -19,7 +19,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Table(name = "software")
 @SQLRestriction("deleted=false")
-public class Software extends Document {
+public non-sealed class Software extends Document implements PublisherPublishable {
 
     @Column(name = "internal_number")
     private String internalNumber;

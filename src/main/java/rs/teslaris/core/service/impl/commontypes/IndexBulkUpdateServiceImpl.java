@@ -41,6 +41,33 @@ public class IndexBulkUpdateServiceImpl implements IndexBulkUpdateService {
     }
 
     @Override
+    public void setIdFieldForRecord(String indexName, String fieldMappingName, Integer queryValue,
+                                    String idField, Integer idToSet) {
+        var request = new UpdateByQueryRequest.Builder()
+            .index(indexName)
+            .waitForCompletion(true)
+            .query(q -> q.term(t -> t
+                .field(fieldMappingName)
+                .value(queryValue)))
+            .script(s -> s
+                .inline(i -> i
+                    .source("ctx._source." + idField + " = params.idToSet")
+                    .lang("painless")
+                    .params(Map.of("idToSet", JsonData.of(idToSet)))))
+            .build();
+
+        try {
+            elasticsearchClient.updateByQuery(request);
+            elasticsearchClient.indices().refresh(r -> r.index(indexName));
+
+            log.info("Set ID {} for document in index {} on field {}", idToSet, indexName,
+                fieldMappingName);
+        } catch (Exception e) {
+            log.error("An error occurred while setting id to index records: {}", e.getMessage());
+        }
+    }
+
+    @Override
     public void removeIdFromListField(String indexName, String fieldMappingName,
                                       Integer idToRemove) {
         var request = new UpdateByQueryRequest.Builder()
