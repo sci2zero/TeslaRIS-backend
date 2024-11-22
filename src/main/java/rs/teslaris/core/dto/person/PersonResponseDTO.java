@@ -37,4 +37,6 @@ public class PersonResponseDTO {
     private List<ExpertiseOrSkillResponseDTO> expertisesOrSkills;
 
     private List<PrizeResponseDTO> prizes;
+
+    private String imageServerFilename;
 }

@@ -3,16 +3,19 @@ package rs.teslaris.core.service.impl.person;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -53,7 +57,9 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -90,9 +96,33 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final MultilingualContentService multilingualContentService;
+
+    private final FileService fileService;
 
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
+
+
+    private static boolean validateImageMIMEType(MultipartFile multipartFile) throws IOException {
+        var validMimeTypes = List.of("image/jpeg", "image/png");
+
+        String contentType = multipartFile.getContentType();
+        if (!validMimeTypes.contains(contentType)) {
+            return false;
+        }
+
+        String originalFilename = multipartFile.getOriginalFilename();
+        if (originalFilename == null ||
+            !(originalFilename.endsWith(".jpg") || originalFilename.endsWith(".jpeg") ||
+                originalFilename.endsWith(".png"))) {
+            return false;
+        }
+
+        var tika = new Tika();
+        String detectedType = tika.detect(multipartFile.getInputStream());
+        return List.of("image/jpeg", "image/png").contains(detectedType);
+    }
 
     @Override
     protected JpaRepository<Person, Integer> getEntityRepository() {
@@ -423,6 +453,28 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         index.ifPresent(personIndexRepository::delete);
     }
 
+    @Override
+    public String setPersonProfileImage(Integer personId, MultipartFile multipartFile)
+        throws IOException {
+        if (!validateImageMIMEType(multipartFile)) {
+            throw new IllegalArgumentException("mimeTypeValidationFailed");
+        }
+
+        var person = findOne(personId);
+
+        if (Objects.nonNull(person.getProfileImageServerName())) {
+            fileService.delete(person.getProfileImageServerName());
+        }
+
+        var serverFilename = fileService.store(multipartFile, UUID.randomUUID().toString());
+
+        person.setProfileImageServerName(serverFilename);
+
+        save(person);
+
+        return serverFilename;
+    }
+
     public void deletePersonPublications(Integer personId, boolean switchToUnmanaged) {
         int pageNumber = 0;
         int chunkSize = 10;
@@ -644,6 +696,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         });
 
         personIndex.setNameSortable(personIndex.getName());
+        indexPersonBiography(personIndex, savedPerson);
 
         if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
             personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
@@ -657,6 +710,18 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setDatabaseId(savedPerson.getId());
         personIndex.setOrcid(savedPerson.getOrcid());
         personIndex.setScopusAuthorId(savedPerson.getScopusAuthorId());
+    }
+
+    private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+        multilingualContentService.buildLanguageStringsFromHTMLMC(srContent, otherContent,
+            savedPerson.getBiography(), false);
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        personIndex.setBiographySr(
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        personIndex.setBiographyOther(
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {

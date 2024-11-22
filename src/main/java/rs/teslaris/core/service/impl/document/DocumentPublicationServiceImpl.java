@@ -329,23 +329,23 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.getSubTitle(), false);
 
         StringUtil.removeTrailingDelimiters(contentSr, contentOther);
-        index.setTitleSr(contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+        index.setTitleSr(!contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
         index.setTitleOther(
-            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
+            !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
     private void indexDescription(Document document, DocumentPublicationIndex index) {
         var contentSr = new StringBuilder();
         var contentOther = new StringBuilder();
 
-        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+        multilingualContentService.buildLanguageStringsFromHTMLMC(contentSr, contentOther,
             document.getDescription(), false);
 
         StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setDescriptionSr(
-            contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+            !contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
         index.setDescriptionOther(
-            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
+            !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
     private void indexKeywords(Document document, DocumentPublicationIndex index) {
@@ -357,9 +357,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setKeywordsSr(
-            contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+            !contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
         index.setKeywordsOther(
-            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
+            !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
     private int parseYear(String dateString) {

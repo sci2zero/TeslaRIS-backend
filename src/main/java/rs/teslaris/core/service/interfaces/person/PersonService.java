@@ -1,10 +1,12 @@
 package rs.teslaris.core.service.interfaces.person;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -88,4 +90,6 @@ public interface PersonService extends JPAService<Person> {
     boolean canPersonScanDataSources(Integer personId);
 
     void switchToUnmanagedEntity(Integer personId);
+
+    String setPersonProfileImage(Integer personId, MultipartFile multipartFile) throws IOException;
 }

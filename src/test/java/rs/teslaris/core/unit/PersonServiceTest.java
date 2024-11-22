@@ -39,7 +39,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -71,7 +73,9 @@ import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
@@ -112,6 +116,12 @@ public class PersonServiceTest {
 
     @Mock
     private IndexBulkUpdateService indexBulkUpdateService;
+
+    @Mock
+    private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private FileService fileService;
 
     @InjectMocks
     private PersonServiceImpl personService;
@@ -881,5 +891,22 @@ public class PersonServiceTest {
         });
 
         verify(personRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionForInvalidMimeType() {
+        // given
+        var personId = 1;
+        var mockFile = createMockMultipartFile();
+
+        // when / then
+        assertThrows(IllegalArgumentException.class,
+            () -> personService.setPersonProfileImage(personId, mockFile));
+        verifyNoInteractions(fileService);
+    }
+
+    private MultipartFile createMockMultipartFile() {
+        return new MockMultipartFile("file", "test.txt", "text/plain",
+            "Test file content".getBytes());
     }
 }

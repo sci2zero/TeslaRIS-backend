@@ -353,22 +353,22 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected void indexEventCommonFields(EventIndex index, Event event) {
         indexMultilingualContent(index, event, Event::getName, EventIndex::setNameSr,
-            EventIndex::setNameOther);
+            EventIndex::setNameOther, false);
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());
         indexMultilingualContent(index, event, Event::getDescription, EventIndex::setDescriptionSr,
-            EventIndex::setDescriptionOther);
+            EventIndex::setDescriptionOther, true);
         indexMultilingualContent(index, event, Event::getKeywords, EventIndex::setKeywordsSr,
-            EventIndex::setKeywordsOther);
+            EventIndex::setKeywordsOther, false);
         index.setStateSrSortable(index.getStateSr());
         index.setStateOtherSortable(index.getStateOther());
         indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
-            EventIndex::setPlaceOther);
+            EventIndex::setPlaceOther, false);
 
         if (Objects.nonNull(event.getCountry())) {
             indexMultilingualContent(index, event, t -> event.getCountry().getName(),
                 EventIndex::setStateSr,
-                EventIndex::setStateOther);
+                EventIndex::setStateOther, false);
         }
 
         if (Objects.nonNull(event.getDateFrom()) && Objects.nonNull(event.getDateTo())) {
@@ -394,12 +394,20 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private void indexMultilingualContent(EventIndex index, Event event,
                                           Function<Event, Set<MultiLingualContent>> contentExtractor,
                                           BiConsumer<EventIndex, String> srSetter,
-                                          BiConsumer<EventIndex, String> otherSetter) {
+                                          BiConsumer<EventIndex, String> otherSetter,
+                                          boolean isHTML) {
         Set<MultiLingualContent> contentList = contentExtractor.apply(event);
 
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
-        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList, true);
+
+        if (isHTML) {
+            multilingualContentService.buildLanguageStringsFromHTMLMC(srContent, otherContent,
+                contentList, true);
+        } else {
+            multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList,
+                true);
+        }
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,

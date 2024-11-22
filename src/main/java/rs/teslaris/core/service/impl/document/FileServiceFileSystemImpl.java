@@ -1,13 +1,16 @@
 package rs.teslaris.core.service.impl.document;
 
+import io.minio.GetObjectResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import okhttp3.Headers;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -59,7 +62,7 @@ public class FileServiceFileSystemImpl implements FileService {
     }
 
     @Override
-    public Resource loadAsResource(String filename) {
+    public GetObjectResponse loadAsResource(String filename) throws IOException {
         var filepath = Paths.get(rootLocation, filename)
             .normalize().toAbsolutePath();
 
@@ -71,7 +74,14 @@ public class FileServiceFileSystemImpl implements FileService {
         }
 
         if (resource.exists() || resource.isReadable()) {
-            return resource;
+            var inputStream = resource.getInputStream();
+
+            // Create dummy headers (if required, extract metadata from your resource or service)
+            var headersMap = new HashMap<String, String>();
+            headersMap.put("Content-Type", "application/octet-stream");
+            var headers = Headers.of(headersMap);
+
+            return new GetObjectResponse(headers, null, null, null, inputStream);
         } else {
             throw new StorageException("Could not read file: " + filename);
         }

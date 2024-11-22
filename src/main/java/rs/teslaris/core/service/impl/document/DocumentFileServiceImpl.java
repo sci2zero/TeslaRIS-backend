@@ -15,6 +15,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -175,7 +176,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         parseAndIndexPdfDocument(documentFile,
             new ResourceMultipartFile(documentFile.getServerFilename(), documentFile.getFilename(),
                 documentFile.getMimeType(),
-                new ByteArrayResource(fileResource.getInputStream().readAllBytes())),
+                new ByteArrayResource(
+                    new InputStreamResource(fileResource).getContentAsByteArray())),
             documentFile.getServerFilename(), new DocumentFileIndex());
     }
 
@@ -184,21 +186,33 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         String trueMimeType;
         String specifiedMimeType;
+
         try {
-            trueMimeType = contentAnalyzer.detect(file.getBytes());
-            specifiedMimeType =
-                Files.probeContentType(Path.of(Objects.requireNonNull(file.getOriginalFilename())));
+            trueMimeType = contentAnalyzer.detect(file.getInputStream());
+
+            var originalFilename = file.getOriginalFilename();
+            if (Objects.isNull(originalFilename)) {
+                throw new StorageException("File does not have a valid name.");
+            }
+            specifiedMimeType = Files.probeContentType(Path.of(originalFilename));
+
         } catch (IOException e) {
-            throw new StorageException("Failed to detect mime type for file.");
+            throw new StorageException("Failed to detect MIME type for file.");
         }
 
-        if (!trueMimeType.equals(specifiedMimeType) &&
-            !(trueMimeType.contains("zip") && specifiedMimeType.contains("zip"))) {
-            throw new StorageException("True mime type is different from specified one, aborting.");
+        if (!trueMimeType.equals(specifiedMimeType)) {
+            if (!(trueMimeType.contains("zip") && specifiedMimeType.contains("zip"))) {
+                throw new StorageException(String.format(
+                    "MIME type mismatch: detected [%s], specified [%s]. Aborting.",
+                    trueMimeType,
+                    specifiedMimeType
+                ));
+            }
         }
 
         return trueMimeType;
     }
+
 
     @Override
     public void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,

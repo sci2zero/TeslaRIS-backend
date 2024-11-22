@@ -18,4 +18,9 @@ public interface MultilingualContentService {
                               StringBuilder otherLanguagesBuilder,
                               Set<MultiLingualContent> contentList,
                               boolean popEnglishFirst);
+
+    void buildLanguageStringsFromHTMLMC(StringBuilder serbianBuilder,
+                                        StringBuilder otherLanguagesBuilder,
+                                        Set<MultiLingualContent> contentList,
+                                        boolean popEnglishFirst);
 }

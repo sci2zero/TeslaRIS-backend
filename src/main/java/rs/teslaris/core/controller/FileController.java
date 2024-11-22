@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,12 +49,12 @@ public class FileController {
 
         if (!license.equals(License.OPEN_ACCESS) && !license.equals(License.PUBLIC_DOMAIN)) {
             if (Objects.isNull(bearerToken)) {
-                return buildUnavailableResponse(request, "loginToViewDocumentMessage");
+                return buildUnavailableResponse(request);
             }
 
             var tokenParts = bearerToken.split(" ");
             if (tokenParts.length != 2) {
-                return buildUnauthorisedResponse(request, "unauthorisedToViewDocumentMessage");
+                return buildUnauthorisedResponse(request);
             }
 
             var token = bearerToken.split(" ")[1];
@@ -62,30 +63,39 @@ public class FileController {
                 userService.loadUserByUsername(tokenUtil.extractUsernameFromToken(token));
 
             if (!tokenUtil.validateToken(token, userDetails)) {
-                return buildUnauthorisedResponse(request, "unauthorisedToViewDocumentMessage");
+                return buildUnauthorisedResponse(request);
             }
         }
 
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"" + file.getFilename() + "\"")
+            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
-            .body(file);
+            .body(new InputStreamResource(file));
     }
 
-    private ResponseEntity<Object> buildUnauthorisedResponse(HttpServletRequest request,
-                                                             String message) {
+    @GetMapping("/image/{filename}")
+    @ResponseBody
+    public ResponseEntity<Object> serveImageFile(@PathVariable String filename) throws IOException {
+        var file = fileService.loadAsResource(filename);
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
+            .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
+            .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+            .body(new InputStreamResource(file));
+    }
+
+    private ResponseEntity<Object> buildUnauthorisedResponse(HttpServletRequest request) {
         return ResponseEntity.status(401)
             .header(HttpHeaders.CONTENT_TYPE, "application/json")
-            .body(new ErrorObject(request, message,
+            .body(new ErrorObject(request, "unauthorisedToViewDocumentMessage",
                 HttpStatus.UNAUTHORIZED));
     }
 
-    private ResponseEntity<Object> buildUnavailableResponse(HttpServletRequest request,
-                                                            String message) {
+    private ResponseEntity<Object> buildUnavailableResponse(HttpServletRequest request) {
         return ResponseEntity.status(451)
             .header(HttpHeaders.CONTENT_TYPE, "application/json")
-            .body(new ErrorObject(request, message,
+            .body(new ErrorObject(request, "loginToViewDocumentMessage",
                 HttpStatus.UNAVAILABLE_FOR_LEGAL_REASONS));
     }
 }

@@ -57,6 +57,9 @@ public class Person extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MultiLingualContent> keyword = new HashSet<>();
 
+    @Column(name = "profile_image_server_name")
+    private String profileImageServerName;
+
     @Column(name = "apvnt")
     private String apvnt;
 

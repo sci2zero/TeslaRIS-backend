@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.document;
 
-import org.springframework.core.io.Resource;
+import io.minio.GetObjectResponse;
+import java.io.IOException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,5 +12,5 @@ public interface FileService {
 
     void delete(String serverFilename);
 
-    Resource loadAsResource(String serverFilename);
+    GetObjectResponse loadAsResource(String serverFilename) throws IOException;
 }
