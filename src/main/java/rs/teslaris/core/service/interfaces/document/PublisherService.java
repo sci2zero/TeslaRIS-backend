@@ -24,7 +24,7 @@ public interface PublisherService {
 
     Publisher createPublisher(PublisherBasicAdditionDTO publisherDTO);
 
-    void updatePublisher(PublisherDTO publisherDTO, Integer publisherId);
+    void editPublisher(Integer publisherId, PublisherDTO publisherDTO);
 
     void deletePublisher(Integer publisherId);
 

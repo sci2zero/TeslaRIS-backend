@@ -112,7 +112,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
-    public void updatePublisher(PublisherDTO publisherDTO, Integer publisherId) {
+    public void editPublisher(Integer publisherId, PublisherDTO publisherDTO) {
         var publisherToUpdate = findPublisherById(publisherId);
 
         publisherToUpdate.setCountry(null);

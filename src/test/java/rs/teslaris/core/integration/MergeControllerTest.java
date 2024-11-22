@@ -25,7 +25,21 @@ public class MergeControllerTest extends BaseTest {
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch(
-                    "http://localhost:8081/api/merge/journal/{sourceJournalId}/publication/{publicationId}",
+                    "http://localhost:8081/api/merge/journal/{targetJournalId}/publication/{publicationId}",
+                    1, 999)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testSwitchPublisherPublicationToOtherJournalWhenPublisherDoesNotExist()
+        throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/merge/publisher/{targetPublisherId}/publication/{publicationId}",
                     1, 999)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());

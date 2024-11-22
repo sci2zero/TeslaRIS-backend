@@ -85,7 +85,7 @@ public class PublisherController {
     @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
     public void updatePublisher(@PathVariable Integer publisherId,
                                 @RequestBody @Valid PublisherDTO publisherDTO) {
-        publisherService.updatePublisher(publisherDTO, publisherId);
+        publisherService.editPublisher(publisherId, publisherDTO);
     }
 
     @DeleteMapping("/{publisherId}")

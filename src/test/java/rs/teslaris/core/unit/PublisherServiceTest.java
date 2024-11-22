@@ -121,7 +121,7 @@ public class PublisherServiceTest {
         when(publisherRepository.findById(1)).thenReturn(Optional.of(publisher));
 
         // when
-        publisherService.updatePublisher(publisherDTO, 1);
+        publisherService.editPublisher(1, publisherDTO);
 
         // then
         verify(publisherRepository, times(1)).save(any());

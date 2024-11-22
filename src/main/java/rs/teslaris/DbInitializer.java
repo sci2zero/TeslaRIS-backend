@@ -205,6 +205,7 @@ public class DbInitializer implements ApplicationRunner {
         var switchEntityToUnmanaged = new Privilege("SWITCH_ENTITY_TO_UNMANAGED");
         var claimDocument = new Privilege("CLAIM_DOCUMENT");
         var mergePublisherPublications = new Privilege("MERGE_PUBLISHER_PUBLICATIONS");
+        var mergePublishersMetadata = new Privilege("MERGE_PUBLISHERS_METADATA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -220,7 +221,7 @@ public class DbInitializer implements ApplicationRunner {
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
                 mergeOUMetadata, editCountries, forceDelete, switchEntityToUnmanaged,
-                claimDocument, mergePublisherPublications));
+                claimDocument, mergePublisherPublications, mergePublishersMetadata));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -236,7 +237,8 @@ public class DbInitializer implements ApplicationRunner {
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
                 prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries,
-                forceDelete, switchEntityToUnmanaged, mergePublisherPublications
+                forceDelete, switchEntityToUnmanaged, mergePublisherPublications,
+                mergePublishersMetadata
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
