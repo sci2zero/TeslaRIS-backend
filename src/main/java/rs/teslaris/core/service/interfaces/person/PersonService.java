@@ -6,13 +6,13 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.model.person.Involvement;
@@ -91,5 +91,8 @@ public interface PersonService extends JPAService<Person> {
 
     void switchToUnmanagedEntity(Integer personId);
 
-    String setPersonProfileImage(Integer personId, MultipartFile multipartFile) throws IOException;
+    String setPersonProfileImage(Integer personId, ProfilePhotoDTO profilePhotoDTO)
+        throws IOException;
+
+    void removePersonProfileImage(Integer personId);
 }

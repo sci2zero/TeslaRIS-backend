@@ -33,6 +33,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -50,6 +51,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.person.ProfilePhoto;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -105,6 +107,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
 
     private static boolean validateImageMIMEType(MultipartFile multipartFile) throws IOException {
+        if (multipartFile.isEmpty()) {
+            return true;
+        }
+
         var validMimeTypes = List.of("image/jpeg", "image/png");
 
         String contentType = multipartFile.getContentType();
@@ -121,7 +127,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var tika = new Tika();
         String detectedType = tika.detect(multipartFile.getInputStream());
-        return List.of("image/jpeg", "image/png").contains(detectedType);
+        return validMimeTypes.contains(detectedType);
     }
 
     @Override
@@ -454,24 +460,52 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public String setPersonProfileImage(Integer personId, MultipartFile multipartFile)
+    public void removePersonProfileImage(Integer personId) {
+        var person = findOne(personId);
+
+        if (Objects.nonNull(person.getProfilePhoto()) &&
+            Objects.nonNull(person.getProfilePhoto().getProfileImageServerName())) {
+            fileService.delete(person.getProfilePhoto().getProfileImageServerName());
+            person.getProfilePhoto().setProfileImageServerName(null);
+            person.getProfilePhoto().setTopOffset(null);
+            person.getProfilePhoto().setLeftOffset(null);
+            person.getProfilePhoto().setHeight(null);
+            person.getProfilePhoto().setWidth(null);
+        }
+
+        save(person);
+    }
+
+    @Override
+    public String setPersonProfileImage(Integer personId, ProfilePhotoDTO profilePhotoDTO)
         throws IOException {
-        if (!validateImageMIMEType(multipartFile)) {
+        if (!validateImageMIMEType(profilePhotoDTO.getFile())) {
             throw new IllegalArgumentException("mimeTypeValidationFailed");
         }
 
         var person = findOne(personId);
 
-        if (Objects.nonNull(person.getProfileImageServerName())) {
-            fileService.delete(person.getProfileImageServerName());
+        if (Objects.nonNull(person.getProfilePhoto()) &&
+            Objects.nonNull(person.getProfilePhoto().getProfileImageServerName()) &&
+            !profilePhotoDTO.getFile().isEmpty()) {
+            fileService.delete(person.getProfilePhoto().getProfileImageServerName());
+        } else if (Objects.isNull(person.getProfilePhoto())) {
+            person.setProfilePhoto(new ProfilePhoto());
         }
 
-        var serverFilename = fileService.store(multipartFile, UUID.randomUUID().toString());
+        person.getProfilePhoto().setTopOffset(profilePhotoDTO.getTop());
+        person.getProfilePhoto().setLeftOffset(profilePhotoDTO.getLeft());
+        person.getProfilePhoto().setHeight(profilePhotoDTO.getHeight());
+        person.getProfilePhoto().setWidth(profilePhotoDTO.getWidth());
 
-        person.setProfileImageServerName(serverFilename);
+        var serverFilename = person.getProfilePhoto().getProfileImageServerName();
+        if (!profilePhotoDTO.getFile().isEmpty()) {
+            serverFilename =
+                fileService.store(profilePhotoDTO.getFile(), UUID.randomUUID().toString());
+            person.getProfilePhoto().setProfileImageServerName(serverFilename);
+        }
 
         save(person);
-
         return serverFilename;
     }
 
@@ -679,20 +713,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexProperties(PersonIndex personIndex, Person savedPerson) {
-        if (Objects.nonNull(savedPerson.getName().getOtherName())) {
-            personIndex.setName(
-                savedPerson.getName().getFirstname() + " " + savedPerson.getName().getOtherName() +
-                    " " + savedPerson.getName().getLastname());
-        } else {
-            personIndex.setName(
-                savedPerson.getName().getFirstname() + " " + savedPerson.getName().getLastname());
-        }
+        personIndex.setName(savedPerson.getName().toString());
 
         savedPerson.getOtherNames().forEach((otherName) -> {
-            var fullName = Objects.requireNonNullElse(otherName.getFirstname(), "") + " " +
-                Objects.requireNonNullElse(otherName.getOtherName(), "") + " " +
-                Objects.requireNonNullElse(otherName.getLastname(), "");
-            personIndex.setName(personIndex.getName() + "; " + fullName);
+            personIndex.setName(personIndex.getName() + "; " + otherName.toString());
         });
 
         personIndex.setNameSortable(personIndex.getName());
@@ -838,37 +862,38 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.6);
 
         return BoolQuery.of(q -> q
             .must(mb -> mb.bool(b -> {
                     tokens.forEach(
                         token -> {
-                            if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
-                                b.must(mp ->
-                                    mp.bool(m -> {
-                                        {
-                                            m.should(sb -> sb.matchPhrase(
-                                                mq -> mq.field("employments_sr")
-                                                    .query(token.replace("\\\"", ""))));
-                                            m.should(sb -> sb.matchPhrase(
-                                                mq -> mq.field("employments_other")
-                                                    .query(token.replace("\\\"", ""))));
-                                        }
-                                        return m;
-                                    }));
-                            }
-
                             if (!strict) {
+                                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                                    b.must(mp ->
+                                        mp.bool(m -> {
+                                            {
+                                                m.should(sb -> sb.matchPhrase(
+                                                    mq -> mq.field("employments_sr")
+                                                        .query(token.replace("\\\"", ""))));
+                                                m.should(sb -> sb.matchPhrase(
+                                                    mq -> mq.field("employments_other")
+                                                        .query(token.replace("\\\"", ""))));
+                                            }
+                                            return m;
+                                        }));
+                                }
+
                                 b.should(sb -> sb.wildcard(
                                     m -> m.field("name").value(token + "*").caseInsensitive(true)));
+
+                                b.should(
+                                    sb -> sb.match(m -> m.field("employments_other").query(token)));
+                                b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
+                                b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
                             }
 
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
-                            b.should(
-                                sb -> sb.match(m -> m.field("employments_other").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
                         });
                     return b.minimumShouldMatch(Integer.toString(minShouldMatch));
                 }

@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -31,6 +31,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -233,8 +234,16 @@ public class PersonController {
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @ResponseStatus(HttpStatus.OK)
     @PersonEditCheck
-    public String updatePersonProfileImage(@RequestParam("imageFile") MultipartFile file,
+    public String updatePersonProfileImage(@ModelAttribute @Valid ProfilePhotoDTO profilePhotoDTO,
                                            @PathVariable Integer personId) throws IOException {
-        return personService.setPersonProfileImage(personId, file);
+        return personService.setPersonProfileImage(personId, profilePhotoDTO);
+    }
+
+    @DeleteMapping("/profile-image/{personId}")
+    @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PersonEditCheck
+    public void removePersonProfileImage(@PathVariable Integer personId) {
+        personService.removePersonProfileImage(personId);
     }
 }

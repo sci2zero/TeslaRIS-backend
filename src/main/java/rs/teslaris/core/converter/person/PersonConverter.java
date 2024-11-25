@@ -58,7 +58,8 @@ public class PersonConverter {
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getPersonalInfo().getUris()), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
-            expertisesOrSkills, prizes, person.getProfileImageServerName());
+            expertisesOrSkills, prizes, Objects.nonNull(person.getProfilePhoto()) ?
+            person.getProfilePhoto().getProfileImageServerName() : null);
     }
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {

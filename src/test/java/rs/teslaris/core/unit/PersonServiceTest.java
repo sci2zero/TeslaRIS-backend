@@ -50,6 +50,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
+import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -901,7 +902,8 @@ public class PersonServiceTest {
 
         // when / then
         assertThrows(IllegalArgumentException.class,
-            () -> personService.setPersonProfileImage(personId, mockFile));
+            () -> personService.setPersonProfileImage(personId,
+                new ProfilePhotoDTO(1, 2, 3, 4, mockFile)));
         verifyNoInteractions(fileService);
     }
 

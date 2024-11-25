@@ -90,7 +90,7 @@ public class ScopusConverter {
 
         document.getTitle().add(new MultilingualContent("EN", entry.title(), 1));
 
-        if (Objects.nonNull(document.getDescription()) && !document.getDescription().isEmpty()) {
+        if (Objects.nonNull(entry.description()) && !entry.description().isEmpty()) {
             document.getDescription().add(new MultilingualContent("EN", entry.description(), 1));
         }
 

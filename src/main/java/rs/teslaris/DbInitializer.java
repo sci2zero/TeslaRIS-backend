@@ -356,7 +356,7 @@ public class DbInitializer implements ApplicationRunner {
 
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
-                "Janko", "Jankovic", false, false, serbianLanguage, researcherAuthority, person1,
+                "Dragan", "Ivanovic", false, false, serbianLanguage, researcherAuthority, person1,
                 null, UserNotificationPeriod.DAILY);
         userRepository.save(researcherUser);
 
