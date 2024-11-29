@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
@@ -39,6 +41,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final ConferenceRepository conferenceRepository;
+
 
     @Autowired
     public ConferenceServiceImpl(EventIndexRepository eventIndexRepository,
@@ -50,12 +54,14 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  CountryService countryService,
                                  IndexBulkUpdateService indexBulkUpdateService,
                                  ConferenceJPAServiceImpl conferenceJPAService,
-                                 DocumentPublicationIndexRepository documentPublicationIndexRepository) {
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 ConferenceRepository conferenceRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
             eventRepository, indexBulkUpdateService, eventsRelationRepository, searchService,
             emailUtil, countryService);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
+        this.conferenceRepository = conferenceRepository;
     }
 
     @Override
@@ -85,6 +91,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     public Conference findConferenceById(Integer conferenceId) {
         return conferenceJPAService.findOne(conferenceId);
+    }
+
+    @Override
+    @Nullable
+    public Conference findConferenceByConfId(String confId) {
+        return conferenceRepository.findConferenceByConfId(confId).orElse(null);
     }
 
     @Override

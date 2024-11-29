@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -35,11 +36,13 @@ import rs.teslaris.core.importer.model.converter.load.publication.JournalPublica
 import rs.teslaris.core.importer.model.converter.load.publication.ProceedingsPublicationConverter;
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
 import rs.teslaris.core.importer.utility.DataSet;
+import rs.teslaris.core.importer.utility.LoadProgressReport;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -55,7 +58,13 @@ import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedExce
 @RequiredArgsConstructor
 public class CommonLoaderImpl implements CommonLoader {
 
-    private static final Object lock = new Object();
+    private static final Object institutionLock = new Object();
+
+    private static final Object personLock = new Object();
+
+    private static final Object journalLock = new Object();
+
+    private static final Object eventLock = new Object();
 
     private final MongoTemplate mongoTemplate;
 
@@ -79,6 +88,23 @@ public class CommonLoaderImpl implements CommonLoader {
 
     private final PersonService personService;
 
+    @NotNull
+    private static BasicPersonDTO getBasicPersonDTO(Person person) {
+        var basicPersonDTO = new BasicPersonDTO();
+
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname(person.getName().getFirstName());
+        personNameDTO.setOtherName(person.getName().getMiddleName());
+        personNameDTO.setLastname(person.getName().getLastName());
+        basicPersonDTO.setPersonName(personNameDTO);
+
+        basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
+        basicPersonDTO.setECrisId(person.getECrisId());
+        basicPersonDTO.setENaukaId(person.getENaukaId());
+        basicPersonDTO.setOrcid(person.getOrcid());
+        basicPersonDTO.setApvnt(person.getApvnt());
+        return basicPersonDTO;
+    }
 
     @Override
     public <R> R loadRecordsWizard(Integer userId) {
@@ -108,8 +134,9 @@ public class CommonLoaderImpl implements CommonLoader {
     @Override
     public void skipRecord(Integer userId) {
         var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                mongoTemplate);
+            Objects.requireNonNullElse(
+                ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+                    mongoTemplate), new LoadProgressReport("1", userId, DataSet.DOCUMENT_IMPORTS));
         Query nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
@@ -136,8 +163,9 @@ public class CommonLoaderImpl implements CommonLoader {
     @Override
     public void markRecordAsLoaded(Integer userId) {
         var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                mongoTemplate);
+            Objects.requireNonNullElse(
+                ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+                    mongoTemplate), new LoadProgressReport("1", userId, DataSet.DOCUMENT_IMPORTS));
 
         Query query = new Query();
         query.addCriteria(Criteria.where("identifier").is(progressReport.getLastLoadedId()));
@@ -276,6 +304,12 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private PublicationSeriesDTO createJournal(DocumentImport documentImport) {
+        // Lock hint
+        var potentialMatch = searchPotentialMatches(documentImport);
+        if (Objects.nonNull(potentialMatch)) {
+            return potentialMatch;
+        }
+
         var journalDTO = new PublicationSeriesDTO();
 
         journalDTO.setTitle(new ArrayList<>());
@@ -288,10 +322,17 @@ public class CommonLoaderImpl implements CommonLoader {
         journalDTO.setNameAbbreviation(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
-        var createdJournal = journalService.createJournal(journalDTO, true);
-        journalDTO.setId(createdJournal.getId());
+        synchronized (journalLock) {
+            potentialMatch = searchPotentialMatches(documentImport);
+            if (Objects.nonNull(potentialMatch)) {
+                return potentialMatch;
+            }
 
-        return journalDTO;
+            var createdJournal = journalService.createJournal(journalDTO, true);
+            journalDTO.setId(createdJournal.getId());
+
+            return journalDTO;
+        }
     }
 
     private ProceedingsDTO createProceedings(DocumentImport proceedingsPublication,
@@ -323,6 +364,12 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private Conference createConference(Event conference) {
+        // Lock hint
+        var potentialMatch = searchPotentialMatches(conference);
+        if (Objects.nonNull(potentialMatch)) {
+            return potentialMatch;
+        }
+
         var conferenceDTO = new ConferenceDTO();
 
         conferenceDTO.setName(new ArrayList<>());
@@ -353,7 +400,14 @@ public class CommonLoaderImpl implements CommonLoader {
         conferenceDTO.setDateFrom(conference.getDateFrom());
         conferenceDTO.setDateTo(conference.getDateTo());
 
-        return conferenceService.createConference(conferenceDTO, true);
+        synchronized (eventLock) {
+            potentialMatch = searchPotentialMatches(conference);
+            if (Objects.nonNull(potentialMatch)) {
+                return potentialMatch;
+            }
+
+            return conferenceService.createConference(conferenceDTO, true);
+        }
     }
 
     private void setMultilingualContent(List<MultilingualContentDTO> targetList,
@@ -392,7 +446,7 @@ public class CommonLoaderImpl implements CommonLoader {
         organisationUnitDTO.setContact(new ContactDTO());
         organisationUnitDTO.setLocation(new GeoLocationDTO());
 
-        synchronized (lock) {
+        synchronized (institutionLock) {
             potentialMatch = searchPotentialMatches(institution);
             if (Objects.nonNull(potentialMatch)) {
                 return potentialMatch;
@@ -403,21 +457,22 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private rs.teslaris.core.model.person.Person createLoadedPerson(Person person) {
-        var basicPersonDTO = new BasicPersonDTO();
+        // Lock hint
+        var potentialMatch = searchPotentialMatches(person);
+        if (Objects.nonNull(potentialMatch)) {
+            return potentialMatch;
+        }
 
-        var personNameDTO = new PersonNameDTO();
-        personNameDTO.setFirstname(person.getName().getFirstName());
-        personNameDTO.setOtherName(person.getName().getMiddleName());
-        personNameDTO.setLastname(person.getName().getLastName());
-        basicPersonDTO.setPersonName(personNameDTO);
+        var basicPersonDTO = getBasicPersonDTO(person);
 
-        basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
-        basicPersonDTO.setECrisId(person.getECrisId());
-        basicPersonDTO.setENaukaId(person.getENaukaId());
-        basicPersonDTO.setOrcid(person.getOrcid());
-        basicPersonDTO.setApvnt(person.getApvnt());
+        synchronized (personLock) {
+            potentialMatch = searchPotentialMatches(person);
+            if (Objects.nonNull(potentialMatch)) {
+                return potentialMatch;
+            }
 
-        return personService.createPersonWithBasicInfo(basicPersonDTO, true);
+            return personService.createPersonWithBasicInfo(basicPersonDTO, true);
+        }
     }
 
     @Nullable
@@ -429,6 +484,51 @@ public class CommonLoaderImpl implements CommonLoader {
             existingRecordResponse.setName(List.of(new MultilingualContentDTO(-1, "",
                 potentialMatch.getNameSr(), 1)));
             existingRecordResponse.setId(potentialMatch.getDatabaseId());
+            return existingRecordResponse;
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private rs.teslaris.core.model.person.Person searchPotentialMatches(Person person) {
+        var potentialMatch =
+            personService.findPersonByScopusAuthorId(person.getScopusAuthorId());
+        if (Objects.nonNull(potentialMatch)) {
+            var existingRecordResponse = new rs.teslaris.core.model.person.Person();
+            existingRecordResponse.setName(
+                new PersonName(potentialMatch.getName().trim(), "", "", null, null));
+            existingRecordResponse.setId(potentialMatch.getDatabaseId());
+            return existingRecordResponse;
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private PublicationSeriesDTO searchPotentialMatches(DocumentImport documentImport) {
+        var potentialMatch =
+            journalService.readJournalByIssn(documentImport.getEIssn(),
+                documentImport.getPrintIssn());
+        if (Objects.nonNull(potentialMatch)) {
+            var existingRecordResponse = new PublicationSeriesDTO();
+            existingRecordResponse.setTitle(
+                List.of(new MultilingualContentDTO(-1, "", potentialMatch.getTitleOther(), 1)));
+            existingRecordResponse.setId(potentialMatch.getDatabaseId());
+            return existingRecordResponse;
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private Conference searchPotentialMatches(Event conference) {
+        var potentialMatch =
+            conferenceService.findConferenceByConfId(conference.getConfId());
+        if (Objects.nonNull(potentialMatch)) {
+            var existingRecordResponse = new Conference();
+            existingRecordResponse.setName(potentialMatch.getName());
+            existingRecordResponse.setId(potentialMatch.getId());
             return existingRecordResponse;
         }
 
