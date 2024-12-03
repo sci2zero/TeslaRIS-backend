@@ -48,7 +48,7 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
         if (searchExpression.isEmpty()) {
             return countryRepository.findAll(pageable).map(CountryConverter::toDTO);
         } else {
-            return countryRepository.searchCountries(pageable, searchExpression)
+            return countryRepository.searchCountries(searchExpression, pageable)
                 .map(CountryConverter::toDTO);
         }
     }

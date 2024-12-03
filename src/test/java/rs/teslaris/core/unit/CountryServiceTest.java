@@ -171,14 +171,14 @@ public class CountryServiceTest {
         var countryDTO = new CountryDTO();
         var countryPage = new PageImpl<>(List.of(new Country()));
         var pageable = PageRequest.of(0, 10);
-        when(countryRepository.searchCountries(pageable, "Search Term")).thenReturn(countryPage);
+        when(countryRepository.searchCountries("Search Term", pageable)).thenReturn(countryPage);
 
         // when
         var result = countryService.searchCountries(pageable, "Search Term");
 
         // then
         assertNotNull(result);
-        verify(countryRepository).searchCountries(pageable, "Search Term");
+        verify(countryRepository).searchCountries("Search Term", pageable);
     }
 
     @Test
