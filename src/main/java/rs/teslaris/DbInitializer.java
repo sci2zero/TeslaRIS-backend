@@ -206,6 +206,7 @@ public class DbInitializer implements ApplicationRunner {
         var claimDocument = new Privilege("CLAIM_DOCUMENT");
         var mergePublisherPublications = new Privilege("MERGE_PUBLISHER_PUBLICATIONS");
         var mergePublishersMetadata = new Privilege("MERGE_PUBLISHERS_METADATA");
+        var unbindYourselfFromPublication = new Privilege("UNBIND_YOURSELF_FROM_PUBLICATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -221,7 +222,8 @@ public class DbInitializer implements ApplicationRunner {
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
                 mergeOUMetadata, editCountries, forceDelete, switchEntityToUnmanaged,
-                claimDocument, mergePublisherPublications, mergePublishersMetadata));
+                claimDocument, mergePublisherPublications, mergePublishersMetadata,
+                unbindYourselfFromPublication));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -244,7 +246,8 @@ public class DbInitializer implements ApplicationRunner {
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
-                editEntityIndicatorProofs, listMyJournalPublications})));
+                editEntityIndicatorProofs, listMyJournalPublications,
+                unbindYourselfFromPublication})));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -584,6 +587,21 @@ public class DbInitializer implements ApplicationRunner {
         monograph1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 1", 1)));
         monograph1.setMonographType(MonographType.BIBLIOGRAPHY);
+        var monographContribution = new PersonDocumentContribution();
+        monographContribution.setPerson(person2);
+        monographContribution.setContributionType(DocumentContributionType.AUTHOR);
+        monographContribution.setIsMainContributor(true);
+        monographContribution.setIsCorrespondingContributor(false);
+        monographContribution.setOrderNumber(1);
+        monographContribution.setDocument(monograph1);
+        monographContribution.setApproveStatus(ApproveStatus.APPROVED);
+        monographContribution.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), new PersonName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+        monographContribution.getAffiliationStatement().setDisplayPersonName(
+            new PersonName("Joachim", "N.", "S.", null, null));
+
+        monograph1.getContributors().add(monographContribution);
         monographRepository.save(monograph1);
 
         var monograph2 = new Monograph();

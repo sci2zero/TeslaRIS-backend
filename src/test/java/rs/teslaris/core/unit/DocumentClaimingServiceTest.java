@@ -97,10 +97,12 @@ public class DocumentClaimingServiceTest {
         var affiliationStatement1 = new AffiliationStatement();
         affiliationStatement1.setDisplayPersonName(new PersonName("John", null, "Doe", null, null));
         contribution1.setAffiliationStatement(affiliationStatement1);
+        contribution1.setOrderNumber(1);
         var contribution2 = new PersonDocumentContribution();
         var affiliationStatement2 = new AffiliationStatement();
         affiliationStatement2.setDisplayPersonName(new PersonName("John", null, "Doe", null, null));
         contribution2.setAffiliationStatement(affiliationStatement1);
+        contribution2.setOrderNumber(2);
 
         var document = new DocumentPublicationIndex();
         document.setDatabaseId(documentId);

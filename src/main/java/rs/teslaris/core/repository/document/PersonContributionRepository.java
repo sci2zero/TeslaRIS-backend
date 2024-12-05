@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.document;
 
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,10 @@ public interface PersonContributionRepository extends JpaRepository<PersonContri
     @Query("select pdc from PersonDocumentContribution pdc join pdc.person p where p.id = :personId")
     Page<PersonDocumentContribution> fetchAllPersonDocumentContributions(Integer personId,
                                                                          Pageable pageable);
+
+    @Query("select pdc from PersonDocumentContribution pdc where pdc.person.id = :personId and pdc.document.id = :documentId")
+    Optional<PersonDocumentContribution> fetchPersonDocumentContributionOnDocument(Integer personId,
+                                                                                   Integer documentId);
 
     @Modifying
     @Query("update PersonEventContribution pec set pec.deleted = true where pec.person.id = :personId")

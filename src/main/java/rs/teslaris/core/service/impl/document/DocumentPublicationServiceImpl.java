@@ -227,12 +227,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             .forEach(contribution -> {
                 var personExists = Objects.nonNull(contribution.getPerson());
 
-                var contributorDisplayName =
-                    contribution.getAffiliationStatement().getDisplayPersonName();
                 var contributorName =
-                    (Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
-                        Objects.toString(contributorDisplayName.getOtherName(), "") + " " +
-                        Objects.toString(contributorDisplayName.getLastname(), "")).trim();
+                    contribution.getAffiliationStatement().getDisplayPersonName().toString();
 
                 organisationUnitIds.addAll(
                     contribution.getInstitutions().stream().map((BaseEntity::getId)).toList());
@@ -547,6 +543,31 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             indexCommonFields(document, documentPublicationIndex);
             documentPublicationIndexRepository.save(documentPublicationIndex);
         });
+    }
+
+    @Override
+    public void unbindResearcherFromContribution(Integer personId, Integer documentId) {
+        var contribution =
+            personContributionService.findContributionForResearcherAndDocument(personId,
+                documentId);
+
+        if (Objects.isNull(contribution)) {
+            return;
+        }
+
+        contribution.setPerson(null);
+        contribution.getInstitutions().clear();
+        personContributionService.save(contribution);
+
+        var document = documentRepository.findById(documentId);
+        var indexOptional =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
+
+        if (document.isPresent() && indexOptional.isPresent()) {
+            var index = indexOptional.get();
+            indexCommonFields(document.get(), index);
+            documentPublicationIndexRepository.save(index);
+        }
     }
 
     private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId) {

@@ -55,4 +55,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     void reorderDocumentContributions(Integer documentId, Integer contributionId,
                                       Integer oldContributionOrderNumber,
                                       Integer newContributionOrderNumber);
+
+    void unbindResearcherFromContribution(Integer personId, Integer documentId);
 }

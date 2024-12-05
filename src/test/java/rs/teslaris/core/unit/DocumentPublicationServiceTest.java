@@ -31,6 +31,8 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -378,5 +380,94 @@ public class DocumentPublicationServiceTest {
 
         // then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    void shouldDoNothingWhenContributionDoesNotExist() {
+        // Given
+        var personId = 1;
+        var documentId = 1;
+        when(personContributionService.findContributionForResearcherAndDocument(personId,
+            documentId))
+            .thenReturn(null);
+
+        // When
+        documentPublicationService.unbindResearcherFromContribution(personId, documentId);
+
+        // Then
+        verify(personContributionService, never()).save(any());
+        verify(documentRepository, never()).findById(any());
+        verify(documentPublicationIndexRepository,
+            never()).findDocumentPublicationIndexByDatabaseId(any());
+    }
+
+    @Test
+    void shouldUpdateIndexWhenDocumentAndIndexExist() {
+        // Given
+        var personId = 1;
+        var documentId = 1;
+
+        var contribution = new PersonDocumentContribution();
+        var document = new Software();
+        var index = new DocumentPublicationIndex();
+
+        when(personContributionService.findContributionForResearcherAndDocument(personId,
+            documentId))
+            .thenReturn(contribution);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(index));
+
+        // When
+        documentPublicationService.unbindResearcherFromContribution(personId, documentId);
+
+        // Then
+        verify(documentRepository).findById(documentId);
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            documentId);
+    }
+
+    @Test
+    void shouldNotUpdateIndexWhenDocumentDoesNotExist() {
+        // Given
+        var personId = 1;
+        var documentId = 1;
+
+        var contribution = new PersonDocumentContribution();
+
+        when(personContributionService.findContributionForResearcherAndDocument(personId,
+            documentId))
+            .thenReturn(contribution);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+
+        // When
+        documentPublicationService.unbindResearcherFromContribution(personId, documentId);
+
+        // Then
+        verify(documentPublicationIndexRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldNotUpdateIndexWhenIndexDoesNotExist() {
+        // Given
+        var personId = 1;
+        var documentId = 1;
+
+        var contribution = new PersonDocumentContribution();
+        var document = new Software();
+
+        when(personContributionService.findContributionForResearcherAndDocument(personId,
+            documentId)).thenReturn(contribution);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // When
+        documentPublicationService.unbindResearcherFromContribution(personId, documentId);
+
+        // Then
+        verify(documentPublicationIndexRepository, never()).save(any());
     }
 }

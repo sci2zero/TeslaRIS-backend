@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.person.DeclinedDocumentClaim;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -100,6 +102,8 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
 
         var contributionsToClaim =
             personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId);
+        contributionsToClaim = contributionsToClaim.stream()
+            .sorted(Comparator.comparing(PersonContribution::getOrderNumber)).toList();
 
         var counter = 1;
         for (var contribution : contributionsToClaim) {
@@ -156,8 +160,9 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
                         continue;
                     }
 
-                    var results = personSearchService.runQuery(buildNameQuery(authorNames[i]),
-                        Pageable.unpaged(), PersonIndex.class, "person");
+                    var results =
+                        personSearchService.runQuery(buildNameQuery(authorNames[i].trim()),
+                            Pageable.unpaged(), PersonIndex.class, "person");
                     results.getContent().forEach(person -> {
                         if (declinedDocumentClaimRepository.canBeClaimedByPerson(
                             person.getDatabaseId(), document.getDatabaseId())) {
@@ -187,8 +192,9 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     }
 
     private Query buildNameQuery(String authorName) {
+        // TODO: Switch to some un-analyzed text field
         return BoolQuery.of(q -> q
-            .must(mb -> mb.matchPhrase(m -> m.field("name").query(authorName)))
+            .must(mb -> mb.term(m -> m.field("name").value(authorName)))
         )._toQuery();
     }
 }
