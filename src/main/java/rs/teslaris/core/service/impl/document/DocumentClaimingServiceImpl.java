@@ -30,6 +30,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -132,11 +133,14 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     }
 
     private boolean isMatchingName(Person person, PersonName displayName) {
-        if (person.getName().toString().equals(displayName.toString())) {
+        if (StringUtil.performSimpleSerbianPreprocessing(person.getName().toString())
+            .equals(StringUtil.performSimpleSerbianPreprocessing(displayName.toString()))) {
             return true;
         }
         return person.getOtherNames().stream()
-            .anyMatch(otherName -> otherName.toString().equals(displayName.toString()));
+            .anyMatch(
+                otherName -> StringUtil.performSimpleSerbianPreprocessing(otherName.toString())
+                    .equals(StringUtil.performSimpleSerbianPreprocessing(displayName.toString())));
     }
 
     @Scheduled(cron = "${refresh-potential-claims.schedule}")
@@ -192,9 +196,8 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     }
 
     private Query buildNameQuery(String authorName) {
-        // TODO: Switch to some un-analyzed text field
         return BoolQuery.of(q -> q
-            .must(mb -> mb.term(m -> m.field("name").value(authorName)))
+            .must(mb -> mb.matchPhrase(m -> m.field("name").query(authorName)))
         )._toQuery();
     }
 }
