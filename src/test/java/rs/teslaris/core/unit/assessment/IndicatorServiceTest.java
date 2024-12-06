@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.assessment.dto.IndicatorDTO;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.IndicatorServiceImpl;
@@ -98,7 +99,8 @@ public class IndicatorServiceTest {
     @Test
     void shouldCreateIndicator() {
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
-            List.of(new MultilingualContentDTO()), AccessLevel.CLOSED);
+            List.of(new MultilingualContentDTO()), AccessLevel.CLOSED,
+            List.of(ApplicableEntityType.ALL));
         var newIndicator = new Indicator();
 
         when(indicatorRepository.save(any(Indicator.class)))
@@ -115,7 +117,8 @@ public class IndicatorServiceTest {
     void shouldUpdateIndicator() {
         var indicatorId = 1;
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
-            List.of(new MultilingualContentDTO()), AccessLevel.CLOSED);
+            List.of(new MultilingualContentDTO()), AccessLevel.CLOSED,
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON));
         var existingIndicator = new Indicator();
 
         when(indicatorRepository.findById(indicatorId))

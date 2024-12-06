@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.model;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
@@ -37,4 +38,7 @@ public class Indicator extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<ApplicableEntityType> applicableTypes = new HashSet<>();
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.dto.EntityIndicatorDTO;
 import rs.teslaris.core.assessment.model.EntityIndicator;
+import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 import rs.teslaris.core.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.EntityIndicatorService;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
@@ -79,7 +80,7 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
     protected void setCommonFields(EntityIndicator entityIndicator,
                                    EntityIndicatorDTO entityIndicatorDTO) {
         entityIndicator.setTimestamp(LocalDateTime.now());
-        entityIndicator.setSource("MANUAL");
+        entityIndicator.setSource(EntityIndicatorSource.MANUAL);
 
         entityIndicator.setNumericValue(entityIndicatorDTO.getNumericValue());
         entityIndicator.setBooleanValue(entityIndicatorDTO.getBooleanValue());

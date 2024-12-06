@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,4 +23,7 @@ public class PublicationSeriesIndicator extends EntityIndicator {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publication_series_id")
     private PublicationSeries publicationSeries;
+
+    @Column(name = "category_identifier")
+    private String categoryIdentifier;
 }

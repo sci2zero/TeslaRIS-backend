@@ -12,6 +12,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.assessment.model.AssessmentRulebook;
@@ -875,6 +876,9 @@ public class DbInitializer implements ApplicationRunner {
         totalViews.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Total number of views.", 1)));
         totalViews.setAccessLevel(AccessLevel.OPEN);
+        totalViews.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
 
         var dailyViews = new Indicator();
         dailyViews.setCode("viewsDay");
@@ -883,6 +887,9 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of views in the last 24h.", 1)));
         dailyViews.setAccessLevel(AccessLevel.OPEN);
+        dailyViews.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
 
         var weeklyViews = new Indicator();
         weeklyViews.setCode("viewsWeek");
@@ -891,6 +898,9 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
                 1)));
         weeklyViews.setAccessLevel(AccessLevel.OPEN);
+        weeklyViews.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
 
         var monthlyViews = new Indicator();
         monthlyViews.setCode("viewsMonth");
@@ -899,6 +909,9 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(englishTag, "Total number of views in the last month.",
                 1)));
         monthlyViews.setAccessLevel(AccessLevel.OPEN);
+        monthlyViews.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
 
         var totalDownloads = new Indicator();
         totalDownloads.setCode("downloadsTotal");
@@ -906,6 +919,9 @@ public class DbInitializer implements ApplicationRunner {
         totalDownloads.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Total number of downloads.", 1)));
         totalDownloads.setAccessLevel(AccessLevel.OPEN);
+        totalDownloads.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
 
         var dailyDownloads = new Indicator();
         dailyDownloads.setCode("downloadsDay");
@@ -915,6 +931,9 @@ public class DbInitializer implements ApplicationRunner {
                 new MultiLingualContent(englishTag, "Total number of downloads in the last 24h.",
                     1)));
         dailyDownloads.setAccessLevel(AccessLevel.OPEN);
+        dailyDownloads.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
 
         var weeklyDownloads = new Indicator();
         weeklyDownloads.setCode("downloadsWeek");
@@ -925,6 +944,9 @@ public class DbInitializer implements ApplicationRunner {
                 new MultiLingualContent(englishTag, "Total number of downloads in the last 7 days.",
                     1)));
         weeklyDownloads.setAccessLevel(AccessLevel.OPEN);
+        weeklyDownloads.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
 
         var monthlyDownloads = new Indicator();
         monthlyDownloads.setCode("downloadsMonth");
@@ -935,6 +957,9 @@ public class DbInitializer implements ApplicationRunner {
                 new MultiLingualContent(englishTag, "Total number of downloads in the last month.",
                     1)));
         monthlyDownloads.setAccessLevel(AccessLevel.OPEN);
+        monthlyDownloads.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
 
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads,

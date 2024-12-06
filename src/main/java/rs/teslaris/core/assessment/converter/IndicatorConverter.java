@@ -10,6 +10,7 @@ public class IndicatorConverter {
         return new IndicatorResponseDTO(
             indicator.getId(), indicator.getCode(),
             MultilingualContentConverter.getMultilingualContentDTO(indicator.getTitle()),
-            MultilingualContentConverter.getMultilingualContentDTO(indicator.getDescription()));
+            MultilingualContentConverter.getMultilingualContentDTO(indicator.getDescription()),
+            indicator.getApplicableTypes().stream().toList());
     }
 }

@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import java.util.HashSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -78,6 +79,7 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
         }
 
         indicator.setCode(indicatorDTO.code());
+        indicator.setApplicableTypes(new HashSet<>(indicatorDTO.applicableTypes()));
         indicator.setTitle(
             multilingualContentService.getMultilingualContent(indicatorDTO.title()));
         indicator.setDescription(

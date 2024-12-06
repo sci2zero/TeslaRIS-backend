@@ -47,7 +47,7 @@ public abstract class EntityIndicator extends BaseEntity {
     private LocalDateTime timestamp;
 
     @Column(name = "source")
-    private String source;
+    private EntityIndicatorSource source;
 
     @Column(name = "from_date")
     private LocalDate fromDate;
