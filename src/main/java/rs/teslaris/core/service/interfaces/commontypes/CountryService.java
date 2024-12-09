@@ -14,7 +14,8 @@ public interface CountryService extends JPAService<Country> {
 
     List<CountryDTO> readAllCountries();
 
-    Page<CountryDTO> searchCountries(Pageable pageable, String searchExpression);
+    Page<CountryDTO> searchCountries(Pageable pageable, String searchExpression,
+                                     String languageCode);
 
     CountryDTO readCountryById(Integer countryId);
 

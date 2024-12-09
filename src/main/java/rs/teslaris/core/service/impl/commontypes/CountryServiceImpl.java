@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -41,16 +42,17 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
     }
 
     @Override
-    public Page<CountryDTO> searchCountries(Pageable pageable, String searchExpression) {
+    public Page<CountryDTO> searchCountries(Pageable pageable, String searchExpression,
+                                            String languageCode) {
         if (searchExpression.equals("*")) {
             searchExpression = "";
         }
-        if (searchExpression.isEmpty()) {
-            return countryRepository.findAll(pageable).map(CountryConverter::toDTO);
-        } else {
-            return countryRepository.searchCountries(searchExpression, pageable)
-                .map(CountryConverter::toDTO);
-        }
+        var count = countryRepository.countCountries(searchExpression, languageCode);
+        var countryPage =
+            countryRepository.searchCountries(searchExpression, languageCode, pageable)
+                .map(CountryConverter::toDTO).getContent();
+
+        return new PageImpl<>(countryPage, pageable, count);
     }
 
     @Override

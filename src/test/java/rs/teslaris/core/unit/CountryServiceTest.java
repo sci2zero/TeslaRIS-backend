@@ -171,14 +171,15 @@ public class CountryServiceTest {
         var countryDTO = new CountryDTO();
         var countryPage = new PageImpl<>(List.of(new Country()));
         var pageable = PageRequest.of(0, 10);
-        when(countryRepository.searchCountries("Search Term", pageable)).thenReturn(countryPage);
+        when(countryRepository.searchCountries("Search Term", "EN", pageable)).thenReturn(
+            countryPage);
 
         // when
-        var result = countryService.searchCountries(pageable, "Search Term");
+        var result = countryService.searchCountries(pageable, "Search Term", "EN");
 
         // then
         assertNotNull(result);
-        verify(countryRepository).searchCountries("Search Term", pageable);
+        verify(countryRepository).searchCountries("Search Term", "EN", pageable);
     }
 
     @Test
@@ -186,13 +187,13 @@ public class CountryServiceTest {
         // given
         var countryPage = new PageImpl<>(List.of(new Country()));
         var pageable = PageRequest.of(0, 10);
-        when(countryRepository.findAll(pageable)).thenReturn(countryPage);
+        when(countryRepository.searchCountries("", "SR", pageable)).thenReturn(countryPage);
 
         // when
-        var result = countryService.searchCountries(pageable, "*");
+        var result = countryService.searchCountries(pageable, "*", "SR");
 
         // then
         assertNotNull(result);
-        verify(countryRepository).findAll(pageable);
+        verify(countryRepository).searchCountries("", "SR", pageable);
     }
 }

@@ -42,8 +42,10 @@ public class CountryController {
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('EDIT_COUNTRIES')")
     public Page<CountryDTO> searchCountries(Pageable pageable,
-                                            @RequestParam("tokens") List<String> tokens) {
-        return countryService.searchCountries(pageable, Strings.join(tokens, ' '));
+                                            @RequestParam("tokens") List<String> tokens,
+                                            @RequestParam("lang") String language) {
+        return countryService.searchCountries(pageable, Strings.join(tokens, ' '),
+            language.toUpperCase());
     }
 
     @PostMapping
