@@ -157,8 +157,8 @@ public class PatentServiceTest {
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldReadJournalPublication(DocumentContributionType type, Boolean isMainAuthor,
-                                             Boolean isCorrespondingAuthor, Country country) {
+    public void shouldReadPatent(DocumentContributionType type, Boolean isMainAuthor,
+                                 Boolean isCorrespondingAuthor, Country country) {
         // Given
         var patentId = 1;
         var patent = new Patent();
@@ -189,7 +189,7 @@ public class PatentServiceTest {
     }
 
     @Test
-    public void shouldReindexJournalPublications() {
+    public void shouldReindexPatents() {
         // Given
         var patent = new Patent();
         patent.setDocumentDate("2024");

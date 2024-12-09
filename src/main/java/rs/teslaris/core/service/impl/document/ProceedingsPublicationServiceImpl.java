@@ -59,19 +59,19 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            personContributionService, expressionTransformer, eventService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }
 
     @Override
-    public ProceedingsPublicationDTO readProceedingsPublicationById(Integer proceedingsId) {
-        var publication = (ProceedingsPublication) this.findOne(proceedingsId);
+    public ProceedingsPublicationDTO readProceedingsPublicationById(Integer publicationId) {
+        var publication = proceedingPublicationJPAService.findOne(publicationId);
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
+
         return ProceedingsPublicationConverter.toDTO(publication);
     }
 

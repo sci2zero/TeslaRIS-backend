@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.core.converter.document.SoftwareConverter;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -22,6 +23,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
@@ -37,24 +39,28 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                SearchService<DocumentPublicationIndex> searchService,
                                OrganisationUnitService organisationUnitService,
+                               StatisticsService statisticsIndexService,
                                DocumentRepository documentRepository,
                                DocumentFileService documentFileService,
                                PersonContributionService personContributionService,
                                ExpressionTransformer expressionTransformer,
-                               EventService eventService,
-                               SoftwareJPAServiceImpl softwareJPAService,
+                               EventService eventService, SoftwareJPAServiceImpl softwareJPAService,
                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            personContributionService, expressionTransformer, eventService);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }
 
     @Override
     public SoftwareDTO readSoftwareById(Integer softwareId) {
-        return SoftwareConverter.toDTO(softwareJPAService.findOne(softwareId));
+        var software = softwareJPAService.findOne(softwareId);
+        if (!software.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return SoftwareConverter.toDTO(software);
     }
 
     @Override
@@ -66,7 +72,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         newSoftware.setInternalNumber(softwareDTO.getInternalNumber());
         if (Objects.nonNull(softwareDTO.getPublisherId())) {
             newSoftware.setPublisher(
-                publisherService.findPublisherById(softwareDTO.getPublisherId()));
+                publisherService.findOne(softwareDTO.getPublisherId()));
         }
 
         newSoftware.setApproveStatus(
@@ -93,7 +99,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         softwareToUpdate.setInternalNumber(softwareDTO.getInternalNumber());
         if (Objects.nonNull(softwareDTO.getPublisherId())) {
             softwareToUpdate.setPublisher(
-                publisherService.findPublisherById(softwareDTO.getPublisherId()));
+                publisherService.findOne(softwareDTO.getPublisherId()));
         }
 
         softwareJPAService.save(softwareToUpdate);

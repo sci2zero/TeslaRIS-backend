@@ -1,6 +1,6 @@
 package rs.teslaris.core.indexmodel;
 
-public enum IndexType {
+public enum EntityType {
     BOOK_SERIES,
     PUBLICATION,
     EVENT,

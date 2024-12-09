@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,4 +34,6 @@ public class PublicationSeriesDTO {
 
     @NotNull(message = "You have to provide name abbreviations.")
     private List<MultilingualContentDTO> nameAbbreviation;
+
+    private Set<String> uris;
 }

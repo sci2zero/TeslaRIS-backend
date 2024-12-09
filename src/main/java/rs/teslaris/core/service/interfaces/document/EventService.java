@@ -9,11 +9,10 @@ import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.document.Event;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
-public interface EventService {
-
-    Event findEventById(Integer eventId);
+public interface EventService extends JPAService<Event> {
 
     Event findEventByOldId(Integer eventId);
 
@@ -25,7 +24,7 @@ public interface EventService {
 
     Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
                                   EventType eventType, Boolean returnOnlyNonSerialEvents,
-                                  Boolean returnOnlySerialEvents);
+                                  Boolean returnOnlySerialEvents, Integer commissionInstitutionId);
 
     Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo);
 

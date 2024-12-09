@@ -15,6 +15,24 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
+import rs.teslaris.core.assessment.model.AssessmentClassification;
+import rs.teslaris.core.assessment.model.AssessmentMeasure;
+import rs.teslaris.core.assessment.model.AssessmentRulebook;
+import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.assessment.model.DocumentIndicator;
+import rs.teslaris.core.assessment.model.EventAssessmentClassification;
+import rs.teslaris.core.assessment.model.Indicator;
+import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
+import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
+import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
+import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
+import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.IndicatorRepository;
+import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
@@ -151,6 +169,23 @@ public class DbInitializer implements ApplicationRunner {
 
     private final Environment environment;
 
+    private final AssessmentClassificationRepository assessmentClassificationRepository;
+
+    private final AssessmentMeasureRepository assessmentMeasureRepository;
+
+    private final IndicatorRepository indicatorRepository;
+
+    private final CommissionRepository commissionRepository;
+
+    private final AssessmentRulebookRepository assessmentRulebookRepository;
+
+    private final DocumentIndicatorRepository documentIndicatorRepository;
+
+    private final EventAssessmentClassificationRepository eventAssessmentClassificationRepository;
+
+    private final PublicationSeriesAssessmentClassificationRepository
+        publicationSeriesAssessmentClassificationRepository;
+
 
     @Override
     @Transactional
@@ -195,6 +230,7 @@ public class DbInitializer implements ApplicationRunner {
         var editDocumentIndicators = new Privilege("EDIT_DOCUMENT_INDICATORS");
         var editCommissions = new Privilege("EDIT_COMMISSIONS");
         var editEntityIndicatorProofs = new Privilege("EDIT_ENTITY_INDICATOR_PROOFS");
+        var editEntityIndicators = new Privilege("EDIT_ENTITY_INDICATOR");
         var listMyJournalPublications = new Privilege("LIST_MY_JOURNAL_PUBLICATIONS");
         var deletePerson = new Privilege("DELETE_PERSON");
         var registerEmployee = new Privilege("REGISTER_EMPLOYEE");
@@ -207,6 +243,8 @@ public class DbInitializer implements ApplicationRunner {
         var mergePublisherPublications = new Privilege("MERGE_PUBLISHER_PUBLICATIONS");
         var mergePublishersMetadata = new Privilege("MERGE_PUBLISHERS_METADATA");
         var unbindYourselfFromPublication = new Privilege("UNBIND_YOURSELF_FROM_PUBLICATION");
+        var editEntityAssessmentClassifications =
+            new Privilege("EDIT_ENTITY_ASSESSMENT_CLASSIFICATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -221,9 +259,11 @@ public class DbInitializer implements ApplicationRunner {
                 registerEmployee, reindexPrivilege, startDeduplicationProcess, performDeduplication,
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
+
                 mergeOUMetadata, editCountries, forceDelete, switchEntityToUnmanaged,
                 claimDocument, mergePublisherPublications, mergePublishersMetadata,
-                unbindYourselfFromPublication));
+                unbindYourselfFromPublication, editEntityIndicators,
+                editEntityAssessmentClassifications));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -240,14 +280,14 @@ public class DbInitializer implements ApplicationRunner {
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
                 prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries,
                 forceDelete, switchEntityToUnmanaged, mergePublisherPublications,
-                mergePublishersMetadata
+                mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
-            List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
+            List.of(allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
                 editEntityIndicatorProofs, listMyJournalPublications,
-                unbindYourselfFromPublication})));
+                unbindYourselfFromPublication, editEntityIndicators)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -333,6 +373,9 @@ public class DbInitializer implements ApplicationRunner {
                 germanLanguage,
                 researchArea3, researcherAuthority);
         }
+
+        ///////////////////// ASSESSMENTS DATA /////////////////////
+        initializeIndicators(englishTag, serbianTag);
     }
 
     private void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -732,6 +775,252 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(new MultiLingualContent(englishTag, "Dummy Translation", 1)));
         monograph3.setMonographType(MonographType.TRANSLATION);
         monographRepository.save(monograph3);
+
+        var indicator1 = new Indicator();
+        indicator1.setCode("Code 1");
+        indicator1.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 1", 1)));
+        indicator1.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Indicator 1 description", 1)));
+        indicator1.setAccessLevel(AccessLevel.OPEN);
+
+        var indicator2 = new Indicator();
+        indicator2.setCode("Code 2");
+        indicator2.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 2", 1)));
+        indicator2.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Indicator 2 description", 1)));
+
+        var indicator3 = new Indicator();
+        indicator3.setCode("Code 3");
+        indicator3.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 3", 1)));
+        indicator3.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Indicator 3 description", 1)));
+        indicator3.setAccessLevel(AccessLevel.CLOSED);
+
+        var indicator4 = new Indicator();
+        indicator4.setCode("Code 4");
+        indicator4.setTitle(Set.of(new MultiLingualContent(englishTag, "Indicator 4", 1)));
+        indicator4.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Indicator 4 description", 1)));
+        indicator4.setAccessLevel(AccessLevel.ADMIN_ONLY);
+
+        indicatorRepository.saveAll(List.of(indicator1, indicator2, indicator3, indicator4));
+
+        var assessmentClassification1 = new AssessmentClassification();
+        assessmentClassification1.setFormalDescriptionOfRule("Rule 1");
+        assessmentClassification1.setCode("Code 1");
+        assessmentClassification1.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Classification 1", 1)));
+
+        var assessmentClassification2 = new AssessmentClassification();
+        assessmentClassification2.setFormalDescriptionOfRule("Rule 2");
+        assessmentClassification2.setCode("Code 2");
+        assessmentClassification2.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Classification 2", 1)));
+
+        assessmentClassificationRepository.saveAll(
+            List.of(assessmentClassification1, assessmentClassification2));
+
+        var assessmentMeasure1 = new AssessmentMeasure();
+        assessmentMeasure1.setFormalDescriptionOfRule("Rule 1");
+        assessmentMeasure1.setCode("Code 1");
+        assessmentMeasure1.setValue(2d);
+        assessmentMeasure1.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Measure 1", 1)));
+
+        var assessmentMeasure2 = new AssessmentMeasure();
+        assessmentMeasure2.setFormalDescriptionOfRule("Rule 2");
+        assessmentMeasure2.setCode("Code 2");
+        assessmentMeasure2.setValue(4d);
+        assessmentMeasure2.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Measure 2", 1)));
+
+        var assessmentMeasure3 = new AssessmentMeasure();
+        assessmentMeasure3.setFormalDescriptionOfRule("Rule 3");
+        assessmentMeasure3.setCode("Code 3");
+        assessmentMeasure3.setValue(4d);
+        assessmentMeasure3.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Measure 3", 1)));
+
+        assessmentMeasureRepository.saveAll(
+            List.of(assessmentMeasure1, assessmentMeasure2, assessmentMeasure3));
+
+        var commission1 = new Commission();
+        commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 1", 1)));
+        commission1.setFormalDescriptionOfRule("Rule 1");
+
+        var commission2 = new Commission();
+        commission2.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 2", 1)));
+        commission2.setFormalDescriptionOfRule("Rule 2");
+        commission2.setAssessmentDateFrom(LocalDate.of(2022, 2, 4));
+        commission2.setAssessmentDateTo(LocalDate.of(2022, 5, 4));
+        commission2.setSuperComission(commission1);
+
+        var commission3 = new Commission();
+        commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1)));
+        commission3.setFormalDescriptionOfRule("Rule 3");
+
+        commissionRepository.saveAll(List.of(commission1, commission2, commission3));
+
+        var assessmentRulebook1 = new AssessmentRulebook();
+        assessmentRulebook1.setName(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 1", 1)));
+        assessmentRulebook1.setIssueDate(LocalDate.of(2023, 10, 1));
+
+        var assessmentRulebook2 = new AssessmentRulebook();
+        assessmentRulebook2.setName(
+            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 2", 1)));
+        assessmentRulebook2.setIssueDate(LocalDate.of(2023, 10, 1));
+        assessmentRulebook2.setAssessmentMeasures(List.of(assessmentMeasure3));
+        assessmentMeasure3.setRulebook(assessmentRulebook2);
+
+        assessmentRulebookRepository.saveAll(List.of(assessmentRulebook1, assessmentRulebook2));
+
+        var documentIndicator1 = new DocumentIndicator();
+        documentIndicator1.setTextualValue("ADMIN ACCESS INDICATOR");
+        documentIndicator1.setIndicator(indicator4);
+        documentIndicator1.setDocument(dataset);
+
+        var documentIndicator2 = new DocumentIndicator();
+        documentIndicator2.setTextualValue("CLOSED ACCESS INDICATOR");
+        documentIndicator2.setIndicator(indicator3);
+        documentIndicator2.setDocument(dataset);
+
+        var documentIndicator3 = new DocumentIndicator();
+        documentIndicator3.setTextualValue("OPEN ACCESS INDICATOR");
+        documentIndicator3.setIndicator(indicator1);
+        documentIndicator3.setDocument(dataset);
+
+        var documentIndicatorToDelete = new DocumentIndicator();
+        documentIndicatorToDelete.setTextualValue("OPEN ACCESS INDICATOR");
+        documentIndicatorToDelete.setIndicator(indicator1);
+        documentIndicatorToDelete.setDocument(dataset);
+
+        documentIndicatorRepository.saveAll(
+            List.of(documentIndicator1, documentIndicator2, documentIndicator3,
+                documentIndicatorToDelete));
+
+        documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
+            new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
+            License.OPEN_ACCESS, ApproveStatus.APPROVED));
+        documentIndicatorRepository.save(documentIndicator1);
+
+        var eventAssessmentClassification1 = new EventAssessmentClassification();
+        eventAssessmentClassification1.setEvent(conferenceEvent1);
+        eventAssessmentClassification1.setAssessmentClassification(assessmentClassification1);
+
+        var eventAssessmentClassification2 = new EventAssessmentClassification();
+        eventAssessmentClassification2.setEvent(conferenceEvent1);
+        eventAssessmentClassification2.setAssessmentClassification(assessmentClassification1);
+
+        eventAssessmentClassificationRepository.saveAll(
+            List.of(eventAssessmentClassification1, eventAssessmentClassification2));
+
+        var publicationSeriesAssessmentClassification =
+            new PublicationSeriesAssessmentClassification();
+        publicationSeriesAssessmentClassification.setPublicationSeries(dummyJournal);
+        publicationSeriesAssessmentClassification.setAssessmentClassification(
+            assessmentClassification1);
+
+        publicationSeriesAssessmentClassificationRepository.saveAll(
+            List.of(publicationSeriesAssessmentClassification));
+    }
+
+    void initializeIndicators(LanguageTag englishTag, LanguageTag serbianTag) {
+        var totalViews = new Indicator();
+        totalViews.setCode("viewsTotal");
+        totalViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1),
+            new MultiLingualContent(serbianTag, "Ukupno pregleda", 2)));
+        totalViews.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Total number of views.", 1)));
+        totalViews.setAccessLevel(AccessLevel.OPEN);
+        totalViews.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
+
+        var dailyViews = new Indicator();
+        dailyViews.setCode("viewsDay");
+        dailyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Daily views", 1)));
+        dailyViews.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of views in the last 24h.", 1)));
+        dailyViews.setAccessLevel(AccessLevel.OPEN);
+        dailyViews.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
+
+        var weeklyViews = new Indicator();
+        weeklyViews.setCode("viewsWeek");
+        weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Weekly views", 1)));
+        weeklyViews.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
+                1)));
+        weeklyViews.setAccessLevel(AccessLevel.OPEN);
+        weeklyViews.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
+
+        var monthlyViews = new Indicator();
+        monthlyViews.setCode("viewsMonth");
+        monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Monthly views", 1)));
+        monthlyViews.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Total number of views in the last month.",
+                1)));
+        monthlyViews.setAccessLevel(AccessLevel.OPEN);
+        monthlyViews.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
+
+        var totalDownloads = new Indicator();
+        totalDownloads.setCode("downloadsTotal");
+        totalDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Total downloads", 1)));
+        totalDownloads.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Total number of downloads.", 1)));
+        totalDownloads.setAccessLevel(AccessLevel.OPEN);
+        totalDownloads.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
+
+        var dailyDownloads = new Indicator();
+        dailyDownloads.setCode("downloadsDay");
+        dailyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Daily downloads", 1)));
+        dailyDownloads.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of downloads in the last 24h.",
+                    1)));
+        dailyDownloads.setAccessLevel(AccessLevel.OPEN);
+        dailyDownloads.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
+
+        var weeklyDownloads = new Indicator();
+        weeklyDownloads.setCode("downloadsWeek");
+        weeklyDownloads.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Weekly downloads", 1)));
+        weeklyDownloads.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of downloads in the last 7 days.",
+                    1)));
+        weeklyDownloads.setAccessLevel(AccessLevel.OPEN);
+        weeklyDownloads.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
+
+        var monthlyDownloads = new Indicator();
+        monthlyDownloads.setCode("downloadsMonth");
+        monthlyDownloads.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Monthly downloads", 1)));
+        monthlyDownloads.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of downloads in the last month.",
+                    1)));
+        monthlyDownloads.setAccessLevel(AccessLevel.OPEN);
+        monthlyDownloads.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
+                ApplicableEntityType.ORGANISATION_UNIT));
+
+        indicatorRepository.saveAll(
+            List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads,
+                dailyDownloads, weeklyDownloads, monthlyDownloads));
     }
 
     private void processCountryLine(String[] line) {

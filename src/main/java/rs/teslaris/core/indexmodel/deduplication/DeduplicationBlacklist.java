@@ -8,7 +8,7 @@ import lombok.Setter;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 
 @Getter
 @Setter
@@ -27,11 +27,11 @@ public class DeduplicationBlacklist {
     private Integer rightEntityId;
 
     @Field(type = FieldType.Keyword, store = true, name = "entity_type")
-    private IndexType entityType;
+    private EntityType entityType;
 
 
     public DeduplicationBlacklist(Integer leftEntityId, Integer rightEntityId,
-                                  IndexType entityType) {
+                                  EntityType entityType) {
         this.leftEntityId = leftEntityId;
         this.rightEntityId = rightEntityId;
         this.entityType = entityType;

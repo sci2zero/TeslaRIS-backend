@@ -11,7 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.converter.document.BookSeriesConverter;
+import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
@@ -71,7 +71,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public Page<JournalResponseDTO> readAllJournals(Pageable pageable) {
-        return journalJPAService.findAll(pageable).map(BookSeriesConverter::toDTO);
+        return journalJPAService.findAll(pageable).map(PublicationSeriesConverter::toDTO);
     }
 
     @Override
@@ -82,7 +82,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public JournalResponseDTO readJournal(Integer journalId) {
-        return BookSeriesConverter.toDTO(journalJPAService.findOne(journalId));
+        return PublicationSeriesConverter.toDTO(journalJPAService.findOne(journalId));
     }
 
     @Override

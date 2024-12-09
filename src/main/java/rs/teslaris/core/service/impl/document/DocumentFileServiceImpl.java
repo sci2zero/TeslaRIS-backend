@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -86,6 +88,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    public ResourceType getDocumentResourceType(String serverFilename) {
+        return documentFileRepository.getReferenceByServerFilename(serverFilename)
+            .getResourceType();
+    }
+
+    @Override
     public DocumentFileIndex findDocumentFileIndexByDatabaseId(Integer databaseId) {
         return documentFileIndexRepository.findDocumentFileIndexByDatabaseId(databaseId)
             .orElseThrow(
@@ -116,6 +124,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         setCommonFields(newDocumentFile, documentFile);
 
+        if (!index) {
+            documentFile.setResourceType(
+                ResourceType.PROOF); // Save every non-indexed (proof) as supplement
+        }
+
         var serverFilename =
             fileService.store(documentFile.getFile(), UUID.randomUUID().toString());
         newDocumentFile.setServerFilename(serverFilename);
@@ -137,6 +150,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
 
         setCommonFields(documentFileToEdit, documentFile);
+
+        if (!index) {
+            documentFile.setResourceType(
+                ResourceType.PROOF); // Save every non-indexed (proof) as supplement
+        }
 
         if (documentFile.getFile().getSize() > 0) {
             var serverFilename =
@@ -250,6 +268,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Override
     public void deleteIndexes() {
         documentFileIndexRepository.deleteAll();
+    }
+
+    @Override
+    @Nullable
+    public Integer findDocumentIdForFilename(String filename) {
+        return documentFileRepository.getDocumentIdByFilename(filename);
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {

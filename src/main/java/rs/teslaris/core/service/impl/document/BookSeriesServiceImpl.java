@@ -10,7 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.converter.document.BookSeriesConverter;
+import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
@@ -66,7 +66,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
     @Override
     public Page<BookSeriesResponseDTO> readAllBookSeries(Pageable pageable) {
-        return bookSeriesJPAService.findAll(pageable).map(BookSeriesConverter::toDTO);
+        return bookSeriesJPAService.findAll(pageable).map(PublicationSeriesConverter::toDTO);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
     @Override
     public BookSeriesResponseDTO readBookSeries(Integer bookSeriesId) {
-        return BookSeriesConverter.toDTO(bookSeriesJPAService.findOne(bookSeriesId));
+        return PublicationSeriesConverter.toDTO(bookSeriesJPAService.findOne(bookSeriesId));
     }
 
     @Override

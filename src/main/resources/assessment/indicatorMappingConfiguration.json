@@ -1,0 +1,22 @@
+{
+  "mappings": {
+    "updateTotalViews": ["viewsTotal"],
+    "updateTotalDownloads": ["downloadsTotal"],
+    "updatePeriodViews": ["viewsDay", "viewsWeek", "viewsMonth", "viewsTotal"],
+    "updatePeriodDownloads": ["downloadsDay", "downloadsWeek", "downloadsMonth", "downloadsTotal"]
+  },
+  "statisticOffsets": {
+    "views": {
+      "viewsDay": "LocalDateTime.now().minusHours(24)",
+      "viewsWeek": "LocalDateTime.now().minusDays(7)",
+      "viewsMonth": "LocalDateTime.now().minusDays(30)",
+      "viewsTotal": "LocalDateTime.of(1970, 1, 1, 0, 0)"
+    },
+    "downloads": {
+      "downloadsDay": "LocalDateTime.now().minusHours(24)",
+      "downloadsWeek": "LocalDateTime.now().minusDays(7)",
+      "downloadsMonth": "LocalDateTime.now().minusDays(30)",
+      "downloadsTotal": "LocalDateTime.of(1970, 1, 1, 0, 0)"
+    }
+  }
+}

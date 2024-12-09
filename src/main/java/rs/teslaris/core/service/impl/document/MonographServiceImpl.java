@@ -64,14 +64,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 EventService eventService,
                                 MonographJPAServiceImpl monographJPAService,
                                 LanguageTagService languageTagService,
-                                JournalService journalService,
-                                BookSeriesService bookSeriesService,
+                                JournalService journalService, BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
                                 MonographRepository monographRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            personContributionService, expressionTransformer, eventService);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
         this.journalService = journalService;

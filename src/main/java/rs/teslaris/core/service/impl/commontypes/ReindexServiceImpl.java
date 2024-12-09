@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -70,53 +70,53 @@ public class ReindexServiceImpl implements ReindexService {
 
 
     @Override
-    public void reindexDatabase(List<IndexType> indexesToRepopulate) {
+    public void reindexDatabase(List<EntityType> indexesToRepopulate) {
         var threadPool = new ArrayList<Thread>();
 
-        if (indexesToRepopulate.contains(IndexType.USER_ACCOUNT)) {
+        if (indexesToRepopulate.contains(EntityType.USER_ACCOUNT)) {
             var userThread = new Thread(userService::reindexUsers);
             userThread.start();
             threadPool.add(userThread);
         }
 
-        if (indexesToRepopulate.contains(IndexType.JOURNAL)) {
+        if (indexesToRepopulate.contains(EntityType.JOURNAL)) {
             var journalThread = new Thread(journalService::reindexJournals);
             journalThread.start();
             threadPool.add(journalThread);
         }
 
-        if (indexesToRepopulate.contains(IndexType.PUBLISHER)) {
+        if (indexesToRepopulate.contains(EntityType.PUBLISHER)) {
             var publisherThread = new Thread(publisherService::reindexPublishers);
             publisherThread.start();
             threadPool.add(publisherThread);
         }
 
-        if (indexesToRepopulate.contains(IndexType.PERSON)) {
+        if (indexesToRepopulate.contains(EntityType.PERSON)) {
             var personThread = new Thread(personService::reindexPersons);
             personThread.start();
             threadPool.add(personThread);
         }
 
-        if (indexesToRepopulate.contains(IndexType.ORGANISATION_UNIT)) {
+        if (indexesToRepopulate.contains(EntityType.ORGANISATION_UNIT)) {
             var organisationUnitThread = new Thread(
                 organisationUnitService::reindexOrganisationUnits);
             organisationUnitThread.start();
             threadPool.add(organisationUnitThread);
         }
 
-        if (indexesToRepopulate.contains(IndexType.BOOK_SERIES)) {
+        if (indexesToRepopulate.contains(EntityType.BOOK_SERIES)) {
             var bookSeriesThread = new Thread(bookSeriesService::reindexBookSeries);
             bookSeriesThread.start();
             threadPool.add(bookSeriesThread);
         }
 
-        if (indexesToRepopulate.contains(IndexType.EVENT)) {
+        if (indexesToRepopulate.contains(EntityType.EVENT)) {
             var conferenceThread = new Thread(conferenceService::reindexConferences);
             conferenceThread.start();
             threadPool.add(conferenceThread);
         }
 
-        if (indexesToRepopulate.contains(IndexType.PUBLICATION)) {
+        if (indexesToRepopulate.contains(EntityType.PUBLICATION)) {
             var reindexPublicationsThread = getReindexPublicationsThread();
             threadPool.add(reindexPublicationsThread);
         }

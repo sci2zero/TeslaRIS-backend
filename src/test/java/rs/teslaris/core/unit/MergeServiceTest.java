@@ -1047,14 +1047,14 @@ public class MergeServiceTest {
         var targetPublisher = new Publisher();
 
         when(proceedingsRepository.findById(publicationId)).thenReturn(Optional.of(publication));
-        when(publisherService.findPublisherById(targetPublisherId)).thenReturn(targetPublisher);
+        when(publisherService.findOne(targetPublisherId)).thenReturn(targetPublisher);
 
         // when
         mergeService.switchPublisherPublicationToOtherPublisher(targetPublisherId, publicationId);
 
         // then
         verify(proceedingsRepository).findById(publicationId);
-        verify(publisherService).findPublisherById(targetPublisherId);
+        verify(publisherService).findOne(targetPublisherId);
         verify(indexBulkUpdateService).setIdFieldForRecord(
             eq("document_publication"), eq("databaseId"), eq(publicationId), eq("publisher_id"),
             eq(targetPublisherId)

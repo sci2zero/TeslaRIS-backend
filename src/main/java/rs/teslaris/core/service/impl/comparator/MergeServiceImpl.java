@@ -653,7 +653,7 @@ public class MergeServiceImpl implements MergeService {
             throw new NotFoundException("Publication does not exist.");
         }
 
-        var targetPublisher = publisherService.findPublisherById(targetPublisherId);
+        var targetPublisher = publisherService.findOne(targetPublisherId);
         publication.setPublisher(targetPublisher);
 
         indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",

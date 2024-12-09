@@ -76,8 +76,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            personContributionService, expressionTransformer, eventService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
@@ -94,6 +93,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         if (!proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }
+
         return ProceedingsConverter.toDTO(proceedings);
     }
 
@@ -232,7 +232,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             proceedings.getLanguages().add(languageTagService.findLanguageTagById(id));
         });
 
-        proceedings.setEvent(eventService.findEventById(proceedingsDTO.getEventId()));
+        proceedings.setEvent(eventService.findOne(proceedingsDTO.getEventId()));
 
         if (proceedingsDTO.getPublicationSeriesId() != null) {
             var optionalJournal =
@@ -249,7 +249,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         if (proceedingsDTO.getPublisherId() != null) {
             proceedings.setPublisher(
-                publisherService.findPublisherById(proceedingsDTO.getPublisherId()));
+                publisherService.findOne(proceedingsDTO.getPublisherId()));
         }
     }
 

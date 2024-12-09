@@ -22,6 +22,7 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
@@ -45,16 +46,20 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            organisationUnitService, documentRepository,
+            documentFileService, personContributionService, expressionTransformer, eventService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }
 
     @Override
     public DatasetDTO readDatasetById(Integer datasetId) {
-        return DatasetConverter.toDTO(datasetJPAService.findOne(datasetId));
+        var dataset = datasetJPAService.findOne(datasetId);
+        if (!dataset.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return DatasetConverter.toDTO(dataset);
     }
 
     @Override
@@ -66,7 +71,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         newDataset.setInternalNumber(datasetDTO.getInternalNumber());
         if (Objects.nonNull(datasetDTO.getPublisherId())) {
             newDataset.setPublisher(
-                publisherService.findPublisherById(datasetDTO.getPublisherId()));
+                publisherService.findOne(datasetDTO.getPublisherId()));
         }
 
         newDataset.setApproveStatus(
@@ -93,7 +98,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         datasetToUpdate.setInternalNumber(datasetDTO.getInternalNumber());
         if (Objects.nonNull(datasetDTO.getPublisherId())) {
             datasetToUpdate.setPublisher(
-                publisherService.findPublisherById(datasetDTO.getPublisherId()));
+                publisherService.findOne(datasetDTO.getPublisherId()));
         }
 
         datasetJPAService.save(datasetToUpdate);

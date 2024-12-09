@@ -18,7 +18,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 
@@ -64,7 +64,7 @@ public class ProceedingsController {
     @PublicationEditCheck
     public void deleteProceedings(@PathVariable Integer documentId) {
         proceedingsService.deleteProceedings(documentId);
-        deduplicationService.deleteSuggestion(documentId, IndexType.PUBLICATION);
+        deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
     }
 
     @DeleteMapping("/force/{documentId}")
@@ -72,6 +72,6 @@ public class ProceedingsController {
     @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
     public void forceDeleteProceedings(@PathVariable Integer documentId) {
         proceedingsService.forceDeleteProceedings(documentId);
-        deduplicationService.deleteSuggestion(documentId, IndexType.PUBLICATION);
+        deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
     }
 }

@@ -8,15 +8,14 @@ import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.indexmodel.PublisherIndex;
 import rs.teslaris.core.model.document.Publisher;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
-public interface PublisherService {
+public interface PublisherService extends JPAService<Publisher> {
 
     Page<PublisherDTO> readAllPublishers(Pageable pageable);
 
     PublisherDTO readPublisherById(Integer publisherId);
-
-    Publisher findPublisherById(Integer publisherId);
 
     Page<PublisherIndex> searchPublishers(List<String> tokens, Pageable pageable);
 

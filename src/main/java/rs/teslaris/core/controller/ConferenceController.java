@@ -23,8 +23,8 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
-import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.search.StringUtil;
@@ -112,7 +112,7 @@ public class ConferenceController {
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     public void deleteConference(@PathVariable Integer conferenceId) {
         conferenceService.deleteConference(conferenceId);
-        deduplicationService.deleteSuggestion(conferenceId, IndexType.EVENT);
+        deduplicationService.deleteSuggestion(conferenceId, EntityType.EVENT);
     }
 
     @DeleteMapping("/force/{conferenceId}")
@@ -120,7 +120,7 @@ public class ConferenceController {
     @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
     public void forceDeleteConference(@PathVariable Integer conferenceId) {
         conferenceService.forceDeleteConference(conferenceId);
-        deduplicationService.deleteSuggestion(conferenceId, IndexType.EVENT);
+        deduplicationService.deleteSuggestion(conferenceId, EntityType.EVENT);
     }
 
     @PatchMapping("/{conferenceId}/reorder-contribution/{contributionId}")

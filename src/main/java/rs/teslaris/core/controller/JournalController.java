@@ -22,7 +22,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -102,7 +102,7 @@ public class JournalController {
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     public void deleteJournal(@PathVariable Integer journalId) {
         journalService.deleteJournal(journalId);
-        deduplicationService.deleteSuggestion(journalId, IndexType.JOURNAL);
+        deduplicationService.deleteSuggestion(journalId, EntityType.JOURNAL);
     }
 
     @DeleteMapping("/force/{journalId}")
@@ -110,6 +110,6 @@ public class JournalController {
     @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
     public void forceDeleteJournal(@PathVariable Integer journalId) {
         journalService.forceDeleteJournal(journalId);
-        deduplicationService.deleteSuggestion(journalId, IndexType.JOURNAL);
+        deduplicationService.deleteSuggestion(journalId, EntityType.JOURNAL);
     }
 }

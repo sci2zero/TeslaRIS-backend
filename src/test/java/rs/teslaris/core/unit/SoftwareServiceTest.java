@@ -156,8 +156,8 @@ public class SoftwareServiceTest {
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldReadJournalPublication(DocumentContributionType type, Boolean isMainAuthor,
-                                             Boolean isCorrespondingAuthor, Country country) {
+    public void shouldReadSoftware(DocumentContributionType type, Boolean isMainAuthor,
+                                   Boolean isCorrespondingAuthor, Country country) {
         // Given
         var softwareId = 1;
         var software = new Software();
@@ -188,7 +188,7 @@ public class SoftwareServiceTest {
     }
 
     @Test
-    public void shouldReindexJournalPublications() {
+    public void shouldReindexSoftwares() {
         // Given
         var software = new Software();
         software.setDocumentDate("2024");

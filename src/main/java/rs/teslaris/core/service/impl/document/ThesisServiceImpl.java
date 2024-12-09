@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
@@ -47,18 +48,18 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
                              SearchService<DocumentPublicationIndex> searchService,
                              OrganisationUnitService organisationUnitService,
+                             StatisticsService statisticsIndexService,
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              PersonContributionService personContributionService,
-                             ExpressionTransformer expressionTransformer, EventService eventService,
-                             ThesisJPAServiceImpl thesisJPAService,
+                             ExpressionTransformer expressionTransformer,
+                             EventService eventService, ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              ResearchAreaService researchAreaService,
                              LanguageTagService languageService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            personContributionService, expressionTransformer, eventService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;
@@ -67,7 +68,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     public ThesisResponseDTO readThesisById(Integer thesisId) {
-        return ThesisConverter.toDTO(thesisJPAService.findOne(thesisId));
+        var thesis = thesisJPAService.findOne(thesisId);
+        if (!thesis.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return ThesisConverter.toDTO(thesis);
     }
 
     @Override
@@ -153,7 +159,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setNumberOfPages(thesisDTO.getNumberOfPages());
 
         if (Objects.nonNull(thesisDTO.getPublisherId())) {
-            thesis.setPublisher(publisherService.findPublisherById(thesisDTO.getPublisherId()));
+            thesis.setPublisher(publisherService.findOne(thesisDTO.getPublisherId()));
         }
 
         if (Objects.nonNull(thesisDTO.getResearchAreaId())) {

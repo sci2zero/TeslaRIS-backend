@@ -74,7 +74,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                               Boolean returnOnlyNonSerialEvents,
                                               Boolean returnOnlySerialEvents) {
         return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents);
+            returnOnlySerialEvents, null);
     }
 
     @Override

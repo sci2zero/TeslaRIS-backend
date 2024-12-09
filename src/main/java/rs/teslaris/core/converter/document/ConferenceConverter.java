@@ -38,6 +38,8 @@ public class ConferenceConverter {
         conferenceDTO.setSerialEvent(conference.getSerialEvent());
         conferenceDTO.setConfId(conference.getConfId());
 
+        conferenceDTO.setUris(conference.getUris());
+
         return conferenceDTO;
     }
 }
