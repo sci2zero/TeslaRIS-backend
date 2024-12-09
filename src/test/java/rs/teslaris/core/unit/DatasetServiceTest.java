@@ -156,8 +156,8 @@ public class DatasetServiceTest {
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldReadJournalPublication(DocumentContributionType type, Boolean isMainAuthor,
-                                             Boolean isCorrespondingAuthor, Country country) {
+    public void shouldReadDataset(DocumentContributionType type, Boolean isMainAuthor,
+                                  Boolean isCorrespondingAuthor, Country country) {
         // Given
         var datasetId = 1;
         var dataset = new Dataset();
@@ -188,7 +188,7 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void shouldReindexJournalPublications() {
+    public void shouldReindexDatasets() {
         // Given
         var dataset = new Dataset();
         dataset.setDocumentDate("2024");

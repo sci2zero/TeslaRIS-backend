@@ -2,6 +2,7 @@ package rs.teslaris.core.model.document;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
@@ -57,6 +58,9 @@ public abstract class Event extends BaseEntity {
 
     @Column(name = "cris_uns_id")
     private Integer oldId;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> uris = new HashSet<>();
 
 
     public void addContribution(PersonEventContribution contribution) {

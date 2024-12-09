@@ -14,7 +14,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,6 +93,7 @@ public class ProceedingsPublicationServiceTest {
     @InjectMocks
     private ProceedingsPublicationServiceImpl proceedingsPublicationService;
 
+
     private static Stream<Arguments> argumentSources() {
         var country = new Country();
         country.setId(1);
@@ -123,7 +123,7 @@ public class ProceedingsPublicationServiceTest {
         when(documentRepository.save(any())).thenReturn(document);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
-        when(eventService.findEventById(publicationDTO.getProceedingsId())).thenReturn(
+        when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(
             new Conference());
         when(proceedingPublicationJPAService.save(any())).thenReturn(document);
 
@@ -158,7 +158,7 @@ public class ProceedingsPublicationServiceTest {
             publicationToUpdate);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
-        when(eventService.findEventById(publicationDTO.getProceedingsId())).thenReturn(
+        when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(
             new Conference());
         when(proceedingPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
 
@@ -185,7 +185,7 @@ public class ProceedingsPublicationServiceTest {
         var publication = new ProceedingsPublication();
         publication.setApproveStatus(status);
 
-        when(documentRepository.findById(publicationId)).thenReturn(Optional.of(publication));
+        when(proceedingPublicationJPAService.findOne(publicationId)).thenReturn(publication);
 
         // When
         assertThrows(NotFoundException.class,
@@ -222,13 +222,13 @@ public class ProceedingsPublicationServiceTest {
         proceedings.setId(1);
         publication.setProceedings(proceedings);
 
-        when(documentRepository.findById(publicationId)).thenReturn(Optional.of(publication));
+        when(proceedingPublicationJPAService.findOne(publicationId)).thenReturn(publication);
 
         // When
         var result = proceedingsPublicationService.readProceedingsPublicationById(publicationId);
 
         // Then
-        verify(documentRepository).findById(eq(publicationId));
+        verify(proceedingPublicationJPAService).findOne(eq(publicationId));
         assertNotNull(result);
         assertEquals(1, result.getContributions().size());
     }

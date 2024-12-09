@@ -16,8 +16,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
-import rs.teslaris.core.indexmodel.IndexType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexmodel.deduplication.DeduplicationBlacklist;
@@ -96,12 +96,12 @@ public class DeduplicationServiceTest {
         var suggestion = new DeduplicationSuggestion();
         suggestion.setLeftEntityId(1);
         suggestion.setRightEntityId(2);
-        suggestion.setEntityType(IndexType.PUBLICATION);
+        suggestion.setEntityType(EntityType.PUBLICATION);
 
         when(deduplicationSuggestionRepository.findById("testId")).thenReturn(
             Optional.of(suggestion));
         when(documentDeduplicationBlacklistRepository.findByEntityIdsAndEntityType(1, 2,
-            IndexType.PUBLICATION.name())).thenReturn(Optional.empty());
+            EntityType.PUBLICATION.name())).thenReturn(Optional.empty());
 
         // when
         deduplicationService.flagAsNotDuplicate("testId");
@@ -121,12 +121,12 @@ public class DeduplicationServiceTest {
         var suggestions = List.of(suggestion);
         var page = new PageImpl<>(suggestions, pageable, suggestions.size());
 
-        when(deduplicationSuggestionRepository.findByEntityType(IndexType.PUBLICATION.name(),
+        when(deduplicationSuggestionRepository.findByEntityType(EntityType.PUBLICATION.name(),
             pageable)).thenReturn(page);
 
         // when
         var result =
-            deduplicationService.getDeduplicationSuggestions(pageable, IndexType.PUBLICATION);
+            deduplicationService.getDeduplicationSuggestions(pageable, EntityType.PUBLICATION);
 
         // then
         assertEquals(suggestions.size(), result.getTotalElements());
@@ -148,7 +148,7 @@ public class DeduplicationServiceTest {
     public void shouldDeleteSuggestionsWhenSuggestionsExist() {
         // given
         var deletedEntityId = 1;
-        var entityType = IndexType.PUBLICATION;
+        var entityType = EntityType.PUBLICATION;
 
         var suggestion = new DeduplicationSuggestion();
         suggestion.setLeftEntityId(deletedEntityId);

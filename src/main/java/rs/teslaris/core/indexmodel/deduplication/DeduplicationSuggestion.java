@@ -10,7 +10,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 
 @Getter
 @Setter
@@ -45,14 +45,14 @@ public class DeduplicationSuggestion {
     private DocumentPublicationType documentPublicationType;
 
     @Field(type = FieldType.Keyword, store = true, name = "entity_type")
-    private IndexType entityType;
+    private EntityType entityType;
 
 
     public DeduplicationSuggestion(Integer leftEntityId, Integer rightEntityId, String leftTitleSr,
                                    String leftTitleOther, String rightTitleSr,
                                    String rightTitleOther,
                                    DocumentPublicationType documentPublicationType,
-                                   IndexType entityType) {
+                                   EntityType entityType) {
         this.leftEntityId = leftEntityId;
         this.rightEntityId = rightEntityId;
         this.leftTitleSr = leftTitleSr;

@@ -23,6 +23,7 @@ import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
@@ -42,20 +43,24 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              PersonContributionService personContributionService,
-                             ExpressionTransformer expressionTransformer, EventService eventService,
-                             PatentJPAServiceImpl patentJPAService,
+                             ExpressionTransformer expressionTransformer,
+                             EventService eventService, PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            personContributionService, expressionTransformer, eventService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
     }
 
     @Override
     public PatentDTO readPatentById(Integer patentId) {
-        return PatentConverter.toDTO(patentJPAService.findOne(patentId));
+        var patent = patentJPAService.findOne(patentId);
+        if (!patent.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return PatentConverter.toDTO(patent);
     }
 
     @Override
@@ -66,7 +71,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         newPatent.setNumber(patentDTO.getNumber());
         if (Objects.nonNull(patentDTO.getPublisherId())) {
-            newPatent.setPublisher(publisherService.findPublisherById(patentDTO.getPublisherId()));
+            newPatent.setPublisher(publisherService.findOne(patentDTO.getPublisherId()));
         }
 
         newPatent.setApproveStatus(
@@ -93,7 +98,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         patentToUpdate.setNumber(patentDTO.getNumber());
         if (Objects.nonNull(patentDTO.getPublisherId())) {
             patentToUpdate.setPublisher(
-                publisherService.findPublisherById(patentDTO.getPublisherId()));
+                publisherService.findOne(patentDTO.getPublisherId()));
         }
 
         var updatedPatent = patentJPAService.save(patentToUpdate);

@@ -15,12 +15,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
+import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
+import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -183,6 +185,13 @@ public class ErrorHandlerConfiguration {
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(ExpiredJwtException.class)
+    @ResponseBody
+    ErrorObject handleExpiredJwtException(HttpServletRequest request, ExpiredJwtException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(CantConstructRestTemplateException.class)
     @ResponseBody
     ErrorObject handleCantConstructRestTemplateException(HttpServletRequest request,
@@ -285,17 +294,28 @@ public class ErrorHandlerConfiguration {
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(AssessmentClassificationReferenceConstraintViolationException.class)
+    @ResponseBody
+    ErrorObject handleAssessmentClassificationReferenceConstraintViolationException(
+        HttpServletRequest request,
+        AssessmentClassificationReferenceConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(IndicatorReferenceConstraintViolationException.class)
+    @ResponseBody
+    ErrorObject handleIndicatorReferenceConstraintViolationException(
+        HttpServletRequest request,
+        IndicatorReferenceConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(MonographReferenceConstraintViolationException.class)
     @ResponseBody
     ErrorObject handleMonographReferenceConstraintViolationException(HttpServletRequest request,
                                                                      MonographReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
-    }
-
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler(ExpiredJwtException.class)
-    @ResponseBody
-    ErrorObject handleExpiredJwtException(HttpServletRequest request, ExpiredJwtException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }

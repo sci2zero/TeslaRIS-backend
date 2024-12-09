@@ -96,6 +96,16 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    public OrganisationUnitDTO readOrganisationUnitById(Integer id) {
+        var ou = findOne(id);
+
+        if (!ou.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("OrganisationUnit with given ID does not exist.");
+        }
+        return OrganisationUnitConverter.toDTO(ou);
+    }
+
+    @Override
     @Nullable
     public OrganisationUnitIndex findOrganisationUnitByScopusAfid(String scopusAfid) {
         return organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(scopusAfid)

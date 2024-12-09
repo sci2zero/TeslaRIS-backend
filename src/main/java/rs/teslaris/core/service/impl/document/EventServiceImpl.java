@@ -36,6 +36,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -63,12 +64,6 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     private final EmailUtil emailUtil;
 
-
-    @Override
-    public Event findEventById(Integer eventId) {
-        return eventRepository.findById(eventId)
-            .orElseThrow(() -> new NotFoundException("Event with given ID does not exist."));
-    }
 
     @Override
     @Nullable
@@ -102,6 +97,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         event.setOldId(eventDTO.getOldId());
+        IdentifierUtil.setUris(event.getUris(), eventDTO.getUris());
 
         if (Objects.nonNull(eventDTO.getContributions())) {
             personContributionService.setPersonEventContributionForEvent(event, eventDTO);
@@ -142,9 +138,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
-                                         EventType eventType, Boolean returnOnlyNonSerialEvents) {
+                                         EventType eventType, Boolean returnOnlyNonSerialEvents,
+                                         Integer commissionInstitutionId) {
         return searchService.runQuery(
-            buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents),
+            buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
+                commissionInstitutionId),
             pageable, EventIndex.class, "events");
     }
 
@@ -261,8 +259,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
-                                         Boolean returnOnlyNonSerialEvents) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+                                         Boolean returnOnlyNonSerialEvents,
+                                         Integer commissionInstitutionId) {
+        boolean onlyYearTokens = tokens.stream().allMatch(token -> token.matches("\\d{4}"));
+
+        // If only searching by years, disable minimum_should_match, otherwise set it
+        var minShouldMatch = onlyYearTokens ? 1 : (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
@@ -295,7 +297,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                         eq.should(sb -> sb.match(
                             m -> m.field("place_other").query(token)));
                         eq.should(sb -> sb.wildcard(
-                            m -> m.field("date_from_to").value(token)));
+                            m -> m.field("date_from_to").value("*" + token + "*")));
                     });
                     return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
                 });
@@ -306,6 +308,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
                 if (returnOnlyNonSerialEvents) {
                     sb.match(m -> m.field("is_serial_event").query(false));
+                }
+
+                if (Objects.nonNull(commissionInstitutionId)) {
+                    sb.match(
+                        m -> m.field("related_institution_ids").query(commissionInstitutionId));
                 }
 
                 return sb;
@@ -346,6 +353,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         index.setSerialEvent(event.getSerialEvent());
+        index.getRelatedInstitutionIds()
+            .addAll(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
+                event.getId()));
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,

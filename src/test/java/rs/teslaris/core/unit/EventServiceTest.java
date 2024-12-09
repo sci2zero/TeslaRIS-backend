@@ -69,8 +69,10 @@ public class EventServiceTest {
 
     static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery_arguments() {
         return Stream.of(
-            Arguments.of(EventType.CONFERENCE, true),
-            Arguments.of(EventType.CONFERENCE, false)
+            Arguments.of(EventType.CONFERENCE, true, null),
+            Arguments.of(EventType.CONFERENCE, true, 1),
+            Arguments.of(EventType.CONFERENCE, false, null),
+            Arguments.of(EventType.CONFERENCE, false, 1)
         );
     }
 
@@ -81,7 +83,7 @@ public class EventServiceTest {
         when(eventRepository.findById(1)).thenReturn(Optional.of(expected));
 
         // when
-        var result = eventService.findEventById(1);
+        var result = eventService.findOne(1);
 
         // then
         assertEquals(expected, result);
@@ -93,7 +95,7 @@ public class EventServiceTest {
         when(eventRepository.findById(1)).thenReturn(Optional.empty());
 
         // when
-        assertThrows(NotFoundException.class, () -> eventService.findEventById(1));
+        assertThrows(NotFoundException.class, () -> eventService.findOne(1));
 
         // then (NotFoundException should be thrown)
     }
@@ -164,7 +166,8 @@ public class EventServiceTest {
             new PageImpl<>(List.of(new EventIndex(), new EventIndex())));
 
         // When
-        var result = eventService.searchEvents(tokens, pageable, eventType, returnOnlySerialEvents);
+        var result =
+            eventService.searchEvents(tokens, pageable, eventType, returnOnlySerialEvents, null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

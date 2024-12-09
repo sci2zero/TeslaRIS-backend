@@ -54,9 +54,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService);
+            organisationUnitService, documentRepository,
+            documentFileService, personContributionService, expressionTransformer, eventService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
@@ -68,6 +67,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
+
         return JournalPublicationConverter.toDTO(publication);
     }
 

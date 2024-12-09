@@ -170,6 +170,28 @@ public class SecurityConfiguration {
                 // EXPORT
                 .requestMatchers(HttpMethod.GET, "/api/export/{handlerName}").permitAll()
 
+                // ASSESSMENT
+                .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/assessment/person-indicator/{documentId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/assessment/event-indicator/{documentId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/organisation-unit-indicator/{documentId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/publication-series-indicator/{documentId}")
+                .permitAll()
+
+                // STATISTICS
+                .requestMatchers(HttpMethod.GET, "/api/statistics/{statisticsType}").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/statistics/person/{personId}").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/statistics/organisation-unit/{organisationUnitId}").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/statistics/document/{documentId}")
+                .permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

@@ -175,8 +175,8 @@ public class ThesisServiceTest {
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldReadJournalPublication(DocumentContributionType type, Boolean isMainAuthor,
-                                             Boolean isCorrespondingAuthor, Country country) {
+    public void shouldReadThesis(DocumentContributionType type, Boolean isMainAuthor,
+                                 Boolean isCorrespondingAuthor, Country country) {
         // Given
         var thesisId = 1;
         var thesis = new Thesis();
@@ -207,7 +207,7 @@ public class ThesisServiceTest {
     }
 
     @Test
-    public void shouldReindexJournalPublications() {
+    public void shouldReindexThesiss() {
         // Given
         var thesis = new Thesis();
         thesis.setDocumentDate("2024");

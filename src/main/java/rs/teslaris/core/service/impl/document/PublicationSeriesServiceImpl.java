@@ -42,11 +42,6 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     }
 
     @Override
-    public PublicationSeries findPublicationSeriesById(Integer id) {
-        return findOne(id);
-    }
-
-    @Override
     @Nullable
     public PublicationSeries findPublicationSeriesByIssn(String eIssn, String printIssn) {
         if (Objects.isNull(eIssn)) { // null will match with other nulls
@@ -71,6 +66,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
 
         publicationSeries.setOldId(publicationSeriesDTO.getOldId());
 
+        IdentifierUtil.setUris(publicationSeries.getUris(), publicationSeriesDTO.getUris());
         setCommonIdentifiers(publicationSeries, publicationSeriesDTO);
 
         publicationSeriesDTO.getLanguageTagIds().forEach(languageTagId -> {

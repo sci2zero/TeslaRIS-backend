@@ -12,7 +12,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -392,13 +391,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setOldId(documentDTO.getOldId());
         document.setDocumentDate(documentDTO.getDocumentDate());
 
-        setUris(document, documentDTO);
+        IdentifierUtil.setUris(document.getUris(), documentDTO.getUris());
         setCommonIdentifiers(document, documentDTO);
 
         document.setScopusId(documentDTO.getScopusId());
 
         if (Objects.nonNull(documentDTO.getEventId())) {
-            var event = eventService.findEventById(documentDTO.getEventId());
+            var event = eventService.findOne(documentDTO.getEventId());
 
             if (event.getSerialEvent()) {
                 throw new ProceedingsReferenceConstraintViolationException(
@@ -429,20 +428,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "scopusIdFormatError",
             "scopusIdExistsError"
         );
-    }
-
-    private void setUris(Document document, DocumentDTO documentDTO) {
-        var uriPattern =
-            "^(?:(?:http|https)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?$";
-        var pattern = Pattern.compile(uriPattern, Pattern.CASE_INSENSITIVE);
-
-        if (Objects.nonNull(documentDTO.getUris())) {
-            documentDTO.getUris().forEach(uri -> {
-                if (uri.length() <= 2048 && pattern.matcher(uri).matches()) {
-                    document.getUris().add(uri);
-                }
-            });
-        }
     }
 
     protected void clearCommonFields(Document publication) {

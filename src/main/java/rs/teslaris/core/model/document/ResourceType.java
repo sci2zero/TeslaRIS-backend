@@ -4,4 +4,6 @@ public enum ResourceType {
     PREPRINT,
     OFFICIAL_PUBLICATION,
     SUPPLEMENT,
+    PROOF,
+    IMAGE
 }

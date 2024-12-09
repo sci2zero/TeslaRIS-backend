@@ -23,7 +23,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
-import rs.teslaris.core.indexmodel.IndexType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
@@ -59,8 +59,7 @@ public class OrganisationUnitController {
 
     @GetMapping("/{organisationUnitId}")
     public OrganisationUnitDTO getOrganisationUnit(@PathVariable Integer organisationUnitId) {
-        return OrganisationUnitConverter.toDTO(
-            organisationUnitService.findOrganisationUnitById(organisationUnitId));
+        return organisationUnitService.readOrganisationUnitById(organisationUnitId);
     }
 
     @GetMapping("/old-id/{organisationUnitOldId}")
@@ -132,6 +131,6 @@ public class OrganisationUnitController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
         organisationUnitService.deleteOrganisationUnit(organisationUnitId);
-        deduplicationService.deleteSuggestion(organisationUnitId, IndexType.ORGANISATION_UNIT);
+        deduplicationService.deleteSuggestion(organisationUnitId, EntityType.ORGANISATION_UNIT);
     }
 }
