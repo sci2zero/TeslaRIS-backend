@@ -5,7 +5,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +19,7 @@ import rs.teslaris.core.assessment.dto.DocumentIndicatorDTO;
 import rs.teslaris.core.integration.BaseTest;
 
 @SpringBootTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class DocumentIndicatorControllerTest extends BaseTest {
 
     @Autowired
@@ -41,6 +45,7 @@ public class DocumentIndicatorControllerTest extends BaseTest {
     }
 
     @Test
+    @Order(Integer.MAX_VALUE)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateDocumentIndicator() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();

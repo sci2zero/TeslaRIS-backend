@@ -13,6 +13,12 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
     @Query("select count(eac) > 0 from EntityAssessmentClassification eac where eac.commission.id = :commissionId")
     boolean isInUse(Integer commissionId);
 
-    @Query("select c from Commission c join fetch c.description d where d.content like %:searchExpression%")
-    Page<Commission> searchCommissions(Pageable pageable, String searchExpression);
+    @Query(value =
+        "SELECT c FROM Commission c LEFT JOIN c.description description WHERE description.language.languageTag = :languageTag AND " +
+            "LOWER(description.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))",
+        countQuery =
+            "SELECT count(DISTINCT c) FROM Commission c JOIN c.description d WHERE d.language.languageTag = :languageTag AND " +
+                "LOWER(d.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))")
+    Page<Commission> searchCommissions(String searchExpression, String languageTag,
+                                       Pageable pageable);
 }

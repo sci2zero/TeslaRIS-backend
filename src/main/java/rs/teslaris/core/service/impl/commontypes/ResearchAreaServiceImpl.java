@@ -43,17 +43,14 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
 
     @Override
     public Page<ResearchAreaResponseDTO> searchResearchAreas(Pageable pageable,
-                                                             String searchExpression) {
+                                                             String searchExpression,
+                                                             String languageTag) {
         if (searchExpression.equals("*")) {
             searchExpression = "";
         }
-        if (searchExpression.isEmpty()) {
-            return researchAreaRepository.findAll(pageable)
-                .map(ResearchAreaConverter::toResponseDTO);
-        } else {
-            return researchAreaRepository.searchResearchAreas(pageable, searchExpression)
-                .map(ResearchAreaConverter::toResponseDTO);
-        }
+
+        return researchAreaRepository.searchResearchAreas(searchExpression, languageTag, pageable)
+            .map(ResearchAreaConverter::toResponseDTO);
     }
 
     @Override
@@ -117,9 +114,11 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
 
     private void setCommonFields(ResearchArea researchArea, ResearchAreaDTO researchAreaDTO) {
         researchArea.setName(
-            multilingualContentService.getMultilingualContent(researchAreaDTO.getName()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                researchAreaDTO.getName()));
         researchArea.setDescription(
-            multilingualContentService.getMultilingualContent(researchAreaDTO.getDescription()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                researchAreaDTO.getDescription()));
         researchArea.setSuperResearchArea(
             getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
     }

@@ -84,9 +84,9 @@ public class ResearchAreaServiceTest {
         var nameMultilingualContent = Set.of(new MultiLingualContent());
         var descriptionMultilingualContent = Set.of(new MultiLingualContent());
 
-        when(multilingualContentService.getMultilingualContent(
+        when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getName())).thenReturn(nameMultilingualContent);
-        when(multilingualContentService.getMultilingualContent(
+        when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getDescription())).thenReturn(descriptionMultilingualContent);
         when(researchAreaRepository.save(any(ResearchArea.class))).thenAnswer(invocation -> {
             ResearchArea savedResearchArea = invocation.getArgument(0);
@@ -105,9 +105,9 @@ public class ResearchAreaServiceTest {
         assertEquals(descriptionMultilingualContent, resultResearchArea.getDescription());
         assertEquals(1, resultResearchArea.getSuperResearchArea().getId());
 
-        verify(multilingualContentService, times(1)).getMultilingualContent(
+        verify(multilingualContentService, times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getName());
-        verify(multilingualContentService, times(1)).getMultilingualContent(
+        verify(multilingualContentService, times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getDescription());
         verify(researchAreaRepository, times(1)).save(any(ResearchArea.class));
     }
@@ -135,9 +135,9 @@ public class ResearchAreaServiceTest {
         researchAreaService.editResearchArea(researchAreaDTO, 1);
 
         // then
-        verify(multilingualContentService, times(1)).getMultilingualContent(
+        verify(multilingualContentService, times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getName());
-        verify(multilingualContentService, times(1)).getMultilingualContent(
+        verify(multilingualContentService, times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getDescription());
         verify(researchAreaRepository, times(1)).save(any(ResearchArea.class));
     }
@@ -223,14 +223,14 @@ public class ResearchAreaServiceTest {
         // given
         var researchAreaPage = new PageImpl<>(List.of(new ResearchArea()));
         var pageable = PageRequest.of(0, 10);
-        when(researchAreaRepository.searchResearchAreas(pageable, "Search Term")).thenReturn(
+        when(researchAreaRepository.searchResearchAreas("Search Term", "SR", pageable)).thenReturn(
             researchAreaPage);
 
         // when
-        var result = researchAreaService.searchResearchAreas(pageable, "Search Term");
+        var result = researchAreaService.searchResearchAreas(pageable, "Search Term", "SR");
 
         // then
         assertNotNull(result);
-        verify(researchAreaRepository).searchResearchAreas(pageable, "Search Term");
+        verify(researchAreaRepository).searchResearchAreas("Search Term", "SR", pageable);
     }
 }

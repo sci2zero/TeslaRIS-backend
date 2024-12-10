@@ -29,5 +29,6 @@ public interface ResearchAreaService extends JPAService<ResearchArea> {
 
     List<ResearchArea> getResearchAreasByIds(List<Integer> id);
 
-    Page<ResearchAreaResponseDTO> searchResearchAreas(Pageable pageable, String searchExpression);
+    Page<ResearchAreaResponseDTO> searchResearchAreas(Pageable pageable, String searchExpression,
+                                                      String languageTag);
 }

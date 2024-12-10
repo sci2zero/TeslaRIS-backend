@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +37,49 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
             );
         }).collect(Collectors.toSet());
     }
+
+    public Set<MultiLingualContent> getMultilingualContentAndSetDefaultsIfNonExistent(
+        List<MultilingualContentDTO> multilingualContentDTOs) {
+
+        var multilingualContent = multilingualContentDTOs.stream()
+            .map(mc -> new MultiLingualContent(
+                languageTagService.findOne(mc.getLanguageTagId()),
+                mc.getContent().trim(),
+                mc.getPriority()))
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        if (multilingualContent.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        ensureLanguageContentExists(multilingualContent, "EN", "SR");
+        ensureLanguageContentExists(multilingualContent, "SR", "EN");
+
+        return new HashSet<>(multilingualContent);
+    }
+
+    private void ensureLanguageContentExists(List<MultiLingualContent> multilingualContent,
+                                             String targetLanguageTag,
+                                             String fallbackLanguageTag) {
+
+        if (multilingualContent.stream()
+            .noneMatch(
+                mc -> mc.getLanguage().getLanguageTag().equalsIgnoreCase(targetLanguageTag))) {
+
+            var targetLanguage = languageTagService.findLanguageTagByValue(targetLanguageTag);
+            var fallbackContent = multilingualContent.stream()
+                .filter(
+                    mc -> mc.getLanguage().getLanguageTag().equalsIgnoreCase(fallbackLanguageTag))
+                .findFirst()
+                .orElse(multilingualContent.getFirst());
+
+            multilingualContent.add(new MultiLingualContent(
+                targetLanguage,
+                fallbackContent.getContent(),
+                fallbackContent.getPriority()));
+        }
+    }
+
 
     @Override
     public Set<MultiLingualContent> deepCopy(Set<MultiLingualContent> content) {

@@ -32,8 +32,10 @@ public class CommissionController {
     @GetMapping
     public Page<CommissionResponseDTO> readCommissions(Pageable pageable,
                                                        @RequestParam(required = false)
-                                                       String searchExpression) {
-        return commissionService.readAllCommissions(pageable, searchExpression);
+                                                       String searchExpression,
+                                                       @RequestParam("lang")
+                                                       String language) {
+        return commissionService.readAllCommissions(pageable, searchExpression, language);
     }
 
 

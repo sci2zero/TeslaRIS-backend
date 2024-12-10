@@ -34,8 +34,8 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     }
 
     @Override
-    public Page<IndicatorResponseDTO> readAllIndicators(Pageable pageable) {
-        return indicatorRepository.findAll(pageable).map(IndicatorConverter::toDTO);
+    public Page<IndicatorResponseDTO> readAllIndicators(Pageable pageable, String language) {
+        return indicatorRepository.readAll(language, pageable).map(IndicatorConverter::toDTO);
     }
 
     @Override
@@ -81,9 +81,11 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
         indicator.setCode(indicatorDTO.code());
         indicator.setApplicableTypes(new HashSet<>(indicatorDTO.applicableTypes()));
         indicator.setTitle(
-            multilingualContentService.getMultilingualContent(indicatorDTO.title()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                indicatorDTO.title()));
         indicator.setDescription(
-            multilingualContentService.getMultilingualContent(indicatorDTO.description()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                indicatorDTO.description()));
         indicator.setAccessLevel(indicatorDTO.indicatorAccessLevel());
     }
 

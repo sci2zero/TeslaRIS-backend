@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,11 +53,11 @@ public class IndicatorServiceTest {
         indicator2.setCode("code2");
         indicator2.setTitle(Set.of(new MultiLingualContent(new LanguageTag(), "Content 2", 1)));
 
-        when(indicatorRepository.findAll(any(Pageable.class))).thenReturn(
+        when(indicatorRepository.readAll(eq("EN"), any(Pageable.class))).thenReturn(
             new PageImpl<>(List.of(indicator1, indicator2)));
 
         var response =
-            indicatorService.readAllIndicators(PageRequest.of(0, 10));
+            indicatorService.readAllIndicators(PageRequest.of(0, 10), "EN");
 
         assertNotNull(response);
         assertEquals(2, response.getSize());

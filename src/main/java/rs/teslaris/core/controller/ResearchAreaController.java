@@ -34,8 +34,11 @@ public class ResearchAreaController {
     @GetMapping("/search")
     public Page<ResearchAreaResponseDTO> searchResearchAreas(Pageable pageable,
                                                              @RequestParam("tokens")
-                                                             List<String> tokens) {
-        return researchAreaService.searchResearchAreas(pageable, Strings.join(tokens, ' '));
+                                                             List<String> tokens,
+                                                             @RequestParam("lang")
+                                                             String language) {
+        return researchAreaService.searchResearchAreas(pageable, Strings.join(tokens, ' '),
+            language.toUpperCase());
     }
 
     @GetMapping

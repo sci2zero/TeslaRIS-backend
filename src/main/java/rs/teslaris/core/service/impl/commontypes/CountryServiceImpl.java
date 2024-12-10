@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -47,12 +46,9 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
         if (searchExpression.equals("*")) {
             searchExpression = "";
         }
-        var count = countryRepository.countCountries(searchExpression, languageCode);
-        var countryPage =
-            countryRepository.searchCountries(searchExpression, languageCode, pageable)
-                .map(CountryConverter::toDTO).getContent();
 
-        return new PageImpl<>(countryPage, pageable, count);
+        return countryRepository.searchCountries(searchExpression, languageCode, pageable)
+            .map(CountryConverter::toDTO);
     }
 
     @Override
@@ -93,7 +89,9 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
     }
 
     private void setCommonFields(Country country, CountryDTO countryDTO) {
-        country.setName(multilingualContentService.getMultilingualContent(countryDTO.getName()));
+        country.setName(
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                countryDTO.getName()));
         country.setCode(countryDTO.getCode());
     }
 }

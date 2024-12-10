@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -35,8 +36,11 @@ public class AssessmentRulebookController {
 
 
     @GetMapping
-    public Page<AssessmentRulebookResponseDTO> readAssessmentRulebooks(Pageable pageable) {
-        return assessmentRulebookService.readAllAssessmentRulebooks(pageable);
+    public Page<AssessmentRulebookResponseDTO> readAssessmentRulebooks(Pageable pageable,
+                                                                       @RequestParam("lang")
+                                                                       String language) {
+        return assessmentRulebookService.readAllAssessmentRulebooks(pageable,
+            language.toUpperCase());
     }
 
     @GetMapping("/{assessmentRulebookId}/measures")

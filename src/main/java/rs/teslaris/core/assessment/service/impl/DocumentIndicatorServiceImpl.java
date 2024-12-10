@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.core.assessment.dto.DocumentIndicatorDTO;
 import rs.teslaris.core.assessment.dto.EntityIndicatorResponseDTO;
@@ -19,6 +20,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service
+@Transactional
 public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements DocumentIndicatorService {
 

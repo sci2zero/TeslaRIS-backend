@@ -44,8 +44,9 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
     }
 
     @Override
-    public Page<AssessmentRulebookResponseDTO> readAllAssessmentRulebooks(Pageable pageable) {
-        return assessmentRulebookRepository.findAll(pageable)
+    public Page<AssessmentRulebookResponseDTO> readAllAssessmentRulebooks(Pageable pageable,
+                                                                          String language) {
+        return assessmentRulebookRepository.readAll(language, pageable)
             .map(AssessmentRulebookConverter::toDTO);
     }
 
@@ -115,9 +116,12 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
     }
 
     private void setCommonFields(AssessmentRulebook assessmentRulebook, AssessmentRulebookDTO dto) {
-        assessmentRulebook.setName(multilingualContentService.getMultilingualContent(dto.name()));
+        assessmentRulebook.setName(
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                dto.name()));
         assessmentRulebook.setDescription(
-            multilingualContentService.getMultilingualContent(dto.description()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                dto.description()));
         assessmentRulebook.setIssueDate(dto.issueDate());
 
         if (Objects.nonNull(assessmentRulebook.getPdfFile())) {

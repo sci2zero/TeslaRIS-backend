@@ -27,6 +27,12 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
     @Query("select count(t) > 0 from Thesis t join t.researchArea where t.researchArea.id = :researchAreaId")
     boolean isResearchedInThesis(Integer researchAreaId);
 
-    @Query("SELECT ra FROM ResearchArea ra JOIN ra.name n WHERE LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))")
-    Page<ResearchArea> searchResearchAreas(Pageable pageable, String searchExpression);
+    @Query(value =
+        "SELECT ra FROM ResearchArea ra LEFT JOIN ra.name name WHERE name.language.languageTag = :languageTag AND " +
+            "LOWER(name.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))",
+        countQuery =
+            "SELECT count(DISTINCT ra) FROM ResearchArea ra JOIN ra.name n WHERE n.language.languageTag = :languageTag AND " +
+                "LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))")
+    Page<ResearchArea> searchResearchAreas(String searchExpression, String languageTag,
+                                           Pageable pageable);
 }

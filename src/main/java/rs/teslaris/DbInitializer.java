@@ -853,7 +853,7 @@ public class DbInitializer implements ApplicationRunner {
         commission2.setFormalDescriptionOfRule("Rule 2");
         commission2.setAssessmentDateFrom(LocalDate.of(2022, 2, 4));
         commission2.setAssessmentDateTo(LocalDate.of(2022, 5, 4));
-        commission2.setSuperComission(commission1);
+        commission2.setSuperCommission(commission1);
 
         var commission3 = new Commission();
         commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1)));
@@ -863,12 +863,20 @@ public class DbInitializer implements ApplicationRunner {
 
         var assessmentRulebook1 = new AssessmentRulebook();
         assessmentRulebook1.setName(
-            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 1", 1)));
+            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 1", 1),
+                new MultiLingualContent(serbianTag, "Pravilnik 1", 2)));
+        assessmentRulebook1.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Description 1", 1),
+                new MultiLingualContent(serbianTag, "Opis 1", 2)));
         assessmentRulebook1.setIssueDate(LocalDate.of(2023, 10, 1));
 
         var assessmentRulebook2 = new AssessmentRulebook();
         assessmentRulebook2.setName(
-            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 2", 1)));
+            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 2", 1),
+                new MultiLingualContent(serbianTag, "Pravilnik 2", 2)));
+        assessmentRulebook2.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Description 2", 1),
+                new MultiLingualContent(serbianTag, "Opis 2", 2)));
         assessmentRulebook2.setIssueDate(LocalDate.of(2023, 10, 1));
         assessmentRulebook2.setAssessmentMeasures(List.of(assessmentMeasure3));
         assessmentMeasure3.setRulebook(assessmentRulebook2);
@@ -931,7 +939,11 @@ public class DbInitializer implements ApplicationRunner {
         totalViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1),
             new MultiLingualContent(serbianTag, "Ukupno pregleda", 2)));
         totalViews.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Total number of views.", 1)));
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of views.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj pregleda.",
+                    2)));
         totalViews.setAccessLevel(AccessLevel.OPEN);
         totalViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -939,10 +951,14 @@ public class DbInitializer implements ApplicationRunner {
 
         var dailyViews = new Indicator();
         dailyViews.setCode("viewsDay");
-        dailyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Daily views", 1)));
+        dailyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Today's views", 1),
+            new MultiLingualContent(serbianTag, "Pregleda danas", 2)));
         dailyViews.setDescription(
             Set.of(
-                new MultiLingualContent(englishTag, "Total number of views in the last 24h.", 1)));
+                new MultiLingualContent(englishTag, "Total number of views in the last 24h.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih 24h.",
+                    2)));
         dailyViews.setAccessLevel(AccessLevel.OPEN);
         dailyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -950,10 +966,14 @@ public class DbInitializer implements ApplicationRunner {
 
         var weeklyViews = new Indicator();
         weeklyViews.setCode("viewsWeek");
-        weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Weekly views", 1)));
+        weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Week's views", 1),
+            new MultiLingualContent(serbianTag, "Pregleda ove sedmice", 2)));
         weeklyViews.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
-                1)));
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih 7 dana.",
+                    2)));
         weeklyViews.setAccessLevel(AccessLevel.OPEN);
         weeklyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -961,10 +981,14 @@ public class DbInitializer implements ApplicationRunner {
 
         var monthlyViews = new Indicator();
         monthlyViews.setCode("viewsMonth");
-        monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Monthly views", 1)));
+        monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Month's views", 1),
+            new MultiLingualContent(serbianTag, "Pregleda ovog meseca", 2)));
         monthlyViews.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Total number of views in the last month.",
-                1)));
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of views in the last month.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih mesec dana.",
+                    2)));
         monthlyViews.setAccessLevel(AccessLevel.OPEN);
         monthlyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -972,9 +996,14 @@ public class DbInitializer implements ApplicationRunner {
 
         var totalDownloads = new Indicator();
         totalDownloads.setCode("downloadsTotal");
-        totalDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Total downloads", 1)));
+        totalDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Total downloads", 1),
+            new MultiLingualContent(serbianTag, "Ukupno preuzimanja", 2)));
         totalDownloads.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Total number of downloads.", 1)));
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of downloads.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja.",
+                    2)));
         totalDownloads.setAccessLevel(AccessLevel.OPEN);
         totalDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -982,11 +1011,14 @@ public class DbInitializer implements ApplicationRunner {
 
         var dailyDownloads = new Indicator();
         dailyDownloads.setCode("downloadsDay");
-        dailyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Daily downloads", 1)));
+        dailyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Today's downloads", 1),
+            new MultiLingualContent(serbianTag, "Preuzimanja danas", 2)));
         dailyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last 24h.",
-                    1)));
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja u poslednjih 24h.",
+                    2)));
         dailyDownloads.setAccessLevel(AccessLevel.OPEN);
         dailyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -994,12 +1026,14 @@ public class DbInitializer implements ApplicationRunner {
 
         var weeklyDownloads = new Indicator();
         weeklyDownloads.setCode("downloadsWeek");
-        weeklyDownloads.setTitle(
-            Set.of(new MultiLingualContent(englishTag, "Weekly downloads", 1)));
+        weeklyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Week's downloads", 1),
+            new MultiLingualContent(serbianTag, "Preuzimanja ove sedmice", 2)));
         weeklyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last 7 days.",
-                    1)));
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja u poslednjih 7 dana.",
+                    2)));
         weeklyDownloads.setAccessLevel(AccessLevel.OPEN);
         weeklyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -1008,11 +1042,15 @@ public class DbInitializer implements ApplicationRunner {
         var monthlyDownloads = new Indicator();
         monthlyDownloads.setCode("downloadsMonth");
         monthlyDownloads.setTitle(
-            Set.of(new MultiLingualContent(englishTag, "Monthly downloads", 1)));
+            Set.of(new MultiLingualContent(englishTag, "Month's downloads", 1),
+                new MultiLingualContent(serbianTag, "Preuzimanja ovog meseca", 2)));
         monthlyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last month.",
-                    1)));
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj preuzimanja u poslednjih mesec dana.",
+                    2)));
         monthlyDownloads.setAccessLevel(AccessLevel.OPEN);
         monthlyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,

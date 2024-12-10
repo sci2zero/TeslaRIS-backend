@@ -35,7 +35,7 @@ public class AssessmentRulebookControllerTest extends BaseTest {
     public void testReadAllAssessmentRulebooks() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/assessment-rulebook?page=0&size=10")
+                    "http://localhost:8081/api/assessment/assessment-rulebook?page=0&size=10&lang=sr")
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 

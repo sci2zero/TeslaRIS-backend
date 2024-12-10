@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -29,8 +30,9 @@ public class IndicatorController {
 
 
     @GetMapping
-    public Page<IndicatorResponseDTO> readIndicators(Pageable pageable) {
-        return indicatorService.readAllIndicators(pageable);
+    public Page<IndicatorResponseDTO> readIndicators(@RequestParam("lang") String language,
+                                                     Pageable pageable) {
+        return indicatorService.readAllIndicators(pageable, language.toUpperCase());
     }
 
     @GetMapping("/{indicatorId}")

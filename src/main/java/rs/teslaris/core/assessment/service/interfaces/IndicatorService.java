@@ -12,7 +12,7 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface IndicatorService extends JPAService<Indicator> {
 
-    Page<IndicatorResponseDTO> readAllIndicators(Pageable pageable);
+    Page<IndicatorResponseDTO> readAllIndicators(Pageable pageable, String language);
 
     IndicatorResponseDTO readIndicatorById(Integer indicatorId);
 

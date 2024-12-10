@@ -2,7 +2,10 @@ package rs.teslaris.core.integration.assessment;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +15,7 @@ import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.integration.BaseTest;
 
 @SpringBootTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class StatisticsControllerTest extends BaseTest {
 
     @ParameterizedTest
@@ -24,6 +28,7 @@ public class StatisticsControllerTest extends BaseTest {
     }
 
     @Test
+    @Order(1)
     public void testRegisterPersonView() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.post(
@@ -33,6 +38,7 @@ public class StatisticsControllerTest extends BaseTest {
     }
 
     @Test
+    @Order(2)
     public void testRegisterOrganisationUnitView() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.post(

@@ -15,4 +15,12 @@ public interface AssessmentRulebookRepository extends
     @Query("select am from AssessmentMeasure am where am.rulebook.id = :rulebookId")
     Page<AssessmentMeasure> readAssessmentMeasuresForRulebook(Pageable pageable,
                                                               Integer rulebookId);
+
+    @Query(value =
+        "SELECT ar FROM AssessmentRulebook ar LEFT JOIN ar.name name LEFT JOIN ar.description description " +
+            "WHERE name.language.languageTag = :languageTag AND description.language.languageTag = :languageTag",
+        countQuery =
+            "SELECT count(DISTINCT ar) FROM AssessmentRulebook ar LEFT JOIN ar.name name LEFT JOIN ar.description description " +
+                "WHERE name.language.languageTag = :languageTag AND description.language.languageTag = :languageTag")
+    Page<AssessmentRulebook> readAll(String languageTag, Pageable pageable);
 }
