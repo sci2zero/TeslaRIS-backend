@@ -105,9 +105,11 @@ public class ResearchAreaServiceTest {
         assertEquals(descriptionMultilingualContent, resultResearchArea.getDescription());
         assertEquals(1, resultResearchArea.getSuperResearchArea().getId());
 
-        verify(multilingualContentService, times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
+        verify(multilingualContentService,
+            times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getName());
-        verify(multilingualContentService, times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
+        verify(multilingualContentService,
+            times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getDescription());
         verify(researchAreaRepository, times(1)).save(any(ResearchArea.class));
     }
@@ -135,9 +137,11 @@ public class ResearchAreaServiceTest {
         researchAreaService.editResearchArea(researchAreaDTO, 1);
 
         // then
-        verify(multilingualContentService, times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
+        verify(multilingualContentService,
+            times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getName());
-        verify(multilingualContentService, times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
+        verify(multilingualContentService,
+            times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getDescription());
         verify(researchAreaRepository, times(1)).save(any(ResearchArea.class));
     }
