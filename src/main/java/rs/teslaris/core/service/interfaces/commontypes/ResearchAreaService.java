@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaNodeDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaResponseDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
@@ -31,4 +32,6 @@ public interface ResearchAreaService extends JPAService<ResearchArea> {
 
     Page<ResearchAreaResponseDTO> searchResearchAreas(Pageable pageable, String searchExpression,
                                                       String languageTag);
+
+    List<ResearchAreaNodeDTO> getChildResearchAreas(Integer parentId);
 }

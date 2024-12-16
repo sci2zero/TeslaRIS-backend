@@ -85,4 +85,18 @@ public class ResearchAreaControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
+
+    @Test
+    @Order(Integer.MAX_VALUE)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetChildResearchAreas() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/research-area/children/{researchAreaId}",
+                        1).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
 }

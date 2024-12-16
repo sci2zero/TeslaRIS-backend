@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaNodeDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaResponseDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -46,10 +47,15 @@ public class ResearchAreaController {
         return researchAreaService.getResearchAreas();
     }
 
-    @GetMapping("{researchAreaId}")
+    @GetMapping("/{researchAreaId}")
     public ResearchAreaHierarchyDTO getResearchArea(
         @PathVariable Integer researchAreaId) {
         return researchAreaService.readResearchArea(researchAreaId);
+    }
+
+    @GetMapping("/children/{parentId}")
+    public List<ResearchAreaNodeDTO> getChildResearchAreas(@PathVariable Integer parentId) {
+        return researchAreaService.getChildResearchAreas(parentId);
     }
 
     @GetMapping("/list")

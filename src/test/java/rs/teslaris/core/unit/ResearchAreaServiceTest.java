@@ -4,7 +4,9 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -236,5 +238,84 @@ public class ResearchAreaServiceTest {
         // then
         assertNotNull(result);
         verify(researchAreaRepository).searchResearchAreas("Search Term", "SR", pageable);
+    }
+
+    @Test
+    public void shouldFetchTopLevelResearchAreas() {
+        // given
+        var researchAreas = List.of(new ResearchArea());
+        when(researchAreaRepository.getTopLevelResearchAreas()).thenReturn(researchAreas);
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(0);
+
+        // then
+        assertNotNull(result);
+        assertEquals(researchAreas.size(), result.size());
+        verify(researchAreaRepository).getTopLevelResearchAreas();
+        verify(researchAreaRepository, never()).getChildResearchAreas(any());
+    }
+
+    @Test
+    public void shouldFetchChildResearchAreas() {
+        // given
+        var researchAreas = List.of(new ResearchArea());
+        var parentId = 1;
+        when(researchAreaRepository.getChildResearchAreas(parentId)).thenReturn(researchAreas);
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(parentId);
+
+        // then
+        assertNotNull(result);
+        assertEquals(researchAreas.size(), result.size());
+        verify(researchAreaRepository).getChildResearchAreas(parentId);
+        verify(researchAreaRepository, never()).getTopLevelResearchAreas();
+    }
+
+    @Test
+    public void shouldReturnEmptyForTopLevelWhenNoResearchAreasFound() {
+        // given
+        when(researchAreaRepository.getTopLevelResearchAreas()).thenReturn(List.of());
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(0);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(researchAreaRepository).getTopLevelResearchAreas();
+        verify(researchAreaRepository, never()).getChildResearchAreas(any());
+    }
+
+    @Test
+    public void shouldReturnEmptyForChildWhenNoResearchAreasFound() {
+        // given
+        var parentId = 1;
+        when(researchAreaRepository.getChildResearchAreas(parentId)).thenReturn(List.of());
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(parentId);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(researchAreaRepository).getChildResearchAreas(parentId);
+        verify(researchAreaRepository, never()).getTopLevelResearchAreas();
+    }
+
+    @Test
+    public void shouldHandleNullParentIdGracefully() {
+        // given
+        when(researchAreaRepository.getChildResearchAreas(null)).thenReturn(List.of());
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(null);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(researchAreaRepository).getTopLevelResearchAreas();
+        verify(researchAreaRepository, never()).getChildResearchAreas(null);
     }
 }

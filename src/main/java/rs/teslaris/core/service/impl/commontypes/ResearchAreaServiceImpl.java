@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaNodeDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaResponseDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
@@ -51,6 +52,21 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
 
         return researchAreaRepository.searchResearchAreas(searchExpression, languageTag, pageable)
             .map(ResearchAreaConverter::toResponseDTO);
+    }
+
+    @Override
+    public List<ResearchAreaNodeDTO> getChildResearchAreas(Integer parentId) {
+        List<ResearchArea> fetchedResearchAreas;
+        if (Objects.isNull(parentId) || parentId == 0) {
+            fetchedResearchAreas = researchAreaRepository.getTopLevelResearchAreas();
+        } else {
+            fetchedResearchAreas = researchAreaRepository.getChildResearchAreas(parentId);
+        }
+
+        return fetchedResearchAreas.stream().map(
+                researchArea -> new ResearchAreaNodeDTO(researchArea.getId(),
+                    MultilingualContentConverter.getMultilingualContentDTO(researchArea.getName())))
+            .collect(Collectors.toList());
     }
 
     @Override
