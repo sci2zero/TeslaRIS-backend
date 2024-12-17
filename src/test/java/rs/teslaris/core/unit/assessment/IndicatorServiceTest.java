@@ -3,6 +3,7 @@ package rs.teslaris.core.unit.assessment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -159,5 +160,49 @@ public class IndicatorServiceTest {
             indicatorService.deleteIndicator(indicatorId));
 
         // Then (IndicatorReferenceConstraintViolationException should be thrown)
+    }
+
+    @Test
+    public void shouldGetIndicatorsApplicableToEntity() {
+        // given
+        var mockIndicator1 = new Indicator();
+        mockIndicator1.setId(1);
+        var mockIndicator2 = new Indicator();
+        mockIndicator2.setId(2);
+
+        var applicableEntityTypes =
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON);
+        var mockIndicators = List.of(mockIndicator1, mockIndicator2);
+
+        // Mock repository call
+        when(indicatorRepository.getIndicatorsApplicableToEntity(applicableEntityTypes))
+            .thenReturn(mockIndicators);
+
+        // when
+        var result = indicatorService.getIndicatorsApplicableToEntity(applicableEntityTypes);
+
+        // then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+
+        verify(indicatorRepository).getIndicatorsApplicableToEntity(applicableEntityTypes);
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenNoIndicatorsFound() {
+        // given
+        var applicableEntityTypes = List.of(ApplicableEntityType.DOCUMENT);
+
+        when(indicatorRepository.getIndicatorsApplicableToEntity(applicableEntityTypes))
+            .thenReturn(List.of());
+
+        // when
+        var result = indicatorService.getIndicatorsApplicableToEntity(applicableEntityTypes);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+
+        verify(indicatorRepository).getIndicatorsApplicableToEntity(applicableEntityTypes);
     }
 }

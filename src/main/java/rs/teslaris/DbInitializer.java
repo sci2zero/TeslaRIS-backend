@@ -246,6 +246,7 @@ public class DbInitializer implements ApplicationRunner {
         var editEntityAssessmentClassifications =
             new Privilege("EDIT_ENTITY_ASSESSMENT_CLASSIFICATION");
         var editLanguageTags = new Privilege("EDIT_LANGUAGE_TAGS");
+        var submitEntityIndicators = new Privilege("SUBMIT_ENTITY_INDICATORS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -263,7 +264,7 @@ public class DbInitializer implements ApplicationRunner {
                 mergeOUMetadata, editCountries, forceDelete, switchEntityToUnmanaged,
                 claimDocument, mergePublisherPublications, mergePublishersMetadata,
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
-                editEntityAssessmentClassifications));
+                editEntityAssessmentClassifications, submitEntityIndicators));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -286,7 +287,7 @@ public class DbInitializer implements ApplicationRunner {
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
-                editEntityIndicatorProofs, listMyJournalPublications,
+                editEntityIndicatorProofs, listMyJournalPublications, submitEntityIndicators,
                 unbindYourselfFromPublication, editEntityIndicators)));
 
         var institutionalEditorAuthority =
@@ -1056,9 +1057,24 @@ public class DbInitializer implements ApplicationRunner {
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
 
+        var numberOfPages = new Indicator();
+        numberOfPages.setCode("pageNum");
+        numberOfPages.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Number of pages", 1),
+                new MultiLingualContent(serbianTag, "Broj stranica", 2)));
+        numberOfPages.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of pages in a document.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj stranica u dokumentu.",
+                    2)));
+        numberOfPages.setAccessLevel(AccessLevel.CLOSED);
+        numberOfPages.getApplicableTypes().addAll(List.of(ApplicableEntityType.MONOGRAPH));
+
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads,
-                dailyDownloads, weeklyDownloads, monthlyDownloads));
+                dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages));
     }
 
     private void processCountryLine(String[] line) {

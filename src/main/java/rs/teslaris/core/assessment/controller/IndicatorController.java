@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.converter.IndicatorConverter;
 import rs.teslaris.core.assessment.dto.IndicatorDTO;
 import rs.teslaris.core.assessment.dto.IndicatorResponseDTO;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
 
 @RestController
@@ -70,5 +72,12 @@ public class IndicatorController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteIndicator(@PathVariable Integer indicatorId) {
         indicatorService.deleteIndicator(indicatorId);
+    }
+
+    @GetMapping("/list")
+    @PreAuthorize("hasAuthority('SUBMIT_ENTITY_INDICATORS')")
+    public List<IndicatorResponseDTO> getIndicatorsApplicableToEntity(
+        @RequestParam("applicableType") List<ApplicableEntityType> applicableEntityTypes) {
+        return indicatorService.getIndicatorsApplicableToEntity(applicableEntityTypes);
     }
 }
