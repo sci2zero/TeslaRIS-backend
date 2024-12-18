@@ -54,7 +54,8 @@ public class DocumentIndicatorControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(documentIndicatorDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/assessment/document-indicator")
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/assessment/document-indicator/{documentId}", 5)
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -73,7 +74,8 @@ public class DocumentIndicatorControllerTest extends BaseTest {
         String requestBody = objectMapper.writeValueAsString(documentIndicatorDTO);
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
-                        "http://localhost:8081/api/assessment/document-indicator/{entityIndicatorId}", 1)
+                        "http://localhost:8081/api/assessment/document-indicator/{documentId}/{entityIndicatorId}",
+                        5, 1)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

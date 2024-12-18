@@ -11,6 +11,6 @@ public class IndicatorConverter {
             indicator.getId(), indicator.getCode(),
             MultilingualContentConverter.getMultilingualContentDTO(indicator.getTitle()),
             MultilingualContentConverter.getMultilingualContentDTO(indicator.getDescription()),
-            indicator.getApplicableTypes().stream().toList());
+            indicator.getApplicableTypes().stream().toList(), indicator.getContentType());
     }
 }

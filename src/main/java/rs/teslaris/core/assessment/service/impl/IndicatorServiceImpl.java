@@ -97,6 +97,7 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
                 indicatorDTO.description()));
         indicator.setAccessLevel(indicatorDTO.indicatorAccessLevel());
+        indicator.setContentType(indicatorDTO.contentType());
     }
 
     @Override

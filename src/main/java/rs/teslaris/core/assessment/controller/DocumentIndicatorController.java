@@ -3,6 +3,7 @@ package rs.teslaris.core.assessment.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.EntityIndicatorEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.core.assessment.dto.DocumentIndicatorDTO;
 import rs.teslaris.core.assessment.dto.EntityIndicatorResponseDTO;
@@ -47,8 +49,9 @@ public class DocumentIndicatorController {
         );
     }
 
-    @PostMapping
+    @PostMapping("/{documentId}")
     @ResponseStatus(HttpStatus.CREATED)
+    @PublicationEditCheck
     @Idempotent
     public EntityIndicatorResponseDTO createDocumentIndicator(
         @RequestBody DocumentIndicatorDTO documentIndicatorDTO,
@@ -58,7 +61,9 @@ public class DocumentIndicatorController {
                 tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
-    @PutMapping("/{entityIndicatorId}")
+    @PutMapping("/{documentId}/{entityIndicatorId}")
+    @PreAuthorize("hasAuthority('EDIT_ENTITY_INDICATOR')")
+    @PublicationEditCheck
     @EntityIndicatorEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateDocumentIndicator(

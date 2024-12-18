@@ -22,7 +22,9 @@ import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.EventAssessmentClassification;
+import rs.teslaris.core.assessment.model.EventIndicator;
 import rs.teslaris.core.assessment.model.Indicator;
+import rs.teslaris.core.assessment.model.IndicatorContentType;
 import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
@@ -30,6 +32,7 @@ import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.EventIndicatorRepository;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -186,6 +189,8 @@ public class DbInitializer implements ApplicationRunner {
     private final PublicationSeriesAssessmentClassificationRepository
         publicationSeriesAssessmentClassificationRepository;
 
+    private final EventIndicatorRepository eventIndicatorRepository;
+
 
     @Override
     @Transactional
@@ -246,7 +251,7 @@ public class DbInitializer implements ApplicationRunner {
         var editEntityAssessmentClassifications =
             new Privilege("EDIT_ENTITY_ASSESSMENT_CLASSIFICATION");
         var editLanguageTags = new Privilege("EDIT_LANGUAGE_TAGS");
-        var submitEntityIndicators = new Privilege("SUBMIT_ENTITY_INDICATORS");
+        var editEventIndicators = new Privilege("EDIT_EVENT_INDICATORS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -264,7 +269,7 @@ public class DbInitializer implements ApplicationRunner {
                 mergeOUMetadata, editCountries, forceDelete, switchEntityToUnmanaged,
                 claimDocument, mergePublisherPublications, mergePublishersMetadata,
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
-                editEntityAssessmentClassifications, submitEntityIndicators));
+                editEntityAssessmentClassifications, editEventIndicators));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -281,13 +286,14 @@ public class DbInitializer implements ApplicationRunner {
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
                 prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries,
                 forceDelete, switchEntityToUnmanaged, mergePublisherPublications, editLanguageTags,
-                mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications
+                mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
+                editEventIndicators
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
-                editEntityIndicatorProofs, listMyJournalPublications, submitEntityIndicators,
+                editEntityIndicatorProofs, listMyJournalPublications, editEventIndicators,
                 unbindYourselfFromPublication, editEntityIndicators)));
 
         var institutionalEditorAuthority =
@@ -783,6 +789,7 @@ public class DbInitializer implements ApplicationRunner {
         indicator1.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Indicator 1 description", 1)));
         indicator1.setAccessLevel(AccessLevel.OPEN);
+        indicator1.setApplicableTypes(Set.of(ApplicableEntityType.ALL));
 
         var indicator2 = new Indicator();
         indicator2.setCode("Code 2");
@@ -913,6 +920,12 @@ public class DbInitializer implements ApplicationRunner {
             License.OPEN_ACCESS, ApproveStatus.APPROVED));
         documentIndicatorRepository.save(documentIndicator1);
 
+        var eventIndicator1 = new EventIndicator();
+        eventIndicator1.setTextualValue("OPEN ACCESS INDICATOR");
+        eventIndicator1.setIndicator(indicator1);
+        eventIndicator1.setEvent(conferenceEvent2);
+        eventIndicatorRepository.save(eventIndicator1);
+
         var eventAssessmentClassification1 = new EventAssessmentClassification();
         eventAssessmentClassification1.setEvent(conferenceEvent1);
         eventAssessmentClassification1.setAssessmentClassification(assessmentClassification1);
@@ -949,6 +962,7 @@ public class DbInitializer implements ApplicationRunner {
         totalViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        totalViews.setContentType(IndicatorContentType.NUMBER);
 
         var dailyViews = new Indicator();
         dailyViews.setCode("viewsDay");
@@ -964,6 +978,7 @@ public class DbInitializer implements ApplicationRunner {
         dailyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        dailyViews.setContentType(IndicatorContentType.NUMBER);
 
         var weeklyViews = new Indicator();
         weeklyViews.setCode("viewsWeek");
@@ -979,6 +994,7 @@ public class DbInitializer implements ApplicationRunner {
         weeklyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        weeklyViews.setContentType(IndicatorContentType.NUMBER);
 
         var monthlyViews = new Indicator();
         monthlyViews.setCode("viewsMonth");
@@ -994,6 +1010,7 @@ public class DbInitializer implements ApplicationRunner {
         monthlyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        monthlyViews.setContentType(IndicatorContentType.NUMBER);
 
         var totalDownloads = new Indicator();
         totalDownloads.setCode("downloadsTotal");
@@ -1009,6 +1026,7 @@ public class DbInitializer implements ApplicationRunner {
         totalDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        totalDownloads.setContentType(IndicatorContentType.NUMBER);
 
         var dailyDownloads = new Indicator();
         dailyDownloads.setCode("downloadsDay");
@@ -1024,6 +1042,7 @@ public class DbInitializer implements ApplicationRunner {
         dailyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        dailyDownloads.setContentType(IndicatorContentType.NUMBER);
 
         var weeklyDownloads = new Indicator();
         weeklyDownloads.setCode("downloadsWeek");
@@ -1039,6 +1058,7 @@ public class DbInitializer implements ApplicationRunner {
         weeklyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        weeklyDownloads.setContentType(IndicatorContentType.NUMBER);
 
         var monthlyDownloads = new Indicator();
         monthlyDownloads.setCode("downloadsMonth");
@@ -1056,6 +1076,7 @@ public class DbInitializer implements ApplicationRunner {
         monthlyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        monthlyDownloads.setContentType(IndicatorContentType.NUMBER);
 
         var numberOfPages = new Indicator();
         numberOfPages.setCode("pageNum");
@@ -1070,7 +1091,8 @@ public class DbInitializer implements ApplicationRunner {
                     "Ukupan broj stranica u dokumentu.",
                     2)));
         numberOfPages.setAccessLevel(AccessLevel.CLOSED);
-        numberOfPages.getApplicableTypes().addAll(List.of(ApplicableEntityType.MONOGRAPH));
+        numberOfPages.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
+        numberOfPages.setContentType(IndicatorContentType.NUMBER);
 
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads,

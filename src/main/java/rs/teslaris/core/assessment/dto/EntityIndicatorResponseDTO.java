@@ -1,8 +1,10 @@
 package rs.teslaris.core.assessment.dto;
 
 import java.time.LocalDate;
+import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 
 public record EntityIndicatorResponseDTO(
+    Integer id,
     Double numericValue,
 
     Boolean booleanValue,
@@ -13,6 +15,8 @@ public record EntityIndicatorResponseDTO(
 
     LocalDate toDate,
 
-    IndicatorResponseDTO indicatorResponse
+    IndicatorResponseDTO indicatorResponse,
+
+    EntityIndicatorSource source
 ) {
 }
