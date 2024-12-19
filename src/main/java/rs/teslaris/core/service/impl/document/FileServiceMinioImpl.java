@@ -8,6 +8,8 @@ import io.minio.RemoveObjectArgs;
 import java.util.Collections;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.tika.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,8 +32,15 @@ public class FileServiceMinioImpl implements FileService {
             throw new StorageException("Failed to store empty file.");
         }
 
+        var originalFilename = FilenameUtils.normalize(
+            Objects.requireNonNullElse(file.getOriginalFilename(), ""));
+        if (originalFilename.isEmpty()) {
+            throw new StorageException("Failed to store file with empty file name.");
+        }
+
         var originalFilenameTokens =
-            Objects.requireNonNull(file.getOriginalFilename()).split("\\.");
+            Objects.requireNonNull(StringEscapeUtils.escapeHtml4(originalFilename))
+                .split("\\.");
         var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
 
         try {
