@@ -18,5 +18,21 @@
       "downloadsMonth": "LocalDateTime.now().minusDays(30)",
       "downloadsTotal": "LocalDateTime.of(1970, 1, 1, 0, 0)"
     }
+  },
+  "publicationSeriesIndicatorMapping": {
+    "webOfScience": {
+      "nameColumn": 0,
+      "identifierColumns": [3, 4],
+      "categoryColumn": 5,
+      "defaultLanguage": "EN",
+      "columnMapping": {
+        "7": "totalCitations",
+        "16": "fiveYearJIF",
+        "17": "currentJIF",
+        "21": "eigenFactorNorm",
+        "22": "ais",
+        "28": "citedHL"
+      }
+    }
   }
 }

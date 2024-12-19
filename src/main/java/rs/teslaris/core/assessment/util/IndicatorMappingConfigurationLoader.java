@@ -60,9 +60,25 @@ public class IndicatorMappingConfigurationLoader {
         };
     }
 
+    public static PublicationSeriesIndicatorMapping fetchPublicationSeriesIndicatorMapping(
+        String mappingName) {
+        return indicatorMappingConfiguration.publicationSeriesIndicatorMapping.getOrDefault(
+            mappingName, null);
+    }
+
     private record IndicatorMappingConfiguration(
         @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings,
-        @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets
+        @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets,
+        @JsonProperty(value = "publicationSeriesIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesIndicatorMapping
+    ) {
+    }
+
+    public record PublicationSeriesIndicatorMapping(
+        @JsonProperty(value = "nameColumn", required = true) Integer nameColumn,
+        @JsonProperty(value = "identifierColumns", required = true) List<Integer> identifierColumns,
+        @JsonProperty(value = "categoryColumn", required = true) Integer categoryColumn,
+        @JsonProperty(value = "defaultLanguage", required = true) String defaultLanguage,
+        @JsonProperty(value = "columnMapping", required = true) Map<String, String> columnMapping
     ) {
     }
 

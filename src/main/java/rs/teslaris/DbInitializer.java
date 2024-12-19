@@ -1094,9 +1094,110 @@ public class DbInitializer implements ApplicationRunner {
         numberOfPages.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
         numberOfPages.setContentType(IndicatorContentType.NUMBER);
 
+        var totalCitations = new Indicator();
+        totalCitations.setCode("totalCitations");
+        totalCitations.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Total citations", 1),
+                new MultiLingualContent(serbianTag, "Broj citata", 2)));
+        totalCitations.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of citations in this journal.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj citata radova u ovom časopisu.",
+                    2)));
+        totalCitations.setAccessLevel(AccessLevel.CLOSED);
+        totalCitations.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.PUBLICATION_SERIES, ApplicableEntityType.DOCUMENT));
+        totalCitations.setContentType(IndicatorContentType.NUMBER);
+
+        var fiveYearJIF = new Indicator();
+        fiveYearJIF.setCode("fiveYearJIF");
+        fiveYearJIF.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "5 Year JIF", 1),
+                new MultiLingualContent(serbianTag, "Petogodišnji IF", 2)));
+        fiveYearJIF.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "JIF in the last 5 years.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "IF u poslednjih 5 godina.",
+                    2)));
+        fiveYearJIF.setAccessLevel(AccessLevel.CLOSED);
+        fiveYearJIF.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        fiveYearJIF.setContentType(IndicatorContentType.TEXT);
+
+        var currentJIF = new Indicator();
+        currentJIF.setCode("currentJIF");
+        currentJIF.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "JIF", 1),
+                new MultiLingualContent(serbianTag, "IF", 2)));
+        currentJIF.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "JIF in the current year.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "IF ove godine.",
+                    2)));
+        currentJIF.setAccessLevel(AccessLevel.CLOSED);
+        currentJIF.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        currentJIF.setContentType(IndicatorContentType.TEXT);
+
+        var eigenFactorNorm = new Indicator();
+        eigenFactorNorm.setCode("eigenFactorNorm");
+        eigenFactorNorm.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Normalized Eigenfactor", 1),
+                new MultiLingualContent(serbianTag, "Normalizovani Eigenfactor", 2)));
+        eigenFactorNorm.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "A measure of the total influence of a journal over a 5-year period, considering both the quantity and quality of citations..",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Mera ukupnog uticaja časopisa u periodu od 5 godina, uzevši u obzir i kvalitet i kvantitet citata.",
+                    2)));
+        eigenFactorNorm.setAccessLevel(AccessLevel.CLOSED);
+        eigenFactorNorm.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        eigenFactorNorm.setContentType(IndicatorContentType.NUMBER);
+
+        var ais = new Indicator();
+        ais.setCode("ais");
+        ais.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Article Influence Score", 1),
+                new MultiLingualContent(serbianTag, "Article Influence Score", 2)));
+        ais.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Metric used to measure the average influence of a journal's articles over the first five years after publication.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Metrika koja se koristi da prikaže srednju vrednost uticaja radova u časopisu kroz prvih pet godina nakon publikacije.",
+                    2)));
+        ais.setAccessLevel(AccessLevel.CLOSED);
+        ais.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        ais.setContentType(IndicatorContentType.NUMBER);
+
+        var citedHL = new Indicator();
+        citedHL.setCode("citedHL");
+        citedHL.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Cited Half-Life", 1),
+                new MultiLingualContent(serbianTag, "Cited Half-Life", 2)));
+        citedHL.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Counts all the journal citations during one calendar year and calculates the median article publication date—half of the cited articles were published before this time, half were published afterwards.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Broji sve citate u časopisima tokom jedne kalendarske godine i izračunava srednji datum objavljivanja članka – polovina citiranih članaka je objavljena pre ovog vremena, polovina je objavljena kasnije.",
+                    2)));
+        citedHL.setAccessLevel(AccessLevel.CLOSED);
+        citedHL.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        citedHL.setContentType(IndicatorContentType.NUMBER);
+
         indicatorRepository.saveAll(
-            List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads,
-                dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages));
+            List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
+                dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
+                currentJIF, eigenFactorNorm, ais, citedHL));
     }
 
     private void processCountryLine(String[] line) {

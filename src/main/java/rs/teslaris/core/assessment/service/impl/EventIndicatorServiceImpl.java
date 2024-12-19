@@ -40,7 +40,7 @@ public class EventIndicatorServiceImpl extends EntityIndicatorServiceImpl
         IndicatorService indicatorService, EventIndicatorRepository eventIndicatorRepository,
         EventIndicatorJPAServiceImpl eventIndicatorJPAService,
         UserService userService, EventService eventService) {
-        super(entityIndicatorRepository, eventFileService, indicatorService);
+        super(indicatorService, entityIndicatorRepository, eventFileService);
         this.eventIndicatorRepository = eventIndicatorRepository;
         this.eventIndicatorJPAService = eventIndicatorJPAService;
         this.userService = userService;
