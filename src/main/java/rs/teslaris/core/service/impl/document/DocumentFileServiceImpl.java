@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
+import org.apache.tika.io.FilenameUtils;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -208,8 +209,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         try {
             trueMimeType = contentAnalyzer.detect(file.getInputStream());
 
-            var originalFilename = file.getOriginalFilename();
-            if (Objects.isNull(originalFilename)) {
+            var originalFilename = FilenameUtils.normalize(
+                Objects.requireNonNullElse(file.getOriginalFilename(), ""));
+            if (originalFilename.isEmpty()) {
                 throw new StorageException("File does not have a valid name.");
             }
             specifiedMimeType = Files.probeContentType(Path.of(originalFilename));
@@ -230,7 +232,6 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         return trueMimeType;
     }
-
 
     @Override
     public void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,

@@ -94,7 +94,7 @@ public class FileController {
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
-            .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
+            .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
             .body(new InputStreamResource(file));
     }
 

@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import okhttp3.Headers;
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.tika.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -32,8 +34,15 @@ public class FileServiceFileSystemImpl implements FileService {
             throw new StorageException("Failed to store empty file.");
         }
 
+        var originalFilename = FilenameUtils.normalize(
+            Objects.requireNonNullElse(file.getOriginalFilename(), ""));
+        if (originalFilename.isEmpty()) {
+            throw new StorageException("Failed to store file with empty file name.");
+        }
+
         var originalFilenameTokens =
-            Objects.requireNonNull(file.getOriginalFilename()).split("\\.");
+            Objects.requireNonNull(StringEscapeUtils.escapeHtml4(originalFilename))
+                .split("\\.");
         var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
         var destinationFilePath = Paths.get(rootLocation, serverFilename + "." + extension)
             .normalize().toAbsolutePath();
