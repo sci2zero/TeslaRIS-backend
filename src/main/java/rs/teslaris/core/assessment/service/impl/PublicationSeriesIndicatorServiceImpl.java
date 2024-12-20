@@ -117,8 +117,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     private void processIndicatorsLine(String[] line,
-                                    IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
-                                    Integer year) {
+                                       IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
+                                       Integer year) {
         if (line.length == 1) {
             log.info("Invalid line format, skipping...");
             return;
@@ -207,7 +207,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     private void saveIndicator(PublicationSeries publicationSeries, Indicator indicator,
-                               String indicatorValue, String categoryIdentifier, Integer year, String source) {
+                               String indicatorValue, String categoryIdentifier, Integer year,
+                               String source) {
         var newJournalIndicator = new PublicationSeriesIndicator();
         newJournalIndicator.setIndicator(indicator);
         newJournalIndicator.setPublicationSeries(publicationSeries);
