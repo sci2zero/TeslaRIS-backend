@@ -1125,13 +1125,13 @@ public class DbInitializer implements ApplicationRunner {
                     2)));
         fiveYearJIF.setAccessLevel(AccessLevel.CLOSED);
         fiveYearJIF.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
-        fiveYearJIF.setContentType(IndicatorContentType.TEXT);
+        fiveYearJIF.setContentType(IndicatorContentType.NUMBER);
 
         var currentJIF = new Indicator();
         currentJIF.setCode("currentJIF");
         currentJIF.setTitle(
-            Set.of(new MultiLingualContent(englishTag, "JIF", 1),
-                new MultiLingualContent(serbianTag, "IF", 2)));
+            Set.of(new MultiLingualContent(englishTag, "Journal Impact Factor", 1),
+                new MultiLingualContent(serbianTag, "Impakt Faktor", 2)));
         currentJIF.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "JIF in the current year.",
@@ -1141,7 +1141,39 @@ public class DbInitializer implements ApplicationRunner {
                     2)));
         currentJIF.setAccessLevel(AccessLevel.CLOSED);
         currentJIF.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
-        currentJIF.setContentType(IndicatorContentType.TEXT);
+        currentJIF.setContentType(IndicatorContentType.NUMBER);
+
+        var fiveYearJIFRank = new Indicator();
+        fiveYearJIFRank.setCode("fiveYearJIFRank");
+        fiveYearJIFRank.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "5 Year JIF Rank", 1),
+                new MultiLingualContent(serbianTag, "Petogodišnji IF Rank", 2)));
+        fiveYearJIFRank.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "JIF Rank in the last 5 years.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "IF Rank u poslednjih 5 godina.",
+                    2)));
+        fiveYearJIFRank.setAccessLevel(AccessLevel.CLOSED);
+        fiveYearJIFRank.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        fiveYearJIFRank.setContentType(IndicatorContentType.TEXT);
+
+        var currentJIFRank = new Indicator();
+        currentJIFRank.setCode("currentJIFRank");
+        currentJIFRank.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "JIF Rank", 1),
+                new MultiLingualContent(serbianTag, "IF Rank", 2)));
+        currentJIFRank.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "JIF rank in the current year.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "IF rank ove godine.",
+                    2)));
+        currentJIFRank.setAccessLevel(AccessLevel.CLOSED);
+        currentJIFRank.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        currentJIFRank.setContentType(IndicatorContentType.TEXT);
 
         var eigenFactorNorm = new Indicator();
         eigenFactorNorm.setCode("eigenFactorNorm");
@@ -1197,7 +1229,7 @@ public class DbInitializer implements ApplicationRunner {
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
-                currentJIF, eigenFactorNorm, ais, citedHL));
+                currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank));
     }
 
     private void processCountryLine(String[] line) {

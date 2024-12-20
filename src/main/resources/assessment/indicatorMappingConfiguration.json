@@ -21,14 +21,19 @@
   },
   "publicationSeriesIndicatorMapping": {
     "webOfScience": {
+      "source": "WEB_OF_SCIENCE",
+      "yearParseRegex": "\\b\\d{4}\\b",
       "nameColumn": 0,
-      "identifierColumns": [3, 4],
+      "eIssnColumn": 3,
+      "printIssnColumn": 4,
       "categoryColumn": 5,
       "defaultLanguage": "EN",
       "columnMapping": {
         "7": "totalCitations",
-        "16": "fiveYearJIF",
-        "17": "currentJIF",
+        "16": "fiveYearJIFRank",
+        "17": "currentJIFRank",
+        "15": "fiveYearJIF",
+        "8": "currentJIF",
         "21": "eigenFactorNorm",
         "22": "ais",
         "28": "citedHL"

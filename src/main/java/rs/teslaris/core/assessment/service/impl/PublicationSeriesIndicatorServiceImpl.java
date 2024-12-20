@@ -3,11 +3,13 @@ package rs.teslaris.core.assessment.service.impl;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,7 @@ import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
@@ -49,6 +52,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private final LanguageTagService languageTagService;
 
+    private final TaskManagerService taskManagerService;
+
     private final String WOS_DIRECTORY = "src/main/resources/publicationSeriesIndicators/wos";
 
 
@@ -59,13 +64,15 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         IndicatorService indicatorService,
         PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
         CsvDataLoader csvDataLoader, PublicationSeriesService publicationSeriesService,
-        JournalService journalService, LanguageTagService languageTagService) {
+        JournalService journalService, LanguageTagService languageTagService,
+        TaskManagerService taskManagerService) {
         super(indicatorService, entityIndicatorRepository, documentFileService);
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.csvDataLoader = csvDataLoader;
         this.publicationSeriesService = publicationSeriesService;
         this.journalService = journalService;
         this.languageTagService = languageTagService;
+        this.taskManagerService = taskManagerService;
     }
 
     @Override
@@ -76,6 +83,11 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             publicationSeriesId,
             accessLevel).stream().map(
             EntityIndicatorConverter::toDTO).collect(Collectors.toList());
+    }
+
+    public void scheduleIndicatorLoading(LocalDateTime timeToRun) {
+        taskManagerService.scheduleTask("Publication_Series_task-" + UUID.randomUUID(), timeToRun,
+            this::loadPublicationSeriesIndicatorsFromWOSCSVFiles);
     }
 
     @Override
@@ -93,8 +105,9 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             try (var paths = Files.walk(dirPath)) {
                 paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".csv"))
                     .forEach(csvFile -> {
-                        csvDataLoader.loadData(csvFile.normalize().toAbsolutePath().toString(),
-                            mapping, this::processCountryLine);
+                        csvDataLoader.loadIndicatorData(
+                            csvFile.normalize().toAbsolutePath().toString(),
+                            mapping, this::processIndicatorsLine, mapping.yearParseRegex());
                     });
             } catch (IOException e) {
                 log.error("An error occurred while reading WOS files. Aborting. Reason: {}",
@@ -103,18 +116,19 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         }
     }
 
-    private void processCountryLine(String[] line,
-                                    IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping) {
+    private void processIndicatorsLine(String[] line,
+                                    IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
+                                    Integer year) {
         if (line.length == 1) {
             log.info("Invalid line format, skipping...");
             return;
         }
 
-        var eIssn = cleanIssn(line[mapping.identifierColumns().getFirst()]);
-        var printIssn = cleanIssn(line[mapping.identifierColumns().getLast()]);
+        var eIssn = cleanIssn(line[mapping.eIssnColumn()]);
+        var printIssn = cleanIssn(line[mapping.printIssnColumn()]);
         var publicationSeries = findOrCreatePublicationSeries(line, mapping, eIssn, printIssn);
 
-        processIndicatorValues(line, mapping, publicationSeries);
+        processIndicatorValues(line, mapping, publicationSeries, year);
     }
 
     private String cleanIssn(String issn) {
@@ -176,7 +190,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private void processIndicatorValues(String[] line,
                                         IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
-                                        PublicationSeries publicationSeries) {
+                                        PublicationSeries publicationSeries, Integer year) {
         for (var columnNumber : mapping.columnMapping().keySet()) {
             var indicatorCode = mapping.columnMapping().get(columnNumber);
             var indicator = indicatorService.getIndicatorByCode(indicatorCode);
@@ -188,18 +202,20 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
             var indicatorValue = line[Integer.parseInt(columnNumber)];
             saveIndicator(publicationSeries, indicator, indicatorValue,
-                line[mapping.categoryColumn()].trim());
+                line[mapping.categoryColumn()].trim(), year, mapping.source());
         }
     }
 
     private void saveIndicator(PublicationSeries publicationSeries, Indicator indicator,
-                               String indicatorValue, String categoryIdentifier) {
+                               String indicatorValue, String categoryIdentifier, Integer year, String source) {
         var newJournalIndicator = new PublicationSeriesIndicator();
         newJournalIndicator.setIndicator(indicator);
         newJournalIndicator.setPublicationSeries(publicationSeries);
         newJournalIndicator.setCategoryIdentifier(categoryIdentifier);
-        newJournalIndicator.setSource(EntityIndicatorSource.WEB_OF_SCIENCE);
+        newJournalIndicator.setSource(EntityIndicatorSource.valueOf(source));
         newJournalIndicator.setTimestamp(LocalDateTime.now());
+        newJournalIndicator.setFromDate(LocalDate.of(year, 1, 1));
+        newJournalIndicator.setToDate(LocalDate.of(year, 12, 31));
 
         switch (indicator.getContentType()) {
             case NUMBER:

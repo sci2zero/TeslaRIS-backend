@@ -74,8 +74,11 @@ public class IndicatorMappingConfigurationLoader {
     }
 
     public record PublicationSeriesIndicatorMapping(
+        @JsonProperty(value = "source", required = true) String source,
+        @JsonProperty(value = "yearParseRegex", required = true) String yearParseRegex,
         @JsonProperty(value = "nameColumn", required = true) Integer nameColumn,
-        @JsonProperty(value = "identifierColumns", required = true) List<Integer> identifierColumns,
+        @JsonProperty(value = "eIssnColumn", required = true) Integer eIssnColumn,
+        @JsonProperty(value = "printIssnColumn", required = true) Integer printIssnColumn,
         @JsonProperty(value = "categoryColumn", required = true) Integer categoryColumn,
         @JsonProperty(value = "defaultLanguage", required = true) String defaultLanguage,
         @JsonProperty(value = "columnMapping", required = true) Map<String, String> columnMapping
