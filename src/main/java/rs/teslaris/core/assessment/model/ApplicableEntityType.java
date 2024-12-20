@@ -6,5 +6,6 @@ public enum ApplicableEntityType {
     DOCUMENT,
     PERSON,
     ORGANISATION_UNIT,
+    PUBLICATION_SERIES,
     ALL
 }
