@@ -38,6 +38,19 @@
         "22": "ais",
         "28": "citedHL"
       }
+    },
+    "scimago": {
+      "source": "SCIMAGO",
+      "yearParseRegex": "\\b\\d{4}\\b",
+      "nameColumn": 2,
+      "eIssnColumn": 4,
+      "printIssnColumn": 4,
+      "identifierDelimiter": "/",
+      "categoryColumn": 22,
+      "defaultLanguage": "EN",
+      "columnMapping": {
+        "5": "sjr"
+      }
     }
   }
 }

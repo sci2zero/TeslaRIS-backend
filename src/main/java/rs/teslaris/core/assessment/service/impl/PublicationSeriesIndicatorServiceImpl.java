@@ -35,6 +35,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 
 @Service
@@ -55,6 +56,9 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     private final TaskManagerService taskManagerService;
 
     private final String WOS_DIRECTORY = "src/main/resources/publicationSeriesIndicators/wos";
+
+    private final String SCIMAGO_DIRECTORY =
+        "src/main/resources/publicationSeriesIndicators/scimago";
 
 
     @Autowired
@@ -89,8 +93,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     public void scheduleIndicatorLoading(LocalDateTime timeToRun, EntityIndicatorSource source,
                                          Integer userId) {
         Runnable handlerFunction = switch (source) {
-            case WEB_OF_SCIENCE, SCIMAGO -> // TODO: Create Scimago handler
-                this::loadPublicationSeriesIndicatorsFromWOSCSVFiles;
+            case WEB_OF_SCIENCE -> this::loadPublicationSeriesIndicatorsFromWOSCSVFiles;
+            case SCIMAGO -> this::loadPublicationSeriesIndicatorsFromSCImagoCSVFiles;
             default -> null;
         };
 
@@ -125,6 +129,35 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         }
     }
 
+    @Override
+    public void loadPublicationSeriesIndicatorsFromSCImagoCSVFiles() {
+        var dirPath = Paths.get(SCIMAGO_DIRECTORY);
+
+        var mapping = IndicatorMappingConfigurationLoader.fetchPublicationSeriesIndicatorMapping(
+            "scimago");
+        if (Objects.isNull(mapping)) {
+            log.error("Configuration scimago does not exist");
+            return;
+        }
+
+        if (Files.exists(dirPath) && Files.isDirectory(dirPath)) {
+            try (var paths = Files.walk(dirPath)) {
+                paths.filter(
+                        path -> Files.isRegularFile(path) &&
+                            path.getFileName().toString().startsWith("clean") &&
+                            path.toString().endsWith(".csv"))
+                    .forEach(csvFile -> {
+                        csvDataLoader.loadIndicatorData(
+                            csvFile.normalize().toAbsolutePath().toString(),
+                            mapping, this::processIndicatorsLine, mapping.yearParseRegex());
+                    });
+            } catch (IOException e) {
+                log.error("An error occurred while reading WOS files. Aborting. Reason: {}",
+                    e.getMessage());
+            }
+        }
+    }
+
     private void processIndicatorsLine(String[] line,
                                        IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
                                        Integer year) {
@@ -135,13 +168,23 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
         var eIssn = cleanIssn(line[mapping.eIssnColumn()]);
         var printIssn = cleanIssn(line[mapping.printIssnColumn()]);
+        if (mapping.eIssnColumn().equals(mapping.printIssnColumn())) {
+            var tokens = eIssn.split(mapping.identifierDelimiter());
+            eIssn = cleanIssn(tokens[0]);
+            if (tokens.length == 2) {
+                printIssn = cleanIssn(tokens[1]);
+            } else {
+                printIssn = eIssn;
+            }
+        }
+
         var publicationSeries = findOrCreatePublicationSeries(line, mapping, eIssn, printIssn);
 
         processIndicatorValues(line, mapping, publicationSeries, year);
     }
 
     private String cleanIssn(String issn) {
-        return issn.trim().replace("N/A", "");
+        return StringUtil.formatIssn(issn.trim().replace("N/A", ""));
     }
 
     private PublicationSeries findOrCreatePublicationSeries(String[] line,

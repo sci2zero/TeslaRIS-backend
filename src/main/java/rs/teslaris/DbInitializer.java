@@ -1226,10 +1226,27 @@ public class DbInitializer implements ApplicationRunner {
         citedHL.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         citedHL.setContentType(IndicatorContentType.NUMBER);
 
+        var sjr = new Indicator();
+        sjr.setCode("sjr");
+        sjr.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "SCImago Journal Rank", 1),
+                new MultiLingualContent(serbianTag, "SCImago Journal Rank", 2)));
+        sjr.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "The SCImago Journal Rank (SJR) indicator is a measure of the prestige of scholarly journals that accounts for both the number of citations received by a journal and the prestige of the journals where the citations come from.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "SCImago Journal Rank (SJR) je mera prestiža naučnog časopisa koja uzima u obzir i broj citata i prestiž časopisa iz kojeg ti citati dolaze..",
+                    2)));
+        sjr.setAccessLevel(AccessLevel.CLOSED);
+        sjr.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        sjr.setContentType(IndicatorContentType.TEXT);
+
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
-                currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank));
+                currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr));
     }
 
     private void processCountryLine(String[] line) {

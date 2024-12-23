@@ -16,6 +16,8 @@ public interface PublicationSeriesIndicatorService {
 
     void loadPublicationSeriesIndicatorsFromWOSCSVFiles();
 
+    void loadPublicationSeriesIndicatorsFromSCImagoCSVFiles();
+
     void scheduleIndicatorLoading(LocalDateTime dateTime,
                                   EntityIndicatorSource entityIndicatorSource, Integer userId);
 }
