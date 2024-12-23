@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesIndicatorService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/publication-series-indicator")
@@ -19,6 +21,8 @@ import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesIndicator
 public class PublicationSeriesIndicatorController {
 
     private final PublicationSeriesIndicatorService publicationSeriesIndicatorService;
+
+    private final JwtUtil tokenUtil;
 
 
     @GetMapping("/{publicationSeriesId}")
@@ -43,9 +47,14 @@ public class PublicationSeriesIndicatorController {
         publicationSeriesIndicatorService.loadPublicationSeriesIndicatorsFromWOSCSVFiles();
     }
 
-    @PostMapping("/schedule-load/wos")
+    @PostMapping("/schedule-load")
     public void scheduleLoadingOfPublicationSeriesIndicatorsFromWOS(@RequestParam("timestamp")
-                                                                    LocalDateTime timestamp) {
-        publicationSeriesIndicatorService.scheduleIndicatorLoading(timestamp);
+                                                                    LocalDateTime timestamp,
+                                                                    @RequestParam("source")
+                                                                    EntityIndicatorSource source,
+                                                                    @RequestHeader("Authorization")
+                                                                    String bearerToken) {
+        publicationSeriesIndicatorService.scheduleIndicatorLoading(timestamp, source,
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 }

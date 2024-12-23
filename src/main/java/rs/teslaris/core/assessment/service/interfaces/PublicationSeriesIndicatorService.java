@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.dto.PublicationSeriesIndicatorResponseDTO;
+import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 
 @Service
@@ -15,5 +16,6 @@ public interface PublicationSeriesIndicatorService {
 
     void loadPublicationSeriesIndicatorsFromWOSCSVFiles();
 
-    void scheduleIndicatorLoading(LocalDateTime dateTime);
+    void scheduleIndicatorLoading(LocalDateTime dateTime,
+                                  EntityIndicatorSource entityIndicatorSource, Integer userId);
 }

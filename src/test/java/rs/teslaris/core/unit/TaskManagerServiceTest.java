@@ -39,7 +39,7 @@ class TaskManagerServiceTest {
             invocation -> mock(ScheduledFuture.class));
 
         // When
-        taskManagerService.scheduleTask(taskId, executionTime, task);
+        taskManagerService.scheduleTask(taskId, executionTime, task, 1);
 
         // Then
         assertTrue(taskManagerService.isTaskScheduled(taskId));
@@ -59,8 +59,8 @@ class TaskManagerServiceTest {
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(
             invocation -> mock(ScheduledFuture.class));
 
-        taskManagerService.scheduleTask(taskId1, executionTime1, task1);
-        taskManagerService.scheduleTask(taskId2, executionTime2, task2);
+        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1);
+        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 1);
 
         // When
         var scheduledTasks = taskManagerService.listScheduledTasks();

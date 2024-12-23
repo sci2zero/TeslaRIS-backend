@@ -8,7 +8,7 @@ import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
 @Service
 public interface TaskManagerService {
 
-    void scheduleTask(String taskId, LocalDateTime dateTime, Runnable task);
+    void scheduleTask(String taskId, LocalDateTime dateTime, Runnable task, Integer userId);
 
     boolean cancelTask(String taskId);
 

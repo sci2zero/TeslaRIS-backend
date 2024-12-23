@@ -2,18 +2,26 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.SchedulingException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TaskManagerServiceImpl implements TaskManagerService {
 
     private static final ConcurrentHashMap<String, ScheduledTask> tasks =
@@ -21,15 +29,39 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     private final ThreadPoolTaskScheduler taskScheduler;
 
+    private final UserService userService;
+
+    private final NotificationService notificationService;
+
 
     @Override
-    public void scheduleTask(String taskId, LocalDateTime dateTime, Runnable task) {
+    public void scheduleTask(String taskId, LocalDateTime dateTime, Runnable task, Integer userId) {
+        if (Objects.isNull(task)) {
+            log.error("Trying to schedule null as task -> {}", taskId);
+            return;
+        }
+
+        if (dateTime.isBefore(LocalDateTime.now())) {
+            throw new SchedulingException("cantScheduleInPastMessage");
+        }
+
         var executionTime = dateTime.atZone(ZoneId.systemDefault()).toInstant();
 
         Runnable wrappedTask = () -> {
+            var notificationValues = new HashMap<String, String>();
+            notificationValues.put("taskId", taskId);
+
+            boolean taskSucceeded = false;
+
             try {
                 task.run();
+                taskSucceeded = true;
+            } catch (Exception e) {
+                log.error("Task {} failed. Reason: {}", taskId, e.getMessage(), e);
             } finally {
+                notificationService.createNotification(
+                    NotificationFactory.contructScheduledTaskCompletedNotification(
+                        notificationValues, userService.findOne(userId), taskSucceeded));
                 tasks.remove(taskId);
             }
         };

@@ -85,9 +85,18 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             EntityIndicatorConverter::toDTO).collect(Collectors.toList());
     }
 
-    public void scheduleIndicatorLoading(LocalDateTime timeToRun) {
-        taskManagerService.scheduleTask("Publication_Series_task-" + UUID.randomUUID(), timeToRun,
-            this::loadPublicationSeriesIndicatorsFromWOSCSVFiles);
+    @Override
+    public void scheduleIndicatorLoading(LocalDateTime timeToRun, EntityIndicatorSource source,
+                                         Integer userId) {
+        Runnable handlerFunction = switch (source) {
+            case WEB_OF_SCIENCE, SCIMAGO -> // TODO: Create Scimago handler
+                this::loadPublicationSeriesIndicatorsFromWOSCSVFiles;
+            default -> null;
+        };
+
+        taskManagerService.scheduleTask(
+            "Publication_Series_task-" + source.name() + "-" + UUID.randomUUID(), timeToRun,
+            handlerFunction, userId);
     }
 
     @Override
