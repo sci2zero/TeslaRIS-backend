@@ -45,11 +45,16 @@
       "nameColumn": 2,
       "eIssnColumn": 4,
       "printIssnColumn": 4,
-      "identifierDelimiter": "/",
+      "identifierDelimiter": ",",
+      "categoryDelimiter": ";",
+      "categoryFromIndicatorDiffRegex": "[A-Za-z ]*(?=\\()",
       "categoryColumn": 22,
       "defaultLanguage": "EN",
       "columnMapping": {
-        "5": "sjr"
+        "22": "sjr§\\(Q\\d\\)",
+        "7": "hIndex",
+        "17": "sdg",
+        "16": "overton"
       }
     }
   }

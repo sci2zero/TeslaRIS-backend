@@ -81,6 +81,8 @@ public class IndicatorMappingConfigurationLoader {
         @JsonProperty(value = "printIssnColumn", required = true) Integer printIssnColumn,
         @JsonProperty(value = "identifierDelimiter") String identifierDelimiter,
         @JsonProperty(value = "categoryColumn", required = true) Integer categoryColumn,
+        @JsonProperty(value = "categoryDelimiter") String categoryDelimiter,
+        @JsonProperty(value = "categoryFromIndicatorDiffRegex") String categoryFromIndicatorDiffRegex,
         @JsonProperty(value = "defaultLanguage", required = true) String defaultLanguage,
         @JsonProperty(value = "columnMapping", required = true) Map<String, String> columnMapping
     ) {

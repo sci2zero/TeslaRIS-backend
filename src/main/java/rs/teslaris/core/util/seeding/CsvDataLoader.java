@@ -1,6 +1,8 @@
 package rs.teslaris.core.util.seeding;
 
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,10 +24,10 @@ public class CsvDataLoader {
     private static final String CSV_FILE_DIRECTORY = "src/main/resources/dbSeedData/";
 
 
-    public void loadData(String fileName, Consumer<String[]> lineProcessor) {
+    public void loadData(String fileName, Consumer<String[]> lineProcessor, char separator) {
         String filePath = CSV_FILE_DIRECTORY + fileName;
 
-        processFile(filePath, reader -> {
+        processFile(filePath, separator, reader -> {
             try {
                 reader.readNext(); // skip header
                 String[] line;
@@ -40,8 +42,8 @@ public class CsvDataLoader {
 
     public <T> void loadIndicatorData(String filePath, T mappingConfiguration,
                                       TriConsumer<String[], T, Integer> lineProcessor,
-                                      String yearParseRegex) {
-        processFile(filePath, reader -> {
+                                      String yearParseRegex, char separator) {
+        processFile(filePath, separator, reader -> {
             try {
                 String[] line;
                 do {
@@ -69,13 +71,15 @@ public class CsvDataLoader {
         });
     }
 
-    private void processFile(String filePath, Consumer<CSVReader> readerProcessor) {
+    private void processFile(String filePath, char delimiter,
+                             Consumer<CSVReader> readerProcessor) {
         if (Files.notExists(Paths.get(filePath))) {
             log.error("File not found: {}", filePath);
             return;
         }
 
-        try (CSVReader reader = new CSVReader(new FileReader(filePath))) {
+        try (CSVReader reader = new CSVReaderBuilder(new FileReader(filePath)).withCSVParser(
+            new CSVParserBuilder().withSeparator(delimiter).build()).build()) {
             readerProcessor.accept(reader);
             log.info("Successfully loaded from CSV: {}", filePath);
         } catch (IOException e) {

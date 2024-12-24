@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -10,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,7 +122,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                     .forEach(csvFile -> {
                         csvDataLoader.loadIndicatorData(
                             csvFile.normalize().toAbsolutePath().toString(),
-                            mapping, this::processIndicatorsLine, mapping.yearParseRegex());
+                            mapping, this::processIndicatorsLine, mapping.yearParseRegex(), ',');
                     });
             } catch (IOException e) {
                 log.error("An error occurred while reading WOS files. Aborting. Reason: {}",
@@ -144,12 +146,12 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             try (var paths = Files.walk(dirPath)) {
                 paths.filter(
                         path -> Files.isRegularFile(path) &&
-                            path.getFileName().toString().startsWith("clean") &&
+                            path.getFileName().toString().startsWith("scimago") &&
                             path.toString().endsWith(".csv"))
                     .forEach(csvFile -> {
                         csvDataLoader.loadIndicatorData(
                             csvFile.normalize().toAbsolutePath().toString(),
-                            mapping, this::processIndicatorsLine, mapping.yearParseRegex());
+                            mapping, this::processIndicatorsLine, mapping.yearParseRegex(), ';');
                     });
             } catch (IOException e) {
                 log.error("An error occurred while reading WOS files. Aborting. Reason: {}",
@@ -245,6 +247,14 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                         PublicationSeries publicationSeries, Integer year) {
         for (var columnNumber : mapping.columnMapping().keySet()) {
             var indicatorCode = mapping.columnMapping().get(columnNumber);
+
+            String indicatorParseRule = null;
+            if (indicatorCode.contains("§")) {
+                var fieldTokens = indicatorCode.split("§");
+                indicatorCode = fieldTokens[0];
+                indicatorParseRule = fieldTokens[1];
+            }
+
             var indicator = indicatorService.getIndicatorByCode(indicatorCode);
 
             if (Objects.isNull(indicator)) {
@@ -253,14 +263,70 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             }
 
             var indicatorValue = line[Integer.parseInt(columnNumber)];
+            var categoryIdentifier = line[mapping.categoryColumn()].trim();
+
+            if (mapping.categoryColumn().equals(Integer.parseInt(columnNumber))) {
+                if (!mapping.categoryDelimiter().isEmpty()) {
+                    var fieldValues = categoryIdentifier.split(mapping.categoryDelimiter());
+                    for (var fieldValue : fieldValues) {
+                        categoryIdentifier = parseCategoryIdentifier(fieldValue,
+                            mapping.categoryFromIndicatorDiffRegex());
+                        indicatorValue = parseIndicatorValue(fieldValue, indicatorParseRule);
+
+                        saveIndicator(publicationSeries, indicator, indicatorValue,
+                            categoryIdentifier, year, mapping.source());
+                    }
+                    continue;
+                }
+            }
+
+            indicatorValue = parseIndicatorValue(indicatorValue, indicatorParseRule);
+
             saveIndicator(publicationSeries, indicator, indicatorValue,
-                line[mapping.categoryColumn()].trim(), year, mapping.source());
+                categoryIdentifier, year, mapping.source());
+        }
+    }
+
+    @Nullable
+    private String parseIndicatorValue(String indicatorValue, String indicatorParseRule) {
+        if (Objects.isNull(indicatorParseRule)) {
+            return indicatorValue;
+        }
+
+        var valuePattern = Pattern.compile(indicatorParseRule);
+        var matcher = valuePattern.matcher(indicatorValue);
+
+        if (matcher.find()) {
+            return matcher.group().trim();
+        } else {
+            log.error(
+                "Error while parsing indicator value from column {} using {}",
+                indicatorValue, indicatorParseRule);
+            return null;
+        }
+    }
+
+    private String parseCategoryIdentifier(String fieldValue, String pattern) {
+        var valuePattern = Pattern.compile(pattern);
+        var matcher = valuePattern.matcher(fieldValue);
+
+        if (matcher.find()) {
+            return matcher.group().trim();
+        } else {
+            log.error(
+                "Error while parsing category identifier column {} using {}. Returning whole field.",
+                fieldValue, pattern);
+            return fieldValue.trim();
         }
     }
 
     private void saveIndicator(PublicationSeries publicationSeries, Indicator indicator,
                                String indicatorValue, String categoryIdentifier, Integer year,
                                String source) {
+        if (Objects.isNull(indicatorValue)) {
+            return;
+        }
+
         var newJournalIndicator = new PublicationSeriesIndicator();
         newJournalIndicator.setIndicator(indicator);
         newJournalIndicator.setPublicationSeries(publicationSeries);

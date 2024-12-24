@@ -368,7 +368,7 @@ public class DbInitializer implements ApplicationRunner {
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
 
         // COUNTRIES
-        csvDataLoader.loadData("countries.csv", this::processCountryLine);
+        csvDataLoader.loadData("countries.csv", this::processCountryLine, ',');
 
         // RESEARCH AREAS
         skosLoader.loadResearchAreas();
@@ -1243,10 +1243,63 @@ public class DbInitializer implements ApplicationRunner {
         sjr.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         sjr.setContentType(IndicatorContentType.TEXT);
 
+        var hIndex = new Indicator();
+        hIndex.setCode("hIndex");
+        hIndex.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "H Index", 1),
+                new MultiLingualContent(serbianTag, "H Index", 2)));
+        hIndex.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "The h-index is calculated by counting the number of publications for which an author has been cited by other authors at least that same number of times.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "H-indeks se izračunava kao ukupan broj publikacija koje su citirali drugi autori najmanje isti broj puta.",
+                    2)));
+        hIndex.setAccessLevel(AccessLevel.CLOSED);
+        hIndex.getApplicableTypes()
+            .addAll(List.of(ApplicableEntityType.PUBLICATION_SERIES, ApplicableEntityType.PERSON));
+        hIndex.setContentType(IndicatorContentType.NUMBER);
+
+        var sdg = new Indicator();
+        sdg.setCode("sdg");
+        sdg.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Sustainable Development Goals (SDG)", 1),
+                new MultiLingualContent(serbianTag, "Sustainable Development Goals (SDG)", 2)));
+        sdg.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "SDG represents the alignment of journals with the United Nations Sustainable Development Goals based on their research focus and contribution to global sustainability.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "SDG označava povezanost časopisa sa Ciljevima održivog razvoja Ujedinjenih nacija na osnovu njihovog istraživačkog fokusa i doprinosa globalnoj održivosti.",
+                    2)));
+        sdg.setAccessLevel(AccessLevel.CLOSED);
+        sdg.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        sdg.setContentType(IndicatorContentType.NUMBER);
+
+        var overton = new Indicator();
+        overton.setCode("overton");
+        overton.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Overton", 1),
+                new MultiLingualContent(serbianTag, "Overton", 2)));
+        overton.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Overton measures the influence of academic journals by tracking citations in policy documents, legal texts, patents, and other non-academic sources, reflecting their impact on public policy and practical applications",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Overton meri uticaj akademskih časopisa praćenjem citata u političkim dokumentima, pravnim tekstovima, patentima i drugim neakademskim izvorima, čime odražava njihov uticaj na javne politike i praktične primene.",
+                    2)));
+        overton.setAccessLevel(AccessLevel.CLOSED);
+        overton.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        overton.setContentType(IndicatorContentType.NUMBER);
+
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
-                currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr));
+                currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
+                hIndex, sdg, overton));
     }
 
     private void processCountryLine(String[] line) {

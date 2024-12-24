@@ -17,7 +17,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(indexName = "deduplication_suggestion")
-@Setting(settingPath = "/configuration/serbian-analyzer-config.json")
+@Setting(settingPath = "/configuration/index-config.json")
 public class DeduplicationSuggestion {
 
     @Id

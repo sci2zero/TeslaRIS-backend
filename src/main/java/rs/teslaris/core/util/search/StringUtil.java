@@ -3,7 +3,6 @@ package rs.teslaris.core.util.search;
 import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import java.util.List;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 
@@ -62,6 +61,10 @@ public class StringUtil {
 
     public static String formatIssn(String issn) {
         if (issn == null || issn.isEmpty()) {
+            return "";
+        }
+
+        if (issn.length() < 8) {
             return "";
         }
 

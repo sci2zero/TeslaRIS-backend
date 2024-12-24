@@ -26,6 +26,9 @@ public interface PublicationSeriesRepository extends JpaRepository<PublicationSe
         "FROM PublicationSeries p WHERE (p.printISSN = :printISSN OR p.eISSN = :printISSN) AND p.id <> :id")
     boolean existsByPrintISSN(String printISSN, Integer id);
 
+    @Query("SELECT ps FROM PublicationSeries ps WHERE (ps.printISSN = :printISSN OR " +
+        "ps.eISSN = :printISSN) OR (ps.eISSN = :eISSN OR ps.printISSN = :eISSN)")
     Optional<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN,
                                                                         String printISSN);
+
 }
