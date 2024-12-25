@@ -7,7 +7,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -42,7 +44,8 @@ public class CsvDataLoader {
 
     public <T> void loadIndicatorData(String filePath, T mappingConfiguration,
                                       TriConsumer<String[], T, Integer> lineProcessor,
-                                      String yearParseRegex, char separator) {
+                                      String yearParseRegex, char separator,
+                                      boolean processInParallel) {
         processFile(filePath, separator, reader -> {
             try {
                 String[] line;
@@ -61,10 +64,30 @@ public class CsvDataLoader {
                     throw new LoadingException("Error while parsing date from header line");
                 }
 
-                while ((line = reader.readNext()) != null) {
-                    lineProcessor.accept(line,
-                        mappingConfiguration, year);
+                if (!processInParallel) {
+                    while ((line = reader.readNext()) != null) {
+                        lineProcessor.accept(line,
+                            mappingConfiguration, year);
+                    }
+                    return;
                 }
+
+                List<String[]> rows = new ArrayList<>();
+                while ((line = reader.readNext()) != null) {
+                    rows.add(line);
+                }
+
+                // Process rows in parallel
+                rows.parallelStream().forEach(row -> {
+                    try {
+                        lineProcessor.accept(row, mappingConfiguration, year);
+                    } catch (Exception e) {
+                        throw new LoadingException(
+                            "Error processing row: " + Arrays.toString(row) + ". Reason: " +
+                                e.getMessage());
+                    }
+                });
+
             } catch (Exception e) {
                 throw new LoadingException(e.getMessage());
             }

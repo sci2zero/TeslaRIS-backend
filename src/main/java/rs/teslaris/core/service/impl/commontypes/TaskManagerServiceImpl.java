@@ -52,6 +52,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             notificationValues.put("taskId", taskId);
 
             boolean taskSucceeded = false;
+            long startTime = System.nanoTime();
 
             try {
                 task.run();
@@ -59,6 +60,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             } catch (Exception e) {
                 log.error("Task {} failed. Reason: {}", taskId, e.getMessage(), e);
             } finally {
+                var duration = (System.nanoTime() - startTime) / 1000000000.0;
+                notificationValues.put("duration", String.valueOf(duration));
                 notificationService.createNotification(
                     NotificationFactory.contructScheduledTaskCompletedNotification(
                         notificationValues, userService.findOne(userId), taskSucceeded));

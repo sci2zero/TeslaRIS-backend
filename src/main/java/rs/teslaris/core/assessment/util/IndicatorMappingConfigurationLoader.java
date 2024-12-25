@@ -60,16 +60,16 @@ public class IndicatorMappingConfigurationLoader {
         };
     }
 
-    public static PublicationSeriesIndicatorMapping fetchPublicationSeriesIndicatorMapping(
+    public static PublicationSeriesIndicatorMapping fetchPublicationSeriesCSVIndicatorMapping(
         String mappingName) {
-        return indicatorMappingConfiguration.publicationSeriesIndicatorMapping.getOrDefault(
+        return indicatorMappingConfiguration.publicationSeriesCSVIndicatorMapping.getOrDefault(
             mappingName, null);
     }
 
     private record IndicatorMappingConfiguration(
         @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings,
         @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets,
-        @JsonProperty(value = "publicationSeriesIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesIndicatorMapping
+        @JsonProperty(value = "publicationSeriesCSVIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesCSVIndicatorMapping
     ) {
     }
 
@@ -84,7 +84,15 @@ public class IndicatorMappingConfigurationLoader {
         @JsonProperty(value = "categoryDelimiter") String categoryDelimiter,
         @JsonProperty(value = "categoryFromIndicatorDiffRegex") String categoryFromIndicatorDiffRegex,
         @JsonProperty(value = "defaultLanguage", required = true) String defaultLanguage,
-        @JsonProperty(value = "columnMapping", required = true) Map<String, String> columnMapping
+        @JsonProperty(value = "columnMapping", required = true) Map<String, ColumnMapping> columnMapping,
+        @JsonProperty(value = "parallelize", required = true) Boolean parallelize
+    ) {
+    }
+
+    public record ColumnMapping(
+        @JsonProperty(value = "mapsTo", required = true) String mapsTo,
+        @JsonProperty(value = "type", required = true) EntityIndicatorType type,
+        @JsonProperty(value = "parseRegex") String parseRegex
     ) {
     }
 

@@ -118,7 +118,7 @@ public class NotificationFactory {
         Map<String, String> notificationValues, User user, boolean success) {
         String message;
         var args =
-            new Object[] {notificationValues.get("taskId")};
+            new Object[] {notificationValues.get("taskId"), notificationValues.get("duration")};
         try {
             message = messageSource.getMessage(
                 success ? "notification.scheduleTaskCompleted" : "notification.scheduleTaskFailed",

@@ -3,6 +3,7 @@ package rs.teslaris.core.assessment.service.impl;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import rs.teslaris.core.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesIndicatorService;
+import rs.teslaris.core.assessment.util.EntityIndicatorType;
 import rs.teslaris.core.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -107,56 +110,53 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     @Override
     public void loadPublicationSeriesIndicatorsFromWOSCSVFiles() {
-        var dirPath = Paths.get(WOS_DIRECTORY);
+        loadPublicationSeriesIndicators(
+            WOS_DIRECTORY,
+            "webOfScience",
+            ',',
+            path -> true // No additional filtering for WOS files
+        );
+    }
 
-        var mapping = IndicatorMappingConfigurationLoader.fetchPublicationSeriesIndicatorMapping(
-            "webOfScience");
+    @Override
+    public void loadPublicationSeriesIndicatorsFromSCImagoCSVFiles() {
+        loadPublicationSeriesIndicators(
+            SCIMAGO_DIRECTORY,
+            "scimago",
+            ';',
+            // Additional filtering for SCImago files
+            path -> path.getFileName().toString().startsWith("scimago")
+        );
+    }
+
+    private void loadPublicationSeriesIndicators(String directory, String configKey, char separator,
+                                                 Predicate<Path> additionalFilter) {
+        var dirPath = Paths.get(directory);
+
+        var mapping = IndicatorMappingConfigurationLoader.fetchPublicationSeriesCSVIndicatorMapping(
+            configKey);
         if (Objects.isNull(mapping)) {
-            log.error("Configuration webOfScience does not exist");
+            log.error("Configuration {} does not exist", configKey);
             return;
         }
 
         if (Files.exists(dirPath) && Files.isDirectory(dirPath)) {
             try (var paths = Files.walk(dirPath)) {
                 paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".csv"))
+                    .filter(additionalFilter)
                     .forEach(csvFile -> {
                         csvDataLoader.loadIndicatorData(
                             csvFile.normalize().toAbsolutePath().toString(),
-                            mapping, this::processIndicatorsLine, mapping.yearParseRegex(), ',');
+                            mapping, this::processIndicatorsLine, mapping.yearParseRegex(),
+                            separator,
+                            mapping.parallelize());
                     });
             } catch (IOException e) {
-                log.error("An error occurred while reading WOS files. Aborting. Reason: {}",
-                    e.getMessage());
+                log.error("An error occurred while reading {} files. Aborting. Reason: {}",
+                    configKey, e.getMessage());
             }
-        }
-    }
-
-    @Override
-    public void loadPublicationSeriesIndicatorsFromSCImagoCSVFiles() {
-        var dirPath = Paths.get(SCIMAGO_DIRECTORY);
-
-        var mapping = IndicatorMappingConfigurationLoader.fetchPublicationSeriesIndicatorMapping(
-            "scimago");
-        if (Objects.isNull(mapping)) {
-            log.error("Configuration scimago does not exist");
-            return;
-        }
-
-        if (Files.exists(dirPath) && Files.isDirectory(dirPath)) {
-            try (var paths = Files.walk(dirPath)) {
-                paths.filter(
-                        path -> Files.isRegularFile(path) &&
-                            path.getFileName().toString().startsWith("scimago") &&
-                            path.toString().endsWith(".csv"))
-                    .forEach(csvFile -> {
-                        csvDataLoader.loadIndicatorData(
-                            csvFile.normalize().toAbsolutePath().toString(),
-                            mapping, this::processIndicatorsLine, mapping.yearParseRegex(), ';');
-                    });
-            } catch (IOException e) {
-                log.error("An error occurred while reading WOS files. Aborting. Reason: {}",
-                    e.getMessage());
-            }
+        } else {
+            log.error("Directory {} does not exist or is not a directory", directory);
         }
     }
 
@@ -246,14 +246,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                         IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
                                         PublicationSeries publicationSeries, Integer year) {
         for (var columnNumber : mapping.columnMapping().keySet()) {
-            var indicatorCode = mapping.columnMapping().get(columnNumber);
-
-            String indicatorParseRule = null;
-            if (indicatorCode.contains("§")) {
-                var fieldTokens = indicatorCode.split("§");
-                indicatorCode = fieldTokens[0];
-                indicatorParseRule = fieldTokens[1];
-            }
+            var indicatorMappingConfiguration = mapping.columnMapping().get(columnNumber);
+            var indicatorCode = indicatorMappingConfiguration.mapsTo().trim();
 
             var indicator = indicatorService.getIndicatorByCode(indicatorCode);
 
@@ -262,38 +256,45 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 continue;
             }
 
-            var indicatorValue = line[Integer.parseInt(columnNumber)];
-            var categoryIdentifier = line[mapping.categoryColumn()].trim();
+            var indicatorValue = line[Integer.parseInt(columnNumber.trim())];
 
-            if (mapping.categoryColumn().equals(Integer.parseInt(columnNumber))) {
-                if (!mapping.categoryDelimiter().isEmpty()) {
-                    var fieldValues = categoryIdentifier.split(mapping.categoryDelimiter());
-                    for (var fieldValue : fieldValues) {
-                        categoryIdentifier = parseCategoryIdentifier(fieldValue,
-                            mapping.categoryFromIndicatorDiffRegex());
-                        indicatorValue = parseIndicatorValue(fieldValue, indicatorParseRule);
+            String categoryIdentifier = null;
+            if (indicatorMappingConfiguration.type().equals(EntityIndicatorType.BY_CATEGORY)) {
+                categoryIdentifier = line[mapping.categoryColumn()].trim();
 
-                        saveIndicator(publicationSeries, indicator, indicatorValue,
-                            categoryIdentifier, year, mapping.source());
+                if (mapping.categoryColumn().equals(Integer.parseInt(columnNumber))) {
+                    if (!mapping.categoryDelimiter().isEmpty()) {
+                        var fieldValues = categoryIdentifier.split(mapping.categoryDelimiter());
+                        for (var fieldValue : fieldValues) {
+                            categoryIdentifier = parseCategoryIdentifier(fieldValue,
+                                mapping.categoryFromIndicatorDiffRegex());
+                            indicatorValue = parseIndicatorValue(fieldValue,
+                                indicatorMappingConfiguration.parseRegex());
+
+                            saveIndicator(publicationSeries, indicator, indicatorValue,
+                                categoryIdentifier, year,
+                                EntityIndicatorSource.valueOf(mapping.source()));
+                        }
+                        continue;
                     }
-                    continue;
                 }
             }
 
-            indicatorValue = parseIndicatorValue(indicatorValue, indicatorParseRule);
+            indicatorValue =
+                parseIndicatorValue(indicatorValue, indicatorMappingConfiguration.parseRegex());
 
             saveIndicator(publicationSeries, indicator, indicatorValue,
-                categoryIdentifier, year, mapping.source());
+                categoryIdentifier, year, EntityIndicatorSource.valueOf(mapping.source()));
         }
     }
 
     @Nullable
     private String parseIndicatorValue(String indicatorValue, String indicatorParseRule) {
-        if (Objects.isNull(indicatorParseRule)) {
+        if (Objects.isNull(indicatorParseRule) || indicatorParseRule.isEmpty()) {
             return indicatorValue;
         }
 
-        var valuePattern = Pattern.compile(indicatorParseRule);
+        var valuePattern = Pattern.compile(indicatorParseRule.trim());
         var matcher = valuePattern.matcher(indicatorValue);
 
         if (matcher.find()) {
@@ -322,8 +323,10 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private void saveIndicator(PublicationSeries publicationSeries, Indicator indicator,
                                String indicatorValue, String categoryIdentifier, Integer year,
-                               String source) {
-        if (Objects.isNull(indicatorValue)) {
+                               EntityIndicatorSource source) {
+        if (Objects.isNull(indicatorValue) ||
+            publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                publicationSeries.getId(), source, year, categoryIdentifier, indicator.getCode())) {
             return;
         }
 
@@ -331,7 +334,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         newJournalIndicator.setIndicator(indicator);
         newJournalIndicator.setPublicationSeries(publicationSeries);
         newJournalIndicator.setCategoryIdentifier(categoryIdentifier);
-        newJournalIndicator.setSource(EntityIndicatorSource.valueOf(source));
+        newJournalIndicator.setSource(source);
         newJournalIndicator.setTimestamp(LocalDateTime.now());
         newJournalIndicator.setFromDate(LocalDate.of(year, 1, 1));
         newJournalIndicator.setToDate(LocalDate.of(year, 12, 31));

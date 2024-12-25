@@ -19,7 +19,7 @@
       "downloadsTotal": "LocalDateTime.of(1970, 1, 1, 0, 0)"
     }
   },
-  "publicationSeriesIndicatorMapping": {
+  "publicationSeriesCSVIndicatorMapping": {
     "webOfScience": {
       "source": "WEB_OF_SCIENCE",
       "yearParseRegex": "\\b\\d{4}\\b",
@@ -28,15 +28,40 @@
       "printIssnColumn": 4,
       "categoryColumn": 5,
       "defaultLanguage": "EN",
+      "parallelize": false,
       "columnMapping": {
-        "7": "totalCitations",
-        "16": "fiveYearJIFRank",
-        "17": "currentJIFRank",
-        "15": "fiveYearJIF",
-        "8": "currentJIF",
-        "21": "eigenFactorNorm",
-        "22": "ais",
-        "28": "citedHL"
+        "7": {
+          "mapsTo": "totalCitations",
+          "type": "INDEPENDENT"
+        },
+        "16": {
+          "mapsTo": "fiveYearJIFRank",
+          "type": "BY_CATEGORY"
+        },
+        "17": {
+          "mapsTo": "currentJIFRank",
+          "type": "BY_CATEGORY"
+        },
+        "15": {
+          "mapsTo": "fiveYearJIF",
+          "type": "INDEPENDENT"
+        },
+        "8": {
+          "mapsTo": "currentJIF",
+          "type": "INDEPENDENT"
+        },
+        "21": {
+          "mapsTo": "eigenFactorNorm",
+          "type": "INDEPENDENT"
+        },
+        "22": {
+          "mapsTo": "ais",
+          "type": "INDEPENDENT"
+        },
+        "28": {
+          "mapsTo": "citedHL",
+          "type": "INDEPENDENT"
+        }
       }
     },
     "scimago": {
@@ -50,11 +75,25 @@
       "categoryFromIndicatorDiffRegex": "[A-Za-z ]*(?=\\()",
       "categoryColumn": 22,
       "defaultLanguage": "EN",
+      "parallelize": true,
       "columnMapping": {
-        "22": "sjr§\\(Q\\d\\)",
-        "7": "hIndex",
-        "17": "sdg",
-        "16": "overton"
+        "22": {
+          "mapsTo": "sjr",
+          "type": "BY_CATEGORY",
+          "parseRegex": "\\(Q\\d\\)"
+        },
+        "7": {
+          "mapsTo": "hIndex",
+          "type": "INDEPENDENT"
+        },
+        "17": {
+          "mapsTo": "sdg",
+          "type": "INDEPENDENT"
+        },
+        "16": {
+          "mapsTo": "overton",
+          "type": "INDEPENDENT"
+        }
       }
     }
   }
