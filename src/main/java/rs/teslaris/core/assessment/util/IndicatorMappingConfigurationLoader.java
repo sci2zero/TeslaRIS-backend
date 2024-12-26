@@ -78,6 +78,7 @@ public class IndicatorMappingConfigurationLoader {
         @JsonProperty(value = "yearParseRegex", required = true) String yearParseRegex,
         @JsonProperty(value = "nameColumn", required = true) Integer nameColumn,
         @JsonProperty(value = "eIssnColumn", required = true) Integer eIssnColumn,
+        @JsonProperty(value = "editionColumn") Integer editionColumn,
         @JsonProperty(value = "printIssnColumn", required = true) Integer printIssnColumn,
         @JsonProperty(value = "identifierDelimiter") String identifierDelimiter,
         @JsonProperty(value = "categoryColumn", required = true) Integer categoryColumn,

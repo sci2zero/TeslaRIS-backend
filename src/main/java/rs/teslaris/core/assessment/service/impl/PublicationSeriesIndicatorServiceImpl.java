@@ -257,6 +257,10 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             }
 
             var indicatorValue = line[Integer.parseInt(columnNumber.trim())];
+            var edition = "";
+            if (Objects.nonNull(mapping.editionColumn())) {
+                edition = line[mapping.editionColumn()];
+            }
 
             String categoryIdentifier = null;
             if (indicatorMappingConfiguration.type().equals(EntityIndicatorType.BY_CATEGORY)) {
@@ -273,7 +277,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
                             saveIndicator(publicationSeries, indicator, indicatorValue,
                                 categoryIdentifier, year,
-                                EntityIndicatorSource.valueOf(mapping.source()));
+                                EntityIndicatorSource.valueOf(mapping.source()), edition);
                         }
                         continue;
                     }
@@ -284,7 +288,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 parseIndicatorValue(indicatorValue, indicatorMappingConfiguration.parseRegex());
 
             saveIndicator(publicationSeries, indicator, indicatorValue,
-                categoryIdentifier, year, EntityIndicatorSource.valueOf(mapping.source()));
+                categoryIdentifier, year, EntityIndicatorSource.valueOf(mapping.source()), edition);
         }
     }
 
@@ -323,7 +327,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private void saveIndicator(PublicationSeries publicationSeries, Indicator indicator,
                                String indicatorValue, String categoryIdentifier, Integer year,
-                               EntityIndicatorSource source) {
+                               EntityIndicatorSource source, String edition) {
         if (Objects.isNull(indicatorValue) ||
             publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
                 publicationSeries.getId(), source, year, categoryIdentifier, indicator.getCode())) {
@@ -338,6 +342,10 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         newJournalIndicator.setTimestamp(LocalDateTime.now());
         newJournalIndicator.setFromDate(LocalDate.of(year, 1, 1));
         newJournalIndicator.setToDate(LocalDate.of(year, 12, 31));
+
+        if (Objects.nonNull(edition) && !edition.isEmpty()) {
+            newJournalIndicator.setEdition(edition);
+        }
 
         switch (indicator.getContentType()) {
             case NUMBER:

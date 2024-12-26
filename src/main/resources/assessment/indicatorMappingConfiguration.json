@@ -24,11 +24,12 @@
       "source": "WEB_OF_SCIENCE",
       "yearParseRegex": "\\b\\d{4}\\b",
       "nameColumn": 0,
-      "eIssnColumn": 3,
-      "printIssnColumn": 4,
+      "eIssnColumn": 4,
+      "printIssnColumn": 3,
       "categoryColumn": 5,
       "defaultLanguage": "EN",
       "parallelize": false,
+      "editionColumn": 6,
       "columnMapping": {
         "7": {
           "mapsTo": "totalCitations",
