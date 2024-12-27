@@ -25,6 +25,16 @@
 
     <dependencies>
         <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>0.4.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.18.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
         </dependency>
@@ -78,12 +88,17 @@
             <artifactId>jaxb-impl</artifactId>
             <version>2.3.4</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.lyncode/xoai -->
-        <!--		<dependency>-->
-        <!--			<groupId>com.jlefebure</groupId>-->
-        <!--			<artifactId>spring-boot-starter-minio</artifactId>-->
-        <!--			<version>1.10</version>-->
-        <!--		</dependency>-->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>apache-jena-libs</artifactId>
+            <version>4.2.0</version>
+            <type>pom</type>
+        </dependency>
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
@@ -154,6 +169,16 @@
             <version>2.7.0</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ibm.icu</groupId>
+            <artifactId>icu4j</artifactId>
+            <version>76.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
             <version>2.0.28</version>
@@ -220,6 +245,11 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>4.30.0</version>
+        </dependency>
     </dependencies>
 
     <reporting>
@@ -233,6 +263,38 @@
                     <failOnViolation>false</failOnViolation>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-maven-plugin</artifactId>
+                <version>4.27.0</version>
+                <configuration>
+                    <driver>org.postgresql.Driver</driver>
+                    <url>jdbc:postgresql://localhost:5432/TeslaRISDB</url>
+                    <username>root</username>
+                    <password>postgres</password>
+                    <outputChangeLogFile>src/main/resources/configuration/liquibase-changelog.xml</outputChangeLogFile>
+                </configuration>
+            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.liquibase</groupId>-->
+<!--                <artifactId>liquibase-maven-plugin</artifactId>-->
+<!--                <version>4.30.0</version>-->
+<!--                <configuration>-->
+<!--                    <changeLogFile>src/main/resources/configuration/liquibase/master.xml</changeLogFile>-->
+<!--                    <diffChangeLogFile>src/main/resources/configuration/liquibase/changelog/${maven.build.timestamp}_changelog.xml</diffChangeLogFile>-->
+<!--                    <driver>org.postgresql.Driver</driver>-->
+<!--                    <url>jdbc:postgresql://localhost:5432/TeslaRISDB</url>-->
+<!--                    <defaultSchemaName />-->
+<!--                    <username>TeslaRISDB</username>-->
+<!--                    <password />-->
+<!--                    <referenceUrl>hibernate:spring:com.car.app.domain?dialect=org.hibernate.dialect.PostgreSQLDialect-->
+<!--                        &amp;hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy-->
+<!--                        &amp;hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy-->
+<!--                    </referenceUrl>-->
+<!--                    <verbose>true</verbose>-->
+<!--                    <logging>debug</logging>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
         </plugins>
     </reporting>
 

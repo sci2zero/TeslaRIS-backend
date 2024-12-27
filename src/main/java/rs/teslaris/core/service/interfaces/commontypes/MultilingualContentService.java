@@ -12,10 +12,18 @@ public interface MultilingualContentService {
     Set<MultiLingualContent> getMultilingualContent(
         List<MultilingualContentDTO> multilingualContent);
 
+    Set<MultiLingualContent> getMultilingualContentAndSetDefaultsIfNonExistent(
+        List<MultilingualContentDTO> multilingualContentDTOs);
+
     Set<MultiLingualContent> deepCopy(Set<MultiLingualContent> content);
 
     void buildLanguageStrings(StringBuilder serbianBuilder,
                               StringBuilder otherLanguagesBuilder,
                               Set<MultiLingualContent> contentList,
                               boolean popEnglishFirst);
+
+    void buildLanguageStringsFromHTMLMC(StringBuilder serbianBuilder,
+                                        StringBuilder otherLanguagesBuilder,
+                                        Set<MultiLingualContent> contentList,
+                                        boolean popEnglishFirst);
 }

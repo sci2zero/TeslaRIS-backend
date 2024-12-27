@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -23,6 +24,8 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -45,13 +48,17 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
     private final SearchService<PublisherIndex> searchService;
 
+    private final CountryService countryService;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
+
 
     @Override
     public Page<PublisherDTO> readAllPublishers(Pageable pageable) {
         return this.findAll(pageable).map(p -> new PublisherDTO(p.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(p.getName()),
             MultilingualContentConverter.getMultilingualContentDTO(p.getPlace()),
-            MultilingualContentConverter.getMultilingualContentDTO(p.getState())));
+            p.getCountry() != null ? p.getCountry().getId() : null));
     }
 
     @Override
@@ -85,8 +92,10 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         publisher.setName(
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
-        publisher.setState(
-            multilingualContentService.getMultilingualContent(publisherDTO.getState()));
+
+        if (Objects.nonNull(publisherDTO.getCountryId())) {
+            publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
+        }
 
         var savedPublisher = this.save(publisher);
 
@@ -98,9 +107,10 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
-    public void updatePublisher(PublisherDTO publisherDTO, Integer publisherId) {
+    public void editPublisher(Integer publisherId, PublisherDTO publisherDTO) {
         var publisherToUpdate = findOne(publisherId);
 
+        publisherToUpdate.setCountry(null);
         setCommonFields(publisherToUpdate, publisherDTO);
 
         this.save(publisherToUpdate);
@@ -129,6 +139,23 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    public void forceDeletePublisher(Integer publisherId) {
+        publisherRepository.unbindDataset(publisherId);
+        publisherRepository.unbindPatent(publisherId);
+        publisherRepository.unbindProceedings(publisherId);
+        publisherRepository.unbindSoftware(publisherId);
+        publisherRepository.unbindThesis(publisherId);
+
+        delete(publisherId);
+
+        var index = publisherIndexRepository.findByDatabaseId(publisherId);
+        index.ifPresent(publisherIndexRepository::delete);
+
+        indexBulkUpdateService.removeIdFromRecord("document_publication", "publisher_id",
+            publisherId);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public void reindexPublishers() {
         publisherIndexRepository.deleteAll();
@@ -152,8 +179,10 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
         publisher.setPlace(
             multilingualContentService.getMultilingualContent(publisherDTO.getPlace()));
-        publisher.setState(
-            multilingualContentService.getMultilingualContent(publisherDTO.getState()));
+
+        if (Objects.nonNull(publisherDTO.getCountryId())) {
+            publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
+        }
     }
 
     private void indexPublisher(Publisher publisher, PublisherIndex index) {
@@ -168,8 +197,13 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             PublisherIndex::setNameSr, PublisherIndex::setNameOther);
         indexMultilingualContent(publisherIndex, publisher, Publisher::getPlace,
             PublisherIndex::setPlaceSr, PublisherIndex::setPlaceOther);
-        indexMultilingualContent(publisherIndex, publisher, Publisher::getState,
-            PublisherIndex::setStateSr, PublisherIndex::setStateOther);
+
+
+        if (Objects.nonNull(publisher.getCountry())) {
+            indexMultilingualContent(publisherIndex, publisher,
+                t -> publisher.getCountry().getName(),
+                PublisherIndex::setStateSr, PublisherIndex::setStateOther);
+        }
     }
 
     private void indexMultilingualContent(PublisherIndex index, Publisher publisher,
@@ -184,14 +218,29 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,
-            srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
-            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
+                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                    b.must(mp ->
+                        mp.bool(m -> {
+                            {
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("name_sr")
+                                        .query(token.replace("\\\"", ""))));
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("name_other")
+                                        .query(token.replace("\\\"", ""))));
+                            }
+                            return m;
+                        }));
+                }
+
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(

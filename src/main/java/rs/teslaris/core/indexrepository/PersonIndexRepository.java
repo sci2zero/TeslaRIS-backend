@@ -18,5 +18,8 @@ public interface PersonIndexRepository extends ElasticsearchRepository<PersonInd
     long count();
 
     Page<PersonIndex> findByEmploymentInstitutionsIdIn(Pageable pageable,
-                                                       List<Integer> employmentInstitutionsIds);
+                                                       List<Integer> employmentInstitutionIds);
+
+    Page<PersonIndex> findByPastEmploymentInstitutionIdsIn(Pageable pageable,
+                                                           List<Integer> employmentInstitutionIds);
 }

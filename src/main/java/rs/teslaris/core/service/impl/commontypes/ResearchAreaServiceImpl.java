@@ -4,12 +4,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaNodeDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaResponseDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
@@ -39,6 +43,33 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     }
 
     @Override
+    public Page<ResearchAreaResponseDTO> searchResearchAreas(Pageable pageable,
+                                                             String searchExpression,
+                                                             String languageTag) {
+        if (searchExpression.equals("*")) {
+            searchExpression = "";
+        }
+
+        return researchAreaRepository.searchResearchAreas(searchExpression, languageTag, pageable)
+            .map(ResearchAreaConverter::toResponseDTO);
+    }
+
+    @Override
+    public List<ResearchAreaNodeDTO> getChildResearchAreas(Integer parentId) {
+        List<ResearchArea> fetchedResearchAreas;
+        if (Objects.isNull(parentId) || parentId == 0) {
+            fetchedResearchAreas = researchAreaRepository.getTopLevelResearchAreas();
+        } else {
+            fetchedResearchAreas = researchAreaRepository.getChildResearchAreas(parentId);
+        }
+
+        return fetchedResearchAreas.stream().map(
+                researchArea -> new ResearchAreaNodeDTO(researchArea.getId(),
+                    MultilingualContentConverter.getMultilingualContentDTO(researchArea.getName())))
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public List<ResearchAreaHierarchyDTO> getResearchAreas() {
         return researchAreaRepository.getAllLeafs().stream().map(ResearchAreaConverter::toDTO)
             .collect(Collectors.toList());
@@ -63,31 +94,20 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     @Override
     public ResearchArea createResearchArea(ResearchAreaDTO researchAreaDTO) {
         var newResearchArea = new ResearchArea();
-        newResearchArea.setName(
-            multilingualContentService.getMultilingualContent(researchAreaDTO.getName()));
-        newResearchArea.setDescription(
-            multilingualContentService.getMultilingualContent(researchAreaDTO.getDescription()));
-        newResearchArea.setSuperResearchArea(
-            getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
 
-        return this.save(newResearchArea);
+        setCommonFields(newResearchArea, researchAreaDTO);
+
+        return save(newResearchArea);
     }
 
     @Override
     public void editResearchArea(ResearchAreaDTO researchAreaDTO, Integer researchAreaId) {
-        var reserchAreaToUpdate = getReferenceToResearchAreaById(researchAreaId);
+        var researchAreaToUpdate = getReferenceToResearchAreaById(researchAreaId);
 
-        reserchAreaToUpdate.getName().clear();
-        reserchAreaToUpdate.setName(
-            multilingualContentService.getMultilingualContent(researchAreaDTO.getName()));
-        reserchAreaToUpdate.getDescription().clear();
-        reserchAreaToUpdate.setDescription(
-            multilingualContentService.getMultilingualContent(researchAreaDTO.getDescription()));
+        researchAreaToUpdate.setSuperResearchArea(null);
+        setCommonFields(researchAreaToUpdate, researchAreaDTO);
 
-        reserchAreaToUpdate.setSuperResearchArea(
-            getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
-
-        this.save(reserchAreaToUpdate);
+        save(researchAreaToUpdate);
     }
 
     @Override
@@ -106,5 +126,16 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     @Override
     public List<ResearchArea> getResearchAreasByIds(List<Integer> ids) {
         return researchAreaRepository.findAllById(ids);
+    }
+
+    private void setCommonFields(ResearchArea researchArea, ResearchAreaDTO researchAreaDTO) {
+        researchArea.setName(
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                researchAreaDTO.getName()));
+        researchArea.setDescription(
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                researchAreaDTO.getDescription()));
+        researchArea.setSuperResearchArea(
+            getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
     }
 }

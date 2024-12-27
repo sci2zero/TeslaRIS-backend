@@ -1,7 +1,6 @@
 package rs.teslaris.core.importer.model.converter.load.publication;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,7 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         dto.setTitle(multilingualContentConverter.toDTO(record.getName()));
-        dto.setUris(new HashSet<>(record.getUrl()));
+        DocumentConverter.addUrlsWithoutCRISUNSLandingPages(record.getUrl(), dto);
 
         dto.setSubTitle(new ArrayList<>());
         dto.setDescription(new ArrayList<>());

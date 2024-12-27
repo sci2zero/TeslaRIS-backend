@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +16,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -145,6 +147,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         index.setPublicationSeriesId(publication.getJournal().getId());
         index.setType(DocumentPublicationType.JOURNAL_PUBLICATION.name());
+
+        if (Objects.nonNull(publication.getJournalPublicationType())) {
+            index.setPublicationType(publication.getJournalPublicationType().name());
+        }
+
         index.setJournalId(publication.getJournal().getId());
 
         documentPublicationIndexRepository.save(index);
@@ -175,7 +182,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     private void setJournalPublicationRelatedFields(JournalPublication publication,
                                                     JournalPublicationDTO publicationDTO) {
-        publication.setJournalPublicationType(publicationDTO.getJournalPublicationType());
+        if (Objects.nonNull(publicationDTO.getJournalPublicationType())) {
+            publication.setJournalPublicationType(publicationDTO.getJournalPublicationType());
+        } else {
+            publication.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
+        }
+
         publication.setStartPage(publicationDTO.getStartPage());
         publication.setEndPage(publicationDTO.getEndPage());
         publication.setNumberOfPages(publicationDTO.getNumberOfPages());

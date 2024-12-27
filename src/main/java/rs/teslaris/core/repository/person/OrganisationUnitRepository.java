@@ -1,12 +1,16 @@
 package rs.teslaris.core.repository.person;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.user.User;
 
 @Repository
 public interface OrganisationUnitRepository extends JpaRepository<OrganisationUnit, Integer> {
@@ -40,4 +44,23 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     @Query(value = "SELECT * FROM organisation_units ou WHERE " +
         "ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<OrganisationUnit> findAllModifiedInLast24Hours(Pageable pageable);
+
+    @Query("select t from Thesis t where t.organisationUnit.id = :organisationUnitId")
+    Page<Thesis> fetchAllThesesForOU(Integer organisationUnitId, Pageable pageable);
+
+    @Modifying
+    @Query("update Involvement i set i.deleted = true where i.organisationUnit.id = :organisationUnitId")
+    void deleteInvolvementsForOrganisationUnit(Integer organisationUnitId);
+
+    @Modifying
+    @Query("update OrganisationUnitsRelation our set our.deleted = true " +
+        "where our.sourceOrganisationUnit.id = :organisationUnitId or " +
+        "our.targetOrganisationUnit.id = :organisationUnitId")
+    void deleteRelationsForOrganisationUnit(Integer organisationUnitId);
+
+    @Query("select u from User u where u.organisationUnit.id = :organisationUnitId and u.authority.name = 'INSTITUTIONAL_EDITOR'")
+    List<User> fetchInstitutionalEditorsForOrganisationUnit(Integer organisationUnitId);
+
+    @Query("select count(u) > 0 from User u where u.organisationUnit.id = :organisationUnitId and u.authority.name = 'INSTITUTIONAL_EDITOR'")
+    boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId);
 }

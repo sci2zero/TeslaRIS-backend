@@ -12,6 +12,7 @@ import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
@@ -23,6 +24,11 @@ public interface MergeService {
     void switchJournalPublicationToOtherJournal(Integer targetJournalId, Integer publicationId);
 
     void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId);
+
+    void switchPublisherPublicationToOtherPublisher(Integer targetPublisherId,
+                                                    Integer publicationId);
+
+    void switchAllPublicationsToOtherPublisher(Integer sourceId, Integer targetId);
 
     void switchPublicationToOtherBookSeries(Integer targetJournalId,
                                             Integer publicationId);
@@ -112,4 +118,7 @@ public interface MergeService {
     void saveMergedMonographPublicationsMetadata(Integer leftId, Integer rightId,
                                                  MonographPublicationDTO leftData,
                                                  MonographPublicationDTO rightData);
+
+    void saveMergedPublishersMetadata(Integer leftId, Integer rightId, PublisherDTO leftData,
+                                      PublisherDTO rightData);
 }

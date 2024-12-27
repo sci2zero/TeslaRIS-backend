@@ -69,13 +69,14 @@ public class CommissionServiceTest {
         var commission2 = new Commission();
         commission2.setId(2);
         commission2.setFormalDescriptionOfRule("rule2");
-        commission2.setSuperComission(commission1);
+        commission2.setSuperCommission(commission1);
 
-        when(commissionRepository.searchCommissions(any(Pageable.class), eq("aaa"))).thenReturn(
+        when(commissionRepository.searchCommissions(eq("aaa"), eq("SR"),
+            any(Pageable.class))).thenReturn(
             new PageImpl<>(List.of(commission1, commission2)));
 
         var response =
-            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa");
+            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa", "SR");
 
         assertNotNull(response);
         assertEquals(2, response.getSize());

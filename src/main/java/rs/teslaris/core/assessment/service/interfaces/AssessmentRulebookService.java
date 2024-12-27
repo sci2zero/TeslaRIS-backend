@@ -14,7 +14,8 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface AssessmentRulebookService extends JPAService<AssessmentRulebook> {
 
-    Page<AssessmentRulebookResponseDTO> readAllAssessmentRulebooks(Pageable pageable);
+    Page<AssessmentRulebookResponseDTO> readAllAssessmentRulebooks(Pageable pageable,
+                                                                   String language);
 
     Page<AssessmentMeasureDTO> readAssessmentMeasuresForRulebook(Pageable pageable,
                                                                  Integer rulebookId);

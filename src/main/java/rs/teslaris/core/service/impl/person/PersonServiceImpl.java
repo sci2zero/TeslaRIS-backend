@@ -3,14 +3,19 @@ package rs.teslaris.core.service.impl.person;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -27,12 +33,16 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -41,12 +51,17 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.person.ProfilePhoto;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -77,9 +92,43 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final PersonNameService personNameService;
 
+    private final PersonContributionRepository personContributionRepository;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    private final MultilingualContentService multilingualContentService;
+
+    private final FileService fileService;
 
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
+
+
+    private static boolean validateImageMIMEType(MultipartFile multipartFile) throws IOException {
+        if (multipartFile.isEmpty()) {
+            return true;
+        }
+
+        var validMimeTypes = List.of("image/jpeg", "image/png");
+
+        String contentType = multipartFile.getContentType();
+        if (!validMimeTypes.contains(contentType)) {
+            return false;
+        }
+
+        String originalFilename = multipartFile.getOriginalFilename();
+        if (originalFilename == null ||
+            !(originalFilename.endsWith(".jpg") || originalFilename.endsWith(".jpeg") ||
+                originalFilename.endsWith(".png"))) {
+            return false;
+        }
+
+        var tika = new Tika();
+        String detectedType = tika.detect(multipartFile.getInputStream());
+        return validMimeTypes.contains(detectedType);
+    }
 
     @Override
     protected JpaRepository<Person, Integer> getEntityRepository() {
@@ -175,7 +224,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var personalContact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
         var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
-            new PostalAddress(null, new HashSet<>(), new HashSet<>()), personalContact);
+            new PostalAddress(null, new HashSet<>(), new HashSet<>()), personalContact,
+            new HashSet<>());
 
         var newPerson = new Person();
         newPerson.setName(personName);
@@ -238,6 +288,24 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
+    public void updatePersonMainName(Integer personId, PersonNameDTO personNameDTO) {
+        var personToUpdate = findOne(personId);
+
+        personToUpdate.getName().setFirstname(personNameDTO.getFirstname());
+        personToUpdate.getName().setOtherName(personNameDTO.getOtherName());
+        personToUpdate.getName().setLastname(personNameDTO.getLastname());
+        personToUpdate.getName().setDateFrom(personNameDTO.getDateFrom());
+        personToUpdate.getName().setDateTo(personNameDTO.getDateTo());
+
+        save(personToUpdate);
+
+        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(personToUpdate, personToUpdate.getId());
+        }
+    }
+
+    @Override
+    @Transactional
     public void setPersonMainName(Integer personNameId, Integer personId) {
         var personToUpdate = findOne(personId);
         var chosenName = personNameService.findOne(personNameId);
@@ -288,6 +356,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personalInfoToUpdate.setPlaceOfBrith(personalInfo.getPlaceOfBirth());
         personalInfoToUpdate.setLocalBirthDate(personalInfo.getLocalBirthDate());
         personalInfoToUpdate.setSex(personalInfo.getSex());
+        IdentifierUtil.setUris(personalInfoToUpdate.getUris(), personalInfo.getUris());
 
         var countryId = personalInfo.getPostalAddress().getCountryId();
 
@@ -300,10 +369,16 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personToUpdate.getPersonalInfo().getPostalAddress().getCity().clear();
         setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
-        personalInfoToUpdate.getContact()
-            .setContactEmail(personalInfo.getContact().getContactEmail());
-        personalInfoToUpdate.getContact()
-            .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
+        if (Objects.nonNull(personalInfo.getContact())) {
+            if (Objects.isNull(personalInfoToUpdate.getContact())) {
+                personalInfoToUpdate.setContact(new Contact());
+            }
+
+            personalInfoToUpdate.getContact()
+                .setContactEmail(personalInfo.getContact().getContactEmail());
+            personalInfoToUpdate.getContact()
+                .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
+        }
 
         save(personToUpdate);
 
@@ -333,12 +408,188 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         if (personRepository.hasContribution(personId) ||
             personRepository.isBoundToUser(personId)) {
             throw new PersonReferenceConstraintViolationException(
-                "This person is allready in use.");
+                "This person is already in use.");
         }
 
         delete(personId);
         var index = personIndexRepository.findByDatabaseId(personId);
         index.ifPresent(personIndexRepository::delete);
+    }
+
+    @Override
+    @Transactional
+    public void forceDeletePerson(Integer personId) {
+        if (personRepository.isBoundToUser(personId)) {
+            throw new PersonReferenceConstraintViolationException(
+                "This person is already in use.");
+        }
+
+        personContributionRepository.deletePersonEventContributions(personId);
+        personContributionRepository.deletePersonPublicationsSeriesContributions(personId);
+
+        deletePersonPublications(personId, false);
+
+        delete(personId);
+
+        var index = personIndexRepository.findByDatabaseId(personId);
+        index.ifPresent(personIndexRepository::delete);
+
+        deleteOrUnbindPersonRelatedIndexes(personId);
+    }
+
+    @Override
+    @Transactional
+    public void switchToUnmanagedEntity(Integer personId) {
+        if (personRepository.isBoundToUser(personId)) {
+            throw new PersonReferenceConstraintViolationException(
+                "This person is already in use.");
+        }
+
+        personContributionRepository.deleteInstitutionsForForPersonContributions(personId);
+        personContributionRepository
+            .makePersonEventContributionsPointToExternalContributor(personId);
+        personContributionRepository
+            .makePersonPublicationsSeriesContributionsPointToExternalContributor(personId);
+
+        deletePersonPublications(personId, true);
+
+        delete(personId);
+
+        var index = personIndexRepository.findByDatabaseId(personId);
+        index.ifPresent(personIndexRepository::delete);
+    }
+
+    @Override
+    public void removePersonProfileImage(Integer personId) {
+        var person = findOne(personId);
+
+        if (Objects.nonNull(person.getProfilePhoto()) &&
+            Objects.nonNull(person.getProfilePhoto().getProfileImageServerName())) {
+            fileService.delete(person.getProfilePhoto().getProfileImageServerName());
+            person.getProfilePhoto().setProfileImageServerName(null);
+            person.getProfilePhoto().setTopOffset(null);
+            person.getProfilePhoto().setLeftOffset(null);
+            person.getProfilePhoto().setHeight(null);
+            person.getProfilePhoto().setWidth(null);
+        }
+
+        save(person);
+    }
+
+    @Override
+    public String setPersonProfileImage(Integer personId, ProfilePhotoDTO profilePhotoDTO)
+        throws IOException {
+        if (!validateImageMIMEType(profilePhotoDTO.getFile())) {
+            throw new IllegalArgumentException("mimeTypeValidationFailed");
+        }
+
+        var person = findOne(personId);
+
+        if (Objects.nonNull(person.getProfilePhoto()) &&
+            Objects.nonNull(person.getProfilePhoto().getProfileImageServerName()) &&
+            !profilePhotoDTO.getFile().isEmpty()) {
+            fileService.delete(person.getProfilePhoto().getProfileImageServerName());
+        } else if (Objects.isNull(person.getProfilePhoto())) {
+            person.setProfilePhoto(new ProfilePhoto());
+        }
+
+        person.getProfilePhoto().setTopOffset(profilePhotoDTO.getTop());
+        person.getProfilePhoto().setLeftOffset(profilePhotoDTO.getLeft());
+        person.getProfilePhoto().setHeight(profilePhotoDTO.getHeight());
+        person.getProfilePhoto().setWidth(profilePhotoDTO.getWidth());
+
+        var serverFilename = person.getProfilePhoto().getProfileImageServerName();
+        if (!profilePhotoDTO.getFile().isEmpty()) {
+            serverFilename =
+                fileService.store(profilePhotoDTO.getFile(), UUID.randomUUID().toString());
+            person.getProfilePhoto().setProfileImageServerName(serverFilename);
+        }
+
+        save(person);
+        return serverFilename;
+    }
+
+    public void deletePersonPublications(Integer personId, boolean switchToUnmanaged) {
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<PersonDocumentContribution> chunk =
+                personContributionRepository.fetchAllPersonDocumentContributions(personId,
+                    PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((contribution) -> {
+                var index =
+                    documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                        contribution.getDocument().getId());
+                if (index.isEmpty()) {
+                    contribution.getDocument()
+                        .setDeleted(true); // is this sound, this should never happen?
+                    return;
+                }
+
+                if (switchToUnmanaged) {
+                    contribution.setPerson(null);
+
+                    BiConsumer<List<Integer>, Integer> replaceIdWithUnmanaged =
+                        (list, idToReplace) ->
+                            list.replaceAll(id -> id.equals(idToReplace) ? -1 : id);
+
+                    List<Supplier<List<Integer>>> idLists = List.of(
+                        index.get()::getAuthorIds,
+                        index.get()::getEditorIds,
+                        index.get()::getReviewerIds,
+                        index.get()::getBoardMemberIds,
+                        index.get()::getAdvisorIds
+                    );
+
+                    idLists.forEach(
+                        idList -> replaceIdWithUnmanaged.accept(idList.get(), personId));
+
+                    contribution.getInstitutions().clear();
+                    documentPublicationIndexRepository.save(index.get());
+                    return;
+                }
+
+                if (index.get().getType().equals(DocumentPublicationType.MONOGRAPH.name()) ||
+                    index.get().getType().equals(DocumentPublicationType.PROCEEDINGS.name())) {
+                    contribution.setDeleted(true);
+                    contribution.getInstitutions().forEach(institution -> {
+                        index.get().getOrganisationUnitIds().remove(institution.getId());
+                    });
+                    contribution.getInstitutions().clear();
+
+                    documentPublicationIndexRepository.save(index.get());
+                } else {
+                    contribution.getDocument().setDeleted(true);
+                }
+            });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+    }
+
+    public void deleteOrUnbindPersonRelatedIndexes(Integer personId) {
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.JOURNAL_PUBLICATION.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.MONOGRAPH_PUBLICATION.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.SOFTWARE.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.DATASET.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.PATENT.name());
+        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
+            DocumentPublicationType.THESIS.name());
+
+        indexBulkUpdateService.removeIdFromListAndRelatedArrayField("document_publication",
+            "author_ids", "author_names", "author_names_sortable", personId);
     }
 
     @Nullable
@@ -442,37 +693,59 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personRepository.findInstitutionIdsForPerson(personId);
     }
 
+    @Override
+    public boolean isPersonBoundToAUser(Integer personId) {
+        return personRepository.isBoundToUser(personId);
+    }
+
+    @Override
+    public boolean canPersonScanDataSources(Integer personId) {
+        if (Objects.isNull(personId)) {
+            return false;
+        }
+
+        var person = findOne(personId);
+        return !Objects.isNull(person.getScopusAuthorId()) && !person.getScopusAuthorId().isEmpty();
+    }
+
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
         return personIndexRepository.findByDatabaseId(personDatabaseId).orElse(new PersonIndex());
     }
 
     private void setPersonIndexProperties(PersonIndex personIndex, Person savedPerson) {
-        if (Objects.nonNull(savedPerson.getName().getOtherName())) {
-            personIndex.setName(
-                savedPerson.getName().getFirstname() + " " + savedPerson.getName().getOtherName() +
-                    " " + savedPerson.getName().getLastname());
-        } else {
-            personIndex.setName(
-                savedPerson.getName().getFirstname() + " " + savedPerson.getName().getLastname());
-        }
+        personIndex.setName(savedPerson.getName().toString());
 
         savedPerson.getOtherNames().forEach((otherName) -> {
-            var fullName = Objects.requireNonNullElse(otherName.getFirstname(), "") + " " +
-                Objects.requireNonNullElse(otherName.getOtherName(), "") + " " +
-                Objects.requireNonNullElse(otherName.getLastname(), "");
-            personIndex.setName(personIndex.getName() + "; " + fullName);
+            personIndex.setName(personIndex.getName() + "; " + otherName.toString());
         });
 
         personIndex.setNameSortable(personIndex.getName());
+        indexPersonBiography(personIndex, savedPerson);
 
         if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
             personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
         }
         personIndex.setBirthdateSortable(personIndex.getBirthdate());
 
+        if (Objects.nonNull(savedPerson.getUser())) {
+            personIndex.setUserId(savedPerson.getUser().getId());
+        }
+
         personIndex.setDatabaseId(savedPerson.getId());
         personIndex.setOrcid(savedPerson.getOrcid());
         personIndex.setScopusAuthorId(savedPerson.getScopusAuthorId());
+    }
+
+    private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+        multilingualContentService.buildLanguageStringsFromHTMLMC(srContent, otherContent,
+            savedPerson.getBiography(), false);
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        personIndex.setBiographySr(
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        personIndex.setBiographyOther(
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
@@ -481,9 +754,16 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         var employmentInstitutions = savedPerson.getInvolvements().stream()
-            .filter(i -> i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                i.getInvolvementType().equals(InvolvementType.HIRED_BY))
-            .map(Involvement::getOrganisationUnit).collect(Collectors.toList());
+            .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                Objects.isNull(i.getDateTo()))
+            .map(Involvement::getOrganisationUnit).toList();
+
+        personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
+            .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                Objects.nonNull(i.getDateTo()))
+            .map(involvement -> involvement.getOrganisationUnit().getId()).toList());
 
         personIndex.setEmploymentInstitutionsId(
             employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
@@ -505,7 +785,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     if (mc.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH)) {
                         institutionNameOther.insert(0, mc.getContent());
                     } else {
-                        institutionNameOther.append(mc.getContent());
+                        institutionNameOther.append(", ").append(mc.getContent());
                     }
                 });
 
@@ -548,19 +828,24 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable) {
-        return searchService.runQuery(buildNameAndEmploymentQuery(tokens), pageable,
+    public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
+                                                           boolean strict) {
+        return searchService.runQuery(buildNameAndEmploymentQuery(tokens, strict), pageable,
             PersonIndex.class, "person");
     }
 
     @Override
-    public Page<PersonIndex> findPeopleForOrganisationUnit(
-        Integer employmentInstitutionId,
-        Pageable pageable) {
+    public Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
+                                                           Pageable pageable, Boolean fetchAlumni) {
         var ouHierarchyIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(employmentInstitutionId);
-        return personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
-            ouHierarchyIds);
+
+        if (fetchAlumni) {
+            return personIndexRepository.findByPastEmploymentInstitutionIdsIn(pageable,
+                ouHierarchyIds);
+        }
+
+        return personIndexRepository.findByEmploymentInstitutionsIdIn(pageable, ouHierarchyIds);
     }
 
     @Override
@@ -576,19 +861,39 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personIndexRepository.findByScopusAuthorId(scopusAuthorId).orElse(null);
     }
 
-    private Query buildNameAndEmploymentQuery(List<String> tokens) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+    private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict) {
+        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.6);
 
         return BoolQuery.of(q -> q
             .must(mb -> mb.bool(b -> {
                     tokens.forEach(
                         token -> {
-                            b.should(sb -> sb.wildcard(
-                                m -> m.field("name").value(token + "*").caseInsensitive(true)));
+                            if (!strict) {
+                                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                                    b.must(mp ->
+                                        mp.bool(m -> {
+                                            {
+                                                m.should(sb -> sb.matchPhrase(
+                                                    mq -> mq.field("employments_sr")
+                                                        .query(token.replace("\\\"", ""))));
+                                                m.should(sb -> sb.matchPhrase(
+                                                    mq -> mq.field("employments_other")
+                                                        .query(token.replace("\\\"", ""))));
+                                            }
+                                            return m;
+                                        }));
+                                }
+
+                                b.should(sb -> sb.wildcard(
+                                    m -> m.field("name").value(token + "*").caseInsensitive(true)));
+
+                                b.should(
+                                    sb -> sb.match(m -> m.field("employments_other").query(token)));
+                                b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
+                                b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
+                            }
+
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments_other").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
-                            b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
                         });
                     return b.minimumShouldMatch(Integer.toString(minShouldMatch));
                 }

@@ -47,12 +47,12 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
             throw new UserIsNotResearcherException("You are not a researcher.");
         }
 
-        var person = personService.readPersonWithBasicInfo(personId);
-        var scopusId = person.getPersonalInfo().getScopusAuthorId();
-
-        if (Objects.isNull(scopusId)) {
+        if (!personService.canPersonScanDataSources(personId)) {
             throw new ScopusIdMissingException("You have not set your Scopus ID.");
         }
+
+        var person = personService.readPersonWithBasicInfo(personId);
+        var scopusId = person.getPersonalInfo().getScopusAuthorId();
 
         var yearlyResults = scopusImportUtility.getDocumentsByAuthor(scopusId, startYear, endYear);
 
@@ -91,8 +91,14 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                     }
                 }
 
-                var documentImport =
+                var optionalDocument =
                     ScopusConverter.toCommonImportModel(entry, scopusImportUtility);
+                if (optionalDocument.isEmpty()) {
+                    log.info("Harvested entry is retracted: {}", entry.title());
+                    return;
+                }
+
+                var documentImport = optionalDocument.get();
                 documentImport.setIdentifier(entry.identifier());
 
                 if (Objects.nonNull(importedDocumentEmbedding)) {

@@ -37,7 +37,7 @@ public class Commission extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "commission_sources", joinColumns = @JoinColumn(name = "commission_id"))
     @Column(name = "source", nullable = false)
     private Set<String> sources = new HashSet<>();
@@ -62,5 +62,5 @@ public class Commission extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "super_commission")
-    private Commission superComission;
+    private Commission superCommission;
 }

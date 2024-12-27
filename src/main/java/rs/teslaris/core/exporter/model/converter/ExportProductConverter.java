@@ -36,17 +36,28 @@ public class ExportProductConverter extends ExportConverterBase {
         }
 
         // Validator complains where there are more than 1 urls
-        openaireProduct.setUrl(List.of(exportDocument.getUris().getFirst()));
+        if (!exportDocument.getUris().isEmpty()) {
+            openaireProduct.setUrl(List.of(exportDocument.getUris().getFirst()));
+        }
+
         openaireProduct.setAccess(
             (Objects.nonNull(exportDocument.getOpenAccess()) && exportDocument.getOpenAccess()) ?
                 "http://purl.org/coar/access_right/c_abf2" :
                 "http://purl.org/coar/access_right/c_14cb");
 
         openaireProduct.setCreators(new ArrayList<>());
-        exportDocument.getAuthors().forEach(contribution -> {
-            openaireProduct.getCreators().add(new PersonAttributes(contribution.getDisplayName(),
-                ExportPersonConverter.toOpenaireModel(contribution.getPerson())));
-        });
+        exportDocument.getAuthors()
+            .forEach(contribution -> {
+                var personAttributes = new PersonAttributes();
+                personAttributes.setDisplayName(contribution.getDisplayName());
+
+                if (Objects.nonNull(contribution.getPerson())) {
+                    personAttributes.setPerson(
+                        ExportPersonConverter.toOpenaireModel(contribution.getPerson()));
+                }
+
+                openaireProduct.getCreators().add(personAttributes);
+            });
 
         return openaireProduct;
     }

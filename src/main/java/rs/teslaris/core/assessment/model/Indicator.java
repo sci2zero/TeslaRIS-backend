@@ -41,4 +41,7 @@ public class Indicator extends BaseEntity {
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<ApplicableEntityType> applicableTypes = new HashSet<>();
+
+    @Column(name = "content_type")
+    private IndicatorContentType contentType;
 }

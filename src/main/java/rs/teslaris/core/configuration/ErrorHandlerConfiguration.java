@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditEntityIndicatorException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
@@ -36,6 +38,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceCon
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
@@ -317,5 +320,29 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleMonographReferenceConstraintViolationException(HttpServletRequest request,
                                                                      MonographReferenceConstraintViolationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(BookSeriesReferenceConstraintViolationException.class)
+    @ResponseBody
+    ErrorObject handleBookSeriesReferenceConstraintViolationException(HttpServletRequest request,
+                                                                      BookSeriesReferenceConstraintViolationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(ScopusIdMissingException.class)
+    @ResponseBody
+    ErrorObject handleScopusIdMissingException(HttpServletRequest request,
+                                               ScopusIdMissingException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(CantEditEntityIndicatorException.class)
+    @ResponseBody
+    ErrorObject handleCantEditEntityIndicatorException(HttpServletRequest request,
+                                                       CantEditEntityIndicatorException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 }

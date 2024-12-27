@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.importer.service.interfaces.ScopusHarvester;
 import rs.teslaris.core.importer.utility.scopus.ScopusImportUtility;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
@@ -32,7 +32,7 @@ public class CommonHarvestController {
 
     private final UserService userService;
 
-    private final DeduplicationUtil deduplicationUtil;
+    private final PersonService personService;
 
     @Value("${scopus.api.key}")
     private String apiKey;
@@ -41,6 +41,12 @@ public class CommonHarvestController {
     @PostConstruct
     public void init() {
         ScopusImportUtility.headers.put("X-ELS-APIKey", apiKey);
+    }
+
+    @GetMapping("/can-perform")
+    public boolean canPerformHarvest(@RequestHeader("Authorization") String bearerToken) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        return personService.canPersonScanDataSources(personService.getPersonIdForUserId(userId));
     }
 
     @GetMapping("/documents-by-author")

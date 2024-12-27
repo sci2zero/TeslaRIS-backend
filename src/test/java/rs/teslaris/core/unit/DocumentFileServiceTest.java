@@ -9,6 +9,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.minio.GetObjectResponse;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +23,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.mock.web.MockMultipartFile;
@@ -227,7 +228,8 @@ public class DocumentFileServiceTest {
 
         when(documentFileRepository.findById(documentFileId)).thenReturn(Optional.of(documentFile));
         when(fileService.loadAsResource(any())).thenReturn(
-            new ByteArrayResource("Some test data".getBytes()));
+            new GetObjectResponse(null, null, null, null,
+                new ByteArrayInputStream("Some test data".getBytes())));
 
         // When
         documentFileService.changeApproveStatus(documentFileId, approved);

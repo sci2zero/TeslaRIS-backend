@@ -7,6 +7,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
@@ -19,6 +20,7 @@ import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
@@ -30,12 +32,18 @@ import rs.teslaris.core.model.document.BookSeriesPublishable;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.document.PublisherPublishable;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
+import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.repository.document.SoftwareRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
@@ -47,6 +55,7 @@ import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
@@ -115,6 +124,18 @@ public class MergeServiceImpl implements MergeService {
 
     private final BookSeriesService bookSeriesService;
 
+    private final SoftwareRepository softwareRepository;
+
+    private final DatasetRepository datasetRepository;
+
+    private final PatentRepository patentRepository;
+
+    private final ThesisRepository thesisRepository;
+
+    private final PublisherService publisherService;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
+
 
     @Override
     public void switchJournalPublicationToOtherJournal(Integer targetJournalId,
@@ -137,6 +158,23 @@ public class MergeServiceImpl implements MergeService {
             pageRequest -> documentPublicationIndexRepository.findByTypeAndJournalId(
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, pageRequest)
                 .getContent()
+        );
+    }
+
+    @Override
+    public void switchPublisherPublicationToOtherPublisher(Integer targetPublisherId,
+                                                           Integer publicationId) {
+        performPublisherPublicationSwitch(targetPublisherId, publicationId);
+    }
+
+    @Override
+    public void switchAllPublicationsToOtherPublisher(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, documentIndex) -> performPublisherPublicationSwitch(targetId,
+                documentIndex.getDatabaseId()),
+            pageRequest -> documentPublicationIndexRepository.findByPublisherId(sourceId,
+                pageRequest).getContent()
         );
     }
 
@@ -199,7 +237,8 @@ public class MergeServiceImpl implements MergeService {
             sourceOUId,
             (srcId, personIndex) -> performEmployeeSwitch(srcId, targetOUId,
                 personIndex.getDatabaseId()),
-            pageRequest -> personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest)
+            pageRequest -> personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest,
+                    false)
                 .getContent()
         );
     }
@@ -460,6 +499,14 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
+    public void saveMergedPublishersMetadata(Integer leftId, Integer rightId, PublisherDTO leftData,
+                                             PublisherDTO rightData) {
+        updateAndRestoreMetadata(publisherService::editPublisher, leftId, rightId, leftData,
+            rightData, dto -> new String[] {}, (dto, values) -> {
+            });
+    }
+
+    @Override
     public void switchPublicationToOtherMonograph(Integer targetMonographId,
                                                   Integer publicationId) {
         performMonographPublicationSwitch(targetMonographId, publicationId);
@@ -515,9 +562,8 @@ public class MergeServiceImpl implements MergeService {
 
         monographPublication.setMonograph(targetMonograph);
 
-        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            monographPublicationId).orElse(new DocumentPublicationIndex());
-        monographPublicationService.indexMonographPublication(monographPublication, index);
+        indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
+            monographPublicationId, "monograph_id", targetMonographId);
     }
 
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,
@@ -579,9 +625,39 @@ public class MergeServiceImpl implements MergeService {
 
         journalPublicationRepository.save(publication.get());
 
-        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            publicationId).orElse(new DocumentPublicationIndex());
-        journalPublicationService.indexJournalPublication(publication.get(), index);
+        indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
+            publicationId, "journal_id", targetJournalId);
+    }
+
+    private void performPublisherPublicationSwitch(Integer targetPublisherId,
+                                                   Integer publicationId) {
+        PublisherPublishable publication = null;
+
+        List<JpaRepository<? extends PublisherPublishable, Integer>> repositories = List.of(
+            proceedingsRepository,
+            patentRepository,
+            datasetRepository,
+            softwareRepository,
+            thesisRepository
+        );
+
+        for (var repository : repositories) {
+            var result = repository.findById(publicationId);
+            if (result.isPresent()) {
+                publication = result.get();
+                break;
+            }
+        }
+
+        if (publication == null) {
+            throw new NotFoundException("Publication does not exist.");
+        }
+
+        var targetPublisher = publisherService.findOne(targetPublisherId);
+        publication.setPublisher(targetPublisher);
+
+        indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
+            publicationId, "publisher_id", targetPublisherId);
     }
 
     private void performBookSeriesPublicationSwitch(Integer targetBookSeriesId,
@@ -604,15 +680,14 @@ public class MergeServiceImpl implements MergeService {
 
         publication.setPublicationSeries(targetBookSeries);
 
-        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            publicationId).orElse(new DocumentPublicationIndex());
         if (publication instanceof Proceedings) {
             proceedingsRepository.save((Proceedings) publication);
-            proceedingsService.indexProceedings((Proceedings) publication, index);
         } else {
             monographRepository.save((Monograph) publication);
-            monographService.indexMonograph((Monograph) publication, index);
         }
+
+        indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
+            publicationId, "publication_series_id", targetBookSeriesId);
     }
 
     private void performProceedingsPublicationSwitch(Integer targetProceedingsId,
@@ -629,9 +704,8 @@ public class MergeServiceImpl implements MergeService {
 
         proceedingsPublicationRepository.save(publication.get());
 
-        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            publicationId).orElse(new DocumentPublicationIndex());
-        proceedingsPublicationService.indexProceedingsPublication(publication.get(), index);
+        indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
+            publicationId, "proceedings_id", targetProceedingsId);
     }
 
     private void performProceedingsSwitch(Integer targetConferenceId,

@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.user;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("select count(u) > 0 from User u where u.person.id = :personId")
     boolean personAlreadyBinded(Integer personId);
+
+    @Query("select u.id from User u where u.canTakeRole = true")
+    List<Integer> getIdsOfUsersWhoAllowedAccountTakeover();
 }

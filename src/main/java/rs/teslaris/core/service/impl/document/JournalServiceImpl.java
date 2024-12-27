@@ -15,12 +15,15 @@ import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -42,22 +45,28 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     private final JournalRepository journalRepository;
 
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
 
     @Autowired
     public JournalServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
                               MultilingualContentService multilingualContentService,
                               LanguageTagService languageTagService,
                               PersonContributionService personContributionService,
-                              EmailUtil emailUtil, JournalJPAServiceImpl journalJPAService,
+                              EmailUtil emailUtil,
+                              IndexBulkUpdateService indexBulkUpdateService,
+                              JournalJPAServiceImpl journalJPAService,
                               SearchService<JournalIndex> searchService,
                               JournalIndexRepository journalIndexRepository,
-                              JournalRepository journalRepository) {
+                              JournalRepository journalRepository,
+                              DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
-            personContributionService, emailUtil);
+            personContributionService, emailUtil, indexBulkUpdateService);
         this.journalJPAService = journalJPAService;
         this.searchService = searchService;
         this.journalIndexRepository = journalIndexRepository;
         this.journalRepository = journalRepository;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
     }
 
     @Override
@@ -153,12 +162,29 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         if (journalRepository.hasPublication(journalId) ||
             publicationSeriesRepository.hasProceedings(journalId)) {
             throw new JournalReferenceConstraintViolationException(
-                "PublicationSeries with given ID is allready in use.");
+                "PublicationSeries with given ID is already in use.");
         }
 
         journalJPAService.delete(journalId);
         var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
         index.ifPresent(journalIndexRepository::delete);
+    }
+
+    @Override
+    public void forceDeleteJournal(Integer journalId) {
+        journalRepository.deleteAllPublicationsInJournal(journalId);
+        publicationSeriesRepository.unbindProceedings(journalId);
+
+        journalJPAService.delete(journalId);
+
+        var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
+        index.ifPresent(journalIndexRepository::delete);
+
+        documentPublicationIndexRepository.deleteByJournalIdAndType(journalId,
+            DocumentPublicationType.JOURNAL_PUBLICATION.name());
+
+        indexBulkUpdateService.removeIdFromRecord("document_publication", "publication_series_id",
+            journalId);
     }
 
     @Override
@@ -205,10 +231,10 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             journal.getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
-        index.setTitleSr(srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+        index.setTitleSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOther(
-            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(journal.getEISSN());
         index.setPrintISSN(journal.getPrintISSN());
@@ -219,6 +245,21 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
+                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                    b.must(mp ->
+                        mp.bool(m -> {
+                            {
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("title_sr")
+                                        .query(token.replace("\\\"", ""))));
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("title_other")
+                                        .query(token.replace("\\\"", ""))));
+                            }
+                            return m;
+                        }));
+                }
+
                 b.should(sb -> sb.wildcard(
                     m -> m.field("title_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
@@ -226,9 +267,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                 b.should(sb -> sb.wildcard(
                     m -> m.field("title_other").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("e_issn").query(token)));
+                    m -> m.field("e_issn").query(token.replace("\\-", "-"))));
                 b.should(sb -> sb.match(
-                    m -> m.field("print_issn").query(token)));
+                    m -> m.field("print_issn").query(token.replace("\\-", "-"))));
             });
             return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();

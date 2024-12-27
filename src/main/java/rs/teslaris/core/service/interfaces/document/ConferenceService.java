@@ -15,13 +15,16 @@ public interface ConferenceService {
     Page<ConferenceDTO> readAllConferences(Pageable pageable);
 
     Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable,
-                                       Boolean returnOnlyNonSerialEvents);
+                                       Boolean returnOnlyNonSerialEvents,
+                                       Boolean returnOnlySerialEvents);
 
     Page<EventIndex> searchConferencesForImport(List<String> names, String dateFrom, String dateTo);
 
     ConferenceDTO readConference(Integer conferenceId);
 
     Conference findConferenceById(Integer conferenceId);
+
+    Conference findConferenceByConfId(String confId);
 
     Conference createConference(ConferenceDTO conferenceDTO, Boolean index);
 
@@ -30,6 +33,8 @@ public interface ConferenceService {
     void updateConference(Integer conferenceId, ConferenceDTO conferenceDTO);
 
     void deleteConference(Integer conferenceId);
+
+    void forceDeleteConference(Integer conferenceId);
 
     void reindexConferences();
 

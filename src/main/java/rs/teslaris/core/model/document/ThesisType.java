@@ -4,5 +4,6 @@ public enum ThesisType {
     BACHELOR,
     MR,
     PHD,
-    MASTER
+    MASTER,
+    PHD_ART_PROJECT
 }

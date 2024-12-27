@@ -47,6 +47,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId);
 
+    Page<OrganisationUnitIndex> getOUSubUnits(Integer organisationUnitId, Pageable pageable);
+
     OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index);
 
@@ -57,6 +59,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                          Integer organisationUnitId);
 
     void deleteOrganisationUnit(Integer organisationUnitId);
+
+    void forceDeleteOrganisationUnit(Integer organisationUnitId);
 
     OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO organisationUnitsRelation);
@@ -74,6 +78,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer organisationUnitId,
                                                       Integer belongOrganisationUnit);
+
+    boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId);
 
     void reindexOrganisationUnits();
 }

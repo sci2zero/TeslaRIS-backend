@@ -44,9 +44,10 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
 
     @Override
     public Page<CommissionResponseDTO> readAllCommissions(Pageable pageable,
-                                                          String searchExpression) {
+                                                          String searchExpression,
+                                                          String language) {
         if (Objects.nonNull(searchExpression)) {
-            return commissionRepository.searchCommissions(pageable, searchExpression)
+            return commissionRepository.searchCommissions(searchExpression, language, pageable)
                 .map(CommissionConverter::toDTO);
         } else {
             return commissionRepository.findAll(pageable).map(CommissionConverter::toDTO);
@@ -88,14 +89,15 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
 
     private void setCommonFields(Commission commission, CommissionDTO commissionDTO) {
         commission.setDescription(
-            multilingualContentService.getMultilingualContent(commissionDTO.description()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                commissionDTO.description()));
         commission.setSources(new HashSet<>(commissionDTO.sources()));
         commission.setAssessmentDateFrom(commissionDTO.assessmentDateFrom());
         commission.setAssessmentDateTo(commissionDTO.assessmentDateTo());
         commission.setFormalDescriptionOfRule(commissionDTO.formalDescriptionOfRule());
 
         if (Objects.nonNull(commissionDTO.superCommissionId())) {
-            commission.setSuperComission(findOne(commissionDTO.superCommissionId()));
+            commission.setSuperCommission(findOne(commissionDTO.superCommissionId()));
         }
 
         commissionDTO.documentIdsForAssessment().forEach(documentId -> {

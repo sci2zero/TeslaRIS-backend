@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsPublicationsDTO;
+import rs.teslaris.core.dto.deduplication.MergedPublishersDTO;
 import rs.teslaris.core.dto.deduplication.MergedSoftwareDTO;
 import rs.teslaris.core.dto.deduplication.MergedThesesDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
@@ -50,6 +51,22 @@ public class MergeController {
     public void switchAllPublicationsToOtherJournal(@PathVariable Integer sourceJournalId,
                                                     @PathVariable Integer targetJournalId) {
         mergeService.switchAllPublicationsToOtherJournal(sourceJournalId, targetJournalId);
+    }
+
+    @PatchMapping("/publisher/{targetPublisherId}/publication/{publicationId}")
+    @PreAuthorize("hasAuthority('MERGE_PUBLISHER_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchPublisherPublicationToOtherPublisher(@PathVariable Integer targetPublisherId,
+                                                           @PathVariable Integer publicationId) {
+        mergeService.switchPublisherPublicationToOtherPublisher(targetPublisherId, publicationId);
+    }
+
+    @PatchMapping("/publisher/source/{sourcePublisherId}/target/{targetPublisherId}")
+    @PreAuthorize("hasAuthority('MERGE_PUBLISHER_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllPublicationsToOtherPublisher(@PathVariable Integer sourcePublisherId,
+                                                      @PathVariable Integer targetPublisherId) {
+        mergeService.switchAllPublicationsToOtherPublisher(sourcePublisherId, targetPublisherId);
     }
 
     @PatchMapping("/book-series/{targetBookSeriesId}/publication/{publicationId}")
@@ -367,6 +384,19 @@ public class MergeController {
 
         mergeDocumentFiles(leftMonographPublicationId, rightMonographPublicationId,
             mergedMonographPublications);
+    }
+
+    @PatchMapping("/publisher/metadata/{leftPublisherId}/{rightPublisherId}")
+    @PreAuthorize("hasAuthority('MERGE_PUBLISHERS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedPublishersMetadata(
+        @PathVariable Integer leftPublisherId,
+        @PathVariable Integer rightPublisherId,
+        @NotNull @RequestBody MergedPublishersDTO mergedPublishers) {
+        mergeService.saveMergedPublishersMetadata(leftPublisherId,
+            rightPublisherId,
+            mergedPublishers.getLeftPublisher(),
+            mergedPublishers.getRightPublisher());
     }
 
     private void mergeDocumentFiles(Integer leftId, Integer rightId,

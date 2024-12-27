@@ -20,7 +20,10 @@ public class SearchServiceImplES<T> implements SearchService<T> {
 
     @Override
     public Page<T> runQuery(Query query, Pageable pageable, Class<T> clazz, String indexName) {
-        var searchQueryBuilder = new NativeQueryBuilder().withQuery(query).withPageable(pageable);
+        var searchQueryBuilder = new NativeQueryBuilder()
+            .withQuery(query)
+            .withPageable(pageable)
+            .withTrackTotalHits(true);
 
         var searchQuery = searchQueryBuilder.build();
 

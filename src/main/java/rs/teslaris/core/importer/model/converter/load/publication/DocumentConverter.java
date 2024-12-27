@@ -3,6 +3,7 @@ package rs.teslaris.core.importer.model.converter.load.publication;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,20 @@ public abstract class DocumentConverter {
         return person;
     }
 
+    public static void addUrlsWithoutCRISUNSLandingPages(List<String> urls, DocumentDTO dto) {
+        if (Objects.isNull(urls)) {
+            return;
+        }
+
+        urls.forEach(url -> {
+            if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId")) {
+                return;
+            }
+
+            dto.getUris().add(url);
+        });
+    }
+
     protected void setCommonFields(Publication record, DocumentDTO dto) {
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
         dto.setSubTitle(multilingualContentConverter.toDTO(record.getSubtitle()));
@@ -66,9 +81,7 @@ public abstract class DocumentConverter {
             dto.setKeywords(new ArrayList<>());
         }
 
-        if (Objects.nonNull(record.getUrl())) {
-            dto.setUris(new HashSet<>(record.getUrl()));
-        }
+        addUrlsWithoutCRISUNSLandingPages(record.getUrl(), dto);
 
         dto.setDoi(Objects.nonNull(record.getDoi()) ? record.getDoi().replace("|", "") : null);
         dto.setScopusId(record.getScpNumber());

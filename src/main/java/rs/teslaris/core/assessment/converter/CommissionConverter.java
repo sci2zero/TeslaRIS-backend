@@ -23,10 +23,10 @@ public class CommissionConverter {
             commission.getOrganisationUnitsForAssessment().stream().map(OrganisationUnit::getId)
                 .collect(Collectors.toList()),
             commission.getFormalDescriptionOfRule(),
-            Objects.nonNull(commission.getSuperComission()) ?
-                commission.getSuperComission().getId() : null,
-            Objects.nonNull(commission.getSuperComission()) ?
+            Objects.nonNull(commission.getSuperCommission()) ?
+                commission.getSuperCommission().getId() : null,
+            Objects.nonNull(commission.getSuperCommission()) ?
                 MultilingualContentConverter.getMultilingualContentDTO(
-                    commission.getSuperComission().getDescription()) : null);
+                    commission.getSuperCommission().getDescription()) : null);
     }
 }

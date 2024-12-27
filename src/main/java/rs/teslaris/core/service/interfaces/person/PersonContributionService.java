@@ -11,11 +11,13 @@ import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
-public interface PersonContributionService {
+public interface PersonContributionService extends JPAService<PersonContribution> {
 
     void setPersonDocumentContributionsForDocument(Document document, DocumentDTO documentDTO);
 
@@ -37,4 +39,7 @@ public interface PersonContributionService {
                               Integer contributionId,
                               Integer oldContributionOrderNumber,
                               Integer newContributionOrderNumber);
+
+    PersonDocumentContribution findContributionForResearcherAndDocument(Integer personId,
+                                                                        Integer documentId);
 }

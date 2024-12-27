@@ -49,4 +49,16 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> findByPublisherId(Integer publisherId, Pageable pageable);
 
     Page<DocumentPublicationIndex> findByTypeIn(List<String> types, Pageable pageable);
+
+    void deleteByJournalIdAndType(Integer journalId, String type);
+
+    void deleteByEventIdAndType(Integer eventId, String type);
+
+    void deleteByMonographId(Integer monographId);
+
+    void deleteByProceedingsId(Integer monographId);
+
+    void deleteByAuthorIdsAndType(Integer authorId, String type);
+
+    Page<DocumentPublicationIndex> findByClaimerIds(Integer claimerId, Pageable pageable);
 }

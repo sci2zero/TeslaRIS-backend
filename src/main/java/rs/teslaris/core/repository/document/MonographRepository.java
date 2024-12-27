@@ -3,6 +3,7 @@ package rs.teslaris.core.repository.document;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.document.Monograph;
@@ -24,4 +25,8 @@ public interface MonographRepository extends JpaRepository<Monograph, Integer> {
 
     @Query("select count(p) > 0 from MonographPublication p join p.monograph m where m.id = :monographId")
     boolean hasPublication(Integer monographId);
+
+    @Modifying
+    @Query("update MonographPublication mp set mp.deleted = true where mp.monograph.id = :monographId")
+    void deleteAllPublicationsInMonograph(Integer monographId);
 }

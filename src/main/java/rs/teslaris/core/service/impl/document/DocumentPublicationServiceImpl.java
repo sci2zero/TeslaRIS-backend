@@ -226,12 +226,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             .forEach(contribution -> {
                 var personExists = Objects.nonNull(contribution.getPerson());
 
-                var contributorDisplayName =
-                    contribution.getAffiliationStatement().getDisplayPersonName();
                 var contributorName =
-                    (Objects.toString(contributorDisplayName.getFirstname(), "") + " " +
-                        Objects.toString(contributorDisplayName.getOtherName(), "") + " " +
-                        Objects.toString(contributorDisplayName.getLastname(), "")).trim();
+                    contribution.getAffiliationStatement().getDisplayPersonName().toString();
 
                 organisationUnitIds.addAll(
                     contribution.getInstitutions().stream().map((BaseEntity::getId)).toList());
@@ -244,35 +240,50 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
                         if (personExists) {
                             index.getAuthorIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getAuthorIds().add(-1);
                         }
+
                         index.setAuthorNames(StringUtil.removeLeadingColonSpace(
                             index.getAuthorNames() + "; " + contributorName));
                         break;
                     case EDITOR:
                         if (personExists) {
                             index.getEditorIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getEditorIds().add(-1);
                         }
+
                         index.setEditorNames(StringUtil.removeLeadingColonSpace(
                             index.getEditorNames() + "; " + contributorName));
                         break;
                     case ADVISOR:
                         if (personExists) {
                             index.getAdvisorIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getAdvisorIds().add(-1);
                         }
+
                         index.setAdvisorNames(StringUtil.removeLeadingColonSpace(
                             index.getAdvisorNames() + "; " + contributorName));
                         break;
                     case REVIEWER:
                         if (personExists) {
                             index.getReviewerIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getReviewerIds().add(-1);
                         }
+
                         index.setReviewerNames(StringUtil.removeLeadingColonSpace(
                             index.getReviewerNames() + "; " + contributorName));
                         break;
                     case BOARD_MEMBER:
                         if (personExists) {
                             index.getBoardMemberIds().add(contribution.getPerson().getId());
+                        } else {
+                            index.getBoardMemberIds().add(-1);
                         }
+
                         index.setBoardMemberNames(StringUtil.removeLeadingColonSpace(
                             index.getBoardMemberNames() + "; " + contributorName));
                         break;
@@ -313,23 +324,23 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.getSubTitle(), false);
 
         StringUtil.removeTrailingDelimiters(contentSr, contentOther);
-        index.setTitleSr(contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+        index.setTitleSr(!contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
         index.setTitleOther(
-            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
+            !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
     private void indexDescription(Document document, DocumentPublicationIndex index) {
         var contentSr = new StringBuilder();
         var contentOther = new StringBuilder();
 
-        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+        multilingualContentService.buildLanguageStringsFromHTMLMC(contentSr, contentOther,
             document.getDescription(), false);
 
         StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setDescriptionSr(
-            contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+            !contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
         index.setDescriptionOther(
-            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
+            !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
     private void indexKeywords(Document document, DocumentPublicationIndex index) {
@@ -341,9 +352,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         StringUtil.removeTrailingDelimiters(contentSr, contentOther);
         index.setKeywordsSr(
-            contentSr.length() > 0 ? contentSr.toString() : contentOther.toString());
+            !contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
         index.setKeywordsOther(
-            contentOther.length() > 0 ? contentOther.toString() : contentSr.toString());
+            !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
     private int parseYear(String dateString) {
@@ -519,6 +530,31 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         });
     }
 
+    @Override
+    public void unbindResearcherFromContribution(Integer personId, Integer documentId) {
+        var contribution =
+            personContributionService.findContributionForResearcherAndDocument(personId,
+                documentId);
+
+        if (Objects.isNull(contribution)) {
+            return;
+        }
+
+        contribution.setPerson(null);
+        contribution.getInstitutions().clear();
+        personContributionService.save(contribution);
+
+        var document = documentRepository.findById(documentId);
+        var indexOptional =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
+
+        if (document.isPresent() && indexOptional.isPresent()) {
+            var index = indexOptional.get();
+            indexCommonFields(document.get(), index);
+            documentPublicationIndexRepository.save(index);
+        }
+    }
+
     private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
@@ -560,6 +596,21 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
+                        if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                            b.must(mp ->
+                                mp.bool(m -> {
+                                    {
+                                        m.should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("title_sr")
+                                                .query(token.replace("\\\"", ""))));
+                                        m.should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("title_other")
+                                                .query(token.replace("\\\"", ""))));
+                                    }
+                                    return m;
+                                }));
+                        }
+
                         eq.should(sb -> sb.wildcard(
                             m -> m.field("title_sr").value(token + "*").caseInsensitive(true)));
                         eq.should(sb -> sb.match(

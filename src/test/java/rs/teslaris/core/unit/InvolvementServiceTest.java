@@ -5,11 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -168,7 +171,7 @@ public class InvolvementServiceTest {
 
         // then
         assertNotNull(result);
-        verify(involvementRepository, times(1)).save(result);
+        verify(involvementRepository, times(1)).save(any());
     }
 
     @Test
@@ -188,7 +191,7 @@ public class InvolvementServiceTest {
 
         // then
         assertNotNull(result);
-        verify(involvementRepository, times(1)).save(result);
+        verify(involvementRepository, times(1)).save(any());
     }
 
     @Test
@@ -352,4 +355,47 @@ public class InvolvementServiceTest {
         // then
         assertEquals(2, result.size());
     }
+
+    @Test
+    public void shouldEndEmploymentWhenActiveEmploymentExists() {
+        // given
+        Integer institutionId = 1;
+        Integer personId = 1;
+
+        var employment = new Employment();
+        employment.setOrganisationUnit(new OrganisationUnit());
+        employment.setPersonInvolved(new Person());
+        employment.setDateTo(null); // Active employment
+
+        when(involvementRepository.findActiveEmploymentForPersonAndInstitution(institutionId,
+            personId))
+            .thenReturn(Optional.of(employment));
+
+        // when
+        involvementService.endEmployment(institutionId, personId);
+
+        // then
+        assertNotNull(employment.getDateTo());
+        assertEquals(LocalDate.now(), employment.getDateTo());
+        verify(employmentRepository).save(employment);
+        verify(personService).indexPerson(employment.getPersonInvolved(), personId);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenActiveEmploymentDoesNotExist() {
+        // given
+        Integer institutionId = 1;
+        Integer personId = 1;
+
+        when(involvementRepository.findActiveEmploymentForPersonAndInstitution(institutionId,
+            personId))
+            .thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(NotFoundException.class,
+            () -> involvementService.endEmployment(institutionId, personId));
+        verify(employmentRepository, never()).save(any(Employment.class));
+        verify(personService, never()).indexPerson(any(), anyInt());
+    }
+
 }

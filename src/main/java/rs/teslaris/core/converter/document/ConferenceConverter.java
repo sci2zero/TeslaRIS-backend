@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.document;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -21,8 +22,11 @@ public class ConferenceConverter {
             conference.getKeywords()));
         conferenceDTO.setDateFrom(conference.getDateFrom());
         conferenceDTO.setDateTo(conference.getDateTo());
-        conferenceDTO.setState(
-            MultilingualContentConverter.getMultilingualContentDTO(conference.getState()));
+
+        if (Objects.nonNull(conference.getCountry())) {
+            conferenceDTO.setCountryId(conference.getCountry().getId());
+        }
+
         conferenceDTO.setPlace(
             MultilingualContentConverter.getMultilingualContentDTO(conference.getPlace()));
 

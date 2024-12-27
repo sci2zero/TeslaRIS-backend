@@ -93,6 +93,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "type", store = true)
     private String type;
 
+    @Field(type = FieldType.Keyword, name = "publication_type", store = true)
+    private String publicationType;
+
     @Field(type = FieldType.Integer, name = "publication_series_id", store = true)
     private Integer publicationSeriesId;
 
@@ -122,4 +125,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Integer, name = "organisation_unit_ids", store = true)
     private List<Integer> organisationUnitIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "claimer_ids", store = true)
+    private List<Integer> claimerIds = new ArrayList<>();
 }

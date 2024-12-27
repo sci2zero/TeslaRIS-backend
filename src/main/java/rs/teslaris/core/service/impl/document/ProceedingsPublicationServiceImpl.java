@@ -84,6 +84,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         return proceedingsPublications.stream().map(publication -> {
             var responseDTO = new ProceedingsPublicationResponseDTO();
 
+            responseDTO.setPublicationId(publication.getId());
             responseDTO.setTitle(
                 MultilingualContentConverter.getMultilingualContentDTO(publication.getTitle()));
             responseDTO.setProceedingsTitle(MultilingualContentConverter.getMultilingualContentDTO(
@@ -163,6 +164,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         index.setEventId(publication.getProceedings().getEvent().getId());
         index.setType(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
+
+        if (Objects.nonNull(publication.getProceedingsPublicationType())) {
+            index.setPublicationType(publication.getProceedingsPublicationType().name());
+        }
 
         if (Objects.nonNull(publication.getProceedings())) {
             index.setProceedingsId(publication.getProceedings().getId());

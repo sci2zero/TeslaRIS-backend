@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 
 @Service
 public interface CommonLoader {
@@ -19,6 +20,8 @@ public interface CommonLoader {
     Integer countRemainingDocumentsForLoading(Integer userId);
 
     OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId);
+
+    PersonResponseDTO createPerson(String scopusAuthorId, Integer userId);
 
     PublicationSeriesDTO createJournal(String eIssn, String printIssn, Integer userId);
 

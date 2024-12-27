@@ -47,10 +47,12 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
                 var exportContribution = new ExportContribution();
                 exportContribution.setDisplayName(
                     contribution.getAffiliationStatement().getDisplayPersonName().toString());
+
                 if (Objects.nonNull(contribution.getPerson())) {
                     exportContribution.setPerson(
                         ExportPersonConverter.toCommonExportModel(contribution.getPerson(), false));
                 }
+
                 commonExportPublicationSeries.getEditors().add(exportContribution);
             }
 

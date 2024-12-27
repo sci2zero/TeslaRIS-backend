@@ -3,7 +3,9 @@ package rs.teslaris.core.unit.assessment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.assessment.dto.IndicatorDTO;
 import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.model.Indicator;
+import rs.teslaris.core.assessment.model.IndicatorContentType;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.IndicatorServiceImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -52,11 +55,11 @@ public class IndicatorServiceTest {
         indicator2.setCode("code2");
         indicator2.setTitle(Set.of(new MultiLingualContent(new LanguageTag(), "Content 2", 1)));
 
-        when(indicatorRepository.findAll(any(Pageable.class))).thenReturn(
+        when(indicatorRepository.readAll(eq("EN"), any(Pageable.class))).thenReturn(
             new PageImpl<>(List.of(indicator1, indicator2)));
 
         var response =
-            indicatorService.readAllIndicators(PageRequest.of(0, 10));
+            indicatorService.readAllIndicators(PageRequest.of(0, 10), "EN");
 
         assertNotNull(response);
         assertEquals(2, response.getSize());
@@ -100,7 +103,7 @@ public class IndicatorServiceTest {
     void shouldCreateIndicator() {
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
             List.of(new MultilingualContentDTO()), AccessLevel.CLOSED,
-            List.of(ApplicableEntityType.ALL));
+            List.of(ApplicableEntityType.ALL), IndicatorContentType.TEXT);
         var newIndicator = new Indicator();
 
         when(indicatorRepository.save(any(Indicator.class)))
@@ -118,7 +121,8 @@ public class IndicatorServiceTest {
         var indicatorId = 1;
         var indicatorDTO = new IndicatorDTO(null, "rule", List.of(new MultilingualContentDTO()),
             List.of(new MultilingualContentDTO()), AccessLevel.CLOSED,
-            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON));
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON),
+            IndicatorContentType.NUMBER);
         var existingIndicator = new Indicator();
 
         when(indicatorRepository.findById(indicatorId))
@@ -158,5 +162,49 @@ public class IndicatorServiceTest {
             indicatorService.deleteIndicator(indicatorId));
 
         // Then (IndicatorReferenceConstraintViolationException should be thrown)
+    }
+
+    @Test
+    public void shouldGetIndicatorsApplicableToEntity() {
+        // given
+        var mockIndicator1 = new Indicator();
+        mockIndicator1.setId(1);
+        var mockIndicator2 = new Indicator();
+        mockIndicator2.setId(2);
+
+        var applicableEntityTypes =
+            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON);
+        var mockIndicators = List.of(mockIndicator1, mockIndicator2);
+
+        // Mock repository call
+        when(indicatorRepository.getIndicatorsApplicableToEntity(applicableEntityTypes))
+            .thenReturn(mockIndicators);
+
+        // when
+        var result = indicatorService.getIndicatorsApplicableToEntity(applicableEntityTypes);
+
+        // then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+
+        verify(indicatorRepository).getIndicatorsApplicableToEntity(applicableEntityTypes);
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenNoIndicatorsFound() {
+        // given
+        var applicableEntityTypes = List.of(ApplicableEntityType.DOCUMENT);
+
+        when(indicatorRepository.getIndicatorsApplicableToEntity(applicableEntityTypes))
+            .thenReturn(List.of());
+
+        // when
+        var result = indicatorService.getIndicatorsApplicableToEntity(applicableEntityTypes);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+
+        verify(indicatorRepository).getIndicatorsApplicableToEntity(applicableEntityTypes);
     }
 }

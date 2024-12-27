@@ -23,9 +23,11 @@ public interface PublisherService extends JPAService<Publisher> {
 
     Publisher createPublisher(PublisherBasicAdditionDTO publisherDTO);
 
-    void updatePublisher(PublisherDTO publisherDTO, Integer publisherId);
+    void editPublisher(Integer publisherId, PublisherDTO publisherDTO);
 
     void deletePublisher(Integer publisherId);
+
+    void forceDeletePublisher(Integer publisherId);
 
     void reindexPublishers();
 }

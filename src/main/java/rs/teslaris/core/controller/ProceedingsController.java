@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,6 +64,14 @@ public class ProceedingsController {
     @PublicationEditCheck
     public void deleteProceedings(@PathVariable Integer documentId) {
         proceedingsService.deleteProceedings(documentId);
+        deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
+    }
+
+    @DeleteMapping("/force/{documentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    public void forceDeleteProceedings(@PathVariable Integer documentId) {
+        proceedingsService.forceDeleteProceedings(documentId);
         deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
     }
 }

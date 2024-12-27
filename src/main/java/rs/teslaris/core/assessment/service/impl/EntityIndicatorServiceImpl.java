@@ -1,6 +1,7 @@
 package rs.teslaris.core.assessment.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditEntityIndicatorException;
 
 @Service
 @Primary
@@ -79,6 +81,12 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
 
     protected void setCommonFields(EntityIndicator entityIndicator,
                                    EntityIndicatorDTO entityIndicatorDTO) {
+        if (Objects.nonNull(entityIndicator.getSource()) &&
+            !entityIndicator.getSource().equals(EntityIndicatorSource.MANUAL)) {
+            throw new CantEditEntityIndicatorException(
+                "Only manually entered indicators are editable.");
+        }
+
         entityIndicator.setTimestamp(LocalDateTime.now());
         entityIndicator.setSource(EntityIndicatorSource.MANUAL);
 

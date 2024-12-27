@@ -32,8 +32,10 @@ import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
+import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
@@ -41,6 +43,7 @@ import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -77,6 +80,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final SearchService<OrganisationUnitIndex> searchService;
 
     private final ExpressionTransformer expressionTransformer;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
+
+    private final UserAccountIndexRepository userAccountIndexRepository;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -163,6 +170,20 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
+
+                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                    b.must(mp ->
+                        mp.bool(m -> {
+                            {
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("name_sr").query(token.replace("\\\"", ""))));
+                                m.should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("name_other").query(token.replace("\\\"", ""))));
+                            }
+                            return m;
+                        }));
+                }
+
                 b.should(sb -> sb.wildcard(
                     m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
@@ -174,9 +195,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 b.should(sb -> sb.match(
                     m -> m.field("super_ou_name_other").query(token)));
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("keywords_sr").value("*" + token + "*").caseInsensitive(true)));
+                    m -> m.field("keywords_sr").value("*" + token + "*")
+                        .caseInsensitive(true)));
                 b.should(sb -> sb.wildcard(
-                    m -> m.field("keywords_other").value("*" + token + "*").caseInsensitive(true)));
+                    m -> m.field("keywords_other").value("*" + token + "*")
+                        .caseInsensitive(true)));
                 b.should(sb -> sb.match(
                     m -> m.field("research_areas_sr").query(token)));
                 b.should(sb -> sb.match(
@@ -261,6 +284,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         return nodeIds;
+    }
+
+    @Override
+    public Page<OrganisationUnitIndex> getOUSubUnits(Integer organisationUnitId,
+                                                     Pageable pageable) {
+        return organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
+            organisationUnitId, pageable);
     }
 
     @Override
@@ -351,6 +381,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
+
+        if (Objects.nonNull(organisationUnitDTO.getUris())) {
+            IdentifierUtil.setUris(organisationUnit.getUris(), organisationUnitDTO.getUris());
+        }
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
@@ -385,10 +419,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         StringUtil.removeTrailingDelimiters(researchAreaSrContent, researchAreaOtherContent);
         index.setResearchAreasSr(
-            researchAreaSrContent.length() > 0 ? researchAreaSrContent.toString() :
+            !researchAreaSrContent.isEmpty() ? researchAreaSrContent.toString() :
                 researchAreaOtherContent.toString());
         index.setResearchAreasOther(
-            researchAreaOtherContent.length() > 0 ? researchAreaOtherContent.toString() :
+            !researchAreaOtherContent.isEmpty() ? researchAreaOtherContent.toString() :
                 researchAreaSrContent.toString());
 
         indexBelongsToSuperOURelation(organisationUnit, index);
@@ -398,11 +432,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                OrganisationUnitIndex index) {
         var belongsToRelation =
             organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
-        belongsToRelation.ifPresent(organisationUnitsRelation -> indexMultilingualContent(index,
-            organisationUnitsRelation.getTargetOrganisationUnit(),
-            OrganisationUnit::getName,
-            OrganisationUnitIndex::setSuperOUNameSr,
-            OrganisationUnitIndex::setSuperOUNameOther));
+        belongsToRelation.ifPresent(organisationUnitsRelation -> {
+            indexMultilingualContent(index,
+                organisationUnitsRelation.getTargetOrganisationUnit(),
+                OrganisationUnit::getName,
+                OrganisationUnitIndex::setSuperOUNameSr,
+                OrganisationUnitIndex::setSuperOUNameOther);
+            index.setSuperOUId(belongsToRelation.get().getTargetOrganisationUnit().getId());
+        });
     }
 
     private void indexMultilingualContent(OrganisationUnitIndex index,
@@ -419,9 +456,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,
-            srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
-            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
     @Override
@@ -453,10 +490,62 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 "Organisation unit is already in use.");
         }
 
-        this.delete(organisationUnitId);
+        delete(organisationUnitId);
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             organisationUnitId);
         index.ifPresent(organisationUnitIndexRepository::delete);
+    }
+
+    @Override
+    public void forceDeleteOrganisationUnit(Integer organisationUnitId) {
+        organisationUnitRepository.deleteInvolvementsForOrganisationUnit(organisationUnitId);
+        organisationUnitRepository.deleteRelationsForOrganisationUnit(organisationUnitId);
+
+        // Migrate to non-managed OU for theses
+        migrateThesesToUnmanagedOU(organisationUnitId);
+
+        // Delete all institutional editors and their user account index
+        organisationUnitRepository.fetchInstitutionalEditorsForOrganisationUnit(organisationUnitId)
+            .forEach(user -> {
+                user.setDeleted(true);
+                userAccountIndexRepository.findByDatabaseId(user.getId())
+                    .ifPresent(userAccountIndexRepository::delete);
+            });
+
+        delete(organisationUnitId);
+        var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            organisationUnitId);
+        index.ifPresent(organisationUnitIndexRepository::delete);
+
+        indexBulkUpdateService.removeIdFromListField("document_publication",
+            "organisation_unit_ids",
+            organisationUnitId);
+    }
+
+    public void migrateThesesToUnmanagedOU(Integer organisationUnitId) {
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<Thesis> chunk =
+                organisationUnitRepository.fetchAllThesesForOU(organisationUnitId,
+                    PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((thesis) -> {
+                thesis.getOrganisationUnit().getName().forEach(mc -> {
+                    thesis.getExternalOrganisationUnitName().add(
+                        new MultiLingualContent(mc.getLanguage(), mc.getContent(),
+                            mc.getPriority()));
+                });
+
+                thesis.setOrganisationUnit(null);
+            });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 
     @Override
@@ -579,6 +668,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
         return false;
 
+    }
+
+    @Override
+    public boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId) {
+        return organisationUnitRepository.checkIfInstitutionalAdminsExist(organisationUnitId);
     }
 
     @Override

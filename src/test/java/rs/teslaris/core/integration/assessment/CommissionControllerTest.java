@@ -36,7 +36,7 @@ public class CommissionControllerTest extends BaseTest {
     public void testReadAllCommissions() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/commission?page=0&size=10")
+                    "http://localhost:8081/api/assessment/commission?page=0&size=10&lang=sr")
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 

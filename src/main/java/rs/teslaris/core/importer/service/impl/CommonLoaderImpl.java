@@ -8,12 +8,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -21,29 +23,48 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
+import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.importer.model.common.DocumentImport;
 import rs.teslaris.core.importer.model.common.Event;
 import rs.teslaris.core.importer.model.common.MultilingualContent;
 import rs.teslaris.core.importer.model.common.OrganisationUnit;
+import rs.teslaris.core.importer.model.common.Person;
 import rs.teslaris.core.importer.model.converter.load.publication.JournalPublicationConverter;
 import rs.teslaris.core.importer.model.converter.load.publication.ProceedingsPublicationConverter;
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
 import rs.teslaris.core.importer.utility.DataSet;
+import rs.teslaris.core.importer.utility.LoadProgressReport;
 import rs.teslaris.core.importer.utility.ProgressReportUtility;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 
 @Service
 @RequiredArgsConstructor
 public class CommonLoaderImpl implements CommonLoader {
+
+    private static final Object institutionLock = new Object();
+
+    private static final Object personLock = new Object();
+
+    private static final Object journalLock = new Object();
+
+    private static final Object eventLock = new Object();
 
     private final MongoTemplate mongoTemplate;
 
@@ -63,6 +84,27 @@ public class CommonLoaderImpl implements CommonLoader {
 
     private final PublicationSeriesService publicationSeriesService;
 
+    private final CountryService countryService;
+
+    private final PersonService personService;
+
+    @NotNull
+    private static BasicPersonDTO getBasicPersonDTO(Person person) {
+        var basicPersonDTO = new BasicPersonDTO();
+
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname(person.getName().getFirstName());
+        personNameDTO.setOtherName(person.getName().getMiddleName());
+        personNameDTO.setLastname(person.getName().getLastName());
+        basicPersonDTO.setPersonName(personNameDTO);
+
+        basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
+        basicPersonDTO.setECrisId(person.getECrisId());
+        basicPersonDTO.setENaukaId(person.getENaukaId());
+        basicPersonDTO.setOrcid(person.getOrcid());
+        basicPersonDTO.setApvnt(person.getApvnt());
+        return basicPersonDTO;
+    }
 
     @Override
     public <R> R loadRecordsWizard(Integer userId) {
@@ -92,8 +134,9 @@ public class CommonLoaderImpl implements CommonLoader {
     @Override
     public void skipRecord(Integer userId) {
         var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                mongoTemplate);
+            Objects.requireNonNullElse(
+                ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+                    mongoTemplate), new LoadProgressReport("1", userId, DataSet.DOCUMENT_IMPORTS));
         Query nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
@@ -120,8 +163,9 @@ public class CommonLoaderImpl implements CommonLoader {
     @Override
     public void markRecordAsLoaded(Integer userId) {
         var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                mongoTemplate);
+            Objects.requireNonNullElse(
+                ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+                    mongoTemplate), new LoadProgressReport("1", userId, DataSet.DOCUMENT_IMPORTS));
 
         Query query = new Query();
         query.addCriteria(Criteria.where("identifier").is(progressReport.getLastLoadedId()));
@@ -173,6 +217,46 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     @Override
+    public PersonResponseDTO createPerson(String scopusAuthorId, Integer userId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId);
+
+        if (Objects.isNull(currentlyLoadedEntity)) {
+            throw new NotFoundException("No entity is being loaded at the moment.");
+        }
+
+        for (var contribution : currentlyLoadedEntity.getContributions()) {
+            if (contribution.getPerson().getScopusAuthorId().equals(scopusAuthorId) &&
+                Objects.isNull(personService.findPersonByScopusAuthorId(scopusAuthorId))) {
+
+                var savedPerson = createLoadedPerson(contribution.getPerson());
+
+                contribution.getInstitutions().forEach(institution -> {
+                    var institutionIndex =
+                        organisationUnitService.findOrganisationUnitByScopusAfid(
+                            institution.getScopusAfid());
+
+                    if (Objects.nonNull(institutionIndex)) {
+                        var employmentInstitution =
+                            organisationUnitService.findOne(institutionIndex.getDatabaseId());
+                        var currentEmployment =
+                            new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
+                                InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                                employmentInstitution, null, new HashSet<>());
+                        savedPerson.addInvolvement(currentEmployment);
+                    }
+                });
+
+                personService.save(savedPerson);
+                personService.indexPerson(savedPerson, savedPerson.getId());
+
+                return PersonConverter.toDTO(savedPerson);
+            }
+        }
+
+        throw new NotFoundException("Person with given ScopusID is not loaded.");
+    }
+
+    @Override
     public PublicationSeriesDTO createJournal(String eIssn, String printIssn, Integer userId) {
         var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId);
 
@@ -220,6 +304,12 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private PublicationSeriesDTO createJournal(DocumentImport documentImport) {
+        // Lock hint
+        var potentialMatch = searchPotentialMatches(documentImport);
+        if (Objects.nonNull(potentialMatch)) {
+            return potentialMatch;
+        }
+
         var journalDTO = new PublicationSeriesDTO();
 
         journalDTO.setTitle(new ArrayList<>());
@@ -232,10 +322,17 @@ public class CommonLoaderImpl implements CommonLoader {
         journalDTO.setNameAbbreviation(new ArrayList<>());
         journalDTO.setLanguageTagIds(new ArrayList<>());
 
-        var createdJournal = journalService.createJournal(journalDTO, true);
-        journalDTO.setId(createdJournal.getId());
+        synchronized (journalLock) {
+            potentialMatch = searchPotentialMatches(documentImport);
+            if (Objects.nonNull(potentialMatch)) {
+                return potentialMatch;
+            }
 
-        return journalDTO;
+            var createdJournal = journalService.createJournal(journalDTO, true);
+            journalDTO.setId(createdJournal.getId());
+
+            return journalDTO;
+        }
     }
 
     private ProceedingsDTO createProceedings(DocumentImport proceedingsPublication,
@@ -267,6 +364,12 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private Conference createConference(Event conference) {
+        // Lock hint
+        var potentialMatch = searchPotentialMatches(conference);
+        if (Objects.nonNull(potentialMatch)) {
+            return potentialMatch;
+        }
+
         var conferenceDTO = new ConferenceDTO();
 
         conferenceDTO.setName(new ArrayList<>());
@@ -282,17 +385,29 @@ public class CommonLoaderImpl implements CommonLoader {
         conferenceDTO.setKeywords(new ArrayList<>());
         setMultilingualContent(conferenceDTO.getKeywords(), conference.getKeywords());
 
-        conferenceDTO.setState(new ArrayList<>());
-        setMultilingualContent(conferenceDTO.getState(), conference.getState());
-
         conferenceDTO.setPlace(new ArrayList<>());
         setMultilingualContent(conferenceDTO.getPlace(), conference.getPlace());
+
+        for (var stateMC : conference.getState()) {
+            var country = countryService.findCountryByName(stateMC.getContent());
+            if (country.isPresent()) {
+                conferenceDTO.setCountryId(country.get().getId());
+                break;
+            }
+        }
 
         conferenceDTO.setSerialEvent(conference.getSerialEvent());
         conferenceDTO.setDateFrom(conference.getDateFrom());
         conferenceDTO.setDateTo(conference.getDateTo());
 
-        return conferenceService.createConference(conferenceDTO, true);
+        synchronized (eventLock) {
+            potentialMatch = searchPotentialMatches(conference);
+            if (Objects.nonNull(potentialMatch)) {
+                return potentialMatch;
+            }
+
+            return conferenceService.createConference(conferenceDTO, true);
+        }
     }
 
     private void setMultilingualContent(List<MultilingualContentDTO> targetList,
@@ -311,6 +426,12 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private OrganisationUnitDTO createLoadedInstitution(OrganisationUnit institution) {
+        // Lock hint
+        var potentialMatch = searchPotentialMatches(institution);
+        if (Objects.nonNull(potentialMatch)) {
+            return potentialMatch;
+        }
+
         var organisationUnitDTO = new OrganisationUnitRequestDTO();
 
         organisationUnitDTO.setName(new ArrayList<>());
@@ -325,7 +446,93 @@ public class CommonLoaderImpl implements CommonLoader {
         organisationUnitDTO.setContact(new ContactDTO());
         organisationUnitDTO.setLocation(new GeoLocationDTO());
 
-        return organisationUnitService.createOrganisationUnit(organisationUnitDTO, true);
+        synchronized (institutionLock) {
+            potentialMatch = searchPotentialMatches(institution);
+            if (Objects.nonNull(potentialMatch)) {
+                return potentialMatch;
+            }
+
+            return organisationUnitService.createOrganisationUnit(organisationUnitDTO, true);
+        }
+    }
+
+    private rs.teslaris.core.model.person.Person createLoadedPerson(Person person) {
+        // Lock hint
+        var potentialMatch = searchPotentialMatches(person);
+        if (Objects.nonNull(potentialMatch)) {
+            return potentialMatch;
+        }
+
+        var basicPersonDTO = getBasicPersonDTO(person);
+
+        synchronized (personLock) {
+            potentialMatch = searchPotentialMatches(person);
+            if (Objects.nonNull(potentialMatch)) {
+                return potentialMatch;
+            }
+
+            return personService.createPersonWithBasicInfo(basicPersonDTO, true);
+        }
+    }
+
+    @Nullable
+    private OrganisationUnitDTO searchPotentialMatches(OrganisationUnit institution) {
+        var potentialMatch =
+            organisationUnitService.findOrganisationUnitByScopusAfid(institution.getScopusAfid());
+        if (Objects.nonNull(potentialMatch)) {
+            var existingRecordResponse = new OrganisationUnitDTO();
+            existingRecordResponse.setName(List.of(new MultilingualContentDTO(-1, "",
+                potentialMatch.getNameSr(), 1)));
+            existingRecordResponse.setId(potentialMatch.getDatabaseId());
+            return existingRecordResponse;
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private rs.teslaris.core.model.person.Person searchPotentialMatches(Person person) {
+        var potentialMatch =
+            personService.findPersonByScopusAuthorId(person.getScopusAuthorId());
+        if (Objects.nonNull(potentialMatch)) {
+            var existingRecordResponse = new rs.teslaris.core.model.person.Person();
+            existingRecordResponse.setName(
+                new PersonName(potentialMatch.getName().trim(), "", "", null, null));
+            existingRecordResponse.setId(potentialMatch.getDatabaseId());
+            return existingRecordResponse;
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private PublicationSeriesDTO searchPotentialMatches(DocumentImport documentImport) {
+        var potentialMatch =
+            journalService.readJournalByIssn(documentImport.getEIssn(),
+                documentImport.getPrintIssn());
+        if (Objects.nonNull(potentialMatch)) {
+            var existingRecordResponse = new PublicationSeriesDTO();
+            existingRecordResponse.setTitle(
+                List.of(new MultilingualContentDTO(-1, "", potentialMatch.getTitleOther(), 1)));
+            existingRecordResponse.setId(potentialMatch.getDatabaseId());
+            return existingRecordResponse;
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private Conference searchPotentialMatches(Event conference) {
+        var potentialMatch =
+            conferenceService.findConferenceByConfId(conference.getConfId());
+        if (Objects.nonNull(potentialMatch)) {
+            var existingRecordResponse = new Conference();
+            existingRecordResponse.setName(potentialMatch.getName());
+            existingRecordResponse.setId(potentialMatch.getId());
+            return existingRecordResponse;
+        }
+
+        return null;
     }
 
     @Nullable

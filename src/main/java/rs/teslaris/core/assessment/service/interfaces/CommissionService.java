@@ -11,7 +11,9 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface CommissionService extends JPAService<Commission> {
 
-    Page<CommissionResponseDTO> readAllCommissions(Pageable pageable, String searchExpression);
+    Page<CommissionResponseDTO> readAllCommissions(Pageable pageable,
+                                                   String searchExpression,
+                                                   String language);
 
     CommissionResponseDTO readCommissionById(Integer commissionId);
 

@@ -4,7 +4,9 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -20,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
@@ -83,9 +86,9 @@ public class ResearchAreaServiceTest {
         var nameMultilingualContent = Set.of(new MultiLingualContent());
         var descriptionMultilingualContent = Set.of(new MultiLingualContent());
 
-        when(multilingualContentService.getMultilingualContent(
+        when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getName())).thenReturn(nameMultilingualContent);
-        when(multilingualContentService.getMultilingualContent(
+        when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getDescription())).thenReturn(descriptionMultilingualContent);
         when(researchAreaRepository.save(any(ResearchArea.class))).thenAnswer(invocation -> {
             ResearchArea savedResearchArea = invocation.getArgument(0);
@@ -104,9 +107,11 @@ public class ResearchAreaServiceTest {
         assertEquals(descriptionMultilingualContent, resultResearchArea.getDescription());
         assertEquals(1, resultResearchArea.getSuperResearchArea().getId());
 
-        verify(multilingualContentService, times(1)).getMultilingualContent(
+        verify(multilingualContentService,
+            times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getName());
-        verify(multilingualContentService, times(1)).getMultilingualContent(
+        verify(multilingualContentService,
+            times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getDescription());
         verify(researchAreaRepository, times(1)).save(any(ResearchArea.class));
     }
@@ -134,9 +139,11 @@ public class ResearchAreaServiceTest {
         researchAreaService.editResearchArea(researchAreaDTO, 1);
 
         // then
-        verify(multilingualContentService, times(1)).getMultilingualContent(
+        verify(multilingualContentService,
+            times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getName());
-        verify(multilingualContentService, times(1)).getMultilingualContent(
+        verify(multilingualContentService,
+            times(1)).getMultilingualContentAndSetDefaultsIfNonExistent(
             researchAreaDTO.getDescription());
         verify(researchAreaRepository, times(1)).save(any(ResearchArea.class));
     }
@@ -215,5 +222,100 @@ public class ResearchAreaServiceTest {
         ResearchAreaDTO dto2 = result.get(1);
         assertEquals(2, dto2.getId());
         assertEquals(20, dto2.getSuperResearchAreaId());
+    }
+
+    @Test
+    public void shouldSearchCountries() {
+        // given
+        var researchAreaPage = new PageImpl<>(List.of(new ResearchArea()));
+        var pageable = PageRequest.of(0, 10);
+        when(researchAreaRepository.searchResearchAreas("Search Term", "SR", pageable)).thenReturn(
+            researchAreaPage);
+
+        // when
+        var result = researchAreaService.searchResearchAreas(pageable, "Search Term", "SR");
+
+        // then
+        assertNotNull(result);
+        verify(researchAreaRepository).searchResearchAreas("Search Term", "SR", pageable);
+    }
+
+    @Test
+    public void shouldFetchTopLevelResearchAreas() {
+        // given
+        var researchAreas = List.of(new ResearchArea());
+        when(researchAreaRepository.getTopLevelResearchAreas()).thenReturn(researchAreas);
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(0);
+
+        // then
+        assertNotNull(result);
+        assertEquals(researchAreas.size(), result.size());
+        verify(researchAreaRepository).getTopLevelResearchAreas();
+        verify(researchAreaRepository, never()).getChildResearchAreas(any());
+    }
+
+    @Test
+    public void shouldFetchChildResearchAreas() {
+        // given
+        var researchAreas = List.of(new ResearchArea());
+        var parentId = 1;
+        when(researchAreaRepository.getChildResearchAreas(parentId)).thenReturn(researchAreas);
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(parentId);
+
+        // then
+        assertNotNull(result);
+        assertEquals(researchAreas.size(), result.size());
+        verify(researchAreaRepository).getChildResearchAreas(parentId);
+        verify(researchAreaRepository, never()).getTopLevelResearchAreas();
+    }
+
+    @Test
+    public void shouldReturnEmptyForTopLevelWhenNoResearchAreasFound() {
+        // given
+        when(researchAreaRepository.getTopLevelResearchAreas()).thenReturn(List.of());
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(0);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(researchAreaRepository).getTopLevelResearchAreas();
+        verify(researchAreaRepository, never()).getChildResearchAreas(any());
+    }
+
+    @Test
+    public void shouldReturnEmptyForChildWhenNoResearchAreasFound() {
+        // given
+        var parentId = 1;
+        when(researchAreaRepository.getChildResearchAreas(parentId)).thenReturn(List.of());
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(parentId);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(researchAreaRepository).getChildResearchAreas(parentId);
+        verify(researchAreaRepository, never()).getTopLevelResearchAreas();
+    }
+
+    @Test
+    public void shouldHandleNullParentIdGracefully() {
+        // given
+        when(researchAreaRepository.getChildResearchAreas(null)).thenReturn(List.of());
+
+        // when
+        var result = researchAreaService.getChildResearchAreas(null);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(researchAreaRepository).getTopLevelResearchAreas();
+        verify(researchAreaRepository, never()).getChildResearchAreas(null);
     }
 }

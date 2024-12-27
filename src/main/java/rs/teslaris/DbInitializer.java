@@ -7,8 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +22,9 @@ import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.EventAssessmentClassification;
+import rs.teslaris.core.assessment.model.EventIndicator;
 import rs.teslaris.core.assessment.model.Indicator;
+import rs.teslaris.core.assessment.model.IndicatorContentType;
 import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
@@ -27,6 +32,7 @@ import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.EventIndicatorRepository;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -49,6 +55,7 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -102,9 +109,13 @@ import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.seeding.CsvDataLoader;
+import rs.teslaris.core.util.seeding.SKOSLoader;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
+@Profile("test")
 public class DbInitializer implements ApplicationRunner {
 
     private final AuthorityRepository authorityRepository;
@@ -155,6 +166,12 @@ public class DbInitializer implements ApplicationRunner {
 
     private final ThesisRepository thesisRepository;
 
+    private final CsvDataLoader csvDataLoader;
+
+    private final SKOSLoader skosLoader;
+
+    private final Environment environment;
+
     private final AssessmentClassificationRepository assessmentClassificationRepository;
 
     private final AssessmentMeasureRepository assessmentMeasureRepository;
@@ -171,6 +188,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final PublicationSeriesAssessmentClassificationRepository
         publicationSeriesAssessmentClassificationRepository;
+
+    private final EventIndicatorRepository eventIndicatorRepository;
 
 
     @Override
@@ -222,8 +241,17 @@ public class DbInitializer implements ApplicationRunner {
         var registerEmployee = new Privilege("REGISTER_EMPLOYEE");
         var reindexPrivilege = new Privilege("REINDEX_DATABASE");
         var mergeBookSeriesPublications = new Privilege("MERGE_BOOK_SERIES_PUBLICATIONS");
+        var editCountries = new Privilege("EDIT_COUNTRIES");
+        var forceDelete = new Privilege("FORCE_DELETE_ENTITIES");
+        var switchEntityToUnmanaged = new Privilege("SWITCH_ENTITY_TO_UNMANAGED");
+        var claimDocument = new Privilege("CLAIM_DOCUMENT");
+        var mergePublisherPublications = new Privilege("MERGE_PUBLISHER_PUBLICATIONS");
+        var mergePublishersMetadata = new Privilege("MERGE_PUBLISHERS_METADATA");
+        var unbindYourselfFromPublication = new Privilege("UNBIND_YOURSELF_FROM_PUBLICATION");
         var editEntityAssessmentClassifications =
             new Privilege("EDIT_ENTITY_ASSESSMENT_CLASSIFICATION");
+        var editLanguageTags = new Privilege("EDIT_LANGUAGE_TAGS");
+        var editEventIndicators = new Privilege("EDIT_EVENT_INDICATORS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -238,7 +266,10 @@ public class DbInitializer implements ApplicationRunner {
                 registerEmployee, reindexPrivilege, startDeduplicationProcess, performDeduplication,
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
-                mergeOUMetadata, editEntityIndicators, editEntityAssessmentClassifications));
+                mergeOUMetadata, editCountries, forceDelete, switchEntityToUnmanaged,
+                claimDocument, mergePublisherPublications, mergePublishersMetadata,
+                unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
+                editEntityAssessmentClassifications, editEventIndicators));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -253,14 +284,17 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, deletePerson, registerEmployee, reindexPrivilege,
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
                 mergeEventMetadata, mergePublicationSeriesMetadata, mergeMonographPublications,
-                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata,
-                editEntityIndicators, editEntityAssessmentClassifications
+                prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries,
+                forceDelete, switchEntityToUnmanaged, mergePublisherPublications, editLanguageTags,
+                mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
+                editEventIndicators
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
-            List.of(new Privilege[] {allowAccountTakeover, updateProfile, editPersonalInfo,
-                createUserBasic, editDocumentFiles, editDocumentIndicators,
-                editEntityIndicatorProofs, listMyJournalPublications, editEntityIndicators})));
+            List.of(allowAccountTakeover, updateProfile, editPersonalInfo,
+                createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
+                editEntityIndicatorProofs, listMyJournalPublications, editEventIndicators,
+                unbindYourselfFromPublication, editEntityIndicators)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -333,9 +367,19 @@ public class DbInitializer implements ApplicationRunner {
 
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
 
+        // COUNTRIES
+        csvDataLoader.loadData("countries.csv", this::processCountryLine);
+
+        // RESEARCH AREAS
+        skosLoader.loadResearchAreas();
+
         ///////////////////// TESTING DATA /////////////////////
-        initializeIntegrationTestingData(serbianTag, serbianLanguage, englishTag, germanLanguage,
-            researchArea3, researcherAuthority);
+        if (Arrays.stream(environment.getActiveProfiles())
+            .anyMatch(profile -> profile.equalsIgnoreCase("test"))) {
+            initializeIntegrationTestingData(serbianTag, serbianLanguage, englishTag,
+                germanLanguage,
+                researchArea3, researcherAuthority);
+        }
 
         ///////////////////// ASSESSMENTS DATA /////////////////////
         initializeIndicators(englishTag, serbianTag);
@@ -345,14 +389,14 @@ public class DbInitializer implements ApplicationRunner {
                                                   LanguageTag englishTag, Language germanLanguage,
                                                   ResearchArea researchArea3,
                                                   Authority researcherAuthority) {
-        var country = new Country("RS", new HashSet<>());
-        country = countryRepository.save(country);
+        var country = new Country("SRB", new HashSet<>());
+        countryRepository.save(country);
 
         var postalAddress = new PostalAddress(country, new HashSet<>(),
             new HashSet<>());
         var personalInfo =
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
-                new Contact("john@ftn.uns.ac.com", "021555666"));
+                new Contact("john@ftn.uns.ac.com", "021555666"), new HashSet<>());
         var person1 = new Person();
         person1.setOldId(1);
         person1.setName(
@@ -365,7 +409,7 @@ public class DbInitializer implements ApplicationRunner {
 
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
-                "Janko", "Jankovic", false, false, serbianLanguage, researcherAuthority, person1,
+                "Dragan", "Ivanovic", false, false, serbianLanguage, researcherAuthority, person1,
                 null, UserNotificationPeriod.DAILY);
         userRepository.save(researcherUser);
 
@@ -423,7 +467,7 @@ public class DbInitializer implements ApplicationRunner {
         var publisher1 = new Publisher();
         publisher1.setName(Set.of(new MultiLingualContent(englishTag, "Name1", 1)));
         publisher1.setPlace(Set.of(new MultiLingualContent(englishTag, "Place1", 1)));
-        publisher1.setState(Set.of(new MultiLingualContent(englishTag, "Serbia", 1)));
+        publisher1.setCountry(country);
         publisherRepository.save(publisher1);
 
         var conferenceEvent2 = new Conference();
@@ -456,7 +500,7 @@ public class DbInitializer implements ApplicationRunner {
             new HashSet<>());
         var personalInfo2 =
             new PersonalInfo(LocalDate.of(2000, 1, 31), "Germany", Sex.MALE, postalAddress2,
-                new Contact("joakim@email.com", "021555769"));
+                new Contact("joakim@email.com", "021555769"), new HashSet<>());
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
         person2.setName(
@@ -561,7 +605,9 @@ public class DbInitializer implements ApplicationRunner {
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
-        countryRepository.save(country);
+        var country2 = new Country("MNE",
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Crna Gora", 1))));
+        countryRepository.saveAll(List.of(country, country2));
 
         datasetContribution.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null));
@@ -575,6 +621,7 @@ public class DbInitializer implements ApplicationRunner {
         softwareContribution.setOrderNumber(1);
         softwareContribution.setDocument(dataset);
         softwareContribution.setApproveStatus(ApproveStatus.APPROVED);
+        softwareContribution.getInstitutions().add(dummyOU);
         softwareContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
@@ -590,6 +637,21 @@ public class DbInitializer implements ApplicationRunner {
         monograph1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 1", 1)));
         monograph1.setMonographType(MonographType.BIBLIOGRAPHY);
+        var monographContribution = new PersonDocumentContribution();
+        monographContribution.setPerson(person2);
+        monographContribution.setContributionType(DocumentContributionType.AUTHOR);
+        monographContribution.setIsMainContributor(true);
+        monographContribution.setIsCorrespondingContributor(false);
+        monographContribution.setOrderNumber(1);
+        monographContribution.setDocument(monograph1);
+        monographContribution.setApproveStatus(ApproveStatus.APPROVED);
+        monographContribution.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), new PersonName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+        monographContribution.getAffiliationStatement().setDisplayPersonName(
+            new PersonName("Joachim", "N.", "S.", null, null));
+
+        monograph1.getContributors().add(monographContribution);
         monographRepository.save(monograph1);
 
         var monograph2 = new Monograph();
@@ -611,7 +673,7 @@ public class DbInitializer implements ApplicationRunner {
             new HashSet<>());
         var personalInfo3 =
             new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress3,
-                new Contact("test@email.com", "021555769"));
+                new Contact("test@email.com", "021555769"), new HashSet<>());
         person3.setApproveStatus(ApproveStatus.APPROVED);
         person3.setPersonalInfo(personalInfo3);
         person3.setName(
@@ -620,7 +682,7 @@ public class DbInitializer implements ApplicationRunner {
         personRepository.save(person3);
 
         var softwareContribution2 = new PersonDocumentContribution();
-        softwareContribution2.setPerson(person3);
+//        softwareContribution2.setPerson(person3);
         softwareContribution2.setContributionType(DocumentContributionType.AUTHOR);
         softwareContribution2.setIsMainContributor(false);
         softwareContribution2.setIsCorrespondingContributor(false);
@@ -643,7 +705,7 @@ public class DbInitializer implements ApplicationRunner {
             new HashSet<>());
         var personalInfo4 =
             new PersonalInfo(LocalDate.of(1976, 6, 24), "Serbia", Sex.FEMALE, postalAddress4,
-                new Contact("test1@email.com", "021555769"));
+                new Contact("test1@email.com", "021555769"), new HashSet<>());
         person4.setApproveStatus(ApproveStatus.APPROVED);
         person4.setPersonalInfo(personalInfo4);
         person4.setName(
@@ -674,6 +736,7 @@ public class DbInitializer implements ApplicationRunner {
         monographPublication1.setApproveStatus(ApproveStatus.APPROVED);
         monographPublication1.setDocumentDate("2024");
         monographPublication1.setMonograph(monograph1);
+        monographPublication1.setMonographPublicationType(MonographPublicationType.PREFACE);
         monographPublication1.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Monograph Publication 1", 1)));
         monographPublicationRepository.save(monographPublication1);
@@ -682,6 +745,7 @@ public class DbInitializer implements ApplicationRunner {
         monographPublication2.setApproveStatus(ApproveStatus.APPROVED);
         monographPublication2.setDocumentDate("2024");
         monographPublication2.setMonograph(monograph1);
+        monographPublication2.setMonographPublicationType(MonographPublicationType.CHAPTER);
         monographPublication2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Rad u monografiji 2", 1)));
         monographPublicationRepository.save(monographPublication2);
@@ -725,6 +789,7 @@ public class DbInitializer implements ApplicationRunner {
         indicator1.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Indicator 1 description", 1)));
         indicator1.setAccessLevel(AccessLevel.OPEN);
+        indicator1.setApplicableTypes(Set.of(ApplicableEntityType.ALL));
 
         var indicator2 = new Indicator();
         indicator2.setCode("Code 2");
@@ -796,7 +861,7 @@ public class DbInitializer implements ApplicationRunner {
         commission2.setFormalDescriptionOfRule("Rule 2");
         commission2.setAssessmentDateFrom(LocalDate.of(2022, 2, 4));
         commission2.setAssessmentDateTo(LocalDate.of(2022, 5, 4));
-        commission2.setSuperComission(commission1);
+        commission2.setSuperCommission(commission1);
 
         var commission3 = new Commission();
         commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1)));
@@ -806,12 +871,20 @@ public class DbInitializer implements ApplicationRunner {
 
         var assessmentRulebook1 = new AssessmentRulebook();
         assessmentRulebook1.setName(
-            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 1", 1)));
+            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 1", 1),
+                new MultiLingualContent(serbianTag, "Pravilnik 1", 2)));
+        assessmentRulebook1.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Description 1", 1),
+                new MultiLingualContent(serbianTag, "Opis 1", 2)));
         assessmentRulebook1.setIssueDate(LocalDate.of(2023, 10, 1));
 
         var assessmentRulebook2 = new AssessmentRulebook();
         assessmentRulebook2.setName(
-            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 2", 1)));
+            Set.of(new MultiLingualContent(englishTag, "Assessment Rulebook 2", 1),
+                new MultiLingualContent(serbianTag, "Pravilnik 2", 2)));
+        assessmentRulebook2.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Description 2", 1),
+                new MultiLingualContent(serbianTag, "Opis 2", 2)));
         assessmentRulebook2.setIssueDate(LocalDate.of(2023, 10, 1));
         assessmentRulebook2.setAssessmentMeasures(List.of(assessmentMeasure3));
         assessmentMeasure3.setRulebook(assessmentRulebook2);
@@ -847,6 +920,12 @@ public class DbInitializer implements ApplicationRunner {
             License.OPEN_ACCESS, ApproveStatus.APPROVED));
         documentIndicatorRepository.save(documentIndicator1);
 
+        var eventIndicator1 = new EventIndicator();
+        eventIndicator1.setTextualValue("OPEN ACCESS INDICATOR");
+        eventIndicator1.setIndicator(indicator1);
+        eventIndicator1.setEvent(conferenceEvent2);
+        eventIndicatorRepository.save(eventIndicator1);
+
         var eventAssessmentClassification1 = new EventAssessmentClassification();
         eventAssessmentClassification1.setEvent(conferenceEvent1);
         eventAssessmentClassification1.setAssessmentClassification(assessmentClassification1);
@@ -874,95 +953,180 @@ public class DbInitializer implements ApplicationRunner {
         totalViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1),
             new MultiLingualContent(serbianTag, "Ukupno pregleda", 2)));
         totalViews.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Total number of views.", 1)));
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of views.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj pregleda.",
+                    2)));
         totalViews.setAccessLevel(AccessLevel.OPEN);
         totalViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        totalViews.setContentType(IndicatorContentType.NUMBER);
 
         var dailyViews = new Indicator();
         dailyViews.setCode("viewsDay");
-        dailyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Daily views", 1)));
+        dailyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Today's views", 1),
+            new MultiLingualContent(serbianTag, "Pregleda danas", 2)));
         dailyViews.setDescription(
             Set.of(
-                new MultiLingualContent(englishTag, "Total number of views in the last 24h.", 1)));
+                new MultiLingualContent(englishTag, "Total number of views in the last 24h.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih 24h.",
+                    2)));
         dailyViews.setAccessLevel(AccessLevel.OPEN);
         dailyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        dailyViews.setContentType(IndicatorContentType.NUMBER);
 
         var weeklyViews = new Indicator();
         weeklyViews.setCode("viewsWeek");
-        weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Weekly views", 1)));
+        weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Week's views", 1),
+            new MultiLingualContent(serbianTag, "Pregleda ove sedmice", 2)));
         weeklyViews.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
-                1)));
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih 7 dana.",
+                    2)));
         weeklyViews.setAccessLevel(AccessLevel.OPEN);
         weeklyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        weeklyViews.setContentType(IndicatorContentType.NUMBER);
 
         var monthlyViews = new Indicator();
         monthlyViews.setCode("viewsMonth");
-        monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Monthly views", 1)));
+        monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Month's views", 1),
+            new MultiLingualContent(serbianTag, "Pregleda ovog meseca", 2)));
         monthlyViews.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Total number of views in the last month.",
-                1)));
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of views in the last month.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih mesec dana.",
+                    2)));
         monthlyViews.setAccessLevel(AccessLevel.OPEN);
         monthlyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        monthlyViews.setContentType(IndicatorContentType.NUMBER);
 
         var totalDownloads = new Indicator();
         totalDownloads.setCode("downloadsTotal");
-        totalDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Total downloads", 1)));
+        totalDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Total downloads", 1),
+            new MultiLingualContent(serbianTag, "Ukupno preuzimanja", 2)));
         totalDownloads.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Total number of downloads.", 1)));
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of downloads.",
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja.",
+                    2)));
         totalDownloads.setAccessLevel(AccessLevel.OPEN);
         totalDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        totalDownloads.setContentType(IndicatorContentType.NUMBER);
 
         var dailyDownloads = new Indicator();
         dailyDownloads.setCode("downloadsDay");
-        dailyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Daily downloads", 1)));
+        dailyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Today's downloads", 1),
+            new MultiLingualContent(serbianTag, "Preuzimanja danas", 2)));
         dailyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last 24h.",
-                    1)));
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja u poslednjih 24h.",
+                    2)));
         dailyDownloads.setAccessLevel(AccessLevel.OPEN);
         dailyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        dailyDownloads.setContentType(IndicatorContentType.NUMBER);
 
         var weeklyDownloads = new Indicator();
         weeklyDownloads.setCode("downloadsWeek");
-        weeklyDownloads.setTitle(
-            Set.of(new MultiLingualContent(englishTag, "Weekly downloads", 1)));
+        weeklyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Week's downloads", 1),
+            new MultiLingualContent(serbianTag, "Preuzimanja ove sedmice", 2)));
         weeklyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last 7 days.",
-                    1)));
+                    1),
+                new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja u poslednjih 7 dana.",
+                    2)));
         weeklyDownloads.setAccessLevel(AccessLevel.OPEN);
         weeklyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        weeklyDownloads.setContentType(IndicatorContentType.NUMBER);
 
         var monthlyDownloads = new Indicator();
         monthlyDownloads.setCode("downloadsMonth");
         monthlyDownloads.setTitle(
-            Set.of(new MultiLingualContent(englishTag, "Monthly downloads", 1)));
+            Set.of(new MultiLingualContent(englishTag, "Month's downloads", 1),
+                new MultiLingualContent(serbianTag, "Preuzimanja ovog meseca", 2)));
         monthlyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last month.",
-                    1)));
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj preuzimanja u poslednjih mesec dana.",
+                    2)));
         monthlyDownloads.setAccessLevel(AccessLevel.OPEN);
         monthlyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
+        monthlyDownloads.setContentType(IndicatorContentType.NUMBER);
+
+        var numberOfPages = new Indicator();
+        numberOfPages.setCode("pageNum");
+        numberOfPages.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Number of pages", 1),
+                new MultiLingualContent(serbianTag, "Broj stranica", 2)));
+        numberOfPages.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total number of pages in a document.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj stranica u dokumentu.",
+                    2)));
+        numberOfPages.setAccessLevel(AccessLevel.CLOSED);
+        numberOfPages.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
+        numberOfPages.setContentType(IndicatorContentType.NUMBER);
 
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads,
-                dailyDownloads, weeklyDownloads, monthlyDownloads));
+                dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages));
+    }
+
+    private void processCountryLine(String[] line) {
+        var country = new Country();
+        country.setCode(line[0]);
+
+        var names = new HashSet<MultiLingualContent>();
+        var nameList = line[1].split(";");
+        for (int i = 0; i < nameList.length; i++) {
+            var nameParts = nameList[i].split("@");
+            if (nameParts.length == 2) {
+                var content = nameParts[0].trim();
+                var languageTagCode = nameParts[1].trim().toUpperCase();
+
+                var languageTag = languageTagRepository
+                    .findLanguageTagByLanguageTag(languageTagCode)
+                    .orElseGet(() -> {
+                        var newLanguageTag = new LanguageTag();
+                        newLanguageTag.setLanguageTag(languageTagCode);
+                        newLanguageTag.setDisplay(languageTagCode);
+                        log.info("Created new language tag: {}", languageTagCode);
+                        return languageTagRepository.save(newLanguageTag);
+                    });
+
+                var multilingualContent =
+                    new MultiLingualContent(languageTag, content, i + 1);
+                names.add(multilingualContent);
+            }
+        }
+        country.setName(names);
+        countryRepository.save(country);
     }
 }

@@ -151,10 +151,13 @@ public class ThesisServiceTest {
         var thesisId = 1;
         var thesisDTO = new ThesisDTO();
         thesisDTO.setDocumentDate("2024");
+        thesisDTO.setOrganisationUnitId(1);
+
         var thesisToUpdate = new Thesis();
         thesisToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         thesisToUpdate.setDocumentDate("2023");
 
+        when(organisationUnitService.findOne(1)).thenReturn(new OrganisationUnit());
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesisToUpdate);
         when(thesisJPAService.save(any())).thenReturn(thesisToUpdate);
 

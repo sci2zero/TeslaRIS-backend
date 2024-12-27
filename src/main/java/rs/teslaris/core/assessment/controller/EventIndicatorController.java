@@ -2,13 +2,25 @@ package rs.teslaris.core.assessment.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.EntityIndicatorEditCheck;
+import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
+import rs.teslaris.core.assessment.dto.EntityIndicatorResponseDTO;
+import rs.teslaris.core.assessment.dto.EventIndicatorDTO;
 import rs.teslaris.core.assessment.service.interfaces.EventIndicatorService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/event-indicator")
@@ -16,6 +28,8 @@ import rs.teslaris.core.assessment.service.interfaces.EventIndicatorService;
 public class EventIndicatorController {
 
     private final EventIndicatorService eventIndicatorService;
+
+    private final JwtUtil tokenUtil;
 
 
     @GetMapping("/{eventId}")
@@ -32,5 +46,27 @@ public class EventIndicatorController {
             accessLevel -> eventIndicatorService.getIndicatorsForEvent(eventId,
                 accessLevel)
         );
+    }
+
+    @PostMapping("/{eventId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EDIT_EVENT_INDICATORS')")
+    @Idempotent
+    public EntityIndicatorResponseDTO createEventIndicator(
+        @RequestBody EventIndicatorDTO eventIndicatorDTO,
+        @RequestHeader("Authorization") String bearerToken) {
+        return EntityIndicatorConverter.toDTO(
+            eventIndicatorService.createEventIndicator(eventIndicatorDTO,
+                tokenUtil.extractUserIdFromToken(bearerToken)));
+    }
+
+    @PutMapping("/{eventId}/{entityIndicatorId}")
+    @PreAuthorize("hasAuthority('EDIT_EVENT_INDICATORS')")
+    @EntityIndicatorEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateEventIndicator(
+        @RequestBody EventIndicatorDTO eventIndicatorDTO,
+        @PathVariable Integer entityIndicatorId) {
+        eventIndicatorService.updateEventIndicator(entityIndicatorId, eventIndicatorDTO);
     }
 }

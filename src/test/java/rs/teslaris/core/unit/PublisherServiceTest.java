@@ -31,6 +31,7 @@ import rs.teslaris.core.indexrepository.PublisherIndexRepository;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.impl.document.PublisherServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.email.EmailUtil;
@@ -55,6 +56,9 @@ public class PublisherServiceTest {
     @Mock
     private SearchService<PublisherIndex> searchService;
 
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
+
     @InjectMocks
     private PublisherServiceImpl publisherService;
 
@@ -73,7 +77,6 @@ public class PublisherServiceTest {
         var publisherDTO = new PublisherDTO();
         publisherDTO.setName(new ArrayList<>());
         publisherDTO.setPlace(new ArrayList<>());
-        publisherDTO.setState(new ArrayList<>());
 
         var publisher = new Publisher();
 
@@ -92,7 +95,6 @@ public class PublisherServiceTest {
         // given
         var publisherDTO = new PublisherBasicAdditionDTO();
         publisherDTO.setName(new ArrayList<>());
-        publisherDTO.setState(new ArrayList<>());
         var publisher = new Publisher();
         publisher.setId(1);
 
@@ -114,13 +116,12 @@ public class PublisherServiceTest {
         var publisherDTO = new PublisherDTO();
         publisherDTO.setName(new ArrayList<>());
         publisherDTO.setPlace(new ArrayList<>());
-        publisherDTO.setState(new ArrayList<>());
         var publisher = new Publisher();
 
         when(publisherRepository.findById(1)).thenReturn(Optional.of(publisher));
 
         // when
-        publisherService.updatePublisher(publisherDTO, 1);
+        publisherService.editPublisher(1, publisherDTO);
 
         // then
         verify(publisherRepository, times(1)).save(any());
@@ -272,5 +273,25 @@ public class PublisherServiceTest {
 
         // then
         assertEquals(expected.getId(), result.getId());
+    }
+
+    @Test
+    void shouldForceDeletePublisher() {
+        // Given
+        var publisherId = 1;
+
+        when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(new Publisher()));
+        when(publisherIndexRepository.findByDatabaseId(publisherId)).thenReturn(
+            Optional.of(new PublisherIndex()));
+
+        // When
+        publisherService.forceDeletePublisher(publisherId);
+
+        // Then
+        verify(publisherRepository).unbindDataset(publisherId);
+        verify(publisherRepository).unbindPatent(publisherId);
+        verify(publisherRepository).unbindProceedings(publisherId);
+        verify(publisherRepository).unbindSoftware(publisherId);
+        verify(publisherRepository).unbindThesis(publisherId);
     }
 }

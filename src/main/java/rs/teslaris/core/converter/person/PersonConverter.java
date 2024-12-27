@@ -56,9 +56,10 @@ public class PersonConverter {
                         person.getPersonalInfo().getContact().getPhoneNumber() : null),
                 person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
-                person.getScopusAuthorId()), biography,
+                person.getScopusAuthorId(), person.getPersonalInfo().getUris()), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
-            expertisesOrSkills, prizes);
+            expertisesOrSkills, prizes, Objects.nonNull(person.getProfilePhoto()) ?
+            person.getProfilePhoto().getProfileImageServerName() : null);
     }
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
@@ -193,6 +194,12 @@ public class PersonConverter {
             userDTO = UserConverter.toUserResponseDTO(person.getUser());
         }
 
+        var contact = new ContactDTO();
+        if (Objects.nonNull(person.getPersonalInfo().getContact())) {
+            contact.setContactEmail(person.getPersonalInfo().getContact().getContactEmail());
+            contact.setPhoneNumber(person.getPersonalInfo().getContact().getPhoneNumber());
+        }
+
         return new PersonUserResponseDTO(
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
@@ -200,14 +207,9 @@ public class PersonConverter {
                 person.getName().getDateTo()), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
-                person.getPersonalInfo()
-                    .getSex(), postalAddress,
-                new ContactDTO(person.getPersonalInfo().getContact().getContactEmail(),
-                    person.getPersonalInfo().getContact().getPhoneNumber()), person.getApvnt(),
+                person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
-                person.getScopusAuthorId()), biography,
-            keyword,
-            person.getApproveStatus(),
-            userDTO);
+                person.getScopusAuthorId(), person.getPersonalInfo().getUris()), biography,
+            keyword, person.getApproveStatus(), userDTO);
     }
 }

@@ -57,6 +57,9 @@ public class Person extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MultiLingualContent> keyword = new HashSet<>();
 
+    @Embedded
+    private ProfilePhoto profilePhoto;
+
     @Column(name = "apvnt")
     private String apvnt;
 

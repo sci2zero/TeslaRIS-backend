@@ -64,5 +64,7 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     UserResponseDTO getUserFromPerson(Integer personId);
 
+    List<Integer> getAccountsWithRoleTakingAllowed();
+
     void reindexUsers();
 }

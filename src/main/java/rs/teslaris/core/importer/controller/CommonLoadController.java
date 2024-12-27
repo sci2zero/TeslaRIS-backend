@@ -14,6 +14,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.importer.service.interfaces.CommonLoader;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -64,6 +65,13 @@ public class CommonLoadController {
                                                  @PathVariable String scopusAfid) {
         return loader.createInstitution(scopusAfid,
             tokenUtil.extractUserIdFromToken(bearerToken));
+    }
+
+    @PostMapping("/person/{scopusAuthorId}")
+    @Idempotent
+    public PersonResponseDTO createPerson(@RequestHeader("Authorization") String bearerToken,
+                                          @PathVariable String scopusAuthorId) {
+        return loader.createPerson(scopusAuthorId, tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @PostMapping("/journal")

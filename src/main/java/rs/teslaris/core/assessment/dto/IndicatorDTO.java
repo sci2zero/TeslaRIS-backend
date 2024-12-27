@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import rs.teslaris.core.assessment.model.ApplicableEntityType;
+import rs.teslaris.core.assessment.model.IndicatorContentType;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 
@@ -26,6 +27,9 @@ public record IndicatorDTO(
     AccessLevel indicatorAccessLevel,
 
     @NotNull(message = "You have to provide applicable entity types for indicator")
-    List<ApplicableEntityType> applicableTypes
+    List<ApplicableEntityType> applicableTypes,
+
+    @NotNull(message = "You have to provide content type for indicator")
+    IndicatorContentType contentType
 ) {
 }

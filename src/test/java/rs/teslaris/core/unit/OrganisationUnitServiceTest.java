@@ -2,9 +2,11 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -57,6 +59,7 @@ import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -92,6 +95,9 @@ public class OrganisationUnitServiceTest {
 
     @Mock
     private SearchService<OrganisationUnitIndex> searchService;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
@@ -745,5 +751,83 @@ public class OrganisationUnitServiceTest {
 
         // Then
         assertNull(foundOu);
+    }
+
+    @Test
+    public void testGetOUSubUnits() {
+        // Given
+        var organisationUnitId = 1;
+        var ouIndex1 = new OrganisationUnitIndex();
+        var ouIndex2 = new OrganisationUnitIndex();
+        var expectedSubUnits = new PageImpl<>(List.of(ouIndex1, ouIndex2));
+        var pageRequest = PageRequest.of(0, 10);
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
+            organisationUnitId, pageRequest))
+            .thenReturn(expectedSubUnits);
+
+        // When
+        var actualSubUnits = organisationUnitService.getOUSubUnits(organisationUnitId, pageRequest);
+
+        // Then
+        assertEquals(expectedSubUnits, actualSubUnits);
+        verify(organisationUnitIndexRepository, times(1))
+            .findOrganisationUnitIndexesBySuperOUId(organisationUnitId, pageRequest);
+    }
+
+    @Test
+    void shouldForceDeleteOrganisationUnit() {
+        // Given
+        var organisationUnitId = 1;
+
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(organisationUnitId))
+            .thenReturn(Optional.of(new OrganisationUnit()));
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            organisationUnitId))
+            .thenReturn(Optional.of(new OrganisationUnitIndex()));
+        when(organisationUnitRepository.fetchAllThesesForOU(any(), any())).thenReturn(Page.empty());
+
+        // When
+        organisationUnitService.forceDeleteOrganisationUnit(organisationUnitId);
+
+        // Then
+        verify(organisationUnitRepository, times(1))
+            .deleteInvolvementsForOrganisationUnit(organisationUnitId);
+        verify(organisationUnitRepository, times(1))
+            .deleteRelationsForOrganisationUnit(organisationUnitId);
+    }
+
+    @Test
+    void shouldReturnTrueIfInstitutionalAdminsExist() {
+        // Given
+        Integer organisationUnitId = 1;
+        when(organisationUnitRepository.checkIfInstitutionalAdminsExist(
+            organisationUnitId)).thenReturn(true);
+
+        // When
+        boolean result =
+            organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
+
+        // Then
+        assertTrue(result, "Expected institutional admins to exist");
+        verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(
+            organisationUnitId);
+    }
+
+    @Test
+    void shouldReturnFalseIfInstitutionalAdminsDoNotExist() {
+        // Given
+        Integer organisationUnitId = 1;
+        when(organisationUnitRepository.checkIfInstitutionalAdminsExist(
+            organisationUnitId)).thenReturn(false);
+
+        // When
+        boolean result =
+            organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
+
+        // Then
+        assertFalse(result, "Expected institutional admins to not exist");
+        verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(
+            organisationUnitId);
     }
 }

@@ -1,10 +1,13 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -29,11 +32,54 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
                 multilingualContent.getLanguageTagId());
             return new MultiLingualContent(
                 languageTag,
-                multilingualContent.getContent(),
+                multilingualContent.getContent().trim(),
                 multilingualContent.getPriority()
             );
         }).collect(Collectors.toSet());
     }
+
+    public Set<MultiLingualContent> getMultilingualContentAndSetDefaultsIfNonExistent(
+        List<MultilingualContentDTO> multilingualContentDTOs) {
+
+        var multilingualContent = multilingualContentDTOs.stream()
+            .map(mc -> new MultiLingualContent(
+                languageTagService.findOne(mc.getLanguageTagId()),
+                mc.getContent().trim(),
+                mc.getPriority()))
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        if (multilingualContent.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        ensureLanguageContentExists(multilingualContent, "EN", "SR");
+        ensureLanguageContentExists(multilingualContent, "SR", "EN");
+
+        return new HashSet<>(multilingualContent);
+    }
+
+    private void ensureLanguageContentExists(List<MultiLingualContent> multilingualContent,
+                                             String targetLanguageTag,
+                                             String fallbackLanguageTag) {
+
+        if (multilingualContent.stream()
+            .noneMatch(
+                mc -> mc.getLanguage().getLanguageTag().equalsIgnoreCase(targetLanguageTag))) {
+
+            var targetLanguage = languageTagService.findLanguageTagByValue(targetLanguageTag);
+            var fallbackContent = multilingualContent.stream()
+                .filter(
+                    mc -> mc.getLanguage().getLanguageTag().equalsIgnoreCase(fallbackLanguageTag))
+                .findFirst()
+                .orElse(multilingualContent.getFirst());
+
+            multilingualContent.add(new MultiLingualContent(
+                targetLanguage,
+                fallbackContent.getContent(),
+                fallbackContent.getPriority()));
+        }
+    }
+
 
     @Override
     public Set<MultiLingualContent> deepCopy(Set<MultiLingualContent> content) {
@@ -52,17 +98,40 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
                                      StringBuilder otherLanguagesBuilder,
                                      Set<MultiLingualContent> contentList,
                                      boolean popEnglishFirst) {
+        buildLanguageStringsInternal(serbianBuilder, otherLanguagesBuilder, contentList,
+            popEnglishFirst, content -> content);
+    }
+
+    @Override
+    public void buildLanguageStringsFromHTMLMC(StringBuilder serbianBuilder,
+                                               StringBuilder otherLanguagesBuilder,
+                                               Set<MultiLingualContent> contentList,
+                                               boolean popEnglishFirst) {
+        buildLanguageStringsInternal(serbianBuilder, otherLanguagesBuilder, contentList,
+            popEnglishFirst, this::html2text);
+    }
+
+    private void buildLanguageStringsInternal(StringBuilder serbianBuilder,
+                                              StringBuilder otherLanguagesBuilder,
+                                              Set<MultiLingualContent> contentList,
+                                              boolean popEnglishFirst,
+                                              Function<String, String> contentTransformer) {
         contentList.forEach(content -> {
+            String transformedContent = contentTransformer.apply(content.getContent());
             if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
-                serbianBuilder.append(content.getContent()).append(" | ");
+                serbianBuilder.append(transformedContent).append(" | ");
             } else {
                 if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH) &&
                     popEnglishFirst) {
-                    otherLanguagesBuilder.insert(0, " | ").insert(0, content.getContent());
+                    otherLanguagesBuilder.insert(0, " | ").insert(0, transformedContent);
                 } else {
-                    otherLanguagesBuilder.append(content.getContent()).append(" | ");
+                    otherLanguagesBuilder.append(transformedContent).append(" | ");
                 }
             }
         });
+    }
+
+    public String html2text(String html) {
+        return Jsoup.parse(html).text();
     }
 }

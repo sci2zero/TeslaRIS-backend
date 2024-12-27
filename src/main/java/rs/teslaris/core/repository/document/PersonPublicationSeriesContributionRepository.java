@@ -5,6 +5,6 @@ import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 
 @Repository
-public interface PersonJournalContributionRepository
+public interface PersonPublicationSeriesContributionRepository
     extends JpaRepository<PersonPublicationSeriesContribution, Integer> {
 }

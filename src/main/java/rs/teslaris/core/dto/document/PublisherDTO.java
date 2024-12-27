@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.document;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +25,6 @@ public class PublisherDTO {
     @NotNull(message = "You have to provide publisher place.")
     private List<MultilingualContentDTO> place;
 
-    @NotNull(message = "You have to provide publisher state.")
-    private List<MultilingualContentDTO> state;
+    @Positive(message = "Country ID must be a positive number")
+    private Integer countryId;
 }

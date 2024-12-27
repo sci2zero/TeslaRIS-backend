@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,6 +28,8 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -38,6 +41,10 @@ public class DocumentPublicationController {
     private final DocumentPublicationService documentPublicationService;
 
     private final DeduplicationService deduplicationService;
+
+    private final JwtUtil tokenUtil;
+
+    private final PersonService personService;
 
 
     @GetMapping("/{documentId}/can-edit")
@@ -118,26 +125,39 @@ public class DocumentPublicationController {
     @DeleteMapping("/{documentId}/{documentFileId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    void deleteDocumentFile(@PathVariable Integer documentId,
-                            @PathVariable Integer documentFileId) {
+    public void deleteDocumentFile(@PathVariable Integer documentId,
+                                   @PathVariable Integer documentFileId) {
         documentPublicationService.deleteDocumentFile(documentId, documentFileId);
     }
 
     @DeleteMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    void deleteDocumentPublication(@PathVariable Integer documentId) {
+    public void deleteDocumentPublication(@PathVariable Integer documentId) {
         documentPublicationService.deleteDocumentPublication(documentId);
         deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
     }
 
     @PatchMapping("/{documentId}/reorder-contribution/{contributionId}")
     @PublicationEditCheck
-    void reorderContributions(@PathVariable Integer documentId,
-                              @PathVariable Integer contributionId,
-                              @RequestBody ReorderContributionRequestDTO reorderRequest) {
+    public void reorderContributions(@PathVariable Integer documentId,
+                                     @PathVariable Integer contributionId,
+                                     @RequestBody ReorderContributionRequestDTO reorderRequest) {
         documentPublicationService.reorderDocumentContributions(documentId, contributionId,
             reorderRequest.getOldContributionOrderNumber(),
             reorderRequest.getNewContributionOrderNumber());
+    }
+
+    @PatchMapping("/unbind-researcher/{documentId}")
+    @PreAuthorize("hasAuthority('UNBIND_YOURSELF_FROM_PUBLICATION')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PublicationEditCheck
+    public void unbindResearcherFromDocument(@PathVariable Integer documentId,
+                                             @RequestHeader(value = "Authorization")
+                                             String bearerToken) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        var personId = personService.getPersonIdForUserId(userId);
+
+        documentPublicationService.unbindResearcherFromContribution(personId, documentId);
     }
 }

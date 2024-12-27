@@ -820,4 +820,17 @@ public class UserServiceTest {
         verify(userRepository, atLeastOnce()).findAll(any(PageRequest.class));
         verify(userAccountIndexRepository, atLeastOnce()).save(any(UserAccountIndex.class));
     }
+
+    @Test
+    public void shouldGetAccountsWithRoleTakingAllowed() {
+        // Given
+        when(userRepository.getIdsOfUsersWhoAllowedAccountTakeover()).thenReturn(List.of(1, 2, 3));
+
+        // When
+        var result = userService.getAccountsWithRoleTakingAllowed();
+
+        // Then
+        verify(userRepository, times(1)).getIdsOfUsersWhoAllowedAccountTakeover();
+        assertEquals(3, result.size());
+    }
 }

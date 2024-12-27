@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -71,6 +72,14 @@ public class MonographController {
     @PublicationEditCheck
     public void deleteMonograph(@PathVariable Integer documentId) {
         monographService.deleteMonograph(documentId);
+        deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
+    }
+
+    @DeleteMapping("/force/{documentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    public void forceDeleteMonograph(@PathVariable Integer documentId) {
+        monographService.forceDeleteMonograph(documentId);
         deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
     }
 }

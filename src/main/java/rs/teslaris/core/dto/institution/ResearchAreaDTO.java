@@ -1,6 +1,7 @@
 package rs.teslaris.core.dto.institution;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,5 +23,6 @@ public class ResearchAreaDTO {
     @Valid
     private List<MultilingualContentDTO> description;
 
+    @Positive(message = "Super research area ID must be a positive number.")
     private Integer superResearchAreaId;
 }

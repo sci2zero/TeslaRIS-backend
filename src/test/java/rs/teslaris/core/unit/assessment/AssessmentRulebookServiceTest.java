@@ -62,11 +62,11 @@ public class AssessmentRulebookServiceTest {
         assessmentRulebook2.setName(
             Set.of(new MultiLingualContent(new LanguageTag(), "Name 2", 1)));
 
-        when(assessmentRulebookRepository.findAll(any(Pageable.class))).thenReturn(
+        when(assessmentRulebookRepository.readAll(eq("SR"), any(Pageable.class))).thenReturn(
             new PageImpl<>(List.of(assessmentRulebook1, assessmentRulebook2)));
 
         var response =
-            assessmentRulebookService.readAllAssessmentRulebooks(PageRequest.of(0, 10));
+            assessmentRulebookService.readAllAssessmentRulebooks(PageRequest.of(0, 10), "SR");
 
         assertNotNull(response);
         assertEquals(2, response.getSize());

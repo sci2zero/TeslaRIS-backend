@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
+import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
@@ -31,10 +33,11 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -44,7 +47,8 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class PersonContributionServiceImpl implements PersonContributionService {
+public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribution>
+    implements PersonContributionService {
 
     private final PersonService personService;
 
@@ -56,7 +60,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
     private final UserRepository userRepository;
 
-    private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
 
 
     @Value("${contribution.approved_by_default}")
@@ -185,7 +189,8 @@ public class PersonContributionServiceImpl implements PersonContributionService 
             contributionDTO.getPersonName().getLastname(),
             contributionDTO.getPersonName().getDateFrom(),
             contributionDTO.getPersonName().getDateTo());
-        if (personName.getFirstname().isEmpty() && personName.getLastname().isEmpty()) {
+        if (personName.getFirstname().isEmpty() && personName.getLastname().isEmpty() &&
+            Objects.nonNull(contributor)) {
             personName = new PersonName(contributor.getName().getFirstname(),
                 contributor.getName().getOtherName(),
                 contributor.getName().getLastname(),
@@ -203,7 +208,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                 notificationValues.put("middlename",
                     contributionDTO.getPersonName().getOtherName());
                 notificationValues.put("lastname", contributionDTO.getPersonName().getLastname());
-                notificationService.createNotification(
+                createNotification(
                     NotificationFactory.contructNewOtherNameDetectedNotification(notificationValues,
                         userOptional.get()));
             }
@@ -213,13 +218,21 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
     private void setPersonContributionCommonFields(PersonContribution contribution,
                                                    PersonContributionDTO contributionDTO) {
-        var contributor = personService.findOne(contributionDTO.getPersonId());
-        contribution.setPerson(contributor);
+        if (Objects.nonNull(contributionDTO.getPersonId())) {
+            var contributor = personService.findOne(contributionDTO.getPersonId());
+            contribution.setPerson(contributor);
+            setAffiliationStatement(contribution, contributionDTO, contributor);
+        } else {
+            var affiliationStatement = new AffiliationStatement();
+            affiliationStatement.setDisplayPersonName(getPersonName(contributionDTO, null));
+            affiliationStatement.setDisplayAffiliationStatement(
+                multilingualContentService.getMultilingualContent(
+                    contributionDTO.getDisplayAffiliationStatement()));
+            contribution.setAffiliationStatement(affiliationStatement);
+        }
 
         contribution.setContributionDescription(multilingualContentService.getMultilingualContent(
             contributionDTO.getContributionDescription()));
-
-        setAffiliationStatement(contribution, contributionDTO, contributor);
 
         contribution.setInstitutions(new HashSet<>());
         if (Objects.nonNull(contributionDTO.getInstitutionIds())) {
@@ -236,7 +249,8 @@ public class PersonContributionServiceImpl implements PersonContributionService 
 
     private boolean compareContributions(PersonContribution previousContribution,
                                          PersonContribution contribution) {
-        if (Objects.nonNull(previousContribution.getPerson())) {
+        if (Objects.nonNull(previousContribution.getPerson()) &&
+            Objects.nonNull(contribution.getPerson())) {
             return previousContribution.getPerson().getId()
                 .equals(contribution.getPerson().getId());
         }
@@ -260,7 +274,7 @@ public class PersonContributionServiceImpl implements PersonContributionService 
     }
 
     public void notifyContributor(Notification notification) {
-        notificationService.createNotification(notification);
+        createNotification(notification);
     }
 
     @Override
@@ -287,5 +301,36 @@ public class PersonContributionServiceImpl implements PersonContributionService 
                 }
             });
         }
+    }
+
+    @Override
+    @Nullable
+    public PersonDocumentContribution findContributionForResearcherAndDocument(Integer personId,
+                                                                               Integer documentId) {
+        return personContributionRepository.fetchPersonDocumentContributionOnDocument(personId,
+            documentId).orElse(null);
+    }
+
+    @Override
+    protected JpaRepository<PersonContribution, Integer> getEntityRepository() {
+        return personContributionRepository;
+    }
+
+    private void createNotification(Notification notification) {
+        var newOtherNameNotifications =
+            notificationRepository.getNewOtherNameNotificationsForUser(
+                notification.getUser().getId());
+        for (var oldNotification : newOtherNameNotifications) {
+            if (oldNotification.getValues().get("firstname")
+                .equals(notification.getValues().get("firstname")) &&
+                oldNotification.getValues().get("middlename")
+                    .equals(notification.getValues().get("middlename")) &&
+                oldNotification.getValues().get("lastname")
+                    .equals(notification.getValues().get("lastname"))) {
+                return;
+            }
+        }
+
+        notificationRepository.save(notification);
     }
 }

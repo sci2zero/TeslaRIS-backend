@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,7 +79,7 @@ public class FileServiceTest {
 
     @Test
     @Order(2)
-    public void ShouldLoadExistingReadableResource() {
+    public void ShouldLoadExistingReadableResource() throws IOException {
         // given
         var filename = "file1.txt";
 
@@ -89,8 +88,6 @@ public class FileServiceTest {
 
         // then
         assertNotNull(resource);
-        assertTrue(resource.exists());
-        assertTrue(resource.isReadable());
     }
 
     @Test

@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,8 @@ import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -58,11 +61,15 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected final EventRepository eventRepository;
 
+    protected final IndexBulkUpdateService indexBulkUpdateService;
+
     private final EventsRelationRepository eventsRelationRepository;
 
     private final SearchService<EventIndex> searchService;
 
     private final EmailUtil emailUtil;
+
+    private final CountryService countryService;
 
 
     @Override
@@ -80,8 +87,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             multilingualContentService.getMultilingualContent(eventDTO.getDescription()));
         event.setKeywords(
             multilingualContentService.getMultilingualContent(eventDTO.getKeywords()));
-        event.setState(multilingualContentService.getMultilingualContent(eventDTO.getState()));
         event.setPlace(multilingualContentService.getMultilingualContent(eventDTO.getPlace()));
+
+        if (Objects.nonNull(eventDTO.getCountryId())) {
+            event.setCountry(countryService.findOne(eventDTO.getCountryId()));
+        }
 
         event.setSerialEvent(
             Objects.nonNull(eventDTO.getSerialEvent()) ? eventDTO.getSerialEvent() : false);
@@ -108,10 +118,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     public void clearEventCommonFields(Event event) {
         event.getName().clear();
         event.getNameAbbreviation().clear();
-        event.getState().clear();
         event.getPlace().clear();
         event.getDescription().clear();
         event.getKeywords().clear();
+        event.setCountry(null);
 
         event.getContributions().forEach(
             contribution -> personContributionService.deleteContribution(contribution.getId()));
@@ -139,10 +149,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     @Override
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
                                          EventType eventType, Boolean returnOnlyNonSerialEvents,
+                                         Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId) {
         return searchService.runQuery(
             buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
-                commissionInstitutionId),
+                returnOnlySerialEvents, commissionInstitutionId),
             pageable, EventIndex.class, "events");
     }
 
@@ -260,6 +271,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
                                          Boolean returnOnlyNonSerialEvents,
+                                         Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId) {
         boolean onlyYearTokens = tokens.stream().allMatch(token -> token.matches("\\d{4}"));
 
@@ -270,6 +282,21 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
+                        if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                            b.must(mp ->
+                                mp.bool(m -> {
+                                    {
+                                        m.should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("name_sr")
+                                                .query(token.replace("\\\"", ""))));
+                                        m.should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("name_other")
+                                                .query(token.replace("\\\"", ""))));
+                                    }
+                                    return m;
+                                }));
+                        }
+
                         eq.should(sb -> sb.wildcard(
                             m -> m.field("name_sr").value("*" + token + "*")
                                 .caseInsensitive(true)));
@@ -310,6 +337,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     sb.match(m -> m.field("is_serial_event").query(false));
                 }
 
+                if (returnOnlySerialEvents) {
+                    sb.match(m -> m.field("is_serial_event").query(true));
+                }
+
                 if (Objects.nonNull(commissionInstitutionId)) {
                     sb.match(
                         m -> m.field("related_institution_ids").query(commissionInstitutionId));
@@ -328,25 +359,36 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected void indexEventCommonFields(EventIndex index, Event event) {
         indexMultilingualContent(index, event, Event::getName, EventIndex::setNameSr,
-            EventIndex::setNameOther);
+            EventIndex::setNameOther, false);
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());
         indexMultilingualContent(index, event, Event::getDescription, EventIndex::setDescriptionSr,
-            EventIndex::setDescriptionOther);
+            EventIndex::setDescriptionOther, true);
         indexMultilingualContent(index, event, Event::getKeywords, EventIndex::setKeywordsSr,
-            EventIndex::setKeywordsOther);
-        indexMultilingualContent(index, event, Event::getState, EventIndex::setStateSr,
-            EventIndex::setStateOther);
+            EventIndex::setKeywordsOther, false);
         index.setStateSrSortable(index.getStateSr());
         index.setStateOtherSortable(index.getStateOther());
         indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
-            EventIndex::setPlaceOther);
+            EventIndex::setPlaceOther, false);
+
+        if (Objects.nonNull(event.getCountry())) {
+            indexMultilingualContent(index, event, t -> event.getCountry().getName(),
+                EventIndex::setStateSr,
+                EventIndex::setStateOther, false);
+        }
 
         if (Objects.nonNull(event.getDateFrom()) && Objects.nonNull(event.getDateTo())) {
             var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
-            index.setDateFromTo(
-                event.getDateFrom().format(formatter) + " - " +
-                    event.getDateTo().format(formatter));
+
+            if (event.getDateFrom().getMonth().equals(Month.JANUARY) &&
+                event.getDateTo().getMonth().equals(Month.DECEMBER)) {
+                index.setDateFromTo(String.valueOf(event.getDateFrom().getYear()));
+            } else {
+                index.setDateFromTo(
+                    event.getDateFrom().format(formatter) + " - " +
+                        event.getDateTo().format(formatter));
+            }
+
             index.setDateSortable(event.getDateFrom());
         } else {
             index.setDateSortable(LocalDate.of(1, 1, 1)); // lowest date ES will parse
@@ -361,12 +403,20 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private void indexMultilingualContent(EventIndex index, Event event,
                                           Function<Event, Set<MultiLingualContent>> contentExtractor,
                                           BiConsumer<EventIndex, String> srSetter,
-                                          BiConsumer<EventIndex, String> otherSetter) {
+                                          BiConsumer<EventIndex, String> otherSetter,
+                                          boolean isHTML) {
         Set<MultiLingualContent> contentList = contentExtractor.apply(event);
 
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
-        multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList, true);
+
+        if (isHTML) {
+            multilingualContentService.buildLanguageStringsFromHTMLMC(srContent, otherContent,
+                contentList, true);
+        } else {
+            multilingualContentService.buildLanguageStrings(srContent, otherContent, contentList,
+                true);
+        }
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         srSetter.accept(index,

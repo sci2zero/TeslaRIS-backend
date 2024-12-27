@@ -159,6 +159,19 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    public void forceDeleteMonograph(Integer monographId) {
+        monographRepository.deleteAllPublicationsInMonograph(monographId);
+
+        monographJPAService.delete(monographId);
+
+        var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            monographId);
+        index.ifPresent(documentPublicationIndexRepository::delete);
+
+        documentPublicationIndexRepository.deleteByMonographId(monographId);
+    }
+
+    @Override
     public void reindexMonographs() {
         // Super service does the initial deletion
 
@@ -224,6 +237,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         }
 
         index.setType(DocumentPublicationType.MONOGRAPH.name());
+
+        if (Objects.nonNull(monograph.getMonographType())) {
+            index.setPublicationType(monograph.getMonographType().name());
+        }
 
         documentPublicationIndexRepository.save(index);
     }

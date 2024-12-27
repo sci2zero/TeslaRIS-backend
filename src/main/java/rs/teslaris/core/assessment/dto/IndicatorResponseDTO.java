@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.dto;
 
 import java.util.List;
 import rs.teslaris.core.assessment.model.ApplicableEntityType;
+import rs.teslaris.core.assessment.model.IndicatorContentType;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 public record IndicatorResponseDTO(
@@ -14,6 +15,8 @@ public record IndicatorResponseDTO(
 
     List<MultilingualContentDTO> description,
 
-    List<ApplicableEntityType> applicableEntityTypes
+    List<ApplicableEntityType> applicableEntityTypes,
+
+    IndicatorContentType contentType
 ) {
 }

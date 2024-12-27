@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,7 @@ import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.BookSeriesServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.BookSeriesJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -68,6 +70,9 @@ public class BookSeriesServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private BookSeriesServiceImpl bookSeriesService;
@@ -282,5 +287,22 @@ public class BookSeriesServiceTest {
         // Then
         assertNotNull(result);
         assertTrue(result.getSize() >= 2);
+    }
+
+    @Test
+    void shouldForceDeleteDeleteBookSeries() {
+        // Given
+        var bookSeriesId = 1;
+
+        when(bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)).thenReturn(
+            Optional.empty());
+
+        // When
+        bookSeriesService.forceDeleteBookSeries(bookSeriesId);
+
+        // Then
+        verify(publicationSeriesRepository).unbindProceedings(bookSeriesId);
+        verify(bookSeriesJPAService).delete(bookSeriesId);
+        verify(bookSeriesIndexRepository, never()).delete(any());
     }
 }

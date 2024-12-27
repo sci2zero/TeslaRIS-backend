@@ -5,6 +5,7 @@ import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.document.Journal;
@@ -14,6 +15,10 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
 
     @Query("select count(p) > 0 from JournalPublication p join p.journal j where j.id = :journalId")
     boolean hasPublication(Integer journalId);
+
+    @Modifying
+    @Query("update JournalPublication jp set jp.deleted = true where jp.journal.id = :journalId")
+    void deleteAllPublicationsInJournal(Integer journalId);
 
     Optional<Journal> findJournalByOldId(Integer oldId);
 

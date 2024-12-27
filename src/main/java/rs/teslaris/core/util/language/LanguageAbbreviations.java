@@ -14,11 +14,11 @@ public class LanguageAbbreviations {
 
     public static String HUNGARIAN = "HU";
 
-    public static String GERMAN = "GE";
+    public static String GERMAN = "DE";
 
     public static String FRENCH = "FR";
 
-    public static String SPANISH = "SP";
+    public static String SPANISH = "ES";
 
     public static String RUSSIAN = "RU";
 
@@ -27,4 +27,8 @@ public class LanguageAbbreviations {
     public static String ITALIAN = "IT";
 
     public static String SLOVENIAN = "SL";
+
+    public static String OLD_GERMAN = "GE";
+
+    public static String OLD_SPANISH = "SP";
 }

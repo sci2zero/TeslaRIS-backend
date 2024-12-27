@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,4 +41,6 @@ public class PersonalInfoDTO implements PersonIdentifierable {
     private String orcid;
 
     private String scopusAuthorId;
+
+    private Set<String> uris;
 }

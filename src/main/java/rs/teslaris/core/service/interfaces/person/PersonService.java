@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.person;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.model.person.Involvement;
@@ -25,10 +27,11 @@ public interface PersonService extends JPAService<Person> {
 
     Long getResearcherCount();
 
-    Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable);
+    Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
+                                                    boolean strict);
 
     Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
-                                                    Pageable pageable);
+                                                    Pageable pageable, Boolean fetchAlumni);
 
     Page<PersonIndex> advancedSearch(List<String> tokens, Pageable pageable);
 
@@ -58,6 +61,8 @@ public interface PersonService extends JPAService<Person> {
 
     void setPersonMainName(Integer personNameId, Integer personId);
 
+    void updatePersonMainName(Integer personId, PersonNameDTO personNameDTO);
+
     void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId);
 
     void updatePersonalInfo(Integer personId, PersonalInfoDTO personalInfo);
@@ -65,6 +70,8 @@ public interface PersonService extends JPAService<Person> {
     void approvePerson(Integer personId, Boolean approved);
 
     void deletePerson(Integer personId);
+
+    void forceDeletePerson(Integer personId);
 
     Involvement getLatestResearcherInvolvement(Person person);
 
@@ -77,4 +84,15 @@ public interface PersonService extends JPAService<Person> {
     Integer getPersonIdForUserId(Integer userId);
 
     List<Integer> findInstitutionIdsForPerson(Integer personId);
+
+    boolean isPersonBoundToAUser(Integer personId);
+
+    boolean canPersonScanDataSources(Integer personId);
+
+    void switchToUnmanagedEntity(Integer personId);
+
+    String setPersonProfileImage(Integer personId, ProfilePhotoDTO profilePhotoDTO)
+        throws IOException;
+
+    void removePersonProfileImage(Integer personId);
 }

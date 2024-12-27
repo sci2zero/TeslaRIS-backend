@@ -30,5 +30,7 @@ public interface BookSeriesService {
 
     void deleteBookSeries(Integer bookSeriesId);
 
+    void forceDeleteBookSeries(Integer journalId);
+
     void reindexBookSeries();
 }

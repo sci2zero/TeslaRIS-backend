@@ -18,5 +18,7 @@ public class NotificationConfiguration {
             List.of(NotificationAction.REMOVE_FROM_PUBLICATION));
         allowedActions.put(NotificationType.DEDUPLICATION_SCAN_FINISHED,
             List.of(NotificationAction.PERFORM_DEDUPLICATION));
+        allowedActions.put(NotificationType.FOUND_POTENTIAL_CLAIMS,
+            List.of(NotificationAction.BROWSE_CLAIMABLE_DOCUMENTS));
     }
 }

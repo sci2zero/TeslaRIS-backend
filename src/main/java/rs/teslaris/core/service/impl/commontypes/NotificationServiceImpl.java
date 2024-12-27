@@ -117,20 +117,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     @Nullable
     public Notification createNotification(Notification notification) {
         if (Objects.requireNonNull(notification.getNotificationType())
-            .equals(NotificationType.NEW_OTHER_NAME_DETECTED)) {
-            var newOtherNameNotifications =
-                notificationRepository.getNewOtherNameNotificationsForUser(
-                    notification.getUser().getId());
-            for (var oldNotification : newOtherNameNotifications) {
-                if (oldNotification.getValues().get("firstname")
-                    .equals(notification.getValues().get("firstname")) &&
-                    oldNotification.getValues().get("middlename")
-                        .equals(notification.getValues().get("middlename")) &&
-                    oldNotification.getValues().get("lastname")
-                        .equals(notification.getValues().get("lastname"))) {
-                    return null;
-                }
-            }
+            .equals(NotificationType.FOUND_POTENTIAL_CLAIMS)) {
+            notificationRepository.deleteNewPotentialClaimsNotificationsForUser(
+                notification.getUser().getId());
         }
 
         return notificationRepository.save(notification);

@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.document.ThesisType;
 
 @Getter
@@ -16,8 +17,9 @@ import rs.teslaris.core.model.document.ThesisType;
 public class ThesisDTO extends DocumentDTO {
 
     @Positive(message = "Publisher id cannot be a negative number.")
-    @NotNull(message = "You have to provide an organisation unit ID.")
     private Integer organisationUnitId;
+
+    private List<MultilingualContentDTO> externalOrganisationUnitName;
 
     @NotNull(message = "You have to provide thesis type.")
     private ThesisType thesisType;

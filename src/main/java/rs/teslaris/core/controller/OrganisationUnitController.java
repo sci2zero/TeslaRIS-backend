@@ -62,6 +62,12 @@ public class OrganisationUnitController {
         return organisationUnitService.readOrganisationUnitById(organisationUnitId);
     }
 
+    @GetMapping("/sub-units/{organisationUnitId}")
+    public Page<OrganisationUnitIndex> getOUSubUnits(@PathVariable Integer organisationUnitId,
+                                                     Pageable pageable) {
+        return organisationUnitService.getOUSubUnits(organisationUnitId, pageable);
+    }
+
     @GetMapping("/old-id/{organisationUnitOldId}")
     public OrganisationUnitDTO getOrganisationUnitForOldId(
         @PathVariable Integer organisationUnitOldId) {
@@ -132,5 +138,19 @@ public class OrganisationUnitController {
     public void deleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
         organisationUnitService.deleteOrganisationUnit(organisationUnitId);
         deduplicationService.deleteSuggestion(organisationUnitId, EntityType.ORGANISATION_UNIT);
+    }
+
+    @DeleteMapping("/force/{organisationUnitId}")
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forceDeleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
+        organisationUnitService.forceDeleteOrganisationUnit(organisationUnitId);
+        deduplicationService.deleteSuggestion(organisationUnitId, EntityType.ORGANISATION_UNIT);
+    }
+
+    @GetMapping("/admin-exists/{organisationUnitId}")
+    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    public boolean doesAdminExistForOrganisationUnit(@PathVariable Integer organisationUnitId) {
+        return organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
     }
 }

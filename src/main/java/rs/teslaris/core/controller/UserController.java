@@ -173,6 +173,12 @@ public class UserController {
         return new ResponseEntity<>(authenticationResponse, headers, HttpStatus.OK);
     }
 
+    @GetMapping("/take-role")
+    @PreAuthorize("hasAuthority('TAKE_ROLE')")
+    public List<Integer> getAccountsWithRoleTakingAllowed() {
+        return userService.getAccountsWithRoleTakingAllowed();
+    }
+
     @PatchMapping("/allow-role-taking")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('ALLOW_ACCOUNT_TAKEOVER')")

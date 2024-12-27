@@ -2,7 +2,6 @@ package rs.teslaris.core.dto.person;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
@@ -45,7 +44,6 @@ public class BasicPersonDTO implements PersonIdentifierable {
 
     private String scopusAuthorId;
 
-    @NotNull(message = "You must provide a person employment.")
     @Positive(message = "Organisation unit id must be a positive number.")
     private Integer organisationUnitId;
 

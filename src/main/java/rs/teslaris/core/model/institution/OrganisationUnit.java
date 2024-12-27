@@ -2,6 +2,7 @@ package rs.teslaris.core.model.institution;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -57,4 +58,7 @@ public class OrganisationUnit extends BaseEntity {
 
     @Embedded
     private Contact contact;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> uris = new HashSet<>();
 }

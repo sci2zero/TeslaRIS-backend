@@ -477,16 +477,32 @@ public class ExportDocumentConverter extends ExportConverterBase {
         });
 
         openairePublication.setAuthors(new ArrayList<>());
-        exportDocument.getAuthors().forEach(contribution -> {
-            openairePublication.getAuthors().add(new PersonAttributes(contribution.getDisplayName(),
-                ExportPersonConverter.toOpenaireModel(contribution.getPerson())));
-        });
+        exportDocument.getAuthors()
+            .forEach(contribution -> {
+                var personAttributes = new PersonAttributes();
+                personAttributes.setDisplayName(contribution.getDisplayName());
+
+                if (Objects.nonNull(contribution.getPerson())) {
+                    personAttributes.setPerson(
+                        ExportPersonConverter.toOpenaireModel(contribution.getPerson()));
+                }
+
+                openairePublication.getAuthors().add(personAttributes);
+            });
 
         openairePublication.setEditors(new ArrayList<>());
-        exportDocument.getEditors().forEach(contribution -> {
-            openairePublication.getEditors().add(new PersonAttributes(contribution.getDisplayName(),
-                ExportPersonConverter.toOpenaireModel(contribution.getPerson())));
-        });
+        exportDocument.getEditors()
+            .forEach(contribution -> {
+                var personAttributes = new PersonAttributes();
+                personAttributes.setDisplayName(contribution.getDisplayName());
+
+                if (Objects.nonNull(contribution.getPerson())) {
+                    personAttributes.setPerson(
+                        ExportPersonConverter.toOpenaireModel(contribution.getPerson()));
+                }
+
+                openairePublication.getEditors().add(personAttributes);
+            });
 
         openairePublication.setPublishers(new ArrayList<>());
         exportDocument.getPublishers().forEach(publisher -> {

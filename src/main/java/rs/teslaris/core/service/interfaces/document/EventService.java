@@ -24,7 +24,7 @@ public interface EventService extends JPAService<Event> {
 
     Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
                                   EventType eventType, Boolean returnOnlyNonSerialEvents,
-                                  Integer commissionInstitutionId);
+                                  Boolean returnOnlySerialEvents, Integer commissionInstitutionId);
 
     Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo);
 

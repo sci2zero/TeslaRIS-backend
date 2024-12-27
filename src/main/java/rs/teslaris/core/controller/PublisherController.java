@@ -85,7 +85,7 @@ public class PublisherController {
     @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
     public void updatePublisher(@PathVariable Integer publisherId,
                                 @RequestBody @Valid PublisherDTO publisherDTO) {
-        publisherService.updatePublisher(publisherDTO, publisherId);
+        publisherService.editPublisher(publisherId, publisherDTO);
     }
 
     @DeleteMapping("/{publisherId}")
@@ -93,5 +93,12 @@ public class PublisherController {
     @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
     public void deletePublisher(@PathVariable Integer publisherId) {
         publisherService.deletePublisher(publisherId);
+    }
+
+    @DeleteMapping("/force/{publisherId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
+    public void forceDeletePublisher(@PathVariable Integer publisherId) {
+        publisherService.forceDeletePublisher(publisherId);
     }
 }

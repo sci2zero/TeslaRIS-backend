@@ -1,6 +1,8 @@
 package rs.teslaris.core.assessment.service.impl;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.converter.IndicatorConverter;
 import rs.teslaris.core.assessment.dto.IndicatorDTO;
 import rs.teslaris.core.assessment.dto.IndicatorResponseDTO;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
@@ -34,8 +37,15 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     }
 
     @Override
-    public Page<IndicatorResponseDTO> readAllIndicators(Pageable pageable) {
-        return indicatorRepository.findAll(pageable).map(IndicatorConverter::toDTO);
+    public Page<IndicatorResponseDTO> readAllIndicators(Pageable pageable, String language) {
+        return indicatorRepository.readAll(language, pageable).map(IndicatorConverter::toDTO);
+    }
+
+    @Override
+    public List<IndicatorResponseDTO> getIndicatorsApplicableToEntity(
+        List<ApplicableEntityType> applicableEntityTypes) {
+        return indicatorRepository.getIndicatorsApplicableToEntity(applicableEntityTypes).stream()
+            .map(IndicatorConverter::toDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -81,10 +91,13 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
         indicator.setCode(indicatorDTO.code());
         indicator.setApplicableTypes(new HashSet<>(indicatorDTO.applicableTypes()));
         indicator.setTitle(
-            multilingualContentService.getMultilingualContent(indicatorDTO.title()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                indicatorDTO.title()));
         indicator.setDescription(
-            multilingualContentService.getMultilingualContent(indicatorDTO.description()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                indicatorDTO.description()));
         indicator.setAccessLevel(indicatorDTO.indicatorAccessLevel());
+        indicator.setContentType(indicatorDTO.contentType());
     }
 
     @Override

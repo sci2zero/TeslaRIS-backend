@@ -25,6 +25,12 @@ public class PersonIndex {
     @Field(type = FieldType.Text, store = true, name = "name", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String name;
 
+    @Field(type = FieldType.Text, store = true, name = "biography_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String biographySr;
+
+    @Field(type = FieldType.Text, store = true, name = "biography_other", analyzer = "english", searchAnalyzer = "english")
+    private String biographyOther;
+
     @Field(type = FieldType.Keyword, store = true, name = "name_sortable")
     private String nameSortable;
 
@@ -40,8 +46,11 @@ public class PersonIndex {
     @Field(type = FieldType.Keyword, store = true, name = "employments_other_sortable")
     private String employmentsOtherSortable;
 
-    @Field(type = FieldType.Integer, name = "employmentInstitutionsId", store = true)
+    @Field(type = FieldType.Integer, name = "employment_institutions_id", store = true)
     private List<Integer> employmentInstitutionsId;
+
+    @Field(type = FieldType.Integer, name = "past_employment_institution_ids", store = true)
+    private List<Integer> pastEmploymentInstitutionIds;
 
     @Field(type = FieldType.Text, store = true, name = "birthdate")
     private String birthdate;
@@ -60,4 +69,7 @@ public class PersonIndex {
 
     @Field(type = FieldType.Text, store = true, name = "keywords")
     private String keywords;
+
+    @Field(type = FieldType.Integer, store = true, name = "user_id")
+    private Integer userId;
 }

@@ -1,17 +1,23 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -24,14 +30,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -40,7 +50,9 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
+import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -55,12 +67,16 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
+import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
@@ -92,6 +108,21 @@ public class PersonServiceTest {
 
     @Mock
     private ExpressionTransformer expressionTransformer;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private PersonContributionRepository personContributionRepository;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
+
+    @Mock
+    private MultilingualContentService multilingualContentService;
+
+    @Mock
+    private FileService fileService;
 
     @InjectMocks
     private PersonServiceImpl personService;
@@ -470,7 +501,8 @@ public class PersonServiceTest {
         assertEquals(expected, actual);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
     void shouldFindPeopleByNameAndEmploymentWhenProperQueryIsGiven() {
         // given
         var tokens = Arrays.asList("Ivan", "FTN");
@@ -480,14 +512,15 @@ public class PersonServiceTest {
             new PageImpl<>(List.of(new PersonIndex(), new PersonIndex())));
 
         // when
-        var result = personService.findPeopleByNameAndEmployment(tokens, pageable);
+        var result = personService.findPeopleByNameAndEmployment(tokens, pageable, false);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
     }
 
-    @Test
-    void shouldFindPeopleForOrganisationUnitWhenGivenValidId() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldFindPeopleForOrganisationUnitWhenGivenValidId(boolean fetchAlumni) {
         // given
         var employmentInstitutionId = 123;
         var pageable = PageRequest.of(0, 10);
@@ -497,10 +530,14 @@ public class PersonServiceTest {
         when(personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
             List.of(employmentInstitutionId))).thenReturn(
             new PageImpl<>(List.of(new PersonIndex())));
+        when(personIndexRepository.findByPastEmploymentInstitutionIdsIn(pageable,
+            List.of(employmentInstitutionId))).thenReturn(
+            new PageImpl<>(List.of(new PersonIndex())));
 
         // when
         var result =
-            personService.findPeopleForOrganisationUnit(employmentInstitutionId, pageable);
+            personService.findPeopleForOrganisationUnit(employmentInstitutionId, pageable,
+                fetchAlumni);
 
         // then
         assertEquals(result.getTotalElements(), 1L);
@@ -690,5 +727,188 @@ public class PersonServiceTest {
 
         // Then
         assertNull(foundPerson);
+    }
+
+    @Test
+    void shouldForceDeletePerson() {
+        // Given
+        var personId = 1;
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
+        when(personRepository.isBoundToUser(personId)).thenReturn(false);
+        when(personContributionRepository.fetchAllPersonDocumentContributions(eq(personId), any()))
+            .thenReturn(Page.empty());
+        when(personIndexRepository.findByDatabaseId(personId))
+            .thenReturn(Optional.of(new PersonIndex()));
+
+        // When
+        personService.forceDeletePerson(personId);
+
+        // Then
+        verify(personRepository, times(1)).isBoundToUser(personId);
+        verify(personContributionRepository, times(1)).deletePersonEventContributions(personId);
+        verify(personContributionRepository, times(1)).deletePersonPublicationsSeriesContributions(
+            personId);
+        verify(personContributionRepository, times(1)).fetchAllPersonDocumentContributions(
+            eq(personId), any());
+        verify(personIndexRepository, times(1)).delete(any(PersonIndex.class));
+        verify(documentPublicationIndexRepository, times(7)).deleteByAuthorIdsAndType(anyInt(),
+            anyString());
+    }
+
+    @Test
+    void switchToUnmanagedEntityShouldThrowsExceptionWhenPersonIsBoundToUser() {
+        // Given
+        var personId = 1;
+
+        when(personRepository.isBoundToUser(personId)).thenReturn(true);
+
+        // When
+        var exception = assertThrows(PersonReferenceConstraintViolationException.class,
+            () -> personService.switchToUnmanagedEntity(personId));
+
+        // Then
+        assertEquals("This person is already in use.", exception.getMessage());
+        verify(personRepository, times(1)).isBoundToUser(personId);
+        verifyNoInteractions(personContributionRepository, personIndexRepository,
+            documentPublicationIndexRepository);
+    }
+
+    @Test
+    void shouldSwitchToUnmanagedEntity() {
+        // Given
+        var personId = 1;
+
+        when(personRepository.isBoundToUser(personId)).thenReturn(false);
+        when(personIndexRepository.findByDatabaseId(personId)).thenReturn(Optional.empty());
+        when(personContributionRepository.fetchAllPersonDocumentContributions(eq(1),
+            any())).thenReturn(Page.empty());
+        when(personRepository.findById(1)).thenReturn(Optional.of(new Person()));
+
+        doNothing().when(personContributionRepository)
+            .deleteInstitutionsForForPersonContributions(personId);
+        doNothing().when(personContributionRepository)
+            .makePersonEventContributionsPointToExternalContributor(personId);
+        doNothing().when(personContributionRepository)
+            .makePersonPublicationsSeriesContributionsPointToExternalContributor(personId);
+
+        // When
+        personService.switchToUnmanagedEntity(personId);
+
+        // Then
+        verify(personRepository, times(1)).isBoundToUser(personId);
+        verify(personContributionRepository, times(1)).deleteInstitutionsForForPersonContributions(
+            personId);
+        verify(personContributionRepository,
+            times(1)).makePersonEventContributionsPointToExternalContributor(personId);
+        verify(personContributionRepository,
+            times(1)).makePersonPublicationsSeriesContributionsPointToExternalContributor(personId);
+        verify(personIndexRepository, times(1)).findByDatabaseId(personId);
+        verifyNoInteractions(documentPublicationIndexRepository);
+    }
+
+    @Test
+    void shouldScanDataSourcesWhenScopusAuthorIdIsNonEmpty() {
+        var personId = 1;
+        var person = new Person();
+        person.setScopusAuthorId("1234");
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        var response = personService.canPersonScanDataSources(personId);
+
+        assertTrue(response);
+    }
+
+    @Test
+    void shouldReturnFalseWhenScopusAuthorIdIsEmpty() {
+        var personId = 1;
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
+
+        var response = personService.canPersonScanDataSources(personId);
+
+        assertFalse(response);
+    }
+
+    @Test
+    void shouldUpdateAndIndexPersonPrimaryNameWhenStatusIsApproved() {
+        // Given
+        var personId = 1;
+        var personNameDTO = new PersonNameDTO(null, "John", "Michael", "Doe", null, null);
+        var person = new Person();
+        person.setId(personId);
+        person.setPersonalInfo(new PersonalInfo());
+        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null));
+        person.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        // When
+        personService.updatePersonMainName(personId, personNameDTO);
+
+        // Then
+        assertEquals("John", person.getName().getFirstname());
+        assertEquals("Michael", person.getName().getOtherName());
+        assertEquals("Doe", person.getName().getLastname());
+
+        verify(personRepository).save(person);
+    }
+
+    @Test
+    void shouldUpdateButNotIndexPersonPrimaryNameWhenStatusIsNotApproved() {
+        // Given
+        var personId = 2;
+        var personNameDTO = new PersonNameDTO(null, "Jane", "Alice", "Smith", null, null);
+        var person = new Person();
+        person.setId(personId);
+        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null));
+        person.setApproveStatus(ApproveStatus.REQUESTED);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        // When
+        personService.updatePersonMainName(personId, personNameDTO);
+
+        // Then
+        assertEquals("Jane", person.getName().getFirstname());
+        assertEquals("Alice", person.getName().getOtherName());
+        assertEquals("Smith", person.getName().getLastname());
+
+        verify(personRepository).save(person);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenPersonNotFound() {
+        // Given
+        var personId = 3;
+        var personNameDTO = new PersonNameDTO(null, "Test", "User", "Test", null, null);
+        when(personRepository.findById(personId)).thenThrow(
+            new NotFoundException("Person not found"));
+
+        // When & Then
+        assertThrows(NotFoundException.class, () -> {
+            personService.updatePersonMainName(personId, personNameDTO);
+        });
+
+        verify(personRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionForInvalidMimeType() {
+        // given
+        var personId = 1;
+        var mockFile = createMockMultipartFile();
+
+        // when / then
+        assertThrows(IllegalArgumentException.class,
+            () -> personService.setPersonProfileImage(personId,
+                new ProfilePhotoDTO(1, 2, 3, 4, mockFile)));
+        verifyNoInteractions(fileService);
+    }
+
+    private MultipartFile createMockMultipartFile() {
+        return new MockMultipartFile("file", "test.txt", "text/plain",
+            "Test file content".getBytes());
     }
 }

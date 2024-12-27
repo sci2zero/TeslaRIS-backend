@@ -6,9 +6,10 @@ import rs.teslaris.core.assessment.model.EntityIndicator;
 public class EntityIndicatorConverter {
 
     public static EntityIndicatorResponseDTO toDTO(EntityIndicator entityIndicator) {
-        return new EntityIndicatorResponseDTO(entityIndicator.getNumericValue(),
-            entityIndicator.getBooleanValue(),
+        return new EntityIndicatorResponseDTO(entityIndicator.getId(),
+            entityIndicator.getNumericValue(), entityIndicator.getBooleanValue(),
             entityIndicator.getTextualValue(), entityIndicator.getFromDate(),
-            entityIndicator.getToDate(), IndicatorConverter.toDTO(entityIndicator.getIndicator()));
+            entityIndicator.getToDate(), IndicatorConverter.toDTO(entityIndicator.getIndicator()),
+            entityIndicator.getSource());
     }
 }
