@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,6 +19,10 @@ import rs.teslaris.core.model.document.PublicationSeries;
 @Entity
 @DiscriminatorValue("PUB_SERIES_ASSESSMENT_CLASS")
 public class PublicationSeriesAssessmentClassification extends EntityAssessmentClassification {
+
+
+    @Column(name = "category_identifier")
+    private String categoryIdentifier;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publication_series_id")

@@ -1217,14 +1217,32 @@ public class DbInitializer implements ApplicationRunner {
         citedHL.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
-                    "Counts all the journal citations during one calendar year and calculates the median article publication date—half of the cited articles were published before this time, half were published afterwards.",
+                    "Calculates the median age of articles cited by a journal during a calendar year. Half of the citations reference articles published before this time, and half reference articles published afterwards.",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "Broji sve citate u časopisima tokom jedne kalendarske godine i izračunava srednji datum objavljivanja članka – polovina citiranih članaka je objavljena pre ovog vremena, polovina je objavljena kasnije.",
+                    "Izračunava srednju starost članaka citiranih u časopisu tokom jedne kalendarske godine. Polovina citata se odnosi na članke objavljene pre ovog vremena, a polovina na članke objavljene kasnije.",
                     2)));
         citedHL.setAccessLevel(AccessLevel.CLOSED);
         citedHL.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         citedHL.setContentType(IndicatorContentType.NUMBER);
+
+        var citingHL = new Indicator();
+        citingHL.setCode("citingHL");
+        citingHL.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Citing Half-Life", 1),
+                new MultiLingualContent(serbianTag, "Citing Half-Life", 2)));
+        citingHL.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Counts all the references made by the journal during one calendar year and calculates the median article publication date—half of the cited references were published before this time, half were published afterwards.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Broji sve reference koje je časopis naveo tokom jedne kalendarske godine i izračunava srednji datum objavljivanja članka – polovina citiranih referenci je objavljena pre ovog vremena, polovina je objavljena kasnije.",
+                    2)));
+        citingHL.setAccessLevel(AccessLevel.CLOSED);
+        citingHL.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        citingHL.setContentType(IndicatorContentType.NUMBER);
+
 
         var sjr = new Indicator();
         sjr.setCode("sjr");
@@ -1299,7 +1317,7 @@ public class DbInitializer implements ApplicationRunner {
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
-                hIndex, sdg, overton));
+                hIndex, sdg, overton, citingHL));
     }
 
     private void processCountryLine(String[] line) {

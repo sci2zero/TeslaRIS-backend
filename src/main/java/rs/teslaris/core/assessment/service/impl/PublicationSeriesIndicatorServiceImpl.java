@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -142,15 +143,27 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
         if (Files.exists(dirPath) && Files.isDirectory(dirPath)) {
             try (var paths = Files.walk(dirPath)) {
-                paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".csv"))
+                var csvFileCount = paths.filter(
+                        path -> Files.isRegularFile(path) && path.toString().endsWith(".csv"))
                     .filter(additionalFilter)
-                    .forEach(csvFile -> {
-                        csvDataLoader.loadIndicatorData(
-                            csvFile.normalize().toAbsolutePath().toString(),
-                            mapping, this::processIndicatorsLine, mapping.yearParseRegex(),
-                            separator,
-                            mapping.parallelize());
-                    });
+                    .count();
+
+                log.info("Loading {} csv files from {}", csvFileCount, directory);
+                var counter = new AtomicInteger(1);
+
+                try (var csvPaths = Files.walk(dirPath)) {
+                    csvPaths.filter(
+                            path -> Files.isRegularFile(path) && path.toString().endsWith(".csv"))
+                        .filter(additionalFilter)
+                        .forEach(csvFile -> {
+                            csvDataLoader.loadIndicatorData(
+                                csvFile.normalize().toAbsolutePath().toString(),
+                                mapping, this::processIndicatorsLine, mapping.yearParseRegex(),
+                                separator,
+                                mapping.parallelize());
+                            log.info("Loaded {} of {}", counter.getAndIncrement(), csvFileCount);
+                        });
+                }
             } catch (IOException e) {
                 log.error("An error occurred while reading {} files. Aborting. Reason: {}",
                     configKey, e.getMessage());
@@ -158,18 +171,24 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         } else {
             log.error("Directory {} does not exist or is not a directory", directory);
         }
+
     }
 
     private void processIndicatorsLine(String[] line,
                                        IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
                                        Integer year) {
         if (line.length == 1) {
-            log.info("Invalid line format, skipping...");
+            log.info("Invalid line format. Skipping...");
             return;
         }
 
         var eIssn = cleanIssn(line[mapping.eIssnColumn()]);
         var printIssn = cleanIssn(line[mapping.printIssnColumn()]);
+        if (eIssn.isEmpty() && printIssn.isEmpty()) {
+            log.info("ISSN is not specified. Skipping...");
+            return;
+        }
+
         if (mapping.eIssnColumn().equals(mapping.printIssnColumn())) {
             var tokens = eIssn.split(mapping.identifierDelimiter());
             eIssn = cleanIssn(tokens[0]);
@@ -192,8 +211,14 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     private PublicationSeries findOrCreatePublicationSeries(String[] line,
                                                             IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
                                                             String eIssn, String printIssn) {
-        var publicationSeries =
-            publicationSeriesService.findPublicationSeriesByIssn(eIssn, printIssn);
+        PublicationSeries publicationSeries = null;
+        try {
+            publicationSeries =
+                publicationSeriesService.findPublicationSeriesByIssn(eIssn, printIssn);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
 
         if (Objects.isNull(publicationSeries)) {
             var defaultLanguage =
@@ -201,6 +226,13 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             var journalName = line[mapping.nameColumn()];
             publicationSeries =
                 findPublicationSeriesByJournalName(journalName, defaultLanguage, eIssn, printIssn);
+        }
+
+        if (publicationSeries.getPrintISSN().equals(publicationSeries.getEISSN()) &&
+            !eIssn.equals(printIssn)) {
+            publicationSeries.setEISSN(eIssn);
+            publicationSeries.setPrintISSN(printIssn);
+            publicationSeriesService.save(publicationSeries);
         }
 
         return publicationSeries;
@@ -349,7 +381,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
         switch (indicator.getContentType()) {
             case NUMBER:
-                var valueToBeParsed = indicatorValue.trim().replace("N/A", "").replace(",", "");
+                var valueToBeParsed =
+                    indicatorValue.trim().replace("N/A", "").replaceAll("[,<>]", "");
                 if (!valueToBeParsed.isEmpty()) {
                     newJournalIndicator.setNumericValue(Double.parseDouble(valueToBeParsed));
                 }

@@ -35,15 +35,15 @@
           "mapsTo": "totalCitations",
           "type": "INDEPENDENT"
         },
-        "16": {
+        "15": {
           "mapsTo": "fiveYearJIFRank",
           "type": "BY_CATEGORY"
         },
-        "17": {
+        "16": {
           "mapsTo": "currentJIFRank",
           "type": "BY_CATEGORY"
         },
-        "15": {
+        "14": {
           "mapsTo": "fiveYearJIF",
           "type": "INDEPENDENT"
         },
@@ -59,8 +59,12 @@
           "mapsTo": "ais",
           "type": "INDEPENDENT"
         },
-        "28": {
+        "27": {
           "mapsTo": "citedHL",
+          "type": "INDEPENDENT"
+        },
+        "28": {
+          "mapsTo": "citingHL",
           "type": "INDEPENDENT"
         }
       }
