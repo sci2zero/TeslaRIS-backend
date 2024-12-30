@@ -86,7 +86,10 @@ public class IndicatorMappingConfigurationLoader {
         @JsonProperty(value = "categoryFromIndicatorDiffRegex") String categoryFromIndicatorDiffRegex,
         @JsonProperty(value = "defaultLanguage", required = true) String defaultLanguage,
         @JsonProperty(value = "columnMapping", required = true) Map<String, ColumnMapping> columnMapping,
-        @JsonProperty(value = "parallelize", required = true) Boolean parallelize
+        @JsonProperty(value = "parallelize", required = true) Boolean parallelize,
+        @JsonProperty(value = "discriminator") String discriminator,
+        @JsonProperty(value = "startDateColumn") Integer startDateColumn,
+        @JsonProperty(value = "endDateColumn") Integer endDateColumn
     ) {
     }
 

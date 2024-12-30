@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -66,6 +67,9 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     private final String SCIMAGO_DIRECTORY =
         "src/main/resources/publicationSeriesIndicators/scimago";
 
+    private final String ERIH_PLUS_DIRECTORY =
+        "src/main/resources/publicationSeriesIndicators/erihPlus";
+
 
     @Autowired
     public PublicationSeriesIndicatorServiceImpl(
@@ -101,6 +105,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         Runnable handlerFunction = switch (source) {
             case WEB_OF_SCIENCE -> this::loadPublicationSeriesIndicatorsFromWOSCSVFiles;
             case SCIMAGO -> this::loadPublicationSeriesIndicatorsFromSCImagoCSVFiles;
+            case ERIH_PLUS -> this::loadPublicationSeriesIndicatorsFromErihPlusCSVFiles;
             default -> null;
         };
 
@@ -127,6 +132,16 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             ';',
             // Additional filtering for SCImago files
             path -> path.getFileName().toString().startsWith("scimago")
+        );
+    }
+
+    @Override
+    public void loadPublicationSeriesIndicatorsFromErihPlusCSVFiles() {
+        loadPublicationSeriesIndicators(
+            ERIH_PLUS_DIRECTORY,
+            "erihPlus",
+            ';',
+            path -> true
         );
     }
 
@@ -182,6 +197,17 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             return;
         }
 
+        if (Objects.nonNull(mapping.discriminator()) && !mapping.discriminator().isEmpty()) {
+            var tokens = mapping.discriminator().split("§");
+            var discriminatorColumnValue = line[Integer.parseInt(tokens[0])];
+            if (!discriminatorColumnValue.contains(
+                tokens[1])) { // TODO: Maybe use regex here? Is contains enough?
+                log.info("Discriminator check failed (value is {}), skipping column.",
+                    discriminatorColumnValue);
+                return;
+            }
+        }
+
         var eIssn = cleanIssn(line[mapping.eIssnColumn()]);
         var printIssn = cleanIssn(line[mapping.printIssnColumn()]);
         if (eIssn.isEmpty() && printIssn.isEmpty()) {
@@ -201,7 +227,33 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
         var publicationSeries = findOrCreatePublicationSeries(line, mapping, eIssn, printIssn);
 
-        processIndicatorValues(line, mapping, publicationSeries, year);
+        LocalDate startDate, endDate;
+        if (Objects.nonNull(year)) {
+            startDate = LocalDate.of(year, 1, 1);
+            endDate = LocalDate.of(year, 12, 31);
+        } else {
+            var yearPattern = Pattern.compile(mapping.yearParseRegex());
+
+            Function<Integer, LocalDate> parseDateFromColumn = columnIndex -> {
+                if (Objects.isNull(columnIndex)) {
+                    return null;
+                }
+                var matcher = yearPattern.matcher(line[columnIndex]);
+                if (matcher.find()) {
+                    return LocalDate.parse(matcher.group());
+                }
+                throw new IllegalArgumentException("Invalid date format in column: " + columnIndex);
+            };
+
+            startDate = parseDateFromColumn.apply(mapping.startDateColumn());
+            if (startDate == null) {
+                startDate = LocalDate.now();
+            }
+
+            endDate = parseDateFromColumn.apply(mapping.endDateColumn());
+        }
+
+        processIndicatorValues(line, mapping, publicationSeries, startDate, endDate);
     }
 
     private String cleanIssn(String issn) {
@@ -276,7 +328,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private void processIndicatorValues(String[] line,
                                         IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
-                                        PublicationSeries publicationSeries, Integer year) {
+                                        PublicationSeries publicationSeries, LocalDate startDate,
+                                        LocalDate endDate) {
         for (var columnNumber : mapping.columnMapping().keySet()) {
             var indicatorMappingConfiguration = mapping.columnMapping().get(columnNumber);
             var indicatorCode = indicatorMappingConfiguration.mapsTo().trim();
@@ -308,8 +361,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                 indicatorMappingConfiguration.parseRegex());
 
                             saveIndicator(publicationSeries, indicator, indicatorValue,
-                                categoryIdentifier, year,
-                                EntityIndicatorSource.valueOf(mapping.source()), edition);
+                                categoryIdentifier, EntityIndicatorSource.valueOf(mapping.source()),
+                                edition, startDate, endDate);
                         }
                         continue;
                     }
@@ -319,8 +372,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             indicatorValue =
                 parseIndicatorValue(indicatorValue, indicatorMappingConfiguration.parseRegex());
 
-            saveIndicator(publicationSeries, indicator, indicatorValue,
-                categoryIdentifier, year, EntityIndicatorSource.valueOf(mapping.source()), edition);
+            saveIndicator(publicationSeries, indicator, indicatorValue, categoryIdentifier,
+                EntityIndicatorSource.valueOf(mapping.source()), edition, startDate, endDate);
         }
     }
 
@@ -358,13 +411,18 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     private void saveIndicator(PublicationSeries publicationSeries, Indicator indicator,
-                               String indicatorValue, String categoryIdentifier, Integer year,
-                               EntityIndicatorSource source, String edition) {
-        if (Objects.isNull(indicatorValue) ||
-            publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
-                publicationSeries.getId(), source, year, categoryIdentifier, indicator.getCode())) {
+                               String indicatorValue, String categoryIdentifier,
+                               EntityIndicatorSource source, String edition, LocalDate startDate,
+                               LocalDate endDate) {
+        if (Objects.isNull(indicatorValue)) {
             return;
         }
+
+        var existingIndicatorValue =
+            publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                publicationSeries.getId(), source, startDate, categoryIdentifier,
+                indicator.getCode());
+        existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
 
         var newJournalIndicator = new PublicationSeriesIndicator();
         newJournalIndicator.setIndicator(indicator);
@@ -372,8 +430,9 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         newJournalIndicator.setCategoryIdentifier(categoryIdentifier);
         newJournalIndicator.setSource(source);
         newJournalIndicator.setTimestamp(LocalDateTime.now());
-        newJournalIndicator.setFromDate(LocalDate.of(year, 1, 1));
-        newJournalIndicator.setToDate(LocalDate.of(year, 12, 31));
+
+        newJournalIndicator.setFromDate(startDate);
+        newJournalIndicator.setToDate(endDate);
 
         if (Objects.nonNull(edition) && !edition.isEmpty()) {
             newJournalIndicator.setEdition(edition);
@@ -388,7 +447,14 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 }
                 break;
             case BOOL:
-                newJournalIndicator.setBooleanValue(Boolean.parseBoolean(indicatorValue));
+                if (indicatorValue.isEmpty()) {
+                    newJournalIndicator.setBooleanValue(false);
+                } else if ("true".equalsIgnoreCase(indicatorValue) ||
+                    "false".equalsIgnoreCase(indicatorValue)) {
+                    newJournalIndicator.setBooleanValue(Boolean.parseBoolean(indicatorValue));
+                } else {
+                    newJournalIndicator.setBooleanValue(true);
+                }
                 break;
             default:
                 newJournalIndicator.setTextualValue(indicatorValue);

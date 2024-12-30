@@ -61,7 +61,7 @@ public class CsvDataLoader {
                 if (matcher.find()) {
                     year = Integer.parseInt(matcher.group());
                 } else {
-                    throw new LoadingException("Error while parsing date from header line");
+                    year = null;
                 }
 
                 if (!processInParallel) {

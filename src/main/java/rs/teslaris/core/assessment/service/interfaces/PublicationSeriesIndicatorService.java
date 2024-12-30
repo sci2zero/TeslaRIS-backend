@@ -18,6 +18,8 @@ public interface PublicationSeriesIndicatorService {
 
     void loadPublicationSeriesIndicatorsFromSCImagoCSVFiles();
 
+    void loadPublicationSeriesIndicatorsFromErihPlusCSVFiles();
+
     void scheduleIndicatorLoading(LocalDateTime dateTime,
                                   EntityIndicatorSource entityIndicatorSource, Integer userId);
 }

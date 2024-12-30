@@ -1304,7 +1304,7 @@ public class DbInitializer implements ApplicationRunner {
         overton.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
-                    "Overton measures the influence of academic journals by tracking citations in policy documents, legal texts, patents, and other non-academic sources, reflecting their impact on public policy and practical applications",
+                    "Overton measures the influence of academic journals by tracking citations in policy documents, legal texts, patents, and other non-academic sources, reflecting their impact on public policy and practical applications.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "Overton meri uticaj akademskih časopisa praćenjem citata u političkim dokumentima, pravnim tekstovima, patentima i drugim neakademskim izvorima, čime odražava njihov uticaj na javne politike i praktične primene.",
@@ -1313,11 +1313,45 @@ public class DbInitializer implements ApplicationRunner {
         overton.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         overton.setContentType(IndicatorContentType.NUMBER);
 
+        var erihPlus = new Indicator();
+        erihPlus.setCode("erihPlus");
+        erihPlus.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "ERIH PLUS list", 1),
+                new MultiLingualContent(serbianTag, "ERIH PLUS lista", 2)));
+        erihPlus.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "The ERIH PLUS list is a European reference index for scientific journals in the humanities and social sciences, aimed at enhancing their visibility and quality.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "ERIH PLUS lista je evropski referentni indeks za naučne časopise iz oblasti humanističkih i društvenih nauka, sa ciljem povećanja njihove vidljivosti i kvaliteta.",
+                    2)));
+        erihPlus.setAccessLevel(AccessLevel.CLOSED);
+        erihPlus.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        erihPlus.setContentType(IndicatorContentType.BOOL);
+
+        var jci = new Indicator();
+        jci.setCode("jci");
+        jci.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Journal Citation Indicator (JCI)", 1),
+                new MultiLingualContent(serbianTag, "Indikator citiranosti časopisa (JCI)", 2)));
+        jci.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Normalized metric that measures the citation impact of a journal's publications over a three-year period, allowing for comparison across disciplines.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Normalizovana metrika koja meri uticaj citiranosti publikacija časopisa tokom trogodišnjeg perioda, omogućavajući poređenje među disciplinama.",
+                    2)));
+        jci.setAccessLevel(AccessLevel.CLOSED);
+        jci.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        jci.setContentType(IndicatorContentType.NUMBER);
+
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
-                hIndex, sdg, overton, citingHL));
+                hIndex, sdg, overton, citingHL, erihPlus, jci));
     }
 
     private void processCountryLine(String[] line) {

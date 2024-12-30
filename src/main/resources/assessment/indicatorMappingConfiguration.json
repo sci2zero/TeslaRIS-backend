@@ -66,6 +66,10 @@
         "28": {
           "mapsTo": "citingHL",
           "type": "INDEPENDENT"
+        },
+        "10": {
+          "mapsTo": "jci",
+          "type": "INDEPENDENT"
         }
       }
     },
@@ -78,6 +82,7 @@
       "identifierDelimiter": ",",
       "categoryDelimiter": ";",
       "categoryFromIndicatorDiffRegex": "[A-Za-z ]*(?=\\()",
+      "discriminator": "3§journal",
       "categoryColumn": 22,
       "defaultLanguage": "EN",
       "parallelize": true,
@@ -97,6 +102,23 @@
         },
         "16": {
           "mapsTo": "overton",
+          "type": "INDEPENDENT"
+        }
+      }
+    },
+    "erihPlus": {
+      "source": "ERIH_PLUS",
+      "yearParseRegex": "^\\d{4}-\\d{2}-\\d{2}",
+      "nameColumn": 4,
+      "eIssnColumn": 2,
+      "printIssnColumn": 1,
+      "categoryColumn": 6,
+      "defaultLanguage": "EN",
+      "parallelize": true,
+      "startDateColumn": 8,
+      "columnMapping": {
+        "0": {
+          "mapsTo": "erihPlus",
           "type": "INDEPENDENT"
         }
       }
