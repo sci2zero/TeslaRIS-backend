@@ -214,7 +214,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         }
     }
 
-    private void indexJournal(Journal journal, JournalIndex index) {
+    @Override
+    public void indexJournal(Journal journal, JournalIndex index) {
         index.setDatabaseId(journal.getId());
 
         indexCommonFields(journal, index);

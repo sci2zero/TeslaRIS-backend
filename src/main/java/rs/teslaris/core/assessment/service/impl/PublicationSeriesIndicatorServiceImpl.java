@@ -263,14 +263,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     private PublicationSeries findOrCreatePublicationSeries(String[] line,
                                                             IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
                                                             String eIssn, String printIssn) {
-        PublicationSeries publicationSeries = null;
-        try {
-            publicationSeries =
-                publicationSeriesService.findPublicationSeriesByIssn(eIssn, printIssn);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-
+        var publicationSeries =
+            publicationSeriesService.findPublicationSeriesByIssn(eIssn, printIssn);
 
         if (Objects.isNull(publicationSeries)) {
             var defaultLanguage =
@@ -298,12 +292,24 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
         for (var potentialHit : potentialHits) {
             for (var title : potentialHit.getTitleOther().split("\\|")) {
-                if (title.equals(journalName)) {
+                if (title.equalsIgnoreCase(journalName)) { // is equalsIgnoreCase ok here?
                     var publicationSeries =
-                        publicationSeriesService.findOne(potentialHit.getDatabaseId());
+                        journalService.findJournalById(potentialHit.getDatabaseId());
+
                     // TODO: is this ok?
-                    publicationSeries.setEISSN(eIssn);
-                    publicationSeries.setPrintISSN(printIssn);
+                    if (Objects.isNull(publicationSeries.getEISSN()) ||
+                        publicationSeries.getEISSN().isEmpty() ||
+                        publicationSeries.getEISSN().equals(publicationSeries.getPrintISSN())) {
+                        publicationSeries.setEISSN(eIssn);
+                    }
+
+                    if (Objects.isNull(publicationSeries.getPrintISSN()) ||
+                        publicationSeries.getPrintISSN().isEmpty() ||
+                        publicationSeries.getPrintISSN().equals(publicationSeries.getEISSN())) {
+                        publicationSeries.setPrintISSN(printIssn);
+                    }
+
+                    journalService.indexJournal(publicationSeries, potentialHit);
                     return publicationSeriesService.save(publicationSeries);
                 }
             }

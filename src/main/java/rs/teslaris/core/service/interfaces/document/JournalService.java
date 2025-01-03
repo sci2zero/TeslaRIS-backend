@@ -39,4 +39,6 @@ public interface JournalService {
     void forceDeleteJournal(Integer journalId);
 
     void reindexJournals();
+
+    void indexJournal(Journal journal, JournalIndex index);
 }
