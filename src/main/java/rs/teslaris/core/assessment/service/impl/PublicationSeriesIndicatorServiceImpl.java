@@ -393,7 +393,11 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         var matcher = valuePattern.matcher(indicatorValue);
 
         if (matcher.find()) {
-            return matcher.group().trim();
+            if (matcher.groupCount() > 0) {
+                return matcher.group(1).trim();
+            } else {
+                return matcher.group().trim();
+            }
         } else {
             log.error(
                 "Error while parsing indicator value from column {} using {}",

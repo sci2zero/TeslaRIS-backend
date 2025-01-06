@@ -90,7 +90,7 @@
         "22": {
           "mapsTo": "sjr",
           "type": "BY_CATEGORY",
-          "parseRegex": "\\(Q\\d\\)"
+          "parseRegex": "\\((Q\\d)\\)"
         },
         "7": {
           "mapsTo": "hIndex",
