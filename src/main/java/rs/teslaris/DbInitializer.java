@@ -1183,7 +1183,7 @@ public class DbInitializer implements ApplicationRunner {
         eigenFactorNorm.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
-                    "A measure of the total influence of a journal over a 5-year period, considering both the quantity and quality of citations..",
+                    "A measure of the total influence of a journal over a 5-year period, considering both the quantity and quality of citations.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "Mera ukupnog uticaja časopisa u periodu od 5 godina, uzevši u obzir i kvalitet i kvantitet citata.",
@@ -1255,7 +1255,7 @@ public class DbInitializer implements ApplicationRunner {
                     "The SCImago Journal Rank (SJR) indicator is a measure of the prestige of scholarly journals that accounts for both the number of citations received by a journal and the prestige of the journals where the citations come from.",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "SCImago Journal Rank (SJR) je mera prestiža naučnog časopisa koja uzima u obzir i broj citata i prestiž časopisa iz kojeg ti citati dolaze..",
+                    "SCImago Journal Rank (SJR) je mera prestiža naučnog časopisa koja uzima u obzir i broj citata i prestiž časopisa iz kojeg ti citati dolaze.",
                     2)));
         sjr.setAccessLevel(AccessLevel.CLOSED);
         sjr.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
@@ -1347,11 +1347,45 @@ public class DbInitializer implements ApplicationRunner {
         jci.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         jci.setContentType(IndicatorContentType.NUMBER);
 
+        var jcr = new Indicator();
+        jcr.setCode("jcr");
+        jcr.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Journal Citation Rank (JCR) list", 1),
+                new MultiLingualContent(serbianTag, "Journal Citation Rank (JCR) lista", 2)));
+        jcr.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "The Journal Citation Reports (JCR) list provides metrics like Impact Factor to evaluate and rank scientific journals based on citation data.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Lista Journal Citation Reports (JCR) pruža metrike, poput faktora uticaja, za ocenjivanje i rangiranje naučnih časopisa na osnovu podataka o citatima.",
+                    2)));
+        jcr.setAccessLevel(AccessLevel.CLOSED);
+        jcr.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        jcr.setContentType(IndicatorContentType.BOOL);
+
+        var scimago = new Indicator();
+        scimago.setCode("scimago");
+        scimago.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "SciMAGO list", 1),
+                new MultiLingualContent(serbianTag, "SciMago lista", 2)));
+        scimago.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "The SciMAGO Journal Rank (SJR) list ranks journals using citation data from the Scopus database, emphasizing visibility and prestige.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Lista SciMAGO Journal Rank (SJR) rangira časopise koristeći podatke o citatima iz Scopus baze, naglašavajući vidljivost i prestiž.",
+                    2)));
+        scimago.setAccessLevel(AccessLevel.CLOSED);
+        scimago.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        scimago.setContentType(IndicatorContentType.BOOL);
+
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
-                hIndex, sdg, overton, citingHL, erihPlus, jci));
+                hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago));
     }
 
     private void processCountryLine(String[] line) {

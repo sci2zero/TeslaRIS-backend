@@ -31,6 +31,10 @@
       "parallelize": false,
       "editionColumn": 6,
       "columnMapping": {
+        "0": {
+          "mapsTo": "jcr",
+          "type": "INDEPENDENT"
+        },
         "7": {
           "mapsTo": "totalCitations",
           "type": "INDEPENDENT"
@@ -87,6 +91,10 @@
       "defaultLanguage": "EN",
       "parallelize": true,
       "columnMapping": {
+        "0": {
+          "mapsTo": "scimago",
+          "type": "INDEPENDENT"
+        },
         "22": {
           "mapsTo": "sjr",
           "type": "BY_CATEGORY",

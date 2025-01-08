@@ -1,8 +1,12 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +17,7 @@ import rs.teslaris.core.assessment.dto.CommissionDTO;
 import rs.teslaris.core.assessment.dto.CommissionResponseDTO;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
+import rs.teslaris.core.assessment.ruleengine.JournalClassificationRuleEngine;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -66,6 +71,24 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
         setCommonFields(newCommission, commissionDTO);
 
         return save(newCommission);
+    }
+
+    @Override
+    public List<String> readAllApplicableRuleEngines() {
+        var classNames = new ArrayList<String>();
+        var provider = new ClassPathScanningCandidateComponentProvider(false);
+        provider.addIncludeFilter(new AssignableTypeFilter(JournalClassificationRuleEngine.class));
+
+        var components = provider.findCandidateComponents("rs/teslaris/core/assessment/ruleengine");
+        for (var component : components) {
+            try {
+                var clazz = Class.forName(component.getBeanClassName());
+                classNames.add(clazz.getName().split("\\.")[5]);
+            } catch (ClassNotFoundException e) {
+                // not going to happen as this class exists by default
+            }
+        }
+        return classNames;
     }
 
     @Override
