@@ -55,6 +55,10 @@
           "mapsTo": "currentJIF",
           "type": "INDEPENDENT"
         },
+        "20": {
+          "mapsTo": "jciPercentile",
+          "type": "INDEPENDENT"
+        },
         "22": {
           "mapsTo": "eigenFactorNorm",
           "type": "INDEPENDENT"

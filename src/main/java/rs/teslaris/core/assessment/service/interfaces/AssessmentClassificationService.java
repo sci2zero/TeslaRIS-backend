@@ -21,4 +21,6 @@ public interface AssessmentClassificationService extends JPAService<AssessmentCl
                                         AssessmentClassificationDTO assessmentClassification);
 
     void deleteAssessmentClassification(Integer assessmentClassificationId);
+
+    AssessmentClassification readAssessmentClassificationByCode(String code);
 }

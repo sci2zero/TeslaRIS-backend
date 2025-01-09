@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -9,7 +10,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -17,6 +20,7 @@ import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConve
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/publication-series-assessment-classification")
@@ -25,6 +29,9 @@ public class PublicationSeriesAssessmentClassificationController {
 
     private final PublicationSeriesAssessmentClassificationService
         publicationSeriesAssessmentClassificationService;
+
+    private final JwtUtil tokenUtil;
+
 
     @GetMapping("/{publicationSeriesId}")
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForPublicationSeries(
@@ -58,5 +65,15 @@ public class PublicationSeriesAssessmentClassificationController {
         publicationSeriesAssessmentClassificationService.updatePublicationSeriesAssessmentClassification(
             publicationSeriesAssessmentClassificationId,
             publicationSeriesAssessmentClassificationDTO);
+    }
+
+    @GetMapping("/schedule-classification")
+    public void createPublicationSeriesAssessmentClassification(
+        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("commissionId") Integer commissionId,
+        @RequestParam("classificationYears") List<Integer> classificationYears,
+        @RequestHeader("Authorization") String bearerToken) {
+        publicationSeriesAssessmentClassificationService.scheduleClassification(timestamp,
+            commissionId, tokenUtil.extractUserIdFromToken(bearerToken), classificationYears);
     }
 }

@@ -110,7 +110,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         };
 
         taskManagerService.scheduleTask(
-            "Publication_Series_task-" + source.name() + "-" + UUID.randomUUID(), timeToRun,
+            "Publication_Series_Indicator_Load-" + source.name() + "-" + UUID.randomUUID(),
+            timeToRun,
             handlerFunction, userId);
     }
 
@@ -461,13 +462,14 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                     newJournalIndicator.setBooleanValue(false);
                 } else if ("true".equalsIgnoreCase(indicatorValue) ||
                     "false".equalsIgnoreCase(indicatorValue)) {
-                    newJournalIndicator.setBooleanValue(Boolean.parseBoolean(indicatorValue));
+                    newJournalIndicator.setBooleanValue(
+                        Boolean.parseBoolean(indicatorValue.trim()));
                 } else {
                     newJournalIndicator.setBooleanValue(true);
                 }
                 break;
             default:
-                newJournalIndicator.setTextualValue(indicatorValue);
+                newJournalIndicator.setTextualValue(indicatorValue.trim());
         }
 
         publicationSeriesIndicatorRepository.save(newJournalIndicator);

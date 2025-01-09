@@ -21,6 +21,13 @@ public interface PublicationSeriesIndicatorRepository extends
         Integer publicationSeriesId,
         AccessLevel accessLevel);
 
+    @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
+        "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
+        "extract(year from psi.fromDate) = :year AND " +
+        "psi.source = :source")
+    List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+        Integer publicationSeriesId, Integer year, EntityIndicatorSource source);
+
     @Query("SELECT ps " +
         "FROM PublicationSeriesIndicator ps " +
         "WHERE ps.publicationSeries.id = :publicationSeriesId " +
@@ -33,5 +40,4 @@ public interface PublicationSeriesIndicatorRepository extends
         EntityIndicatorSource source,
         LocalDate date, String category,
         String indicatorCode);
-
 }

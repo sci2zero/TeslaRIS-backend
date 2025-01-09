@@ -13,6 +13,7 @@ import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationSe
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -80,5 +81,12 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
         }
 
         delete(assessmentClassificationId);
+    }
+
+    @Override
+    public AssessmentClassification readAssessmentClassificationByCode(String code) {
+        return assessmentClassificationRepository.findByCode(code).orElseThrow(
+            () -> new NotFoundException(
+                "Assessment Classification with given code does not exist."));
     }
 }

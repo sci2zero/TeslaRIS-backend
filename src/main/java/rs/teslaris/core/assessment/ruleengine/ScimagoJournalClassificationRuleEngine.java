@@ -1,64 +1,72 @@
 package rs.teslaris.core.assessment.ruleengine;
 
+import org.jetbrains.annotations.Nullable;
+import rs.teslaris.core.assessment.model.AssessmentClassification;
+import rs.teslaris.core.assessment.model.EntityIndicatorSource;
+import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
+import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.repository.document.JournalRepository;
+
 public class ScimagoJournalClassificationRuleEngine extends JournalClassificationRuleEngine {
 
-    @Override
-    public boolean handleM21APlus(Integer journalIndex) {
-        return false;
+    public ScimagoJournalClassificationRuleEngine() {
     }
 
     @Override
-    public boolean handleM21A(Integer journalIndex) {
-        return false;
+    public void initialize(
+        PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
+        JournalRepository journalRepository, JournalIndexRepository journalIndexRepository,
+        PublicationSeriesAssessmentClassificationRepository assessmentClassificationRepository,
+        AssessmentClassificationService assessmentClassificationService) {
+        this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
+        this.journalRepository = journalRepository;
+        this.journalIndexRepository = journalIndexRepository;
+        this.assessmentClassificationRepository = assessmentClassificationRepository;
+        this.assessmentClassificationService = assessmentClassificationService;
+        this.source = EntityIndicatorSource.SCIMAGO;
     }
 
+    @Nullable
     @Override
-    public boolean handleM21(Integer journalIndex) {
-        return false;
+    public AssessmentClassification handleM21APlus(String category) {
+        return null;
     }
 
+    @Nullable
     @Override
-    public boolean handleM22(Integer journalIndex) {
-        return false;
+    public AssessmentClassification handleM21A(String category) {
+        return null;
     }
 
+    @Nullable
     @Override
-    public boolean handleM23(Integer journalIndex) {
-        return false;
+    public AssessmentClassification handleM21(String category) {
+        return null;
     }
 
+    @Nullable
     @Override
-    public boolean handleM23E(Integer journalIndex) {
-        return false;
+    public AssessmentClassification handleM22(String category) {
+        return null;
     }
 
+    @Nullable
     @Override
-    public boolean handleM24Plus(Integer journalIndex) {
-        return false;
+    public AssessmentClassification handleM23(String category) {
+        return null;
     }
 
+    @Nullable
     @Override
-    public boolean handleM24(Integer journalIndex) {
-        return false;
+    public AssessmentClassification handleM23e(String category) {
+        return null;
     }
 
+    @Nullable
     @Override
-    public boolean handleM51(Integer journalIndex) {
-        return false;
-    }
-
-    @Override
-    public boolean handleM52(Integer journalIndex) {
-        return false;
-    }
-
-    @Override
-    public boolean handleM53(Integer journalIndex) {
-        return false;
-    }
-
-    @Override
-    public boolean handleM54(Integer journalIndex) {
-        return false;
+    protected AssessmentClassification handleM24plus(String category) {
+        return null;
     }
 }

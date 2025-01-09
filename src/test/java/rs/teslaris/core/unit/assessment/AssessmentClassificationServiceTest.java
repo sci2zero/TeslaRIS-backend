@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +28,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
 public class AssessmentClassificationServiceTest {
@@ -145,5 +147,42 @@ public class AssessmentClassificationServiceTest {
                 assessmentClassificationId));
 
         // Then (AssessmentClassificationReferenceConstraintViolationException should be thrown)
+    }
+
+    @Test
+    void shouldReadAssessmentClassificationByCode() {
+        // Given
+        var code = "M21APlus";
+
+        var assessmentClassification = new AssessmentClassification();
+        assessmentClassification.setCode(code);
+
+        when(assessmentClassificationRepository.findByCode(code))
+            .thenReturn(Optional.of(assessmentClassification));
+
+        // When
+        var result = assessmentClassificationService.readAssessmentClassificationByCode(code);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(code, result.getCode());
+        verify(assessmentClassificationRepository, times(1)).findByCode(code);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenCodeDoesNotExist() {
+        // Given
+        var code = "NonExistentCode";
+
+        when(assessmentClassificationRepository.findByCode(code))
+            .thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> assessmentClassificationService.readAssessmentClassificationByCode(code));
+
+        assertEquals("Assessment Classification with given code does not exist.",
+            exception.getMessage());
+        verify(assessmentClassificationRepository, times(1)).findByCode(code);
     }
 }

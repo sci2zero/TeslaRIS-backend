@@ -854,18 +854,18 @@ public class DbInitializer implements ApplicationRunner {
 
         var commission1 = new Commission();
         commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 1", 1)));
-        commission1.setFormalDescriptionOfRule("Rule 1");
+        commission1.setFormalDescriptionOfRule("WOSJournalClassificationRuleEngine");
 
         var commission2 = new Commission();
         commission2.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 2", 1)));
-        commission2.setFormalDescriptionOfRule("Rule 2");
+        commission2.setFormalDescriptionOfRule("ScimagoJournalClassificationRuleEngine");
         commission2.setAssessmentDateFrom(LocalDate.of(2022, 2, 4));
         commission2.setAssessmentDateTo(LocalDate.of(2022, 5, 4));
         commission2.setSuperCommission(commission1);
 
         var commission3 = new Commission();
         commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1)));
-        commission3.setFormalDescriptionOfRule("Rule 3");
+        commission3.setFormalDescriptionOfRule("ErihPlusJournalClassificationRuleEngine");
 
         commissionRepository.saveAll(List.of(commission1, commission2, commission3));
 
@@ -1347,6 +1347,26 @@ public class DbInitializer implements ApplicationRunner {
         jci.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         jci.setContentType(IndicatorContentType.NUMBER);
 
+        var jciPercentile = new Indicator();
+        jciPercentile.setCode("jciPercentile");
+        jciPercentile.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Journal Citation Indicator (JCI) percentile",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Indikator citiranosti časopisa (JCI) percentil", 2)));
+        jciPercentile.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "The Journal Citation Indicator (JCI) percentile shows a journal's relative position within its research field, where a higher percentile indicates stronger performance compared to other journals in the same category.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Procenat Journal Citation Indicator-a (JCI) prikazuje relativnu poziciju časopisa unutar svoje oblasti istraživanja, pri čemu veći procenat označava bolje performanse u odnosu na druge časopise u istoj kategoriji.",
+                    2)));
+        jciPercentile.setAccessLevel(AccessLevel.CLOSED);
+        jciPercentile.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        jciPercentile.setContentType(IndicatorContentType.NUMBER);
+
         var jcr = new Indicator();
         jcr.setCode("jcr");
         jcr.setTitle(
@@ -1385,7 +1405,17 @@ public class DbInitializer implements ApplicationRunner {
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
-                hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago));
+                hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile));
+
+        var m21APlus = new AssessmentClassification();
+        m21APlus.setFormalDescriptionOfRule("handleM21APlus");
+        m21APlus.setCode("M21APlus");
+        m21APlus.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Vodeci medjunarodni casopis kategorije M21A+",
+                    1)));
+
+        assessmentClassificationRepository.saveAll(List.of(m21APlus));
     }
 
     private void processCountryLine(String[] line) {
