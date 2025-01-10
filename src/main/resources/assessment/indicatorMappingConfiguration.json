@@ -40,10 +40,6 @@
           "type": "INDEPENDENT"
         },
         "16": {
-          "mapsTo": "fiveYearJIFRank",
-          "type": "BY_CATEGORY"
-        },
-        "17": {
           "mapsTo": "currentJIFRank",
           "type": "BY_CATEGORY"
         },
@@ -55,23 +51,23 @@
           "mapsTo": "currentJIF",
           "type": "INDEPENDENT"
         },
-        "20": {
+        "19": {
           "mapsTo": "jciPercentile",
           "type": "INDEPENDENT"
         },
-        "22": {
+        "21": {
           "mapsTo": "eigenFactorNorm",
           "type": "INDEPENDENT"
         },
-        "23": {
+        "22": {
           "mapsTo": "ais",
           "type": "INDEPENDENT"
         },
-        "28": {
+        "27": {
           "mapsTo": "citedHL",
           "type": "INDEPENDENT"
         },
-        "29": {
+        "28": {
           "mapsTo": "citingHL",
           "type": "INDEPENDENT"
         },

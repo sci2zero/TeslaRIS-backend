@@ -79,14 +79,10 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
         return null;
     }
 
-    private PublicationSeriesIndicator findIndicatorByCode(String code, String category) {
-        return currentJournalIndicators.stream()
-            .filter(journalIndicator ->
-                journalIndicator.getIndicator().getCode().equals(code) &&
-                    journalIndicator.getFromDate().getYear() == this.classificationYear &&
-                    (category == null || category.equals(journalIndicator.getCategoryIdentifier())))
-            .findFirst()
-            .orElse(null);
+    @Nullable
+    @Override
+    protected AssessmentClassification handleM24(String category) {
+        return null;
     }
 
     private boolean isRankConditionPassed(PublicationSeriesIndicator indicator,
@@ -121,6 +117,7 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
     }
 
     private boolean isJciConditionPassed(PublicationSeriesIndicator jci, double topPercentage) {
-        return Objects.nonNull(jci) && jci.getNumericValue() <= topPercentage;
+        return Objects.nonNull(jci) && Objects.nonNull(jci.getNumericValue()) &&
+            (100.00 - jci.getNumericValue()) <= (topPercentage * 100);
     }
 }

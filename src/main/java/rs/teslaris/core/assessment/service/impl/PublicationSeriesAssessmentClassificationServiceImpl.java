@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
@@ -25,6 +26,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 
 @Service
+@Transactional
 public class PublicationSeriesAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl
     implements PublicationSeriesAssessmentClassificationService {

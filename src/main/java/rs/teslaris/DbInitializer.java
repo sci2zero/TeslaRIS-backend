@@ -1361,7 +1361,7 @@ public class DbInitializer implements ApplicationRunner {
                     "The Journal Citation Indicator (JCI) percentile shows a journal's relative position within its research field, where a higher percentile indicates stronger performance compared to other journals in the same category.",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "Procenat Journal Citation Indicator-a (JCI) prikazuje relativnu poziciju časopisa unutar svoje oblasti istraživanja, pri čemu veći procenat označava bolje performanse u odnosu na druge časopise u istoj kategoriji.",
+                    "Percentil Journal Citation Indicator-a (JCI) prikazuje relativnu poziciju časopisa unutar svoje oblasti istraživanja, pri čemu veći procenat označava bolje performanse u odnosu na druge časopise u istoj kategoriji.",
                     2)));
         jciPercentile.setAccessLevel(AccessLevel.CLOSED);
         jciPercentile.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
@@ -1412,10 +1412,59 @@ public class DbInitializer implements ApplicationRunner {
         m21APlus.setCode("M21APlus");
         m21APlus.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Vodeci medjunarodni casopis kategorije M21A+",
+                new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21A+.",
                     1)));
 
-        assessmentClassificationRepository.saveAll(List.of(m21APlus));
+        var m21A = new AssessmentClassification();
+        m21A.setFormalDescriptionOfRule("handleM21A");
+        m21A.setCode("M21A");
+        m21A.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21A.",
+                    1)));
+
+        var m21 = new AssessmentClassification();
+        m21.setFormalDescriptionOfRule("handleM21");
+        m21.setCode("M21");
+        m21.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21.",
+                    1)));
+
+        var m22 = new AssessmentClassification();
+        m22.setFormalDescriptionOfRule("handleM22");
+        m22.setCode("M22");
+        m22.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M22.",
+                    1)));
+
+        var m23 = new AssessmentClassification();
+        m23.setFormalDescriptionOfRule("handleM23");
+        m23.setCode("M23");
+        m23.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M23.",
+                    1)));
+
+        var m23e = new AssessmentClassification();
+        m23e.setFormalDescriptionOfRule("handleM23e");
+        m23e.setCode("M23e");
+        m23e.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M23e.",
+                    1)));
+
+        var m24plus = new AssessmentClassification();
+        m24plus.setFormalDescriptionOfRule("handleM24plus");
+        m24plus.setCode("M24plus");
+        m24plus.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M24+.",
+                    1)));
+
+        assessmentClassificationRepository.saveAll(
+            List.of(m21APlus, m21A, m21, m22, m23, m23e, m24plus));
     }
 
     private void processCountryLine(String[] line) {

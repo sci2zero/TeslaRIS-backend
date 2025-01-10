@@ -28,6 +28,21 @@ public interface PublicationSeriesIndicatorRepository extends
     List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
         Integer publicationSeriesId, Integer year, EntityIndicatorSource source);
 
+    @Query("SELECT DISTINCT psi.publicationSeries.id FROM PublicationSeriesIndicator psi " +
+        "WHERE psi.categoryIdentifier = :category AND " +
+        "extract(year from psi.fromDate) = :year AND " +
+        "psi.source = :source")
+    List<Integer> findIndicatorsForCategoryAndYearAndSource(
+        String category, Integer year, EntityIndicatorSource source);
+
+    @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
+        "WHERE psi.publicationSeries.id IN :journalIds AND " +
+        "psi.indicator.code = :code AND " +
+        "extract(year from psi.fromDate) = :year AND " +
+        "psi.source = :source")
+    List<PublicationSeriesIndicator> findJournalIndicatorsForIdsAndCodeAndYearAndSource(
+        List<Integer> journalIds, String code, Integer year, EntityIndicatorSource source);
+
     @Query("SELECT ps " +
         "FROM PublicationSeriesIndicator ps " +
         "WHERE ps.publicationSeries.id = :publicationSeriesId " +

@@ -1,15 +1,20 @@
 package rs.teslaris.core.assessment.ruleengine;
 
 import jakarta.annotation.Nullable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.assessment.model.EntityIndicator;
 import rs.teslaris.core.assessment.model.EntityIndicatorSource;
+import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.core.assessment.model.PublicationSeriesIndicator;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
@@ -62,12 +67,7 @@ public abstract class JournalClassificationRuleEngine {
                     publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
                         journalIndex.getDatabaseId(), classificationYear, source);
 
-                var classification = new PublicationSeriesAssessmentClassification();
-                classification.setPublicationSeries(currentJournal);
-                classification.setTimestamp(LocalDateTime.now());
-                classification.setCommission(commission);
-
-                performClassification(classification);
+                performClassification(commission);
             });
 
             pageNumber++;
@@ -76,8 +76,7 @@ public abstract class JournalClassificationRuleEngine {
     }
 
     @Transactional
-    private void performClassification(
-        PublicationSeriesAssessmentClassification entityClassification) {
+    private void performClassification(Commission commission) {
         List<Function<String, AssessmentClassification>> handlers = List.of(
             this::handleM21APlus,
             this::handleM21A,
@@ -95,6 +94,44 @@ public abstract class JournalClassificationRuleEngine {
             .toList();
 
         for (var categoryIdentifier : distinctCategoryIdentifiers) {
+            // TODO: move this to separate task as to compute IF5 rank for each journal.
+            var journalInSameCategoryIds =
+                publicationSeriesIndicatorRepository.findIndicatorsForCategoryAndYearAndSource(
+                    categoryIdentifier, classificationYear, EntityIndicatorSource.WEB_OF_SCIENCE);
+            var allIF5Values =
+                publicationSeriesIndicatorRepository.findJournalIndicatorsForIdsAndCodeAndYearAndSource(
+                    journalInSameCategoryIds, "fiveYearJIF", classificationYear,
+                    EntityIndicatorSource.WEB_OF_SCIENCE);
+            allIF5Values.sort(Comparator.comparing(EntityIndicator::getNumericValue,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+
+
+            int rank = IntStream.range(0, allIF5Values.size())
+                .filter(i -> Objects.equals(allIF5Values.get(i).getPublicationSeries().getId(),
+                    currentJournal.getId()))
+                .findFirst()
+                .orElse(allIF5Values.size() - 1) +
+                1; // orElse is not going to happen, but just to be sure
+
+            var if5Rank = new PublicationSeriesIndicator();
+            if5Rank.setCategoryIdentifier(categoryIdentifier);
+            if5Rank.setFromDate(LocalDate.of(classificationYear, 1, 1));
+            if5Rank.setToDate(LocalDate.of(classificationYear, 12, 31));
+            if5Rank.setPublicationSeries(currentJournal);
+            var indicator = new Indicator();
+            indicator.setCode("fiveYearJIFRank");
+            if5Rank.setIndicator(indicator);
+            if5Rank.setTextualValue(rank + "/" + allIF5Values.size());
+            // TODO: end of IF5 rank computing functionality.
+
+            currentJournalIndicators.add(if5Rank);
+
+            var entityClassification = new PublicationSeriesAssessmentClassification();
+            entityClassification.setPublicationSeries(currentJournal);
+            entityClassification.setTimestamp(LocalDateTime.now());
+            entityClassification.setCommission(commission);
+            entityClassification.setClassificationYear(this.classificationYear);
+
             for (Function<String, AssessmentClassification> handler : handlers) {
                 var assessmentClassification = handler.apply(categoryIdentifier);
                 if (saveIfNotNull(entityClassification,
@@ -108,7 +145,7 @@ public abstract class JournalClassificationRuleEngine {
     @Transactional
     private boolean saveIfNotNull(PublicationSeriesAssessmentClassification classification,
                                   Pair<AssessmentClassification, String> assessmentClassification) {
-        if (Objects.nonNull(assessmentClassification)) {
+        if (Objects.nonNull(assessmentClassification.a)) {
             classification.setCategoryIdentifier(assessmentClassification.b);
             classification.setAssessmentClassification(assessmentClassification.a);
             assessmentClassificationRepository.save(classification);
@@ -145,4 +182,17 @@ public abstract class JournalClassificationRuleEngine {
 
     @Nullable
     abstract protected AssessmentClassification handleM24plus(String category);
+
+    @Nullable
+    abstract protected AssessmentClassification handleM24(String category);
+
+    protected PublicationSeriesIndicator findIndicatorByCode(String code, String category) {
+        return currentJournalIndicators.stream()
+            .filter(journalIndicator ->
+                journalIndicator.getIndicator().getCode().equals(code) &&
+                    journalIndicator.getFromDate().getYear() == this.classificationYear &&
+                    (category == null || category.equals(journalIndicator.getCategoryIdentifier())))
+            .findFirst()
+            .orElse(null);
+    }
 }
