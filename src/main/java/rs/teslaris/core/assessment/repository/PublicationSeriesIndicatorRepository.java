@@ -3,6 +3,8 @@ package rs.teslaris.core.assessment.repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -15,11 +17,24 @@ public interface PublicationSeriesIndicatorRepository extends
     JpaRepository<PublicationSeriesIndicator, Integer> {
 
     @Query("SELECT psi FROM PublicationSeriesIndicator psi " +
+        "WHERE psi.publicationSeries.id = :publicationSeriesId")
+    Page<PublicationSeriesIndicator> findIndicatorsForPublicationSeries(Integer publicationSeriesId,
+                                                                        Pageable pageable);
+
+    @Query("SELECT psi FROM PublicationSeriesIndicator psi " +
         "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
         "psi.indicator.accessLevel <= :accessLevel")
     List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndIndicatorAccessLevel(
         Integer publicationSeriesId,
         AccessLevel accessLevel);
+
+    @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
+        "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
+        "extract(year from psi.fromDate) = :year AND " +
+        "psi.indicator.code = :code AND " +
+        "psi.source = :source")
+    List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndCodeAndSourceAndYear(
+        Integer publicationSeriesId, String code, Integer year, EntityIndicatorSource source);
 
     @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
         "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +

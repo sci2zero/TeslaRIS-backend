@@ -22,4 +22,9 @@ public interface PublicationSeriesIndicatorService {
 
     void scheduleIndicatorLoading(LocalDateTime dateTime,
                                   EntityIndicatorSource entityIndicatorSource, Integer userId);
+
+    void computeFiveYearIFRank(List<Integer> classificationYears);
+
+    void scheduleIF5RankComputation(LocalDateTime timeToRun, List<Integer> classificationYears,
+                                    Integer userId);
 }

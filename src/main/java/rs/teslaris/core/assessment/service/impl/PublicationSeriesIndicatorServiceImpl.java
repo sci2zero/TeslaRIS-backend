@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -17,12 +18,17 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.core.assessment.dto.PublicationSeriesIndicatorResponseDTO;
+import rs.teslaris.core.assessment.model.EntityIndicator;
 import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.model.PublicationSeriesIndicator;
@@ -34,8 +40,11 @@ import rs.teslaris.core.assessment.util.EntityIndicatorType;
 import rs.teslaris.core.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -47,6 +56,7 @@ import rs.teslaris.core.util.seeding.CsvDataLoader;
 
 @Service
 @Slf4j
+@Transactional
 public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements PublicationSeriesIndicatorService {
 
@@ -61,6 +71,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     private final LanguageTagService languageTagService;
 
     private final TaskManagerService taskManagerService;
+
+    private final JournalIndexRepository journalIndexRepository;
 
     private final String WOS_DIRECTORY = "src/main/resources/publicationSeriesIndicators/wos";
 
@@ -79,7 +91,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
         CsvDataLoader csvDataLoader, PublicationSeriesService publicationSeriesService,
         JournalService journalService, LanguageTagService languageTagService,
-        TaskManagerService taskManagerService) {
+        TaskManagerService taskManagerService, JournalIndexRepository journalIndexRepository) {
         super(indicatorService, entityIndicatorRepository, documentFileService);
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.csvDataLoader = csvDataLoader;
@@ -87,6 +99,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         this.journalService = journalService;
         this.languageTagService = languageTagService;
         this.taskManagerService = taskManagerService;
+        this.journalIndexRepository = journalIndexRepository;
     }
 
     @Override
@@ -97,6 +110,100 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             publicationSeriesId,
             accessLevel).stream().map(
             EntityIndicatorConverter::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public void computeFiveYearIFRank(List<Integer> classificationYears) {
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            List<JournalIndex> chunk =
+                journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            chunk.forEach((journalIndex) -> {
+                var currentJournal = journalService.findJournalById(journalIndex.getDatabaseId());
+                classificationYears.forEach(classificationYear -> {
+                    var currentJournalRankIndicators =
+                        publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndCodeAndSourceAndYear(
+                            journalIndex.getDatabaseId(), "currentJIFRank", classificationYear,
+                            EntityIndicatorSource.WEB_OF_SCIENCE);
+
+                    if (currentJournalRankIndicators.isEmpty()) {
+                        return;
+                    }
+
+                    var distinctCategoryIdentifiers = currentJournalRankIndicators.stream()
+                        .map(PublicationSeriesIndicator::getCategoryIdentifier)
+                        .filter(Objects::nonNull)
+                        .filter(categoryIdentifier -> !categoryIdentifier.isEmpty())
+                        .distinct()
+                        .toList();
+
+                    distinctCategoryIdentifiers.forEach(categoryIdentifier -> {
+                        performIF5RankComputation(classificationYear, currentJournal,
+                            categoryIdentifier,
+                            currentJournalRankIndicators.getFirst().getEdition());
+                    });
+                });
+            });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+    }
+
+    private void performIF5RankComputation(Integer classificationYear, Journal currentJournal,
+                                           String categoryIdentifier, String edition) {
+        var journalInSameCategoryIds =
+            publicationSeriesIndicatorRepository.findIndicatorsForCategoryAndYearAndSource(
+                categoryIdentifier, classificationYear, EntityIndicatorSource.WEB_OF_SCIENCE);
+        var allIF5Values =
+            publicationSeriesIndicatorRepository.findJournalIndicatorsForIdsAndCodeAndYearAndSource(
+                journalInSameCategoryIds, "fiveYearJIF", classificationYear,
+                EntityIndicatorSource.WEB_OF_SCIENCE);
+        allIF5Values.sort(Comparator.comparing(EntityIndicator::getNumericValue,
+            Comparator.nullsLast(Comparator.reverseOrder())));
+
+        int rank = IntStream.range(0, allIF5Values.size())
+            .filter(i -> Objects.equals(allIF5Values.get(i).getPublicationSeries().getId(),
+                currentJournal.getId()))
+            .findFirst()
+            .orElse(allIF5Values.size() - 1) +
+            1; // orElse is not going to happen, but just to be sure
+
+        var if5Rank = new PublicationSeriesIndicator();
+        if5Rank.setCategoryIdentifier(categoryIdentifier);
+        if5Rank.setFromDate(LocalDate.of(classificationYear, 1, 1));
+        if5Rank.setToDate(LocalDate.of(classificationYear, 12, 31));
+        if5Rank.setPublicationSeries(currentJournal);
+        if5Rank.setIndicator(indicatorService.getIndicatorByCode("fiveYearJIFRank"));
+        if5Rank.setTextualValue(rank + "/" + allIF5Values.size());
+        if5Rank.setEdition(edition);
+        if5Rank.setTimestamp(LocalDateTime.now());
+        if5Rank.setSource(EntityIndicatorSource.WEB_OF_SCIENCE);
+
+        var existingIndicatorValue =
+            publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                currentJournal.getId(), if5Rank.getSource(), if5Rank.getFromDate(),
+                categoryIdentifier,
+                "fiveYearJIFRank");
+        existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
+
+        publicationSeriesIndicatorRepository.save(if5Rank);
+    }
+
+    @Override
+    public void scheduleIF5RankComputation(LocalDateTime timeToRun,
+                                           List<Integer> classificationYears, Integer userId) {
+
+        taskManagerService.scheduleTask(
+            "Publication_Series_IF5Rank_Compute-" + EntityIndicatorSource.WEB_OF_SCIENCE.name() +
+                "-" + StringUtils.join(classificationYears, "_") +
+                "-" + UUID.randomUUID(),
+            timeToRun,
+            () -> computeFiveYearIFRank(classificationYears), userId);
     }
 
     @Override
@@ -323,7 +430,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                                String eIssn, String printIssn) {
         var newJournal = new JournalDTO();
         newJournal.setTitle(List.of(new MultilingualContentDTO(defaultLanguage.getId(),
-            defaultLanguage.getLanguageTag(), journalName, 1)));
+            defaultLanguage.getLanguageTag(), StringEscapeUtils.unescapeHtml4(journalName), 1)));
         newJournal.setNameAbbreviation(new ArrayList<>());
         newJournal.setContributions(new ArrayList<>());
         newJournal.setEissn(eIssn);

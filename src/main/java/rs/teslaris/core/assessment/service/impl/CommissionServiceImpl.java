@@ -52,7 +52,8 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
                                                           String searchExpression,
                                                           String language) {
         if (Objects.nonNull(searchExpression)) {
-            return commissionRepository.searchCommissions(searchExpression, language, pageable)
+            return commissionRepository.searchCommissions(searchExpression, language.toUpperCase(),
+                    pageable)
                 .map(CommissionConverter::toDTO);
         } else {
             return commissionRepository.findAll(pageable).map(CommissionConverter::toDTO);

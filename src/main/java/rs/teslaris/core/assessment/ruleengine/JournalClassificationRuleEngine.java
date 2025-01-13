@@ -1,20 +1,15 @@
 package rs.teslaris.core.assessment.ruleengine;
 
 import jakarta.annotation.Nullable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.IntStream;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
-import rs.teslaris.core.assessment.model.EntityIndicator;
 import rs.teslaris.core.assessment.model.EntityIndicatorSource;
-import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.core.assessment.model.PublicationSeriesIndicator;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
@@ -83,7 +78,9 @@ public abstract class JournalClassificationRuleEngine {
             this::handleM21,
             this::handleM22,
             this::handleM23,
-            this::handleM23e
+            this::handleM23e,
+            this::handleM24plus,
+            this::handleM24
         );
 
         var distinctCategoryIdentifiers = currentJournalIndicators.stream()
@@ -94,38 +91,6 @@ public abstract class JournalClassificationRuleEngine {
             .toList();
 
         for (var categoryIdentifier : distinctCategoryIdentifiers) {
-            // TODO: move this to separate task as to compute IF5 rank for each journal.
-            var journalInSameCategoryIds =
-                publicationSeriesIndicatorRepository.findIndicatorsForCategoryAndYearAndSource(
-                    categoryIdentifier, classificationYear, EntityIndicatorSource.WEB_OF_SCIENCE);
-            var allIF5Values =
-                publicationSeriesIndicatorRepository.findJournalIndicatorsForIdsAndCodeAndYearAndSource(
-                    journalInSameCategoryIds, "fiveYearJIF", classificationYear,
-                    EntityIndicatorSource.WEB_OF_SCIENCE);
-            allIF5Values.sort(Comparator.comparing(EntityIndicator::getNumericValue,
-                Comparator.nullsLast(Comparator.reverseOrder())));
-
-
-            int rank = IntStream.range(0, allIF5Values.size())
-                .filter(i -> Objects.equals(allIF5Values.get(i).getPublicationSeries().getId(),
-                    currentJournal.getId()))
-                .findFirst()
-                .orElse(allIF5Values.size() - 1) +
-                1; // orElse is not going to happen, but just to be sure
-
-            var if5Rank = new PublicationSeriesIndicator();
-            if5Rank.setCategoryIdentifier(categoryIdentifier);
-            if5Rank.setFromDate(LocalDate.of(classificationYear, 1, 1));
-            if5Rank.setToDate(LocalDate.of(classificationYear, 12, 31));
-            if5Rank.setPublicationSeries(currentJournal);
-            var indicator = new Indicator();
-            indicator.setCode("fiveYearJIFRank");
-            if5Rank.setIndicator(indicator);
-            if5Rank.setTextualValue(rank + "/" + allIF5Values.size());
-            // TODO: end of IF5 rank computing functionality.
-
-            currentJournalIndicators.add(if5Rank);
-
             var entityClassification = new PublicationSeriesAssessmentClassification();
             entityClassification.setPublicationSeries(currentJournal);
             entityClassification.setTimestamp(LocalDateTime.now());
@@ -136,7 +101,7 @@ public abstract class JournalClassificationRuleEngine {
                 var assessmentClassification = handler.apply(categoryIdentifier);
                 if (saveIfNotNull(entityClassification,
                     new Pair<>(assessmentClassification, categoryIdentifier))) {
-                    return;
+                    break;
                 }
             }
         }
@@ -148,6 +113,13 @@ public abstract class JournalClassificationRuleEngine {
         if (Objects.nonNull(assessmentClassification.a)) {
             classification.setCategoryIdentifier(assessmentClassification.b);
             classification.setAssessmentClassification(assessmentClassification.a);
+
+            var existingClassification =
+                assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYear(
+                    classification.getPublicationSeries().getId(), assessmentClassification.b,
+                    classificationYear);
+            existingClassification.ifPresent(assessmentClassificationRepository::delete);
+
             assessmentClassificationRepository.save(classification);
             return true;
         }

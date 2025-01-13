@@ -252,6 +252,7 @@ public class DbInitializer implements ApplicationRunner {
             new Privilege("EDIT_ENTITY_ASSESSMENT_CLASSIFICATION");
         var editLanguageTags = new Privilege("EDIT_LANGUAGE_TAGS");
         var editEventIndicators = new Privilege("EDIT_EVENT_INDICATORS");
+        var scheduleTask = new Privilege("SCHEDULE_TASK");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -262,7 +263,7 @@ public class DbInitializer implements ApplicationRunner {
                 mergePersonMetadata, mergeConferenceProceedings, mergeProceedingsPublications,
                 prepareExportData, editIndicators, editAssessmentClassifications, editCommissions,
                 editAssessmentMeasures, editAssessmentRulebooks, editDocumentIndicators,
-                editEntityIndicatorProofs, listMyJournalPublications, deletePerson,
+                editEntityIndicatorProofs, listMyJournalPublications, deletePerson, scheduleTask,
                 registerEmployee, reindexPrivilege, startDeduplicationProcess, performDeduplication,
                 mergeDocumentsMetadata, mergeEventMetadata, mergePublicationSeriesMetadata,
                 mergeMonographPublications, prepareExportData, mergeBookSeriesPublications,
@@ -279,7 +280,7 @@ public class DbInitializer implements ApplicationRunner {
                 editPublicationSeries, editConferences, editEventRelations, editCommissions,
                 mergeJournalPublications, mergePersonPublications, mergePersonMetadata,
                 mergeOUEmployments, mergeConferenceProceedings, mergeProceedingsPublications,
-                prepareExportData, editIndicators, editAssessmentClassifications,
+                prepareExportData, editIndicators, editAssessmentClassifications, scheduleTask,
                 editAssessmentMeasures, editAssessmentRulebooks, editDocumentIndicators,
                 editEntityIndicatorProofs, deletePerson, registerEmployee, reindexPrivilege,
                 startDeduplicationProcess, performDeduplication, mergeDocumentsMetadata,
@@ -853,18 +854,21 @@ public class DbInitializer implements ApplicationRunner {
             List.of(assessmentMeasure1, assessmentMeasure2, assessmentMeasure3));
 
         var commission1 = new Commission();
-        commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 1", 1)));
+        commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 1", 1),
+            new MultiLingualContent(serbianTag, "Komisija 1", 2)));
         commission1.setFormalDescriptionOfRule("WOSJournalClassificationRuleEngine");
 
         var commission2 = new Commission();
-        commission2.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 2", 1)));
+        commission2.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 2", 1),
+            new MultiLingualContent(serbianTag, "Komisija 2", 2)));
         commission2.setFormalDescriptionOfRule("ScimagoJournalClassificationRuleEngine");
         commission2.setAssessmentDateFrom(LocalDate.of(2022, 2, 4));
         commission2.setAssessmentDateTo(LocalDate.of(2022, 5, 4));
         commission2.setSuperCommission(commission1);
 
         var commission3 = new Commission();
-        commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1)));
+        commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1),
+            new MultiLingualContent(serbianTag, "Komisija 3", 2)));
         commission3.setFormalDescriptionOfRule("ErihPlusJournalClassificationRuleEngine");
 
         commissionRepository.saveAll(List.of(commission1, commission2, commission3));

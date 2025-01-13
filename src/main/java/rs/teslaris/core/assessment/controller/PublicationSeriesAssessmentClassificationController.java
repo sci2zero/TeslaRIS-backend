@@ -67,7 +67,9 @@ public class PublicationSeriesAssessmentClassificationController {
             publicationSeriesAssessmentClassificationDTO);
     }
 
-    @GetMapping("/schedule-classification")
+    @PostMapping("/schedule-classification")
+    @Idempotent
+    @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
     public void createPublicationSeriesAssessmentClassification(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("commissionId") Integer commissionId,
