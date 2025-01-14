@@ -61,6 +61,9 @@ public abstract class JournalClassificationRuleEngine {
                 this.currentJournalIndicators =
                     publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
                         journalIndex.getDatabaseId(), classificationYear, source);
+                this.currentJournalIndicators.addAll(
+                    publicationSeriesIndicatorRepository.findOngoingIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+                        journalIndex.getDatabaseId(), classificationYear, source));
 
                 performClassification(commission);
             });
@@ -89,6 +92,10 @@ public abstract class JournalClassificationRuleEngine {
             .filter(categoryIdentifier -> !categoryIdentifier.isEmpty())
             .distinct()
             .toList();
+
+        distinctCategoryIdentifiers = distinctCategoryIdentifiers.isEmpty()
+            ? List.of("")
+            : distinctCategoryIdentifiers;
 
         for (var categoryIdentifier : distinctCategoryIdentifiers) {
             var entityClassification = new PublicationSeriesAssessmentClassification();
@@ -162,7 +169,7 @@ public abstract class JournalClassificationRuleEngine {
         return currentJournalIndicators.stream()
             .filter(journalIndicator ->
                 journalIndicator.getIndicator().getCode().equals(code) &&
-                    journalIndicator.getFromDate().getYear() == this.classificationYear &&
+                    journalIndicator.getFromDate().getYear() <= this.classificationYear &&
                     (category == null || category.equals(journalIndicator.getCategoryIdentifier())))
             .findFirst()
             .orElse(null);

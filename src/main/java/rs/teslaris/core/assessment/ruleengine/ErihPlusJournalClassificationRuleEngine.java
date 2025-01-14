@@ -58,10 +58,10 @@ public class ErihPlusJournalClassificationRuleEngine extends JournalClassificati
     @Nullable
     @Override
     protected AssessmentClassification handleM23e(String category) {
-        var jcr = findIndicatorByCode("erihPlus", null);
-        var jcrConditionPassed = Objects.nonNull(jcr) && jcr.getBooleanValue();
+        var erihPlus = findIndicatorByCode("erihPlus", null);
+        var erihPlusConditionPassed = Objects.nonNull(erihPlus) && erihPlus.getBooleanValue();
 
-        if (jcrConditionPassed) {
+        if (erihPlusConditionPassed) {
             return assessmentClassificationService.readAssessmentClassificationByCode("M23e");
         }
 

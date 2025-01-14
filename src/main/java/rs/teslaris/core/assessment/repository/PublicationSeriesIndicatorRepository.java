@@ -43,6 +43,14 @@ public interface PublicationSeriesIndicatorRepository extends
     List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
         Integer publicationSeriesId, Integer year, EntityIndicatorSource source);
 
+    @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
+        "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
+        "extract(year from psi.fromDate) < :year AND " +
+        "psi.toDate IS NULL AND " +
+        "psi.source = :source")
+    List<PublicationSeriesIndicator> findOngoingIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+        Integer publicationSeriesId, Integer year, EntityIndicatorSource source);
+
     @Query("SELECT DISTINCT psi.publicationSeries.id FROM PublicationSeriesIndicator psi " +
         "WHERE psi.categoryIdentifier = :category AND " +
         "extract(year from psi.fromDate) = :year AND " +
@@ -50,7 +58,7 @@ public interface PublicationSeriesIndicatorRepository extends
     List<Integer> findIndicatorsForCategoryAndYearAndSource(
         String category, Integer year, EntityIndicatorSource source);
 
-    @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
+    @Query("SELECT DISTINCT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
         "WHERE psi.publicationSeries.id IN :journalIds AND " +
         "psi.indicator.code = :code AND " +
         "extract(year from psi.fromDate) = :year AND " +

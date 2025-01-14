@@ -15,13 +15,18 @@ public class EntityAssessmentClassificationConverter {
             entityAssessmentClassification.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(
                 entityAssessmentClassification.getAssessmentClassification().getTitle()),
+            entityAssessmentClassification.getAssessmentClassification().getId(),
             Objects.nonNull(entityAssessmentClassification.getCommission()) ?
                 MultilingualContentConverter.getMultilingualContentDTO(
                     entityAssessmentClassification.getCommission().getDescription()) :
                 new ArrayList<>(),
+            Objects.nonNull(entityAssessmentClassification.getCommission()) ?
+                entityAssessmentClassification.getCommission().getId() : null,
             entityAssessmentClassification.getCategoryIdentifier(),
             entityAssessmentClassification.getClassificationYear(),
-            entityAssessmentClassification.getTimestamp());
+            entityAssessmentClassification.getTimestamp(),
+            entityAssessmentClassification.getAssessmentClassification().getApplicableTypes()
+                .stream().toList(), entityAssessmentClassification.getManual());
     }
 
     public static EntityAssessmentClassificationResponseDTO toDTO(
@@ -30,12 +35,17 @@ public class EntityAssessmentClassificationConverter {
             entityAssessmentClassification.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(
                 entityAssessmentClassification.getAssessmentClassification().getTitle()),
+            entityAssessmentClassification.getAssessmentClassification().getId(),
             Objects.nonNull(entityAssessmentClassification.getCommission()) ?
                 MultilingualContentConverter.getMultilingualContentDTO(
                     entityAssessmentClassification.getCommission().getDescription()) :
                 new ArrayList<>(),
+            Objects.nonNull(entityAssessmentClassification.getCommission()) ?
+                entityAssessmentClassification.getCommission().getId() : null,
             "",
             entityAssessmentClassification.getClassificationYear(),
-            entityAssessmentClassification.getTimestamp());
+            entityAssessmentClassification.getTimestamp(),
+            entityAssessmentClassification.getAssessmentClassification().getApplicableTypes()
+                .stream().toList(), entityAssessmentClassification.getManual());
     }
 }

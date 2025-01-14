@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.controller;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,7 @@ public class EventAssessmentClassificationController {
     @PreAuthorize("hasAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
     @Idempotent
     public EntityAssessmentClassificationResponseDTO createEventAssessmentClassification(
-        @RequestBody EventAssessmentClassificationDTO eventAssessmentClassificationDTO) {
+        @RequestBody @Valid EventAssessmentClassificationDTO eventAssessmentClassificationDTO) {
         var newEventAssessmentClassification =
             eventAssessmentClassificationService.createEventAssessmentClassification(
                 eventAssessmentClassificationDTO);
@@ -48,7 +49,7 @@ public class EventAssessmentClassificationController {
     @PreAuthorize("hasAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateEventAssessmentClassification(
-        @RequestBody EventAssessmentClassificationDTO eventAssessmentClassificationDTO,
+        @RequestBody @Valid EventAssessmentClassificationDTO eventAssessmentClassificationDTO,
         @PathVariable Integer eventAssessmentClassificationId) {
         eventAssessmentClassificationService.updateEventAssessmentClassification(
             eventAssessmentClassificationId, eventAssessmentClassificationDTO);

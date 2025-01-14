@@ -933,10 +933,12 @@ public class DbInitializer implements ApplicationRunner {
         var eventAssessmentClassification1 = new EventAssessmentClassification();
         eventAssessmentClassification1.setEvent(conferenceEvent1);
         eventAssessmentClassification1.setAssessmentClassification(assessmentClassification1);
+        eventAssessmentClassification1.setClassificationYear(2023);
 
         var eventAssessmentClassification2 = new EventAssessmentClassification();
         eventAssessmentClassification2.setEvent(conferenceEvent1);
         eventAssessmentClassification2.setAssessmentClassification(assessmentClassification1);
+        eventAssessmentClassification2.setClassificationYear(2020);
 
         eventAssessmentClassificationRepository.saveAll(
             List.of(eventAssessmentClassification1, eventAssessmentClassification2));
@@ -1405,11 +1407,100 @@ public class DbInitializer implements ApplicationRunner {
         scimago.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         scimago.setContentType(IndicatorContentType.BOOL);
 
+        var numParticipants = new Indicator();
+        numParticipants.setCode("numParticipants");
+        numParticipants.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Number of Participants", 1),
+                new MultiLingualContent(serbianTag, "Broj učesnika", 2)));
+        numParticipants.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Number of conference participants.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Broj učesnika na konferenciji.",
+                    2)));
+        numParticipants.setAccessLevel(AccessLevel.CLOSED);
+        numParticipants.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        numParticipants.setContentType(IndicatorContentType.NUMBER);
+
+        var numPresentations = new Indicator();
+        numPresentations.setCode("numPresentations");
+        numPresentations.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "Number of Presentations", 1),
+            new MultiLingualContent(serbianTag, "Broj saopštenja na skupu", 2)
+        ));
+        numPresentations.setDescription(Set.of(
+            new MultiLingualContent(englishTag, "Number of presentations at the conference.", 1),
+            new MultiLingualContent(serbianTag, "Broj saopštenja na skupu.", 2)
+        ));
+        numPresentations.setAccessLevel(AccessLevel.CLOSED);
+        numPresentations.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        numPresentations.setContentType(IndicatorContentType.NUMBER);
+
+        var numParticipantCountries = new Indicator();
+        numParticipantCountries.setCode("numParticipantCountries");
+        numParticipantCountries.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "Number of Participant Countries", 1),
+            new MultiLingualContent(serbianTag, "Broj zemalja koji imaju učesnika na skupu", 2)
+        ));
+        numParticipantCountries.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "Number of countries represented by participants at the conference.", 1),
+            new MultiLingualContent(serbianTag, "Broj zemalja koji imaju učesnika na skupu.", 2)
+        ));
+        numParticipantCountries.setAccessLevel(AccessLevel.CLOSED);
+        numParticipantCountries.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        numParticipantCountries.setContentType(IndicatorContentType.NUMBER);
+
+        var numCountriesInScientificCommittee = new Indicator();
+        numCountriesInScientificCommittee.setCode("numCountriesInScientificCommittee");
+        numCountriesInScientificCommittee.setTitle(Set.of(
+            new MultiLingualContent(englishTag,
+                "Number of Countries Represented in Scientific Committee", 1),
+            new MultiLingualContent(serbianTag,
+                "Broj zemalja koji imaju učesnika u naučnom odboru skupa", 2)
+        ));
+        numCountriesInScientificCommittee.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "Number of countries represented in the scientific committee.", 1),
+            new MultiLingualContent(serbianTag,
+                "Broj zemalja koji imaju učesnika u naučnom odboru skupa.", 2)
+        ));
+        numCountriesInScientificCommittee.setAccessLevel(AccessLevel.CLOSED);
+        numCountriesInScientificCommittee.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        numCountriesInScientificCommittee.setContentType(IndicatorContentType.NUMBER);
+
+        var organizedByScientificInstitution = new Indicator();
+        organizedByScientificInstitution.setCode("organizedByScientificInstitution");
+        organizedByScientificInstitution.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "Organized by Scientific or National Institution",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Skup organizuje naučno-istraživačka institucija, ili institucija od nacionalnog značaja",
+                2)
+        ));
+        organizedByScientificInstitution.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "Indicates if the event is organized by a scientific research or national institution.",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Da li skup organizuje naučno-istraživačka institucija, ili institucija od nacionalnog značaja.",
+                2)
+        ));
+        organizedByScientificInstitution.setAccessLevel(AccessLevel.CLOSED);
+        organizedByScientificInstitution.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        organizedByScientificInstitution.setContentType(IndicatorContentType.BOOL);
+
+
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
-                hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile));
+                hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile,
+                numParticipants, organizedByScientificInstitution,
+                numCountriesInScientificCommittee,
+                numParticipantCountries, numPresentations));
 
         var m21APlus = new AssessmentClassification();
         m21APlus.setFormalDescriptionOfRule("handleM21APlus");
@@ -1418,6 +1509,7 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(
                 new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21A+.",
                     1)));
+        m21APlus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var m21A = new AssessmentClassification();
         m21A.setFormalDescriptionOfRule("handleM21A");
@@ -1426,6 +1518,7 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(
                 new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21A.",
                     1)));
+        m21A.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var m21 = new AssessmentClassification();
         m21.setFormalDescriptionOfRule("handleM21");
@@ -1434,6 +1527,7 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(
                 new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21.",
                     1)));
+        m21.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var m22 = new AssessmentClassification();
         m22.setFormalDescriptionOfRule("handleM22");
@@ -1442,6 +1536,7 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(
                 new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M22.",
                     1)));
+        m22.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var m23 = new AssessmentClassification();
         m23.setFormalDescriptionOfRule("handleM23");
@@ -1450,6 +1545,7 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(
                 new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M23.",
                     1)));
+        m23.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var m23e = new AssessmentClassification();
         m23e.setFormalDescriptionOfRule("handleM23e");
@@ -1458,17 +1554,47 @@ public class DbInitializer implements ApplicationRunner {
             Set.of(
                 new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M23e.",
                     1)));
+        m23e.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var m24plus = new AssessmentClassification();
         m24plus.setFormalDescriptionOfRule("handleM24plus");
-        m24plus.setCode("M24plus");
+        m24plus.setCode("M24Plus");
         m24plus.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M24+.",
                     1)));
+        m24plus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+
+        var multinationalConf = new AssessmentClassification();
+        multinationalConf.setFormalDescriptionOfRule("multinationalConference");
+        multinationalConf.setCode("multinationalConf");
+        multinationalConf.setTitle(
+            Set.of(
+                new MultiLingualContent(serbianTag, "Međunarodna konferencija.", 2),
+                new MultiLingualContent(englishTag, "Multinational conference.", 1)));
+        multinationalConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
+
+        var nationalConf = new AssessmentClassification();
+        nationalConf.setFormalDescriptionOfRule("nationalConference");
+        nationalConf.setCode("nationalConf");
+        nationalConf.setTitle(
+            Set.of(
+                new MultiLingualContent(serbianTag, "Domaća konferencija.", 2),
+                new MultiLingualContent(englishTag, "National conference.", 1)));
+        nationalConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
+
+        var nonAcademicConf = new AssessmentClassification();
+        nonAcademicConf.setFormalDescriptionOfRule("nonAcademicConference");
+        nonAcademicConf.setCode("nonAcademicConf");
+        nonAcademicConf.setTitle(
+            Set.of(
+                new MultiLingualContent(serbianTag, "Tehnička (ne-naučna) konferencija.", 2),
+                new MultiLingualContent(englishTag, "Technical (non-academic) conference.", 1)));
+        nonAcademicConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
 
         assessmentClassificationRepository.saveAll(
-            List.of(m21APlus, m21A, m21, m22, m23, m23e, m24plus));
+            List.of(m21APlus, m21A, m21, m22, m23, m23e, m24plus, multinationalConf, nationalConf,
+                nonAcademicConf));
     }
 
     private void processCountryLine(String[] line) {

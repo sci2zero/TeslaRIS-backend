@@ -49,9 +49,11 @@ public class EventAssessmentClassificationServiceTest {
 
         var eventAssessmentClassification1 = new EventAssessmentClassification();
         eventAssessmentClassification1.setAssessmentClassification(assessmentClassification);
+        eventAssessmentClassification1.setClassificationYear(2025);
 
         var eventAssessmentClassification2 = new EventAssessmentClassification();
         eventAssessmentClassification2.setAssessmentClassification(assessmentClassification);
+        eventAssessmentClassification2.setClassificationYear(2025);
 
         when(
             eventAssessmentClassificationRepository.findAssessmentClassificationsForEvent(

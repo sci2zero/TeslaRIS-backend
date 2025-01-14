@@ -1,5 +1,8 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.converter.AssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.AssessmentClassificationDTO;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
@@ -43,6 +47,14 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
     }
 
     @Override
+    public List<AssessmentClassificationDTO> getAssessmentClassificationsApplicableToEntity(
+        List<ApplicableEntityType> applicableEntityTypes) {
+        return assessmentClassificationRepository.getAssessmentClassificationsApplicableToEntity(
+                applicableEntityTypes).stream()
+            .map(AssessmentClassificationConverter::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
     public AssessmentClassification createAssessmentClassification(
         AssessmentClassificationDTO assessmentClassification) {
         var newAssessmentClassification = new AssessmentClassification();
@@ -69,8 +81,8 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
         assessmentClassification.setCode(assessmentClassificationDTO.code());
         assessmentClassification.setTitle(
             multilingualContentService.getMultilingualContent(assessmentClassificationDTO.title()));
-        assessmentClassification.setApplicableEntityType(
-            assessmentClassificationDTO.applicableEntityType());
+        assessmentClassification.setApplicableTypes(
+            new HashSet<>(assessmentClassificationDTO.applicableTypes()));
     }
 
     @Override

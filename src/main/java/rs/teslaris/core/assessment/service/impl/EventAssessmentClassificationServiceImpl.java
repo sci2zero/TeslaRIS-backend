@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.dto.EventAssessmentClassificationDTO;
@@ -17,6 +18,7 @@ import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificat
 import rs.teslaris.core.service.interfaces.document.EventService;
 
 @Service
+@Transactional
 public class EventAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl
     implements EventAssessmentClassificationService {
@@ -49,6 +51,7 @@ public class EventAssessmentClassificationServiceImpl
         Integer eventId) {
         return eventAssessmentClassificationRepository.findAssessmentClassificationsForEvent(
                 eventId).stream().map(EntityAssessmentClassificationConverter::toDTO)
+            .sorted((a, b) -> b.year().compareTo(a.year()))
             .collect(Collectors.toList());
     }
 

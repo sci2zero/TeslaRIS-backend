@@ -34,9 +34,11 @@ public class DocumentAssessmentClassificationServiceTest {
 
         var documentAssessmentClassification1 = new DocumentAssessmentClassification();
         documentAssessmentClassification1.setAssessmentClassification(assessmentClassification);
+        documentAssessmentClassification1.setClassificationYear(2025);
 
         var documentAssessmentClassification2 = new DocumentAssessmentClassification();
         documentAssessmentClassification2.setAssessmentClassification(assessmentClassification);
+        documentAssessmentClassification2.setClassificationYear(2025);
 
         when(
             documentAssessmentClassificationRepository.findAssessmentClassificationsForDocument(

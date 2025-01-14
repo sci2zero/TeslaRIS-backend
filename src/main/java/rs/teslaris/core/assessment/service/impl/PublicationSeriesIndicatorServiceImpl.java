@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -18,7 +19,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -163,15 +163,30 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             publicationSeriesIndicatorRepository.findJournalIndicatorsForIdsAndCodeAndYearAndSource(
                 journalInSameCategoryIds, "fiveYearJIF", classificationYear,
                 EntityIndicatorSource.WEB_OF_SCIENCE);
-        allIF5Values.sort(Comparator.comparing(EntityIndicator::getNumericValue,
-            Comparator.nullsLast(Comparator.reverseOrder())));
 
-        int rank = IntStream.range(0, allIF5Values.size())
-            .filter(i -> Objects.equals(allIF5Values.get(i).getPublicationSeries().getId(),
-                currentJournal.getId()))
-            .findFirst()
-            .orElse(allIF5Values.size() - 1) +
-            1; // orElse is not going to happen, but just to be sure
+        var sortedIF5Values = allIF5Values.stream()
+            .filter((indicator) -> Objects.nonNull(indicator.getNumericValue()))
+            .sorted(
+                Comparator.comparing(EntityIndicator::getNumericValue, Comparator.reverseOrder()))
+            .toList();
+
+        var rankMap = new HashMap<Double, Integer>();
+        AtomicInteger currentRank = new AtomicInteger(1);
+
+        // Build rank map based on value occurrences
+        sortedIF5Values.forEach(indicator ->
+            rankMap.computeIfAbsent(indicator.getNumericValue(), v -> currentRank.getAndIncrement())
+        );
+
+        int rank = rankMap.getOrDefault(
+            sortedIF5Values.stream()
+                .filter(ind -> Objects.equals(ind.getPublicationSeries().getId(),
+                    currentJournal.getId()))
+                .map(EntityIndicator::getNumericValue)
+                .findFirst()
+                .orElse(Double.NaN),
+            sortedIF5Values.size()
+        );
 
         var if5Rank = new PublicationSeriesIndicator();
         if5Rank.setCategoryIdentifier(categoryIdentifier);
@@ -179,7 +194,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         if5Rank.setToDate(LocalDate.of(classificationYear, 12, 31));
         if5Rank.setPublicationSeries(currentJournal);
         if5Rank.setIndicator(indicatorService.getIndicatorByCode("fiveYearJIFRank"));
-        if5Rank.setTextualValue(rank + "/" + allIF5Values.size());
+        if5Rank.setTextualValue(rank + "/" + sortedIF5Values.size());
         if5Rank.setEdition(edition);
         if5Rank.setTimestamp(LocalDateTime.now());
         if5Rank.setSource(EntityIndicatorSource.WEB_OF_SCIENCE);

@@ -37,6 +37,7 @@ public class OrganisationUnitAssessmentClassificationServiceImpl
         Integer organisationUnitId) {
         return organisationUnitAssessmentClassificationRepository.findAssessmentClassificationsForOrganisationUnit(
                 organisationUnitId).stream().map(EntityAssessmentClassificationConverter::toDTO)
+            .sorted((a, b) -> b.year().compareTo(a.year()))
             .collect(Collectors.toList());
     }
 }

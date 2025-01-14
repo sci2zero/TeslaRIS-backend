@@ -80,11 +80,13 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
             new PublicationSeriesAssessmentClassification();
         publicationSeriesAssessmentClassification1.setAssessmentClassification(
             assessmentClassification);
+        publicationSeriesAssessmentClassification1.setClassificationYear(2025);
 
         var publicationSeriesAssessmentClassification2 =
             new PublicationSeriesAssessmentClassification();
         publicationSeriesAssessmentClassification2.setAssessmentClassification(
             assessmentClassification);
+        publicationSeriesAssessmentClassification2.setClassificationYear(2025);
 
         when(
             publicationSeriesAssessmentClassificationRepository.findAssessmentClassificationsForPublicationSeries(

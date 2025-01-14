@@ -35,6 +35,7 @@ public class PersonAssessmentClassificationServiceImpl
         Integer personId) {
         return personAssessmentClassificationRepository.findAssessmentClassificationsForPerson(
                 personId).stream().map(EntityAssessmentClassificationConverter::toDTO)
+            .sorted((a, b) -> b.year().compareTo(a.year()))
             .collect(Collectors.toList());
     }
 }

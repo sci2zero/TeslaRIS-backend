@@ -88,6 +88,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         Integer publicationSeriesId) {
         return publicationSeriesAssessmentClassificationRepository.findAssessmentClassificationsForPublicationSeries(
                 publicationSeriesId).stream().map(EntityAssessmentClassificationConverter::toDTO)
+            .sorted((a, b) -> b.year().compareTo(a.year()))
             .collect(Collectors.toList());
     }
 
