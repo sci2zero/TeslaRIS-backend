@@ -4,5 +4,6 @@ public enum EntityIndicatorSource {
     MANUAL,
     WEB_OF_SCIENCE,
     SCIMAGO,
-    ERIH_PLUS
+    ERIH_PLUS,
+    MKS_SLAVISTS
 }

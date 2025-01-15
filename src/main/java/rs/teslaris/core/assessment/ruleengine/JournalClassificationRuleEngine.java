@@ -59,11 +59,8 @@ public abstract class JournalClassificationRuleEngine {
                 this.currentJournal =
                     journalRepository.getReferenceById(journalIndex.getDatabaseId());
                 this.currentJournalIndicators =
-                    publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+                    publicationSeriesIndicatorRepository.findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
                         journalIndex.getDatabaseId(), classificationYear, source);
-                this.currentJournalIndicators.addAll(
-                    publicationSeriesIndicatorRepository.findOngoingIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
-                        journalIndex.getDatabaseId(), classificationYear, source));
 
                 performClassification(commission);
             });

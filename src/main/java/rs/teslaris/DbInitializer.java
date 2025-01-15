@@ -1492,15 +1492,35 @@ public class DbInitializer implements ApplicationRunner {
         organizedByScientificInstitution.getApplicableTypes().add(ApplicableEntityType.EVENT);
         organizedByScientificInstitution.setContentType(IndicatorContentType.BOOL);
 
+        var slavistiCategory = new Indicator();
+        slavistiCategory.setCode("slavistiCategory");
+        slavistiCategory.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "MKS Slavisti Category",
+                1),
+            new MultiLingualContent(serbianTag,
+                "MKS Slavisti Category",
+                2)
+        ));
+        slavistiCategory.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "Reference list of slavistic magazines issued by international committee of Slavists.",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Referentna lista slavističkih časopisa međunarodnog komiteta slavista.",
+                2)
+        ));
+        slavistiCategory.setAccessLevel(AccessLevel.CLOSED);
+        slavistiCategory.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        slavistiCategory.setContentType(IndicatorContentType.TEXT);
+
 
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
                 dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
                 hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile,
-                numParticipants, organizedByScientificInstitution,
-                numCountriesInScientificCommittee,
-                numParticipantCountries, numPresentations));
+                numParticipants, organizedByScientificInstitution, slavistiCategory,
+                numCountriesInScientificCommittee, numParticipantCountries, numPresentations));
 
         var m21APlus = new AssessmentClassification();
         m21APlus.setFormalDescriptionOfRule("handleM21APlus");

@@ -82,6 +82,9 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     private final String ERIH_PLUS_DIRECTORY =
         "src/main/resources/publicationSeriesIndicators/erihPlus";
 
+    private final String SLAVISTS_DIRECTORY =
+        "src/main/resources/publicationSeriesIndicators/mks";
+
 
     @Autowired
     public PublicationSeriesIndicatorServiceImpl(
@@ -165,7 +168,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 EntityIndicatorSource.WEB_OF_SCIENCE);
 
         var sortedIF5Values = allIF5Values.stream()
-            .filter((indicator) -> Objects.nonNull(indicator.getNumericValue()))
+            .filter((indicator) -> Objects.nonNull(indicator.getNumericValue()) &&
+                (indicator.getEdition().equals("SSCI") || indicator.getEdition().equals("SCIE")))
             .sorted(
                 Comparator.comparing(EntityIndicator::getNumericValue, Comparator.reverseOrder()))
             .toList();
@@ -228,6 +232,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             case WEB_OF_SCIENCE -> this::loadPublicationSeriesIndicatorsFromWOSCSVFiles;
             case SCIMAGO -> this::loadPublicationSeriesIndicatorsFromSCImagoCSVFiles;
             case ERIH_PLUS -> this::loadPublicationSeriesIndicatorsFromErihPlusCSVFiles;
+            case MKS_SLAVISTS -> this::loadPublicationSeriesIndicatorsFromSlavistCSVFiles;
             default -> null;
         };
 
@@ -264,6 +269,16 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             ERIH_PLUS_DIRECTORY,
             "erihPlus",
             ';',
+            path -> true
+        );
+    }
+
+    @Override
+    public void loadPublicationSeriesIndicatorsFromSlavistCSVFiles() {
+        loadPublicationSeriesIndicators(
+            SLAVISTS_DIRECTORY,
+            "mksSlavists",
+            ',',
             path -> true
         );
     }
@@ -331,14 +346,13 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             }
         }
 
-        var eIssn = cleanIssn(line[mapping.eIssnColumn()]);
-        var printIssn = cleanIssn(line[mapping.printIssnColumn()]);
-        if (eIssn.isEmpty() && printIssn.isEmpty()) {
-            log.info("ISSN is not specified. Skipping...");
-            return;
-        }
+        var eIssn =
+            Objects.nonNull(mapping.eIssnColumn()) ? cleanIssn(line[mapping.eIssnColumn()]) : "";
+        var printIssn = Objects.nonNull(mapping.printIssnColumn()) ?
+            cleanIssn(line[mapping.printIssnColumn()]) : "";
+        var issnSpecified = !eIssn.isEmpty() || !printIssn.isEmpty();
 
-        if (mapping.eIssnColumn().equals(mapping.printIssnColumn())) {
+        if (issnSpecified && mapping.eIssnColumn().equals(mapping.printIssnColumn())) {
             var tokens = eIssn.split(mapping.identifierDelimiter());
             eIssn = cleanIssn(tokens[0]);
             if (tokens.length == 2) {
@@ -348,7 +362,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             }
         }
 
-        var publicationSeries = findOrCreatePublicationSeries(line, mapping, eIssn, printIssn);
+        var publicationSeries =
+            findOrCreatePublicationSeries(line, mapping, eIssn, printIssn, issnSpecified);
 
         LocalDate startDate, endDate;
         if (Objects.nonNull(year)) {
@@ -361,9 +376,13 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 if (Objects.isNull(columnIndex)) {
                     return null;
                 }
-                var matcher = yearPattern.matcher(line[columnIndex]);
+                var matcher = yearPattern.matcher(line[columnIndex].trim());
                 if (matcher.find()) {
-                    return LocalDate.parse(matcher.group());
+                    try {
+                        return LocalDate.parse(matcher.group());
+                    } catch (Exception exception) {
+                        return LocalDate.of(Integer.parseInt(matcher.group()), 1, 1);
+                    }
                 }
                 throw new IllegalArgumentException("Invalid date format in column: " + columnIndex);
             };
@@ -385,9 +404,10 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private PublicationSeries findOrCreatePublicationSeries(String[] line,
                                                             IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
-                                                            String eIssn, String printIssn) {
-        var publicationSeries =
-            publicationSeriesService.findPublicationSeriesByIssn(eIssn, printIssn);
+                                                            String eIssn, String printIssn,
+                                                            boolean issnSpecified) {
+        var publicationSeries = issnSpecified ?
+            publicationSeriesService.findPublicationSeriesByIssn(eIssn, printIssn) : null;
 
         if (Objects.isNull(publicationSeries)) {
             var defaultLanguage =
@@ -397,7 +417,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 findPublicationSeriesByJournalName(journalName, defaultLanguage, eIssn, printIssn);
         }
 
-        if (publicationSeries.getPrintISSN().equals(publicationSeries.getEISSN()) &&
+        if (issnSpecified &&
+            publicationSeries.getPrintISSN().equals(publicationSeries.getEISSN()) &&
             !eIssn.equals(printIssn)) {
             publicationSeries.setEISSN(eIssn);
             publicationSeries.setPrintISSN(printIssn);
@@ -548,6 +569,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                EntityIndicatorSource source, String edition, LocalDate startDate,
                                LocalDate endDate) {
         if (Objects.isNull(indicatorValue)) {
+            System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
             return;
         }
 
@@ -573,10 +595,19 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
         switch (indicator.getContentType()) {
             case NUMBER:
+                indicatorValue = indicatorValue.trim();
+                var correctionValue = 0.0;
+                if (indicatorValue.contains("<")) {
+                    correctionValue = -0.01;
+                } else if (indicatorValue.contains(">")) {
+                    correctionValue = 0.01;
+                }
+
                 var valueToBeParsed =
-                    indicatorValue.trim().replace("N/A", "").replaceAll("[,<>]", "");
+                    indicatorValue.replace("N/A", "").replaceAll("[,<>]", "");
                 if (!valueToBeParsed.isEmpty()) {
-                    newJournalIndicator.setNumericValue(Double.parseDouble(valueToBeParsed));
+                    newJournalIndicator.setNumericValue(
+                        Double.parseDouble(valueToBeParsed) + correctionValue);
                 }
                 break;
             case BOOL:

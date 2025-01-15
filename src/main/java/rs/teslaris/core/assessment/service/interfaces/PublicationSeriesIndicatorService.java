@@ -20,6 +20,8 @@ public interface PublicationSeriesIndicatorService {
 
     void loadPublicationSeriesIndicatorsFromErihPlusCSVFiles();
 
+    void loadPublicationSeriesIndicatorsFromSlavistCSVFiles();
+
     void scheduleIndicatorLoading(LocalDateTime dateTime,
                                   EntityIndicatorSource entityIndicatorSource, Integer userId);
 

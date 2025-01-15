@@ -130,6 +130,23 @@
           "type": "INDEPENDENT"
         }
       }
+    },
+    "mksSlavists": {
+      "source": "MKS_SLAVISTS",
+      "yearParseRegex": "^\\d{4}",
+      "nameColumn": 2,
+      "eIssnColumn": null,
+      "printIssnColumn": null,
+      "categoryColumn": 3,
+      "defaultLanguage": "EN",
+      "parallelize": true,
+      "startDateColumn": 4,
+      "columnMapping": {
+        "0": {
+          "mapsTo": "slavistiCategory",
+          "type": "BY_CATEGORY"
+        }
+      }
     }
   }
 }
