@@ -1,6 +1,8 @@
 package rs.teslaris.core.converter.institution;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
@@ -30,6 +32,18 @@ public class OrganisationUnitConverter {
         dto.setScopusAfid(organisationUnit.getScopusAfid());
         dto.setUris(organisationUnit.getUris());
 
+        filterSensitiveData(dto);
+
         return dto;
+    }
+
+    private static void filterSensitiveData(OrganisationUnitDTO organisationUnitResponse) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (Objects.isNull(authentication) || !authentication.isAuthenticated() ||
+            (authentication.getPrincipal() instanceof String &&
+                authentication.getPrincipal().equals("anonymousUser"))) {
+            organisationUnitResponse.getContact().setPhoneNumber("");
+        }
     }
 }

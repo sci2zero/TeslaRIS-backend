@@ -3,6 +3,7 @@ package rs.teslaris.core.converter.person;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
+import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -40,7 +41,7 @@ public class PersonConverter {
         var prizes = new ArrayList<PrizeResponseDTO>();
         setPrizes(person, prizes);
 
-        return new PersonResponseDTO(
+        var personResponse = new PersonResponseDTO(
             person.getId(),
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
@@ -60,6 +61,10 @@ public class PersonConverter {
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
             expertisesOrSkills, prizes, Objects.nonNull(person.getProfilePhoto()) ?
             person.getProfilePhoto().getProfileImageServerName() : null);
+
+        filterSensitiveData(personResponse);
+
+        return personResponse;
     }
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
@@ -211,5 +216,22 @@ public class PersonConverter {
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getPersonalInfo().getUris()), biography,
             keyword, person.getApproveStatus(), userDTO);
+    }
+
+    private static void filterSensitiveData(PersonResponseDTO personResponse) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (Objects.isNull(authentication) || !authentication.isAuthenticated() ||
+            (authentication.getPrincipal() instanceof String &&
+                authentication.getPrincipal().equals("anonymousUser"))) {
+            personResponse.getPersonalInfo().getContact().setPhoneNumber("");
+            personResponse.getPersonalInfo().getContact().setContactEmail("");
+            personResponse.getPersonalInfo().setPlaceOfBirth(null);
+            personResponse.getPersonalInfo().setLocalBirthDate(null);
+            personResponse.getPersonalInfo().getPostalAddress().setCountryId(null);
+            personResponse.getPersonalInfo().getPostalAddress().setCity(new ArrayList<>());
+            personResponse.getPersonalInfo().getPostalAddress()
+                .setStreetAndNumber(new ArrayList<>());
+        }
     }
 }
