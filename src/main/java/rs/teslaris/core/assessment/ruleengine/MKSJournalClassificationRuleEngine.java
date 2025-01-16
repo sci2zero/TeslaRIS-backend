@@ -10,8 +10,7 @@ import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationSe
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 
-public class ScimagoJournalClassificationRuleEngine extends JournalClassificationRuleEngine {
-
+public class MKSJournalClassificationRuleEngine extends JournalClassificationRuleEngine {
     @Override
     public void initialize(
         PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
@@ -23,45 +22,39 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
         this.journalIndexRepository = journalIndexRepository;
         this.assessmentClassificationRepository = assessmentClassificationRepository;
         this.assessmentClassificationService = assessmentClassificationService;
-        this.source = EntityIndicatorSource.SCIMAGO;
+        this.source = EntityIndicatorSource.MKS_SLAVISTS;
     }
 
     @Nullable
     @Override
-    public AssessmentClassification handleM21APlus(String category) {
+    protected AssessmentClassification handleM21APlus(String category) {
         return null;
     }
 
     @Nullable
     @Override
-    public AssessmentClassification handleM21A(String category) {
+    protected AssessmentClassification handleM21A(String category) {
         return null;
     }
 
     @Nullable
     @Override
-    public AssessmentClassification handleM21(String category) {
+    protected AssessmentClassification handleM21(String category) {
         return null;
     }
 
     @Nullable
     @Override
-    public AssessmentClassification handleM22(String category) {
-        var sjr = findIndicatorByCode("sjr", category);
-
-        if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q1")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M22");
-        }
-
+    protected AssessmentClassification handleM22(String category) {
         return null;
     }
 
     @Nullable
     @Override
-    public AssessmentClassification handleM23(String category) {
-        var sjr = findIndicatorByCode("sjr", category);
+    protected AssessmentClassification handleM23(String category) {
+        var mksCategory = findIndicatorByCode("slavistiCategory", category);
 
-        if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q2")) {
+        if (Objects.nonNull(mksCategory) && mksCategory.getTextualValue().equals("I kategorija")) {
             return assessmentClassificationService.readAssessmentClassificationByCode("M23");
         }
 
@@ -70,33 +63,19 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
 
     @Nullable
     @Override
-    public AssessmentClassification handleM23e(String category) {
+    protected AssessmentClassification handleM23e(String category) {
         return null;
     }
 
     @Nullable
     @Override
     protected AssessmentClassification handleM24plus(String category) {
-        var sjr = findIndicatorByCode("sjr", category);
-
-        if (Objects.nonNull(sjr) &&
-            (sjr.getTextualValue().equals("Q1") || sjr.getTextualValue().equals("Q2") ||
-                sjr.getTextualValue().equals("Q3"))) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M24Plus");
-        }
-
         return null;
     }
 
     @Nullable
     @Override
     protected AssessmentClassification handleM24(String category) {
-        var sjr = findIndicatorByCode("sjr", category);
-
-        if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q4")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M24");
-        }
-
         return null;
     }
 }

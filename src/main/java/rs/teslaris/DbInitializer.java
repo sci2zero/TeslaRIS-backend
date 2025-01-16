@@ -871,7 +871,12 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(serbianTag, "Komisija 3", 2)));
         commission3.setFormalDescriptionOfRule("ErihPlusJournalClassificationRuleEngine");
 
-        commissionRepository.saveAll(List.of(commission1, commission2, commission3));
+        var commission4 = new Commission();
+        commission4.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 4", 1),
+            new MultiLingualContent(serbianTag, "Komisija 4", 2)));
+        commission4.setFormalDescriptionOfRule("MKSJournalClassificationRuleEngine");
+
+        commissionRepository.saveAll(List.of(commission1, commission2, commission3, commission4));
 
         var assessmentRulebook1 = new AssessmentRulebook();
         assessmentRulebook1.setName(
