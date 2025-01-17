@@ -9,7 +9,9 @@ import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.PublicationSeries;
 
 @Service
 public interface JournalService {
@@ -17,6 +19,15 @@ public interface JournalService {
     Page<JournalResponseDTO> readAllJournals(Pageable pageable);
 
     Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable);
+
+    Journal findJournalByJournalName(String journalName, LanguageTag defaultLanguage,
+                                     String eIssn, String printIssn);
+
+    PublicationSeries findOrCreatePublicationSeries(String[] line,
+                                                    String defaultLanguageTag,
+                                                    String journalName,
+                                                    String eIssn, String printIssn,
+                                                    boolean issnSpecified);
 
     JournalResponseDTO readJournal(Integer journalId);
 

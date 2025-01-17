@@ -7,8 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +19,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -38,12 +35,9 @@ import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesIndicatorService;
 import rs.teslaris.core.assessment.util.EntityIndicatorType;
 import rs.teslaris.core.assessment.util.IndicatorMappingConfigurationLoader;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
-import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -309,7 +303,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                             path -> Files.isRegularFile(path) && path.toString().endsWith(".csv"))
                         .filter(additionalFilter)
                         .forEach(csvFile -> {
-                            csvDataLoader.loadIndicatorData(
+                            csvDataLoader.loadAssessmentData(
                                 csvFile.normalize().toAbsolutePath().toString(),
                                 mapping, this::processIndicatorsLine, mapping.yearParseRegex(),
                                 separator,
@@ -324,7 +318,6 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         } else {
             log.error("Directory {} does not exist or is not a directory", directory);
         }
-
     }
 
     private void processIndicatorsLine(String[] line,
@@ -363,7 +356,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         }
 
         var publicationSeries =
-            findOrCreatePublicationSeries(line, mapping, eIssn, printIssn, issnSpecified);
+            journalService.findOrCreatePublicationSeries(line, mapping.defaultLanguage(),
+                line[mapping.nameColumn()].trim(), eIssn, printIssn, issnSpecified);
 
         LocalDate startDate, endDate;
         if (Objects.nonNull(year)) {
@@ -400,80 +394,6 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private String cleanIssn(String issn) {
         return StringUtil.formatIssn(issn.trim().replace("N/A", ""));
-    }
-
-    private PublicationSeries findOrCreatePublicationSeries(String[] line,
-                                                            IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
-                                                            String eIssn, String printIssn,
-                                                            boolean issnSpecified) {
-        var publicationSeries = issnSpecified ?
-            publicationSeriesService.findPublicationSeriesByIssn(eIssn, printIssn) : null;
-
-        if (Objects.isNull(publicationSeries)) {
-            var defaultLanguage =
-                languageTagService.findLanguageTagByValue(mapping.defaultLanguage());
-            var journalName = line[mapping.nameColumn()];
-            publicationSeries =
-                findPublicationSeriesByJournalName(journalName, defaultLanguage, eIssn, printIssn);
-        }
-
-        if (issnSpecified &&
-            publicationSeries.getPrintISSN().equals(publicationSeries.getEISSN()) &&
-            !eIssn.equals(printIssn)) {
-            publicationSeries.setEISSN(eIssn);
-            publicationSeries.setPrintISSN(printIssn);
-            publicationSeriesService.save(publicationSeries);
-        }
-
-        return publicationSeries;
-    }
-
-    private PublicationSeries findPublicationSeriesByJournalName(String journalName,
-                                                                 LanguageTag defaultLanguage,
-                                                                 String eIssn, String printIssn) {
-        var potentialHits = journalService.searchJournals(
-            Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2)).getContent();
-
-        for (var potentialHit : potentialHits) {
-            for (var title : potentialHit.getTitleOther().split("\\|")) {
-                if (title.equalsIgnoreCase(journalName)) { // is equalsIgnoreCase ok here?
-                    var publicationSeries =
-                        journalService.findJournalById(potentialHit.getDatabaseId());
-
-                    // TODO: is this ok?
-                    if (Objects.isNull(publicationSeries.getEISSN()) ||
-                        publicationSeries.getEISSN().isEmpty() ||
-                        publicationSeries.getEISSN().equals(publicationSeries.getPrintISSN())) {
-                        publicationSeries.setEISSN(eIssn);
-                    }
-
-                    if (Objects.isNull(publicationSeries.getPrintISSN()) ||
-                        publicationSeries.getPrintISSN().isEmpty() ||
-                        publicationSeries.getPrintISSN().equals(publicationSeries.getEISSN())) {
-                        publicationSeries.setPrintISSN(printIssn);
-                    }
-
-                    journalService.indexJournal(publicationSeries, potentialHit);
-                    return publicationSeriesService.save(publicationSeries);
-                }
-            }
-        }
-
-        return createNewJournal(journalName, defaultLanguage, eIssn, printIssn);
-    }
-
-    private PublicationSeries createNewJournal(String journalName, LanguageTag defaultLanguage,
-                                               String eIssn, String printIssn) {
-        var newJournal = new JournalDTO();
-        newJournal.setTitle(List.of(new MultilingualContentDTO(defaultLanguage.getId(),
-            defaultLanguage.getLanguageTag(), StringEscapeUtils.unescapeHtml4(journalName), 1)));
-        newJournal.setNameAbbreviation(new ArrayList<>());
-        newJournal.setContributions(new ArrayList<>());
-        newJournal.setEissn(eIssn);
-        newJournal.setPrintISSN(printIssn);
-        newJournal.setLanguageTagIds(List.of(defaultLanguage.getId()));
-
-        return journalService.createJournal(newJournal, true);
     }
 
     private void processIndicatorValues(String[] line,

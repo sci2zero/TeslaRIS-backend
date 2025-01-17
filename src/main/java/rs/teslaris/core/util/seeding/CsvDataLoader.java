@@ -42,10 +42,10 @@ public class CsvDataLoader {
         });
     }
 
-    public <T> void loadIndicatorData(String filePath, T mappingConfiguration,
-                                      TriConsumer<String[], T, Integer> lineProcessor,
-                                      String yearParseRegex, char separator,
-                                      boolean processInParallel) {
+    public <T> void loadAssessmentData(String filePath, T mappingConfiguration,
+                                       TriConsumer<String[], T, Integer> lineProcessor,
+                                       String yearParseRegex, char separator,
+                                       boolean processInParallel) {
         processFile(filePath, separator, reader -> {
             try {
                 String[] line;

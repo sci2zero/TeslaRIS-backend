@@ -19,6 +19,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
+import rs.teslaris.core.assessment.model.EntityClassificationSource;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -70,12 +71,23 @@ public class PublicationSeriesAssessmentClassificationController {
     @PostMapping("/schedule-classification")
     @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
-    public void createPublicationSeriesAssessmentClassification(
+    public void schedulePublicationSeriesAssessmentClassificationComputation(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("commissionId") Integer commissionId,
         @RequestParam("classificationYears") List<Integer> classificationYears,
         @RequestHeader("Authorization") String bearerToken) {
         publicationSeriesAssessmentClassificationService.scheduleClassification(timestamp,
             commissionId, tokenUtil.extractUserIdFromToken(bearerToken), classificationYears);
+    }
+
+    @PostMapping("/schedule-classification-load")
+    @Idempotent
+    @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
+    public void schedulePublicationSeriesAssessmentClassificationLoad(
+        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("source") EntityClassificationSource source,
+        @RequestHeader("Authorization") String bearerToken) {
+        publicationSeriesAssessmentClassificationService.scheduleClassificationLoading(timestamp,
+            source, tokenUtil.extractUserIdFromToken(bearerToken));
     }
 }

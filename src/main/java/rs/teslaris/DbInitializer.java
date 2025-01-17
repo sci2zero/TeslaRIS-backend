@@ -876,7 +876,13 @@ public class DbInitializer implements ApplicationRunner {
             new MultiLingualContent(serbianTag, "Komisija 4", 2)));
         commission4.setFormalDescriptionOfRule("MKSJournalClassificationRuleEngine");
 
-        commissionRepository.saveAll(List.of(commission1, commission2, commission3, commission4));
+        var commission5 = new Commission();
+        commission5.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 5", 1),
+            new MultiLingualContent(serbianTag, "Komisija 5", 2)));
+        commission5.setFormalDescriptionOfRule("MNOJournalClassificationRuleEngine");
+
+        commissionRepository.saveAll(
+            List.of(commission1, commission2, commission3, commission4, commission5));
 
         var assessmentRulebook1 = new AssessmentRulebook();
         assessmentRulebook1.setName(
@@ -1590,6 +1596,53 @@ public class DbInitializer implements ApplicationRunner {
                     1)));
         m24plus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
+        var m51 = new AssessmentClassification();
+        m51.setFormalDescriptionOfRule("handleM51");
+        m51.setCode("M51");
+        m51.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Vodeći nacionalni časopis kategorije M51.",
+                    1)));
+        m51.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+
+        var m52 = new AssessmentClassification();
+        m52.setFormalDescriptionOfRule("handleM52");
+        m52.setCode("M52");
+        m52.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Nacionalni časopis kategorije M52.",
+                    1)));
+        m52.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+
+        var m53 = new AssessmentClassification();
+        m53.setFormalDescriptionOfRule("handleM53");
+        m53.setCode("M53");
+        m53.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "Nacionalni časopis kategorije M53.",
+                    1)));
+        m53.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+
+        var m54 = new AssessmentClassification();
+        m54.setFormalDescriptionOfRule("handleM54");
+        m54.setCode("M54");
+        m54.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Nacionalni naučni časopis koji se prvi put kategoriše.",
+                    1)));
+        m54.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+
+        var m24 = new AssessmentClassification();
+        m24.setFormalDescriptionOfRule("handleM24");
+        m24.setCode("M24");
+        m24.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Vodeći nacionalni časopis kategorije M54.",
+                    1)));
+        m24.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+
         var multinationalConf = new AssessmentClassification();
         multinationalConf.setFormalDescriptionOfRule("multinationalConference");
         multinationalConf.setCode("multinationalConf");
@@ -1619,7 +1672,7 @@ public class DbInitializer implements ApplicationRunner {
 
         assessmentClassificationRepository.saveAll(
             List.of(m21APlus, m21A, m21, m22, m23, m23e, m24plus, multinationalConf, nationalConf,
-                nonAcademicConf));
+                nonAcademicConf, m51, m52, m53, m54, m24));
     }
 
     private void processCountryLine(String[] line) {
