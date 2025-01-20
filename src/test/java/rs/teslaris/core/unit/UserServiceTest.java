@@ -17,6 +17,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.cache.Cache;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +40,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
+import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
@@ -131,6 +135,9 @@ public class UserServiceTest {
     @Mock
     private MessageSource messageSource;
 
+    @Mock
+    private CommissionService commissionService;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -147,7 +154,7 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null,
-                new Authority("RESEARCHER", null), null, null, UserNotificationPeriod.NEVER);
+                new Authority("RESEARCHER", null), null, null, null, UserNotificationPeriod.NEVER);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -167,7 +174,7 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null,
-                new Authority("ADMIN", null), null, null, UserNotificationPeriod.NEVER);
+                new Authority("ADMIN", null), null, null, null, UserNotificationPeriod.NEVER);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -222,7 +229,7 @@ public class UserServiceTest {
             Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
         var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, UserNotificationPeriod.NEVER);
+            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -245,7 +252,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldRegisterEmployeeWithValidData() {
+    public void shouldRegisterEmployeeWithValidData() throws NoSuchAlgorithmException {
         // Given
         var registrationRequest = new EmployeeRegistrationRequestDTO();
         registrationRequest.setEmail("johndoe@example.com");
@@ -271,7 +278,7 @@ public class UserServiceTest {
 
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, UserNotificationPeriod.NEVER);
+            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -283,6 +290,58 @@ public class UserServiceTest {
 
         // When
         var savedUser = userService.registerInstitutionAdmin(registrationRequest);
+
+        // Then
+        assertNotNull(savedUser);
+        assertEquals("johndoe@example.com", savedUser.getEmail());
+        assertEquals("John", savedUser.getFirstname());
+        assertEquals("Doe", savedUser.getLastName());
+        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(authority, savedUser.getAuthority());
+    }
+
+    @Test
+    public void shouldRegisterCommissionUserWithValidData() throws NoSuchAlgorithmException {
+        // Given
+        var registrationRequest = new CommissionRegistrationRequestDTO();
+        registrationRequest.setEmail("johndoe@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(1);
+        registrationRequest.setCommissionId(1);
+        registrationRequest.setName("Name");
+        registrationRequest.setSurname("Surname");
+
+        var language = new Language();
+        language.setLanguageCode("SR");
+        when(languageService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.COMMISSION.toString());
+        when(authorityRepository.findByName(UserRole.COMMISSION.toString())).thenReturn(
+            Optional.of(authority));
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+
+        when(commissionService.findOne(1)).thenReturn(new Commission());
+
+        User newUser = new User("johndoe@example.com", "password123", "",
+            "John", "Doe", true,
+            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerCommissionUser(registrationRequest);
 
         // Then
         assertNotNull(savedUser);
@@ -330,7 +389,8 @@ public class UserServiceTest {
         UserAccountActivation accountActivation = new UserAccountActivation(activationTokenValue,
             new User("johndoe@example.com", "password123", "",
                 "John", "Doe", true,
-                true, new Language(), new Authority(), null, null, UserNotificationPeriod.NEVER));
+                true, new Language(), new Authority(), null, null, null,
+                UserNotificationPeriod.NEVER));
         when(
             userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
             Optional.of(accountActivation));

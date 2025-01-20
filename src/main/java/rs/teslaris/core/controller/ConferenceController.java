@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -25,8 +26,11 @@ import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
@@ -38,10 +42,20 @@ public class ConferenceController {
 
     private final DeduplicationService deduplicationService;
 
+    private final JwtUtil tokenUtil;
+
+    private final UserService userService;
+
 
     @GetMapping("/{conferenceId}/can-edit")
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     public boolean canEditConference() {
+        return true;
+    }
+
+    @GetMapping("/{conferenceId}/can-classify")
+    @PreAuthorize("hasAuthority('EDIT_EVENT_ASSESSMENT_CLASSIFICATION') and hasAuthority('EDIT_EVENT_INDICATORS')")
+    public boolean canClassifyConference() {
         return true;
     }
 
@@ -58,10 +72,18 @@ public class ConferenceController {
         @NotNull(message = "You have to provide search range.") Boolean returnOnlyNonSerialEvents,
         @RequestParam("returnOnlySerialEvents")
         @NotNull(message = "You have to provide search range.") Boolean returnOnlySerialEvents,
+        @RequestHeader("Authorization") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
+
+        if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
+            return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
+                returnOnlySerialEvents, userService.getUserOrganisationUnitId(
+                    tokenUtil.extractUserIdFromToken(bearerToken)));
+        }
+
         return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents);
+            returnOnlySerialEvents, null);
     }
 
     @GetMapping("/import-search")

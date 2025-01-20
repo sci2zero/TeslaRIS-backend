@@ -15,12 +15,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.EntityClassificationEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.model.EntityClassificationSource;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
+import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
@@ -33,6 +36,8 @@ public class PublicationSeriesAssessmentClassificationController {
 
     private final JwtUtil tokenUtil;
 
+    private final UserService userService;
+
 
     @GetMapping("/{publicationSeriesId}")
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForPublicationSeries(
@@ -43,11 +48,18 @@ public class PublicationSeriesAssessmentClassificationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION', 'EDIT_PUB_SERIES_ASSESSMENT_CLASSIFICATION')")
     @Idempotent
     public EntityAssessmentClassificationResponseDTO createPublicationSeriesAssessmentClassification(
         @RequestBody
-        PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO) {
+        PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO,
+        @RequestHeader("Authorization") String bearerToken) {
+        if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
+            var user = userService.findOne(tokenUtil.extractUserIdFromToken(bearerToken));
+            publicationSeriesAssessmentClassificationDTO.setCommissionId(
+                user.getCommission().getId());
+        }
+
         var newPublicationSeriesAssessmentClassification =
             publicationSeriesAssessmentClassificationService.createPublicationSeriesAssessmentClassification(
                 publicationSeriesAssessmentClassificationDTO);
@@ -56,15 +68,16 @@ public class PublicationSeriesAssessmentClassificationController {
             newPublicationSeriesAssessmentClassification);
     }
 
-    @PutMapping("/{publicationSeriesAssessmentClassificationId}")
-    @PreAuthorize("hasAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
+    @PutMapping("/{entityAssessmentClassificationId}")
+    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION', 'EDIT_PUB_SERIES_ASSESSMENT_CLASSIFICATION')")
+    @EntityClassificationEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updatePublicationSeriesAssessmentClassification(
         @RequestBody
         PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO,
-        @PathVariable Integer publicationSeriesAssessmentClassificationId) {
+        @PathVariable Integer entityAssessmentClassificationId) {
         publicationSeriesAssessmentClassificationService.updatePublicationSeriesAssessmentClassification(
-            publicationSeriesAssessmentClassificationId,
+            entityAssessmentClassificationId,
             publicationSeriesAssessmentClassificationDTO);
     }
 

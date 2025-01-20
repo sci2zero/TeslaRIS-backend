@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -79,7 +80,10 @@ public class EventAssessmentClassificationServiceTest {
         newEventAssessmentClassification.setAssessmentClassification(
             new AssessmentClassification());
 
-        when(eventService.findOne(1)).thenReturn(new Conference());
+        var conference = new Conference();
+        conference.setDateFrom(LocalDate.of(2020, 4, 2));
+        when(eventService.findOne(1)).thenReturn(conference);
+
         when(eventAssessmentClassificationJPAService.save(any(EventAssessmentClassification.class)))
             .thenReturn(newEventAssessmentClassification);
         when(assessmentClassificationService.findOne(1)).thenReturn(new AssessmentClassification());

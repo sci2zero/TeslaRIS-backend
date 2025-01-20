@@ -1,7 +1,6 @@
 package rs.teslaris.core.assessment.service.impl;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -115,7 +114,7 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
         commission.setDescription(
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
                 commissionDTO.description()));
-        commission.setSources(new HashSet<>(commissionDTO.sources()));
+//        commission.setSources(new HashSet<>(commissionDTO.sources()));
         commission.setAssessmentDateFrom(commissionDTO.assessmentDateFrom());
         commission.setAssessmentDateTo(commissionDTO.assessmentDateTo());
         commission.setFormalDescriptionOfRule(commissionDTO.formalDescriptionOfRule());

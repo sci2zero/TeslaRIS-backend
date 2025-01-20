@@ -10,14 +10,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.EntityClassificationEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.dto.EventAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificationService;
+import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/event-assessment-classification")
@@ -25,6 +30,11 @@ import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificat
 public class EventAssessmentClassificationController {
 
     private final EventAssessmentClassificationService eventAssessmentClassificationService;
+
+    private final JwtUtil tokenUtil;
+
+    private final UserService userService;
+
 
     @GetMapping("/{eventId}")
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForEvent(
@@ -34,10 +44,16 @@ public class EventAssessmentClassificationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
+    @PreAuthorize("hasAuthority('EDIT_EVENT_ASSESSMENT_CLASSIFICATION')")
     @Idempotent
     public EntityAssessmentClassificationResponseDTO createEventAssessmentClassification(
-        @RequestBody @Valid EventAssessmentClassificationDTO eventAssessmentClassificationDTO) {
+        @RequestBody @Valid EventAssessmentClassificationDTO eventAssessmentClassificationDTO,
+        @RequestHeader("Authorization") String bearerToken) {
+        if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
+            var user = userService.findOne(tokenUtil.extractUserIdFromToken(bearerToken));
+            eventAssessmentClassificationDTO.setCommissionId(user.getCommission().getId());
+        }
+
         var newEventAssessmentClassification =
             eventAssessmentClassificationService.createEventAssessmentClassification(
                 eventAssessmentClassificationDTO);
@@ -45,13 +61,14 @@ public class EventAssessmentClassificationController {
         return EntityAssessmentClassificationConverter.toDTO(newEventAssessmentClassification);
     }
 
-    @PutMapping("/{eventAssessmentClassificationId}")
-    @PreAuthorize("hasAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
+    @PutMapping("/{entityAssessmentClassificationId}")
+    @PreAuthorize("hasAnyAuthority('EDIT_EVENT_ASSESSMENT_CLASSIFICATION', 'EDIT_EVENT_ASSESSMENT_CLASSIFICATION')")
+    @EntityClassificationEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateEventAssessmentClassification(
         @RequestBody @Valid EventAssessmentClassificationDTO eventAssessmentClassificationDTO,
-        @PathVariable Integer eventAssessmentClassificationId) {
+        @PathVariable Integer entityAssessmentClassificationId) {
         eventAssessmentClassificationService.updateEventAssessmentClassification(
-            eventAssessmentClassificationId, eventAssessmentClassificationDTO);
+            entityAssessmentClassificationId, eventAssessmentClassificationDTO);
     }
 }

@@ -15,6 +15,7 @@ import rs.teslaris.core.assessment.service.impl.cruddelegate.EventAssessmentClas
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificationService;
+import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
 @Service
@@ -61,8 +62,28 @@ public class EventAssessmentClassificationServiceImpl
         var newAssessmentClassification = new EventAssessmentClassification();
 
         setCommonFields(newAssessmentClassification, eventAssessmentClassificationDTO);
-        newAssessmentClassification.setEvent(
-            eventService.findOne(eventAssessmentClassificationDTO.getEventId()));
+
+        var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());
+        newAssessmentClassification.setEvent(event);
+        if (event.getSerialEvent()) {
+            newAssessmentClassification.setClassificationYear(null);
+
+            eventService.readSerialEventRelations(eventAssessmentClassificationDTO.getEventId())
+                .forEach((relation) -> {
+                    if (relation.getEventsRelationType()
+                        .equals(EventsRelationType.BELONGS_TO_SERIES)) {
+                        var eventInstance = eventService.findOne(relation.getSourceId());
+                        var instanceClassification = new EventAssessmentClassification();
+                        setCommonFields(instanceClassification, eventAssessmentClassificationDTO);
+                        instanceClassification.setClassificationYear(
+                            eventInstance.getDateFrom().getYear());
+                        instanceClassification.setEvent(eventInstance);
+                        eventAssessmentClassificationJPAService.save(instanceClassification);
+                    }
+                });
+        }
+
+        newAssessmentClassification.setClassificationYear(event.getDateFrom().getYear());
 
         return eventAssessmentClassificationJPAService.save(newAssessmentClassification);
     }

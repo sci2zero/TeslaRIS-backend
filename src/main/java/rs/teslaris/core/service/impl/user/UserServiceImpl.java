@@ -5,6 +5,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.google.common.cache.Cache;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -28,11 +30,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
@@ -108,6 +112,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final MultilingualContentService multilingualContentService;
 
     private final Cache<String, Byte> passwordResetRequestCacheStore;
+
+    private final CommissionService commissionService;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -304,7 +310,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
                 languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
                 person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
-                UserNotificationPeriod.NEVER);
+                null, UserNotificationPeriod.NEVER);
         var savedUser = userRepository.save(newUser);
 
         indexUser(savedUser, new UserAccountIndex());
@@ -334,26 +340,68 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    public User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest) {
-        validateEmailUniqueness(registrationRequest.getEmail());
+    public User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
+        var authorityName = UserRole.INSTITUTIONAL_EDITOR.toString();
+        return registerUser(
+            registrationRequest.getEmail(),
+            registrationRequest.getNote(),
+            registrationRequest.getName(),
+            registrationRequest.getSurname(),
+            registrationRequest.getPreferredLanguageId(),
+            registrationRequest.getOrganisationUnitId(),
+            null, // No commission for institutional admin
+            authorityName
+        );
+    }
 
-        var authority = authorityRepository.findByName(UserRole.INSTITUTIONAL_EDITOR.toString())
+    @Override
+    public User registerCommissionUser(CommissionRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
+        var authorityName = UserRole.COMMISSION.toString();
+        return registerUser(
+            registrationRequest.getEmail(),
+            registrationRequest.getNote(),
+            registrationRequest.getName(),
+            registrationRequest.getSurname(),
+            registrationRequest.getPreferredLanguageId(),
+            registrationRequest.getOrganisationUnitId(),
+            registrationRequest.getCommissionId(),
+            authorityName
+        );
+    }
+
+    private User registerUser(String email, String note, String name, String surname,
+                              Integer preferredLanguageId, Integer organisationUnitId,
+                              Integer commissionId, String authorityName)
+        throws NoSuchAlgorithmException {
+        validateEmailUniqueness(email);
+
+        var authority = authorityRepository.findByName(authorityName)
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        var organisationUnit =
-            organisationUnitService.findOne(registrationRequest.getOrganisationUnitId());
+        var organisationUnit = organisationUnitService.findOne(organisationUnitId);
+        var commission = (commissionId != null) ? commissionService.findOne(commissionId) : null;
 
-        var generatedPassword =
-            PasswordUtil.generatePassword(12 + (int) (Math.random() * ((18 - 12) + 1)));
+        var random = SecureRandom.getInstance("SHA1PRNG");
+        var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
 
-        var newUser =
-            new User(registrationRequest.getEmail(),
-                passwordEncoder.encode(new String(generatedPassword)),
-                registrationRequest.getNote(),
-                registrationRequest.getName().trim(), registrationRequest.getSurname().trim(),
-                true, false,
-                languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
-                null, organisationUnit, UserNotificationPeriod.NEVER);
+        var newUser = new User(
+            email,
+            passwordEncoder.encode(new String(generatedPassword)),
+            note,
+            name.trim(),
+            surname.trim(),
+            true,
+            false,
+            languageService.findOne(preferredLanguageId),
+            authority,
+            null,
+            organisationUnit,
+            commission,
+            UserNotificationPeriod.NEVER
+        );
+
         var savedUser = userRepository.save(newUser);
 
         indexUser(savedUser, new UserAccountIndex());
@@ -363,8 +411,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var language = savedUser.getPreferredLanguage().getLanguageCode().toLowerCase();
         String activationLink =
-            clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
-                "/activate-account/" + activationToken.getActivationToken();
+            generateActivationLink(language, activationToken.getActivationToken());
 
         var subject = messageSource.getMessage(
             "accountActivation.mailSubject",
@@ -377,10 +424,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new Object[] {activationLink, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
+
         emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
 
         Arrays.fill(generatedPassword, '\0');
         return savedUser;
+    }
+
+    private String generateActivationLink(String language, String activationToken) {
+        return clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
+            "/activate-account/" + activationToken;
     }
 
     private void validateEmailUniqueness(String email) {
@@ -412,6 +465,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 organisationUnitService.findOne(userUpdateRequest.getOrganisationalUnitId());
             userToUpdate.setOrganisationUnit(orgUnit);
         } else if (userToUpdate.getAuthority().getName().equals(UserRole.ADMIN.toString())) {
+            userToUpdate.setFirstname(userUpdateRequest.getFirstname());
+            userToUpdate.setLastName(userUpdateRequest.getLastName());
+        } else if (userToUpdate.getAuthority().getName().equals(UserRole.COMMISSION.toString())) {
             userToUpdate.setFirstname(userUpdateRequest.getFirstname());
             userToUpdate.setLastName(userUpdateRequest.getLastName());
         }

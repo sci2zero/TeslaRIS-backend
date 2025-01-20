@@ -37,7 +37,7 @@ public class Commission extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "commission_sources", joinColumns = @JoinColumn(name = "commission_id"))
     @Column(name = "source", nullable = false)
     private Set<String> sources = new HashSet<>();

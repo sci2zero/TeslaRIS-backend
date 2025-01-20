@@ -30,6 +30,8 @@ public class UserResponseDTO {
 
     private Integer organisationUnitId;
 
+    private Integer commissionId;
+
     private Integer personId;
 
     private List<MultilingualContentDTO> organisationUnitName;

@@ -250,9 +250,14 @@ public class DbInitializer implements ApplicationRunner {
         var unbindYourselfFromPublication = new Privilege("UNBIND_YOURSELF_FROM_PUBLICATION");
         var editEntityAssessmentClassifications =
             new Privilege("EDIT_ENTITY_ASSESSMENT_CLASSIFICATION");
+        var editEventAssessmentClassification =
+            new Privilege("EDIT_EVENT_ASSESSMENT_CLASSIFICATION");
         var editLanguageTags = new Privilege("EDIT_LANGUAGE_TAGS");
         var editEventIndicators = new Privilege("EDIT_EVENT_INDICATORS");
         var scheduleTask = new Privilege("SCHEDULE_TASK");
+        var editPublicationSeriesAssessmentClassifications =
+            new Privilege("EDIT_PUB_SERIES_ASSESSMENT_CLASSIFICATION");
+        var editPubSeriesIndicators = new Privilege("EDIT_PUB_SERIES_INDICATORS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -270,7 +275,8 @@ public class DbInitializer implements ApplicationRunner {
                 mergeOUMetadata, editCountries, forceDelete, switchEntityToUnmanaged,
                 claimDocument, mergePublisherPublications, mergePublishersMetadata,
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
-                editEntityAssessmentClassifications, editEventIndicators));
+                editEntityAssessmentClassifications, editEventIndicators, editPubSeriesIndicators,
+                editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -288,21 +294,30 @@ public class DbInitializer implements ApplicationRunner {
                 prepareExportData, mergeBookSeriesPublications, mergeOUMetadata, editCountries,
                 forceDelete, switchEntityToUnmanaged, mergePublisherPublications, editLanguageTags,
                 mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
-                editEventIndicators
+                editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
+                editPublicationSeriesAssessmentClassifications
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
-                editEntityIndicatorProofs, listMyJournalPublications, editEventIndicators,
+                editEntityIndicatorProofs, listMyJournalPublications,
                 unbindYourselfFromPublication, editEntityIndicators)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
-                List.of(new Privilege[] {updateProfile})));
+                List.of(new Privilege[] {updateProfile, allowAccountTakeover})));
+
+        var commissionAuthority =
+            new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
+                editEventAssessmentClassification, updateProfile, editEventIndicators,
+                editPublicationSeriesAssessmentClassifications, editPubSeriesIndicators,
+                allowAccountTakeover
+            )));
 
         authorityRepository.saveAll(
-            List.of(adminAuthority, researcherAuthority, institutionalEditorAuthority));
+            List.of(adminAuthority, researcherAuthority, institutionalEditorAuthority,
+                commissionAuthority));
 
         // LANGUAGES
         var serbianLanguage = new Language();
@@ -351,7 +366,7 @@ public class DbInitializer implements ApplicationRunner {
         // ADMIN USER
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage, adminAuthority, null, null,
+                "Markovic", false, false, serbianLanguage, adminAuthority, null, null, null,
                 UserNotificationPeriod.DAILY);
         userRepository.save(adminUser);
 
@@ -378,8 +393,7 @@ public class DbInitializer implements ApplicationRunner {
         if (Arrays.stream(environment.getActiveProfiles())
             .anyMatch(profile -> profile.equalsIgnoreCase("test"))) {
             initializeIntegrationTestingData(serbianTag, serbianLanguage, englishTag,
-                germanLanguage,
-                researchArea3, researcherAuthority);
+                germanLanguage, researchArea3, researcherAuthority, commissionAuthority);
         }
 
         ///////////////////// ASSESSMENTS DATA /////////////////////
@@ -389,7 +403,8 @@ public class DbInitializer implements ApplicationRunner {
     private void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
                                                   LanguageTag englishTag, Language germanLanguage,
                                                   ResearchArea researchArea3,
-                                                  Authority researcherAuthority) {
+                                                  Authority researcherAuthority,
+                                                  Authority commissionAuthority) {
         var country = new Country("SRB", new HashSet<>());
         countryRepository.save(country);
 
@@ -411,7 +426,7 @@ public class DbInitializer implements ApplicationRunner {
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
                 "Dragan", "Ivanovic", false, false, serbianLanguage, researcherAuthority, person1,
-                null, UserNotificationPeriod.DAILY);
+                null, null, UserNotificationPeriod.DAILY);
         userRepository.save(researcherUser);
 
         var dummyOU = new OrganisationUnit();
@@ -666,7 +681,7 @@ public class DbInitializer implements ApplicationRunner {
         var researcherUser2 =
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
                 "Schöpfel", "Joachim", false, false, germanLanguage, researcherAuthority, person2,
-                null, UserNotificationPeriod.WEEKLY);
+                null, null, UserNotificationPeriod.WEEKLY);
         userRepository.save(researcherUser2);
 
         var person3 = new Person();
@@ -959,9 +974,17 @@ public class DbInitializer implements ApplicationRunner {
         publicationSeriesAssessmentClassification.setPublicationSeries(dummyJournal);
         publicationSeriesAssessmentClassification.setAssessmentClassification(
             assessmentClassification1);
+        publicationSeriesAssessmentClassification.setClassificationYear(2020);
 
         publicationSeriesAssessmentClassificationRepository.saveAll(
             List.of(publicationSeriesAssessmentClassification));
+
+        var commissionUser =
+            new User("commission@commission.com", passwordEncoder.encode("commission"),
+                "note note note",
+                "Marko", "Markovic", false, false, serbianLanguage, commissionAuthority, null,
+                dummyOU, commission1, UserNotificationPeriod.WEEKLY);
+        userRepository.save(commissionUser);
     }
 
     void initializeIndicators(LanguageTag englishTag, LanguageTag serbianTag) {

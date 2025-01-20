@@ -75,7 +75,7 @@ public class IndicatorController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasAuthority('EDIT_ENTITY_INDICATOR')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_INDICATOR', 'EDIT_EVENT_INDICATORS')")
     public List<IndicatorResponseDTO> getIndicatorsApplicableToEntity(
         @RequestParam("applicableType") List<ApplicableEntityType> applicableEntityTypes) {
         return indicatorService.getIndicatorsApplicableToEntity(applicableEntityTypes);
