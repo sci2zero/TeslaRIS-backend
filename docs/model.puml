@@ -666,195 +666,197 @@ package project {
   }
 
   class AssessmentRulebook {
-    MultiLingualContent title
-    MultiLingualContent description
-    LocalDate issueDate
-    DocumentFile pdf
+    -MultiLingualContent title
+    -MultiLingualContent description
+    -LocalDate issueDate
+    -DocumentFile pdf
   }
 
   AssessmentRulebook "0..*" --> "1" Publisher
 
-  AssessmentRulebook "0..*" --> "0..*" AssessmentMeasure
+  AssessmentRulebook "0..*" -- "0..*" AssessmentMeasure
 
   class AssessmentMeasure {
-    String code
+    -String code
     ' M28b
     ' M22
-    Double refreshTokenValue
+    -Double value
     ' 2.5
-    MultiLingualContent title
+    -Set<MultiLingualContent> title
     ' examples of Serbian rule book:
     ' Uređivanje istaknutog međunarodnog naučnog   M28b  2,5  2,5  2,5  2,5  časopisa (gost urednik) ili publikacije sa monografskim delima kategorije M14
     ' Autor rada u istaknutom međunarodnom časopisu
-    String formalDescriptionOfRule
+    -String formalDescriptionOfRule
     ' rule is based on assessment classification and commission properties
   }
 
   class AssessmentClassification {
-    String code
+    -String code
     ' international journal
     ' leading international journal
-    MultiLingualContent title
-    String formalDescriptionOfRule
+    -Set<MultiLingualContent> title
+    -String formalDescriptionOfRule
     ' rule is based on indicators and commission properties
+    -Set<ApplicableEntityType> applicableTypes
   }
 
-  class Commission extends OrganisationUnit {
+  enum ApplicableEntityType {
+    MONOGRAPH
+    EVENT
+    DOCUMENT
+    PERSON
+    ORGANISATION_UNIT
+    PUBLICATION_SERIES
+    ALL
+  }
+
+  class Commission {
     MultiLingualContent description
     ' it might be description of the commission goal, for instance comission for promotion to higher position, or Faculty of Sciences commission, or national/Serbian ministry of science commission
-    Set<String> sources
-    LocalDate assessmentDateFrom
-    LocalDate assessmentDateTo
-    Set<Document> documentsForAssessment
-    Set<Person> personsForAssessment
-    Set<OrganisationUnit> organisationUnitsForAssessment
-    String formalDescriptionOfRule
+    -Set<String> sources
+    -LocalDate assessmentDateFrom
+    -LocalDate assessmentDateTo
+    -Set<Document> documentsForAssessment
+    -Set<Person> personsForAssessment
+    -Set<OrganisationUnit> organisationUnitsForAssessment
+    -String formalDescriptionOfRule
     ' it additionally defining rules for automatic determination of assessment classification, for instance all research areas are taken into account and the best classification is taken into account
     ' we should consider whether researchAreas (inherited from OrganisationUnit), sources, assessmentDateFrom and assessmentDateTo can be specified through formal description
   }
 
-  Commission "0..*" --> "0..* super" Commission
+  Commission "0..1 sourceCommission" --> "0..* relations" CommissionRelation
 
-  class Document_AssessmentClassification {
-    LocalDateTime timestamp
-    Boolean manual
+  class CommissionRelation {
+    -ResultClaculationMethod resultCalculationMethod
+    -Integer priority
   }
 
-  Document_AssessmentClassification "0..*" --> "1" Commission
-  Document_AssessmentClassification "0..*" --> "1" Document
-  Document_AssessmentClassification "0..*" --> "1" AssessmentClassification
+  CommissionRelation "0..*" --> "0..* targetCommission" Commission
 
-  class Event_AssessmentClassification {
-    LocalDateTime timestamp
-    Boolean manual
+  class EntityAssessmentClassification {
+    -LocalDateTime timestamp
+    -Boolean manual
+    -Integer classificationYear
   }
 
-  Event_AssessmentClassification "0..*" --> "1" Commission
-  Event_AssessmentClassification "0..*" --> "1" Event
-  Event_AssessmentClassification "0..*" --> "1" AssessmentClassification
+  EntityAssessmentClassification "0..*" --> "1" Commission
+  EntityAssessmentClassification "0..*" --> "1" AssessmentClassification
 
-  class PublicationSeries_AssessmentClassification {
-    LocalDateTime timestamp
-    Boolean manual
+  class DocumentAssessmentClassification extends EntityAssessmentClassification {
   }
 
-  PublicationSeries_AssessmentClassification "0..*" --> "1" Commission
-  PublicationSeries_AssessmentClassification "0..*" --> "1" PublicationSeries
-  PublicationSeries_AssessmentClassification "0..*" --> "1" AssessmentClassification
+  DocumentAssessmentClassification "0..*" --> "1" Document
 
-  class Person_AssessmentClassification {
-    LocalDateTime timestamp
-    Boolean manual
+  class EventAssessmentClassification extends EntityAssessmentClassification {
   }
 
-  Person_AssessmentClassification "0..*" --> "1" Commission
-  Person_AssessmentClassification "0..*" --> "1" Person
-  Person_AssessmentClassification "0..*" --> "1" AssessmentClassification
+  EventAssessmentClassification "0..*" --> "1" Event
 
-  class OrganisationUnit_AssessmentClassification {
-    LocalDateTime timestamp
-    Boolean manual
+  class PublicationSeriesAssessmentClassification extends EntityAssessmentClassification {
   }
 
-  OrganisationUnit_AssessmentClassification "0..*" --> "1" Commission
-  OrganisationUnit_AssessmentClassification "0..*" --> "1" OrganisationUnit
-  OrganisationUnit_AssessmentClassification "0..*" --> "1" AssessmentClassification
+  PublicationSeriesAssessmentClassification "0..*" --> "1" PublicationSeries
+
+  class PersonAssessmentClassification extends EntityAssessmentClassification {
+  }
+
+  PersonAssessmentClassification "0..*" --> "1" Person
+
+  class OrganisationUnitAssessmentClassification extends EntityAssessmentClassification {
+  }
+
+  OrganisationUnitAssessmentClassification "0..*" --> "1" OrganisationUnit
 
   class Indicator {
-    String code
-    MultiLingualContent title
+    -String code
+    -Set<MultiLingualContent> title
     ' h-index
     ' two years impact factor (numeric value in PublicationSeries_Indicator - 1.138)
     ' two years impact factor position (number value in PublicationSeries_Indicator - 56, meaning a journal is 56th in the list according to two years impact factor )
     ' two years impact factor fraction (number value in PublicationSeries_Indicator - 0.17, meaning a journal belongs to 17% of the best journals in a research field)
     ' AMS journal (boolean value in PublicationSeries_Indicator, true - journal belongs to AMS list, false - not belongs to the list)
     ' etc.
-    MultiLingualContent description
+    -Set<MultiLingualContent> description
+    -AccessLevel accessLevel
+    -Set<ApplicableEntityType> applicableTypes
+    -IndicatorContentType contentType
   }
 
-  class Document_Indicator {
-    Double numericValue
-    Boolean booleanValue
-    String textualValue
-    LocalDateTime timestamp
-    String source
-    LocalDate fromDate
-    LocalDate toDate
-    Set<DocumentFile> proofs
-    Set<String> urls
+  enum AccessLevel {
+    OPEN
+    CLOSED
+    ADMIN_ONLY
   }
 
-  Document_Indicator "0..*" --> "1" Indicator
-  Document_Indicator "0..*" --> "1" Document
-  Document_Indicator "0..*" --> "0" User
-  ' in some cases there won't be user, it will be the result of importing journal impact factors for example
-  ' can we record also those different automatic scripts in some Document_Indicator field?
-
-  class Event_Indicator {
-    Double numericValue
-    Boolean booleanValue
-    String textualValue
-    LocalDateTime timestamp
-    String source
-    LocalDate fromDate
-    LocalDate toDate
-    Set<DocumentFile> proofs
-    Set<String> urls
+  enum IndicatorContentType {
+    TEXT
+    BOOL
+    NUMBER
+    ANYTHING
   }
 
-  Event_Indicator "0..*" --> "1" Indicator
-  Event_Indicator "0..*" --> "1" Event
-  Event_Indicator "0..*" --> "0" User
-
-  class PublicationSeries_Indicator {
-    Double numericValue
-    Boolean booleanValue
-    String textualValue
-    LocalDateTime timestamp
-    String source
-    LocalDate fromDate
-    LocalDate toDate
-    Set<DocumentFile> proofs
-    Set<String> urls
+  enum ApplicableEntityType {
+    MONOGRAPH
+    EVENT
+    DOCUMENT
+    PERSON
+    ORGANISATION_UNIT
+    PUBLICATION_SERIES
+    ALL
   }
 
-  PublicationSeries_Indicator "0..*" --> "1" Indicator
-  PublicationSeries_Indicator "0..*" --> "1" PublicationSeries
-  PublicationSeries_Indicator "0..*" --> "0" User
-
-  class Person_Indicator {
-    Double numericValue
-    Boolean booleanValue
-    String textualValue
-    LocalDateTime timestamp
-    String source
-    LocalDate fromDate
-    LocalDate toDate
-    Set<DocumentFile> proofs
-    Set<String> urls
+  class EntityIndicator {
+    -Double numericValue
+    -Boolean booleanValue
+    -String textualValue
+    -LocalDateTime timestamp
+    -EntityIndicatorSource source
+    -LocalDate fromDate
+    -LocalDate toDate
+    -Set<DocumentFile> proofs
+    -Set<String> urls
   }
 
-  Person_Indicator "0..*" --> "1" Indicator
-  Person_Indicator "0..*" --> "1" Person
-  Person_Indicator "0..*" --> "0" User
+  EntityIndicator "0..*" --> "1" Indicator
+  EntityIndicator "0..*" --> "0" User
+  ' in some cases there won't be user, such as when performing automatic import of journal impact factors from external source
 
-  class OrganisationUnit_Indicator {
-    Double numericValue
-    Boolean booleanValue
-    String textualValue
-    LocalDateTime timestamp
-    String source
-    LocalDate fromDate
-    LocalDate toDate
-    Set<DocumentFile> proofs
-    Set<String> urls
+  enum EntityIndicatorSource {
+    MANUAL
+    WEB_OF_SCIENCE
+    SCIMAGO
+    ERIH_PLUS
+    MKS_SLAVISTS
   }
 
-  OrganisationUnit_Indicator "0..*" --> "1" Indicator
-  OrganisationUnit_Indicator "0..*" --> "1" OrganisationUnit
-  OrganisationUnit_Indicator "0..*" --> "0" User
+  class DocumentIndicator extends EntityIndicator {
+  }
+
+  DocumentIndicator "0..*" --> "1" Document
+
+
+  class EventIndicator extends EntityIndicator {
+  }
+
+  EventIndicator "0..*" --> "1" Event
+
+  class PublicationSeriesIndicator extends EntityIndicator {
+    -String categoryIdentifier
+    -String edition
+  }
+
+  PublicationSeriesIndicator "0..*" --> "1" PublicationSeries
+
+  class PersonIndicator extends EntityIndicator {
+  }
+
+  PersonIndicator "0..*" --> "1" Person
+
+  class OrganisationUnitIndicator extends EntityIndicator {
+  }
+
+  OrganisationUnitIndicator "0..*" --> "1" OrganisationUnit
 
 }
 
 @enduml
-
