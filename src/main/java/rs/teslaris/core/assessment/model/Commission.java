@@ -60,5 +60,5 @@ public class Commission extends BaseEntity {
     private String formalDescriptionOfRule;
 
     @OneToMany(mappedBy = "sourceCommission", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<CommissionRelation> relations;
+    private Set<CommissionRelation> relations = new HashSet<>();
 }

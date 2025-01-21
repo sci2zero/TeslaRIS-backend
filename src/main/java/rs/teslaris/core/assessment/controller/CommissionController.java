@@ -31,6 +31,7 @@ public class CommissionController {
 
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
     public Page<CommissionResponseDTO> readCommissions(Pageable pageable,
                                                        @RequestParam(required = false)
                                                        String searchExpression,
@@ -40,12 +41,14 @@ public class CommissionController {
     }
 
     @GetMapping("/rule-engines")
+    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
     public List<String> readApplicableRuleEnginesForCommissions() {
         return commissionService.readAllApplicableRuleEngines();
     }
 
 
     @GetMapping("/{commissionId}")
+    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
     public CommissionResponseDTO readCommission(@PathVariable Integer commissionId) {
         return commissionService.readCommissionById(commissionId);
     }

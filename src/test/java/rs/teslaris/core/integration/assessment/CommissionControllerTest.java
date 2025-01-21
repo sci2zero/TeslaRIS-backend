@@ -34,19 +34,27 @@ public class CommissionControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAllCommissions() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/assessment/commission?page=0&size=10&lang=sr")
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadCommission() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/assessment/commission/{commissionId}", 1)
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
     }
 
     @Test

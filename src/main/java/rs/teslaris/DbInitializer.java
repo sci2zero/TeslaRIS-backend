@@ -20,15 +20,18 @@ import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.assessment.model.CommissionRelation;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.EventAssessmentClassification;
 import rs.teslaris.core.assessment.model.EventIndicator;
 import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.model.IndicatorContentType;
 import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
+import rs.teslaris.core.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
+import rs.teslaris.core.assessment.repository.CommissionRelationRepository;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
@@ -179,6 +182,8 @@ public class DbInitializer implements ApplicationRunner {
     private final IndicatorRepository indicatorRepository;
 
     private final CommissionRepository commissionRepository;
+
+    private final CommissionRelationRepository commissionRelationRepository;
 
     private final AssessmentRulebookRepository assessmentRulebookRepository;
 
@@ -897,6 +902,14 @@ public class DbInitializer implements ApplicationRunner {
 
         commissionRepository.saveAll(
             List.of(commission1, commission2, commission3, commission4, commission5));
+
+        var commissionRelation1 = new CommissionRelation();
+        commissionRelation1.setSourceCommission(commission5);
+        commissionRelation1.setTargetCommissions(new HashSet<>(List.of(commission2)));
+        commissionRelation1.setPriority(1);
+        commissionRelation1.setResultCalculationMethod(ResultCalculationMethod.BEST_VALUE);
+
+        commissionRelationRepository.save(commissionRelation1);
 
         var assessmentRulebook1 = new AssessmentRulebook();
         assessmentRulebook1.setName(

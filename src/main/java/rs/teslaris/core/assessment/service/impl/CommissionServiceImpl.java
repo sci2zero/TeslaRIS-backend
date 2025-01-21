@@ -55,7 +55,8 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
                     pageable)
                 .map(CommissionConverter::toDTO);
         } else {
-            return commissionRepository.findAll(pageable).map(CommissionConverter::toDTO);
+            return commissionRepository.readAll(language.toUpperCase(), pageable)
+                .map(CommissionConverter::toDTO);
         }
     }
 
