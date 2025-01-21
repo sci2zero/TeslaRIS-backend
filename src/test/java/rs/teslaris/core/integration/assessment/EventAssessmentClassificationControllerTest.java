@@ -22,7 +22,9 @@ public class EventAssessmentClassificationControllerTest extends BaseTest {
     private EventAssessmentClassificationDTO getTestPayload() {
         var dto = new EventAssessmentClassificationDTO();
         dto.setAssessmentClassificationId(1);
+        dto.setCommissionId(1);
         dto.setEventId(1);
+        dto.setClassificationYear(2024);
 
         return dto;
     }

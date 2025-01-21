@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -136,6 +137,8 @@ public class MergeServiceImpl implements MergeService {
 
     private final IndexBulkUpdateService indexBulkUpdateService;
 
+    private final PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository;
+
 
     @Override
     public void switchJournalPublicationToOtherJournal(Integer targetJournalId,
@@ -158,6 +161,26 @@ public class MergeServiceImpl implements MergeService {
             pageRequest -> documentPublicationIndexRepository.findByTypeAndJournalId(
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, pageRequest)
                 .getContent()
+        );
+    }
+
+    @Override
+    public void switchAllIndicatorsToOtherJournal(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, journalIndicator) -> {
+                // TODO: Should I delete this if it exists?
+                var existingIndicatorValue =
+                    publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                        targetId, journalIndicator.getSource(), journalIndicator.getFromDate(),
+                        journalIndicator.getCategoryIdentifier(),
+                        journalIndicator.getIndicator().getCode());
+                existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
+
+                journalIndicator.setPublicationSeries(journalService.findJournalById(targetId));
+            },
+            pageRequest -> publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeries(
+                sourceId, pageRequest).getContent()
         );
     }
 

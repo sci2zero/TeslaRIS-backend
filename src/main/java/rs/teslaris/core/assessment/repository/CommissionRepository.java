@@ -17,7 +17,7 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
         "SELECT c FROM Commission c LEFT JOIN c.description description WHERE description.language.languageTag = :languageTag AND " +
             "LOWER(description.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))",
         countQuery =
-            "SELECT count(DISTINCT c) FROM Commission c JOIN c.description d WHERE d.language.languageTag = :languageTag AND " +
+            "SELECT count(c) FROM Commission c JOIN c.description d WHERE d.language.languageTag = :languageTag AND " +
                 "LOWER(d.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))")
     Page<Commission> searchCommissions(String searchExpression, String languageTag,
                                        Pageable pageable);

@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.user;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
@@ -51,7 +53,11 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest);
 
-    User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest);
+    User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException;
+
+    User registerCommissionUser(CommissionRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException;
 
     AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userID,
                                          String fingerprint);

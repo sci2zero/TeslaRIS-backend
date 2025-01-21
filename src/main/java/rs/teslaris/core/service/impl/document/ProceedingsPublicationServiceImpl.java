@@ -23,6 +23,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
@@ -43,6 +44,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     private final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
+    private final ConferenceService conferenceService;
+
 
     @Autowired
     public ProceedingsPublicationServiceImpl(MultilingualContentService multilingualContentService,
@@ -56,13 +59,15 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              EventService eventService,
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
-                                             ProceedingsPublicationRepository proceedingsPublicationRepository) {
+                                             ProceedingsPublicationRepository proceedingsPublicationRepository,
+                                             ConferenceService conferenceService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService, expressionTransformer, eventService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
+        this.conferenceService = conferenceService;
     }
 
     @Override
@@ -119,6 +124,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
         }
 
+        conferenceService.reindexConference(savedPublication.getEvent().getId());
+
         sendNotifications(savedPublication);
 
         return savedPublication;
@@ -129,6 +136,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                            ProceedingsPublicationDTO publicationDTO) {
         var publicationToUpdate =
             (ProceedingsPublication) proceedingPublicationJPAService.findOne(publicationId);
+
+        var oldConferenceId = publicationToUpdate.getEvent().getId();
 
         clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
@@ -142,6 +151,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         }
 
         proceedingPublicationJPAService.save(publicationToUpdate);
+
+        conferenceService.reindexConference(publicationToUpdate.getEvent().getId());
+        if (!publicationToUpdate.getEvent().getId().equals(oldConferenceId)) {
+            conferenceService.reindexConference(oldConferenceId);
+        }
 
         sendNotifications(publicationToUpdate);
     }

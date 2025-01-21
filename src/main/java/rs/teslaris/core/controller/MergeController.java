@@ -53,6 +53,14 @@ public class MergeController {
         mergeService.switchAllPublicationsToOtherJournal(sourceJournalId, targetJournalId);
     }
 
+    @PatchMapping("/journal-indicator/source/{sourceJournalId}/target/{targetJournalId}")
+    @PreAuthorize("hasAuthority('MERGE_JOURNAL_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllIndicatorsToOtherJournal(@PathVariable Integer sourceJournalId,
+                                                  @PathVariable Integer targetJournalId) {
+        mergeService.switchAllIndicatorsToOtherJournal(sourceJournalId, targetJournalId);
+    }
+
     @PatchMapping("/publisher/{targetPublisherId}/publication/{publicationId}")
     @PreAuthorize("hasAuthority('MERGE_PUBLISHER_PUBLICATIONS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
