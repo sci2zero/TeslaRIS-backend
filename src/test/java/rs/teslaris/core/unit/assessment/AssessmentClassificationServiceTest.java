@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -197,7 +198,7 @@ public class AssessmentClassificationServiceTest {
         classification2.setId(2);
 
         var applicableEntityTypes =
-            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON);
+            new ArrayList<>(List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON));
         var mockClassifications = List.of(classification2, classification1);
 
         // Mock repository call
@@ -220,7 +221,7 @@ public class AssessmentClassificationServiceTest {
     @Test
     public void shouldReturnEmptyListWhenNoCLassificationsFound() {
         // given
-        var applicableEntityTypes = List.of(ApplicableEntityType.DOCUMENT);
+        var applicableEntityTypes = new ArrayList<>(List.of(ApplicableEntityType.DOCUMENT));
 
         when(assessmentClassificationRepository.getAssessmentClassificationsApplicableToEntity(
             applicableEntityTypes))

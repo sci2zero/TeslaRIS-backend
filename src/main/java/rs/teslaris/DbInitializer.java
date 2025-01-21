@@ -879,7 +879,6 @@ public class DbInitializer implements ApplicationRunner {
         commission2.setFormalDescriptionOfRule("ScimagoJournalClassificationRuleEngine");
         commission2.setAssessmentDateFrom(LocalDate.of(2022, 2, 4));
         commission2.setAssessmentDateTo(LocalDate.of(2022, 5, 4));
-        commission2.setSuperCommission(commission1);
 
         var commission3 = new Commission();
         commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1),
@@ -982,7 +981,7 @@ public class DbInitializer implements ApplicationRunner {
         var commissionUser =
             new User("commission@commission.com", passwordEncoder.encode("commission"),
                 "note note note",
-                "Marko", "Markovic", false, false, serbianLanguage, commissionAuthority, null,
+                "PMF", "", false, false, serbianLanguage, commissionAuthority, null,
                 dummyOU, commission1, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser);
     }

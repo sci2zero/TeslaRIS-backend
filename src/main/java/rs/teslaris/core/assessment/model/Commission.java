@@ -8,7 +8,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
@@ -60,7 +59,6 @@ public class Commission extends BaseEntity {
     @Column(name = "formal_description_of_rule")
     private String formalDescriptionOfRule;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "super_commission")
-    private Commission superCommission;
+    @OneToMany(mappedBy = "sourceCommission", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<CommissionRelation> relations;
 }

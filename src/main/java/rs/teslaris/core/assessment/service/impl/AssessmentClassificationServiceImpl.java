@@ -49,6 +49,11 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
     @Override
     public List<AssessmentClassificationDTO> getAssessmentClassificationsApplicableToEntity(
         List<ApplicableEntityType> applicableEntityTypes) {
+        if (!applicableEntityTypes.isEmpty() &&
+            !applicableEntityTypes.contains(ApplicableEntityType.ALL)) {
+            applicableEntityTypes.add(ApplicableEntityType.ALL);
+        }
+
         return assessmentClassificationRepository.getAssessmentClassificationsApplicableToEntity(
                 applicableEntityTypes).stream()
             .map(AssessmentClassificationConverter::toDTO).collect(Collectors.toList());

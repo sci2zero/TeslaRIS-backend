@@ -16,10 +16,6 @@ public record CommissionResponseDTO(
 
     LocalDate assessmentDateTo,
 
-    String formalDescriptionOfRule,
-
-    Integer superCommissionId,
-
-    List<MultilingualContentDTO> superCommissionDescription
+    String formalDescriptionOfRule
 ) {
 }

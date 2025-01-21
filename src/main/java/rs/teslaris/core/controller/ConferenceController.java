@@ -72,11 +72,13 @@ public class ConferenceController {
         @NotNull(message = "You have to provide search range.") Boolean returnOnlyNonSerialEvents,
         @RequestParam("returnOnlySerialEvents")
         @NotNull(message = "You have to provide search range.") Boolean returnOnlySerialEvents,
+        @RequestParam(value = "forMyInstitution", defaultValue = "false") Boolean forMyInstitution,
         @RequestHeader("Authorization") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
 
-        if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
+        if (forMyInstitution &&
+            tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
             return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
                 returnOnlySerialEvents, userService.getUserOrganisationUnitId(
                     tokenUtil.extractUserIdFromToken(bearerToken)));

@@ -119,10 +119,6 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
         commission.setAssessmentDateTo(commissionDTO.assessmentDateTo());
         commission.setFormalDescriptionOfRule(commissionDTO.formalDescriptionOfRule());
 
-        if (Objects.nonNull(commissionDTO.superCommissionId())) {
-            commission.setSuperCommission(findOne(commissionDTO.superCommissionId()));
-        }
-
         commissionDTO.documentIdsForAssessment().forEach(documentId -> {
             commission.getDocumentsForAssessment()
                 .add(documentPublicationService.findOne(documentId));

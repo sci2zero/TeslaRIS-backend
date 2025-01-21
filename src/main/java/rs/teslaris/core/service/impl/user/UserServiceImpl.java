@@ -363,7 +363,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             registrationRequest.getEmail(),
             registrationRequest.getNote(),
             registrationRequest.getName(),
-            registrationRequest.getSurname(),
+            "",
             registrationRequest.getPreferredLanguageId(),
             registrationRequest.getOrganisationUnitId(),
             registrationRequest.getCommissionId(),
@@ -438,7 +438,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private void validateEmailUniqueness(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new UserAlreadyExistsException("Email " + email + " is already in use!");
+            throw new UserAlreadyExistsException("emailInUseMessage");
         }
     }
 
