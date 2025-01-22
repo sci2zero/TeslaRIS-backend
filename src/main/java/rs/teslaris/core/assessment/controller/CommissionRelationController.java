@@ -58,6 +58,7 @@ public class CommissionRelationController {
 
     @PatchMapping("/{commissionId}/{commissionRelationId}")
     @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Idempotent
     public void reorderCommissionRelations(@PathVariable Integer commissionId,
                                            @PathVariable Integer commissionRelationId,

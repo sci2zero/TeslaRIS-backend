@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.assessment.dto.CommissionRelationDTO;
+import rs.teslaris.core.assessment.dto.ReorderCommissionRelationDTO;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.integration.BaseTest;
 
@@ -87,6 +88,27 @@ public class CommissionRelationControllerTest extends BaseTest {
                         "http://localhost:8081/api/assessment/commission-relation/{commissionRelationId}",
                         1)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReorderCommissionRelations() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var reorderDTO = new ReorderCommissionRelationDTO();
+        reorderDTO.setOldRelationPriority(2);
+        reorderDTO.setNewRelationPriority(1);
+        String requestBody = objectMapper.writeValueAsString(reorderDTO);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/assessment/commission-relation/{commissionId}/{commissionRelationId}",
+                        5, 2)
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_COMMISSION_RELATION_REORDER"))
             .andExpect(status().isNoContent());
     }
 }

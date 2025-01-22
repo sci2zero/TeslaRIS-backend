@@ -906,10 +906,16 @@ public class DbInitializer implements ApplicationRunner {
         var commissionRelation1 = new CommissionRelation();
         commissionRelation1.setSourceCommission(commission5);
         commissionRelation1.setTargetCommissions(new HashSet<>(List.of(commission2)));
-        commissionRelation1.setPriority(1);
+        commissionRelation1.setPriority(2);
         commissionRelation1.setResultCalculationMethod(ResultCalculationMethod.BEST_VALUE);
 
-        commissionRelationRepository.save(commissionRelation1);
+        var commissionRelation2 = new CommissionRelation();
+        commissionRelation2.setSourceCommission(commission5);
+        commissionRelation2.setTargetCommissions(new HashSet<>(List.of(commission1, commission4)));
+        commissionRelation2.setPriority(1);
+        commissionRelation2.setResultCalculationMethod(ResultCalculationMethod.BEST_VALUE);
+
+        commissionRelationRepository.saveAll(List.of(commissionRelation1, commissionRelation2));
 
         var assessmentRulebook1 = new AssessmentRulebook();
         assessmentRulebook1.setName(

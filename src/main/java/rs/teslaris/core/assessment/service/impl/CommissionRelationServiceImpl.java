@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ public class CommissionRelationServiceImpl extends JPAServiceImpl<CommissionRela
     public List<CommissionRelationResponseDTO> fetchCommissionRelations(
         Integer sourceCommissionId) {
         return commissionRelationRepository.getRelationsForSourceCommission(sourceCommissionId)
-            .stream().map(
+            .stream().sorted(Comparator.comparingInt(CommissionRelation::getPriority)).map(
                 CommissionRelationConverter::toDTO).collect(Collectors.toList());
     }
 
