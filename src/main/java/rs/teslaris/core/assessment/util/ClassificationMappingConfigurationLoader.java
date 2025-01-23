@@ -1,9 +1,12 @@
 package rs.teslaris.core.assessment.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -40,13 +43,16 @@ public class ClassificationMappingConfigurationLoader {
             mappingName, null);
     }
 
+    public static List<String> fetchAllConfigurationNames() {
+        return classificationMappingConfiguration.mappings().keySet().stream().toList();
+    }
+
     private record ClassificationMappingConfiguration(
         @JsonProperty(value = "mappings", required = true) Map<String, ClassificationMapping> mappings
     ) {
     }
 
     public record ClassificationMapping(
-        @JsonProperty(value = "commissionId", required = true) Integer commissionId,
         @JsonProperty(value = "yearParseRegex", required = true) String yearParseRegex,
         @JsonProperty(value = "nameColumn", required = true) Integer nameColumn,
         @JsonProperty(value = "issnColumn", required = true) Integer issnColumn,
@@ -54,7 +60,15 @@ public class ClassificationMappingConfigurationLoader {
         @JsonProperty(value = "categoryColumn", required = true) Integer categoryColumn,
         @JsonProperty(value = "classificationColumn", required = true) Integer classificationColumn,
         @JsonProperty(value = "defaultLanguage", required = true) String defaultLanguage,
-        @JsonProperty(value = "parallelize", required = true) Boolean parallelize
+        @JsonProperty(value = "parallelize", required = true) Boolean parallelize,
+        @JsonProperty(value = "discriminators")
+        @JsonSetter(nulls = Nulls.AS_EMPTY) List<Discriminator> discriminators
+    ) {
+    }
+
+    public record Discriminator(
+        @JsonProperty(value = "columnId", required = true) Integer columnId,
+        @JsonProperty(value = "acceptedValues", required = true) List<String> acceptedValues
     ) {
     }
 }

@@ -64,8 +64,11 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
     @Override
     public void deleteEntityIndicatorProof(Integer entityIndicatorId, Integer proofId) {
         var documentFile = documentFileService.findOne(proofId);
+        var entityIndicator = findOne(entityIndicatorId);
+        entityIndicator.getProofs().remove(documentFile);
+
         documentFileService.delete(proofId);
-        documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+        save(entityIndicator);
     }
 
     @Override

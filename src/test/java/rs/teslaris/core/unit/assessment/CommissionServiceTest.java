@@ -75,10 +75,10 @@ public class CommissionServiceTest {
             new PageImpl<>(List.of(commission1, commission2)));
 
         var response =
-            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa", "SR");
+            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa", "SR", false, false);
 
         assertNotNull(response);
-        assertEquals(2, response.getSize());
+        assertEquals(2, response.getTotalElements());
     }
 
     @Test
@@ -102,7 +102,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "rule");
+            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno");
         var newCommission = new Commission();
         newCommission.setId(2);
 
@@ -128,7 +128,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "rule");
+            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno");
         var existingCommission = new Commission();
 
         when(commissionRepository.findById(commissionId))

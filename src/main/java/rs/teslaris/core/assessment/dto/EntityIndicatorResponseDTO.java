@@ -1,7 +1,9 @@
 package rs.teslaris.core.assessment.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 import rs.teslaris.core.assessment.model.EntityIndicatorSource;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 
 public record EntityIndicatorResponseDTO(
     Integer id,
@@ -17,6 +19,8 @@ public record EntityIndicatorResponseDTO(
 
     IndicatorResponseDTO indicatorResponse,
 
-    EntityIndicatorSource source
+    EntityIndicatorSource source,
+
+    List<DocumentFileResponseDTO> proofs
 ) {
 }

@@ -317,7 +317,7 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
                 editEventAssessmentClassification, updateProfile, editEventIndicators,
                 editPublicationSeriesAssessmentClassifications, editPubSeriesIndicators,
-                allowAccountTakeover
+                allowAccountTakeover, editEntityIndicatorProofs
             )));
 
         authorityRepository.saveAll(
@@ -896,12 +896,18 @@ public class DbInitializer implements ApplicationRunner {
         commission4.setFormalDescriptionOfRule("MKSJournalClassificationRuleEngine");
 
         var commission5 = new Commission();
-        commission5.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 5", 1),
-            new MultiLingualContent(serbianTag, "Komisija 5", 2)));
-        commission5.setFormalDescriptionOfRule("MNOJournalClassificationRuleEngine");
+        commission5.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Chair of Informatics", 1),
+                new MultiLingualContent(serbianTag, "Katedra za Informatiku", 2)));
+        commission5.setFormalDescriptionOfRule("load-mno");
+
+        var commission6 = new Commission();
+        commission6.setDescription(Set.of(new MultiLingualContent(englishTag, "Chair of ACS", 1),
+            new MultiLingualContent(serbianTag, "Katedra za PRN", 2)));
+        commission6.setFormalDescriptionOfRule("load-mnoPhysChem");
 
         commissionRepository.saveAll(
-            List.of(commission1, commission2, commission3, commission4, commission5));
+            List.of(commission1, commission2, commission3, commission4, commission5, commission6));
 
         var commissionRelation1 = new CommissionRelation();
         commissionRelation1.setSourceCommission(commission5);

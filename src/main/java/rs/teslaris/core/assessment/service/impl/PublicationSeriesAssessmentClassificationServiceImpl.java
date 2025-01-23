@@ -192,9 +192,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     @Override
     public void scheduleClassificationLoading(LocalDateTime timeToRun,
                                               EntityClassificationSource source,
-                                              Integer userId) {
+                                              Integer userId, Integer commissionId) {
         Runnable handlerFunction = switch (source) {
-            case MNO -> this::loadPublicationSeriesClassificationsFromMNOFiles;
+            case MNO -> (() -> loadPublicationSeriesClassificationsFromMNOFiles(commissionId));
             default -> null;
         };
 
@@ -204,17 +204,19 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             handlerFunction, userId);
     }
 
-    private void loadPublicationSeriesClassificationsFromMNOFiles() {
+    private void loadPublicationSeriesClassificationsFromMNOFiles(Integer commissionId) {
+        var commission = commissionService.findOne(commissionId);
         loadPublicationSeriesClassifications(
             MNO_DIRECTORY,
-            "mno",
+            commission.getFormalDescriptionOfRule().replace("load-", ""),
             ',',
+            commission,
             path -> true
         );
     }
 
     private void loadPublicationSeriesClassifications(String directory, String configKey,
-                                                      char separator,
+                                                      char separator, Commission commission,
                                                       Predicate<Path> additionalFilter) {
         var dirPath = Paths.get(directory);
 
@@ -243,7 +245,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                         .forEach(csvFile -> {
                             csvDataLoader.loadAssessmentData(
                                 csvFile.normalize().toAbsolutePath().toString(),
-                                mapping, this::processClassificationsLine, mapping.yearParseRegex(),
+                                mapping,
+                                ((line, mappingConf, year) -> processClassificationsLine(line,
+                                    mappingConf, year, commission)), mapping.yearParseRegex(),
                                 separator,
                                 mapping.parallelize());
                             log.info("Loaded {} of {}", counter.getAndIncrement(), csvFileCount);
@@ -260,7 +264,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
     private void processClassificationsLine(String[] line,
                                             ClassificationMappingConfigurationLoader.ClassificationMapping mapping,
-                                            Integer year) {
+                                            Integer year, Commission commission) {
         if (line.length == 1) {
             log.info("Invalid line format. Skipping...");
             return;
@@ -271,8 +275,15 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
         var classification = assessmentClassificationService.readAssessmentClassificationByCode(
             line[mapping.classificationColumn()]);
-        var commission = commissionService.findOne(mapping.commissionId());
-        var category = line[mapping.categoryColumn()];
+        var category = line[mapping.categoryColumn()].trim();
+
+        for (var discriminator : mapping.discriminators()) {
+            var discriminatorValue = line[discriminator.columnId()].trim();
+            if (!discriminator.acceptedValues().contains(discriminatorValue)) {
+                log.info("Discriminator check failed for value: {}", discriminatorValue);
+                return;
+            }
+        }
 
         saveJournalClassification(publicationSeries, commission, classification, category, year);
     }

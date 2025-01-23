@@ -99,8 +99,9 @@ public class PublicationSeriesAssessmentClassificationController {
     public void schedulePublicationSeriesAssessmentClassificationLoad(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("source") EntityClassificationSource source,
+        @RequestParam("commissionId") Integer commissionId,
         @RequestHeader("Authorization") String bearerToken) {
         publicationSeriesAssessmentClassificationService.scheduleClassificationLoading(timestamp,
-            source, tokenUtil.extractUserIdFromToken(bearerToken));
+            source, tokenUtil.extractUserIdFromToken(bearerToken), commissionId);
     }
 }

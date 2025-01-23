@@ -28,5 +28,5 @@ public interface PublicationSeriesAssessmentClassificationService {
 
     void scheduleClassificationLoading(LocalDateTime timeToRun,
                                        EntityClassificationSource source,
-                                       Integer userId);
+                                       Integer userId, Integer commissionId);
 }

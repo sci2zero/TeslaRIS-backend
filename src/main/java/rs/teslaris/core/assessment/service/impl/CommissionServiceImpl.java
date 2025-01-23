@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,14 @@ import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.ruleengine.JournalClassificationRuleEngine;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.CommissionReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -49,15 +52,44 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     @Override
     public Page<CommissionResponseDTO> readAllCommissions(Pageable pageable,
                                                           String searchExpression,
-                                                          String language) {
+                                                          String language,
+                                                          Boolean selectOnlyLoadCommissions,
+                                                          Boolean selectOnlyClassificationCommissions) {
         if (Objects.nonNull(searchExpression)) {
-            return commissionRepository.searchCommissions(searchExpression, language.toUpperCase(),
-                    pageable)
-                .map(CommissionConverter::toDTO);
+            return filterAndPage(
+                commissionRepository.searchCommissions(searchExpression, language.toUpperCase(),
+                    pageable),
+                selectOnlyLoadCommissions,
+                selectOnlyClassificationCommissions,
+                pageable
+            );
         } else {
-            return commissionRepository.readAll(language.toUpperCase(), pageable)
-                .map(CommissionConverter::toDTO);
+            return filterAndPage(
+                commissionRepository.readAll(language.toUpperCase(), pageable),
+                selectOnlyLoadCommissions,
+                selectOnlyClassificationCommissions,
+                pageable
+            );
         }
+    }
+
+    private Page<CommissionResponseDTO> filterAndPage(Page<Commission> commissions,
+                                                      Boolean selectOnlyLoadCommissions,
+                                                      Boolean selectOnlyClassificationCommissions,
+                                                      Pageable pageable) {
+        List<CommissionResponseDTO> filteredList = commissions.getContent().stream()
+            .filter(commission -> {
+                if (selectOnlyLoadCommissions) {
+                    return commission.getFormalDescriptionOfRule().startsWith("load-");
+                } else if (selectOnlyClassificationCommissions) {
+                    return !commission.getFormalDescriptionOfRule().startsWith("load-");
+                }
+                return true;
+            })
+            .map(CommissionConverter::toDTO)
+            .toList();
+
+        return new PageImpl<>(filteredList, pageable, commissions.getTotalElements());
     }
 
     @Override
@@ -89,6 +121,12 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
                 // not going to happen as this class exists by default
             }
         }
+
+        ClassificationMappingConfigurationLoader.fetchAllConfigurationNames()
+            .forEach(configurationName -> {
+                classNames.add("load-" + configurationName);
+            });
+
         return classNames;
     }
 
@@ -118,6 +156,10 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
 //        commission.setSources(new HashSet<>(commissionDTO.sources()));
         commission.setAssessmentDateFrom(commissionDTO.assessmentDateFrom());
         commission.setAssessmentDateTo(commissionDTO.assessmentDateTo());
+
+        if (!readAllApplicableRuleEngines().contains(commissionDTO.formalDescriptionOfRule())) {
+            throw new NotFoundException("Specified rule engine is not available.");
+        }
         commission.setFormalDescriptionOfRule(commissionDTO.formalDescriptionOfRule());
 
         commissionDTO.documentIdsForAssessment().forEach(documentId -> {

@@ -36,8 +36,13 @@ public class CommissionController {
                                                        @RequestParam(required = false)
                                                        String searchExpression,
                                                        @RequestParam("lang")
-                                                       String language) {
-        return commissionService.readAllCommissions(pageable, searchExpression, language);
+                                                       String language,
+                                                       @RequestParam("onlyLoad")
+                                                       Boolean selectOnlyLoadCommissions,
+                                                       @RequestParam("onlyClassification")
+                                                       Boolean selectOnlyClassificationCommissions) {
+        return commissionService.readAllCommissions(pageable, searchExpression, language,
+            selectOnlyLoadCommissions, selectOnlyClassificationCommissions);
     }
 
     @GetMapping("/rule-engines")

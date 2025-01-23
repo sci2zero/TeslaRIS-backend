@@ -1,7 +1,6 @@
 {
   "mappings": {
     "mno": {
-      "commissionId": 5,
       "yearParseRegex": "\\d{4}",
       "nameColumn": 2,
       "issnColumn": 1,
@@ -10,6 +9,22 @@
       "categoryColumn": 5,
       "defaultLanguage": "SR",
       "parallelize": false
+    },
+    "mnoPhysChem": {
+      "yearParseRegex": "\\d{4}",
+      "nameColumn": 2,
+      "issnColumn": 1,
+      "issnDelimiter": ",",
+      "classificationColumn": 4,
+      "categoryColumn": 5,
+      "defaultLanguage": "SR",
+      "parallelize": false,
+      "discriminators": [
+        {
+          "columnId": 5,
+          "acceptedValues": ["физику", "хемију"]
+        }
+      ]
     }
   }
 }
