@@ -289,6 +289,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     }
 
     private Pair<String, String> parseIssnDetails(String issnField, String delimiter) {
+        issnField = issnField.replace("- ", "-");
         var eIssn = "";
         var printIssn = "";
 

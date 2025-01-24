@@ -4,7 +4,7 @@
       "yearParseRegex": "\\d{4}",
       "nameColumn": 2,
       "issnColumn": 1,
-      "issnDelimiter": ",",
+      "issnDelimiter": " ",
       "classificationColumn": 4,
       "categoryColumn": 5,
       "defaultLanguage": "SR",
@@ -14,7 +14,7 @@
       "yearParseRegex": "\\d{4}",
       "nameColumn": 2,
       "issnColumn": 1,
-      "issnDelimiter": ",",
+      "issnDelimiter": " ",
       "classificationColumn": 4,
       "categoryColumn": 5,
       "defaultLanguage": "SR",
@@ -22,7 +22,7 @@
       "discriminators": [
         {
           "columnId": 5,
-          "acceptedValues": ["физику", "хемију"]
+          "acceptedValues": ["FIZIKA", "HEMIJA"]
         }
       ]
     }

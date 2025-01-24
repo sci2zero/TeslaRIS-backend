@@ -874,36 +874,37 @@ public class DbInitializer implements ApplicationRunner {
             List.of(assessmentMeasure1, assessmentMeasure2, assessmentMeasure3));
 
         var commission1 = new Commission();
-        commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 1", 1),
-            new MultiLingualContent(serbianTag, "Komisija 1", 2)));
+        commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Web Of Science", 1),
+            new MultiLingualContent(serbianTag, "Web Of Science", 2)));
         commission1.setFormalDescriptionOfRule("WOSJournalClassificationRuleEngine");
 
         var commission2 = new Commission();
-        commission2.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 2", 1),
-            new MultiLingualContent(serbianTag, "Komisija 2", 2)));
+        commission2.setDescription(Set.of(new MultiLingualContent(englishTag, "SciMAGO", 1),
+            new MultiLingualContent(serbianTag, "SciMAGO", 2)));
         commission2.setFormalDescriptionOfRule("ScimagoJournalClassificationRuleEngine");
         commission2.setAssessmentDateFrom(LocalDate.of(2022, 2, 4));
         commission2.setAssessmentDateTo(LocalDate.of(2022, 5, 4));
 
         var commission3 = new Commission();
-        commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 3", 1),
-            new MultiLingualContent(serbianTag, "Komisija 3", 2)));
+        commission3.setDescription(Set.of(new MultiLingualContent(englishTag, "Erih PLUS", 1),
+            new MultiLingualContent(serbianTag, "Erih PLUS", 2)));
         commission3.setFormalDescriptionOfRule("ErihPlusJournalClassificationRuleEngine");
 
         var commission4 = new Commission();
-        commission4.setDescription(Set.of(new MultiLingualContent(englishTag, "Commission 4", 1),
-            new MultiLingualContent(serbianTag, "Komisija 4", 2)));
+        commission4.setDescription(Set.of(new MultiLingualContent(englishTag, "MKS Slavists", 1),
+            new MultiLingualContent(serbianTag, "MKS Slavisti", 2)));
         commission4.setFormalDescriptionOfRule("MKSJournalClassificationRuleEngine");
 
         var commission5 = new Commission();
         commission5.setDescription(
-            Set.of(new MultiLingualContent(englishTag, "Chair of Informatics", 1),
-                new MultiLingualContent(serbianTag, "Katedra za Informatiku", 2)));
+            Set.of(new MultiLingualContent(englishTag, "MNO ALL", 1),
+                new MultiLingualContent(serbianTag, "MNO SVE", 2)));
         commission5.setFormalDescriptionOfRule("load-mno");
 
         var commission6 = new Commission();
-        commission6.setDescription(Set.of(new MultiLingualContent(englishTag, "Chair of ACS", 1),
-            new MultiLingualContent(serbianTag, "Katedra za PRN", 2)));
+        commission6.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "MNO Physics & Chemistry", 1),
+                new MultiLingualContent(serbianTag, "MNO Fizika i Hemija", 2)));
         commission6.setFormalDescriptionOfRule("load-mnoPhysChem");
 
         commissionRepository.saveAll(
@@ -1553,10 +1554,10 @@ public class DbInitializer implements ApplicationRunner {
         var slavistiCategory = new Indicator();
         slavistiCategory.setCode("slavistiCategory");
         slavistiCategory.setTitle(Set.of(
-            new MultiLingualContent(englishTag, "MKS Slavisti Category",
+            new MultiLingualContent(englishTag, "MKS Slavists Category",
                 1),
             new MultiLingualContent(serbianTag,
-                "MKS Slavisti Category",
+                "MKS Slavisti Kategorija",
                 2)
         ));
         slavistiCategory.setDescription(Set.of(
@@ -1571,6 +1572,89 @@ public class DbInitializer implements ApplicationRunner {
         slavistiCategory.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         slavistiCategory.setContentType(IndicatorContentType.TEXT);
 
+        var lectureInvitation = new Indicator();
+        lectureInvitation.setCode("lectureInvitation");
+        lectureInvitation.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "There is an invitation to lecture",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Postoji poziv za predavanje",
+                2)
+        ));
+        lectureInvitation.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "There is an invitation to lecture.",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Postoji poziv za predavanje.",
+                2)
+        ));
+        lectureInvitation.setAccessLevel(AccessLevel.CLOSED);
+        lectureInvitation.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
+        lectureInvitation.setContentType(IndicatorContentType.BOOL);
+
+        var isTheoretical = new Indicator();
+        isTheoretical.setCode("isTheoretical");
+        isTheoretical.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "Paper is thoretical",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Rad je teorijski",
+                2)
+        ));
+        isTheoretical.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "A paper is theoretical when it focuses on developing models, concepts, or frameworks based on abstract reasoning or mathematics.",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Rad je teorijski kada se fokusira na razvoj modela, koncepata ili okvira zasnovanih na apstraktnom razmišljanju ili matematici.",
+                2)
+        ));
+        isTheoretical.setAccessLevel(AccessLevel.CLOSED);
+        isTheoretical.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
+        isTheoretical.setContentType(IndicatorContentType.BOOL);
+
+        var isExperimental = new Indicator();
+        isExperimental.setCode("isExperimental");
+        isExperimental.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "Paper is experimental",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Rad je eksperimentalni",
+                2)
+        ));
+        isExperimental.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "A paper is experimental when it involves testing or observing phenomena through real-world experiments or practical setups.",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Rad je eksperimentalni kada uključuje testiranje ili posmatranje fenomena kroz eksperimente u stvarnom svetu ili praktične postavke.",
+                2)
+        ));
+        isExperimental.setAccessLevel(AccessLevel.CLOSED);
+        isExperimental.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
+        isExperimental.setContentType(IndicatorContentType.BOOL);
+
+        var isSimulation = new Indicator();
+        isSimulation.setCode("isSimulation");
+        isSimulation.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "Paper is a simulation or an analysis",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Rad je simulacija ili analiza",
+                2)
+        ));
+        isSimulation.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "A paper falls into this category when it uses computational models to mimic real-world processes or systems, or when it examines data, results, or systems to derive insights or conclusions.",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Rad pada u ovu kategoriju kada koristi računarske modele za oponašanje realnih procesa ili sistema, ili kada ispituje podatke, rezultate ili sisteme kako bi se izvukli uvidi ili zaključci.",
+                2)
+        ));
+        isSimulation.setAccessLevel(AccessLevel.CLOSED);
+        isSimulation.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
+        isSimulation.setContentType(IndicatorContentType.BOOL);
 
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
@@ -1578,7 +1662,8 @@ public class DbInitializer implements ApplicationRunner {
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
                 hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile,
                 numParticipants, organizedByScientificInstitution, slavistiCategory,
-                numCountriesInScientificCommittee, numParticipantCountries, numPresentations));
+                numCountriesInScientificCommittee, numParticipantCountries, numPresentations,
+                lectureInvitation, isTheoretical, isExperimental, isSimulation));
 
         var m21APlus = new AssessmentClassification();
         m21APlus.setFormalDescriptionOfRule("handleM21APlus");
