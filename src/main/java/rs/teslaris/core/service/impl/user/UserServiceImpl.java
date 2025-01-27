@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -606,6 +608,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+    }
+
+    @Override
+    public Optional<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId) {
+        return userRepository.findUserCommissionForOrganisationUnit(organisationUnitId);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)

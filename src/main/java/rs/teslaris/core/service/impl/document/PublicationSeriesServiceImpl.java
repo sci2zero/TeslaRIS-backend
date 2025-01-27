@@ -56,7 +56,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         }
 
         return publicationSeriesRepository.findPublicationSeriesByeISSNOrPrintISSN(eIssn,
-            printIssn).orElse(null);
+            printIssn).stream().findFirst().orElse(null);
     }
 
     protected void setPublicationSeriesCommonFields(PublicationSeries publicationSeries,

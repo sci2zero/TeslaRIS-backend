@@ -1,9 +1,11 @@
 package rs.teslaris.core.assessment.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
@@ -21,5 +23,11 @@ public class DocumentAssessmentClassificationController {
         @PathVariable Integer documentId) {
         return documentAssessmentClassificationService.getAssessmentClassificationsForDocument(
             documentId);
+    }
+
+    @PostMapping
+    public void performJournalPublicationAssessmentForThePastYear() {
+        documentAssessmentClassificationService.classifyJournalPublications(
+            LocalDate.now().minusYears(1));
     }
 }

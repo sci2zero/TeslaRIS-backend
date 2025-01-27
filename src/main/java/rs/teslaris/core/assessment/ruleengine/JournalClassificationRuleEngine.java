@@ -119,9 +119,9 @@ public abstract class JournalClassificationRuleEngine {
             classification.setAssessmentClassification(assessmentClassification.a);
 
             var existingClassification =
-                assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYear(
+                assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
                     classification.getPublicationSeries().getId(), assessmentClassification.b,
-                    classificationYear);
+                    classificationYear, classification.getCommission().getId());
             existingClassification.ifPresent(assessmentClassificationRepository::delete);
 
             assessmentClassificationRepository.save(classification);

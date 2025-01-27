@@ -9,6 +9,7 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -204,6 +205,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
         clearCommonIndexFields(index);
 
+        index.setLastEdited(
+            Objects.nonNull(document.getLastModification()) ? document.getLastModification() :
+                new Date());
         index.setDatabaseId(document.getId());
         index.setYear(parseYear(document.getDocumentDate()));
         indexTitle(document, index);

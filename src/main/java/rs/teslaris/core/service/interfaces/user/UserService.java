@@ -2,11 +2,13 @@ package rs.teslaris.core.service.interfaces.user;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
@@ -73,4 +75,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     List<Integer> getAccountsWithRoleTakingAllowed();
 
     void reindexUsers();
+
+    Optional<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId);
 }

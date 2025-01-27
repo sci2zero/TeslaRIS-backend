@@ -63,7 +63,7 @@ public class CsvDataLoader {
                 } else {
                     year = null;
                 }
-
+                System.out.println(year);
                 if (!processInParallel) {
                     while ((line = reader.readNext()) != null) {
                         lineProcessor.accept(line,

@@ -18,8 +18,17 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
 
     @Query("select psac from PublicationSeriesAssessmentClassification psac where " +
         "psac.publicationSeries.id = :publicationSeriesId AND " +
+        "psac.commission.id = :commissionId AND " +
+        "psac.classificationYear = :year")
+    Optional<PublicationSeriesAssessmentClassification> findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+        Integer publicationSeriesId, Integer commissionId, Integer year);
+
+    @Query("select psac from PublicationSeriesAssessmentClassification psac where " +
+        "psac.publicationSeries.id = :publicationSeriesId AND " +
         "psac.categoryIdentifier = :category AND " +
-        "psac.classificationYear = :classificationYear")
-    Optional<PublicationSeriesAssessmentClassification> findClassificationForPublicationSeriesAndCategoryAndYear(
-        Integer publicationSeriesId, String category, Integer classificationYear);
+        "psac.classificationYear = :classificationYear AND " +
+        "psac.commission.id = :commissionId")
+    Optional<PublicationSeriesAssessmentClassification> findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
+        Integer publicationSeriesId, String category, Integer classificationYear,
+        Integer commissionId);
 }

@@ -417,7 +417,7 @@ public class JournalServiceTest {
         expectedPublicationSeries.setPrintISSN("");
         expectedPublicationSeries.setEISSN("");
         when(publicationSeriesRepository.findPublicationSeriesByeISSNOrPrintISSN(eIssn, printIssn))
-            .thenReturn(Optional.of(expectedPublicationSeries));
+            .thenReturn(List.of(expectedPublicationSeries));
 
         // When
         var result = journalService.findOrCreatePublicationSeries(

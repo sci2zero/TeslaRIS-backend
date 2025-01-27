@@ -3,6 +3,7 @@ package rs.teslaris.core.indexmodel;
 
 import jakarta.persistence.Id;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -128,4 +129,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Integer, name = "claimer_ids", store = true)
     private List<Integer> claimerIds = new ArrayList<>();
+
+    @Field(type = FieldType.Date, name = "last_edited")
+    private Date lastEdited;
 }

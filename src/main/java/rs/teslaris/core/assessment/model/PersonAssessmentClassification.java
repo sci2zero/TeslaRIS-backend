@@ -16,7 +16,7 @@ import rs.teslaris.core.model.person.Person;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@DiscriminatorValue("PERSON_ASSESSMENT_CLASSIFICATION")
+@DiscriminatorValue("PERSON_ASSESSMENT_CLASS")
 public class PersonAssessmentClassification extends EntityAssessmentClassification {
 
     @ManyToOne(fetch = FetchType.LAZY)

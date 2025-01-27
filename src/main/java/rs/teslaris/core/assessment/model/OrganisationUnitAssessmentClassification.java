@@ -16,7 +16,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@DiscriminatorValue("ORGANISATION_UNIT_ASSESSMENT_CLASSIFICATION")
+@DiscriminatorValue("ORG_UNIT_ASSESSMENT_CLASS")
 public class OrganisationUnitAssessmentClassification extends EntityAssessmentClassification {
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1008,7 +1008,7 @@ public class DbInitializer implements ApplicationRunner {
             new User("commission@commission.com", passwordEncoder.encode("commission"),
                 "note note note",
                 "PMF", "", false, false, serbianLanguage, commissionAuthority, null,
-                dummyOU, commission1, UserNotificationPeriod.WEEKLY);
+                dummyOU, commission5, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser);
     }
 

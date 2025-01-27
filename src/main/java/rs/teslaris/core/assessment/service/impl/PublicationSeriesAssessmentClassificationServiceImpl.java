@@ -170,11 +170,11 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                 ruleEngine.startClassification(classificationYear, commission);
             });
         } catch (ClassNotFoundException e) {
-            System.err.println("Class not found: " + className);
+            log.error("Class not found: {}", className);
         } catch (NoSuchMethodException e) {
-            System.err.println("No default constructor found for: " + className);
+            log.error("No default constructor found for: {}", className);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            System.err.println("Error instantiating class: " + className);
+            log.error("Error instantiating class: {}", className);
         }
     }
 
@@ -270,11 +270,17 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             return;
         }
 
+        var classificationCode = line[mapping.classificationColumn()].trim();
+        if (classificationCode.isEmpty() || classificationCode.equals("-")) {
+            log.info("Classification not specified for column, skipping.");
+            return;
+        }
+
         var issnDetails = parseIssnDetails(line[mapping.issnColumn()], mapping.issnDelimiter());
         var publicationSeries = findOrCreatePublicationSeries(line, mapping, issnDetails);
 
-        var classification = assessmentClassificationService.readAssessmentClassificationByCode(
-            line[mapping.classificationColumn()]);
+        var classification =
+            assessmentClassificationService.readAssessmentClassificationByCode(classificationCode);
         var category = line[mapping.categoryColumn()].trim();
 
         for (var discriminator : mapping.discriminators()) {
@@ -289,7 +295,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     }
 
     private Pair<String, String> parseIssnDetails(String issnField, String delimiter) {
-        issnField = issnField.replace("- ", "-");
+        issnField = issnField.replace("- ", "-").replace("е: ", "е:");
         var eIssn = "";
         var printIssn = "";
 
@@ -338,8 +344,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         journalClassification.setAssessmentClassification(classification);
 
         var existingClassification =
-            publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYear(
-                publicationSeries.getId(), category, year);
+            publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
+                publicationSeries.getId(), category, year, commission.getId());
         existingClassification.ifPresent(
             publicationSeriesAssessmentClassificationRepository::delete
         );
@@ -348,15 +354,19 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     }
 
     private String formatIssn(String issn) {
+        issn = issn.replace("e", "")
+            .replace("е", "") // cyrillic "е"
+            .replace("Х", "X") // cyrillic "Х"
+            .replace(":", "")
+            .replace("–", "-")
+            .replace(".", "")
+            .replace(",", "")
+            .trim()
+            .replace(" ", "");
         if (issn.isEmpty()) {
             return "";
         }
 
-        issn = issn.replace("e", "")
-            .replace("е", "") // cyrillic "е"
-            .replace(":", "")
-            .trim()
-            .replace(" ", "");
         if (!issn.contains("-")) {
             issn = issn.substring(0, 4) + "-" + issn.substring(4, 8);
         }
