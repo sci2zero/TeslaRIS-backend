@@ -25,6 +25,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("select u.id from User u where u.canTakeRole = true")
     List<Integer> getIdsOfUsersWhoAllowedAccountTakeover();
 
-    @Query("SELECT u.commission FROM User u JOIN u.organisationUnit ou WHERE u.commission IS NOT NULL AND ou.id = :organisationUnitId")
+    @Query("SELECT u.commission FROM User u JOIN u.organisationUnit ou JOIN FETCH u.commission.relations JOIN FETCH u.commission.relations.targetCommissions WHERE u.commission IS NOT NULL AND ou.id = :organisationUnitId")
     Optional<Commission> findUserCommissionForOrganisationUnit(Integer organisationUnitId);
 }

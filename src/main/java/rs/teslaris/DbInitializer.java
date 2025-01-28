@@ -263,6 +263,7 @@ public class DbInitializer implements ApplicationRunner {
         var editPublicationSeriesAssessmentClassifications =
             new Privilege("EDIT_PUB_SERIES_ASSESSMENT_CLASSIFICATION");
         var editPubSeriesIndicators = new Privilege("EDIT_PUB_SERIES_INDICATORS");
+        var assessDocument = new Privilege("ASSESS_DOCUMENT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -281,7 +282,8 @@ public class DbInitializer implements ApplicationRunner {
                 claimDocument, mergePublisherPublications, mergePublishersMetadata,
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
                 editEntityAssessmentClassifications, editEventIndicators, editPubSeriesIndicators,
-                editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications));
+                editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
+                assessDocument));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -300,11 +302,11 @@ public class DbInitializer implements ApplicationRunner {
                 forceDelete, switchEntityToUnmanaged, mergePublisherPublications, editLanguageTags,
                 mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
                 editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
-                editPublicationSeriesAssessmentClassifications
+                editPublicationSeriesAssessmentClassifications, assessDocument
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
-            List.of(allowAccountTakeover, updateProfile, editPersonalInfo,
+            List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
                 editEntityIndicatorProofs, listMyJournalPublications,
                 unbindYourselfFromPublication, editEntityIndicators)));
@@ -1728,6 +1730,16 @@ public class DbInitializer implements ApplicationRunner {
                     1)));
         m24plus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
+        var m24 = new AssessmentClassification();
+        m24.setFormalDescriptionOfRule("handleM24");
+        m24.setCode("M24");
+        m24.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Vodeći nacionalni časopis kategorije M24.",
+                    1)));
+        m24.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+
         var m51 = new AssessmentClassification();
         m51.setFormalDescriptionOfRule("handleM51");
         m51.setCode("M51");
@@ -1765,16 +1777,6 @@ public class DbInitializer implements ApplicationRunner {
                     1)));
         m54.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m24 = new AssessmentClassification();
-        m24.setFormalDescriptionOfRule("handleM24");
-        m24.setCode("M24");
-        m24.setTitle(
-            Set.of(
-                new MultiLingualContent(englishTag,
-                    "Vodeći nacionalni časopis kategorije M54.",
-                    1)));
-        m24.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
-
         var multinationalConf = new AssessmentClassification();
         multinationalConf.setFormalDescriptionOfRule("multinationalConference");
         multinationalConf.setCode("multinationalConf");
@@ -1802,9 +1804,120 @@ public class DbInitializer implements ApplicationRunner {
                 new MultiLingualContent(englishTag, "Technical (non-academic) conference.", 1)));
         nonAcademicConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
 
+        var docM21APlus = new AssessmentClassification();
+        docM21APlus.setFormalDescriptionOfRule("handleDocM21APlus");
+        docM21APlus.setCode("docM21APlus");
+        docM21APlus.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M21a+",
+                    1)));
+        docM21APlus.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM21A = new AssessmentClassification();
+        docM21A.setFormalDescriptionOfRule("handleDocM21A");
+        docM21A.setCode("docM21A");
+        docM21A.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M21a",
+                    1)));
+        docM21A.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM21 = new AssessmentClassification();
+        docM21.setFormalDescriptionOfRule("handleDocM21");
+        docM21.setCode("docM21");
+        docM21.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M21",
+                    1)));
+        docM21.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM22 = new AssessmentClassification();
+        docM22.setFormalDescriptionOfRule("handleDocM22");
+        docM22.setCode("docM22");
+        docM22.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M22",
+                    1)));
+        docM22.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM23 = new AssessmentClassification();
+        docM23.setFormalDescriptionOfRule("handleDocM23");
+        docM23.setCode("docM23");
+        docM23.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M23",
+                    1)));
+        docM23.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM23e = new AssessmentClassification();
+        docM23e.setFormalDescriptionOfRule("handleDocM23e");
+        docM23e.setCode("docM23e");
+        docM23e.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M23e",
+                    1)));
+        docM23e.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM24plus = new AssessmentClassification();
+        docM24plus.setFormalDescriptionOfRule("handleDocM24plus");
+        docM24plus.setCode("docM24Plus");
+        docM24plus.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M24+",
+                    1)));
+        docM24plus.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM24 = new AssessmentClassification();
+        docM24.setFormalDescriptionOfRule("handleDocM24");
+        docM24.setCode("docM24");
+        docM24.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M24",
+                    1)));
+        docM24.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM51 = new AssessmentClassification();
+        docM51.setFormalDescriptionOfRule("handleDocM51");
+        docM51.setCode("docM51");
+        docM51.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M51",
+                    1)));
+        docM51.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM52 = new AssessmentClassification();
+        docM52.setFormalDescriptionOfRule("handleDocM52");
+        docM52.setCode("docM52");
+        docM52.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M52",
+                    1)));
+        docM52.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM53 = new AssessmentClassification();
+        docM53.setFormalDescriptionOfRule("handleDocM53");
+        docM53.setCode("docM53");
+        docM53.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag, "M53",
+                    1)));
+        docM53.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM54 = new AssessmentClassification();
+        docM54.setFormalDescriptionOfRule("handleDocM54");
+        docM54.setCode("docM54");
+        docM54.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M54",
+                    1)));
+        docM54.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
         assessmentClassificationRepository.saveAll(
             List.of(m21APlus, m21A, m21, m22, m23, m23e, m24plus, multinationalConf, nationalConf,
-                nonAcademicConf, m51, m52, m53, m54, m24));
+                nonAcademicConf, m51, m52, m53, m54, m24, docM21APlus, docM21A, docM21, docM22,
+                docM23, docM23e, docM24plus, docM24, docM51, docM52, docM53, docM54));
     }
 
     private void processCountryLine(String[] line) {

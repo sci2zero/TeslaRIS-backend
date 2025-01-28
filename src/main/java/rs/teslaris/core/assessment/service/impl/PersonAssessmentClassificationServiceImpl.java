@@ -19,14 +19,15 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final PersonAssessmentClassificationRepository personAssessmentClassificationRepository;
 
+
     @Autowired
     public PersonAssessmentClassificationServiceImpl(
+        AssessmentClassificationService assessmentClassificationService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
-        AssessmentClassificationService assessmentClassificationService,
         PersonAssessmentClassificationRepository personAssessmentClassificationRepository) {
-        super(entityAssessmentClassificationRepository, commissionService,
-            assessmentClassificationService);
+        super(assessmentClassificationService, entityAssessmentClassificationRepository,
+            commissionService);
         this.personAssessmentClassificationRepository = personAssessmentClassificationRepository;
     }
 

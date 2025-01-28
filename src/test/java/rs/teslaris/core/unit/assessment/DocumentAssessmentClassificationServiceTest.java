@@ -2,8 +2,15 @@ package rs.teslaris.core.unit.assessment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -13,6 +20,7 @@ import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
 import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.impl.DocumentAssessmentClassificationServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 
 @SpringBootTest
 public class DocumentAssessmentClassificationServiceTest {
@@ -21,8 +29,12 @@ public class DocumentAssessmentClassificationServiceTest {
     private DocumentAssessmentClassificationRepository
         documentAssessmentClassificationRepository;
 
+    @Mock
+    private TaskManagerService taskManagerService;
+
     @InjectMocks
     private DocumentAssessmentClassificationServiceImpl documentAssessmentClassificationService;
+
 
     @Test
     void shouldReadAllDocumentAssessmentClassificationsForDocument() {
@@ -53,5 +65,26 @@ public class DocumentAssessmentClassificationServiceTest {
         // Then
         assertNotNull(response);
         assertEquals(2, response.size());
+    }
+
+    @Test
+    void shouldScheduleJournalPublicationClassificationTask() {
+        // Given
+        var timeToRun = LocalDateTime.of(2025, 1, 28, 10, 0);
+        var userId = 123;
+        var fromDate = LocalDate.of(2025, 1, 1);
+
+        // When
+        documentAssessmentClassificationService.scheduleJournalPublicationClassification(timeToRun,
+            userId, fromDate);
+
+        // Then
+        verify(taskManagerService, times(1)).scheduleTask(
+            argThat(
+                taskName -> taskName.startsWith("Journal_Publication_Assessment-From-" + fromDate)),
+            eq(timeToRun),
+            any(Runnable.class),
+            eq(userId)
+        );
     }
 }

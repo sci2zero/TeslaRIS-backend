@@ -1,6 +1,7 @@
 package rs.teslaris.core.assessment.service.interfaces;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
@@ -11,5 +12,8 @@ public interface DocumentAssessmentClassificationService {
     List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForDocument(
         Integer documentId);
 
-    void classifyJournalPublications(LocalDate fromDate);
+    void classifyJournalPublication(Integer journalPublicationId);
+
+    void scheduleJournalPublicationClassification(LocalDateTime timeToRun,
+                                                  Integer userId, LocalDate fromDate);
 }

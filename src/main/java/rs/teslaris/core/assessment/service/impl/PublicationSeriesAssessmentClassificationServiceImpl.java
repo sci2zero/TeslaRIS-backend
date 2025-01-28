@@ -82,9 +82,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
     @Autowired
     public PublicationSeriesAssessmentClassificationServiceImpl(
+        AssessmentClassificationService assessmentClassificationService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
-        AssessmentClassificationService assessmentClassificationService,
         PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
         PublicationSeriesService publicationSeriesService, JournalService journalService,
@@ -93,8 +93,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         CommissionService commissionService1, TaskManagerService taskManagerService,
         AssessmentClassificationService assessmentClassificationService1,
         CsvDataLoader csvDataLoader) {
-        super(entityAssessmentClassificationRepository, commissionService,
-            assessmentClassificationService);
+        super(assessmentClassificationService, entityAssessmentClassificationRepository,
+            commissionService);
         this.publicationSeriesAssessmentClassificationJPAService =
             publicationSeriesAssessmentClassificationJPAService;
         this.publicationSeriesAssessmentClassificationRepository =

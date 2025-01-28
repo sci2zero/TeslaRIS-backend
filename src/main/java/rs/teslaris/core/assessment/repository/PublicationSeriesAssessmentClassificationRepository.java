@@ -11,19 +11,20 @@ import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassificati
 public interface PublicationSeriesAssessmentClassificationRepository extends
     JpaRepository<PublicationSeriesAssessmentClassification, Integer> {
 
-    @Query("select psac from PublicationSeriesAssessmentClassification psac where " +
-        "psac.publicationSeries.id = :publicationSeriesId order by psac.timestamp desc")
+    @Query("SELECT psac FROM PublicationSeriesAssessmentClassification psac WHERE " +
+        "psac.publicationSeries.id = :publicationSeriesId ORDER BY psac.timestamp DESC")
     List<PublicationSeriesAssessmentClassification> findAssessmentClassificationsForPublicationSeries(
         Integer publicationSeriesId);
 
-    @Query("select psac from PublicationSeriesAssessmentClassification psac where " +
-        "psac.publicationSeries.id = :publicationSeriesId AND " +
-        "psac.commission.id = :commissionId AND " +
-        "psac.classificationYear = :year")
+    @Query(
+        "SELECT psac FROM PublicationSeriesAssessmentClassification psac JOIN FETCH psac.assessmentClassification WHERE " +
+            "psac.publicationSeries.id = :publicationSeriesId AND " +
+            "psac.commission.id = :commissionId AND " +
+            "psac.classificationYear = :year")
     Optional<PublicationSeriesAssessmentClassification> findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
         Integer publicationSeriesId, Integer commissionId, Integer year);
 
-    @Query("select psac from PublicationSeriesAssessmentClassification psac where " +
+    @Query("SELECT psac FROM PublicationSeriesAssessmentClassification psac WHERE " +
         "psac.publicationSeries.id = :publicationSeriesId AND " +
         "psac.categoryIdentifier = :category AND " +
         "psac.classificationYear = :classificationYear AND " +

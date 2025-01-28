@@ -31,21 +31,21 @@ public class EventAssessmentClassificationServiceImpl
 
     private final EventService eventService;
 
+
     @Autowired
     public EventAssessmentClassificationServiceImpl(
+        AssessmentClassificationService assessmentClassificationService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
-        AssessmentClassificationService assessmentClassificationService,
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         EventService eventService) {
-        super(entityAssessmentClassificationRepository, commissionService,
-            assessmentClassificationService);
+        super(assessmentClassificationService, entityAssessmentClassificationRepository,
+            commissionService);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;
     }
-
 
     @Override
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForEvent(

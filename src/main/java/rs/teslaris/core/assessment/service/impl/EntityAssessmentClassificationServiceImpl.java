@@ -21,12 +21,11 @@ public class EntityAssessmentClassificationServiceImpl
     extends JPAServiceImpl<EntityAssessmentClassification> implements
     EntityAssessmentClassificationService {
 
+    protected final AssessmentClassificationService assessmentClassificationService;
+
     private final EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
 
     private final CommissionService commissionService;
-
-    private final AssessmentClassificationService assessmentClassificationService;
-
 
     @Override
     public void deleteEntityAssessmentClassification(Integer entityAssessmentId) {
