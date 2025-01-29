@@ -44,4 +44,6 @@ public interface ConferenceService {
     void reorderConferenceContributions(Integer conferenceId, Integer contributionId,
                                         Integer oldContributionOrderNumber,
                                         Integer newContributionOrderNumber);
+
+    ConferenceDTO readConferenceByOldId(Integer oldId);
 }

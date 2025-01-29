@@ -22,10 +22,8 @@ public class EntityAssessmentClassificationServiceImpl
     EntityAssessmentClassificationService {
 
     protected final AssessmentClassificationService assessmentClassificationService;
-
+    protected final CommissionService commissionService;
     private final EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
-
-    private final CommissionService commissionService;
 
     @Override
     public void deleteEntityAssessmentClassification(Integer entityAssessmentId) {

@@ -40,8 +40,8 @@ public class EventAssessmentClassificationServiceImpl
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         EventService eventService) {
-        super(assessmentClassificationService, entityAssessmentClassificationRepository,
-            commissionService);
+        super(assessmentClassificationService, commissionService,
+            entityAssessmentClassificationRepository);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;
@@ -83,7 +83,13 @@ public class EventAssessmentClassificationServiceImpl
                 });
         }
 
-        newAssessmentClassification.setClassificationYear(event.getDateFrom().getYear());
+        var classificationYear = event.getDateFrom().getYear();
+        newAssessmentClassification.setClassificationYear(classificationYear);
+        var existingClassification =
+            eventAssessmentClassificationRepository.findAssessmentClassificationsForEventAndCommissionAndYear(
+                eventAssessmentClassificationDTO.getEventId(),
+                eventAssessmentClassificationDTO.getCommissionId(), classificationYear);
+        existingClassification.ifPresent(eventAssessmentClassificationRepository::delete);
 
         return eventAssessmentClassificationJPAService.save(newAssessmentClassification);
     }

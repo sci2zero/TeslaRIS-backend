@@ -93,8 +93,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         CommissionService commissionService1, TaskManagerService taskManagerService,
         AssessmentClassificationService assessmentClassificationService1,
         CsvDataLoader csvDataLoader) {
-        super(assessmentClassificationService, entityAssessmentClassificationRepository,
-            commissionService);
+        super(assessmentClassificationService, commissionService,
+            entityAssessmentClassificationRepository);
         this.publicationSeriesAssessmentClassificationJPAService =
             publicationSeriesAssessmentClassificationJPAService;
         this.publicationSeriesAssessmentClassificationRepository =

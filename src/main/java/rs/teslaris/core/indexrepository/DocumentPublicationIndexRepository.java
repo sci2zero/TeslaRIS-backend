@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -62,8 +61,4 @@ public interface DocumentPublicationIndexRepository extends
     void deleteByAuthorIdsAndType(Integer authorId, String type);
 
     Page<DocumentPublicationIndex> findByClaimerIds(Integer claimerId, Pageable pageable);
-
-    @Query("{\"bool\": {\"must\": [ {\"range\": {\"last_edited\": {\"gt\": \"?0\"}}}, {\"term\": {\"type\": \"?1\"}} ]}}")
-    Page<DocumentPublicationIndex> findAllByLastEditedAfterAndType(String date, String type,
-                                                                   Pageable pageable);
 }

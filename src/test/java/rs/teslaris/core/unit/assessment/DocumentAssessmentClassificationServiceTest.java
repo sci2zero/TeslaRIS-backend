@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -76,7 +77,7 @@ public class DocumentAssessmentClassificationServiceTest {
 
         // When
         documentAssessmentClassificationService.scheduleJournalPublicationClassification(timeToRun,
-            userId, fromDate);
+            userId, fromDate, null, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 
         // Then
         verify(taskManagerService, times(1)).scheduleTask(

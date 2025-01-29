@@ -1,10 +1,16 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
+import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,6 +37,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -58,6 +65,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final TaskManagerService taskManagerService;
 
+    private final SearchService<DocumentPublicationIndex> searchService;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -69,9 +78,10 @@ public class DocumentAssessmentClassificationServiceImpl
         UserService userService,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
-        DocumentRepository documentRepository, TaskManagerService taskManagerService) {
-        super(assessmentClassificationService, entityAssessmentClassificationRepository,
-            commissionService);
+        DocumentRepository documentRepository, TaskManagerService taskManagerService,
+        SearchService<DocumentPublicationIndex> searchService) {
+        super(assessmentClassificationService, commissionService,
+            entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -81,6 +91,7 @@ public class DocumentAssessmentClassificationServiceImpl
             publicationSeriesAssessmentClassificationRepository;
         this.documentRepository = documentRepository;
         this.taskManagerService = taskManagerService;
+        this.searchService = searchService;
     }
 
     @Override
@@ -94,10 +105,15 @@ public class DocumentAssessmentClassificationServiceImpl
 
     @Override
     public void scheduleJournalPublicationClassification(LocalDateTime timeToRun,
-                                                         Integer userId, LocalDate fromDate) {
+                                                         Integer userId, LocalDate fromDate,
+                                                         Integer commissionId,
+                                                         ArrayList<Integer> authorIds,
+                                                         ArrayList<Integer> orgUnitIds,
+                                                         ArrayList<Integer> journalIds) {
         taskManagerService.scheduleTask(
             "Journal_Publication_Assessment-From-" + fromDate + "-" + UUID.randomUUID(), timeToRun,
-            () -> classifyJournalPublications(fromDate), userId);
+            () -> classifyJournalPublications(fromDate, commissionId, authorIds, orgUnitIds,
+                journalIds), userId);
     }
 
     @Override
@@ -118,25 +134,41 @@ public class DocumentAssessmentClassificationServiceImpl
         });
     }
 
-    private void classifyJournalPublications(LocalDate fromDate) {
+    private void classifyJournalPublications(LocalDate fromDate, Integer commissionId,
+                                             ArrayList<Integer> authorIds,
+                                             ArrayList<Integer> orgUnitIds,
+                                             ArrayList<Integer> journalIds) {
         int pageNumber = 0;
         int chunkSize = 10;
         boolean hasNextPage = true;
 
+        Commission commission =
+            Objects.nonNull(commissionId) ? commissionService.findOne(commissionId) : null;
+
         while (hasNextPage) {
 
             List<DocumentPublicationIndex> chunk =
-                documentPublicationIndexRepository.findAllByLastEditedAfterAndType(
-                    fromDate.toString(),
-                    DocumentPublicationType.JOURNAL_PUBLICATION.name(),
-                    PageRequest.of(pageNumber, chunkSize)).getContent();
+                searchService.runQuery(findAllJournalPublicationsByFilters(fromDate.toString(),
+                        DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                        authorIds,
+                        orgUnitIds,
+                        journalIds),
+                    PageRequest.of(pageNumber, chunkSize), DocumentPublicationIndex.class,
+                    "document_publication").getContent();
 
             chunk.forEach(journalPublicationIndex -> {
-                journalPublicationIndex.getOrganisationUnitIds().forEach(organisationUnitId -> {
-                    performJournalPublicationAssessmentForOrganisationUnit(organisationUnitId,
-                        journalPublicationIndex.getJournalId(),
-                        journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId());
-                });
+                if (Objects.nonNull(commission)) {
+                    performJournalPublicationAssessment(journalPublicationIndex.getJournalId(),
+                        journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(),
+                        commission);
+                } else {
+                    journalPublicationIndex.getOrganisationUnitIds().forEach(organisationUnitId -> {
+                        performJournalPublicationAssessmentForOrganisationUnit(organisationUnitId,
+                            journalPublicationIndex.getJournalId(),
+                            journalPublicationIndex.getYear(),
+                            journalPublicationIndex.getDatabaseId());
+                    });
+                }
             });
 
             pageNumber++;
@@ -156,15 +188,22 @@ public class DocumentAssessmentClassificationServiceImpl
             return;
         }
 
+        performJournalPublicationAssessment(publicationSeriesId, classificationYear, documentId,
+            commission.get());
+    }
+
+    private void performJournalPublicationAssessment(Integer publicationSeriesId,
+                                                     Integer classificationYear, Integer documentId,
+                                                     Commission commission) {
         var classification = publicationSeriesAssessmentClassificationRepository
             .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
-                publicationSeriesId, commission.get().getId(), classificationYear);
+                publicationSeriesId, commission.getId(), classificationYear);
 
         if (classification.isPresent()) {
             handleClassification(classification.get().getAssessmentClassification(),
-                commission.get(), documentId, classificationYear);
+                commission, documentId, classificationYear);
         } else {
-            handleRelationAssessments(commission.get(), publicationSeriesId, classificationYear,
+            handleRelationAssessments(commission, publicationSeriesId, classificationYear,
                 documentId);
         }
     }
@@ -244,6 +283,41 @@ public class DocumentAssessmentClassificationServiceImpl
 
         return ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
             commissionRelation.getResultCalculationMethod());
+    }
+
+    public Query findAllJournalPublicationsByFilters(
+        String date, String type,
+        List<Integer> authorIds,
+        List<Integer> organisationUnitIds,
+        List<Integer> journalIds) {
+
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.must(sb -> sb.range(r -> r.field("last_edited").gt(JsonData.of(date))));
+            b.must(sb -> sb.term(t -> t.field("type").value(type)));
+
+            if (!authorIds.isEmpty()) {
+                var authorIdTerms = new TermsQueryField.Builder()
+                    .value(authorIds.stream().map(FieldValue::of).toList())
+                    .build();
+                b.must(sb -> sb.terms(t -> t.field("author_ids").terms(authorIdTerms)));
+            }
+
+            if (!organisationUnitIds.isEmpty()) {
+                var orgUnitIdTerms = new TermsQueryField.Builder()
+                    .value(organisationUnitIds.stream().map(FieldValue::of).toList())
+                    .build();
+                b.must(sb -> sb.terms(t -> t.field("organisation_unit_ids").terms(orgUnitIdTerms)));
+            }
+
+            if (!journalIds.isEmpty()) {
+                var journalIdTerms = new TermsQueryField.Builder()
+                    .value(journalIds.stream().map(FieldValue::of).toList())
+                    .build();
+                b.must(sb -> sb.terms(t -> t.field("journal_id").terms(journalIdTerms)));
+            }
+
+            return b;
+        })))._toQuery();
     }
 
     private void saveDocumentClassification(AssessmentClassification assessmentClassification,

@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,7 +45,8 @@ public class DocumentAssessmentClassificationController {
                                                                   @RequestHeader("Authorization")
                                                                   String bearerToken) {
         documentAssessmentClassificationService.scheduleJournalPublicationClassification(timestamp,
-            tokenUtil.extractUserIdFromToken(bearerToken), dateFrom);
+            tokenUtil.extractUserIdFromToken(bearerToken), dateFrom, null, new ArrayList<>(),
+            new ArrayList<>(), new ArrayList<>());
     }
 
     @PostMapping("/journal-publication/{journalPublicationId}")

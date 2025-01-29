@@ -27,8 +27,8 @@ public class OrganisationUnitAssessmentClassificationServiceImpl
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
         OrganisationUnitAssessmentClassificationRepository organisationUnitAssessmentClassificationRepository) {
-        super(assessmentClassificationService, entityAssessmentClassificationRepository,
-            commissionService);
+        super(assessmentClassificationService, commissionService,
+            entityAssessmentClassificationRepository);
         this.organisationUnitAssessmentClassificationRepository =
             organisationUnitAssessmentClassificationRepository;
     }

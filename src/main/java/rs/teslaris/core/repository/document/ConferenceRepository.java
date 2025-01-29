@@ -17,4 +17,6 @@ public interface ConferenceRepository extends JpaRepository<Conference, Integer>
 
     @Query("select c from Conference c where c.confId = :confId")
     Optional<Conference> findConferenceByConfId(String confId);
+
+    Optional<Conference> findConferenceByOldId(Integer oldId);
 }
