@@ -337,5 +337,4 @@ public class DocumentAssessmentClassificationServiceImpl
 
         documentAssessmentClassificationRepository.save(documentClassification);
     }
-
 }
