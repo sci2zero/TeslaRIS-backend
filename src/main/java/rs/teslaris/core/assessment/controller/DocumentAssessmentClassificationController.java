@@ -2,19 +2,20 @@ package rs.teslaris.core.assessment.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.dto.JournalPublicationAssessmentRequestDTO;
 import rs.teslaris.core.assessment.service.interfaces.DocumentAssessmentClassificationService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -42,11 +43,16 @@ public class DocumentAssessmentClassificationController {
                                                                   LocalDateTime timestamp,
                                                                   @RequestParam("dateFrom")
                                                                   LocalDate dateFrom,
+                                                                  @RequestBody
+                                                                  JournalPublicationAssessmentRequestDTO journalPublicationAssessmentRequest,
                                                                   @RequestHeader("Authorization")
                                                                   String bearerToken) {
         documentAssessmentClassificationService.scheduleJournalPublicationClassification(timestamp,
-            tokenUtil.extractUserIdFromToken(bearerToken), dateFrom, null, new ArrayList<>(),
-            new ArrayList<>(), new ArrayList<>());
+            tokenUtil.extractUserIdFromToken(bearerToken), dateFrom,
+            journalPublicationAssessmentRequest.getCommissionId(),
+            journalPublicationAssessmentRequest.getAuthorIds(),
+            journalPublicationAssessmentRequest.getOrganisationUnitIds(),
+            journalPublicationAssessmentRequest.getJournalIds());
     }
 
     @PostMapping("/journal-publication/{journalPublicationId}")

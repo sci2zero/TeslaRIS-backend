@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.repository;
 
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,4 +30,7 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
             "SELECT count(DISTINCT c) FROM Commission c LEFT JOIN c.description description " +
                 "WHERE description.language.languageTag = :languageTag")
     Page<Commission> readAll(String languageTag, Pageable pageable);
+
+    @Query("SELECT c FROM Commission c LEFT JOIN FETCH c.relations LEFT JOIN FETCH c.relations.targetCommissions WHERE c.id = :commissionId")
+    Optional<Commission> findOneWithRelations(Integer commissionId);
 }

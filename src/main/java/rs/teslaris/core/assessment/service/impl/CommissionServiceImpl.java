@@ -149,6 +149,12 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
         delete(commissionId);
     }
 
+    @Override
+    public Commission findOneWithFetchedRelations(Integer commissionId) {
+        return commissionRepository.findOneWithRelations(commissionId).orElseThrow(
+            () -> new NotFoundException("Commission with ID " + commissionId + " does not exist."));
+    }
+
     private void setCommonFields(Commission commission, CommissionDTO commissionDTO) {
         commission.setDescription(
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(

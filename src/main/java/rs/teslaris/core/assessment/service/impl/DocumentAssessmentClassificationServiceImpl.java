@@ -107,9 +107,9 @@ public class DocumentAssessmentClassificationServiceImpl
     public void scheduleJournalPublicationClassification(LocalDateTime timeToRun,
                                                          Integer userId, LocalDate fromDate,
                                                          Integer commissionId,
-                                                         ArrayList<Integer> authorIds,
-                                                         ArrayList<Integer> orgUnitIds,
-                                                         ArrayList<Integer> journalIds) {
+                                                         List<Integer> authorIds,
+                                                         List<Integer> orgUnitIds,
+                                                         List<Integer> journalIds) {
         taskManagerService.scheduleTask(
             "Journal_Publication_Assessment-From-" + fromDate + "-" + UUID.randomUUID(), timeToRun,
             () -> classifyJournalPublications(fromDate, commissionId, authorIds, orgUnitIds,
@@ -135,15 +135,16 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     private void classifyJournalPublications(LocalDate fromDate, Integer commissionId,
-                                             ArrayList<Integer> authorIds,
-                                             ArrayList<Integer> orgUnitIds,
-                                             ArrayList<Integer> journalIds) {
+                                             List<Integer> authorIds,
+                                             List<Integer> orgUnitIds,
+                                             List<Integer> journalIds) {
         int pageNumber = 0;
         int chunkSize = 10;
         boolean hasNextPage = true;
 
         Commission commission =
-            Objects.nonNull(commissionId) ? commissionService.findOne(commissionId) : null;
+            Objects.nonNull(commissionId) ?
+                commissionService.findOneWithFetchedRelations(commissionId) : null;
 
         while (hasNextPage) {
 

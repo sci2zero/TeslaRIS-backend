@@ -27,4 +27,6 @@ public interface CommissionService extends JPAService<Commission> {
     void updateCommission(Integer commissionId, CommissionDTO commissionDTO);
 
     void deleteCommission(Integer commissionId);
+
+    Commission findOneWithFetchedRelations(Integer commissionId);
 }

@@ -10,6 +10,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.EventIndicatorRepository;
+import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -139,6 +142,13 @@ public class MergeServiceImpl implements MergeService {
 
     private final PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository;
 
+    private final PublicationSeriesAssessmentClassificationRepository
+        publicationSeriesAssessmentClassificationRepository;
+
+    private final EventIndicatorRepository eventIndicatorRepository;
+
+    private final EventAssessmentClassificationRepository eventAssessmentClassificationRepository;
+
 
     @Override
     public void switchJournalPublicationToOtherJournal(Integer targetJournalId,
@@ -169,7 +179,6 @@ public class MergeServiceImpl implements MergeService {
         processChunks(
             sourceId,
             (srcId, journalIndicator) -> {
-                // TODO: Should I delete this if it exists?
                 var existingIndicatorValue =
                     publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
                         targetId, journalIndicator.getSource(), journalIndicator.getFromDate(),
@@ -180,6 +189,64 @@ public class MergeServiceImpl implements MergeService {
                 journalIndicator.setPublicationSeries(journalService.findJournalById(targetId));
             },
             pageRequest -> publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeries(
+                sourceId, pageRequest).getContent()
+        );
+    }
+
+    @Override
+    public void switchAllClassificationsToOtherJournal(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, journalClassification) -> {
+                var existingClassificationValue =
+                    publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
+                        targetId, journalClassification.getCategoryIdentifier(),
+                        journalClassification.getClassificationYear(),
+                        journalClassification.getCommission().getId());
+                existingClassificationValue.ifPresent(
+                    publicationSeriesAssessmentClassificationRepository::delete);
+
+                journalClassification.setPublicationSeries(
+                    journalService.findJournalById(targetId));
+            },
+            pageRequest -> publicationSeriesAssessmentClassificationRepository.findClassificationsForPublicationSeries(
+                sourceId, pageRequest).getContent()
+        );
+    }
+
+    @Override
+    public void switchAllIndicatorsToOtherEvent(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, eventIndicator) -> {
+                var existingIndicatorValue =
+                    eventIndicatorRepository.existsByEventIdAndSourceAndYear(
+                        targetId, eventIndicator.getSource(), eventIndicator.getFromDate(),
+                        eventIndicator.getIndicator().getCode());
+                existingIndicatorValue.ifPresent(eventIndicatorRepository::delete);
+
+                eventIndicator.setEvent(conferenceService.findConferenceById(targetId));
+            },
+            pageRequest -> eventIndicatorRepository.findIndicatorsForEvent(sourceId, pageRequest)
+                .getContent()
+        );
+    }
+
+    @Override
+    public void switchAllClassificationsToOtherEvent(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, eventClassification) -> {
+                var existingClassificationValue =
+                    eventAssessmentClassificationRepository.findAssessmentClassificationsForEventAndCommissionAndYear(
+                        targetId, eventClassification.getCommission().getId(),
+                        eventClassification.getClassificationYear());
+                existingClassificationValue.ifPresent(
+                    eventAssessmentClassificationRepository::delete);
+
+                eventClassification.setEvent(conferenceService.findConferenceById(targetId));
+            },
+            pageRequest -> eventAssessmentClassificationRepository.findAssessmentClassificationsForEvent(
                 sourceId, pageRequest).getContent()
         );
     }
