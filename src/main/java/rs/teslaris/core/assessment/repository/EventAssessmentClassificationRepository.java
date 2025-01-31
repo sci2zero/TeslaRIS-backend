@@ -28,4 +28,11 @@ public interface EventAssessmentClassificationRepository extends
             "eac.classificationYear = :year")
     Optional<EventAssessmentClassification> findAssessmentClassificationsForEventAndCommissionAndYear(
         Integer eventId, Integer commissionId, Integer year);
+
+    @Query(
+        "SELECT eac FROM EventAssessmentClassification eac WHERE " +
+            "eac.event.id = :eventId AND " +
+            "eac.commission.id = :commissionId")
+    Optional<EventAssessmentClassification> findAssessmentClassificationsForEventAndCommission(
+        Integer eventId, Integer commissionId);
 }

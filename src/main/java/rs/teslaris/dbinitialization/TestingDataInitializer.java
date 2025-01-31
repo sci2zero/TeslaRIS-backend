@@ -688,6 +688,7 @@ public class TestingDataInitializer {
         var eventAssessmentClassification2 = new EventAssessmentClassification();
         eventAssessmentClassification2.setEvent(conferenceEvent1);
         eventAssessmentClassification2.setAssessmentClassification(assessmentClassification1);
+        eventAssessmentClassification2.setCommission(commission5);
         eventAssessmentClassification2.setClassificationYear(2020);
 
         eventAssessmentClassificationRepository.saveAll(

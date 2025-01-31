@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.dto.EventAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
+import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.EventAssessmentClassification;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.impl.EventAssessmentClassificationServiceImpl;
@@ -106,11 +107,15 @@ public class EventAssessmentClassificationServiceTest {
         var existingEventAssessmentClassification = new EventAssessmentClassification();
         existingEventAssessmentClassification.setAssessmentClassification(
             new AssessmentClassification());
+        existingEventAssessmentClassification.setCommission(new Commission());
+
+        var event = new Conference();
+        event.setDateFrom(LocalDate.now());
 
         when(eventAssessmentClassificationJPAService.findOne(
             eventAssessmentClassificationId)).thenReturn(
             existingEventAssessmentClassification);
-        when(eventService.findOne(1)).thenReturn(new Conference());
+        when(eventService.findOne(1)).thenReturn(event);
         when(assessmentClassificationService.findOne(1)).thenReturn(new AssessmentClassification());
 
         eventAssessmentClassificationService.updateEventAssessmentClassification(
