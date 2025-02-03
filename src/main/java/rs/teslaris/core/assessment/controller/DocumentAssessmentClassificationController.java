@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
-import rs.teslaris.core.assessment.dto.JournalPublicationAssessmentRequestDTO;
+import rs.teslaris.core.assessment.dto.PublicationAssessmentRequestDTO;
 import rs.teslaris.core.assessment.service.interfaces.DocumentAssessmentClassificationService;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
@@ -36,29 +38,40 @@ public class DocumentAssessmentClassificationController {
             documentId);
     }
 
-    @PostMapping("/schedule-journal-publication-assessment")
+    @PostMapping("/schedule-publication-assessment/{documentType}")
     @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
-    public void performJournalPublicationAssessmentForThePastYear(@RequestParam("timestamp")
-                                                                  LocalDateTime timestamp,
-                                                                  @RequestParam("dateFrom")
-                                                                  LocalDate dateFrom,
-                                                                  @RequestBody
-                                                                  JournalPublicationAssessmentRequestDTO journalPublicationAssessmentRequest,
-                                                                  @RequestHeader("Authorization")
-                                                                  String bearerToken) {
-        documentAssessmentClassificationService.scheduleJournalPublicationClassification(timestamp,
-            tokenUtil.extractUserIdFromToken(bearerToken), dateFrom,
-            journalPublicationAssessmentRequest.getCommissionId(),
-            journalPublicationAssessmentRequest.getAuthorIds(),
-            journalPublicationAssessmentRequest.getOrganisationUnitIds(),
-            journalPublicationAssessmentRequest.getJournalIds());
+    public void performPublicationAssessmentForThePastYear(@RequestParam("timestamp")
+                                                           LocalDateTime timestamp,
+                                                           @RequestParam("dateFrom")
+                                                           LocalDate dateFrom,
+                                                           @RequestBody
+                                                           PublicationAssessmentRequestDTO publicationAssessmentRequestDTO,
+                                                           @RequestHeader("Authorization")
+                                                           String bearerToken,
+                                                           @PathVariable
+                                                           DocumentPublicationType documentType) {
+        documentAssessmentClassificationService.schedulePublicationClassification(timestamp,
+            tokenUtil.extractUserIdFromToken(bearerToken), dateFrom, documentType,
+            publicationAssessmentRequestDTO.getCommissionId(),
+            publicationAssessmentRequestDTO.getAuthorIds(),
+            publicationAssessmentRequestDTO.getOrganisationUnitIds(),
+            publicationAssessmentRequestDTO.getPublishedInIds());
     }
 
-    @PostMapping("/journal-publication/{journalPublicationId}")
+    @PostMapping("/journal-publication/{documentId}")
     @Idempotent
+    @PublicationEditCheck
     @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
-    public void assessJournalPublication(@PathVariable Integer journalPublicationId) {
-        documentAssessmentClassificationService.classifyJournalPublication(journalPublicationId);
+    public void assessJournalPublication(@PathVariable Integer documentId) {
+        documentAssessmentClassificationService.classifyJournalPublication(documentId);
+    }
+
+    @PostMapping("/proceedings-publication/{documentId}")
+    @Idempotent
+    @PublicationEditCheck
+    @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
+    public void assessProceedingsPublication(@PathVariable Integer documentId) {
+        documentAssessmentClassificationService.classifyProceedingsPublication(documentId);
     }
 }

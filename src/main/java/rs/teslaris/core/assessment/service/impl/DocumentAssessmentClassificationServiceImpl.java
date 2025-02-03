@@ -13,8 +13,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,8 +27,11 @@ import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.CommissionRelation;
 import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
+import rs.teslaris.core.assessment.model.EntityAssessmentClassification;
+import rs.teslaris.core.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
@@ -67,6 +72,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final SearchService<DocumentPublicationIndex> searchService;
 
+    private final EventAssessmentClassificationRepository eventAssessmentClassificationRepository;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -79,7 +86,8 @@ public class DocumentAssessmentClassificationServiceImpl
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
         DocumentRepository documentRepository, TaskManagerService taskManagerService,
-        SearchService<DocumentPublicationIndex> searchService) {
+        SearchService<DocumentPublicationIndex> searchService,
+        EventAssessmentClassificationRepository eventAssessmentClassificationRepository) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -92,6 +100,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.documentRepository = documentRepository;
         this.taskManagerService = taskManagerService;
         this.searchService = searchService;
+        this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
     }
 
     @Override
@@ -104,16 +113,27 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
-    public void scheduleJournalPublicationClassification(LocalDateTime timeToRun,
-                                                         Integer userId, LocalDate fromDate,
-                                                         Integer commissionId,
-                                                         List<Integer> authorIds,
-                                                         List<Integer> orgUnitIds,
-                                                         List<Integer> journalIds) {
+    public void schedulePublicationClassification(LocalDateTime timeToRun,
+                                                  Integer userId, LocalDate fromDate,
+                                                  DocumentPublicationType documentPublicationType,
+                                                  Integer commissionId,
+                                                  List<Integer> authorIds,
+                                                  List<Integer> orgUnitIds,
+                                                  List<Integer> publishedInIds) {
         taskManagerService.scheduleTask(
-            "Journal_Publication_Assessment-From-" + fromDate + "-" + UUID.randomUUID(), timeToRun,
-            () -> classifyJournalPublications(fromDate, commissionId, authorIds, orgUnitIds,
-                journalIds), userId);
+            documentPublicationType.name() + "_Assessment-From-" + fromDate + "-" +
+                UUID.randomUUID(), timeToRun,
+            () -> {
+                switch (documentPublicationType) {
+                    case JOURNAL_PUBLICATION ->
+                        classifyJournalPublications(fromDate, commissionId, authorIds, orgUnitIds,
+                            publishedInIds);
+                    case PROCEEDINGS_PUBLICATION ->
+                        classifyProceedingsPublications(fromDate, commissionId, authorIds,
+                            orgUnitIds,
+                            publishedInIds);
+                }
+            }, userId);
     }
 
     @Override
@@ -121,54 +141,80 @@ public class DocumentAssessmentClassificationServiceImpl
         var journalPublicationIndex =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                 journalPublicationId);
+
         if (journalPublicationIndex.isEmpty()) {
             throw new NotFoundException(
                 "Journal publication with ID " + journalPublicationId + " does not exist");
         }
 
-        journalPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId -> {
-            performJournalPublicationAssessmentForOrganisationUnit(organisationUnitId,
-                journalPublicationIndex.get().getJournalId(),
-                journalPublicationIndex.get().getYear(),
-                journalPublicationIndex.get().getDatabaseId());
-        });
+        documentAssessmentClassificationRepository.deleteByDocumentId(
+            journalPublicationIndex.get().getDatabaseId());
+        journalPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
+            assessJournalPublication(journalPublicationIndex.get(), organisationUnitId, null));
+    }
+
+    @Override
+    public void classifyProceedingsPublication(Integer proceedingsPublicationId) {
+        var proceedingsPublicationIndex =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                proceedingsPublicationId);
+
+        if (proceedingsPublicationIndex.isEmpty()) {
+            throw new NotFoundException(
+                "Journal publication with ID " + proceedingsPublicationId + " does not exist");
+        }
+
+        documentAssessmentClassificationRepository.deleteByDocumentId(
+            proceedingsPublicationIndex.get().getDatabaseId());
+        proceedingsPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
+            assessProceedingsPublication(proceedingsPublicationIndex.get(), organisationUnitId,
+                null));
     }
 
     private void classifyJournalPublications(LocalDate fromDate, Integer commissionId,
-                                             List<Integer> authorIds,
-                                             List<Integer> orgUnitIds,
+                                             List<Integer> authorIds, List<Integer> orgUnitIds,
                                              List<Integer> journalIds) {
+        classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, journalIds,
+            DocumentPublicationType.JOURNAL_PUBLICATION, this::assessJournalPublication);
+    }
+
+    private void classifyProceedingsPublications(LocalDate fromDate, Integer commissionId,
+                                                 List<Integer> authorIds, List<Integer> orgUnitIds,
+                                                 List<Integer> eventIds) {
+        classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION, this::assessProceedingsPublication);
+    }
+
+    private void classifyPublications(LocalDate fromDate, Integer commissionId,
+                                      List<Integer> authorIds, List<Integer> orgUnitIds,
+                                      List<Integer> entityIds,
+                                      DocumentPublicationType publicationType,
+                                      TriConsumer<DocumentPublicationIndex, Integer, Commission> assessFunction) {
         int pageNumber = 0;
         int chunkSize = 10;
         boolean hasNextPage = true;
 
-        Commission commission =
-            Objects.nonNull(commissionId) ?
-                commissionService.findOneWithFetchedRelations(commissionId) : null;
+        Commission presetCommission = Objects.nonNull(commissionId)
+            ? commissionService.findOneWithFetchedRelations(commissionId)
+            : null;
 
         while (hasNextPage) {
-
-            List<DocumentPublicationIndex> chunk =
-                searchService.runQuery(findAllJournalPublicationsByFilters(fromDate.toString(),
-                        DocumentPublicationType.JOURNAL_PUBLICATION.name(),
-                        authorIds,
-                        orgUnitIds,
-                        journalIds),
+            List<DocumentPublicationIndex> chunk = searchService
+                .runQuery(findAllDocumentPublicationsByFilters(fromDate.toString(),
+                        publicationType.name(),
+                        authorIds, orgUnitIds, entityIds),
                     PageRequest.of(pageNumber, chunkSize), DocumentPublicationIndex.class,
                     "document_publication").getContent();
 
-            chunk.forEach(journalPublicationIndex -> {
-                if (Objects.nonNull(commission)) {
-                    performJournalPublicationAssessment(journalPublicationIndex.getJournalId(),
-                        journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(),
-                        commission);
+            chunk.forEach(publicationIndex -> {
+                documentAssessmentClassificationRepository.deleteByDocumentId(
+                    publicationIndex.getDatabaseId());
+
+                if (Objects.nonNull(presetCommission)) {
+                    assessFunction.accept(publicationIndex, null, presetCommission);
                 } else {
-                    journalPublicationIndex.getOrganisationUnitIds().forEach(organisationUnitId -> {
-                        performJournalPublicationAssessmentForOrganisationUnit(organisationUnitId,
-                            journalPublicationIndex.getJournalId(),
-                            journalPublicationIndex.getYear(),
-                            journalPublicationIndex.getDatabaseId());
-                    });
+                    publicationIndex.getOrganisationUnitIds().forEach(organisationUnitId ->
+                        assessFunction.accept(publicationIndex, organisationUnitId, null));
                 }
             });
 
@@ -177,35 +223,95 @@ public class DocumentAssessmentClassificationServiceImpl
         }
     }
 
-    private void performJournalPublicationAssessmentForOrganisationUnit(
-        Integer organisationUnitId, Integer publicationSeriesId, Integer classificationYear,
-        Integer documentId) {
+    private void assessJournalPublication(DocumentPublicationIndex journalPublicationIndex,
+                                          Integer organisationUnitId,
+                                          Commission presetCommission) {
+        Commission commission = (presetCommission != null)
+            ? presetCommission
+            : findCommissionInHierarchy(organisationUnitId).orElse(null);
 
-        var commission = findCommissionInHierarchy(organisationUnitId);
-
-        if (commission.isEmpty()) {
+        if (commission == null) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
                 organisationUnitId);
             return;
         }
 
-        performJournalPublicationAssessment(publicationSeriesId, classificationYear, documentId,
-            commission.get());
+        performPublicationAssessment((year, classifications, commissionObj) -> {
+                var classification = publicationSeriesAssessmentClassificationRepository
+                    .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                        journalPublicationIndex.getJournalId(), commission.getId(), year);
+
+                if (classification.isPresent()) {
+                    classifications.add(classification.get().getAssessmentClassification());
+                } else {
+                    handleRelationAssessments(commission,
+                        (targetCommissionId) -> publicationSeriesAssessmentClassificationRepository
+                            .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                                journalPublicationIndex.getJournalId(), targetCommissionId, year)
+                    ).ifPresent(classifications::add);
+                }
+            },
+            journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(), commission);
     }
 
-    private void performJournalPublicationAssessment(Integer publicationSeriesId,
-                                                     Integer classificationYear, Integer documentId,
-                                                     Commission commission) {
-        var classification = publicationSeriesAssessmentClassificationRepository
-            .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
-                publicationSeriesId, commission.getId(), classificationYear);
+    private void assessProceedingsPublication(DocumentPublicationIndex proceedingsPublicationIndex,
+                                              Integer organisationUnitId,
+                                              Commission presetCommission) {
+        Commission commission = (presetCommission != null)
+            ? presetCommission
+            : findCommissionInHierarchy(organisationUnitId).orElse(null);
 
-        if (classification.isPresent()) {
-            handleClassification(classification.get().getAssessmentClassification(),
-                commission, documentId, classificationYear);
-        } else {
-            handleRelationAssessments(commission, publicationSeriesId, classificationYear,
-                documentId);
+        if (commission == null) {
+            log.info("No commission found for organisation unit {} or its hierarchy.",
+                organisationUnitId);
+            return;
+        }
+
+        performPublicationAssessment((year, classifications, commissionObj) ->
+            {
+                var classification = eventAssessmentClassificationRepository
+                    .findAssessmentClassificationsForEventAndCommissionAndYear(
+                        proceedingsPublicationIndex.getEventId(), commission.getId(), year);
+
+                if (classification.isPresent()) {
+                    classifications.add(classification.get().getAssessmentClassification());
+                } else {
+                    handleRelationAssessments(commission,
+                        (targetCommissionId) -> {
+                            var assessmentClassification = eventAssessmentClassificationRepository
+                                .findAssessmentClassificationsForEventAndCommissionAndYear(
+                                    proceedingsPublicationIndex.getEventId(), targetCommissionId, year)
+                                .orElse(null);
+                            return Objects.nonNull(assessmentClassification) ? Optional.of(
+                                assessmentClassification) : Optional.empty();
+                        }
+                    ).ifPresent(classifications::add);
+                }
+            },
+            proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
+            commission);
+    }
+
+    private void performPublicationAssessment(
+        TriConsumer<Integer, List<AssessmentClassification>, Commission> yearHandler,
+        Integer classificationYear, Integer documentId,
+        Commission commission) {
+        var yearsToConsider =
+            List.of(classificationYear, classificationYear - 1, classificationYear - 2);
+        var classifications = new ArrayList<AssessmentClassification>();
+
+        yearsToConsider.forEach(year -> {
+            yearHandler.accept(year, classifications, commission);
+        });
+
+        if (!classifications.isEmpty()) {
+            var bestClassification =
+                ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
+                    ResultCalculationMethod.BEST_VALUE);
+            bestClassification.ifPresent((documentClassification) -> {
+                handleClassification(documentClassification,
+                    commission, documentId, classificationYear);
+            });
         }
     }
 
@@ -228,8 +334,8 @@ public class DocumentAssessmentClassificationServiceImpl
     private void handleClassification(AssessmentClassification classification,
                                       Commission commission,
                                       Integer documentId, Integer classificationYear) {
-        var mappedCode = ClassificationPriorityMapping.getDocClassificationCodeBasedOnPubSeriesCode(
-            classification.getCode());
+        var mappedCode = ClassificationPriorityMapping.getDocClassificationCodeBasedOnCode(
+            classification.getCode(), documentId);
         if (mappedCode.isEmpty()) {
             return;
         }
@@ -240,40 +346,30 @@ public class DocumentAssessmentClassificationServiceImpl
             classificationYear);
     }
 
-    private void handleRelationAssessments(Commission commission, Integer publicationSeriesId,
-                                           Integer classificationYear, Integer documentId) {
+    private Optional<AssessmentClassification> handleRelationAssessments(
+        Commission commission,
+        Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
         var sortedRelations = commission.getRelations().stream()
             .sorted(Comparator.comparingInt(CommissionRelation::getPriority))
             .toList();
 
         for (var relation : sortedRelations) {
             var respectedClassification =
-                respectRelationAssessment(relation, classificationYear, publicationSeriesId);
+                respectRelationAssessment(relation, classificationFinder);
             if (respectedClassification.isPresent()) {
-                var mappedCode =
-                    ClassificationPriorityMapping.getDocClassificationCodeBasedOnPubSeriesCode(
-                        respectedClassification.get().getCode());
-                if (mappedCode.isPresent()) {
-                    var documentClassification = assessmentClassificationService
-                        .readAssessmentClassificationByCode(mappedCode.get());
-                    saveDocumentClassification(documentClassification,
-                        relation.getSourceCommission(),
-                        documentId, classificationYear);
-                    return;
-                }
+                return respectedClassification;
             }
         }
+
+        return Optional.empty();
     }
 
     private Optional<AssessmentClassification> respectRelationAssessment(
-        CommissionRelation commissionRelation, Integer year,
-        Integer publicationSeriesId) {
+        CommissionRelation commissionRelation,
+        Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
         var classifications = new ArrayList<AssessmentClassification>();
         commissionRelation.getTargetCommissions().forEach(targetCommission -> {
-            var classification =
-                publicationSeriesAssessmentClassificationRepository
-                    .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
-                        publicationSeriesId, targetCommission.getId(), year);
+            var classification = classificationFinder.apply(targetCommission.getId());
             classification.ifPresent(journalClassification -> classifications.add(
                 journalClassification.getAssessmentClassification()));
         });
@@ -286,11 +382,11 @@ public class DocumentAssessmentClassificationServiceImpl
             commissionRelation.getResultCalculationMethod());
     }
 
-    public Query findAllJournalPublicationsByFilters(
+    public Query findAllDocumentPublicationsByFilters(
         String date, String type,
         List<Integer> authorIds,
         List<Integer> organisationUnitIds,
-        List<Integer> journalIds) {
+        List<Integer> publishedInIds) {
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(sb -> sb.range(r -> r.field("last_edited").gt(JsonData.of(date))));
@@ -310,11 +406,13 @@ public class DocumentAssessmentClassificationServiceImpl
                 b.must(sb -> sb.terms(t -> t.field("organisation_unit_ids").terms(orgUnitIdTerms)));
             }
 
-            if (!journalIds.isEmpty()) {
-                var journalIdTerms = new TermsQueryField.Builder()
-                    .value(journalIds.stream().map(FieldValue::of).toList())
+            if (!publishedInIds.isEmpty()) {
+                var publishedInIdTerms = new TermsQueryField.Builder()
+                    .value(publishedInIds.stream().map(FieldValue::of).toList())
                     .build();
-                b.must(sb -> sb.terms(t -> t.field("journal_id").terms(journalIdTerms)));
+                b.must(sb -> sb.terms(t -> t.field(
+                    type.equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name()) ?
+                        "event_id" : "journal_id").terms(publishedInIdTerms)));
             }
 
             return b;
@@ -324,11 +422,6 @@ public class DocumentAssessmentClassificationServiceImpl
     private void saveDocumentClassification(AssessmentClassification assessmentClassification,
                                             Commission commission, Integer documentId,
                                             Integer classificationYear) {
-        var existingClassification =
-            documentAssessmentClassificationRepository.findClassificationForDocumentAndCategoryAndCommission(
-                documentId, commission.getId());
-        existingClassification.ifPresent(documentAssessmentClassificationRepository::delete);
-
         var documentClassification = new DocumentAssessmentClassification();
         documentClassification.setTimestamp(LocalDateTime.now());
         documentClassification.setCommission(commission);

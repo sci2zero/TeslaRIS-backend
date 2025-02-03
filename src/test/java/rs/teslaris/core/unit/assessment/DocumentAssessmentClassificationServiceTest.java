@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +23,7 @@ import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
 import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.impl.DocumentAssessmentClassificationServiceImpl;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 
 @SpringBootTest
@@ -68,21 +71,26 @@ public class DocumentAssessmentClassificationServiceTest {
         assertEquals(2, response.size());
     }
 
-    @Test
-    void shouldScheduleJournalPublicationClassificationTask() {
+    @ParameterizedTest
+    @EnumSource(value = DocumentPublicationType.class, names = {"JOURNAL_PUBLICATION",
+        "PROCEEDINGS_PUBLICATION"})
+    void shouldScheduleJournalPublicationClassificationTask(
+        DocumentPublicationType documentPublicationType) {
         // Given
         var timeToRun = LocalDateTime.of(2025, 1, 28, 10, 0);
         var userId = 123;
         var fromDate = LocalDate.of(2025, 1, 1);
 
         // When
-        documentAssessmentClassificationService.scheduleJournalPublicationClassification(timeToRun,
-            userId, fromDate, null, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        documentAssessmentClassificationService.schedulePublicationClassification(timeToRun,
+            userId, fromDate, documentPublicationType, null, new ArrayList<>(),
+            new ArrayList<>(), new ArrayList<>());
 
         // Then
         verify(taskManagerService, times(1)).scheduleTask(
             argThat(
-                taskName -> taskName.startsWith("Journal_Publication_Assessment-From-" + fromDate)),
+                taskName -> taskName.startsWith(
+                    documentPublicationType.name() + "_Assessment-From-" + fromDate)),
             eq(timeToRun),
             any(Runnable.class),
             eq(userId)

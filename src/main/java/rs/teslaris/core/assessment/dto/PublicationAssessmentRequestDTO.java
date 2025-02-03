@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class JournalPublicationAssessmentRequestDTO {
+public class PublicationAssessmentRequestDTO {
 
     private Integer commissionId;
 
@@ -21,6 +21,6 @@ public class JournalPublicationAssessmentRequestDTO {
     @NotNull(message = "You have to provide organisation unit IDs.")
     private List<Integer> organisationUnitIds;
 
-    @NotNull(message = "You have to provide journal IDs.")
-    private List<Integer> journalIds;
+    @NotNull(message = "You have to provide IDs of the entity publications are published in.")
+    private List<Integer> publishedInIds;
 }

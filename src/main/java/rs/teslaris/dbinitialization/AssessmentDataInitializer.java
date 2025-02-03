@@ -939,10 +939,101 @@ public class AssessmentDataInitializer {
                     1)));
         docM54.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
+        var m31 = new AssessmentClassification();
+        m31.setFormalDescriptionOfRule("handleM31");
+        m31.setCode("M31");
+        m31.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M31",
+                    1)));
+        m31.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m32 = new AssessmentClassification();
+        m32.setFormalDescriptionOfRule("handleM31");
+        m32.setCode("M32");
+        m32.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M32",
+                    1)));
+        m32.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m33 = new AssessmentClassification();
+        m33.setFormalDescriptionOfRule("handleM31");
+        m33.setCode("M33");
+        m33.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M33",
+                    1)));
+        m33.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m34 = new AssessmentClassification();
+        m34.setFormalDescriptionOfRule("handleM31");
+        m34.setCode("M34");
+        m34.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M34",
+                    1)));
+        m34.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m61 = new AssessmentClassification();
+        m61.setFormalDescriptionOfRule("handleM61");
+        m61.setCode("M61");
+        m61.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M61",
+                    1)));
+        m61.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m62 = new AssessmentClassification();
+        m62.setFormalDescriptionOfRule("handleM62");
+        m62.setCode("M62");
+        m62.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M62",
+                    1)));
+        m62.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m63 = new AssessmentClassification();
+        m63.setFormalDescriptionOfRule("handleM63");
+        m63.setCode("M63");
+        m63.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M63",
+                    1)));
+        m63.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m64 = new AssessmentClassification();
+        m64.setFormalDescriptionOfRule("handleM64");
+        m64.setCode("M64");
+        m64.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M64",
+                    1)));
+        m64.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m69 = new AssessmentClassification();
+        m69.setFormalDescriptionOfRule("handleM69");
+        m69.setCode("M69");
+        m69.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M69",
+                    1)));
+        m69.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
         assessmentClassificationRepository.saveAll(
             List.of(m21APlus, m21A, m21, m22, m23, m23e, m24plus, multinationalConf, nationalConf,
                 nonAcademicConf, m51, m52, m53, m54, m24, docM21APlus, docM21A, docM21, docM22,
-                docM23, docM23e, docM24plus, docM24, docM51, docM52, docM53, docM54));
+                docM23, docM23e, docM24plus, docM24, docM51, docM52, docM53, docM54, m31, m32, m33,
+                m34, m61, m62, m63, m64, m69));
     }
 
     public Commission initializeCommissions(LanguageTag englishTag, LanguageTag serbianTag) {

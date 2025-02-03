@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import rs.teslaris.core.assessment.model.EntityAssessmentClassification;
 import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
 
 @Repository
@@ -23,7 +24,7 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
             "psac.publicationSeries.id = :publicationSeriesId AND " +
             "psac.commission.id = :commissionId AND " +
             "psac.classificationYear = :year")
-    Optional<PublicationSeriesAssessmentClassification> findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+    Optional<EntityAssessmentClassification> findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
         Integer publicationSeriesId, Integer commissionId, Integer year);
 
     @Query("SELECT psac FROM PublicationSeriesAssessmentClassification psac WHERE " +

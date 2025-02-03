@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 
 @Service
 public interface DocumentAssessmentClassificationService {
@@ -14,10 +15,13 @@ public interface DocumentAssessmentClassificationService {
 
     void classifyJournalPublication(Integer journalPublicationId);
 
-    void scheduleJournalPublicationClassification(LocalDateTime timeToRun,
-                                                  Integer userId, LocalDate fromDate,
-                                                  Integer commissionId,
-                                                  List<Integer> authorIds,
-                                                  List<Integer> orgUnitIds,
-                                                  List<Integer> journalIds);
+    void classifyProceedingsPublication(Integer proceedingsPublicationId);
+
+    void schedulePublicationClassification(LocalDateTime timeToRun,
+                                           Integer userId, LocalDate fromDate,
+                                           DocumentPublicationType documentPublicationType,
+                                           Integer commissionId,
+                                           List<Integer> authorIds,
+                                           List<Integer> orgUnitIds,
+                                           List<Integer> journalIds);
 }

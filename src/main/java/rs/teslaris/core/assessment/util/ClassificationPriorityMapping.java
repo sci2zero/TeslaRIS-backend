@@ -5,12 +5,18 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 
+@Component
 public class ClassificationPriorityMapping {
 
     private static final Map<String, Integer> CLASSIFICATION_PRIORITIES = Map.ofEntries(
+        // JOURNALS
         Map.entry("M21APlus", 1),
         Map.entry("M21A", 2),
         Map.entry("M21", 3),
@@ -22,7 +28,11 @@ public class ClassificationPriorityMapping {
         Map.entry("M51", 9),
         Map.entry("M52", 10),
         Map.entry("M53", 11),
-        Map.entry("M54", 12)
+        Map.entry("M54", 12),
+
+        // CONFERENCES
+        Map.entry("multinationalConf", 13),
+        Map.entry("nationalConf", 14)
     );
 
     private static final Map<String, String> CLASSIFICATION_TO_ASSESSMENT_MAPPING = Map.ofEntries(
@@ -37,8 +47,20 @@ public class ClassificationPriorityMapping {
         Map.entry("M51", "docM51"),
         Map.entry("M52", "docM52"),
         Map.entry("M53", "docM53"),
-        Map.entry("M54", "docM54")
+        Map.entry("M54", "docM54"),
+        Map.entry("multinationalConf", "M30"),
+        Map.entry("nationalConf", "M60")
     );
+
+    private static ProceedingsPublicationRepository proceedingsPublicationRepository;
+
+    @Autowired
+    public ClassificationPriorityMapping(
+        ProceedingsPublicationRepository proceedingsPublicationRepository) {
+        ClassificationPriorityMapping.proceedingsPublicationRepository =
+            proceedingsPublicationRepository;
+    }
+
 
     public static Optional<AssessmentClassification> getClassificationBasedOnCriteria(
         ArrayList<AssessmentClassification> classifications,
@@ -52,16 +74,46 @@ public class ClassificationPriorityMapping {
                 .max(Comparator.comparingInt(
                     assessmentClassification -> CLASSIFICATION_PRIORITIES.getOrDefault(
                         assessmentClassification.getCode(), Integer.MIN_VALUE)));
-
-            case null -> Optional.empty();
         };
     }
 
-    public static Optional<String> getDocClassificationCodeBasedOnPubSeriesCode(
-        String classificationCode) {
-        var documentCode =
-            CLASSIFICATION_TO_ASSESSMENT_MAPPING.getOrDefault(classificationCode, null);
+    public static Optional<String> getDocClassificationCodeBasedOnCode(
+        String classificationCode, Integer documentId) {
 
-        return Objects.nonNull(documentCode) ? Optional.of(documentCode) : Optional.empty();
+        String documentCode = CLASSIFICATION_TO_ASSESSMENT_MAPPING.get(classificationCode);
+
+        if (Objects.isNull(documentCode)) {
+            return Optional.empty();
+        }
+
+        if (!documentCode.equals("M30") && !documentCode.equals("M60")) {
+            return Optional.of(documentCode);
+        }
+
+        return proceedingsPublicationRepository.findById(documentId)
+            .flatMap(proceedingsPublication -> getMappedCode(documentCode,
+                proceedingsPublication.getProceedingsPublicationType()));
+    }
+
+    private static Optional<String> getMappedCode(String baseCode,
+                                                  ProceedingsPublicationType type) {
+        Map<ProceedingsPublicationType, String> mappingM30 = Map.of(
+            ProceedingsPublicationType.INVITED_FULL_ARTICLE, "M31",
+            ProceedingsPublicationType.INVITED_ABSTRACT_ARTICLE, "M32",
+            ProceedingsPublicationType.REGULAR_FULL_ARTICLE, "M33",
+            ProceedingsPublicationType.REGULAR_ABSTRACT_ARTICLE, "M34"
+        );
+
+        Map<ProceedingsPublicationType, String> mappingM60 = Map.of(
+            ProceedingsPublicationType.INVITED_FULL_ARTICLE, "M61",
+            ProceedingsPublicationType.INVITED_ABSTRACT_ARTICLE, "M62",
+            ProceedingsPublicationType.REGULAR_FULL_ARTICLE, "M63",
+            ProceedingsPublicationType.REGULAR_ABSTRACT_ARTICLE, "M64",
+            ProceedingsPublicationType.SCIENTIFIC_CRITIC, "M69"
+        );
+
+        return Optional.ofNullable(
+            baseCode.equals("M30") ? mappingM30.get(type) : mappingM60.get(type)
+        );
     }
 }

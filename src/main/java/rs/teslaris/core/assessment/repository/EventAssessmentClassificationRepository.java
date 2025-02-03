@@ -22,7 +22,7 @@ public interface EventAssessmentClassificationRepository extends
                                                                               Pageable pageable);
 
     @Query(
-        "SELECT eac FROM EventAssessmentClassification eac WHERE " +
+        "SELECT eac FROM EventAssessmentClassification eac JOIN FETCH eac.assessmentClassification WHERE " +
             "eac.event.id = :eventId AND " +
             "eac.commission.id = :commissionId AND " +
             "eac.classificationYear = :year")
