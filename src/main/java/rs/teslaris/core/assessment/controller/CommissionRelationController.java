@@ -8,10 +8,12 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.CommissionEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.dto.CommissionRelationDTO;
 import rs.teslaris.core.assessment.dto.CommissionRelationResponseDTO;
@@ -25,23 +27,25 @@ public class CommissionRelationController {
 
     private final CommissionRelationService commissionRelationService;
 
-    @GetMapping("/{sourceCommissionId}")
-    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @GetMapping("/{commissionId}")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
     public List<CommissionRelationResponseDTO> fetchCommissionRelations(
-        @PathVariable Integer sourceCommissionId) {
+        @PathVariable("commissionId") Integer sourceCommissionId) {
         return commissionRelationService.fetchCommissionRelations(sourceCommissionId);
     }
 
-    @PatchMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @PatchMapping("/{commissionId}")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
+    @CommissionEditCheck
     @Idempotent
+    @ResponseStatus(HttpStatus.CREATED)
     public void addCommissionRelation(@RequestBody CommissionRelationDTO commissionRelationDTO) {
         commissionRelationService.addCommissionRelation(commissionRelationDTO);
     }
 
-    @PatchMapping("/{commissionRelationId}")
-    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @PutMapping("/{commissionId}/{commissionRelationId}")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
+    @CommissionEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateCommissionRelation(@PathVariable Integer commissionRelationId,
                                          @RequestBody CommissionRelationDTO commissionRelationDTO) {
@@ -49,15 +53,17 @@ public class CommissionRelationController {
             commissionRelationDTO);
     }
 
-    @DeleteMapping("/{commissionRelationId}")
-    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @DeleteMapping("/{commissionId}/{commissionRelationId}")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
+    @CommissionEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCommissionRelation(@PathVariable Integer commissionRelationId) {
         commissionRelationService.deleteCommissionRelation(commissionRelationId);
     }
 
     @PatchMapping("/{commissionId}/{commissionRelationId}")
-    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
+    @CommissionEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Idempotent
     public void reorderCommissionRelations(@PathVariable Integer commissionId,

@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
+import rs.teslaris.core.assessment.dto.DocumentAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
@@ -45,6 +46,7 @@ import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -113,6 +115,47 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
+    public EntityAssessmentClassificationResponseDTO createDocumentAssessmentClassification(
+        DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
+        var newDocumentClassification = new DocumentAssessmentClassification();
+
+        setCommonFields(newDocumentClassification, documentAssessmentClassificationDTO);
+
+        newDocumentClassification.setCommission(
+            commissionService.findOne(documentAssessmentClassificationDTO.getCommissionId()));
+        var document =
+            documentRepository.findById(documentAssessmentClassificationDTO.getDocumentId())
+                .orElseThrow(() -> new NotFoundException(
+                    "Document with ID " + documentAssessmentClassificationDTO.getDocumentId() +
+                        " does not exist."));
+
+        if (Objects.isNull(document.getDocumentDate()) || document.getDocumentDate().isEmpty()) {
+            throw new CantEditException("Document does not have publication date.");
+        }
+
+        documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
+            documentAssessmentClassificationDTO.getDocumentId(),
+            documentAssessmentClassificationDTO.getCommissionId(), true);
+
+        newDocumentClassification.setClassificationYear(
+            Integer.parseInt(document.getDocumentDate().split("-")[0]));
+        newDocumentClassification.setDocument(document);
+
+        return EntityAssessmentClassificationConverter.toDTO(
+            documentAssessmentClassificationRepository.save(newDocumentClassification));
+    }
+
+    @Override
+    public void editDocumentAssessmentClassification(Integer classificationId,
+                                                     DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
+        var documentClassification = findOne(classificationId);
+
+        setCommonFields(documentClassification, documentAssessmentClassificationDTO);
+
+        save(documentClassification);
+    }
+
+    @Override
     public void schedulePublicationClassification(LocalDateTime timeToRun,
                                                   Integer userId, LocalDate fromDate,
                                                   DocumentPublicationType documentPublicationType,
@@ -147,8 +190,6 @@ public class DocumentAssessmentClassificationServiceImpl
                 "Journal publication with ID " + journalPublicationId + " does not exist");
         }
 
-        documentAssessmentClassificationRepository.deleteByDocumentId(
-            journalPublicationIndex.get().getDatabaseId());
         journalPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
             assessJournalPublication(journalPublicationIndex.get(), organisationUnitId, null));
     }
@@ -164,8 +205,6 @@ public class DocumentAssessmentClassificationServiceImpl
                 "Journal publication with ID " + proceedingsPublicationId + " does not exist");
         }
 
-        documentAssessmentClassificationRepository.deleteByDocumentId(
-            proceedingsPublicationIndex.get().getDatabaseId());
         proceedingsPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
             assessProceedingsPublication(proceedingsPublicationIndex.get(), organisationUnitId,
                 null));
@@ -207,9 +246,6 @@ public class DocumentAssessmentClassificationServiceImpl
                     "document_publication").getContent();
 
             chunk.forEach(publicationIndex -> {
-                documentAssessmentClassificationRepository.deleteByDocumentId(
-                    publicationIndex.getDatabaseId());
-
                 if (Objects.nonNull(presetCommission)) {
                     assessFunction.accept(publicationIndex, null, presetCommission);
                 } else {
@@ -236,6 +272,9 @@ public class DocumentAssessmentClassificationServiceImpl
             return;
         }
 
+        documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
+            journalPublicationIndex.getDatabaseId(), commission.getId(), false);
+
         performPublicationAssessment((year, classifications, commissionObj) -> {
                 var classification = publicationSeriesAssessmentClassificationRepository
                     .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
@@ -251,7 +290,9 @@ public class DocumentAssessmentClassificationServiceImpl
                     ).ifPresent(classifications::add);
                 }
             },
-            journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(), commission);
+            journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(), commission,
+            List.of(journalPublicationIndex.getYear(), journalPublicationIndex.getYear() - 1,
+                journalPublicationIndex.getYear() - 2));
     }
 
     private void assessProceedingsPublication(DocumentPublicationIndex proceedingsPublicationIndex,
@@ -266,6 +307,9 @@ public class DocumentAssessmentClassificationServiceImpl
                 organisationUnitId);
             return;
         }
+
+        documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
+            proceedingsPublicationIndex.getDatabaseId(), commission.getId(), false);
 
         performPublicationAssessment((year, classifications, commissionObj) ->
             {
@@ -289,15 +333,13 @@ public class DocumentAssessmentClassificationServiceImpl
                 }
             },
             proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
-            commission);
+            commission, List.of(proceedingsPublicationIndex.getYear()));
     }
 
     private void performPublicationAssessment(
         TriConsumer<Integer, List<AssessmentClassification>, Commission> yearHandler,
         Integer classificationYear, Integer documentId,
-        Commission commission) {
-        var yearsToConsider =
-            List.of(classificationYear, classificationYear - 1, classificationYear - 2);
+        Commission commission, List<Integer> yearsToConsider) {
         var classifications = new ArrayList<AssessmentClassification>();
 
         yearsToConsider.forEach(year -> {
@@ -368,11 +410,16 @@ public class DocumentAssessmentClassificationServiceImpl
         CommissionRelation commissionRelation,
         Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
         var classifications = new ArrayList<AssessmentClassification>();
-        commissionRelation.getTargetCommissions().forEach(targetCommission -> {
-            var classification = classificationFinder.apply(targetCommission.getId());
-            classification.ifPresent(journalClassification -> classifications.add(
-                journalClassification.getAssessmentClassification()));
-        });
+
+        for (var targetCommission : commissionRelation.getTargetCommissions()) {
+            var foundClassification = classificationFinder.apply(targetCommission.getId());
+            if (foundClassification.isPresent()) {
+                if (foundClassification.get().getManual()) {
+                    return Optional.of(foundClassification.get().getAssessmentClassification());
+                }
+                classifications.add(foundClassification.get().getAssessmentClassification());
+            }
+        }
 
         if (classifications.isEmpty()) {
             return Optional.empty();
@@ -430,5 +477,13 @@ public class DocumentAssessmentClassificationServiceImpl
         documentClassification.setDocument(documentRepository.getReferenceById(documentId));
 
         documentAssessmentClassificationRepository.save(documentClassification);
+    }
+
+    private void setCommonFields(DocumentAssessmentClassification documentClassification,
+                                 DocumentAssessmentClassificationDTO dto) {
+        documentClassification.setTimestamp(LocalDateTime.now());
+        documentClassification.setManual(true);
+        documentClassification.setAssessmentClassification(
+            assessmentClassificationService.findOne(dto.getAssessmentClassificationId()));
     }
 }

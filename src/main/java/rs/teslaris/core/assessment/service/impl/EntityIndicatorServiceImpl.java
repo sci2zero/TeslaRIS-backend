@@ -18,7 +18,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
-import rs.teslaris.core.util.exceptionhandling.exception.CantEditEntityIndicatorException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 
 @Service
 @Primary
@@ -86,7 +86,7 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
                                    EntityIndicatorDTO entityIndicatorDTO) {
         if (Objects.nonNull(entityIndicator.getSource()) &&
             !entityIndicator.getSource().equals(EntityIndicatorSource.MANUAL)) {
-            throw new CantEditEntityIndicatorException(
+            throw new CantEditException(
                 "Only manually entered indicators are editable.");
         }
 

@@ -37,7 +37,7 @@ public class CommissionRelationControllerTest extends BaseTest {
 
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/commission-relation/{sourceCommissionId}", 2)
+                    "http://localhost:8081/api/assessment/commission-relation/{commissionId}", 2)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
         ).andExpect(status().isOk());
@@ -52,7 +52,8 @@ public class CommissionRelationControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(commissionRelationDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.patch("http://localhost:8081/api/assessment/commission-relation")
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/assessment/commission-relation/{commissionId}", 2)
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -69,9 +70,9 @@ public class CommissionRelationControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(commissionRelationDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.patch(
-                        "http://localhost:8081/api/assessment/commission-relation/{commissionRelationId}",
-                        1)
+                MockMvcRequestBuilders.put(
+                        "http://localhost:8081/api/assessment/commission-relation/{commissionId}/{commissionRelationId}",
+                        2, 1)
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
@@ -85,8 +86,8 @@ public class CommissionRelationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
         mockMvc.perform(
                 MockMvcRequestBuilders.delete(
-                        "http://localhost:8081/api/assessment/commission-relation/{commissionRelationId}",
-                        1)
+                        "http://localhost:8081/api/assessment/commission-relation/{commissionId}/{commissionRelationId}",
+                        5, 1)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

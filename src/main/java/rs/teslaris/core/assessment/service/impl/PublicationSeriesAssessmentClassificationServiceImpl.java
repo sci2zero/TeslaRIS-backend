@@ -124,6 +124,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO) {
         var newAssessmentClassification = new PublicationSeriesAssessmentClassification();
 
+        newAssessmentClassification.setCommission(
+            commissionService.findOne(
+                publicationSeriesAssessmentClassificationDTO.getCommissionId()));
         setCommonFields(newAssessmentClassification, publicationSeriesAssessmentClassificationDTO);
         newAssessmentClassification.setPublicationSeries(
             publicationSeriesService.findOne(

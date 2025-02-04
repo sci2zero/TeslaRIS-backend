@@ -12,7 +12,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -20,17 +19,15 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @Aspect
 @Component
 @RequiredArgsConstructor
-public class PersonEditCheckAspect {
-
-    private final UserService userService;
-
-    private final PersonService personService;
+public class CommissionEditCheckAspect {
 
     private final JwtUtil tokenUtil;
 
+    private final UserService userService;
 
-    @Around("@annotation(rs.teslaris.core.annotation.PersonEditCheck)")
-    public Object checkApiKey(ProceedingJoinPoint joinPoint) throws Throwable {
+
+    @Around("@annotation(rs.teslaris.core.annotation.CommissionEditCheck)")
+    public Object checkEntityIndicatorEdit(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
@@ -38,7 +35,7 @@ public class PersonEditCheckAspect {
         var tokenValue = bearerToken.split(" ")[1];
         var attributeMap = (Map<String, String>) request.getAttribute(
             HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-        var personId = Integer.parseInt(attributeMap.get("personId"));
+        var commissionId = Integer.parseInt(attributeMap.get("commissionId"));
 
         var role = tokenUtil.extractUserRoleFromToken(tokenValue);
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
@@ -46,19 +43,17 @@ public class PersonEditCheckAspect {
         switch (UserRole.valueOf(role)) {
             case ADMIN:
                 break;
-            case RESEARCHER:
-                if (!userService.isUserAResearcher(userId, personId)) {
-                    throw new CantEditException("unauthorizedPersonEditAttemptMessage");
+            case COMMISSION:
+                if (!userService.getUserProfile(userId).getCommissionId().equals(commissionId)) {
+                    throw new CantEditException(
+                        "unauthorizedCommissionEditAttemptMessage");
                 }
                 break;
-            case INSTITUTIONAL_EDITOR:
-                if (!personService.isPersonEmployedInOrganisationUnit(personId,
-                    userService.getUserOrganisationUnitId(userId))) {
-                    throw new CantEditException("unauthorizedPersonEditAttemptMessage");
-                }
-                break;
+            case RESEARCHER, INSTITUTIONAL_EDITOR:
+                throw new CantEditException(
+                    "unauthorizedCommissionEditAttemptMessage");
             default:
-                throw new CantEditException("unauthorizedPersonEditAttemptMessage");
+                throw new CantEditException("unauthorizedCommissionEditAttemptMessage");
         }
 
         return joinPoint.proceed();

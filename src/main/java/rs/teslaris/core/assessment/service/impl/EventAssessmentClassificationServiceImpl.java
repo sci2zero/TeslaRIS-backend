@@ -61,6 +61,8 @@ public class EventAssessmentClassificationServiceImpl
         EventAssessmentClassificationDTO eventAssessmentClassificationDTO) {
         var newAssessmentClassification = new EventAssessmentClassification();
 
+        newAssessmentClassification.setCommission(
+            commissionService.findOne(eventAssessmentClassificationDTO.getCommissionId()));
         setCommonFields(newAssessmentClassification, eventAssessmentClassificationDTO);
 
         var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());

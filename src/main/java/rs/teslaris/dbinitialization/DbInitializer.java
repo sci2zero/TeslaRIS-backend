@@ -14,6 +14,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -110,6 +112,7 @@ public class DbInitializer implements ApplicationRunner {
         var editAssessmentRulebooks = new Privilege("EDIT_ASSESSMENT_RULEBOOKS");
         var editDocumentIndicators = new Privilege("EDIT_DOCUMENT_INDICATORS");
         var editCommissions = new Privilege("EDIT_COMMISSIONS");
+        var updateCommission = new Privilege("UPDATE_COMMISSION");
         var editEntityIndicatorProofs = new Privilege("EDIT_ENTITY_INDICATOR_PROOFS");
         var editEntityIndicators = new Privilege("EDIT_ENTITY_INDICATOR");
         var listMyJournalPublications = new Privilege("LIST_MY_JOURNAL_PUBLICATIONS");
@@ -135,6 +138,7 @@ public class DbInitializer implements ApplicationRunner {
             new Privilege("EDIT_PUB_SERIES_ASSESSMENT_CLASSIFICATION");
         var editPubSeriesIndicators = new Privilege("EDIT_PUB_SERIES_INDICATORS");
         var assessDocument = new Privilege("ASSESS_DOCUMENT");
+        var editDocumentAssessment = new Privilege("EDIT_DOCUMENT_ASSESSMENT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -154,7 +158,7 @@ public class DbInitializer implements ApplicationRunner {
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
                 editEntityAssessmentClassifications, editEventIndicators, editPubSeriesIndicators,
                 editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
-                assessDocument));
+                assessDocument, updateCommission, editDocumentAssessment));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -173,7 +177,8 @@ public class DbInitializer implements ApplicationRunner {
                 forceDelete, switchEntityToUnmanaged, mergePublisherPublications, editLanguageTags,
                 mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
                 editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
-                editPublicationSeriesAssessmentClassifications, assessDocument
+                editPublicationSeriesAssessmentClassifications, assessDocument, updateCommission,
+                editDocumentAssessment
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -190,7 +195,8 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
                 editEventAssessmentClassification, updateProfile, editEventIndicators,
                 editPublicationSeriesAssessmentClassifications, editPubSeriesIndicators,
-                allowAccountTakeover, editEntityIndicatorProofs
+                allowAccountTakeover, editEntityIndicatorProofs, updateCommission,
+                editDocumentAssessment
             )));
 
         authorityRepository.saveAll(
@@ -265,7 +271,12 @@ public class DbInitializer implements ApplicationRunner {
         csvDataLoader.loadData("countries.csv", this::processCountryLine, ',');
 
         // RESEARCH AREAS
-        skosLoader.loadResearchAreas();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                skosLoader.loadResearchAreas();
+            }
+        });
 
         ///////////////////// ASSESSMENT DATA /////////////////////
         assessmentDataInitializer.initializeIndicators(englishTag, serbianTag);

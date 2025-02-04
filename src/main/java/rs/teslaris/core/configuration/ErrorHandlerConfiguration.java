@@ -19,9 +19,7 @@ import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
-import rs.teslaris.core.util.exceptionhandling.exception.CantEditEntityIndicatorException;
-import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
-import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
@@ -92,22 +90,6 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleIllegalArgumentException(HttpServletRequest request,
                                                IllegalArgumentException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(CantEditPersonException.class)
-    @ResponseBody
-    ErrorObject handleCantEditPersonException(HttpServletRequest request,
-                                              CantEditPersonException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(CantEditPublicationException.class)
-    @ResponseBody
-    ErrorObject handleCantEditPublicationException(HttpServletRequest request,
-                                                   CantEditPublicationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
@@ -340,10 +322,10 @@ public class ErrorHandlerConfiguration {
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    @ExceptionHandler(CantEditEntityIndicatorException.class)
+    @ExceptionHandler(CantEditException.class)
     @ResponseBody
-    ErrorObject handleCantEditEntityIndicatorException(HttpServletRequest request,
-                                                       CantEditEntityIndicatorException ex) {
+    ErrorObject handleCantEditException(HttpServletRequest request,
+                                        CantEditException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.CommissionEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.converter.CommissionConverter;
 import rs.teslaris.core.assessment.dto.CommissionDTO;
@@ -31,7 +32,7 @@ public class CommissionController {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION', 'UPDATE_COMMISSION')")
     public Page<CommissionResponseDTO> readCommissions(Pageable pageable,
                                                        @RequestParam(required = false)
                                                        String searchExpression,
@@ -46,14 +47,14 @@ public class CommissionController {
     }
 
     @GetMapping("/rule-engines")
-    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @PreAuthorize("hasAnyAuthority('EDIT_COMMISSIONS', 'UPDATE_COMMISSION')")
     public List<String> readApplicableRuleEnginesForCommissions() {
         return commissionService.readAllApplicableRuleEngines();
     }
 
 
     @GetMapping("/{commissionId}")
-    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
     public CommissionResponseDTO readCommission(@PathVariable Integer commissionId) {
         return commissionService.readCommissionById(commissionId);
     }
@@ -69,7 +70,8 @@ public class CommissionController {
     }
 
     @PutMapping("/{commissionId}")
-    @PreAuthorize("hasAuthority('EDIT_COMMISSIONS')")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
+    @CommissionEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateCommission(@RequestBody CommissionDTO commissionDTO,
                                  @PathVariable Integer commissionId) {

@@ -19,7 +19,9 @@ public interface DocumentAssessmentClassificationRepository
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM DocumentAssessmentClassification dac WHERE dac.document.id = :documentId")
-    void deleteByDocumentId(Integer documentId);
+    @Query("DELETE FROM DocumentAssessmentClassification dac " +
+        "WHERE dac.document.id = :documentId AND dac.commission.id = :commissionId AND dac.manual = :isManual")
+    void deleteByDocumentIdAndCommissionId(Integer documentId, Integer commissionId,
+                                           Boolean isManual);
 
 }
