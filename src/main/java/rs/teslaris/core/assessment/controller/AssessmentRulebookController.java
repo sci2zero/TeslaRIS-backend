@@ -36,6 +36,7 @@ public class AssessmentRulebookController {
 
 
     @GetMapping
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RULEBOOKS')")
     public Page<AssessmentRulebookResponseDTO> readAssessmentRulebooks(Pageable pageable,
                                                                        @RequestParam("lang")
                                                                        String language) {
@@ -44,6 +45,7 @@ public class AssessmentRulebookController {
     }
 
     @GetMapping("/{assessmentRulebookId}/measures")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RULEBOOKS')")
     public Page<AssessmentMeasureDTO> readAssessmentMeasuresForRulebook(Pageable pageable,
                                                                         @PathVariable
                                                                         Integer assessmentRulebookId) {
@@ -52,6 +54,7 @@ public class AssessmentRulebookController {
     }
 
     @GetMapping("/{assessmentRulebookId}")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RULEBOOKS')")
     public AssessmentRulebookResponseDTO readAssessmentRulebook(
         @PathVariable Integer assessmentRulebookId) {
         return assessmentRulebookService.readAssessmentRulebookById(assessmentRulebookId);
@@ -59,8 +62,8 @@ public class AssessmentRulebookController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RULEBOOKS')")
-    @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
+    @ResponseStatus(HttpStatus.CREATED)
     public AssessmentRulebookResponseDTO createAssessmentRulebook(
         @RequestBody AssessmentRulebookDTO assessmentRulebookDTO) {
         var createdAssessmentRulebook =

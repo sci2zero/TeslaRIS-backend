@@ -7,12 +7,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.assessment.dto.AssessmentResearchAreaDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.institution.ResearchAreaResponseDTO;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
@@ -47,10 +48,16 @@ public class ResearchAreasConfigurationLoader {
         );
     }
 
-    public static List<ResearchAreaResponseDTO> fetchAllResearchAreas() {
-        var researchAreas = new ArrayList<ResearchAreaResponseDTO>();
+    public static boolean codeExists(String code) {
+        return researchAreaConfiguration.researchAreas.stream()
+            .anyMatch(researchArea -> researchArea.code().equals(code));
+    }
+
+    public static List<AssessmentResearchAreaDTO> fetchAllAssessmentResearchAreas() {
+        var researchAreas = new ArrayList<AssessmentResearchAreaDTO>();
         researchAreaConfiguration.researchAreas.forEach((researchArea) -> {
-            var researchAreaResponse = new ResearchAreaResponseDTO();
+            var researchAreaResponse = new AssessmentResearchAreaDTO();
+            researchAreaResponse.setCode(researchArea.code());
             researchAreaResponse.setName(new ArrayList<>());
 
             var priority = new AtomicInteger(1);
@@ -68,13 +75,38 @@ public class ResearchAreasConfigurationLoader {
         return researchAreas;
     }
 
+    public static Optional<AssessmentResearchAreaDTO> fetchAssessmentResearchAreaByCode(
+        String code) {
+        var researchArea = researchAreaConfiguration.researchAreas.stream()
+            .filter(area -> area.code().equals(code)).findFirst();
+
+        if (researchArea.isEmpty()) {
+            return Optional.empty();
+        }
+
+        var researchAreaResponse = new AssessmentResearchAreaDTO();
+        researchAreaResponse.setCode(researchArea.get().code());
+        researchAreaResponse.setName(new ArrayList<>());
+
+        var priority = new AtomicInteger(1);
+        researchArea.get().name().forEach((languageCode, content) -> {
+            var languageTag = languageTagService.findLanguageTagByValue(languageCode);
+            researchAreaResponse.getName()
+                .add(new MultilingualContentDTO(languageTag.getId(), languageCode, content,
+                    priority.getAndIncrement()));
+        });
+
+        return Optional.of(researchAreaResponse);
+    }
+
     private record ResearchAreaConfiguration(
         @JsonProperty(value = "researchAreas", required = true) List<ResearchArea> researchAreas
     ) {
     }
 
     private record ResearchArea(
-        @JsonProperty(value = "name", required = true) Map<String, String> name
+        @JsonProperty(value = "name", required = true) Map<String, String> name,
+        @JsonProperty(value = "code", required = true) String code
     ) {
     }
 }

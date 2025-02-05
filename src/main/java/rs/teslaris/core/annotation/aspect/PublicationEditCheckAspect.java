@@ -40,7 +40,7 @@ public class PublicationEditCheckAspect {
 
 
     @Around("@annotation(rs.teslaris.core.annotation.PublicationEditCheck)")
-    public Object checkApiKey(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object checkPublicationEdit(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 

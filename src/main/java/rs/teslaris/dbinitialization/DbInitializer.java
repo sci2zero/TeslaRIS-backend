@@ -139,6 +139,7 @@ public class DbInitializer implements ApplicationRunner {
         var editPubSeriesIndicators = new Privilege("EDIT_PUB_SERIES_INDICATORS");
         var assessDocument = new Privilege("ASSESS_DOCUMENT");
         var editDocumentAssessment = new Privilege("EDIT_DOCUMENT_ASSESSMENT");
+        var editAssessmentResearchArea = new Privilege("EDIT_ASSESSMENT_RESEARCH_AREA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -158,7 +159,8 @@ public class DbInitializer implements ApplicationRunner {
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
                 editEntityAssessmentClassifications, editEventIndicators, editPubSeriesIndicators,
                 editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
-                assessDocument, updateCommission, editDocumentAssessment));
+                assessDocument, updateCommission, editDocumentAssessment,
+                editAssessmentResearchArea));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -178,13 +180,13 @@ public class DbInitializer implements ApplicationRunner {
                 mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
                 editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
                 editPublicationSeriesAssessmentClassifications, assessDocument, updateCommission,
-                editDocumentAssessment
+                editDocumentAssessment, editAssessmentResearchArea
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
-                editEntityIndicatorProofs, listMyJournalPublications,
+                editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
                 unbindYourselfFromPublication, editEntityIndicators)));
 
         var institutionalEditorAuthority =

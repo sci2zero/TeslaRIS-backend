@@ -30,7 +30,7 @@ public class PersonEditCheckAspect {
 
 
     @Around("@annotation(rs.teslaris.core.annotation.PersonEditCheck)")
-    public Object checkApiKey(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object checkPersonEdit(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 

@@ -27,7 +27,7 @@ public class CommissionEditCheckAspect {
 
 
     @Around("@annotation(rs.teslaris.core.annotation.CommissionEditCheck)")
-    public Object checkEntityIndicatorEdit(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object checkCommissionEdit(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 

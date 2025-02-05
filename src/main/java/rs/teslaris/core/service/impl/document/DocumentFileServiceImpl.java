@@ -127,7 +127,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         if (!index) {
             documentFile.setResourceType(
-                ResourceType.PROOF); // Save every non-indexed (proof) as supplement
+                ResourceType.PROOF); // Save every non-indexed (proof) as its own type
         }
 
         var serverFilename =
