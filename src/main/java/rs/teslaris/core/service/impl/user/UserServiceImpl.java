@@ -611,7 +611,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    public Optional<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId) {
+    public List<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId) {
         return userRepository.findUserCommissionForOrganisationUnit(organisationUnitId);
     }
 

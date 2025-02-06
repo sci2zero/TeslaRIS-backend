@@ -489,7 +489,6 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                EntityIndicatorSource source, String edition, LocalDate startDate,
                                LocalDate endDate) {
         if (Objects.isNull(indicatorValue)) {
-            System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
             return;
         }
 

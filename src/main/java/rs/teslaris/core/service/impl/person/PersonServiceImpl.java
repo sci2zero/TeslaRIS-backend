@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -767,6 +768,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personIndex.setEmploymentInstitutionsId(
             employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+
+        personIndex.setEmploymentInstitutionsIdHierarchy(new ArrayList<>());
+        personIndex.getEmploymentInstitutionsId().forEach(institutionId -> {
+            personIndex.getEmploymentInstitutionsIdHierarchy().add(institutionId);
+            personIndex.getEmploymentInstitutionsIdHierarchy()
+                .addAll(organisationUnitService.getSuperOUsHierarchyRecursive(institutionId));
+        });
 
         var employmentsSr = new StringBuilder();
         var employmentsOther = new StringBuilder();

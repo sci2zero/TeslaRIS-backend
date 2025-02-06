@@ -36,6 +36,9 @@ public record CommissionDTO(
     List<Integer> organisationUnitIdsForAssessment,
 
     @NotBlank(message = "You have to provide formal rule description.")
-    String formalDescriptionOfRule
+    String formalDescriptionOfRule,
+
+    @NotBlank(message = "You have to provide recognised research areas.")
+    List<String> recognisedResearchAreas
 ) {
 }

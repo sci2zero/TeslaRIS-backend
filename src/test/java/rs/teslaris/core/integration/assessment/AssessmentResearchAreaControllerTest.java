@@ -20,10 +20,14 @@ public class AssessmentResearchAreaControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAllAssessmentResearchAreas() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/assessment/research-area")
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
     }
 
     @Test
@@ -41,6 +45,19 @@ public class AssessmentResearchAreaControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadPersonAssessmentResearchAreaForCommission() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/assessment/research-area/{personId}/{researchAreaCode}/{commissionId}", 1, "SOCIAL", 5)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testSetPersonAssessmentResearchArea() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -50,7 +67,22 @@ public class AssessmentResearchAreaControllerTest extends BaseTest {
                     1, "NATURAL")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY_ASSESSMENT_RESEARCH_AREA")
+                .header("Idempotency-Key", "MOCK_KEY_ASSESSMENT_RESEARCH_AREA_1")
+        ).andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testSetPersonAssessmentResearchAreaForCommission() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/assessment/research-area/{personId}/{researchAreaCode}/{commissionId}",
+                    1, "NATURAL", 7)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_ASSESSMENT_RESEARCH_AREA_2")
         ).andExpect(status().isCreated());
     }
 
@@ -63,6 +95,20 @@ public class AssessmentResearchAreaControllerTest extends BaseTest {
         mockMvc.perform(
             MockMvcRequestBuilders.delete(
                     "http://localhost:8081/api/assessment/research-area/{personId}", 1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(Integer.MAX_VALUE)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testRemovePersonAssessmentResearchAreaForCommission() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.delete(
+                    "http://localhost:8081/api/assessment/research-area/{personId}/{commissionId}", 1, 7)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
         ).andExpect(status().isNoContent());

@@ -32,6 +32,24 @@ public interface OrganisationUnitsRelationRepository
         " and our.approveStatus = 1 and our.relationType = 1")
     List<OrganisationUnitsRelation> getSuperOUsMemberOf(Integer sourceId);
 
+    @Query(value = """
+    WITH RECURSIVE hierarchy AS (
+        SELECT our.source_organisation_unit_id, our.target_organisation_unit_id
+        FROM organisation_units_relations our
+        WHERE our.source_organisation_unit_id = :sourceId
+          AND our.approve_status = 1
+          AND our.relation_type = 0
+        UNION ALL
+        SELECT our.source_organisation_unit_id, our.target_organisation_unit_id
+        FROM organisation_units_relations our
+        INNER JOIN hierarchy h ON our.target_organisation_unit_id = h.source_organisation_unit_id
+        WHERE our.approve_status = 1 AND our.relation_type = 0
+    )
+    SELECT target_organisation_unit_id FROM hierarchy
+    """, nativeQuery = true)
+    List<Integer> getSuperOUsRecursive(Integer sourceId);
+
+
     List<OrganisationUnitsRelation> findBySourceOrganisationUnitIdAndRelationType(
         Integer sourceOrganisationId, OrganisationUnitRelationType relationType);
 }

@@ -10,7 +10,7 @@ import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationSe
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 
-public class ScimagoJournalClassificationRuleEngine extends JournalClassificationRuleEngine {
+public class ScimagoSocialJournalClassificationEngine extends JournalClassificationRuleEngine {
 
     @Override
     public void initialize(
@@ -46,11 +46,27 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
 
     @Nullable
     @Override
-    public AssessmentClassification handleM22(String category) {return null;}
+    public AssessmentClassification handleM22(String category) {
+        var sjr = findIndicatorByCode("sjr", category);
+
+        if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q1")) {
+            return assessmentClassificationService.readAssessmentClassificationByCode("M22");
+        }
+
+        return null;
+    }
 
     @Nullable
     @Override
-    public AssessmentClassification handleM23(String category) {return null;}
+    public AssessmentClassification handleM23(String category) {
+        var sjr = findIndicatorByCode("sjr", category);
+
+        if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q2")) {
+            return assessmentClassificationService.readAssessmentClassificationByCode("M23");
+        }
+
+        return null;
+    }
 
     @Nullable
     @Override
@@ -60,27 +76,9 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
 
     @Nullable
     @Override
-    protected AssessmentClassification handleM24plus(String category) {
-        var sjr = findIndicatorByCode("sjr", category);
-
-        if (Objects.nonNull(sjr) &&
-            (sjr.getTextualValue().equals("Q1") || sjr.getTextualValue().equals("Q2") ||
-                sjr.getTextualValue().equals("Q3"))) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M24Plus");
-        }
-
-        return null;
-    }
+    protected AssessmentClassification handleM24plus(String category) {return null;}
 
     @Nullable
     @Override
-    protected AssessmentClassification handleM24(String category) {
-        var sjr = findIndicatorByCode("sjr", category);
-
-        if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q4")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M24");
-        }
-
-        return null;
-    }
+    protected AssessmentClassification handleM24(String category) {return null;}
 }

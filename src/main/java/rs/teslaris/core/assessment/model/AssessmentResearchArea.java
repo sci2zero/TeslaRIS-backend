@@ -29,4 +29,8 @@ public class AssessmentResearchArea extends BaseEntity {
 
     @Column(name = "research_area_code")
     private String researchAreaCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "commission_id")
+    private Commission commission;
 }

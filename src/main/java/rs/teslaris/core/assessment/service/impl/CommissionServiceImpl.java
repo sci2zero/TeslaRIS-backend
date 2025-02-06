@@ -20,6 +20,7 @@ import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.ruleengine.JournalClassificationRuleEngine;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.util.ClassificationMappingConfigurationLoader;
+import rs.teslaris.core.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -181,11 +182,18 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
             commission.getOrganisationUnitsForAssessment()
                 .add(organisationUnitService.findOne(organisationUnitId));
         });
+
+        commissionDTO.recognisedResearchAreas().forEach(researchAreaCode -> {
+            if (ResearchAreasConfigurationLoader.codeExists(researchAreaCode)) {
+                commission.getRecognisedResearchAreas().add(researchAreaCode);
+            }
+        });
     }
 
     private void clearCommonFields(Commission commission) {
         commission.getDocumentsForAssessment().clear();
         commission.getPersonsForAssessment().clear();
         commission.getOrganisationUnitsForAssessment().clear();
+        commission.getRecognisedResearchAreas().clear();
     }
 }

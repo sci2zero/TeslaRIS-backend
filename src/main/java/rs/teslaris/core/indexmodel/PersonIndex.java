@@ -72,4 +72,7 @@ public class PersonIndex {
 
     @Field(type = FieldType.Integer, store = true, name = "user_id")
     private Integer userId;
+
+    @Field(type = FieldType.Integer, name = "employment_institutions_id_hierarchy", store = true)
+    private List<Integer> employmentInstitutionsIdHierarchy;
 }

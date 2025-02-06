@@ -82,4 +82,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId);
 
     void reindexOrganisationUnits();
+
+    List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId);
 }

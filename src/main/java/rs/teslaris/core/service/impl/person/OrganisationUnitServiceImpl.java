@@ -287,6 +287,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    public List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId) {
+        return organisationUnitsRelationRepository.getSuperOUsRecursive(sourceOUId);
+    }
+
+    @Override
     public Page<OrganisationUnitIndex> getOUSubUnits(Integer organisationUnitId,
                                                      Pageable pageable) {
         return organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(

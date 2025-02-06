@@ -102,7 +102,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno");
+            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno", List.of("NATURAL"));
         var newCommission = new Commission();
         newCommission.setId(2);
 
@@ -128,7 +128,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno");
+            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno", List.of("TECHNICAL"));
         var existingCommission = new Commission();
 
         when(commissionRepository.findById(commissionId))

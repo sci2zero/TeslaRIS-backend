@@ -262,78 +262,82 @@ public class DocumentAssessmentClassificationServiceImpl
     private void assessJournalPublication(DocumentPublicationIndex journalPublicationIndex,
                                           Integer organisationUnitId,
                                           Commission presetCommission) {
-        Commission commission = (presetCommission != null)
-            ? presetCommission
-            : findCommissionInHierarchy(organisationUnitId).orElse(null);
+        List<Commission> commissions = (presetCommission != null)
+            ? List.of(presetCommission)
+            : findCommissionInHierarchy(organisationUnitId);
 
-        if (commission == null) {
+        if (commissions.isEmpty()) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
                 organisationUnitId);
             return;
         }
 
-        documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
-            journalPublicationIndex.getDatabaseId(), commission.getId(), false);
+        commissions.forEach(commission -> {
+            documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
+                journalPublicationIndex.getDatabaseId(), commission.getId(), false);
 
-        performPublicationAssessment((year, classifications, commissionObj) -> {
-                var classification = publicationSeriesAssessmentClassificationRepository
-                    .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
-                        journalPublicationIndex.getJournalId(), commission.getId(), year);
+            performPublicationAssessment((year, classifications, commissionObj) -> {
+                    var classification = publicationSeriesAssessmentClassificationRepository
+                        .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                            journalPublicationIndex.getJournalId(), commission.getId(), year);
 
-                if (classification.isPresent()) {
-                    classifications.add(classification.get().getAssessmentClassification());
-                } else {
-                    handleRelationAssessments(commission,
-                        (targetCommissionId) -> publicationSeriesAssessmentClassificationRepository
-                            .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
-                                journalPublicationIndex.getJournalId(), targetCommissionId, year)
-                    ).ifPresent(classifications::add);
-                }
-            },
-            journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(), commission,
-            List.of(journalPublicationIndex.getYear(), journalPublicationIndex.getYear() - 1,
-                journalPublicationIndex.getYear() - 2));
+                    if (classification.isPresent()) {
+                        classifications.add(classification.get().getAssessmentClassification());
+                    } else {
+                        handleRelationAssessments(commission,
+                            (targetCommissionId) -> publicationSeriesAssessmentClassificationRepository
+                                .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                                    journalPublicationIndex.getJournalId(), targetCommissionId, year)
+                        ).ifPresent(classifications::add);
+                    }
+                },
+                journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(), commission,
+                List.of(journalPublicationIndex.getYear(), journalPublicationIndex.getYear() - 1,
+                    journalPublicationIndex.getYear() - 2));
+        });
     }
 
     private void assessProceedingsPublication(DocumentPublicationIndex proceedingsPublicationIndex,
                                               Integer organisationUnitId,
                                               Commission presetCommission) {
-        Commission commission = (presetCommission != null)
-            ? presetCommission
-            : findCommissionInHierarchy(organisationUnitId).orElse(null);
+        List<Commission> commissions = (presetCommission != null)
+            ? List.of(presetCommission)
+            : findCommissionInHierarchy(organisationUnitId);
 
-        if (commission == null) {
+        if (commissions.isEmpty()) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
                 organisationUnitId);
             return;
         }
 
-        documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
-            proceedingsPublicationIndex.getDatabaseId(), commission.getId(), false);
+        commissions.forEach(commission -> {
+            documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
+                proceedingsPublicationIndex.getDatabaseId(), commission.getId(), false);
 
-        performPublicationAssessment((year, classifications, commissionObj) ->
-            {
-                var classification = eventAssessmentClassificationRepository
-                    .findAssessmentClassificationsForEventAndCommissionAndYear(
-                        proceedingsPublicationIndex.getEventId(), commission.getId(), year);
+            performPublicationAssessment((year, classifications, commissionObj) ->
+                {
+                    var classification = eventAssessmentClassificationRepository
+                        .findAssessmentClassificationsForEventAndCommissionAndYear(
+                            proceedingsPublicationIndex.getEventId(), commission.getId(), year);
 
-                if (classification.isPresent()) {
-                    classifications.add(classification.get().getAssessmentClassification());
-                } else {
-                    handleRelationAssessments(commission,
-                        (targetCommissionId) -> {
-                            var assessmentClassification = eventAssessmentClassificationRepository
-                                .findAssessmentClassificationsForEventAndCommissionAndYear(
-                                    proceedingsPublicationIndex.getEventId(), targetCommissionId, year)
-                                .orElse(null);
-                            return Objects.nonNull(assessmentClassification) ? Optional.of(
-                                assessmentClassification) : Optional.empty();
-                        }
-                    ).ifPresent(classifications::add);
-                }
-            },
-            proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
-            commission, List.of(proceedingsPublicationIndex.getYear()));
+                    if (classification.isPresent()) {
+                        classifications.add(classification.get().getAssessmentClassification());
+                    } else {
+                        handleRelationAssessments(commission,
+                            (targetCommissionId) -> {
+                                var assessmentClassification = eventAssessmentClassificationRepository
+                                    .findAssessmentClassificationsForEventAndCommissionAndYear(
+                                        proceedingsPublicationIndex.getEventId(), targetCommissionId, year)
+                                    .orElse(null);
+                                return Objects.nonNull(assessmentClassification) ? Optional.of(
+                                    assessmentClassification) : Optional.empty();
+                            }
+                        ).ifPresent(classifications::add);
+                    }
+                },
+                proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
+                commission, List.of(proceedingsPublicationIndex.getYear()));
+        });
     }
 
     private void performPublicationAssessment(
@@ -357,8 +361,8 @@ public class DocumentAssessmentClassificationServiceImpl
         }
     }
 
-    private Optional<Commission> findCommissionInHierarchy(Integer organisationUnitId) {
-        Optional<Commission> commission;
+    private List<Commission> findCommissionInHierarchy(Integer organisationUnitId) {
+        List<Commission> commission;
         do {
             commission = userService.findCommissionForOrganisationUnitId(organisationUnitId);
             if (commission.isEmpty()) {

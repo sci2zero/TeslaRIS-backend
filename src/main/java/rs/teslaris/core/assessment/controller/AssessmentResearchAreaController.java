@@ -3,6 +3,7 @@ package rs.teslaris.core.assessment.controller;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -14,6 +15,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.assessment.dto.AssessmentResearchAreaDTO;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentResearchAreaService;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 
 @RestController
 @RequestMapping("/api/assessment/research-area")
@@ -23,17 +25,29 @@ public class AssessmentResearchAreaController {
     private final AssessmentResearchAreaService assessmentResearchAreaService;
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('EDIT_ASSESSMENT_RESEARCH_AREA', 'UPDATE_COMMISSION')")
     public List<AssessmentResearchAreaDTO> readAssessmentResearchAreas() {
         return assessmentResearchAreaService.readAllAssessmentResearchAreas();
     }
 
     @GetMapping("/{personId}")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RESEARCH_AREA')")
     public AssessmentResearchAreaDTO readPersonAssessmentResearchArea(
         @PathVariable Integer personId) {
         return assessmentResearchAreaService.readPersonAssessmentResearchArea(personId);
     }
 
+    @GetMapping("/{personId}/{researchAreaCode}/{commissionId}")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
+    public List<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(
+        @PathVariable Integer personId, @PathVariable Integer commissionId,
+        @PathVariable String researchAreaCode) {
+        return assessmentResearchAreaService.readPersonAssessmentResearchAreaForCommission(personId,
+            commissionId, researchAreaCode);
+    }
+
     @PatchMapping("/{personId}/{researchAreaCode}")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RESEARCH_AREA')")
     @PersonEditCheck
     @Idempotent
     @ResponseStatus(HttpStatus.CREATED)
@@ -42,11 +56,35 @@ public class AssessmentResearchAreaController {
         assessmentResearchAreaService.setPersonAssessmentResearchArea(personId, researchAreaCode);
     }
 
+    @PatchMapping("/{personId}/{researchAreaCode}/{commissionId}")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
+    @PersonEditCheck
+    @Idempotent
+    @ResponseStatus(HttpStatus.CREATED)
+    public void setPersonAssessmentResearchAreaForCommission(@PathVariable Integer personId,
+                                                             @PathVariable String researchAreaCode,
+                                                             @PathVariable Integer commissionId) {
+        assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(personId,
+            researchAreaCode, commissionId);
+    }
+
     @DeleteMapping("/{personId}")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RESEARCH_AREA')")
     @PersonEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePersonAssessmentResearchArea(@PathVariable Integer personId) {
         assessmentResearchAreaService.deletePersonAssessmentResearchArea(personId);
+    }
+
+    @DeleteMapping("/{personId}/{commissionId}")
+    @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
+    @PersonEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removePersonAssessmentResearchAreaForCommission(@PathVariable Integer personId,
+                                                                @PathVariable
+                                                                Integer commissionId) {
+        assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId,
+            commissionId);
     }
 
 }
