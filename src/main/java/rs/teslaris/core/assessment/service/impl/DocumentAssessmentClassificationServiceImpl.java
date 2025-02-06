@@ -291,7 +291,8 @@ public class DocumentAssessmentClassificationServiceImpl
                         ).ifPresent(classifications::add);
                     }
                 },
-                journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(), commission,
+                journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(),
+                commission,
                 List.of(journalPublicationIndex.getYear(), journalPublicationIndex.getYear() - 1,
                     journalPublicationIndex.getYear() - 2));
         });
@@ -327,7 +328,8 @@ public class DocumentAssessmentClassificationServiceImpl
                             (targetCommissionId) -> {
                                 var assessmentClassification = eventAssessmentClassificationRepository
                                     .findAssessmentClassificationsForEventAndCommissionAndYear(
-                                        proceedingsPublicationIndex.getEventId(), targetCommissionId, year)
+                                        proceedingsPublicationIndex.getEventId(), targetCommissionId,
+                                        year)
                                     .orElse(null);
                                 return Objects.nonNull(assessmentClassification) ? Optional.of(
                                     assessmentClassification) : Optional.empty();

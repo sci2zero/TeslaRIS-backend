@@ -76,9 +76,13 @@ public class ScimagoSocialJournalClassificationEngine extends JournalClassificat
 
     @Nullable
     @Override
-    protected AssessmentClassification handleM24plus(String category) {return null;}
+    protected AssessmentClassification handleM24plus(String category) {
+        return null;
+    }
 
     @Nullable
     @Override
-    protected AssessmentClassification handleM24(String category) {return null;}
+    protected AssessmentClassification handleM24(String category) {
+        return null;
+    }
 }

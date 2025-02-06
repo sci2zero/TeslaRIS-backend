@@ -46,11 +46,15 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
 
     @Nullable
     @Override
-    public AssessmentClassification handleM22(String category) {return null;}
+    public AssessmentClassification handleM22(String category) {
+        return null;
+    }
 
     @Nullable
     @Override
-    public AssessmentClassification handleM23(String category) {return null;}
+    public AssessmentClassification handleM23(String category) {
+        return null;
+    }
 
     @Nullable
     @Override

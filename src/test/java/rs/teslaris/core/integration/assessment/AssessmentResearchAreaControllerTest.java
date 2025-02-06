@@ -50,7 +50,8 @@ public class AssessmentResearchAreaControllerTest extends BaseTest {
 
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/research-area/{personId}/{researchAreaCode}/{commissionId}", 1, "SOCIAL", 5)
+                    "http://localhost:8081/api/assessment/research-area/{personId}/{researchAreaCode}/{commissionId}",
+                    1, "SOCIAL", 5)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
         ).andExpect(status().isOk());
@@ -108,7 +109,8 @@ public class AssessmentResearchAreaControllerTest extends BaseTest {
 
         mockMvc.perform(
             MockMvcRequestBuilders.delete(
-                    "http://localhost:8081/api/assessment/research-area/{personId}/{commissionId}", 1, 7)
+                    "http://localhost:8081/api/assessment/research-area/{personId}/{commissionId}", 1,
+                    7)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
         ).andExpect(status().isNoContent());

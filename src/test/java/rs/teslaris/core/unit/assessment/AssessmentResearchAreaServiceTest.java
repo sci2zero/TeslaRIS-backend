@@ -134,13 +134,15 @@ public class AssessmentResearchAreaServiceTest {
     @Test
     void shouldCreateNewPersonAssessmentResearchAreaForCommissionIfNotExists() {
         // Given
-        when(assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
+        when(
+            assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
             .thenReturn(Optional.empty());
         when(personService.findOne(personId)).thenReturn(new Person());
         when(commissionService.findOne(commissionId)).thenReturn(new Commission());
 
         // When
-        assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(personId, researchAreaCode, commissionId);
+        assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(personId,
+            researchAreaCode, commissionId);
 
         // Then
         verify(assessmentResearchAreaRepository).save(any(AssessmentResearchArea.class));
@@ -151,12 +153,14 @@ public class AssessmentResearchAreaServiceTest {
         // Given
         AssessmentResearchArea existingResearchArea = new AssessmentResearchArea();
         existingResearchArea.setResearchAreaCode("OLD_RA");
-        when(assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
+        when(
+            assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
             .thenReturn(Optional.of(existingResearchArea));
         when(commissionService.findOne(commissionId)).thenReturn(new Commission());
 
         // When
-        assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(personId, researchAreaCode, commissionId);
+        assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(personId,
+            researchAreaCode, commissionId);
 
         // Then
         assertEquals(researchAreaCode, existingResearchArea.getResearchAreaCode());
@@ -167,7 +171,8 @@ public class AssessmentResearchAreaServiceTest {
     void shouldThrowNotFoundExceptionIfResearchAreaCodeDoesNotExist() {
         // When & Then
         assertThrows(NotFoundException.class,
-            () -> assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(personId, "NON_EXISTANT", commissionId));
+            () -> assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(
+                personId, "NON_EXISTANT", commissionId));
         verify(assessmentResearchAreaRepository, never()).save(any());
     }
 
@@ -176,11 +181,13 @@ public class AssessmentResearchAreaServiceTest {
         // Given
         AssessmentResearchArea existingResearchArea = new AssessmentResearchArea();
         existingResearchArea.setResearchAreaCode(researchAreaCode);
-        when(assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
+        when(
+            assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
             .thenReturn(Optional.of(existingResearchArea));
 
         // When
-        assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId, commissionId);
+        assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId,
+            commissionId);
 
         // Then
         assertNull(existingResearchArea.getResearchAreaCode());
@@ -190,11 +197,13 @@ public class AssessmentResearchAreaServiceTest {
     @Test
     void shouldDoNothingIfRemovingNonExistentResearchArea() {
         // Given
-        when(assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
+        when(
+            assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
             .thenReturn(Optional.empty());
 
         // When
-        assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId, commissionId);
+        assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId,
+            commissionId);
 
         // Then
         verify(assessmentResearchAreaRepository, never()).save(any());
