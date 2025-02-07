@@ -42,6 +42,7 @@ public class EntityAssessmentClassificationServiceImpl
                                    EntityAssessmentClassificationDTO dto) {
         entityAssessmentClassification.setTimestamp(LocalDateTime.now());
         entityAssessmentClassification.setManual(true);
+        entityAssessmentClassification.setClassificationYear(dto.getClassificationYear());
 
         if (Objects.nonNull(dto.getCommissionId())) {
             entityAssessmentClassification.setCommission(

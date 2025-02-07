@@ -25,6 +25,8 @@ public interface MergeService {
 
     void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId);
 
+    void switchAllIndicatorsToOtherJournal(Integer sourceId, Integer targetId);
+
     void switchPublisherPublicationToOtherPublisher(Integer targetPublisherId,
                                                     Integer publicationId);
 

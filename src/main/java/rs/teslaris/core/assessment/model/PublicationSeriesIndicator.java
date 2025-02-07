@@ -26,4 +26,7 @@ public class PublicationSeriesIndicator extends EntityIndicator {
 
     @Column(name = "category_identifier")
     private String categoryIdentifier;
+
+    @Column(name = "edition")
+    private String edition;
 }

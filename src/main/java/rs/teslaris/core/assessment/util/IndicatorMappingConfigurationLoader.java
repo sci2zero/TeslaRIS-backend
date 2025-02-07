@@ -60,9 +60,43 @@ public class IndicatorMappingConfigurationLoader {
         };
     }
 
+    public static PublicationSeriesIndicatorMapping fetchPublicationSeriesCSVIndicatorMapping(
+        String mappingName) {
+        return indicatorMappingConfiguration.publicationSeriesCSVIndicatorMapping.getOrDefault(
+            mappingName, null);
+    }
+
     private record IndicatorMappingConfiguration(
         @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings,
-        @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets
+        @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets,
+        @JsonProperty(value = "publicationSeriesCSVIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesCSVIndicatorMapping
+    ) {
+    }
+
+    public record PublicationSeriesIndicatorMapping(
+        @JsonProperty(value = "source", required = true) String source,
+        @JsonProperty(value = "yearParseRegex", required = true) String yearParseRegex,
+        @JsonProperty(value = "nameColumn", required = true) Integer nameColumn,
+        @JsonProperty(value = "eIssnColumn", required = true) Integer eIssnColumn,
+        @JsonProperty(value = "editionColumn") Integer editionColumn,
+        @JsonProperty(value = "printIssnColumn", required = true) Integer printIssnColumn,
+        @JsonProperty(value = "identifierDelimiter") String identifierDelimiter,
+        @JsonProperty(value = "categoryColumn", required = true) Integer categoryColumn,
+        @JsonProperty(value = "categoryDelimiter") String categoryDelimiter,
+        @JsonProperty(value = "categoryFromIndicatorDiffRegex") String categoryFromIndicatorDiffRegex,
+        @JsonProperty(value = "defaultLanguage", required = true) String defaultLanguage,
+        @JsonProperty(value = "columnMapping", required = true) Map<String, ColumnMapping> columnMapping,
+        @JsonProperty(value = "parallelize", required = true) Boolean parallelize,
+        @JsonProperty(value = "discriminator") String discriminator,
+        @JsonProperty(value = "startDateColumn") Integer startDateColumn,
+        @JsonProperty(value = "endDateColumn") Integer endDateColumn
+    ) {
+    }
+
+    public record ColumnMapping(
+        @JsonProperty(value = "mapsTo", required = true) String mapsTo,
+        @JsonProperty(value = "type", required = true) EntityIndicatorType type,
+        @JsonProperty(value = "parseRegex") String parseRegex
     ) {
     }
 

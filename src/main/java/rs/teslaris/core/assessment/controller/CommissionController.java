@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,11 @@ public class CommissionController {
                                                        @RequestParam("lang")
                                                        String language) {
         return commissionService.readAllCommissions(pageable, searchExpression, language);
+    }
+
+    @GetMapping("/rule-engines")
+    public List<String> readApplicableRuleEnginesForCommissions() {
+        return commissionService.readAllApplicableRuleEngines();
     }
 
 

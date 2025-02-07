@@ -1,5 +1,8 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,12 +10,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.converter.AssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.AssessmentClassificationDTO;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +47,19 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
     }
 
     @Override
+    public List<AssessmentClassificationDTO> getAssessmentClassificationsApplicableToEntity(
+        List<ApplicableEntityType> applicableEntityTypes) {
+        if (!applicableEntityTypes.isEmpty() &&
+            !applicableEntityTypes.contains(ApplicableEntityType.ALL)) {
+            applicableEntityTypes.add(ApplicableEntityType.ALL);
+        }
+
+        return assessmentClassificationRepository.getAssessmentClassificationsApplicableToEntity(
+                applicableEntityTypes).stream()
+            .map(AssessmentClassificationConverter::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
     public AssessmentClassification createAssessmentClassification(
         AssessmentClassificationDTO assessmentClassification) {
         var newAssessmentClassification = new AssessmentClassification();
@@ -68,8 +86,8 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
         assessmentClassification.setCode(assessmentClassificationDTO.code());
         assessmentClassification.setTitle(
             multilingualContentService.getMultilingualContent(assessmentClassificationDTO.title()));
-        assessmentClassification.setApplicableEntityType(
-            assessmentClassificationDTO.applicableEntityType());
+        assessmentClassification.setApplicableTypes(
+            new HashSet<>(assessmentClassificationDTO.applicableTypes()));
     }
 
     @Override
@@ -80,5 +98,12 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
         }
 
         delete(assessmentClassificationId);
+    }
+
+    @Override
+    public AssessmentClassification readAssessmentClassificationByCode(String code) {
+        return assessmentClassificationRepository.findByCode(code).orElseThrow(
+            () -> new NotFoundException(
+                "Assessment Classification with given code does not exist."));
     }
 }

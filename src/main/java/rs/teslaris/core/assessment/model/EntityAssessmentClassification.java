@@ -30,6 +30,9 @@ public class EntityAssessmentClassification extends BaseEntity {
     @Column(name = "timestamp")
     private LocalDateTime timestamp;
 
+    @Column(name = "classification_year")
+    private Integer classificationYear;
+
     @Column(name = "manual")
     private Boolean manual = false;
 

@@ -14,6 +14,6 @@ public class AssessmentClassificationConverter {
             assessmentClassification.getCode(),
             MultilingualContentConverter.getMultilingualContentDTO(
                 assessmentClassification.getTitle()),
-            assessmentClassification.getApplicableEntityType());
+            assessmentClassification.getApplicableTypes().stream().toList());
     }
 }

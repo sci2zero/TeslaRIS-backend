@@ -16,7 +16,8 @@ public interface ConferenceService {
 
     Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable,
                                        Boolean returnOnlyNonSerialEvents,
-                                       Boolean returnOnlySerialEvents);
+                                       Boolean returnOnlySerialEvents,
+                                       Integer commissionInstitutionId);
 
     Page<EventIndex> searchConferencesForImport(List<String> names, String dateFrom, String dateTo);
 
@@ -37,6 +38,8 @@ public interface ConferenceService {
     void forceDeleteConference(Integer conferenceId);
 
     void reindexConferences();
+
+    void reindexConference(Integer conferenceId);
 
     void reorderConferenceContributions(Integer conferenceId, Integer contributionId,
                                         Integer oldContributionOrderNumber,

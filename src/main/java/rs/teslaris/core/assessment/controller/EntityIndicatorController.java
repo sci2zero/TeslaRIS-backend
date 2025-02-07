@@ -63,7 +63,7 @@ public class EntityIndicatorController {
         var role = tokenUtil.extractUserRoleFromToken(token);
         return switch (UserRole.valueOf(role)) {
             case ADMIN -> documentServiceFunction.apply(AccessLevel.ADMIN_ONLY);
-            case RESEARCHER, INSTITUTIONAL_EDITOR ->
+            case RESEARCHER, INSTITUTIONAL_EDITOR, COMMISSION ->
                 documentServiceFunction.apply(AccessLevel.CLOSED);
         };
     }

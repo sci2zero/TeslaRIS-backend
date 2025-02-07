@@ -41,7 +41,7 @@ public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
         DocumentIndicatorJPAServiceImpl documentIndicatorJPAService,
         DocumentIndicatorRepository documentIndicatorRepository,
         DocumentPublicationService documentPublicationService, UserService userService) {
-        super(entityIndicatorRepository, documentFileService, indicatorService);
+        super(indicatorService, entityIndicatorRepository, documentFileService);
         this.documentIndicatorJPAService = documentIndicatorJPAService;
         this.documentIndicatorRepository = documentIndicatorRepository;
         this.documentPublicationService = documentPublicationService;

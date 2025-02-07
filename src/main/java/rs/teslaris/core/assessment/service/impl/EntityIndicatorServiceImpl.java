@@ -27,11 +27,11 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantEditEntityIndicator
 public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> implements
     EntityIndicatorService {
 
+    protected final IndicatorService indicatorService;
+
     private final EntityIndicatorRepository entityIndicatorRepository;
 
     private final DocumentFileService documentFileService;
-
-    private final IndicatorService indicatorService;
 
 
     @Override

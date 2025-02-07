@@ -4,8 +4,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.indexmodel.EntityType;
 
 public record AssessmentClassificationDTO(
 
@@ -21,7 +21,7 @@ public record AssessmentClassificationDTO(
     @NotNull(message = "You have to provide assessment classification title.")
     List<MultilingualContentDTO> title,
 
-    @NotNull(message = "You have to provide an applicable entity type.")
-    EntityType applicableEntityType
+    @NotNull(message = "You have to provide applicable entity types for assessment classification")
+    List<ApplicableEntityType> applicableTypes
 ) {
 }

@@ -2,9 +2,12 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,14 +15,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
@@ -214,11 +221,87 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         }
     }
 
-    private void indexJournal(Journal journal, JournalIndex index) {
+    @Override
+    public void indexJournal(Journal journal, JournalIndex index) {
         index.setDatabaseId(journal.getId());
 
         indexCommonFields(journal, index);
         journalIndexRepository.save(index);
+    }
+
+    @Override
+    public PublicationSeries findOrCreatePublicationSeries(String[] line,
+                                                           String defaultLanguageTag,
+                                                           String journalName,
+                                                           String eIssn, String printIssn,
+                                                           boolean issnSpecified) {
+        var publicationSeries =
+            issnSpecified ? findPublicationSeriesByIssn(eIssn, printIssn) : null;
+
+        if (Objects.isNull(publicationSeries)) {
+            var defaultLanguage =
+                languageTagService.findLanguageTagByValue(defaultLanguageTag);
+            publicationSeries =
+                findJournalByJournalName(journalName, defaultLanguage, eIssn, printIssn);
+        }
+
+        if (issnSpecified &&
+            publicationSeries.getPrintISSN().equals(publicationSeries.getEISSN()) &&
+            !eIssn.equals(printIssn)) {
+            publicationSeries.setEISSN(eIssn);
+            publicationSeries.setPrintISSN(printIssn);
+            save(publicationSeries);
+        }
+
+        return publicationSeries;
+    }
+
+    @Override
+    public Journal findJournalByJournalName(String journalName,
+                                            LanguageTag defaultLanguage,
+                                            String eIssn, String printIssn) {
+        var potentialHits = searchJournals(
+            Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2)).getContent();
+
+        for (var potentialHit : potentialHits) {
+            for (var title : potentialHit.getTitleOther().split("\\|")) {
+                if (title.equalsIgnoreCase(journalName)) { // is equalsIgnoreCase ok here?
+                    var publicationSeries = findJournalById(potentialHit.getDatabaseId());
+
+                    // TODO: is this ok?
+                    if (Objects.isNull(publicationSeries.getEISSN()) ||
+                        publicationSeries.getEISSN().isEmpty() ||
+                        publicationSeries.getEISSN().equals(publicationSeries.getPrintISSN())) {
+                        publicationSeries.setEISSN(eIssn);
+                    }
+
+                    if (Objects.isNull(publicationSeries.getPrintISSN()) ||
+                        publicationSeries.getPrintISSN().isEmpty() ||
+                        publicationSeries.getPrintISSN().equals(publicationSeries.getEISSN())) {
+                        publicationSeries.setPrintISSN(printIssn);
+                    }
+
+                    indexJournal(publicationSeries, potentialHit);
+                    return journalRepository.save(publicationSeries);
+                }
+            }
+        }
+
+        return createNewJournal(journalName, defaultLanguage, eIssn, printIssn);
+    }
+
+    private Journal createNewJournal(String journalName, LanguageTag defaultLanguage,
+                                     String eIssn, String printIssn) {
+        var newJournal = new JournalDTO();
+        newJournal.setTitle(List.of(new MultilingualContentDTO(defaultLanguage.getId(),
+            defaultLanguage.getLanguageTag(), StringEscapeUtils.unescapeHtml4(journalName), 1)));
+        newJournal.setNameAbbreviation(new ArrayList<>());
+        newJournal.setContributions(new ArrayList<>());
+        newJournal.setEissn(eIssn);
+        newJournal.setPrintISSN(printIssn);
+        newJournal.setLanguageTagIds(List.of(defaultLanguage.getId()));
+
+        return createJournal(newJournal, true);
     }
 
     private void indexCommonFields(Journal journal, JournalIndex index) {

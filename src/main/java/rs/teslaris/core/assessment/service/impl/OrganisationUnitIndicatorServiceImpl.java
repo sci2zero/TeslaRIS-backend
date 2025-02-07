@@ -25,7 +25,7 @@ public class OrganisationUnitIndicatorServiceImpl extends EntityIndicatorService
         DocumentFileService documentFileService,
         IndicatorService indicatorService,
         OrganisationUnitIndicatorRepository organisationUnitIndicatorRepository) {
-        super(entityIndicatorRepository, documentFileService, indicatorService);
+        super(indicatorService, entityIndicatorRepository, documentFileService);
         this.organisationUnitIndicatorRepository = organisationUnitIndicatorRepository;
     }
 

@@ -37,6 +37,7 @@ public class DocumentAssessmentClassificationServiceImpl
         Integer documentId) {
         return documentAssessmentClassificationRepository.findAssessmentClassificationsForDocument(
                 documentId).stream().map(EntityAssessmentClassificationConverter::toDTO)
+            .sorted((a, b) -> b.year().compareTo(a.year()))
             .collect(Collectors.toList());
     }
 }

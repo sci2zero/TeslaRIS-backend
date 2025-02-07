@@ -15,7 +15,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(indexName = "document_file")
-@Setting(settingPath = "/configuration/serbian-analyzer-config.json")
+@Setting(settingPath = "/configuration/index-config.json")
 public class DocumentFileIndex {
 
     @Id

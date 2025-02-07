@@ -38,11 +38,13 @@ public class OrganisationUnitAssessmentClassificationServiceTest {
             new OrganisationUnitAssessmentClassification();
         organisationUnitAssessmentClassification1.setAssessmentClassification(
             assessmentClassification);
+        organisationUnitAssessmentClassification1.setClassificationYear(2025);
 
         var organisationUnitAssessmentClassification2 =
             new OrganisationUnitAssessmentClassification();
         organisationUnitAssessmentClassification2.setAssessmentClassification(
             assessmentClassification);
+        organisationUnitAssessmentClassification2.setClassificationYear(2025);
 
         when(
             organisationUnitAssessmentClassificationRepository.findAssessmentClassificationsForOrganisationUnit(

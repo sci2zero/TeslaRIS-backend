@@ -18,7 +18,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(indexName = "document_publication")
-@Setting(settingPath = "/configuration/serbian-analyzer-config.json")
+@Setting(settingPath = "/configuration/index-config.json")
 public class DocumentPublicationIndex {
 
     @Id

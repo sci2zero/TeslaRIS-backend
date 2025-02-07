@@ -221,6 +221,24 @@ public class ConferenceServiceTest {
     }
 
     @Test
+    public void shouldReindexConference() {
+        // given
+        var conference = new Conference();
+        conference.setId(1);
+        conference.setDateFrom(LocalDate.now());
+        conference.setDateTo(LocalDate.now());
+
+        when(conferenceJPAService.findOne(1)).thenReturn(conference);
+        when(eventIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(new EventIndex()));
+
+        // when
+        conferenceService.reindexConference(1);
+
+        // then
+        verify(eventIndexRepository, times(1)).save(any());
+    }
+
+    @Test
     public void shouldUpdateConferenceWhenProvidedWithValidData() {
         // given
         var conference1 = new Conference();
@@ -276,7 +294,8 @@ public class ConferenceServiceTest {
 
         // When
         var result =
-            conferenceService.searchConferences(tokens, pageable, returnOnlySerialEvents, false);
+            conferenceService.searchConferences(tokens, pageable, returnOnlySerialEvents, false,
+                null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

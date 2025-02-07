@@ -33,9 +33,11 @@ public class PersonAssessmentClassificationServiceTest {
 
         var personAssessmentClassification1 = new PersonAssessmentClassification();
         personAssessmentClassification1.setAssessmentClassification(assessmentClassification);
+        personAssessmentClassification1.setClassificationYear(2025);
 
         var personAssessmentClassification2 = new PersonAssessmentClassification();
         personAssessmentClassification2.setAssessmentClassification(assessmentClassification);
+        personAssessmentClassification2.setClassificationYear(2025);
 
         when(
             personAssessmentClassificationRepository.findAssessmentClassificationsForPerson(

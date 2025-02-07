@@ -58,4 +58,20 @@ public class StringUtil {
 
         return result;
     }
+
+    public static String formatIssn(String issn) {
+        if (issn == null || issn.isEmpty()) {
+            return "";
+        }
+
+        if (issn.length() < 8) {
+            return "";
+        }
+
+        if (issn.contains("-")) {
+            return issn;
+        }
+
+        return issn.substring(0, 4) + "-" + issn.substring(4, 8);
+    }
 }

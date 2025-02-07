@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.dto.EventAssessmentClassificationDTO;
@@ -14,9 +15,11 @@ import rs.teslaris.core.assessment.service.impl.cruddelegate.EventAssessmentClas
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificationService;
+import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
 @Service
+@Transactional
 public class EventAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl
     implements EventAssessmentClassificationService {
@@ -49,6 +52,7 @@ public class EventAssessmentClassificationServiceImpl
         Integer eventId) {
         return eventAssessmentClassificationRepository.findAssessmentClassificationsForEvent(
                 eventId).stream().map(EntityAssessmentClassificationConverter::toDTO)
+            .sorted((a, b) -> b.year().compareTo(a.year()))
             .collect(Collectors.toList());
     }
 
@@ -58,8 +62,28 @@ public class EventAssessmentClassificationServiceImpl
         var newAssessmentClassification = new EventAssessmentClassification();
 
         setCommonFields(newAssessmentClassification, eventAssessmentClassificationDTO);
-        newAssessmentClassification.setEvent(
-            eventService.findOne(eventAssessmentClassificationDTO.getEventId()));
+
+        var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());
+        newAssessmentClassification.setEvent(event);
+        if (event.getSerialEvent()) {
+            newAssessmentClassification.setClassificationYear(null);
+
+            eventService.readSerialEventRelations(eventAssessmentClassificationDTO.getEventId())
+                .forEach((relation) -> {
+                    if (relation.getEventsRelationType()
+                        .equals(EventsRelationType.BELONGS_TO_SERIES)) {
+                        var eventInstance = eventService.findOne(relation.getSourceId());
+                        var instanceClassification = new EventAssessmentClassification();
+                        setCommonFields(instanceClassification, eventAssessmentClassificationDTO);
+                        instanceClassification.setClassificationYear(
+                            eventInstance.getDateFrom().getYear());
+                        instanceClassification.setEvent(eventInstance);
+                        eventAssessmentClassificationJPAService.save(instanceClassification);
+                    }
+                });
+        }
+
+        newAssessmentClassification.setClassificationYear(event.getDateFrom().getYear());
 
         return eventAssessmentClassificationJPAService.save(newAssessmentClassification);
     }

@@ -69,7 +69,6 @@ public class CommissionServiceTest {
         var commission2 = new Commission();
         commission2.setId(2);
         commission2.setFormalDescriptionOfRule("rule2");
-        commission2.setSuperCommission(commission1);
 
         when(commissionRepository.searchCommissions(eq("aaa"), eq("SR"),
             any(Pageable.class))).thenReturn(
@@ -103,7 +102,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "rule", 1);
+            List.of(1, 2, 3), List.of(1, 2, 3), "rule");
         var newCommission = new Commission();
         newCommission.setId(2);
 
@@ -111,7 +110,6 @@ public class CommissionServiceTest {
         when(personService.findPersonById(anyInt())).thenReturn(new Person());
         when(organisationUnitService.findOrganisationUnitById(anyInt())).thenReturn(
             new OrganisationUnit());
-        when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
 
         when(commissionRepository.save(any(Commission.class)))
             .thenReturn(newCommission);
@@ -130,7 +128,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "rule", 1);
+            List.of(1, 2, 3), List.of(1, 2, 3), "rule");
         var existingCommission = new Commission();
 
         when(commissionRepository.findById(commissionId))

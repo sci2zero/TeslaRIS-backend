@@ -16,6 +16,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -66,6 +67,10 @@ public class User extends BaseEntity implements UserDetails {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "commission")
+    private Commission commission;
 
     @Column(name = "user_notification_period", nullable = false)
     private UserNotificationPeriod userNotificationPeriod = UserNotificationPeriod.NEVER;

@@ -114,6 +114,24 @@ public class NotificationFactory {
             NotificationType.FOUND_POTENTIAL_CLAIMS, user);
     }
 
+    public static Notification contructScheduledTaskCompletedNotification(
+        Map<String, String> notificationValues, User user, boolean success) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("taskId"), notificationValues.get("duration")};
+        try {
+            message = messageSource.getMessage(
+                success ? "notification.scheduleTaskCompleted" : "notification.scheduleTaskFailed",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.SCHEDULED_TASK_COMPLETED, user);
+    }
+
     private static String fallbackToDefaultLocale(Object[] args) {
         return messageSource.getMessage(
             "notification.addedToPublication",

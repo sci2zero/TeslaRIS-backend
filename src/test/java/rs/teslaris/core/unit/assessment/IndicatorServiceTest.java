@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -173,7 +174,7 @@ public class IndicatorServiceTest {
         mockIndicator2.setId(2);
 
         var applicableEntityTypes =
-            List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON);
+            new ArrayList<>(List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON));
         var mockIndicators = List.of(mockIndicator1, mockIndicator2);
 
         // Mock repository call
@@ -193,7 +194,7 @@ public class IndicatorServiceTest {
     @Test
     public void shouldReturnEmptyListWhenNoIndicatorsFound() {
         // given
-        var applicableEntityTypes = List.of(ApplicableEntityType.DOCUMENT);
+        var applicableEntityTypes = new ArrayList<>(List.of(ApplicableEntityType.DOCUMENT));
 
         when(indicatorRepository.getIndicatorsApplicableToEntity(applicableEntityTypes))
             .thenReturn(List.of());

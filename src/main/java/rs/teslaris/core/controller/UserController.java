@@ -2,6 +2,7 @@ package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
@@ -126,9 +128,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(), null, newUser.getPerson().getId(),
-            null,
-            newUser.getUserNotificationPeriod());
+            newUser.getPreferredLanguage().getLanguageCode(), null, null,
+            newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
     }
 
     @PostMapping("/register-institution-admin")
@@ -136,13 +137,31 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public UserResponseDTO registerInstitutionAdmin(
-        @RequestBody @Valid EmployeeRegistrationRequestDTO registrationRequest) {
+        @RequestBody @Valid EmployeeRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
         var newUser = userService.registerInstitutionAdmin(registrationRequest);
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
             newUser.getPreferredLanguage().getLanguageCode(),
-            registrationRequest.getOrganisationUnitId(), null, null,
+            registrationRequest.getOrganisationUnitId(), null, null, null,
+            newUser.getUserNotificationPeriod());
+    }
+
+    @PostMapping("/register-commission")
+    @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public UserResponseDTO registerCommissionUser(
+        @RequestBody @Valid CommissionRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
+        var newUser = userService.registerCommissionUser(registrationRequest);
+
+        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
+            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
+            newUser.getPreferredLanguage().getLanguageCode(),
+            registrationRequest.getOrganisationUnitId(), registrationRequest.getCommissionId(),
+            null, null,
             newUser.getUserNotificationPeriod());
     }
 

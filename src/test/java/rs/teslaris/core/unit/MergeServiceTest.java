@@ -23,6 +23,9 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.assessment.model.Indicator;
+import rs.teslaris.core.assessment.model.PublicationSeriesIndicator;
+import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -193,6 +196,9 @@ public class MergeServiceTest {
 
     @Mock
     private ThesisRepository thesisRepository;
+
+    @Mock
+    private PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -1059,6 +1065,34 @@ public class MergeServiceTest {
             eq("document_publication"), eq("databaseId"), eq(publicationId), eq("publisher_id"),
             eq(targetPublisherId)
         );
+    }
+
+    @Test
+    public void shouldSwitchAllIndicatorsToOtherJournal() {
+        // given
+        var sourceId = 1;
+        var targetId = 2;
+
+        var sourceJournalIndicator = new PublicationSeriesIndicator();
+        sourceJournalIndicator.setPublicationSeries(new Journal());
+        sourceJournalIndicator.setIndicator(new Indicator());
+
+        var targetJournal = new Journal();
+        when(journalService.findJournalById(targetId)).thenReturn(targetJournal);
+
+        var indicatorsPage = List.of(sourceJournalIndicator);
+        when(publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeries(eq(sourceId),
+            any()))
+            .thenReturn(new PageImpl<>(indicatorsPage));
+
+        // when
+        mergeService.switchAllIndicatorsToOtherJournal(sourceId, targetId);
+
+        // then
+        verify(journalService).findJournalById(targetId);
+        verify(publicationSeriesIndicatorRepository).findIndicatorsForPublicationSeries(
+            eq(sourceId), any());
+        assertEquals(targetJournal, sourceJournalIndicator.getPublicationSeries());
     }
 
     @Test

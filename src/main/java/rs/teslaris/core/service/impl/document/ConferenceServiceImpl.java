@@ -72,9 +72,10 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     public Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable,
                                               Boolean returnOnlyNonSerialEvents,
-                                              Boolean returnOnlySerialEvents) {
+                                              Boolean returnOnlySerialEvents,
+                                              Integer commissionInstitutionId) {
         return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, null);
+            returnOnlySerialEvents, commissionInstitutionId);
     }
 
     @Override
@@ -221,6 +222,14 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         indexEventCommonFields(index, conference);
         eventIndexRepository.save(index);
+    }
+
+    @Override
+    public void reindexConference(Integer conferenceId) {
+        var conferenceToIndex = conferenceJPAService.findOne(conferenceId);
+        var indexToUpdate =
+            eventIndexRepository.findByDatabaseId(conferenceId).orElse(new EventIndex());
+        indexConference(conferenceToIndex, indexToUpdate);
     }
 
     @Override

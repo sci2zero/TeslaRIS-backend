@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.EntityClassificationEditCheck;
 import rs.teslaris.core.assessment.service.interfaces.EntityAssessmentClassificationService;
 
 @RestController
@@ -17,9 +18,11 @@ public class EntityAssessmentClassificationController {
 
     private final EntityAssessmentClassificationService entityAssessmentClassificationService;
 
+
     @DeleteMapping("/{entityAssessmentClassificationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION', 'EDIT_EVENT_ASSESSMENT_CLASSIFICATION')")
+    @EntityClassificationEditCheck
     public void deleteEntityIndicatorProof(@PathVariable Integer entityAssessmentClassificationId) {
         entityAssessmentClassificationService.deleteEntityAssessmentClassification(
             entityAssessmentClassificationId);

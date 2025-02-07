@@ -3,7 +3,8 @@ package rs.teslaris.core.model.user;
 public enum UserRole {
     ADMIN("ADMIN"),
     RESEARCHER("RESEARCHER"),
-    INSTITUTIONAL_EDITOR("INSTITUTIONAL_EDITOR");
+    INSTITUTIONAL_EDITOR("INSTITUTIONAL_EDITOR"),
+    COMMISSION("COMMISSION");
 
     private final String text;
 

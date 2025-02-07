@@ -1,4 +1,5 @@
 {
+  "max_result_window": 100000,
   "analysis": {
     "char_filter": {
       "serbian_char_filter": {

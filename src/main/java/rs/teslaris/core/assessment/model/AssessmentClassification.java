@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.model;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
@@ -13,7 +14,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
-import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
@@ -32,8 +32,8 @@ public class AssessmentClassification extends BaseEntity {
     @Column(name = "code")
     private String code;
 
-    @Column(name = "applicable_entity_type")
-    private EntityType applicableEntityType;
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<ApplicableEntityType> applicableTypes = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();
