@@ -66,4 +66,7 @@ public class Commission extends BaseEntity {
     @CollectionTable(name = "commission_recognised_research_areas", joinColumns = @JoinColumn(name = "commission_id"))
     @Column(name = "recognised_research_areas", nullable = false)
     private Set<String> recognisedResearchAreas = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<Person> excludedResearchers = new HashSet<>();
 }

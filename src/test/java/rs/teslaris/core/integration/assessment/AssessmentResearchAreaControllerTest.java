@@ -50,8 +50,8 @@ public class AssessmentResearchAreaControllerTest extends BaseTest {
 
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/research-area/{personId}/{researchAreaCode}/{commissionId}",
-                    1, "SOCIAL", 5)
+                    "http://localhost:8081/api/assessment/research-area/{researchAreaCode}/{commissionId}",
+                    "SOCIAL", 5)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
         ).andExpect(status().isOk());

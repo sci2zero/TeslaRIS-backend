@@ -837,8 +837,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
-                                                           boolean strict) {
-        return searchService.runQuery(buildNameAndEmploymentQuery(tokens, strict), pageable,
+                                                           boolean strict, Integer institutionId) {
+        return searchService.runQuery(buildNameAndEmploymentQuery(tokens, strict, institutionId),
+            pageable,
             PersonIndex.class, "person");
     }
 
@@ -869,7 +870,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personIndexRepository.findByScopusAuthorId(scopusAuthorId).orElse(null);
     }
 
-    private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict) {
+    private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
+                                              Integer institutionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.6);
 
         return BoolQuery.of(q -> q
@@ -903,6 +905,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
                         });
+
+                    if (Objects.nonNull(institutionId) && institutionId > 0) {
+                        b.must(sb -> sb.term(
+                            m -> m.field("employment_institutions_id_hierarchy").value(institutionId)));
+                    }
+
                     return b.minimumShouldMatch(Integer.toString(minShouldMatch));
                 }
             ))

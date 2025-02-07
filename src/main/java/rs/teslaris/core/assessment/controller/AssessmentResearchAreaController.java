@@ -37,12 +37,12 @@ public class AssessmentResearchAreaController {
         return assessmentResearchAreaService.readPersonAssessmentResearchArea(personId);
     }
 
-    @GetMapping("/{personId}/{researchAreaCode}/{commissionId}")
+    @GetMapping("/{researchAreaCode}/{commissionId}")
     @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
     public List<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(
-        @PathVariable Integer personId, @PathVariable Integer commissionId,
+        @PathVariable Integer commissionId,
         @PathVariable String researchAreaCode) {
-        return assessmentResearchAreaService.readPersonAssessmentResearchAreaForCommission(personId,
+        return assessmentResearchAreaService.readPersonAssessmentResearchAreaForCommission(
             commissionId, researchAreaCode);
     }
 

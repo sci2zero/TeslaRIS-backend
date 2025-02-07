@@ -17,8 +17,7 @@ public interface AssessmentResearchAreaService extends JPAService<AssessmentRese
     void setPersonAssessmentResearchAreaForCommission(Integer personId, String researchAreaCode,
                                                       Integer commissionId);
 
-    List<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(Integer personId,
-                                                                          Integer commissionId,
+    List<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(Integer commissionId,
                                                                           String code);
 
     void setPersonAssessmentResearchArea(Integer personId, String researchAreaCode);

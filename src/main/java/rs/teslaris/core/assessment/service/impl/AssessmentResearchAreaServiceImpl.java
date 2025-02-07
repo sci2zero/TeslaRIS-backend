@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.service.impl;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import rs.teslaris.core.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -49,26 +51,19 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
-    public List<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(Integer personId,
-                                                                                 Integer commissionId,
-                                                                                 String code) {
+    public List<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(
+        Integer commissionId, String code) {
+        var involvementTypes = Set.of(InvolvementType.EMPLOYED_AT, InvolvementType.HIRED_BY,
+            InvolvementType.CANDIDATE);
         var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
-        var persons =
-            assessmentResearchAreaRepository.findAllForPersonIdAndCommissionIdAndCode(personId,
-                commissionId, code);
-        persons.addAll(assessmentResearchAreaRepository.findAllForPersonIdAndCode(personId, code));
 
-        return persons.stream().filter(person -> {
-            for (var involvement : person.getInvolvements()) {
-                if ((involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                    involvement.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
-                    involvement.getInvolvementType().equals(InvolvementType.CANDIDATE)) &&
-                    involvement.getOrganisationUnit().getId().equals(organisationUnitId)) {
-                    return true;
-                }
-            }
-            return false;
-        }).map(PersonConverter::toDTO).toList();
+        Set<Person> persons =
+            assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(commissionId,
+                code, involvementTypes, organisationUnitId);
+
+        return persons.stream()
+            .map(PersonConverter::toDTO)
+            .toList();
     }
 
     @Override
@@ -103,20 +98,27 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
 
         var researchArea =
             assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId);
+        var commission = commissionService.findOne(commissionId);
 
         if (researchArea.isPresent()) {
             researchArea.get().setResearchAreaCode(researchAreaCode);
-            researchArea.get().setCommission(commissionService.findOne(commissionId));
+            commission.getExcludedResearchers().remove(researchArea.get().getPerson());
+            researchArea.get().setCommission(commission);
             save(researchArea.get());
+            commissionService.save(commission);
             return;
         }
 
+        var person = personService.findOne(personId);
+        commission.getExcludedResearchers().remove(person);
+
         var newResearchArea = new AssessmentResearchArea();
-        newResearchArea.setPerson(personService.findOne(personId));
+        newResearchArea.setPerson(person);
         newResearchArea.setResearchAreaCode(researchAreaCode);
-        newResearchArea.setCommission(commissionService.findOne(commissionId));
+        newResearchArea.setCommission(commission);
 
         save(newResearchArea);
+        commissionService.save(commission);
     }
 
     @Override
@@ -128,12 +130,9 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     @Override
     public void removePersonAssessmentResearchAreaForCommission(Integer personId,
                                                                 Integer commissionId) {
-        var researchAreaToRemove =
-            assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId);
-        researchAreaToRemove.ifPresent(researchArea -> {
-            researchArea.setResearchAreaCode(null);
-            assessmentResearchAreaRepository.save(researchArea);
-        });
+        var commission = commissionService.findOne(commissionId);
+        commission.getExcludedResearchers().add(personService.findOne(personId));
+        commissionService.save(commission);
     }
 
     @Override

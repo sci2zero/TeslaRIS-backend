@@ -179,33 +179,14 @@ public class AssessmentResearchAreaServiceTest {
     @Test
     void shouldRemovePersonAssessmentResearchAreaForCommission() {
         // Given
-        AssessmentResearchArea existingResearchArea = new AssessmentResearchArea();
-        existingResearchArea.setResearchAreaCode(researchAreaCode);
-        when(
-            assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
-            .thenReturn(Optional.of(existingResearchArea));
+        when(commissionService.findOne(commissionId)).thenReturn(new Commission());
+        when(personService.findOne(personId)).thenReturn(new Person());
 
         // When
         assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId,
             commissionId);
 
         // Then
-        assertNull(existingResearchArea.getResearchAreaCode());
-        verify(assessmentResearchAreaRepository).save(existingResearchArea);
-    }
-
-    @Test
-    void shouldDoNothingIfRemovingNonExistentResearchArea() {
-        // Given
-        when(
-            assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
-            .thenReturn(Optional.empty());
-
-        // When
-        assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId,
-            commissionId);
-
-        // Then
-        verify(assessmentResearchAreaRepository, never()).save(any());
+        verify(commissionService).save(any());
     }
 }
