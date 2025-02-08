@@ -2,8 +2,9 @@ package rs.teslaris.core.assessment.service.impl;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,8 +16,6 @@ import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
-import rs.teslaris.core.model.person.InvolvementType;
-import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -51,19 +50,12 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
-    public List<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(
-        Integer commissionId, String code) {
-        var involvementTypes = Set.of(InvolvementType.EMPLOYED_AT, InvolvementType.HIRED_BY,
-            InvolvementType.CANDIDATE);
+    public Page<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(
+        Integer commissionId, String code, Pageable pageable) {
         var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
 
-        Set<Person> persons =
-            assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(commissionId,
-                code, involvementTypes, organisationUnitId);
-
-        return persons.stream()
-            .map(PersonConverter::toDTO)
-            .toList();
+        return assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(commissionId,
+            code, organisationUnitId, pageable).map(PersonConverter::toDTO);
     }
 
     @Override

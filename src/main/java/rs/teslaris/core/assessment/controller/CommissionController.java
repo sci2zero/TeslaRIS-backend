@@ -52,6 +52,11 @@ public class CommissionController {
         return commissionService.readAllApplicableRuleEngines();
     }
 
+    @GetMapping("/institution/{commissionId}")
+    @PreAuthorize("hasAnyAuthority('EDIT_COMMISSIONS', 'UPDATE_COMMISSION')")
+    public Integer readInstitutionIdForCommission(@PathVariable Integer commissionId) {
+        return commissionService.findInstitutionIdForCommission(commissionId);
+    }
 
     @GetMapping("/{commissionId}")
     @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")

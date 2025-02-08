@@ -21,6 +21,7 @@ import rs.teslaris.core.assessment.ruleengine.JournalClassificationRuleEngine;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.core.assessment.util.ResearchAreasConfigurationLoader;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -43,6 +44,8 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     private final DocumentPublicationService documentPublicationService;
 
     private final MultilingualContentService multilingualContentService;
+
+    private final UserRepository userRepository;
 
 
     @Override
@@ -154,6 +157,11 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     public Commission findOneWithFetchedRelations(Integer commissionId) {
         return commissionRepository.findOneWithRelations(commissionId).orElseThrow(
             () -> new NotFoundException("Commission with ID " + commissionId + " does not exist."));
+    }
+
+    @Override
+    public Integer findInstitutionIdForCommission(Integer commissionId) {
+        return userRepository.findOUIdForCommission(commissionId);
     }
 
     private void setCommonFields(Commission commission, CommissionDTO commissionDTO) {

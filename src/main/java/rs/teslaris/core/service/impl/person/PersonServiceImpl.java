@@ -75,6 +75,7 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonService {
 
     private final PersonRepository personRepository;
@@ -627,7 +628,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    @Transactional(readOnly = true)
     public void reindexPersons() {
         personIndexRepository.deleteAll();
         int pageNumber = 0;
@@ -760,6 +760,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 Objects.isNull(i.getDateTo()))
             .map(Involvement::getOrganisationUnit).toList();
 
+        var employmentOrCandidateInstitutions = savedPerson.getInvolvements().stream()
+            .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                i.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
+                i.getInvolvementType().equals(InvolvementType.CANDIDATE)) &&
+                Objects.isNull(i.getDateTo()))
+            .map(inv -> inv.getOrganisationUnit().getId()).toList();
+
         personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
@@ -770,11 +777,15 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
 
         personIndex.setEmploymentInstitutionsIdHierarchy(new ArrayList<>());
-        personIndex.getEmploymentInstitutionsId().forEach(institutionId -> {
+        employmentOrCandidateInstitutions.forEach(institutionId -> {
             personIndex.getEmploymentInstitutionsIdHierarchy().add(institutionId);
             personIndex.getEmploymentInstitutionsIdHierarchy()
                 .addAll(organisationUnitService.getSuperOUsHierarchyRecursive(institutionId));
         });
+
+        savedPerson.getEmploymentInstitutionsIdHierarchy().addAll(
+            personIndex.getEmploymentInstitutionsIdHierarchy());
+        save(savedPerson);
 
         var employmentsSr = new StringBuilder();
         var employmentsOther = new StringBuilder();

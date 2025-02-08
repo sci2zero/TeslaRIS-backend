@@ -1,12 +1,12 @@
 package rs.teslaris.core.assessment.repository;
 
 import java.util.Optional;
-import java.util.Set;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.assessment.model.AssessmentResearchArea;
-import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 
 @Repository
@@ -21,7 +21,7 @@ public interface AssessmentResearchAreaRepository
                                                                     Integer commissionId);
 
     @Query("""
-            SELECT p
+            SELECT DISTINCT p
             FROM Person p
             WHERE (
                 p.id IN (
@@ -47,10 +47,8 @@ public interface AssessmentResearchAreaRepository
             )
             AND EXISTS (
                 SELECT 1
-                FROM Involvement i
-                WHERE i.personInvolved.id = p.id
-                AND i.involvementType IN :involvementTypes
-                AND i.organisationUnit.id = :organisationUnitId
+                FROM Person pe JOIN pe.employmentInstitutionsIdHierarchy ei
+                WHERE pe.id = p.id AND ei = :organisationUnitId
             )
             AND p NOT IN (
                 SELECT e
@@ -58,7 +56,7 @@ public interface AssessmentResearchAreaRepository
                 WHERE c.id = :commissionId
             )
         """)
-    Set<Person> findPersonsForAssessmentResearchArea(Integer commissionId, String code,
-                                                     Set<InvolvementType> involvementTypes,
-                                                     Integer organisationUnitId);
+    Page<Person> findPersonsForAssessmentResearchArea(Integer commissionId, String code,
+                                                      Integer organisationUnitId,
+                                                      Pageable pageable);
 }

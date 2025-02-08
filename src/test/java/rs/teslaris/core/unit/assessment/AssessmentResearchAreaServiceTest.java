@@ -4,22 +4,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.assessment.model.AssessmentResearchArea;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.core.assessment.service.impl.AssessmentResearchAreaServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonalInfo;
+import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -37,6 +46,9 @@ public class AssessmentResearchAreaServiceTest {
 
     @Mock
     private PersonService personService;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private CommissionService commissionService;
@@ -188,5 +200,57 @@ public class AssessmentResearchAreaServiceTest {
 
         // Then
         verify(commissionService).save(any());
+    }
+
+    @Test
+    void shouldReturnPersonResponseDTOPageForValidCommission() {
+        // Given
+        var commissionId = 1;
+        var code = "researchCode";
+        var pageable = PageRequest.of(0, 10);
+        var organisationUnitId = 42;
+
+        var person = new Person();
+        person.setName(new PersonName());
+        var personalInfo = new PersonalInfo();
+        personalInfo.setPostalAddress(new PostalAddress());
+        person.setPersonalInfo(personalInfo);
+        var personsPage = new PageImpl<>(List.of(person));
+
+        when(userRepository.findOUIdForCommission(commissionId)).thenReturn(organisationUnitId);
+        when(assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(
+            commissionId, code, organisationUnitId, pageable))
+            .thenReturn(personsPage);
+
+        // When
+        var result = assessmentResearchAreaService.readPersonAssessmentResearchAreaForCommission(
+            commissionId, code, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(personsPage.getContent().size(), result.getContent().size());
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoPersonsFound() {
+        // Given
+        var commissionId = 1;
+        var code = "researchCode";
+        var pageable = PageRequest.of(0, 10);
+        var organisationUnitId = 42;
+        Page<Person> emptyPage = Page.empty();
+
+        when(userRepository.findOUIdForCommission(commissionId)).thenReturn(organisationUnitId);
+        when(assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(
+            commissionId, code, organisationUnitId, pageable))
+            .thenReturn(emptyPage);
+
+        // When
+        var result = assessmentResearchAreaService.readPersonAssessmentResearchAreaForCommission(
+            commissionId, code, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.getContent().isEmpty());
     }
 }
