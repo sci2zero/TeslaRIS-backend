@@ -902,6 +902,26 @@ public class AssessmentDataInitializer {
                     1)));
         docM24.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
+        var docM26 = new AssessmentClassification();
+        docM26.setFormalDescriptionOfRule("handleDocM26");
+        docM26.setCode("M26");
+        docM26.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M26",
+                    1)));
+        docM26.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var docM27 = new AssessmentClassification();
+        docM27.setFormalDescriptionOfRule("handleDocM27");
+        docM27.setCode("M27");
+        docM27.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M27",
+                    1)));
+        docM27.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
         var docM51 = new AssessmentClassification();
         docM51.setFormalDescriptionOfRule("handleDocM51");
         docM51.setCode("docM51");
@@ -1032,7 +1052,8 @@ public class AssessmentDataInitializer {
         assessmentClassificationRepository.saveAll(
             List.of(m21APlus, m21A, m21, m22, m23, m23e, m24plus, multinationalConf, nationalConf,
                 nonAcademicConf, m51, m52, m53, m54, m24, docM21APlus, docM21A, docM21, docM22,
-                docM23, docM23e, docM24plus, docM24, docM51, docM52, docM53, docM54, m31, m32, m33,
+                docM23, docM23e, docM24plus, docM24, docM51, docM52, docM53, docM54, docM26, docM27,
+                m31, m32, m33,
                 m34, m61, m62, m63, m64, m69));
     }
 

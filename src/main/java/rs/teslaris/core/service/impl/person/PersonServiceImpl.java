@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -714,6 +715,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexProperties(PersonIndex personIndex, Person savedPerson) {
+        personIndex.setLastEdited(
+            Objects.nonNull(savedPerson.getLastModification()) ? savedPerson.getLastModification() :
+                new Date());
         personIndex.setName(savedPerson.getName().toString());
 
         savedPerson.getOtherNames().forEach((otherName) -> {

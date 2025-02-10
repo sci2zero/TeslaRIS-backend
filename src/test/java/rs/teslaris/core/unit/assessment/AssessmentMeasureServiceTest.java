@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit.assessment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -49,11 +50,13 @@ public class AssessmentMeasureServiceTest {
         // given
         var assessmentMeasure1 = new AssessmentMeasure();
         assessmentMeasure1.setCode("code1");
-        assessmentMeasure1.setFormalDescriptionOfRule("rule1");
+        assessmentMeasure1.setPointRule("pointsRulebook2025");
+        assessmentMeasure1.setScalingRule("scalingRulebook2025");
 
         var assessmentMeasure2 = new AssessmentMeasure();
         assessmentMeasure2.setCode("code2");
-        assessmentMeasure2.setFormalDescriptionOfRule("rule2");
+        assessmentMeasure2.setPointRule("pointsRulebook2025");
+        assessmentMeasure2.setScalingRule("scalingRulebook2025");
 
         when(assessmentMeasureRepository.searchAssessmentMeasures(any(Pageable.class),
             anyString())).thenReturn(
@@ -95,8 +98,9 @@ public class AssessmentMeasureServiceTest {
     @Test
     void shouldCreateAssessmentMeasure() {
         // given
-        var assessmentMeasureDTO = new AssessmentMeasureDTO(null, "rule", "M22", 1d,
-            List.of(new MultilingualContentDTO()), 1);
+        var assessmentMeasureDTO =
+            new AssessmentMeasureDTO(null, "rule", "pointsRulebook2025", "scalingRulebook2025",
+                List.of(new MultilingualContentDTO()), 1);
         var newAssessmentMeasure = new AssessmentMeasure();
         newAssessmentMeasure.setRulebook(new AssessmentRulebook());
 
@@ -117,8 +121,9 @@ public class AssessmentMeasureServiceTest {
     void shouldUpdateAssessmentMeasure() {
         // given
         var assessmentMeasureId = 1;
-        var assessmentMeasureDTO = new AssessmentMeasureDTO(null, "rule", "M21", 2d,
-            List.of(new MultilingualContentDTO()), 1);
+        var assessmentMeasureDTO =
+            new AssessmentMeasureDTO(null, "rule", "pointsRulebook2025", "scalingRulebook2025",
+                List.of(new MultilingualContentDTO()), 1);
         var existingAssessmentMeasure = new AssessmentMeasure();
 
         when(assessmentMeasureRepository.findById(assessmentMeasureId))
@@ -151,5 +156,23 @@ public class AssessmentMeasureServiceTest {
 
         // Then
         verify(assessmentMeasureRepository).save(any());
+    }
+
+    @Test
+    void shouldListAllPointRules() {
+        // When
+        var result = assessmentMeasureService.listAllPointRules();
+
+        // Then
+        assertFalse(result.isEmpty());
+    }
+
+    @Test
+    void shouldListAllScalingRules() {
+        // When
+        var result = assessmentMeasureService.listAllScalingRules();
+
+        // Then
+        assertFalse(result.isEmpty());
     }
 }

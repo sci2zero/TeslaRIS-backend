@@ -1,9 +1,12 @@
 package rs.teslaris.core.assessment.controller;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
@@ -21,5 +24,12 @@ public class PersonAssessmentClassificationController {
         @PathVariable Integer personId) {
         return personAssessmentClassificationService.getAssessmentClassificationsForPerson(
             personId);
+    }
+
+    // TODO: remove, only for testing
+    @PostMapping("/assess")
+    public void assessResearchers() {
+        personAssessmentClassificationService.assessResearchers(LocalDate.of(2025, 1, 1), 5, 1,
+            new ArrayList<>(), new ArrayList<>());
     }
 }

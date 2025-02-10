@@ -14,8 +14,8 @@ import rs.teslaris.core.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentResearchAreaService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.util.ResearchAreasConfigurationLoader;
-import rs.teslaris.core.converter.person.PersonConverter;
-import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -35,6 +35,8 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
 
     private final UserRepository userRepository;
 
+    private final PersonIndexRepository personIndexRepository;
+
 
     @Override
     public List<AssessmentResearchAreaDTO> readAllAssessmentResearchAreas() {
@@ -50,12 +52,15 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
-    public Page<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(
+    public Page<PersonIndex> readPersonAssessmentResearchAreaForCommission(
         Integer commissionId, String code, Pageable pageable) {
         var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
 
-        return assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(commissionId,
-            code, organisationUnitId, pageable).map(PersonConverter::toDTO);
+        var personIds =
+            assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(commissionId,
+                code, organisationUnitId);
+
+        return personIndexRepository.findByDatabaseIdIn(personIds, pageable);
     }
 
     @Override

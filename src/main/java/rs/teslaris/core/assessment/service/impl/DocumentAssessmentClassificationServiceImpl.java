@@ -277,17 +277,33 @@ public class DocumentAssessmentClassificationServiceImpl
                 journalPublicationIndex.getDatabaseId(), commission.getId(), false);
 
             performPublicationAssessment((year, classifications, commissionObj) -> {
-                    var classification = publicationSeriesAssessmentClassificationRepository
+                    var classificationList = publicationSeriesAssessmentClassificationRepository
                         .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
                             journalPublicationIndex.getJournalId(), commission.getId(), year);
 
-                    if (classification.isPresent()) {
-                        classifications.add(classification.get().getAssessmentClassification());
+                    // Check for manually set classification first
+                    var manualClassification = classificationList.stream()
+                        .filter(EntityAssessmentClassification::getManual)
+                        .findFirst();
+
+                    if (manualClassification.isPresent()) {
+                        classifications.add(manualClassification.get().getAssessmentClassification());
+                    } else if (!classificationList.isEmpty()) {
+                        classifications.add(classificationList.get(0).getAssessmentClassification());
                     } else {
                         handleRelationAssessments(commission,
-                            (targetCommissionId) -> publicationSeriesAssessmentClassificationRepository
-                                .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
-                                    journalPublicationIndex.getJournalId(), targetCommissionId, year)
+                            (targetCommissionId) -> {
+                                var relatedClassifications =
+                                    publicationSeriesAssessmentClassificationRepository
+                                        .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                                            journalPublicationIndex.getJournalId(), targetCommissionId,
+                                            year);
+
+                                return relatedClassifications.stream()
+                                    .filter(EntityAssessmentClassification::getManual)
+                                    .findFirst()
+                                    .or(() -> relatedClassifications.stream().findFirst());
+                            }
                         ).ifPresent(classifications::add);
                     }
                 },

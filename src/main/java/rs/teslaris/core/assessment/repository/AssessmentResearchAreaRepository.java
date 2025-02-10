@@ -1,13 +1,11 @@
 package rs.teslaris.core.assessment.repository;
 
+import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.assessment.model.AssessmentResearchArea;
-import rs.teslaris.core.model.person.Person;
 
 @Repository
 public interface AssessmentResearchAreaRepository
@@ -21,7 +19,7 @@ public interface AssessmentResearchAreaRepository
                                                                     Integer commissionId);
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT DISTINCT p.id
             FROM Person p
             WHERE (
                 p.id IN (
@@ -56,7 +54,6 @@ public interface AssessmentResearchAreaRepository
                 WHERE c.id = :commissionId
             )
         """)
-    Page<Person> findPersonsForAssessmentResearchArea(Integer commissionId, String code,
-                                                      Integer organisationUnitId,
-                                                      Pageable pageable);
+    List<Integer> findPersonsForAssessmentResearchArea(Integer commissionId, String code,
+                                                       Integer organisationUnitId);
 }

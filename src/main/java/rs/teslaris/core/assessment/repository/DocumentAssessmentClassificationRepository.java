@@ -1,6 +1,7 @@
 package rs.teslaris.core.assessment.repository;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,11 @@ public interface DocumentAssessmentClassificationRepository
         "eac.document.id = :documentId order by eac.timestamp desc")
     List<DocumentAssessmentClassification> findAssessmentClassificationsForDocument(
         Integer documentId);
+
+    @Query("select eac from DocumentAssessmentClassification eac where " +
+        "eac.document.id = :documentId and eac.commission.id = :commissionId")
+    Optional<DocumentAssessmentClassification> findAssessmentClassificationsForDocumentAndCommission(
+        Integer documentId, Integer commissionId);
 
     @Modifying
     @Transactional

@@ -13,6 +13,8 @@ public interface PersonIndexRepository extends ElasticsearchRepository<PersonInd
 
     Optional<PersonIndex> findByDatabaseId(Integer databaseId);
 
+    Page<PersonIndex> findByDatabaseIdIn(List<Integer> databaseIds, Pageable pageable);
+
     Optional<PersonIndex> findByScopusAuthorId(String scopusAuthorId);
 
     long count();

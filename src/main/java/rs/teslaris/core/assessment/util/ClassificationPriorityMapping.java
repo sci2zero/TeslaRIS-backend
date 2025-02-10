@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
+import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 
 @Component
@@ -54,11 +56,15 @@ public class ClassificationPriorityMapping {
 
     private static ProceedingsPublicationRepository proceedingsPublicationRepository;
 
+    private static JournalPublicationRepository journalPublicationRepository;
+
     @Autowired
     public ClassificationPriorityMapping(
-        ProceedingsPublicationRepository proceedingsPublicationRepository) {
+        ProceedingsPublicationRepository proceedingsPublicationRepository,
+        JournalPublicationRepository journalPublicationRepository) {
         ClassificationPriorityMapping.proceedingsPublicationRepository =
             proceedingsPublicationRepository;
+        ClassificationPriorityMapping.journalPublicationRepository = journalPublicationRepository;
     }
 
 
@@ -86,13 +92,20 @@ public class ClassificationPriorityMapping {
             return Optional.empty();
         }
 
-        if (!documentCode.equals("M30") && !documentCode.equals("M60")) {
-            return Optional.of(documentCode);
+        if (documentCode.equals("M30") || documentCode.equals("M60")) {
+            return proceedingsPublicationRepository.findById(documentId)
+                .flatMap(proceedingsPublication -> getMappedCode(documentCode,
+                    proceedingsPublication.getProceedingsPublicationType()));
         }
 
-        return proceedingsPublicationRepository.findById(documentId)
-            .flatMap(proceedingsPublication -> getMappedCode(documentCode,
-                proceedingsPublication.getProceedingsPublicationType()));
+        if (documentCode.equals("docM24") || CLASSIFICATION_PRIORITIES.get(classificationCode) <
+            CLASSIFICATION_PRIORITIES.get("M24")) {
+            return journalPublicationRepository.findById(documentId).flatMap(
+                journalPublication -> getMappedCode(documentCode,
+                    journalPublication.getJournalPublicationType()));
+        }
+
+        return Optional.of(documentCode);
     }
 
     private static Optional<String> getMappedCode(String baseCode,
@@ -114,6 +127,22 @@ public class ClassificationPriorityMapping {
 
         return Optional.ofNullable(
             baseCode.equals("M30") ? mappingM30.get(type) : mappingM60.get(type)
+        );
+    }
+
+    private static Optional<String> getMappedCode(String baseCode,
+                                                  JournalPublicationType type) {
+        Map<JournalPublicationType, String> mappingM26 = Map.of(
+            JournalPublicationType.SCIENTIFIC_CRITIC, "M26"
+        );
+
+        Map<JournalPublicationType, String> mappingM27 = Map.of(
+            JournalPublicationType.SCIENTIFIC_CRITIC, "M27"
+        );
+
+        return Optional.ofNullable(
+            baseCode.equals("docM24") ? mappingM26.getOrDefault(type, baseCode) :
+                mappingM27.getOrDefault(type, baseCode)
         );
     }
 }

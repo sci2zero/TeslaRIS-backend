@@ -24,10 +24,9 @@ import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.core.assessment.service.impl.AssessmentResearchAreaServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.model.person.PersonName;
-import rs.teslaris.core.model.person.PersonalInfo;
-import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -52,6 +51,9 @@ public class AssessmentResearchAreaServiceTest {
 
     @Mock
     private CommissionService commissionService;
+
+    @Mock
+    private PersonIndexRepository personIndexRepository;
 
     @InjectMocks
     private AssessmentResearchAreaServiceImpl assessmentResearchAreaService;
@@ -209,18 +211,15 @@ public class AssessmentResearchAreaServiceTest {
         var code = "researchCode";
         var pageable = PageRequest.of(0, 10);
         var organisationUnitId = 42;
-
-        var person = new Person();
-        person.setName(new PersonName());
-        var personalInfo = new PersonalInfo();
-        personalInfo.setPostalAddress(new PostalAddress());
-        person.setPersonalInfo(personalInfo);
-        var personsPage = new PageImpl<>(List.of(person));
+        var personIds = List.of(1, 2, 3);
 
         when(userRepository.findOUIdForCommission(commissionId)).thenReturn(organisationUnitId);
         when(assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(
-            commissionId, code, organisationUnitId, pageable))
-            .thenReturn(personsPage);
+            commissionId, code, organisationUnitId))
+            .thenReturn(personIds);
+        when(personIndexRepository.findByDatabaseIdIn(personIds, pageable)).thenReturn(
+            new PageImpl<>(List.of(new PersonIndex(), new PersonIndex(), new PersonIndex())));
+
 
         // When
         var result = assessmentResearchAreaService.readPersonAssessmentResearchAreaForCommission(
@@ -228,7 +227,7 @@ public class AssessmentResearchAreaServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(personsPage.getContent().size(), result.getContent().size());
+        assertEquals(personIds.size(), result.getContent().size());
     }
 
     @Test
@@ -238,12 +237,13 @@ public class AssessmentResearchAreaServiceTest {
         var code = "researchCode";
         var pageable = PageRequest.of(0, 10);
         var organisationUnitId = 42;
-        Page<Person> emptyPage = Page.empty();
+        Page<PersonIndex> emptyPage = Page.empty();
 
         when(userRepository.findOUIdForCommission(commissionId)).thenReturn(organisationUnitId);
         when(assessmentResearchAreaRepository.findPersonsForAssessmentResearchArea(
-            commissionId, code, organisationUnitId, pageable))
-            .thenReturn(emptyPage);
+            commissionId, code, organisationUnitId))
+            .thenReturn(List.of());
+        when(personIndexRepository.findByDatabaseIdIn(List.of(), pageable)).thenReturn(emptyPage);
 
         // When
         var result = assessmentResearchAreaService.readPersonAssessmentResearchAreaForCommission(

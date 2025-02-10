@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.dto.AssessmentResearchAreaDTO;
 import rs.teslaris.core.assessment.model.AssessmentResearchArea;
-import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
@@ -19,9 +19,9 @@ public interface AssessmentResearchAreaService extends JPAService<AssessmentRese
     void setPersonAssessmentResearchAreaForCommission(Integer personId, String researchAreaCode,
                                                       Integer commissionId);
 
-    Page<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(Integer commissionId,
-                                                                          String code,
-                                                                          Pageable pageable);
+    Page<PersonIndex> readPersonAssessmentResearchAreaForCommission(Integer commissionId,
+                                                                    String code,
+                                                                    Pageable pageable);
 
     void setPersonAssessmentResearchArea(Integer personId, String researchAreaCode);
 

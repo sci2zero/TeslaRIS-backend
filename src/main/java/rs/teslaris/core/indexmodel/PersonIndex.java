@@ -1,6 +1,7 @@
 package rs.teslaris.core.indexmodel;
 
 import jakarta.persistence.Id;
+import java.util.Date;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -75,4 +76,7 @@ public class PersonIndex {
 
     @Field(type = FieldType.Integer, name = "employment_institutions_id_hierarchy", store = true)
     private List<Integer> employmentInstitutionsIdHierarchy;
+
+    @Field(type = FieldType.Date, name = "last_edited")
+    private Date lastEdited;
 }

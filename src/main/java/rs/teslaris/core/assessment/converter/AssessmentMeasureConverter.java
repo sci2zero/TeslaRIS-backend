@@ -10,8 +10,9 @@ public class AssessmentMeasureConverter {
     public static AssessmentMeasureDTO toDTO(AssessmentMeasure assessmentMeasure) {
         return new AssessmentMeasureDTO(
             assessmentMeasure.getId(),
-            assessmentMeasure.getFormalDescriptionOfRule(),
-            assessmentMeasure.getCode(), assessmentMeasure.getValue(),
+            assessmentMeasure.getCode(),
+            assessmentMeasure.getPointRule(),
+            assessmentMeasure.getScalingRule(),
             MultilingualContentConverter.getMultilingualContentDTO(assessmentMeasure.getTitle()),
             Objects.nonNull(assessmentMeasure.getRulebook()) ?
                 assessmentMeasure.getRulebook().getId() : null);

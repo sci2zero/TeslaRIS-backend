@@ -600,23 +600,23 @@ public class TestingDataInitializer {
             List.of(assessmentClassification1, assessmentClassification2));
 
         var assessmentMeasure1 = new AssessmentMeasure();
-        assessmentMeasure1.setFormalDescriptionOfRule("Rule 1");
         assessmentMeasure1.setCode("Code 1");
-        assessmentMeasure1.setValue(2d);
+        assessmentMeasure1.setPointRule("pointsRulebook2025");
+        assessmentMeasure1.setScalingRule("scalingRulebook2025");
         assessmentMeasure1.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Assessment Measure 1", 1)));
 
         var assessmentMeasure2 = new AssessmentMeasure();
-        assessmentMeasure2.setFormalDescriptionOfRule("Rule 2");
         assessmentMeasure2.setCode("Code 2");
-        assessmentMeasure2.setValue(4d);
+        assessmentMeasure2.setPointRule("pointsRulebook2025");
+        assessmentMeasure2.setScalingRule("scalingRulebook2025");
         assessmentMeasure2.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Assessment Measure 2", 1)));
 
         var assessmentMeasure3 = new AssessmentMeasure();
-        assessmentMeasure3.setFormalDescriptionOfRule("Rule 3");
         assessmentMeasure3.setCode("Code 3");
-        assessmentMeasure3.setValue(4d);
+        assessmentMeasure3.setPointRule("pointsRulebook2025");
+        assessmentMeasure3.setScalingRule("scalingRulebook2025");
         assessmentMeasure3.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Assessment Measure 3", 1)));
 

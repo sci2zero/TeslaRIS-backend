@@ -24,7 +24,7 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
             "psac.publicationSeries.id = :publicationSeriesId AND " +
             "psac.commission.id = :commissionId AND " +
             "psac.classificationYear = :year")
-    Optional<EntityAssessmentClassification> findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+    List<EntityAssessmentClassification> findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
         Integer publicationSeriesId, Integer commissionId, Integer year);
 
     @Query("SELECT psac FROM PublicationSeriesAssessmentClassification psac WHERE " +

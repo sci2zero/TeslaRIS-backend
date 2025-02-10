@@ -27,14 +27,14 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @SQLRestriction("deleted=false")
 public class AssessmentMeasure extends BaseEntity {
 
-    @Column(name = "formal_description_of_rule")
-    private String formalDescriptionOfRule;
-
     @Column(name = "code")
     private String code;
 
-    @Column(name = "value")
-    private Double value;
+    @Column(name = "point_rule")
+    private String pointRule;
+
+    @Column(name = "scaling_rule")
+    private String scalingRule;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();

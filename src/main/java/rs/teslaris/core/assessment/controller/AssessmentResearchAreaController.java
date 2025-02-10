@@ -18,7 +18,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.assessment.dto.AssessmentResearchAreaDTO;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentResearchAreaService;
-import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.indexmodel.PersonIndex;
 
 @RestController
 @RequestMapping("/api/assessment/research-area")
@@ -42,7 +42,7 @@ public class AssessmentResearchAreaController {
 
     @GetMapping("/{researchAreaCode}/{commissionId}")
     @PreAuthorize("hasAuthority('UPDATE_COMMISSION')")
-    public Page<PersonResponseDTO> readPersonAssessmentResearchAreaForCommission(
+    public Page<PersonIndex> readPersonAssessmentResearchAreaForCommission(
         @PathVariable Integer commissionId,
         @PathVariable String researchAreaCode,
         Pageable pageable) {
