@@ -19,6 +19,7 @@ import rs.teslaris.core.assessment.ruleengine.AssessmentPointsRuleEngine;
 import rs.teslaris.core.assessment.ruleengine.AssessmentPointsScalingRuleEngine;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentMeasureService;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentRulebookService;
+import rs.teslaris.core.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -120,9 +121,14 @@ public class AssessmentMeasureServiceImpl extends JPAServiceImpl<AssessmentMeasu
         return getRuleEngineRules(AssessmentPointsScalingRuleEngine.class);
     }
 
+    @Override
+    public List<String> listAllGroupCodes() {
+        return ClassificationPriorityMapping.getAssessmentGroups();
+    }
+
     private <T> List<String> getRuleEngineRules(Class<T> clazz) {
         return Arrays.stream(clazz.getMethods()).map(Method::getName)
-            .filter(name -> name.contains("Rulebook")).collect(
+            .filter(name -> name.contains("Rulebook")).sorted().collect(
                 Collectors.toList());
     }
 }

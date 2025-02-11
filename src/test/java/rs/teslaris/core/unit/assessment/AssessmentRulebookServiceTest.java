@@ -185,14 +185,14 @@ public class AssessmentRulebookServiceTest {
         // given
         var assessmentMeasure1 = new AssessmentMeasure();
         assessmentMeasure1.setCode("code1");
-        assessmentMeasure1.setPointRule("pointsRulebook2025");
-        assessmentMeasure1.setScalingRule("scalingRulebook2025");
+        assessmentMeasure1.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure1.setScalingRule("serbianScalingRulebook2025");
         assessmentMeasure1.setRulebook(new AssessmentRulebook());
 
         var assessmentMeasure2 = new AssessmentMeasure();
         assessmentMeasure2.setCode("code2");
-        assessmentMeasure2.setPointRule("pointsRulebook2025");
-        assessmentMeasure2.setScalingRule("scalingRulebook2025");
+        assessmentMeasure2.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure2.setScalingRule("serbianScalingRulebook2025");
         assessmentMeasure2.setRulebook(new AssessmentRulebook());
 
         when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(Pageable.class),

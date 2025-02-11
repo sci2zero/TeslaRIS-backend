@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.dto.ResearcherAssessmentResponseDTO;
 import rs.teslaris.core.assessment.service.interfaces.PersonAssessmentClassificationService;
 
 @RestController
@@ -24,6 +26,12 @@ public class PersonAssessmentClassificationController {
         @PathVariable Integer personId) {
         return personAssessmentClassificationService.getAssessmentClassificationsForPerson(
             personId);
+    }
+
+    @GetMapping("/assess/{personId}")
+    @PersonEditCheck
+    public List<ResearcherAssessmentResponseDTO> assessResearcher(@PathVariable Integer personId) {
+        return personAssessmentClassificationService.assessSingleResearcher(personId, 1);
     }
 
     // TODO: remove, only for testing

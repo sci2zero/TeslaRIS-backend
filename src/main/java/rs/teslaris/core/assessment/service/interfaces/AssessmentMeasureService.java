@@ -25,4 +25,6 @@ public interface AssessmentMeasureService extends JPAService<AssessmentMeasure> 
     List<String> listAllPointRules();
 
     List<String> listAllScalingRules();
+
+    List<String> listAllGroupCodes();
 }

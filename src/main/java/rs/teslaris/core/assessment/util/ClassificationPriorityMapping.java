@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.util;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,6 +53,20 @@ public class ClassificationPriorityMapping {
         Map.entry("M54", "docM54"),
         Map.entry("multinationalConf", "M30"),
         Map.entry("nationalConf", "M60")
+    );
+
+    private static final Map<String, List<String>> GROUP_TO_CLASSIFICATIONS_MAPPING = Map.ofEntries(
+        Map.entry("M10", List.of("M11", "M12", "M13", "M14", "M15", "M16")),
+        Map.entry("M20",
+            List.of("docM21APlus", "docM21A", "docM21", "docM22", "docM23", "docM23e", "docM24Plus",
+                "docM24")),
+        Map.entry("M30", List.of("M31", "M32", "M33", "M34")),
+        Map.entry("M40", List.of("M41", "M42", "M43", "M44", "M45", "M46", "M47")),
+        Map.entry("M50", List.of("docM51", "docM52", "docM53", "docM54", "M56", "M57")),
+        Map.entry("M60", List.of("M61", "M62", "M63", "M64", "M67", "M68", "M69")),
+        Map.entry("M70", List.of("M70")),
+        Map.entry("M80", List.of("M81", "M82", "M83", "M84")),
+        Map.entry("M90", List.of("M91a", "M91", "M62", "M93", "M94", "M95", "M96", "M97", "M98"))
     );
 
     private static ProceedingsPublicationRepository proceedingsPublicationRepository;
@@ -144,5 +159,14 @@ public class ClassificationPriorityMapping {
             baseCode.equals("docM24") ? mappingM26.getOrDefault(type, baseCode) :
                 mappingM27.getOrDefault(type, baseCode)
         );
+    }
+
+    public static List<String> getAssessmentGroups() {
+        return GROUP_TO_CLASSIFICATIONS_MAPPING.keySet().stream().sorted().toList();
+    }
+
+    public static boolean existsInGroup(String groupCode, String classificationCode) {
+        return GROUP_TO_CLASSIFICATIONS_MAPPING.getOrDefault(groupCode, List.of())
+            .contains(classificationCode);
     }
 }

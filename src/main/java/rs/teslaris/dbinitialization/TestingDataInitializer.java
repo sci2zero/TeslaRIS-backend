@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
+import rs.teslaris.core.assessment.model.AssessmentResearchArea;
 import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
@@ -20,6 +21,7 @@ import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
+import rs.teslaris.core.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
@@ -152,6 +154,8 @@ public class TestingDataInitializer {
     private final AssessmentClassificationRepository assessmentClassificationRepository;
 
     private final IndicatorRepository indicatorRepository;
+
+    private final AssessmentResearchAreaRepository assessmentResearchAreaRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -601,22 +605,22 @@ public class TestingDataInitializer {
 
         var assessmentMeasure1 = new AssessmentMeasure();
         assessmentMeasure1.setCode("Code 1");
-        assessmentMeasure1.setPointRule("pointsRulebook2025");
-        assessmentMeasure1.setScalingRule("scalingRulebook2025");
+        assessmentMeasure1.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure1.setScalingRule("serbianScalingRulebook2025");
         assessmentMeasure1.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Assessment Measure 1", 1)));
 
         var assessmentMeasure2 = new AssessmentMeasure();
         assessmentMeasure2.setCode("Code 2");
-        assessmentMeasure2.setPointRule("pointsRulebook2025");
-        assessmentMeasure2.setScalingRule("scalingRulebook2025");
+        assessmentMeasure2.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure2.setScalingRule("serbianScalingRulebook2025");
         assessmentMeasure2.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Assessment Measure 2", 1)));
 
         var assessmentMeasure3 = new AssessmentMeasure();
         assessmentMeasure3.setCode("Code 3");
-        assessmentMeasure3.setPointRule("pointsRulebook2025");
-        assessmentMeasure3.setScalingRule("scalingRulebook2025");
+        assessmentMeasure3.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure3.setScalingRule("serbianScalingRulebook2025");
         assessmentMeasure3.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Assessment Measure 3", 1)));
 
@@ -710,5 +714,10 @@ public class TestingDataInitializer {
                 "PMF", "", false, false, serbianLanguage, commissionAuthority, null,
                 dummyOU, commission5, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser);
+
+        var assessmentResearchArea = new AssessmentResearchArea();
+        assessmentResearchArea.setPerson(person1);
+        assessmentResearchArea.setResearchAreaCode("TECHNICAL");
+        assessmentResearchAreaRepository.save(assessmentResearchArea);
     }
 }

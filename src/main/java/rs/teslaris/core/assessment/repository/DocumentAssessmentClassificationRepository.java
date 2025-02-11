@@ -18,7 +18,8 @@ public interface DocumentAssessmentClassificationRepository
     List<DocumentAssessmentClassification> findAssessmentClassificationsForDocument(
         Integer documentId);
 
-    @Query("select eac from DocumentAssessmentClassification eac where " +
+    @Query("select eac from DocumentAssessmentClassification eac " +
+        "join fetch eac.assessmentClassification where " +
         "eac.document.id = :documentId and eac.commission.id = :commissionId")
     Optional<DocumentAssessmentClassification> findAssessmentClassificationsForDocumentAndCommission(
         Integer documentId, Integer commissionId);

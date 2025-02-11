@@ -50,13 +50,13 @@ public class AssessmentMeasureServiceTest {
         // given
         var assessmentMeasure1 = new AssessmentMeasure();
         assessmentMeasure1.setCode("code1");
-        assessmentMeasure1.setPointRule("pointsRulebook2025");
-        assessmentMeasure1.setScalingRule("scalingRulebook2025");
+        assessmentMeasure1.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure1.setScalingRule("serbianScalingRulebook2025");
 
         var assessmentMeasure2 = new AssessmentMeasure();
         assessmentMeasure2.setCode("code2");
-        assessmentMeasure2.setPointRule("pointsRulebook2025");
-        assessmentMeasure2.setScalingRule("scalingRulebook2025");
+        assessmentMeasure2.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure2.setScalingRule("serbianScalingRulebook2025");
 
         when(assessmentMeasureRepository.searchAssessmentMeasures(any(Pageable.class),
             anyString())).thenReturn(
@@ -99,7 +99,8 @@ public class AssessmentMeasureServiceTest {
     void shouldCreateAssessmentMeasure() {
         // given
         var assessmentMeasureDTO =
-            new AssessmentMeasureDTO(null, "rule", "pointsRulebook2025", "scalingRulebook2025",
+            new AssessmentMeasureDTO(null, "rule", "serbianPointsRulebook2025",
+                "serbianScalingRulebook2025",
                 List.of(new MultilingualContentDTO()), 1);
         var newAssessmentMeasure = new AssessmentMeasure();
         newAssessmentMeasure.setRulebook(new AssessmentRulebook());
@@ -122,7 +123,8 @@ public class AssessmentMeasureServiceTest {
         // given
         var assessmentMeasureId = 1;
         var assessmentMeasureDTO =
-            new AssessmentMeasureDTO(null, "rule", "pointsRulebook2025", "scalingRulebook2025",
+            new AssessmentMeasureDTO(null, "rule", "serbianPointsRulebook2025",
+                "serbianScalingRulebook2025",
                 List.of(new MultilingualContentDTO()), 1);
         var existingAssessmentMeasure = new AssessmentMeasure();
 

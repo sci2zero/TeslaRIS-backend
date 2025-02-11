@@ -9,12 +9,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
+import rs.teslaris.core.assessment.model.AssessmentMeasure;
+import rs.teslaris.core.assessment.model.AssessmentRulebook;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.CommissionRelation;
 import rs.teslaris.core.assessment.model.Indicator;
 import rs.teslaris.core.assessment.model.IndicatorContentType;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
+import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.repository.CommissionRelationRepository;
 import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.repository.IndicatorRepository;
@@ -34,6 +38,10 @@ public class AssessmentDataInitializer {
     private final CommissionRepository commissionRepository;
 
     private final CommissionRelationRepository commissionRelationRepository;
+
+    private final AssessmentMeasureRepository assessmentMeasureRepository;
+
+    private final AssessmentRulebookRepository assessmentRulebookRepository;
 
 
     public void initializeIndicators(LanguageTag englishTag, LanguageTag serbianTag) {
@@ -1085,6 +1093,8 @@ public class AssessmentDataInitializer {
             Set.of(new MultiLingualContent(englishTag, "MNO ALL", 1),
                 new MultiLingualContent(serbianTag, "MNO SVE", 2)));
         commission5.setFormalDescriptionOfRule("load-mno");
+        commission5.setRecognisedResearchAreas(
+            Set.of("NATURAL", "SOCIAL", "TECHNICAL", "HUMANITIES"));
 
         var commission6 = new Commission();
         commission6.setDescription(
@@ -1172,5 +1182,106 @@ public class AssessmentDataInitializer {
         commissionRelationRepository.saveAll(List.of(commissionRelation1, commissionRelation2));
 
         return commission5;
+    }
+
+    public void initializeRulebooks(LanguageTag englishTag, LanguageTag serbianTag) {
+        var serbianRulebook = new AssessmentRulebook();
+        serbianRulebook.setName(
+            Set.of(new MultiLingualContent(englishTag, "Serbian Rulebook", 1),
+                new MultiLingualContent(serbianTag, "Srpski Pravilnik", 2)));
+        serbianRulebook.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Description", 1),
+                new MultiLingualContent(serbianTag, "Opis", 2)));
+        serbianRulebook.setIssueDate(LocalDate.of(2025, 1, 15));
+
+        var measureM10 = new AssessmentMeasure();
+        measureM10.setTitle(Set.of(new MultiLingualContent(englishTag,
+                "Monographs, monographic studies, thematic collections, lexicographic and cartographic publications of international importance",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Monografije, monografske studije, tematski zbornici, leksikografske i kartografske publikacije međunarodnog značaja",
+                2)));
+        measureM10.setCode("M10");
+        measureM10.setPointRule("serbianPointsRulebook2025");
+        measureM10.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM10);
+
+        var measureM20 = new AssessmentMeasure();
+        measureM20.setTitle(Set.of(new MultiLingualContent(englishTag,
+                "Papers published in scientific journals of international importance", 1),
+            new MultiLingualContent(serbianTag,
+                "Radovi objavljeni u naučnim časopisima međunarodnog značaja", 2)));
+        measureM20.setCode("M20");
+        measureM20.setPointRule("serbianPointsRulebook2025");
+        measureM20.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM20);
+
+        var measureM30 = new AssessmentMeasure();
+        measureM30.setTitle(Set.of(new MultiLingualContent(englishTag,
+                "Proceedings of international scientific conferences", 1),
+            new MultiLingualContent(serbianTag, "Zbornici međunarodnih naučnih skupova", 2)));
+        measureM30.setCode("M30");
+        measureM30.setPointRule("serbianPointsRulebook2025");
+        measureM30.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM30);
+
+        var measureM40 = new AssessmentMeasure();
+        measureM40.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Monographs of national importance", 1),
+                new MultiLingualContent(serbianTag, "Monografije nacionalnog značaja", 2)));
+        measureM40.setCode("M40");
+        measureM40.setPointRule("serbianPointsRulebook2025");
+        measureM40.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM40);
+
+        var measureM50 = new AssessmentMeasure();
+        measureM50.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "Papers in journals of national importance", 1),
+            new MultiLingualContent(serbianTag, "Radovi u časopisima nacionalnog značaja", 2)));
+        measureM50.setCode("M50");
+        measureM50.setPointRule("serbianPointsRulebook2025");
+        measureM50.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM50);
+
+        var measureM60 = new AssessmentMeasure();
+        measureM60.setTitle(Set.of(new MultiLingualContent(englishTag,
+                "Proceedings of national scientific conferences, critical editing of sources", 1),
+            new MultiLingualContent(serbianTag,
+                "Zbornici nacionalnih naučnih skupova, kritičko priređivanje izvora", 2)));
+        measureM60.setCode("M60");
+        measureM60.setPointRule("serbianPointsRulebook2025");
+        measureM60.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM60);
+
+        var measureM70 = new AssessmentMeasure();
+        measureM70.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Defended doctoral dissertation", 1),
+                new MultiLingualContent(serbianTag, "Odbranjena doktorska disertacija", 2)));
+        measureM70.setCode("M70");
+        measureM70.setPointRule("serbianPointsRulebook2025");
+        measureM70.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM70);
+
+        var measureM80 = new AssessmentMeasure();
+        measureM80.setTitle(Set.of(new MultiLingualContent(englishTag, "Technical solutions", 1),
+            new MultiLingualContent(serbianTag, "Tehnička rešenja", 2)));
+        measureM80.setCode("M80");
+        measureM80.setPointRule("serbianPointsRulebook2025");
+        measureM80.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM80);
+
+        var measureM90 = new AssessmentMeasure();
+        measureM90.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Patents, varieties, breeds, or strains", 1),
+                new MultiLingualContent(serbianTag, "Patenti, sorte, rase ili sojevi", 2)));
+        measureM90.setCode("M90");
+        measureM90.setPointRule("serbianPointsRulebook2025");
+        measureM90.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM90);
+
+        assessmentMeasureRepository.saveAll(
+            List.of(measureM10, measureM20, measureM30, measureM40, measureM50, measureM60,
+                measureM70, measureM80, measureM90));
+        assessmentRulebookRepository.save(serbianRulebook);
     }
 }

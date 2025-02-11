@@ -284,6 +284,7 @@ public class DbInitializer implements ApplicationRunner {
         assessmentDataInitializer.initializeIndicators(englishTag, serbianTag);
         assessmentDataInitializer.initializeAssessmentClassifications(englishTag, serbianTag);
         var commission5 = assessmentDataInitializer.initializeCommissions(englishTag, serbianTag);
+        assessmentDataInitializer.initializeRulebooks(englishTag, serbianTag);
 
         ///////////////////// TESTING DATA /////////////////////
         if (Arrays.stream(environment.getActiveProfiles())

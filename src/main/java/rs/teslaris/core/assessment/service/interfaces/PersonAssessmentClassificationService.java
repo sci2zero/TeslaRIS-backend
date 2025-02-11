@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.dto.ResearcherAssessmentResponseDTO;
 
 @Service
 public interface PersonAssessmentClassificationService {
@@ -13,4 +14,7 @@ public interface PersonAssessmentClassificationService {
 
     void assessResearchers(LocalDate fromDate, Integer commissionId, Integer rulebookId,
                            List<Integer> researcherIds, List<Integer> orgUnitIds);
+
+    List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
+                                                                 Integer rulebookId);
 }

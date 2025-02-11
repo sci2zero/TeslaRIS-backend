@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,16 +69,17 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private final JournalIndexRepository journalIndexRepository;
 
-    private final String WOS_DIRECTORY = "src/main/resources/publicationSeriesIndicators/wos";
+    @Value("${assessment.indicators.publication-series.wos}")
+    private String WOS_DIRECTORY;
 
-    private final String SCIMAGO_DIRECTORY =
-        "src/main/resources/publicationSeriesIndicators/scimago";
+    @Value("${assessment.indicators.publication-series.scimago}")
+    private String SCIMAGO_DIRECTORY;
 
-    private final String ERIH_PLUS_DIRECTORY =
-        "src/main/resources/publicationSeriesIndicators/erihPlus";
+    @Value("${assessment.indicators.publication-series.erih-plus}")
+    private String ERIH_PLUS_DIRECTORY;
 
-    private final String SLAVISTS_DIRECTORY =
-        "src/main/resources/publicationSeriesIndicators/mks";
+    @Value("${assessment.indicators.publication-series.mks}")
+    private String SLAVISTS_DIRECTORY;
 
 
     @Autowired

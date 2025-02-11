@@ -49,6 +49,11 @@ public class AssessmentRulebook extends BaseEntity {
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.DETACH, orphanRemoval = true)
     private List<AssessmentMeasure> assessmentMeasures = new ArrayList<>();
+
+    public void addAssessmentMeasure(AssessmentMeasure assessmentMeasure) {
+        assessmentMeasures.add(assessmentMeasure);
+        assessmentMeasure.setRulebook(this);
+    }
 }

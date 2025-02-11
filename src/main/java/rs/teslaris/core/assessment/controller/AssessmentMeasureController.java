@@ -55,6 +55,12 @@ public class AssessmentMeasureController {
         return assessmentMeasureService.listAllScalingRules();
     }
 
+    @GetMapping("/assessment-groups")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_MEASURES')")
+    public List<String> readAssessmentGroups() {
+        return assessmentMeasureService.listAllGroupCodes();
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_MEASURES')")
     @ResponseStatus(HttpStatus.CREATED)

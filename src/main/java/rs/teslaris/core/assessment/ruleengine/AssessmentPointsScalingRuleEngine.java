@@ -12,9 +12,9 @@ public class AssessmentPointsScalingRuleEngine {
 
     private List<DocumentIndicator> currentEntityIndicators;
 
-    public double scalingRulebook2025(DocumentPublicationIndex personIndex,
-                                      String classificationCode, double points) {
-        var authorNumber = personIndex.getAuthorIds().size();
+    public double serbianScalingRulebook2025(DocumentPublicationIndex publicationIndex,
+                                             String classificationCode, Double points) {
+        var authorNumber = publicationIndex.getAuthorIds().size();
         var isExperimental = Objects.nonNull(findIndicatorByCode("isExperimental"));
         var isSimulation = Objects.nonNull(findIndicatorByCode("isSimulation"));
         var isM21aPlus = classificationCode.equals("docM21aPlus");
@@ -45,7 +45,12 @@ public class AssessmentPointsScalingRuleEngine {
             }
         }
 
-        return points;
+        // Treat it as experimental by default
+        if (authorNumber > 7) {
+            return points / (1 + 0.2 * (authorNumber - 7));
+        } else {
+            return points;
+        }
     }
 
     private EntityIndicator findIndicatorByCode(String code) {

@@ -25,7 +25,8 @@ public class AssessmentMeasureControllerTest extends BaseTest {
     private AssessmentMeasureDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        return new AssessmentMeasureDTO(null, "M21", "pointsRulebook2025", "scalingRulebook2025",
+        return new AssessmentMeasureDTO(null, "M21", "serbianPointsRulebook2025",
+            "serbianScalingRulebook2025",
             dummyMC, 1);
     }
 
@@ -70,6 +71,19 @@ public class AssessmentMeasureControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadAssessmentGroups() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/assessment/assessment-measure/assessment-groups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAssessmentMeasure() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
@@ -98,8 +112,8 @@ public class AssessmentMeasureControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_ASSESSMENT_MEASURE"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.pointRule").value("pointsRulebook2025"))
-            .andExpect(jsonPath("$.scalingRule").value("scalingRulebook2025"))
+            .andExpect(jsonPath("$.pointRule").value("serbianPointsRulebook2025"))
+            .andExpect(jsonPath("$.scalingRule").value("serbianScalingRulebook2025"))
             .andExpect(jsonPath("$.code").value("M21"));
     }
 
