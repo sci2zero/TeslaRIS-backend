@@ -169,4 +169,11 @@ public class ClassificationPriorityMapping {
         return GROUP_TO_CLASSIFICATIONS_MAPPING.getOrDefault(groupCode, List.of())
             .contains(classificationCode);
     }
+
+    public static String getCodeDisplayValue(String code) {
+        return code.toLowerCase()
+            .replace("doc", "")
+            .replace("m", "M")
+            .replace("plus", "+");
+    }
 }

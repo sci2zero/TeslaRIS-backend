@@ -23,7 +23,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     @Query("select d from Document d " +
         "join PersonDocumentContribution dc on d.id = dc.document.id " +
-        "join fetch d.contributors " +
+        "left join fetch d.contributors " +
         "where dc.person.id = :authorId")
     List<Document> getDocumentsForAuthorId(Integer authorId);
 

@@ -8,12 +8,14 @@ import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
@@ -111,7 +113,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     @Override
     public void assessResearchers(LocalDate fromDate, Integer commissionId, Integer rulebookId,
-                                  List<Integer> researcherIds, List<Integer> orgUnitIds) {
+                                  List<Integer> researcherIds, List<Integer> orgUnitIds,
+                                  LocalDate startDate, LocalDate endDate) {
         var commission = commissionService.findOneWithFetchedRelations(commissionId);
         var assessmentMeasures = assessmentRulebookRepository
             .readAssessmentMeasuresForRulebook(Pageable.unpaged(), rulebookId)
@@ -139,7 +142,8 @@ public class PersonAssessmentClassificationServiceImpl
 
             chunk.forEach(
                 personIndex -> processResearcher(personIndex, commission, assessmentMeasures,
-                    pointsRuleEngine, scalingRuleEngine, assessmentResult));
+                    pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
+                    endDate.getYear()));
 
             pageNumber++;
         }
@@ -147,7 +151,9 @@ public class PersonAssessmentClassificationServiceImpl
 
     @Override
     public List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
-                                                                        Integer rulebookId) {
+                                                                        Integer rulebookId,
+                                                                        LocalDate startDate,
+                                                                        LocalDate endDate) {
         var assessmentResponse = new ArrayList<ResearcherAssessmentResponseDTO>();
 
         var index = personIndexRepository.findByDatabaseId(researcherId);
@@ -172,7 +178,8 @@ public class PersonAssessmentClassificationServiceImpl
                         commission.getDescription()));
 
                 processResearcher(index.get(), commission, assessmentMeasures,
-                    pointsRuleEngine, scalingRuleEngine, assessmentResult);
+                    pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
+                    endDate.getYear());
                 assessmentResponse.add(assessmentResult);
             });
         });
@@ -184,7 +191,8 @@ public class PersonAssessmentClassificationServiceImpl
                                    List<AssessmentMeasure> assessmentMeasures,
                                    AssessmentPointsRuleEngine pointsRuleEngine,
                                    AssessmentPointsScalingRuleEngine scalingRuleEngine,
-                                   ResearcherAssessmentResponseDTO assessmentResult) {
+                                   ResearcherAssessmentResponseDTO assessmentResult,
+                                   int startYear, int endYear) {
         var researchArea = getResearchArea(personIndex.getDatabaseId(), commission);
 
         researchArea.ifPresent(
@@ -194,7 +202,8 @@ public class PersonAssessmentClassificationServiceImpl
                 }
 
                 assessResearcherPublication(personIndex, commission, assessmentMeasures,
-                    pointsRuleEngine, scalingRuleEngine, areaCode, assessmentResult);
+                    pointsRuleEngine, scalingRuleEngine, areaCode, startYear, endYear,
+                    assessmentResult);
             });
     }
 
@@ -212,7 +221,7 @@ public class PersonAssessmentClassificationServiceImpl
         List<AssessmentMeasure> measures,
         AssessmentPointsRuleEngine pointsRuleEngine,
         AssessmentPointsScalingRuleEngine scalingRuleEngine,
-        String researchAreaCode,
+        String researchAreaCode, int startYear, int endYear,
         ResearcherAssessmentResponseDTO assessmentResult) {
 
         int pageNumber = 0;
@@ -221,7 +230,7 @@ public class PersonAssessmentClassificationServiceImpl
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> publications =
-                fetchPublications(personIndex, pageNumber, chunkSize);
+                fetchPublications(personIndex, pageNumber, chunkSize, startYear, endYear);
             hasNextPage = publications.size() == chunkSize;
 
             for (DocumentPublicationIndex publication : publications) {
@@ -234,9 +243,11 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     private List<DocumentPublicationIndex> fetchPublications(PersonIndex personIndex,
-                                                             int pageNumber, int chunkSize) {
-        return documentPublicationIndexRepository.findByAuthorIds(personIndex.getDatabaseId(),
-            PageRequest.of(pageNumber, chunkSize)).getContent();
+                                                             int pageNumber, int chunkSize,
+                                                             int startYear, int endYear) {
+        return documentPublicationIndexRepository.findByAuthorIdsAndYearBetween(
+            personIndex.getDatabaseId(),
+            startYear, endYear, PageRequest.of(pageNumber, chunkSize)).getContent();
     }
 
     private void processPublication(
@@ -281,8 +292,9 @@ public class PersonAssessmentClassificationServiceImpl
         log.info("{} more points for {}", points, personIndex.getName());
 
         assessmentResult.getPublicationsPerCategory()
-            .computeIfAbsent(classificationCode, k -> new ArrayList<>())
-            .add(new Pair<>(publication.getTitleOther(), points));
+            .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(classificationCode),
+                k -> new ArrayList<>())
+            .add(new Pair<>(publication.getTitleOther(), isUserLoggedIn() ? points : 0));
     }
 
     private double calculatePoints(
@@ -345,5 +357,12 @@ public class PersonAssessmentClassificationServiceImpl
             throw new LoadingException(
                 "Error invoking method: " + methodName + ". Reason: " + e.getMessage());
         }
+    }
+
+    private boolean isUserLoggedIn() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        return !(Objects.isNull(authentication) || !authentication.isAuthenticated() ||
+            (authentication.getPrincipal() instanceof String &&
+                authentication.getPrincipal().equals("anonymousUser")));
     }
 }

@@ -155,9 +155,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             publicationSeriesAssessmentClassificationToUpdate);
     }
 
-    @Override
-    public void performJournalClassification(Integer commissionId,
-                                             List<Integer> classificationYears) {
+    private void performJournalClassification(Integer commissionId,
+                                              List<Integer> classificationYears,
+                                              List<Integer> journalIds) {
         var commission = commissionService.findOne(commissionId);
         var className = commission.getFormalDescriptionOfRule();
         JournalClassificationRuleEngine ruleEngine;
@@ -171,7 +171,11 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                 assessmentClassificationService);
 
             classificationYears.forEach((classificationYear) -> {
-                ruleEngine.startClassification(classificationYear, commission);
+                if (journalIds.isEmpty()) {
+                    ruleEngine.startClassification(classificationYear, commission);
+                } else {
+                    ruleEngine.startClassification(classificationYear, commission, journalIds);
+                }
             });
         } catch (ClassNotFoundException e) {
             log.error("Class not found: {}", className);
@@ -184,13 +188,15 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
     @Override
     public void scheduleClassification(LocalDateTime timeToRun, Integer commissionId,
-                                       Integer userId, List<Integer> classificationYears) {
+                                       Integer userId, List<Integer> classificationYears,
+                                       List<Integer> journalIds) {
         var commission = commissionService.findOne(commissionId);
         taskManagerService.scheduleTask(
             "Publication_Series_Classification-" + commission.getFormalDescriptionOfRule() +
                 "-" + StringUtils.join(classificationYears, "_") +
                 "-" + UUID.randomUUID(), timeToRun,
-            () -> performJournalClassification(commissionId, classificationYears), userId);
+            () -> performJournalClassification(commissionId, classificationYears, journalIds),
+            userId);
     }
 
     @Override

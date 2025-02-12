@@ -196,6 +196,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,
                     "/api/assessment/publication-series-indicator/{publicationSeriesId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/person-assessment-classification/assess/{personId}")
+                .permitAll()
 
                 // STATISTICS
                 .requestMatchers(HttpMethod.GET, "/api/statistics/{statisticsType}").permitAll()

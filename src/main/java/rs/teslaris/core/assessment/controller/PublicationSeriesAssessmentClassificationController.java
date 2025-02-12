@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -88,9 +89,11 @@ public class PublicationSeriesAssessmentClassificationController {
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("commissionId") Integer commissionId,
         @RequestParam("classificationYears") List<Integer> classificationYears,
+        @RequestParam(value = "journalIds", required = false) List<Integer> journalIds,
         @RequestHeader("Authorization") String bearerToken) {
         publicationSeriesAssessmentClassificationService.scheduleClassification(timestamp,
-            commissionId, tokenUtil.extractUserIdFromToken(bearerToken), classificationYears);
+            commissionId, tokenUtil.extractUserIdFromToken(bearerToken), classificationYears,
+            Objects.nonNull(journalIds) ? journalIds : List.of());
     }
 
     @PostMapping("/schedule-classification-load")

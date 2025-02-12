@@ -13,8 +13,11 @@ public interface PersonAssessmentClassificationService {
         Integer personId);
 
     void assessResearchers(LocalDate fromDate, Integer commissionId, Integer rulebookId,
-                           List<Integer> researcherIds, List<Integer> orgUnitIds);
+                           List<Integer> researcherIds, List<Integer> orgUnitIds,
+                           LocalDate startDate, LocalDate endDate);
 
     List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
-                                                                 Integer rulebookId);
+                                                                 Integer rulebookId,
+                                                                 LocalDate startDate,
+                                                                 LocalDate endDate);
 }

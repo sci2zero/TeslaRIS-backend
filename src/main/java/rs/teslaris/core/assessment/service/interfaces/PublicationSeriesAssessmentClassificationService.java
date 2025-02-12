@@ -21,10 +21,8 @@ public interface PublicationSeriesAssessmentClassificationService {
         Integer publicationSeriesAssessmentClassificationId,
         PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO);
 
-    void performJournalClassification(Integer commissionId, List<Integer> classificationYears);
-
     void scheduleClassification(LocalDateTime timeToRun, Integer commissionId, Integer userId,
-                                List<Integer> classificationYears);
+                                List<Integer> classificationYears, List<Integer> journalIds);
 
     void scheduleClassificationLoading(LocalDateTime timeToRun,
                                        EntityClassificationSource source,
