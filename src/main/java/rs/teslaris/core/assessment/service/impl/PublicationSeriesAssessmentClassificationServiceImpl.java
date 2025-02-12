@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import jakarta.validation.ValidationException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
@@ -116,6 +117,10 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     @Override
     public PublicationSeriesAssessmentClassification createPublicationSeriesAssessmentClassification(
         PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO) {
+        if (Objects.isNull(publicationSeriesAssessmentClassificationDTO.getClassificationYear())) {
+            throw new ValidationException("You have to provide classification year.");
+        }
+
         var newAssessmentClassification = new PublicationSeriesAssessmentClassification();
 
         setCommonFields(newAssessmentClassification, publicationSeriesAssessmentClassificationDTO);
@@ -131,6 +136,10 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     public void updatePublicationSeriesAssessmentClassification(
         Integer publicationSeriesAssessmentClassificationId,
         PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO) {
+        if (Objects.isNull(publicationSeriesAssessmentClassificationDTO.getClassificationYear())) {
+            throw new ValidationException("You have to provide classification year.");
+        }
+
         var publicationSeriesAssessmentClassificationToUpdate =
             publicationSeriesAssessmentClassificationJPAService.findOne(
                 publicationSeriesAssessmentClassificationId);

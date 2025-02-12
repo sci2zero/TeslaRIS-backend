@@ -18,6 +18,5 @@ public class EntityAssessmentClassificationDTO {
     @NotNull(message = "You have to provide assessment classification ID.")
     private Integer assessmentClassificationId;
 
-    @NotNull(message = "You have to provide classification year.")
     private Integer classificationYear;
 }

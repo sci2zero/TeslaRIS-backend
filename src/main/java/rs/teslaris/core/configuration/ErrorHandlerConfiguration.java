@@ -5,6 +5,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
 import org.hibernate.StaleStateException;
@@ -352,6 +353,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleSchedulingException(HttpServletRequest request,
                                           SchedulingException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ValidationException.class)
+    @ResponseBody
+    ErrorObject handleValidationException(HttpServletRequest request,
+                                          ValidationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }
