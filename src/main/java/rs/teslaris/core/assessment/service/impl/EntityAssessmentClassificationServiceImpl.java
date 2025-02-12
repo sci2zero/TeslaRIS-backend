@@ -21,11 +21,11 @@ public class EntityAssessmentClassificationServiceImpl
     extends JPAServiceImpl<EntityAssessmentClassification> implements
     EntityAssessmentClassificationService {
 
+    protected final CommissionService commissionService;
+
+    protected final AssessmentClassificationService assessmentClassificationService;
+
     private final EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
-
-    private final CommissionService commissionService;
-
-    private final AssessmentClassificationService assessmentClassificationService;
 
 
     @Override

@@ -393,7 +393,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     private String cleanIssn(String issn) {
-        return StringUtil.formatIssn(issn.trim().replace("N/A", ""));
+        return StringUtil.formatIssn(issn.trim().toUpperCase().replace("N/A", ""));
     }
 
     private void processIndicatorValues(String[] line,
@@ -524,7 +524,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 }
 
                 var valueToBeParsed =
-                    indicatorValue.replace("N/A", "").replaceAll("[,<>]", "");
+                    indicatorValue.toUpperCase().replace("N/A", "").replaceAll("[,<>]", "");
                 if (!valueToBeParsed.isEmpty()) {
                     newJournalIndicator.setNumericValue(
                         Double.parseDouble(valueToBeParsed) + correctionValue);

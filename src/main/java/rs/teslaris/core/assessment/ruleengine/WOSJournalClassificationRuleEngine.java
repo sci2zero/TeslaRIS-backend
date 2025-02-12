@@ -51,7 +51,7 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
     @Nullable
     @Override
     public AssessmentClassification handleM22(String category) {
-        return handlePercentileClassification("M22", category, 0.05);
+        return handlePercentileClassification("M22", category, 0.75);
     }
 
     @Nullable

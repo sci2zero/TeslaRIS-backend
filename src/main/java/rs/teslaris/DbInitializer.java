@@ -258,6 +258,7 @@ public class DbInitializer implements ApplicationRunner {
         var editPublicationSeriesAssessmentClassifications =
             new Privilege("EDIT_PUB_SERIES_ASSESSMENT_CLASSIFICATION");
         var editPubSeriesIndicators = new Privilege("EDIT_PUB_SERIES_INDICATORS");
+        var listAssessmentClassifications = new Privilege("LIST_ASSESSMENT_CLASSIFICATIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -276,7 +277,8 @@ public class DbInitializer implements ApplicationRunner {
                 claimDocument, mergePublisherPublications, mergePublishersMetadata,
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
                 editEntityAssessmentClassifications, editEventIndicators, editPubSeriesIndicators,
-                editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications));
+                editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
+                listAssessmentClassifications));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -295,7 +297,7 @@ public class DbInitializer implements ApplicationRunner {
                 forceDelete, switchEntityToUnmanaged, mergePublisherPublications, editLanguageTags,
                 mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
                 editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
-                editPublicationSeriesAssessmentClassifications
+                editPublicationSeriesAssessmentClassifications, listAssessmentClassifications
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -312,7 +314,7 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
                 editEventAssessmentClassification, updateProfile, editEventIndicators,
                 editPublicationSeriesAssessmentClassifications, editPubSeriesIndicators,
-                allowAccountTakeover
+                allowAccountTakeover, listAssessmentClassifications
             )));
 
         authorityRepository.saveAll(

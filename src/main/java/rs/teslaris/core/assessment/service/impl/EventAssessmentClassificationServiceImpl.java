@@ -39,8 +39,8 @@ public class EventAssessmentClassificationServiceImpl
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         EventService eventService) {
-        super(entityAssessmentClassificationRepository, commissionService,
-            assessmentClassificationService);
+        super(commissionService, assessmentClassificationService,
+            entityAssessmentClassificationRepository);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;

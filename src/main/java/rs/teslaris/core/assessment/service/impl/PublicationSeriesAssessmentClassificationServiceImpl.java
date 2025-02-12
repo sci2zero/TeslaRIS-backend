@@ -65,11 +65,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
     private final JournalIndexRepository journalIndexRepository;
 
-    private final CommissionService commissionService;
-
     private final TaskManagerService taskManagerService;
-
-    private final AssessmentClassificationService assessmentClassificationService;
 
     private final String RULE_ENGINE_BASE_PACKAGE =
         "rs.teslaris.core.assessment.ruleengine.";
@@ -81,20 +77,20 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
 
     @Autowired
-    public PublicationSeriesAssessmentClassificationServiceImpl(
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
-        CommissionService commissionService,
-        AssessmentClassificationService assessmentClassificationService,
-        PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
-        PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
-        PublicationSeriesService publicationSeriesService, JournalService journalService,
-        PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
-        JournalRepository journalRepository, JournalIndexRepository journalIndexRepository,
-        CommissionService commissionService1, TaskManagerService taskManagerService,
-        AssessmentClassificationService assessmentClassificationService1,
-        CsvDataLoader csvDataLoader) {
-        super(entityAssessmentClassificationRepository, commissionService,
-            assessmentClassificationService);
+    public PublicationSeriesAssessmentClassificationServiceImpl(CommissionService commissionService,
+                                                                AssessmentClassificationService assessmentClassificationService,
+                                                                EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
+                                                                PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
+                                                                PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
+                                                                PublicationSeriesService publicationSeriesService,
+                                                                JournalService journalService,
+                                                                PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
+                                                                JournalRepository journalRepository,
+                                                                JournalIndexRepository journalIndexRepository,
+                                                                TaskManagerService taskManagerService,
+                                                                CsvDataLoader csvDataLoader) {
+        super(commissionService, assessmentClassificationService,
+            entityAssessmentClassificationRepository);
         this.publicationSeriesAssessmentClassificationJPAService =
             publicationSeriesAssessmentClassificationJPAService;
         this.publicationSeriesAssessmentClassificationRepository =
@@ -104,9 +100,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.journalRepository = journalRepository;
         this.journalIndexRepository = journalIndexRepository;
-        this.commissionService = commissionService1;
         this.taskManagerService = taskManagerService;
-        this.assessmentClassificationService = assessmentClassificationService1;
         this.csvDataLoader = csvDataLoader;
     }
 

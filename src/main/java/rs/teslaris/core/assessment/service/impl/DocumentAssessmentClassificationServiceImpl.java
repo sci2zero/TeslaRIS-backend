@@ -26,8 +26,8 @@ public class DocumentAssessmentClassificationServiceImpl
         CommissionService commissionService,
         AssessmentClassificationService assessmentClassificationService,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository) {
-        super(entityAssessmentClassificationRepository, commissionService,
-            assessmentClassificationService);
+        super(commissionService, assessmentClassificationService,
+            entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
     }

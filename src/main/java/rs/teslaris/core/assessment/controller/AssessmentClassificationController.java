@@ -43,7 +43,7 @@ public class AssessmentClassificationController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasAnyAuthority('EDIT_ASSESSMENT_CLASSIFICATIONS', 'EDIT_EVENT_ASSESSMENT_CLASSIFICATION')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ASSESSMENT_CLASSIFICATIONS', 'LIST_ASSESSMENT_CLASSIFICATIONS')")
     public List<AssessmentClassificationDTO> getClassificationsApplicableToEntity(
         @RequestParam("applicableType") List<ApplicableEntityType> applicableEntityTypes) {
         return assessmentClassificationService.getAssessmentClassificationsApplicableToEntity(

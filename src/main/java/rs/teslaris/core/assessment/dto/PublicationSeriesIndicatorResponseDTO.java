@@ -5,6 +5,7 @@ import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 
 public record PublicationSeriesIndicatorResponseDTO(
     Integer id,
+
     Double numericValue,
 
     Boolean booleanValue,
