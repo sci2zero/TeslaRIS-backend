@@ -28,7 +28,7 @@ public class EntityIndicatorControllerTest extends BaseTest {
         dto.setFromDate(LocalDate.of(2023, 11, 10));
         dto.setToDate((LocalDate.of(2023, 12, 31)));
         dto.setIndicatorId(1);
-        dto.setEventId(2);
+        dto.setEventId(3);
 
         return dto;
     }

@@ -13,7 +13,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.assessment.service.interfaces.EntityIndicatorService;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditEntityIndicatorException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -22,11 +21,10 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RequiredArgsConstructor
 public class EntityIndicatorEditCheckAspect {
 
-    private final UserService userService;
-
     private final EntityIndicatorService entityIndicatorService;
 
     private final JwtUtil tokenUtil;
+
 
     @Around("@annotation(rs.teslaris.core.annotation.EntityIndicatorEditCheck)")
     public Object checkEntityIndicatorEdit(ProceedingJoinPoint joinPoint) throws Throwable {

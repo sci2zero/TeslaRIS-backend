@@ -20,5 +20,6 @@ public class NotificationConfiguration {
             List.of(NotificationAction.PERFORM_DEDUPLICATION));
         allowedActions.put(NotificationType.FOUND_POTENTIAL_CLAIMS,
             List.of(NotificationAction.BROWSE_CLAIMABLE_DOCUMENTS));
+        allowedActions.put(NotificationType.SCHEDULED_TASK_COMPLETED, List.of());
     }
 }

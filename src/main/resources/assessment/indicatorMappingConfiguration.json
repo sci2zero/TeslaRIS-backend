@@ -18,5 +18,135 @@
       "downloadsMonth": "LocalDateTime.now().minusDays(30)",
       "downloadsTotal": "LocalDateTime.of(1970, 1, 1, 0, 0)"
     }
+  },
+  "publicationSeriesCSVIndicatorMapping": {
+    "webOfScience": {
+      "source": "WEB_OF_SCIENCE",
+      "yearParseRegex": "\\b\\d{4}\\b",
+      "nameColumn": 0,
+      "eIssnColumn": 4,
+      "printIssnColumn": 3,
+      "categoryColumn": 5,
+      "defaultLanguage": "EN",
+      "parallelize": false,
+      "editionColumn": 6,
+      "columnMapping": {
+        "0": {
+          "mapsTo": "jcr",
+          "type": "INDEPENDENT"
+        },
+        "7": {
+          "mapsTo": "totalCitations",
+          "type": "INDEPENDENT"
+        },
+        "16": {
+          "mapsTo": "currentJIFRank",
+          "type": "BY_CATEGORY"
+        },
+        "15": {
+          "mapsTo": "fiveYearJIF",
+          "type": "INDEPENDENT"
+        },
+        "8": {
+          "mapsTo": "currentJIF",
+          "type": "INDEPENDENT"
+        },
+        "19": {
+          "mapsTo": "jciPercentile",
+          "type": "INDEPENDENT"
+        },
+        "21": {
+          "mapsTo": "eigenFactorNorm",
+          "type": "INDEPENDENT"
+        },
+        "22": {
+          "mapsTo": "ais",
+          "type": "INDEPENDENT"
+        },
+        "27": {
+          "mapsTo": "citedHL",
+          "type": "INDEPENDENT"
+        },
+        "28": {
+          "mapsTo": "citingHL",
+          "type": "INDEPENDENT"
+        },
+        "10": {
+          "mapsTo": "jci",
+          "type": "INDEPENDENT"
+        }
+      }
+    },
+    "scimago": {
+      "source": "SCIMAGO",
+      "yearParseRegex": "\\b\\d{4}\\b",
+      "nameColumn": 2,
+      "eIssnColumn": 4,
+      "printIssnColumn": 4,
+      "identifierDelimiter": ",",
+      "categoryDelimiter": ";",
+      "categoryFromIndicatorDiffRegex": "[A-Za-z ]*(?=\\()",
+      "discriminator": "3§journal",
+      "categoryColumn": 22,
+      "defaultLanguage": "EN",
+      "parallelize": true,
+      "columnMapping": {
+        "0": {
+          "mapsTo": "scimago",
+          "type": "INDEPENDENT"
+        },
+        "22": {
+          "mapsTo": "sjr",
+          "type": "BY_CATEGORY",
+          "parseRegex": "\\((Q\\d)\\)"
+        },
+        "7": {
+          "mapsTo": "hIndex",
+          "type": "INDEPENDENT"
+        },
+        "17": {
+          "mapsTo": "sdg",
+          "type": "INDEPENDENT"
+        },
+        "16": {
+          "mapsTo": "overton",
+          "type": "INDEPENDENT"
+        }
+      }
+    },
+    "erihPlus": {
+      "source": "ERIH_PLUS",
+      "yearParseRegex": "^\\d{4}-\\d{2}-\\d{2}",
+      "nameColumn": 4,
+      "eIssnColumn": 2,
+      "printIssnColumn": 1,
+      "categoryColumn": 6,
+      "defaultLanguage": "EN",
+      "parallelize": true,
+      "startDateColumn": 8,
+      "columnMapping": {
+        "0": {
+          "mapsTo": "erihPlus",
+          "type": "INDEPENDENT"
+        }
+      }
+    },
+    "mksSlavists": {
+      "source": "MKS_SLAVISTS",
+      "yearParseRegex": "^\\d{4}",
+      "nameColumn": 2,
+      "eIssnColumn": null,
+      "printIssnColumn": null,
+      "categoryColumn": 3,
+      "defaultLanguage": "EN",
+      "parallelize": true,
+      "startDateColumn": 4,
+      "columnMapping": {
+        "0": {
+          "mapsTo": "slavistiCategory",
+          "type": "BY_CATEGORY"
+        }
+      }
+    }
   }
 }

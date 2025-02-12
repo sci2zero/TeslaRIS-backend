@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,11 +13,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.converter.AssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.AssessmentClassificationDTO;
+import rs.teslaris.core.assessment.model.ApplicableEntityType;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 
 @RestController
@@ -37,6 +40,14 @@ public class AssessmentClassificationController {
         @PathVariable Integer assessmentClassificationId) {
         return assessmentClassificationService.readAssessmentClassification(
             assessmentClassificationId);
+    }
+
+    @GetMapping("/list")
+    @PreAuthorize("hasAnyAuthority('EDIT_ASSESSMENT_CLASSIFICATIONS', 'LIST_ASSESSMENT_CLASSIFICATIONS')")
+    public List<AssessmentClassificationDTO> getClassificationsApplicableToEntity(
+        @RequestParam("applicableType") List<ApplicableEntityType> applicableEntityTypes) {
+        return assessmentClassificationService.getAssessmentClassificationsApplicableToEntity(
+            applicableEntityTypes);
     }
 
     @PostMapping

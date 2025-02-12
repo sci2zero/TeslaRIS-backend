@@ -44,6 +44,11 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     @Override
     public List<IndicatorResponseDTO> getIndicatorsApplicableToEntity(
         List<ApplicableEntityType> applicableEntityTypes) {
+        if (!applicableEntityTypes.isEmpty() &&
+            !applicableEntityTypes.contains(ApplicableEntityType.ALL)) {
+            applicableEntityTypes.add(ApplicableEntityType.ALL);
+        }
+
         return indicatorRepository.getIndicatorsApplicableToEntity(applicableEntityTypes).stream()
             .map(IndicatorConverter::toDTO).collect(Collectors.toList());
     }

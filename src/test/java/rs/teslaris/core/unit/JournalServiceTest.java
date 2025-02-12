@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -30,6 +31,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
@@ -399,5 +401,116 @@ public class JournalServiceTest {
         verify(journalIndexRepository, never()).delete(any());
         verify(documentPublicationIndexRepository).deleteByJournalIdAndType(testJournalId,
             DocumentPublicationType.JOURNAL_PUBLICATION.name());
+    }
+
+    @Test
+    void shouldFindExistingPublicationSeriesWhenIssnSpecified() {
+        // Given
+        String[] line = {"dummy line"};
+        var defaultLanguageTag = "en";
+        var journalName = "Test Journal";
+        var eIssn = "1234-5678";
+        var printIssn = "8765-4321";
+        var issnSpecified = true;
+
+        var expectedPublicationSeries = new Journal();
+        expectedPublicationSeries.setPrintISSN("");
+        expectedPublicationSeries.setEISSN("");
+        when(publicationSeriesRepository.findPublicationSeriesByeISSNOrPrintISSN(eIssn, printIssn))
+            .thenReturn(Optional.of(expectedPublicationSeries));
+
+        // When
+        var result = journalService.findOrCreatePublicationSeries(
+            line, defaultLanguageTag, journalName, eIssn, printIssn, issnSpecified);
+
+        // Then
+        assertNotNull(result);
+        verify(publicationSeriesRepository).findPublicationSeriesByeISSNOrPrintISSN(eIssn,
+            printIssn);
+        verify(journalRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldCreateNewPublicationSeriesWhenIssnNotSpecified() {
+        // Given
+        String[] line = {"dummy line"};
+        var defaultLanguageTag = "en";
+        var journalName = "New Journal";
+        var eIssn = "1234-5678";
+        var printIssn = "8765-4321";
+        var issnSpecified = false;
+
+        var defaultLanguage = new LanguageTag();
+        defaultLanguage.setId(1);
+        when(languageTagService.findLanguageTagByValue(defaultLanguageTag)).thenReturn(
+            defaultLanguage);
+
+        when(searchService.runQuery(any(), any(), any(), anyString()))
+            .thenReturn(new PageImpl<>(List.of()));
+        when(journalJPAService.save(any())).thenReturn(new Journal());
+
+        // When
+        var result = journalService.findOrCreatePublicationSeries(
+            line, defaultLanguageTag, journalName, eIssn, printIssn, issnSpecified);
+
+        // Then
+        assertNotNull(result);
+        verify(languageTagService).findLanguageTagByValue(defaultLanguageTag);
+        verify(journalRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldFindJournalByMatchingNameIgnoringCase() {
+        // Given
+        var journalName = "Test Journal";
+        var eIssn = "1234-5678";
+        var printIssn = "8765-4321";
+
+        var defaultLanguage = new LanguageTag();
+        var potentialHit = new JournalIndex();
+        potentialHit.setTitleOther("Test Journal|Dummy Journal");
+        potentialHit.setDatabaseId(1);
+
+        var potentialHits = List.of(potentialHit);
+        when(searchService.runQuery(any(), any(), any(), anyString()))
+            .thenReturn(new PageImpl<>(potentialHits));
+        when(journalRepository.save(any())).thenReturn(new Journal());
+
+        var existingJournal = new Journal();
+        existingJournal.setEISSN(null);
+        existingJournal.setPrintISSN(null);
+
+        when(journalService.findJournalById(potentialHit.getDatabaseId())).thenReturn(
+            existingJournal);
+
+        // When
+        var result =
+            journalService.findJournalByJournalName(journalName, defaultLanguage, eIssn, printIssn);
+
+        // Then
+        assertNotNull(result);
+        verify(journalRepository).save(existingJournal);
+    }
+
+    @Test
+    void shouldCreateNewJournalWhenNoMatchFound() {
+        // Given
+        var journalName = "New Journal";
+        var eIssn = "1234-5678";
+        var printIssn = "8765-4321";
+
+        var defaultLanguage = new LanguageTag();
+        defaultLanguage.setId(1);
+        when(searchService.runQuery(any(), any(), any(), anyString()))
+            .thenReturn(new PageImpl<>(List.of()));
+        when(journalJPAService.save(any())).thenReturn(new Journal());
+
+        // When
+        var result =
+            journalService.findJournalByJournalName(journalName, defaultLanguage, eIssn, printIssn);
+
+        // Then
+        assertNotNull(result);
+        verify(searchService).runQuery(any(), any(), any(), anyString());
     }
 }

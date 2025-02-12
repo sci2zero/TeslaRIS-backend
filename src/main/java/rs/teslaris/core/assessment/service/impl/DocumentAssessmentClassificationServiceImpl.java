@@ -26,8 +26,8 @@ public class DocumentAssessmentClassificationServiceImpl
         CommissionService commissionService,
         AssessmentClassificationService assessmentClassificationService,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository) {
-        super(entityAssessmentClassificationRepository, commissionService,
-            assessmentClassificationService);
+        super(commissionService, assessmentClassificationService,
+            entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
     }
@@ -37,6 +37,7 @@ public class DocumentAssessmentClassificationServiceImpl
         Integer documentId) {
         return documentAssessmentClassificationRepository.findAssessmentClassificationsForDocument(
                 documentId).stream().map(EntityAssessmentClassificationConverter::toDTO)
+            .sorted((a, b) -> b.year().compareTo(a.year()))
             .collect(Collectors.toList());
     }
 }

@@ -1,0 +1,15 @@
+{
+  "mappings": {
+    "mno": {
+      "commissionId": 5,
+      "yearParseRegex": "\\d{4}",
+      "nameColumn": 2,
+      "issnColumn": 1,
+      "issnDelimiter": ",",
+      "classificationColumn": 4,
+      "categoryColumn": 5,
+      "defaultLanguage": "SR",
+      "parallelize": false
+    }
+  }
+}

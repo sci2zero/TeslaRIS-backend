@@ -5,10 +5,12 @@ import io.jsonwebtoken.MalformedJwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
 import org.hibernate.StaleStateException;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.SchedulingException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -344,5 +346,21 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleCantEditEntityIndicatorException(HttpServletRequest request,
                                                        CantEditEntityIndicatorException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(SchedulingException.class)
+    @ResponseBody
+    ErrorObject handleSchedulingException(HttpServletRequest request,
+                                          SchedulingException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ValidationException.class)
+    @ResponseBody
+    ErrorObject handleValidationException(HttpServletRequest request,
+                                          ValidationException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

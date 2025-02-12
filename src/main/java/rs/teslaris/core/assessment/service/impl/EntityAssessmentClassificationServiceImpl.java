@@ -21,11 +21,11 @@ public class EntityAssessmentClassificationServiceImpl
     extends JPAServiceImpl<EntityAssessmentClassification> implements
     EntityAssessmentClassificationService {
 
+    protected final CommissionService commissionService;
+
+    protected final AssessmentClassificationService assessmentClassificationService;
+
     private final EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
-
-    private final CommissionService commissionService;
-
-    private final AssessmentClassificationService assessmentClassificationService;
 
 
     @Override
@@ -42,6 +42,7 @@ public class EntityAssessmentClassificationServiceImpl
                                    EntityAssessmentClassificationDTO dto) {
         entityAssessmentClassification.setTimestamp(LocalDateTime.now());
         entityAssessmentClassification.setManual(true);
+        entityAssessmentClassification.setClassificationYear(dto.getClassificationYear());
 
         if (Objects.nonNull(dto.getCommissionId())) {
             entityAssessmentClassification.setCommission(

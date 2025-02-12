@@ -44,6 +44,12 @@ public class JournalController {
         return true;
     }
 
+    @GetMapping("/{journalId}/can-classify")
+    @PreAuthorize("hasAuthority('EDIT_PUB_SERIES_ASSESSMENT_CLASSIFICATION') and hasAuthority('EDIT_PUB_SERIES_INDICATORS')")
+    public boolean canClassifyJournal() {
+        return true;
+    }
+
     @GetMapping
     public Page<JournalResponseDTO> readAll(Pageable pageable) {
         return journalService.readAllJournals(pageable);

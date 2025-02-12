@@ -24,7 +24,7 @@ public class PersonIndicatorServiceImpl extends EntityIndicatorServiceImpl
         EntityIndicatorRepository entityIndicatorRepository,
         DocumentFileService documentFileService,
         IndicatorService indicatorService, PersonIndicatorRepository personIndicatorRepository) {
-        super(entityIndicatorRepository, documentFileService, indicatorService);
+        super(indicatorService, entityIndicatorRepository, documentFileService);
         this.personIndicatorRepository = personIndicatorRepository;
     }
 

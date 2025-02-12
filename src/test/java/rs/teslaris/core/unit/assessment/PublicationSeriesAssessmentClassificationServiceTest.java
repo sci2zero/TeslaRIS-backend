@@ -3,9 +3,13 @@ package rs.teslaris.core.unit.assessment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -13,12 +17,18 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
+import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.assessment.service.impl.PublicationSeriesAssessmentClassificationServiceImpl;
 import rs.teslaris.core.assessment.service.impl.cruddelegate.PublicationSeriesAssessmentClassificationJPAServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 
 @SpringBootTest
@@ -38,9 +48,25 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
     @Mock
     private PublicationSeriesService publicationSeriesService;
 
+    @Mock
+    private PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository;
+
+    @Mock
+    private JournalRepository journalRepository;
+
+    @Mock
+    private JournalIndexRepository journalIndexRepository;
+
+    @Mock
+    private CommissionService commissionService;
+
+    @Mock
+    private TaskManagerService taskManagerService;
+
     @InjectMocks
     private PublicationSeriesAssessmentClassificationServiceImpl
         publicationSeriesAssessmentClassificationService;
+
 
     @Test
     void shouldReadAllPublicationSeriesAssessmentClassificationsForPublicationSeries() {
@@ -54,11 +80,13 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
             new PublicationSeriesAssessmentClassification();
         publicationSeriesAssessmentClassification1.setAssessmentClassification(
             assessmentClassification);
+        publicationSeriesAssessmentClassification1.setClassificationYear(2025);
 
         var publicationSeriesAssessmentClassification2 =
             new PublicationSeriesAssessmentClassification();
         publicationSeriesAssessmentClassification2.setAssessmentClassification(
             assessmentClassification);
+        publicationSeriesAssessmentClassification2.setClassificationYear(2025);
 
         when(
             publicationSeriesAssessmentClassificationRepository.findAssessmentClassificationsForPublicationSeries(
@@ -78,10 +106,12 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
 
     @Test
     void shouldCreatePublicationSeriesAssessmentClassification() {
+        // given
         var publicationSeriesAssessmentClassificationDTO =
             new PublicationSeriesAssessmentClassificationDTO();
         publicationSeriesAssessmentClassificationDTO.setPublicationSeriesId(1);
         publicationSeriesAssessmentClassificationDTO.setAssessmentClassificationId(1);
+        publicationSeriesAssessmentClassificationDTO.setClassificationYear(2025);
 
         var newPublicationSeriesAssessmentClassification =
             new PublicationSeriesAssessmentClassification();
@@ -94,10 +124,12 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
             .thenReturn(newPublicationSeriesAssessmentClassification);
         when(assessmentClassificationService.findOne(1)).thenReturn(new AssessmentClassification());
 
+        // when
         var result =
             publicationSeriesAssessmentClassificationService.createPublicationSeriesAssessmentClassification(
                 publicationSeriesAssessmentClassificationDTO);
 
+        // then
         assertNotNull(result);
         verify(publicationSeriesAssessmentClassificationJPAService).save(
             any(PublicationSeriesAssessmentClassification.class));
@@ -105,11 +137,13 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
 
     @Test
     void shouldUpdatePublicationSeriesAssessmentClassification() {
+        // given
         var publicationSeriesAssessmentClassificationId = 1;
         var publicationSeriesAssessmentClassificationDTO =
             new PublicationSeriesAssessmentClassificationDTO();
         publicationSeriesAssessmentClassificationDTO.setPublicationSeriesId(1);
         publicationSeriesAssessmentClassificationDTO.setAssessmentClassificationId(1);
+        publicationSeriesAssessmentClassificationDTO.setClassificationYear(2025);
 
         var existingPublicationSeriesAssessmentClassification =
             new PublicationSeriesAssessmentClassification();
@@ -122,13 +156,40 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
         when(publicationSeriesService.findOne(1)).thenReturn(new Journal());
         when(assessmentClassificationService.findOne(1)).thenReturn(new AssessmentClassification());
 
+        // when
         publicationSeriesAssessmentClassificationService.updatePublicationSeriesAssessmentClassification(
             publicationSeriesAssessmentClassificationId,
             publicationSeriesAssessmentClassificationDTO);
 
+        // then
         verify(publicationSeriesAssessmentClassificationJPAService).findOne(
             publicationSeriesAssessmentClassificationId);
         verify(publicationSeriesAssessmentClassificationJPAService).save(
             existingPublicationSeriesAssessmentClassification);
+    }
+
+    @Test
+    void shouldScheduleClassification() {
+        // Given
+        var timeToRun = LocalDateTime.now().plusDays(1);
+        var commissionId = 1;
+        var userId = 42;
+        var classificationYears = List.of(2023, 2024);
+
+        var commission = new Commission();
+        commission.setFormalDescriptionOfRule("CustomRuleEngine");
+
+        when(commissionService.findOne(commissionId)).thenReturn(commission);
+
+        // When
+        publicationSeriesAssessmentClassificationService.scheduleClassification(timeToRun,
+            commissionId, userId, classificationYears);
+
+        // Then
+        verify(taskManagerService, times(1)).scheduleTask(
+            matches("Publication_Series_Classification-CustomRuleEngine-.*"),
+            eq(timeToRun),
+            any(Runnable.class),
+            eq(userId));
     }
 }

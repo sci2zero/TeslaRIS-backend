@@ -54,6 +54,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -90,6 +91,9 @@ public class ProceedingsPublicationServiceTest {
     @Mock
     private ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService;
 
+    @Mock
+    private ConferenceService conferenceService;
+
     @InjectMocks
     private ProceedingsPublicationServiceImpl proceedingsPublicationService;
 
@@ -117,14 +121,16 @@ public class ProceedingsPublicationServiceTest {
         publicationDTO.setProceedingsId(1);
         publicationDTO.setEventId(1);
         var document = new ProceedingsPublication();
+        var conference = new Conference();
+        conference.setId(1);
+        document.setEvent(conference);
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
         when(documentRepository.save(any())).thenReturn(document);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
-        when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(
-            new Conference());
+        when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(conference);
         when(proceedingPublicationJPAService.save(any())).thenReturn(document);
 
         var authentication = mock(Authentication.class);
@@ -154,12 +160,15 @@ public class ProceedingsPublicationServiceTest {
         var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
 
+        var conference = new Conference();
+        conference.setId(1);
+        publicationToUpdate.setEvent(conference);
+
         when(proceedingPublicationJPAService.findOne(publicationId)).thenReturn(
             publicationToUpdate);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings());
-        when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(
-            new Conference());
+        when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(conference);
         when(proceedingPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
 
         var authentication = mock(Authentication.class);
