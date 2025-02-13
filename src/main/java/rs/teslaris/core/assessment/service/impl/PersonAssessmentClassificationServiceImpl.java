@@ -44,6 +44,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -74,6 +75,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final UserRepository userRepository;
 
+    private final CitationService citationService;
+
 
     @Autowired
     public PersonAssessmentClassificationServiceImpl(
@@ -87,7 +90,8 @@ public class PersonAssessmentClassificationServiceImpl
         DocumentIndicatorRepository documentIndicatorRepository,
         AssessmentResearchAreaRepository assessmentResearchAreaRepository,
         AssessmentRulebookRepository assessmentRulebookRepository,
-        PersonIndexRepository personIndexRepository, UserRepository userRepository) {
+        PersonIndexRepository personIndexRepository, UserRepository userRepository,
+        CitationService citationService) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.personAssessmentClassificationRepository = personAssessmentClassificationRepository;
@@ -100,6 +104,7 @@ public class PersonAssessmentClassificationServiceImpl
         this.assessmentRulebookRepository = assessmentRulebookRepository;
         this.personIndexRepository = personIndexRepository;
         this.userRepository = userRepository;
+        this.citationService = citationService;
     }
 
     @Override
@@ -112,12 +117,12 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
-    public void assessResearchers(LocalDate fromDate, Integer commissionId, Integer rulebookId,
+    public void assessResearchers(LocalDate fromDate, Integer commissionId,
                                   List<Integer> researcherIds, List<Integer> orgUnitIds,
                                   LocalDate startDate, LocalDate endDate) {
         var commission = commissionService.findOneWithFetchedRelations(commissionId);
         var assessmentMeasures = assessmentRulebookRepository
-            .readAssessmentMeasuresForRulebook(Pageable.unpaged(), rulebookId)
+            .readAssessmentMeasuresForRulebook(Pageable.unpaged(), findDefaultRulebookId())
             .getContent();
 
         var assessmentResult = new ResearcherAssessmentResponseDTO();
@@ -151,7 +156,6 @@ public class PersonAssessmentClassificationServiceImpl
 
     @Override
     public List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
-                                                                        Integer rulebookId,
                                                                         LocalDate startDate,
                                                                         LocalDate endDate) {
         var assessmentResponse = new ArrayList<ResearcherAssessmentResponseDTO>();
@@ -162,7 +166,7 @@ public class PersonAssessmentClassificationServiceImpl
         }
 
         var assessmentMeasures = assessmentRulebookRepository
-            .readAssessmentMeasuresForRulebook(Pageable.unpaged(), rulebookId)
+            .readAssessmentMeasuresForRulebook(Pageable.unpaged(), findDefaultRulebookId())
             .getContent();
 
         index.get().getEmploymentInstitutionsIdHierarchy().forEach(institutionId -> {
@@ -291,10 +295,12 @@ public class PersonAssessmentClassificationServiceImpl
 
         log.info("{} more points for {}", points, personIndex.getName());
 
+        var citation = citationService.craftCitations(publication, "EN");
+
         assessmentResult.getPublicationsPerCategory()
             .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(classificationCode),
                 k -> new ArrayList<>())
-            .add(new Pair<>(publication.getTitleOther(), isUserLoggedIn() ? points : 0));
+            .add(new Pair<>(citation.getHarvard(), isUserLoggedIn() ? points : 0));
     }
 
     private double calculatePoints(
@@ -364,5 +370,11 @@ public class PersonAssessmentClassificationServiceImpl
         return !(Objects.isNull(authentication) || !authentication.isAuthenticated() ||
             (authentication.getPrincipal() instanceof String &&
                 authentication.getPrincipal().equals("anonymousUser")));
+    }
+
+    private Integer findDefaultRulebookId() {
+        return assessmentRulebookRepository.findDefaultRulebook().orElseGet(
+            () -> assessmentRulebookRepository.findById(1)
+                .orElseThrow(() -> new NotFoundException("noRulebooksDefinedMessage"))).getId();
     }
 }

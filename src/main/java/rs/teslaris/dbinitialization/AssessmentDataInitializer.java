@@ -681,12 +681,33 @@ public class AssessmentDataInitializer {
                 "A paper falls into this category when it uses computational models to mimic real-world processes or systems, or when it examines data, results, or systems to derive insights or conclusions.",
                 1),
             new MultiLingualContent(serbianTag,
-                "Rad pada u ovu kategoriju kada koristi računarske modele za oponašanje realnih procesa ili sistema, ili kada ispituje podatke, rezultate ili sisteme kako bi se izvukli uvidi ili zaključci.",
+                "Rad spada u ovu kategoriju kada koristi računarske modele za oponašanje realnih procesa ili sistema, ili kada ispituje podatke, rezultate ili sisteme kako bi se izvukli uvidi ili zaključci.",
                 2)
         ));
         isSimulation.setAccessLevel(AccessLevel.CLOSED);
         isSimulation.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
         isSimulation.setContentType(IndicatorContentType.BOOL);
+
+        var authorCount = new Indicator();
+        authorCount.setCode("revisedAuthorCount");
+        authorCount.setTitle(Set.of(
+            new MultiLingualContent(englishTag, "Revised author count",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Revidiran broj autora",
+                2)
+        ));
+        authorCount.setDescription(Set.of(
+            new MultiLingualContent(englishTag,
+                "When evaluating the results achieved in large international collaborations with 20 or more authors, where direct normalization would not provide a realistic assessment of the authors' contributions, the competent parent scientific committee verifies and grants full authorship on the published work of the collaboration only to a researcher from the list of authors who meet at least one of the criteria.",
+                1),
+            new MultiLingualContent(serbianTag,
+                "Prilikom vrednovanja rezultata ostvarenih u velikim međunarodnim kolaboracijama, koji imaju 20 ili više autora i čije direktno normiranje ne bi dalo realnu procenu doprinosa autora, nadležni matični naučni odbor verifikuje i priznaje puno autorstvo na objavljenom radu kolaboracije samo istraživaču sa liste autora koji ispunjavaju najmanje jedan od uslova.",
+                2)
+        ));
+        authorCount.setAccessLevel(AccessLevel.CLOSED);
+        authorCount.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
+        authorCount.setContentType(IndicatorContentType.NUMBER);
 
         indicatorRepository.saveAll(
             List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
@@ -695,7 +716,7 @@ public class AssessmentDataInitializer {
                 hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile,
                 numParticipants, organizedByScientificInstitution, slavistiCategory,
                 numCountriesInScientificCommittee, numParticipantCountries, numPresentations,
-                lectureInvitation, isTheoretical, isExperimental, isSimulation));
+                lectureInvitation, isTheoretical, isExperimental, isSimulation, authorCount));
     }
 
     public void initializeAssessmentClassifications(LanguageTag englishTag,
@@ -1193,6 +1214,7 @@ public class AssessmentDataInitializer {
             Set.of(new MultiLingualContent(englishTag, "Description", 1),
                 new MultiLingualContent(serbianTag, "Opis", 2)));
         serbianRulebook.setIssueDate(LocalDate.of(2025, 1, 15));
+        serbianRulebook.setIsDefault(true);
 
         var measureM10 = new AssessmentMeasure();
         measureM10.setTitle(Set.of(new MultiLingualContent(englishTag,

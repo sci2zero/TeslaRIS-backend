@@ -21,7 +21,8 @@ public class AssessmentRulebookConverter {
                 assessmentRulebook.getPublisher().getId() : null,
             Objects.nonNull(assessmentRulebook.getPublisher()) ?
                 MultilingualContentConverter.getMultilingualContentDTO(
-                    assessmentRulebook.getPublisher().getName()) : null
+                    assessmentRulebook.getPublisher().getName()) : null,
+            assessmentRulebook.getIsDefault()
         );
     }
 }

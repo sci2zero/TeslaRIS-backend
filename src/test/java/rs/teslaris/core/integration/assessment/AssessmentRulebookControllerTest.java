@@ -73,6 +73,20 @@ public class AssessmentRulebookControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testSetDefaultAssessmentRulebook() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/assessment/assessment-rulebook/set-default/{assessmentRulebookId}",
+                    1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateAssessmentRulebook() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 

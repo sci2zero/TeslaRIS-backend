@@ -115,6 +115,15 @@ public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRule
         delete(assessmentRulebookId);
     }
 
+    @Override
+    public void setDefaultRulebook(Integer assessmentRulebookId) {
+        var rulebook = findOne(assessmentRulebookId);
+        rulebook.setIsDefault(true);
+
+        assessmentRulebookRepository.setAllOthersAsNonDefault(assessmentRulebookId);
+        save(rulebook);
+    }
+
     private void setCommonFields(AssessmentRulebook assessmentRulebook, AssessmentRulebookDTO dto) {
         assessmentRulebook.setName(
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(

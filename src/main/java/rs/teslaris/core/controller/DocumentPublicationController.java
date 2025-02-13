@@ -22,10 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
+import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -46,11 +48,19 @@ public class DocumentPublicationController {
 
     private final PersonService personService;
 
+    private final CitationService citationService;
+
 
     @GetMapping("/{documentId}/can-edit")
     @PublicationEditCheck
     public boolean canEditDocumentPublication() {
         return true;
+    }
+
+    @GetMapping("/{documentId}/cite")
+    public CitationResponseDTO getDocumentCitations(@PathVariable Integer documentId,
+                                                    @RequestParam("lang") String lang) {
+        return citationService.craftCitations(documentId, lang.toUpperCase());
     }
 
     @GetMapping("/simple-search")

@@ -89,6 +89,7 @@ public class AssessmentRulebookController {
     }
 
     @PatchMapping("/{assessmentRulebookId}")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RULEBOOKS')")
     @Idempotent
     DocumentFileResponseDTO addPDFFile(@PathVariable Integer assessmentRulebookId,
                                        @ModelAttribute @Valid DocumentFileDTO documentFile) {
@@ -96,9 +97,17 @@ public class AssessmentRulebookController {
     }
 
     @DeleteMapping("/{assessmentRulebookId}/{documentFileId}")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RULEBOOKS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void addPDFFile(@PathVariable Integer assessmentRulebookId,
                     @PathVariable Integer documentFileId) {
         assessmentRulebookService.deletePDFFile(assessmentRulebookId, documentFileId);
+    }
+
+    @PatchMapping("/set-default/{rulebookId}")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RULEBOOKS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void setDefaultRulebook(@PathVariable Integer rulebookId) {
+        assessmentRulebookService.setDefaultRulebook(rulebookId);
     }
 }

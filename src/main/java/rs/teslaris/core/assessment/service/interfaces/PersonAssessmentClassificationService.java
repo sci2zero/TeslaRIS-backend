@@ -12,12 +12,11 @@ public interface PersonAssessmentClassificationService {
     List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForPerson(
         Integer personId);
 
-    void assessResearchers(LocalDate fromDate, Integer commissionId, Integer rulebookId,
+    void assessResearchers(LocalDate fromDate, Integer commissionId,
                            List<Integer> researcherIds, List<Integer> orgUnitIds,
                            LocalDate startDate, LocalDate endDate);
 
     List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
-                                                                 Integer rulebookId,
                                                                  LocalDate startDate,
                                                                  LocalDate endDate);
 }

@@ -250,6 +250,21 @@
             <artifactId>liquibase-core</artifactId>
             <version>4.30.0</version>
         </dependency>
+        <dependency>
+            <groupId>de.undercouch</groupId>
+            <artifactId>citeproc-java</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.citationstyles</groupId>
+            <artifactId>styles</artifactId>
+            <version>24.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.citationstyles</groupId>
+            <artifactId>locales</artifactId>
+            <version>24.3</version>
+        </dependency>
     </dependencies>
 
     <reporting>

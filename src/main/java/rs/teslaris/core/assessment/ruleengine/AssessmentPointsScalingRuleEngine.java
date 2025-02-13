@@ -15,6 +15,11 @@ public class AssessmentPointsScalingRuleEngine {
     public double serbianScalingRulebook2025(DocumentPublicationIndex publicationIndex,
                                              String classificationCode, Double points) {
         var authorNumber = publicationIndex.getAuthorIds().size();
+        var revisedAuthorNumber = findIndicatorByCode("revisedAuthorCount");
+        if (Objects.nonNull(revisedAuthorNumber)) {
+            authorNumber = revisedAuthorNumber.getNumericValue().intValue();
+        }
+
         var isExperimental = Objects.nonNull(findIndicatorByCode("isExperimental"));
         var isSimulation = Objects.nonNull(findIndicatorByCode("isSimulation"));
         var isM21aPlus = classificationCode.equals("docM21aPlus");

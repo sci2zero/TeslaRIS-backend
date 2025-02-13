@@ -41,6 +41,9 @@ public class AssessmentRulebook extends BaseEntity {
     @Column(name = "issue_date")
     private LocalDate issueDate;
 
+    @Column(name = "is_default")
+    private Boolean isDefault = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pdf_file_id")
     private DocumentFile pdfFile;

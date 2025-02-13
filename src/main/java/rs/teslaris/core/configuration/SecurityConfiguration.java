@@ -100,6 +100,7 @@ public class SecurityConfiguration {
 
                 // DOCUMENT
                 .requestMatchers(HttpMethod.GET, "/api/document/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/document/{documentId}/cite").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/for-researcher/{personId}")
                 .permitAll()

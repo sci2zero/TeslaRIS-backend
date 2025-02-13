@@ -41,14 +41,14 @@ public class PersonAssessmentClassificationController {
         if (Objects.isNull(endDate)) {
             endDate = LocalDate.now();
         }
-        return personAssessmentClassificationService.assessSingleResearcher(personId, 1, startDate,
+        return personAssessmentClassificationService.assessSingleResearcher(personId, startDate,
             endDate);
     }
 
     // TODO: remove, only for testing
     @PostMapping("/assess")
     public void assessResearchers() {
-        personAssessmentClassificationService.assessResearchers(LocalDate.of(2025, 1, 1), 5, 1,
+        personAssessmentClassificationService.assessResearchers(LocalDate.of(2025, 1, 1), 5,
             new ArrayList<>(), new ArrayList<>(), LocalDate.of(1970, 1, 1), LocalDate.now());
     }
 }

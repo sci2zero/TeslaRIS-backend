@@ -2,6 +2,7 @@ package rs.teslaris.core.unit.assessment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -139,6 +140,25 @@ public class AssessmentRulebookServiceTest {
 
         // Then
         verify(assessmentRulebookRepository).save(any());
+    }
+
+    @Test
+    void shouldSetDefaultRulebook() {
+        // Given
+        var assessmentRulebookId = 1;
+        var rulebook = new AssessmentRulebook();
+        rulebook.setIsDefault(false);
+
+        when(assessmentRulebookRepository.findById(assessmentRulebookId)).thenReturn(
+            Optional.of(rulebook));
+
+        // When
+        assessmentRulebookService.setDefaultRulebook(assessmentRulebookId);
+
+        // Then
+        assertTrue(rulebook.getIsDefault());
+        verify(assessmentRulebookRepository).setAllOthersAsNonDefault(assessmentRulebookId);
+        verify(assessmentRulebookRepository).save(rulebook);
     }
 
     @Test
