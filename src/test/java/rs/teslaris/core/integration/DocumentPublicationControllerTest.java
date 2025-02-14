@@ -33,9 +33,9 @@ public class DocumentPublicationControllerTest extends BaseTest {
     }
 
     @Test
-    public void testgetCitations() throws Exception {
+    public void testGetCitations() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(
-                "http://localhost:8081/api/document/{documentId}/cite?lang=en", 3)
+                "http://localhost:8081/api/document/{documentId}/cite?lang=en", 5)
             .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
