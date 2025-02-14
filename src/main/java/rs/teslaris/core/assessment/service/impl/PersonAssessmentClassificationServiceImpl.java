@@ -24,6 +24,7 @@ import rs.teslaris.core.assessment.dto.ResearcherAssessmentResponseDTO;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.assessment.model.AssessmentResearchArea;
 import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.assessment.model.EntityAssessmentClassification;
 import rs.teslaris.core.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRepository;
@@ -264,15 +265,17 @@ public class PersonAssessmentClassificationServiceImpl
         PersonIndex personIndex,
         ResearcherAssessmentResponseDTO assessmentResult) {
 
-        var classificationOpt = documentAssessmentClassificationRepository
+        var classifications = documentAssessmentClassificationRepository
             .findAssessmentClassificationsForDocumentAndCommission(publication.getDatabaseId(),
                 commission.getId());
 
-        if (classificationOpt.isEmpty()) {
+        if (classifications.isEmpty()) {
             return;
         }
 
-        var classification = classificationOpt.get();
+        var classification = classifications.stream().filter(
+                EntityAssessmentClassification::getManual).findFirst()
+            .orElseGet(() -> classifications.stream().findFirst().get());
         var classificationCode = classification.getAssessmentClassification().getCode();
 
         var applicableMeasureOpt = measures.stream()

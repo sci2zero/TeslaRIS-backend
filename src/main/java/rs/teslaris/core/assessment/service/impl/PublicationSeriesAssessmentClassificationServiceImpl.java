@@ -290,7 +290,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         var publicationSeries = findOrCreatePublicationSeries(line, mapping, issnDetails);
 
         var classification =
-            assessmentClassificationService.readAssessmentClassificationByCode(classificationCode);
+            assessmentClassificationService.readAssessmentClassificationByCode(
+                "journal" + classificationCode);
         var category = line[mapping.categoryColumn()].trim();
 
         for (var discriminator : mapping.discriminators()) {

@@ -33,31 +33,31 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
     @Override
     @Transactional
     public AssessmentClassification handleM21APlus(String category) {
-        return handlePercentileClassification("M21APlus", category, 0.05);
+        return handlePercentileClassification("journalM21APlus", category, 0.05);
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM21A(String category) {
-        return handlePercentileClassification("M21A", category, 0.15);
+        return handlePercentileClassification("journalM21A", category, 0.15);
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM21(String category) {
-        return handlePercentileClassification("M21", category, 0.35);
+        return handlePercentileClassification("journalM21", category, 0.35);
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM22(String category) {
-        return handlePercentileClassification("M22", category, 0.05);
+        return handlePercentileClassification("journalM22", category, 0.05);
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM23(String category) {
-        return handlePercentileClassification("M23", category, 1.0);
+        return handlePercentileClassification("journalM23", category, 1.0);
     }
 
     @Nullable
@@ -73,7 +73,8 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
         var jcrConditionPassed = Objects.nonNull(jcr) && jcr.getBooleanValue();
 
         if (jcrConditionPassed) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M24Plus");
+            return assessmentClassificationService.readAssessmentClassificationByCode(
+                "journalM24Plus");
         }
 
         return null;

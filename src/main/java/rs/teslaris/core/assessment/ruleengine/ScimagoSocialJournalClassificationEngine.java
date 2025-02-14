@@ -50,7 +50,7 @@ public class ScimagoSocialJournalClassificationEngine extends JournalClassificat
         var sjr = findIndicatorByCode("sjr", category);
 
         if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q1")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M22");
+            return assessmentClassificationService.readAssessmentClassificationByCode("journalM22");
         }
 
         return null;
@@ -62,7 +62,7 @@ public class ScimagoSocialJournalClassificationEngine extends JournalClassificat
         var sjr = findIndicatorByCode("sjr", category);
 
         if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q2")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M23");
+            return assessmentClassificationService.readAssessmentClassificationByCode("journalM23");
         }
 
         return null;

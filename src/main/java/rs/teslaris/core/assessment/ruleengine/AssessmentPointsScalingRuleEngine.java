@@ -22,7 +22,7 @@ public class AssessmentPointsScalingRuleEngine {
 
         var isExperimental = Objects.nonNull(findIndicatorByCode("isExperimental"));
         var isSimulation = Objects.nonNull(findIndicatorByCode("isSimulation"));
-        var isM21aPlus = classificationCode.equals("docM21aPlus");
+        var isM21aPlus = classificationCode.equals("M21aPlus");
         var isTheoretical = Objects.nonNull(findIndicatorByCode("isTheoretical"));
 
         // Theoretical works (up to 3 authors, otherwise scale)

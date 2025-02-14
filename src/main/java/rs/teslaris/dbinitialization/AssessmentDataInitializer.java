@@ -721,115 +721,115 @@ public class AssessmentDataInitializer {
 
     public void initializeAssessmentClassifications(LanguageTag englishTag,
                                                     LanguageTag serbianTag) {
-        var m21APlus = new AssessmentClassification();
-        m21APlus.setFormalDescriptionOfRule("handleM21APlus");
-        m21APlus.setCode("M21APlus");
-        m21APlus.setTitle(
+        var journalM21APlus = new AssessmentClassification();
+        journalM21APlus.setFormalDescriptionOfRule("handleM21APlus");
+        journalM21APlus.setCode("journalM21APlus");
+        journalM21APlus.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21A+.",
                     1)));
-        m21APlus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM21APlus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m21A = new AssessmentClassification();
-        m21A.setFormalDescriptionOfRule("handleM21A");
-        m21A.setCode("M21A");
-        m21A.setTitle(
+        var journalM21A = new AssessmentClassification();
+        journalM21A.setFormalDescriptionOfRule("handleM21A");
+        journalM21A.setCode("journalM21A");
+        journalM21A.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21A.",
                     1)));
-        m21A.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM21A.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m21 = new AssessmentClassification();
-        m21.setFormalDescriptionOfRule("handleM21");
-        m21.setCode("M21");
-        m21.setTitle(
+        var journalM21 = new AssessmentClassification();
+        journalM21.setFormalDescriptionOfRule("handleM21");
+        journalM21.setCode("journalM21");
+        journalM21.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21.",
                     1)));
-        m21.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM21.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m22 = new AssessmentClassification();
-        m22.setFormalDescriptionOfRule("handleM22");
-        m22.setCode("M22");
-        m22.setTitle(
+        var journalM22 = new AssessmentClassification();
+        journalM22.setFormalDescriptionOfRule("handleM22");
+        journalM22.setCode("journalM22");
+        journalM22.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M22.",
                     1)));
-        m22.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM22.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m23 = new AssessmentClassification();
-        m23.setFormalDescriptionOfRule("handleM23");
-        m23.setCode("M23");
-        m23.setTitle(
+        var journalM23 = new AssessmentClassification();
+        journalM23.setFormalDescriptionOfRule("handleM23");
+        journalM23.setCode("journalM23");
+        journalM23.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M23.",
                     1)));
-        m23.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM23.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m23e = new AssessmentClassification();
-        m23e.setFormalDescriptionOfRule("handleM23e");
-        m23e.setCode("M23e");
-        m23e.setTitle(
+        var journalM23e = new AssessmentClassification();
+        journalM23e.setFormalDescriptionOfRule("handleM23e");
+        journalM23e.setCode("journalM23e");
+        journalM23e.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M23e.",
                     1)));
-        m23e.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM23e.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m24plus = new AssessmentClassification();
-        m24plus.setFormalDescriptionOfRule("handleM24plus");
-        m24plus.setCode("M24Plus");
-        m24plus.setTitle(
+        var journalM24plus = new AssessmentClassification();
+        journalM24plus.setFormalDescriptionOfRule("handleM24plus");
+        journalM24plus.setCode("journalM24Plus");
+        journalM24plus.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M24+.",
                     1)));
-        m24plus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM24plus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m24 = new AssessmentClassification();
-        m24.setFormalDescriptionOfRule("handleM24");
-        m24.setCode("M24");
-        m24.setTitle(
+        var journalM24 = new AssessmentClassification();
+        journalM24.setFormalDescriptionOfRule("handleM24");
+        journalM24.setCode("journalM24");
+        journalM24.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "Vodeći nacionalni časopis kategorije M24.",
                     1)));
-        m24.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM24.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m51 = new AssessmentClassification();
-        m51.setFormalDescriptionOfRule("handleM51");
-        m51.setCode("M51");
-        m51.setTitle(
+        var journalM51 = new AssessmentClassification();
+        journalM51.setFormalDescriptionOfRule("handleM51");
+        journalM51.setCode("journalM51");
+        journalM51.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Vodeći nacionalni časopis kategorije M51.",
                     1)));
-        m51.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM51.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m52 = new AssessmentClassification();
-        m52.setFormalDescriptionOfRule("handleM52");
-        m52.setCode("M52");
-        m52.setTitle(
+        var journalM52 = new AssessmentClassification();
+        journalM52.setFormalDescriptionOfRule("handleM52");
+        journalM52.setCode("journalM52");
+        journalM52.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Nacionalni časopis kategorije M52.",
                     1)));
-        m52.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM52.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m53 = new AssessmentClassification();
-        m53.setFormalDescriptionOfRule("handleM53");
-        m53.setCode("M53");
-        m53.setTitle(
+        var journalM53 = new AssessmentClassification();
+        journalM53.setFormalDescriptionOfRule("handleM53");
+        journalM53.setCode("journalM53");
+        journalM53.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "Nacionalni časopis kategorije M53.",
                     1)));
-        m53.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM53.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
-        var m54 = new AssessmentClassification();
-        m54.setFormalDescriptionOfRule("handleM54");
-        m54.setCode("M54");
-        m54.setTitle(
+        var journalM54 = new AssessmentClassification();
+        journalM54.setFormalDescriptionOfRule("handleM54");
+        journalM54.setCode("journalM54");
+        journalM54.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "Nacionalni naučni časopis koji se prvi put kategoriše.",
                     1)));
-        m54.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
+        journalM54.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var multinationalConf = new AssessmentClassification();
         multinationalConf.setFormalDescriptionOfRule("multinationalConference");
@@ -858,135 +858,135 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag, "Technical (non-academic) conference.", 1)));
         nonAcademicConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
 
-        var docM21APlus = new AssessmentClassification();
-        docM21APlus.setFormalDescriptionOfRule("handleDocM21APlus");
-        docM21APlus.setCode("docM21APlus");
-        docM21APlus.setTitle(
+        var M21APlus = new AssessmentClassification();
+        M21APlus.setFormalDescriptionOfRule("handleM21APlus");
+        M21APlus.setCode("M21APlus");
+        M21APlus.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M21a+",
                     1)));
-        docM21APlus.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M21APlus.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM21A = new AssessmentClassification();
-        docM21A.setFormalDescriptionOfRule("handleDocM21A");
-        docM21A.setCode("docM21A");
-        docM21A.setTitle(
+        var M21A = new AssessmentClassification();
+        M21A.setFormalDescriptionOfRule("handleM21A");
+        M21A.setCode("M21A");
+        M21A.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M21a",
                     1)));
-        docM21A.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M21A.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM21 = new AssessmentClassification();
-        docM21.setFormalDescriptionOfRule("handleDocM21");
-        docM21.setCode("docM21");
-        docM21.setTitle(
+        var M21 = new AssessmentClassification();
+        M21.setFormalDescriptionOfRule("handleM21");
+        M21.setCode("M21");
+        M21.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M21",
                     1)));
-        docM21.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M21.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM22 = new AssessmentClassification();
-        docM22.setFormalDescriptionOfRule("handleDocM22");
-        docM22.setCode("docM22");
-        docM22.setTitle(
+        var M22 = new AssessmentClassification();
+        M22.setFormalDescriptionOfRule("handleM22");
+        M22.setCode("M22");
+        M22.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M22",
                     1)));
-        docM22.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M22.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM23 = new AssessmentClassification();
-        docM23.setFormalDescriptionOfRule("handleDocM23");
-        docM23.setCode("docM23");
-        docM23.setTitle(
+        var M23 = new AssessmentClassification();
+        M23.setFormalDescriptionOfRule("handleM23");
+        M23.setCode("M23");
+        M23.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M23",
                     1)));
-        docM23.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M23.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM23e = new AssessmentClassification();
-        docM23e.setFormalDescriptionOfRule("handleDocM23e");
-        docM23e.setCode("docM23e");
-        docM23e.setTitle(
+        var M23e = new AssessmentClassification();
+        M23e.setFormalDescriptionOfRule("handleM23e");
+        M23e.setCode("M23e");
+        M23e.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M23e",
                     1)));
-        docM23e.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M23e.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM24plus = new AssessmentClassification();
-        docM24plus.setFormalDescriptionOfRule("handleDocM24plus");
-        docM24plus.setCode("docM24Plus");
-        docM24plus.setTitle(
+        var M24plus = new AssessmentClassification();
+        M24plus.setFormalDescriptionOfRule("handleM24plus");
+        M24plus.setCode("M24Plus");
+        M24plus.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M24+",
                     1)));
-        docM24plus.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M24plus.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM24 = new AssessmentClassification();
-        docM24.setFormalDescriptionOfRule("handleDocM24");
-        docM24.setCode("docM24");
-        docM24.setTitle(
+        var M24 = new AssessmentClassification();
+        M24.setFormalDescriptionOfRule("handleM24");
+        M24.setCode("M24");
+        M24.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "M24",
                     1)));
-        docM24.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M24.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM26 = new AssessmentClassification();
-        docM26.setFormalDescriptionOfRule("handleDocM26");
-        docM26.setCode("M26");
-        docM26.setTitle(
+        var M26 = new AssessmentClassification();
+        M26.setFormalDescriptionOfRule("handleM26");
+        M26.setCode("M26");
+        M26.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "M26",
                     1)));
-        docM26.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M26.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM27 = new AssessmentClassification();
-        docM27.setFormalDescriptionOfRule("handleDocM27");
-        docM27.setCode("M27");
-        docM27.setTitle(
+        var M27 = new AssessmentClassification();
+        M27.setFormalDescriptionOfRule("handleM27");
+        M27.setCode("M27");
+        M27.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "M27",
                     1)));
-        docM27.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M27.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM51 = new AssessmentClassification();
-        docM51.setFormalDescriptionOfRule("handleDocM51");
-        docM51.setCode("docM51");
-        docM51.setTitle(
+        var M51 = new AssessmentClassification();
+        M51.setFormalDescriptionOfRule("handleM51");
+        M51.setCode("M51");
+        M51.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M51",
                     1)));
-        docM51.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M51.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM52 = new AssessmentClassification();
-        docM52.setFormalDescriptionOfRule("handleDocM52");
-        docM52.setCode("docM52");
-        docM52.setTitle(
+        var M52 = new AssessmentClassification();
+        M52.setFormalDescriptionOfRule("handleM52");
+        M52.setCode("M52");
+        M52.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M52",
                     1)));
-        docM52.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M52.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM53 = new AssessmentClassification();
-        docM53.setFormalDescriptionOfRule("handleDocM53");
-        docM53.setCode("docM53");
-        docM53.setTitle(
+        var M53 = new AssessmentClassification();
+        M53.setFormalDescriptionOfRule("handleM53");
+        M53.setCode("M53");
+        M53.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag, "M53",
                     1)));
-        docM53.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M53.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
-        var docM54 = new AssessmentClassification();
-        docM54.setFormalDescriptionOfRule("handleDocM54");
-        docM54.setCode("docM54");
-        docM54.setTitle(
+        var M54 = new AssessmentClassification();
+        M54.setFormalDescriptionOfRule("handleM54");
+        M54.setCode("M54");
+        M54.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "M54",
                     1)));
-        docM54.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M54.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
         var m31 = new AssessmentClassification();
         m31.setFormalDescriptionOfRule("handleM31");
@@ -1079,9 +1079,11 @@ public class AssessmentDataInitializer {
         m69.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
         assessmentClassificationRepository.saveAll(
-            List.of(m21APlus, m21A, m21, m22, m23, m23e, m24plus, multinationalConf, nationalConf,
-                nonAcademicConf, m51, m52, m53, m54, m24, docM21APlus, docM21A, docM21, docM22,
-                docM23, docM23e, docM24plus, docM24, docM51, docM52, docM53, docM54, docM26, docM27,
+            List.of(journalM21APlus, journalM21A, journalM21, journalM22, journalM23, journalM23e,
+                journalM24plus, multinationalConf, nationalConf,
+                nonAcademicConf, journalM51, journalM52, journalM53, journalM54, journalM24,
+                M21APlus, M21A, M21, M22,
+                M23, M23e, M24plus, M24, M51, M52, M53, M54, M26, M27,
                 m31, m32, m33,
                 m34, m61, m62, m63, m64, m69));
     }

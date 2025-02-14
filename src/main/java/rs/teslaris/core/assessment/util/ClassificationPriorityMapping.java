@@ -1,5 +1,9 @@
 package rs.teslaris.core.assessment.util;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -7,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
@@ -14,64 +19,16 @@ import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
 public class ClassificationPriorityMapping {
 
-    private static final Map<String, Integer> CLASSIFICATION_PRIORITIES = Map.ofEntries(
-        // JOURNALS
-        Map.entry("M21APlus", 1),
-        Map.entry("M21A", 2),
-        Map.entry("M21", 3),
-        Map.entry("M22", 4),
-        Map.entry("M23", 5),
-        Map.entry("M23e", 6),
-        Map.entry("M24Plus", 7),
-        Map.entry("M24", 8),
-        Map.entry("M51", 9),
-        Map.entry("M52", 10),
-        Map.entry("M53", 11),
-        Map.entry("M54", 12),
-
-        // CONFERENCES
-        Map.entry("multinationalConf", 13),
-        Map.entry("nationalConf", 14)
-    );
-
-    private static final Map<String, String> CLASSIFICATION_TO_ASSESSMENT_MAPPING = Map.ofEntries(
-        Map.entry("M21APlus", "docM21APlus"),
-        Map.entry("M21A", "docM21A"),
-        Map.entry("M21", "docM21"),
-        Map.entry("M22", "docM22"),
-        Map.entry("M23", "docM23"),
-        Map.entry("M23e", "docM23e"),
-        Map.entry("M24Plus", "docM24Plus"),
-        Map.entry("M24", "docM24"),
-        Map.entry("M51", "docM51"),
-        Map.entry("M52", "docM52"),
-        Map.entry("M53", "docM53"),
-        Map.entry("M54", "docM54"),
-        Map.entry("multinationalConf", "M30"),
-        Map.entry("nationalConf", "M60")
-    );
-
-    private static final Map<String, List<String>> GROUP_TO_CLASSIFICATIONS_MAPPING = Map.ofEntries(
-        Map.entry("M10", List.of("M11", "M12", "M13", "M14", "M15", "M16")),
-        Map.entry("M20",
-            List.of("docM21APlus", "docM21A", "docM21", "docM22", "docM23", "docM23e", "docM24Plus",
-                "docM24")),
-        Map.entry("M30", List.of("M31", "M32", "M33", "M34")),
-        Map.entry("M40", List.of("M41", "M42", "M43", "M44", "M45", "M46", "M47")),
-        Map.entry("M50", List.of("docM51", "docM52", "docM53", "docM54", "M56", "M57")),
-        Map.entry("M60", List.of("M61", "M62", "M63", "M64", "M67", "M68", "M69")),
-        Map.entry("M70", List.of("M70")),
-        Map.entry("M80", List.of("M81", "M82", "M83", "M84")),
-        Map.entry("M90", List.of("M91a", "M91", "M62", "M93", "M94", "M95", "M96", "M97", "M98"))
-    );
-
     private static ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     private static JournalPublicationRepository journalPublicationRepository;
+
+    private static AssessmentConfig assessmentConfig;
 
     @Autowired
     public ClassificationPriorityMapping(
@@ -80,8 +37,27 @@ public class ClassificationPriorityMapping {
         ClassificationPriorityMapping.proceedingsPublicationRepository =
             proceedingsPublicationRepository;
         ClassificationPriorityMapping.journalPublicationRepository = journalPublicationRepository;
+        reloadConfiguration();
     }
 
+    @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
+    private static void reloadConfiguration() {
+        try {
+            loadConfiguration();
+        } catch (IOException e) {
+            throw new StorageException(
+                "Failed to reload indicator mapping configuration: " + e.getMessage());
+        }
+    }
+
+    private static synchronized void loadConfiguration() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        assessmentConfig = objectMapper.readValue(
+            new FileInputStream(
+                "src/main/resources/assessment/assessmentConfiguration.json"),
+            AssessmentConfig.class
+        );
+    }
 
     public static Optional<AssessmentClassification> getClassificationBasedOnCriteria(
         ArrayList<AssessmentClassification> classifications,
@@ -89,11 +65,11 @@ public class ClassificationPriorityMapping {
         return switch (resultCalculationMethod) {
             case BEST_VALUE -> classifications.stream()
                 .min(Comparator.comparingInt(
-                    assessmentClassification -> CLASSIFICATION_PRIORITIES.getOrDefault(
+                    assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
                         assessmentClassification.getCode(), Integer.MAX_VALUE)));
             case WORST_VALUE -> classifications.stream()
                 .max(Comparator.comparingInt(
-                    assessmentClassification -> CLASSIFICATION_PRIORITIES.getOrDefault(
+                    assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
                         assessmentClassification.getCode(), Integer.MIN_VALUE)));
         };
     }
@@ -101,7 +77,8 @@ public class ClassificationPriorityMapping {
     public static Optional<String> getDocClassificationCodeBasedOnCode(
         String classificationCode, Integer documentId) {
 
-        String documentCode = CLASSIFICATION_TO_ASSESSMENT_MAPPING.get(classificationCode);
+        String documentCode =
+            assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
 
         if (Objects.isNull(documentCode)) {
             return Optional.empty();
@@ -113,8 +90,9 @@ public class ClassificationPriorityMapping {
                     proceedingsPublication.getProceedingsPublicationType()));
         }
 
-        if (documentCode.equals("docM24") || CLASSIFICATION_PRIORITIES.get(classificationCode) <
-            CLASSIFICATION_PRIORITIES.get("M24")) {
+        if (documentCode.equals("M24") ||
+            assessmentConfig.classificationPriorities.get(classificationCode) <
+                assessmentConfig.classificationPriorities.get("journalM24")) {
             return journalPublicationRepository.findById(documentId).flatMap(
                 journalPublication -> getMappedCode(documentCode,
                     journalPublication.getJournalPublicationType()));
@@ -156,24 +134,30 @@ public class ClassificationPriorityMapping {
         );
 
         return Optional.ofNullable(
-            baseCode.equals("docM24") ? mappingM26.getOrDefault(type, baseCode) :
+            baseCode.equals("M24") ? mappingM26.getOrDefault(type, baseCode) :
                 mappingM27.getOrDefault(type, baseCode)
         );
     }
 
     public static List<String> getAssessmentGroups() {
-        return GROUP_TO_CLASSIFICATIONS_MAPPING.keySet().stream().sorted().toList();
+        return assessmentConfig.groupToClassificationsMapping.keySet().stream().sorted().toList();
     }
 
     public static boolean existsInGroup(String groupCode, String classificationCode) {
-        return GROUP_TO_CLASSIFICATIONS_MAPPING.getOrDefault(groupCode, List.of())
+        return assessmentConfig.groupToClassificationsMapping.getOrDefault(groupCode, List.of())
             .contains(classificationCode);
     }
 
     public static String getCodeDisplayValue(String code) {
         return code.toLowerCase()
-            .replace("doc", "")
             .replace("m", "M")
             .replace("plus", "+");
+    }
+
+    private record AssessmentConfig(
+        @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
+        @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
+        @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping
+    ) {
     }
 }

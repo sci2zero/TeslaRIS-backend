@@ -1,7 +1,6 @@
 package rs.teslaris.core.assessment.repository;
 
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,7 +20,7 @@ public interface DocumentAssessmentClassificationRepository
     @Query("select eac from DocumentAssessmentClassification eac " +
         "join fetch eac.assessmentClassification where " +
         "eac.document.id = :documentId and eac.commission.id = :commissionId")
-    Optional<DocumentAssessmentClassification> findAssessmentClassificationsForDocumentAndCommission(
+    List<DocumentAssessmentClassification> findAssessmentClassificationsForDocumentAndCommission(
         Integer documentId, Integer commissionId);
 
     @Modifying

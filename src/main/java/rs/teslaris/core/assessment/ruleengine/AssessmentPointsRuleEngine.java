@@ -4,40 +4,40 @@ public class AssessmentPointsRuleEngine {
 
     public double serbianPointsRulebook2025(String researchArea, String classificationCode) {
         switch (classificationCode) {
-            case "docM21APlus":
+            case "M21APlus":
                 return 20;
-            case "docM21A":
+            case "M21A":
                 return 12;
-            case "docM21":
+            case "M21":
                 if (researchArea.equals("NATURAL") || researchArea.equals("TECHNICAL")) {
                     return 8;
                 }
                 return 10;
-            case "docM22":
+            case "M22":
                 if (researchArea.equals("NATURAL") || researchArea.equals("TECHNICAL")) {
                     return 5;
                 }
                 return 6;
-            case "docM23":
+            case "M23":
                 if (researchArea.equals("NATURAL") || researchArea.equals("TECHNICAL")) {
                     return 3;
                 } else if (researchArea.equals("SOCIAL")) {
                     return 5;
                 }
                 return 4;
-            case "docM23e":
+            case "M23e":
                 if (researchArea.equals("HUMANITIES")) {
                     return 4;
                 } else if (researchArea.equals("SOCIAL")) {
                     return 2;
                 }
                 break;
-            case "docM24Plus":
+            case "M24Plus":
                 if (researchArea.equals("NATURAL") || researchArea.equals("TECHNICAL")) {
                     return 2;
                 }
                 return 4;
-            case "docM24":
+            case "M24":
                 if (researchArea.equals("NATURAL")) {
                     return 2;
                 } else if (researchArea.equals("TECHNICAL") || researchArea.equals("SOCIAL")) {
@@ -51,7 +51,7 @@ public class AssessmentPointsRuleEngine {
                     return 1;
                 }
                 return 0.5;
-            case "docM51":
+            case "M51":
                 if (researchArea.equals("SOCIAL")) {
                     return 2.5;
                 }
@@ -59,14 +59,14 @@ public class AssessmentPointsRuleEngine {
                     return 3;
                 }
                 return 2;
-            case "docM52":
+            case "M52":
                 if (researchArea.equals("HUMANITIES")) {
                     return 2;
                 }
                 return 1.5;
-            case "docM53":
+            case "M53":
                 return 1;
-            case "docM54":
+            case "M54":
                 return 0.5;
             case "M56":
                 if (researchArea.equals("HUMANITIES")) {

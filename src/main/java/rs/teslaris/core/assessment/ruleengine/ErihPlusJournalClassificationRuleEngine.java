@@ -62,7 +62,8 @@ public class ErihPlusJournalClassificationRuleEngine extends JournalClassificati
         var erihPlusConditionPassed = Objects.nonNull(erihPlus) && erihPlus.getBooleanValue();
 
         if (erihPlusConditionPassed) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M23e");
+            return assessmentClassificationService.readAssessmentClassificationByCode(
+                "journalM23e");
         }
 
         return null;
