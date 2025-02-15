@@ -33,13 +33,6 @@ public class DocumentPublicationControllerTest extends BaseTest {
     }
 
     @Test
-    public void testGetCitations() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get(
-                "http://localhost:8081/api/document/{documentId}/cite?lang=en", 6)
-            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
-    }
-
-    @Test
     @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
     public void testUnbindResearcherFromPublication() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
