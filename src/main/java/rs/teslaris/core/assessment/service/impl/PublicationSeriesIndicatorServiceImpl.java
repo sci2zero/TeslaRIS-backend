@@ -41,11 +41,9 @@ import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
-import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 
@@ -59,11 +57,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private final CsvDataLoader csvDataLoader;
 
-    private final PublicationSeriesService publicationSeriesService;
-
     private final JournalService journalService;
-
-    private final LanguageTagService languageTagService;
 
     private final TaskManagerService taskManagerService;
 
@@ -83,20 +77,18 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
 
     @Autowired
-    public PublicationSeriesIndicatorServiceImpl(
-        EntityIndicatorRepository entityIndicatorRepository,
-        DocumentFileService documentFileService,
-        IndicatorService indicatorService,
-        PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
-        CsvDataLoader csvDataLoader, PublicationSeriesService publicationSeriesService,
-        JournalService journalService, LanguageTagService languageTagService,
-        TaskManagerService taskManagerService, JournalIndexRepository journalIndexRepository) {
+    public PublicationSeriesIndicatorServiceImpl(IndicatorService indicatorService,
+                                                 EntityIndicatorRepository entityIndicatorRepository,
+                                                 DocumentFileService documentFileService,
+                                                 PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
+                                                 CsvDataLoader csvDataLoader,
+                                                 JournalService journalService,
+                                                 TaskManagerService taskManagerService,
+                                                 JournalIndexRepository journalIndexRepository) {
         super(indicatorService, entityIndicatorRepository, documentFileService);
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.csvDataLoader = csvDataLoader;
-        this.publicationSeriesService = publicationSeriesService;
         this.journalService = journalService;
-        this.languageTagService = languageTagService;
         this.taskManagerService = taskManagerService;
         this.journalIndexRepository = journalIndexRepository;
     }
@@ -395,7 +387,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     private String cleanIssn(String issn) {
-        return StringUtil.formatIssn(issn.trim().replace("N/A", ""));
+        return StringUtil.formatIssn(issn.trim().toUpperCase().replace("N/A", ""));
     }
 
     private void processIndicatorValues(String[] line,
@@ -525,7 +517,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 }
 
                 var valueToBeParsed =
-                    indicatorValue.replace("N/A", "").replaceAll("[,<>]", "");
+                    indicatorValue.toUpperCase().replace("N/A", "").replaceAll("[,<>]", "");
                 if (!valueToBeParsed.isEmpty()) {
                     newJournalIndicator.setNumericValue(
                         Double.parseDouble(valueToBeParsed) + correctionValue);

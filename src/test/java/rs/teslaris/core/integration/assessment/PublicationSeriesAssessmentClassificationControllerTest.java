@@ -24,6 +24,7 @@ public class PublicationSeriesAssessmentClassificationControllerTest extends Bas
         dto.setAssessmentClassificationId(1);
         dto.setPublicationSeriesId(1);
         dto.setCommissionId(1);
+        dto.setClassificationYear(2025);
 
         return dto;
     }

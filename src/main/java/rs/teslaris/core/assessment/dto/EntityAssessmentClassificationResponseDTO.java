@@ -7,6 +7,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 public record EntityAssessmentClassificationResponseDTO(
     Integer id,
+
     List<MultilingualContentDTO> classificationTitle,
 
     Integer classificationId,
@@ -22,6 +23,7 @@ public record EntityAssessmentClassificationResponseDTO(
     LocalDateTime timestamp,
 
     List<ApplicableEntityType> applicableEntityTypes,
+
     Boolean manual
 ) {
 }

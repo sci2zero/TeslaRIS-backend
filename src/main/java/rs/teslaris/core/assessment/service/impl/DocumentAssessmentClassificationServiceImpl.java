@@ -80,8 +80,8 @@ public class DocumentAssessmentClassificationServiceImpl
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
         UserService userService,

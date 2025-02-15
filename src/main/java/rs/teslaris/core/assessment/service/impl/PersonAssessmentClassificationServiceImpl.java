@@ -82,8 +82,8 @@ public class PersonAssessmentClassificationServiceImpl
     @Autowired
     public PersonAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         PersonAssessmentClassificationRepository personAssessmentClassificationRepository,
         SearchService<PersonIndex> searchService,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,

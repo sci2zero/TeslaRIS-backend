@@ -665,7 +665,198 @@ package project {
     USED
   }
 
+  class AssessmentRulebook {
+    -MultiLingualContent title
+    -MultiLingualContent description
+    -LocalDate issueDate
+    -DocumentFile pdf
+  }
+
+  AssessmentRulebook "0..*" --> "1" Publisher
+
+  AssessmentRulebook "0..*" -- "0..*" AssessmentMeasure
+
+  class AssessmentMeasure {
+    -String code
+    ' M28b
+    ' M22
+    -Double value
+    ' 2.5
+    -Set<MultiLingualContent> title
+    ' examples of Serbian rule book:
+    ' Uređivanje istaknutog međunarodnog naučnog   M28b  2,5  2,5  2,5  2,5  časopisa (gost urednik) ili publikacije sa monografskim delima kategorije M14
+    ' Autor rada u istaknutom međunarodnom časopisu
+    -String formalDescriptionOfRule
+    ' rule is based on assessment classification and commission properties
+  }
+
+  class AssessmentClassification {
+    -String code
+    ' international journal
+    ' leading international journal
+    -Set<MultiLingualContent> title
+    -String formalDescriptionOfRule
+    ' rule is based on indicators and commission properties
+    -Set<ApplicableEntityType> applicableTypes
+  }
+
+  enum ApplicableEntityType {
+    MONOGRAPH
+    EVENT
+    DOCUMENT
+    PERSON
+    ORGANISATION_UNIT
+    PUBLICATION_SERIES
+    ALL
+  }
+
+  class Commission {
+    MultiLingualContent description
+    ' it might be description of the commission goal, for instance comission for promotion to higher position, or Faculty of Sciences commission, or national/Serbian ministry of science commission
+    -Set<String> sources
+    -LocalDate assessmentDateFrom
+    -LocalDate assessmentDateTo
+    -Set<Document> documentsForAssessment
+    -Set<Person> personsForAssessment
+    -Set<OrganisationUnit> organisationUnitsForAssessment
+    -String formalDescriptionOfRule
+    ' it additionally defining rules for automatic determination of assessment classification, for instance all research areas are taken into account and the best classification is taken into account
+    ' we should consider whether researchAreas (inherited from OrganisationUnit), sources, assessmentDateFrom and assessmentDateTo can be specified through formal description
+  }
+
+  Commission "0..1 sourceCommission" --> "0..* relations" CommissionRelation
+
+  class CommissionRelation {
+    -ResultClaculationMethod resultCalculationMethod
+    -Integer priority
+  }
+
+  CommissionRelation "0..*" --> "0..* targetCommission" Commission
+
+  class EntityAssessmentClassification {
+    -LocalDateTime timestamp
+    -Boolean manual
+    -Integer classificationYear
+  }
+
+  EntityAssessmentClassification "0..*" --> "1" Commission
+  EntityAssessmentClassification "0..*" --> "1" AssessmentClassification
+
+  class DocumentAssessmentClassification extends EntityAssessmentClassification {
+  }
+
+  DocumentAssessmentClassification "0..*" --> "1" Document
+
+  class EventAssessmentClassification extends EntityAssessmentClassification {
+  }
+
+  EventAssessmentClassification "0..*" --> "1" Event
+
+  class PublicationSeriesAssessmentClassification extends EntityAssessmentClassification {
+  }
+
+  PublicationSeriesAssessmentClassification "0..*" --> "1" PublicationSeries
+
+  class PersonAssessmentClassification extends EntityAssessmentClassification {
+  }
+
+  PersonAssessmentClassification "0..*" --> "1" Person
+
+  class OrganisationUnitAssessmentClassification extends EntityAssessmentClassification {
+  }
+
+  OrganisationUnitAssessmentClassification "0..*" --> "1" OrganisationUnit
+
+  class Indicator {
+    -String code
+    -Set<MultiLingualContent> title
+    ' h-index
+    ' two years impact factor (numeric value in PublicationSeries_Indicator - 1.138)
+    ' two years impact factor position (number value in PublicationSeries_Indicator - 56, meaning a journal is 56th in the list according to two years impact factor )
+    ' two years impact factor fraction (number value in PublicationSeries_Indicator - 0.17, meaning a journal belongs to 17% of the best journals in a research field)
+    ' AMS journal (boolean value in PublicationSeries_Indicator, true - journal belongs to AMS list, false - not belongs to the list)
+    ' etc.
+    -Set<MultiLingualContent> description
+    -AccessLevel accessLevel
+    -Set<ApplicableEntityType> applicableTypes
+    -IndicatorContentType contentType
+  }
+
+  enum AccessLevel {
+    OPEN
+    CLOSED
+    ADMIN_ONLY
+  }
+
+  enum IndicatorContentType {
+    TEXT
+    BOOL
+    NUMBER
+    ANYTHING
+  }
+
+  enum ApplicableEntityType {
+    MONOGRAPH
+    EVENT
+    DOCUMENT
+    PERSON
+    ORGANISATION_UNIT
+    PUBLICATION_SERIES
+    ALL
+  }
+
+  class EntityIndicator {
+    -Double numericValue
+    -Boolean booleanValue
+    -String textualValue
+    -LocalDateTime timestamp
+    -EntityIndicatorSource source
+    -LocalDate fromDate
+    -LocalDate toDate
+    -Set<DocumentFile> proofs
+    -Set<String> urls
+  }
+
+  EntityIndicator "0..*" --> "1" Indicator
+  EntityIndicator "0..*" --> "0" User
+  ' in some cases there won't be user, such as when performing automatic import of journal impact factors from external source
+
+  enum EntityIndicatorSource {
+    MANUAL
+    WEB_OF_SCIENCE
+    SCIMAGO
+    ERIH_PLUS
+    MKS_SLAVISTS
+  }
+
+  class DocumentIndicator extends EntityIndicator {
+  }
+
+  DocumentIndicator "0..*" --> "1" Document
+
+
+  class EventIndicator extends EntityIndicator {
+  }
+
+  EventIndicator "0..*" --> "1" Event
+
+  class PublicationSeriesIndicator extends EntityIndicator {
+    -String categoryIdentifier
+    -String edition
+  }
+
+  PublicationSeriesIndicator "0..*" --> "1" PublicationSeries
+
+  class PersonIndicator extends EntityIndicator {
+  }
+
+  PersonIndicator "0..*" --> "1" Person
+
+  class OrganisationUnitIndicator extends EntityIndicator {
+  }
+
+  OrganisationUnitIndicator "0..*" --> "1" OrganisationUnit
+
 }
 
 @enduml
-

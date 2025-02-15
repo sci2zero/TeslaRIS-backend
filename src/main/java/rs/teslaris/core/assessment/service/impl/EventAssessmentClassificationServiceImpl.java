@@ -35,8 +35,8 @@ public class EventAssessmentClassificationServiceImpl
     @Autowired
     public EventAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         EventService eventService) {

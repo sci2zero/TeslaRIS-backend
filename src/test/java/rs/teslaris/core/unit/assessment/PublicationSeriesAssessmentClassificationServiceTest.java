@@ -112,6 +112,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
             new PublicationSeriesAssessmentClassificationDTO();
         publicationSeriesAssessmentClassificationDTO.setPublicationSeriesId(1);
         publicationSeriesAssessmentClassificationDTO.setAssessmentClassificationId(1);
+        publicationSeriesAssessmentClassificationDTO.setClassificationYear(2025);
 
         var newPublicationSeriesAssessmentClassification =
             new PublicationSeriesAssessmentClassification();
@@ -143,6 +144,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
             new PublicationSeriesAssessmentClassificationDTO();
         publicationSeriesAssessmentClassificationDTO.setPublicationSeriesId(1);
         publicationSeriesAssessmentClassificationDTO.setAssessmentClassificationId(1);
+        publicationSeriesAssessmentClassificationDTO.setClassificationYear(2025);
 
         var existingPublicationSeriesAssessmentClassification =
             new PublicationSeriesAssessmentClassification();

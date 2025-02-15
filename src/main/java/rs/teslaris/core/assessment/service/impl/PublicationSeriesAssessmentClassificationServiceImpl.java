@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import jakarta.validation.ValidationException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
@@ -66,11 +67,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
     private final JournalIndexRepository journalIndexRepository;
 
-    private final CommissionService commissionService;
-
     private final TaskManagerService taskManagerService;
-
-    private final AssessmentClassificationService assessmentClassificationService;
 
     private final String RULE_ENGINE_BASE_PACKAGE =
         "rs.teslaris.core.assessment.ruleengine.";
@@ -84,16 +81,14 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     @Autowired
     public PublicationSeriesAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
         PublicationSeriesService publicationSeriesService, JournalService journalService,
         PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
         JournalRepository journalRepository, JournalIndexRepository journalIndexRepository,
-        CommissionService commissionService1, TaskManagerService taskManagerService,
-        AssessmentClassificationService assessmentClassificationService1,
-        CsvDataLoader csvDataLoader) {
+        TaskManagerService taskManagerService, CsvDataLoader csvDataLoader) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.publicationSeriesAssessmentClassificationJPAService =
@@ -105,9 +100,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.journalRepository = journalRepository;
         this.journalIndexRepository = journalIndexRepository;
-        this.commissionService = commissionService1;
         this.taskManagerService = taskManagerService;
-        this.assessmentClassificationService = assessmentClassificationService1;
         this.csvDataLoader = csvDataLoader;
     }
 
@@ -123,6 +116,10 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     @Override
     public PublicationSeriesAssessmentClassification createPublicationSeriesAssessmentClassification(
         PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO) {
+        if (Objects.isNull(publicationSeriesAssessmentClassificationDTO.getClassificationYear())) {
+            throw new ValidationException("You have to provide classification year.");
+        }
+
         var newAssessmentClassification = new PublicationSeriesAssessmentClassification();
 
         newAssessmentClassification.setCommission(
@@ -141,6 +138,10 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     public void updatePublicationSeriesAssessmentClassification(
         Integer publicationSeriesAssessmentClassificationId,
         PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO) {
+        if (Objects.isNull(publicationSeriesAssessmentClassificationDTO.getClassificationYear())) {
+            throw new ValidationException("You have to provide classification year.");
+        }
+
         var publicationSeriesAssessmentClassificationToUpdate =
             publicationSeriesAssessmentClassificationJPAService.findOne(
                 publicationSeriesAssessmentClassificationId);

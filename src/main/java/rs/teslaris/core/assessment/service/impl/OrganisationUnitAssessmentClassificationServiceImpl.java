@@ -24,8 +24,8 @@ public class OrganisationUnitAssessmentClassificationServiceImpl
     @Autowired
     public OrganisationUnitAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         CommissionService commissionService,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         OrganisationUnitAssessmentClassificationRepository organisationUnitAssessmentClassificationRepository) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
