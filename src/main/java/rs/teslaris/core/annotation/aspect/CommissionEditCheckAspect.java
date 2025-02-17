@@ -49,9 +49,6 @@ public class CommissionEditCheckAspect {
                         "unauthorizedCommissionEditAttemptMessage");
                 }
                 break;
-            case RESEARCHER, INSTITUTIONAL_EDITOR:
-                throw new CantEditException(
-                    "unauthorizedCommissionEditAttemptMessage");
             default:
                 throw new CantEditException("unauthorizedCommissionEditAttemptMessage");
         }
