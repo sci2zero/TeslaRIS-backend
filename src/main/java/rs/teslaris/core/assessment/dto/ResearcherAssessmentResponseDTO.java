@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.Triple;
 
 @Getter
 @Setter
@@ -20,5 +20,6 @@ public class ResearcherAssessmentResponseDTO {
 
     private Integer commissionId;
 
-    private Map<String, List<Pair<String, Double>>> publicationsPerCategory = new HashMap<>();
+    private Map<String, List<Triple<String, Double, Integer>>> publicationsPerCategory =
+        new HashMap<>();
 }

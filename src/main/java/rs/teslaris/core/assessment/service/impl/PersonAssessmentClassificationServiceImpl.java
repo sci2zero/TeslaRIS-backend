@@ -4,7 +4,6 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
-import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
+import rs.teslaris.core.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.core.assessment.dto.ResearcherAssessmentResponseDTO;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
@@ -43,10 +43,13 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -78,6 +81,10 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final CitationService citationService;
 
+    private final InvolvementRepository involvementRepository;
+
+    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+
 
     @Autowired
     public PersonAssessmentClassificationServiceImpl(
@@ -92,7 +99,8 @@ public class PersonAssessmentClassificationServiceImpl
         AssessmentResearchAreaRepository assessmentResearchAreaRepository,
         AssessmentRulebookRepository assessmentRulebookRepository,
         PersonIndexRepository personIndexRepository, UserRepository userRepository,
-        CitationService citationService) {
+        CitationService citationService, InvolvementRepository involvementRepository,
+        OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.personAssessmentClassificationRepository = personAssessmentClassificationRepository;
@@ -106,6 +114,8 @@ public class PersonAssessmentClassificationServiceImpl
         this.personIndexRepository = personIndexRepository;
         this.userRepository = userRepository;
         this.citationService = citationService;
+        this.involvementRepository = involvementRepository;
+        this.organisationUnitsRelationRepository = organisationUnitsRelationRepository;
     }
 
     @Override
@@ -118,27 +128,26 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
-    public void assessResearchers(LocalDate fromDate, Integer commissionId,
-                                  List<Integer> researcherIds, List<Integer> orgUnitIds,
-                                  LocalDate startDate, LocalDate endDate) {
+    public List<EnrichedResearcherAssessmentResponseDTO> assessResearchers(Integer commissionId,
+                                                                           List<Integer> researcherIds,
+                                                                           Integer startYear,
+                                                                           Integer endYear) {
         var commission = commissionService.findOneWithFetchedRelations(commissionId);
+        var organisationUnit = userRepository.findOUForCommission(commissionId)
+            .orElseThrow(() -> new NotFoundException("commissionNotBoundToOUMessage"));
+
         var assessmentMeasures = assessmentRulebookRepository
             .readAssessmentMeasuresForRulebook(Pageable.unpaged(), findDefaultRulebookId())
             .getContent();
 
-        var assessmentResult = new ResearcherAssessmentResponseDTO();
-        assessmentResult.setCommissionId(commission.getId());
-        assessmentResult.setCommissionDescription(
-            MultilingualContentConverter.getMultilingualContentDTO(commission.getDescription()));
-
         var pointsRuleEngine = new AssessmentPointsRuleEngine();
         var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
 
-        int pageNumber = 0;
+        var responses = new ArrayList<EnrichedResearcherAssessmentResponseDTO>();
 
-        while (true) {
+        for (int pageNumber = 0; ; pageNumber++) {
             List<PersonIndex> chunk = searchService
-                .runQuery(findAllPersonsByFilters(fromDate.toString(), researcherIds, orgUnitIds),
+                .runQuery(findAllPersonsByFilters(researcherIds, List.of(organisationUnit.getId())),
                     PageRequest.of(pageNumber, 10), PersonIndex.class, "person")
                 .getContent();
 
@@ -146,13 +155,53 @@ public class PersonAssessmentClassificationServiceImpl
                 break;
             }
 
-            chunk.forEach(
-                personIndex -> processResearcher(personIndex, commission, assessmentMeasures,
-                    pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
-                    endDate.getYear()));
-
-            pageNumber++;
+            chunk.forEach(personIndex -> processPerson(
+                personIndex, commission, organisationUnit, assessmentMeasures, pointsRuleEngine,
+                scalingRuleEngine,
+                responses, startYear, endYear
+            ));
         }
+
+        return responses;
+    }
+
+    private void processPerson(PersonIndex personIndex,
+                               Commission commission,
+                               OrganisationUnit organisationUnit,
+                               List<AssessmentMeasure> assessmentMeasures,
+                               AssessmentPointsRuleEngine pointsRuleEngine,
+                               AssessmentPointsScalingRuleEngine scalingRuleEngine,
+                               List<EnrichedResearcherAssessmentResponseDTO> responses,
+                               Integer startYear, Integer endYear) {
+        var assessmentResult = new EnrichedResearcherAssessmentResponseDTO();
+        assessmentResult.setCommissionId(commission.getId());
+        assessmentResult.setCommissionDescription(
+            MultilingualContentConverter.getMultilingualContentDTO(commission.getDescription()));
+        assessmentResult.setPersonName(personIndex.getName());
+        assessmentResult.setInstitutionName(
+            MultilingualContentConverter.getMultilingualContentDTO(organisationUnit.getName()));
+        assessmentResult.setFromYear(startYear);
+        assessmentResult.setToYear(endYear);
+
+        var subOUs = new ArrayList<>(
+            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnit.getId()));
+        subOUs.add(organisationUnit.getId());
+
+        var employments = involvementRepository.findActiveEmploymentForPersonAndInstitutions(subOUs,
+            personIndex.getDatabaseId());
+        if (employments.isEmpty()) {
+            log.info("Person with ID {} is just a candidate, skipping...",
+                personIndex.getDatabaseId());
+            return;
+        }
+
+        assessmentResult.setPersonPosition(employments.getFirst().getEmploymentPosition());
+
+        processResearcher(personIndex, commission, assessmentMeasures, pointsRuleEngine,
+            scalingRuleEngine,
+            assessmentResult, startYear, endYear);
+
+        responses.add(assessmentResult);
     }
 
     @Override
@@ -303,7 +352,8 @@ public class PersonAssessmentClassificationServiceImpl
         assessmentResult.getPublicationsPerCategory()
             .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(classificationCode),
                 k -> new ArrayList<>())
-            .add(new Pair<>(citation.getHarvard(), isUserLoggedIn() ? points : 0));
+            .add(new Triple<>(citation.getHarvard(), isUserLoggedIn() ? points : 0,
+                publication.getDatabaseId()));
     }
 
     private double calculatePoints(
@@ -322,13 +372,10 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     public Query findAllPersonsByFilters(
-        String date,
         List<Integer> researcherIds,
         List<Integer> organisationUnitIds) {
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(sb -> sb.range(r -> r.field("last_edited").gt(JsonData.of(date))));
-
             if (!researcherIds.isEmpty()) {
                 var personIdTerms = new TermsQueryField.Builder()
                     .value(researcherIds.stream().map(FieldValue::of).toList())

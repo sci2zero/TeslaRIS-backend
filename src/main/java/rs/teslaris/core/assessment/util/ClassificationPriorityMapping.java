@@ -2,6 +2,7 @@ package rs.teslaris.core.assessment.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -154,10 +156,39 @@ public class ClassificationPriorityMapping {
             .replace("plus", "+");
     }
 
+    public static String getCodeOriginalValue(String displayValue) {
+        return displayValue.toUpperCase()
+            .replace("+", "Plus")
+            .replace("E", "e");
+    }
+
+    public static boolean isOnSciList(String assessmentCode) {
+        return assessmentConfig.sciList().contains(getCodeOriginalValue(assessmentCode));
+    }
+
+    @Nullable
+    public static String getGroupCode(String assessmentCode) {
+        AtomicReference<String> resultingGroupCode = new AtomicReference<>();
+        assessmentConfig.groupToClassificationsMapping.forEach(
+            (groupCode, relatedAssessmentCodes) -> {
+                if (relatedAssessmentCodes.contains(getCodeOriginalValue(assessmentCode))) {
+                    resultingGroupCode.set(groupCode);
+                }
+            });
+
+        return resultingGroupCode.get();
+    }
+
+    public static String getGroupNameBasedOnCode(String groupCode) {
+        return assessmentConfig.groupToNameMapping.getOrDefault(groupCode, "");
+    }
+
     private record AssessmentConfig(
         @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
-        @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping
+        @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping,
+        @JsonProperty("groupToNameMapping") Map<String, String> groupToNameMapping,
+        @JsonProperty("sciList") List<String> sciList
     ) {
     }
 }

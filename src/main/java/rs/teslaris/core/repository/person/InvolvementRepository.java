@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.person;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +11,11 @@ import rs.teslaris.core.model.person.Involvement;
 @Repository
 public interface InvolvementRepository extends JpaRepository<Involvement, Integer> {
 
-    @Query("select e from Employment e where e.personInvolved.id = :personId and e.organisationUnit.id = :institutionId and e.dateTo is null")
+    @Query("SELECT e FROM Employment e WHERE e.personInvolved.id = :personId AND e.organisationUnit.id = :institutionId AND e.dateTo IS null")
     Optional<Employment> findActiveEmploymentForPersonAndInstitution(Integer institutionId,
                                                                      Integer personId);
+
+    @Query("SELECT e FROM Employment e WHERE e.personInvolved.id = :personId AND e.organisationUnit.id IN :institutionIds AND e.dateTo IS null")
+    List<Employment> findActiveEmploymentForPersonAndInstitutions(List<Integer> institutionIds,
+                                                                  Integer personId);
 }

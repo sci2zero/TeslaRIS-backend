@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.user.User;
 
 @Repository
@@ -39,4 +40,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT ou.id FROM User u JOIN u.organisationUnit ou WHERE u.commission.id = :commissionId")
     Integer findOUIdForCommission(Integer commissionId);
+
+    @Query("SELECT ou FROM User u JOIN u.organisationUnit ou WHERE u.commission.id = :commissionId")
+    Optional<OrganisationUnit> findOUForCommission(Integer commissionId);
 }
