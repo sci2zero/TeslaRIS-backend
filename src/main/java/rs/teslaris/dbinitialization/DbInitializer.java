@@ -140,6 +140,7 @@ public class DbInitializer implements ApplicationRunner {
         var assessDocument = new Privilege("ASSESS_DOCUMENT");
         var editDocumentAssessment = new Privilege("EDIT_DOCUMENT_ASSESSMENT");
         var editAssessmentResearchArea = new Privilege("EDIT_ASSESSMENT_RESEARCH_AREA");
+        var scheduleReportGeneration = new Privilege("SCHEDULE_REPORT_GENERATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -159,7 +160,7 @@ public class DbInitializer implements ApplicationRunner {
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
                 editEntityAssessmentClassifications, editEventIndicators, editPubSeriesIndicators,
                 editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
-                assessDocument, updateCommission, editDocumentAssessment,
+                assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
                 editAssessmentResearchArea));
 
         // AUTHORITIES
@@ -180,7 +181,7 @@ public class DbInitializer implements ApplicationRunner {
                 mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
                 editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
                 editPublicationSeriesAssessmentClassifications, assessDocument, updateCommission,
-                editDocumentAssessment, editAssessmentResearchArea
+                editDocumentAssessment, editAssessmentResearchArea, scheduleReportGeneration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

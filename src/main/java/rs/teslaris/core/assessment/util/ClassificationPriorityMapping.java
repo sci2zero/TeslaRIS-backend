@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -179,15 +180,16 @@ public class ClassificationPriorityMapping {
         return resultingGroupCode.get();
     }
 
-    public static String getGroupNameBasedOnCode(String groupCode) {
-        return assessmentConfig.groupToNameMapping.getOrDefault(groupCode, "");
+    public static String getGroupNameBasedOnCode(String groupCode, String locale) {
+        return assessmentConfig.groupToNameMapping.getOrDefault(groupCode, new HashMap<>())
+            .getOrDefault(locale, "");
     }
 
     private record AssessmentConfig(
         @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
         @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping,
-        @JsonProperty("groupToNameMapping") Map<String, String> groupToNameMapping,
+        @JsonProperty("groupToNameMapping") Map<String, Map<String, String>> groupToNameMapping,
         @JsonProperty("sciList") List<String> sciList
     ) {
     }
