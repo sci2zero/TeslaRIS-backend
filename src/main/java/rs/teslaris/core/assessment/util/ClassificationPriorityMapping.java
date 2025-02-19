@@ -167,6 +167,10 @@ public class ClassificationPriorityMapping {
         return assessmentConfig.sciList().contains(getCodeOriginalValue(assessmentCode));
     }
 
+    public static int getSciListPriority(String assessmentCode) {
+        return assessmentConfig.sciListPriorities().get(getCodeOriginalValue(assessmentCode));
+    }
+
     @Nullable
     public static String getGroupCode(String assessmentCode) {
         AtomicReference<String> resultingGroupCode = new AtomicReference<>();
@@ -190,7 +194,8 @@ public class ClassificationPriorityMapping {
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
         @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping,
         @JsonProperty("groupToNameMapping") Map<String, Map<String, String>> groupToNameMapping,
-        @JsonProperty("sciList") List<String> sciList
+        @JsonProperty("sciList") List<String> sciList,
+        @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities
     ) {
     }
 }

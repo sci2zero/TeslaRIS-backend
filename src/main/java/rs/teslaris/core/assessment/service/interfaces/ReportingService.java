@@ -8,11 +8,12 @@ import rs.teslaris.core.assessment.model.ReportType;
 @Service
 public interface ReportingService {
 
-    void generateReport(ReportType type, Integer year, Integer commissionId, String locale);
+    void generateReport(ReportType type, Integer year, Integer commissionId, String locale,
+                        Integer topLevelInstitutionId);
 
     void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
                                   Integer assessmentYear, Integer commissionId,
-                                  String locale, Integer userId);
+                                  String locale, Integer topLevelInstitutionId, Integer userId);
 
     List<String> getAvailableReportsForCommission(Integer commissionId);
 }

@@ -1,6 +1,8 @@
 package rs.teslaris.core.assessment.dto;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,4 +25,6 @@ public class EnrichedResearcherAssessmentResponseDTO extends ResearcherAssessmen
     private EmploymentPosition personPosition;
 
     private List<MultilingualContentDTO> institutionName;
+
+    private Map<Integer, List<Integer>> publicationToInstitution = new HashMap<>();
 }

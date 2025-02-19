@@ -34,9 +34,11 @@ public class ReportingController {
         @RequestParam("commissionId") Integer commissionId,
         @RequestParam("year") Integer year,
         @RequestParam("lang") String lang,
+        @RequestParam(value = "topLevelInstitutionId", required = false)
+        Integer topLevelInstitutionId,
         @RequestHeader("Authorization") String bearerToken) {
         reportingService.scheduleReportGeneration(timestamp, reportType, year, commissionId, lang,
-            tokenUtil.extractUserIdFromToken(bearerToken));
+            topLevelInstitutionId, tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/{commissionId}")

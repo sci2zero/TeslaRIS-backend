@@ -16,7 +16,8 @@ public interface PersonAssessmentClassificationService {
     List<EnrichedResearcherAssessmentResponseDTO> assessResearchers(Integer commissionId,
                                                                     List<Integer> researcherIds,
                                                                     Integer startYear,
-                                                                    Integer endYear);
+                                                                    Integer endYear,
+                                                                    Integer topLevelInstitutionId);
 
     List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
                                                                  LocalDate startDate,
