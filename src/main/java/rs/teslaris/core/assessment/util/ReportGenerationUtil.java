@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,15 +17,21 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
+import rs.teslaris.core.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -39,13 +46,25 @@ public class ReportGenerationUtil {
 
     private static OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
+    private static UserRepository userRepository;
+
+    private static OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+
+    private static CommissionService commissionService;
+
 
     @Autowired
     public ReportGenerationUtil(MessageSource messageSource, FileService fileService,
-                                OrganisationUnitIndexRepository organisationUnitIndexRepository) {
+                                OrganisationUnitIndexRepository organisationUnitIndexRepository,
+                                UserRepository userRepository, CommissionService commissionService,
+                                OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
         ReportGenerationUtil.messageSource = messageSource;
         ReportGenerationUtil.fileService = fileService;
         ReportGenerationUtil.organisationUnitIndexRepository = organisationUnitIndexRepository;
+        ReportGenerationUtil.userRepository = userRepository;
+        ReportGenerationUtil.organisationUnitsRelationRepository =
+            organisationUnitsRelationRepository;
+        ReportGenerationUtil.commissionService = commissionService;
     }
 
     public static XWPFDocument loadDocumentTemplate(String templateName) throws IOException {
@@ -56,22 +75,71 @@ public class ReportGenerationUtil {
         return document;
     }
 
-    public static void dynamicallyGenerateTable(XWPFDocument document, List<List<String>> tableData,
-                                                Integer tableIndex) {
+    public static void addColumnsToFirstRow(XWPFDocument document, List<String> columnsData,
+                                            int tableIndex) {
+        var table = document.getTables().get(tableIndex);
+        var firstRow = table.getRow(0);
+
+        for (String columnValue : columnsData) {
+            var cell = firstRow.createCell();
+            cell.setText(columnValue);
+        }
+    }
+
+    public static void dynamicallyGenerateTableRows(XWPFDocument document,
+                                                    List<List<String>> rowsData,
+                                                    Integer tableIndex) {
         var table = document.getTables().get(tableIndex);
 
         if (table.getRows().size() > 1) {
             table.removeRow(1);
         }
 
-        for (List<String> rowData : tableData) {
+        for (List<String> rowData : rowsData) {
             var row = table.createRow();
 
             for (int i = 0; i < rowData.size(); i++) {
                 var cell = row.getCell(i) != null ? row.getCell(i) : row.createCell();
-                cell.setText(rowData.get(i));
+                var text = rowData.get(i);
+
+                if (!text.contains("§")) {
+                    var entries = text.split("\n");
+                    for (var entry : entries) {
+                        if (entry.isEmpty()) {
+                            continue;
+                        }
+                        setText(cell, entry);
+                    }
+                } else {
+                    var entries = text.split("\n");
+                    for (var entry : entries) {
+                        if (entry.isEmpty()) {
+                            continue;
+                        }
+                        var entryTokens = entry.split("§");
+                        setColoredText(cell, entryTokens[0], entryTokens[1]);
+                    }
+                }
+
+                var firstParagraph = cell.getParagraphs().getFirst();
+                if (firstParagraph.isEmpty()) {
+                    cell.removeParagraph(0);
+                }
             }
         }
+    }
+
+    private static void setText(XWPFTableCell cell, String text) {
+        var paragraph = cell.addParagraph();
+        var run = paragraph.createRun();
+        run.setText(text);
+    }
+
+    private static void setColoredText(XWPFTableCell cell, String text, String color) {
+        var paragraph = cell.addParagraph();
+        var run = paragraph.createRun();
+        run.setTextHighlightColor(color);
+        run.setText(text);
     }
 
     public static void insertFields(XWPFDocument document, Map<String, String> replacements) {
@@ -378,11 +446,136 @@ public class ReportGenerationUtil {
             rowA -> ClassificationPriorityMapping.getSciListPriority((rowA.get(3))))).toList());
     }
 
-    public static Pair<Map<String, String>, List<List<String>>> constructDataForTableForAllPublications(
-        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses) {
+    public static Pair<Map<String, String>, List<List<String>>> constructDataForTableTopLevelInstitutionSummary(
+        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
+        List<Integer> commissionIds, String locale) {
         if (assessmentResponses.isEmpty()) {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
+
+        Map<String, String> replacements = Map.of(
+            "{heading}", messageSource.getMessage("reporting.tableTopLevelInstitution.header1",
+                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
+                Locale.forLanguageTag(locale)),
+            "{heading2}",
+            messageSource.getMessage("reporting.tableTopLevelInstitutionSummary.header2",
+                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
+                Locale.forLanguageTag(locale)),
+            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col2}", messageSource.getMessage("reporting.tableTopLevelInstitution.category",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col3}",
+            messageSource.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col4}", messageSource.getMessage("reporting.tableTopLevelInstitution.bibliographies",
+                new Object[] {}, Locale.forLanguageTag(locale))
+        );
+
+        var categoryToSums = new TreeMap<String, int[]>();
+        FunctionalUtil.forEachWithCounter(commissionIds, (index, commissionId) -> {
+            assessmentResponses.stream()
+                .filter(response -> response.getCommissionId().equals(commissionId))
+                .forEach(commissionResponse -> {
+                    commissionResponse.getPublicationsPerCategory()
+                        .forEach((category, publications) -> {
+                            categoryToSums.computeIfAbsent(category,
+                                k -> new int[commissionIds.size()]);
+                            categoryToSums.get(category)[index] += publications.size();
+                        });
+                });
+        });
+
+        List<List<String>> tableData = new ArrayList<>();
+        categoryToSums.forEach((category, sums) -> {
+            var rowData = new ArrayList<String>();
+            rowData.add(String.valueOf(tableData.size() + 1));
+            rowData.add(category);
+            Arrays.stream(sums).forEach(sum -> {
+                rowData.add(String.valueOf(sum));
+            });
+            tableData.add(rowData);
+        });
+
+        return new Pair<>(replacements, tableData);
+    }
+
+    public static Pair<Map<String, String>, List<List<String>>> constructDataForTableTopLevelInstitutionColored(
+        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, String locale) {
+        if (assessmentResponses.isEmpty()) {
+            return new Pair<>(new HashMap<>(), new ArrayList<>());
+        }
+
+        Map<String, String> replacements = Map.of(
+            "{heading}", messageSource.getMessage("reporting.tableTopLevelInstitution.header1",
+                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
+                Locale.forLanguageTag(locale)),
+            "{heading2}", messageSource.getMessage("reporting.tableTopLevelInstitution.header2",
+                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
+                Locale.forLanguageTag(locale)),
+            "{sci}", messageSource.getMessage("reporting.table.sci",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col2}", messageSource.getMessage("reporting.tableTopLevelInstitution.bibliography",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col3}", messageSource.getMessage("reporting.tableTopLevelInstitution.category",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col4}", messageSource.getMessage("reporting.tableTopLevelInstitution.categories",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col5}",
+            messageSource.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
+                new Object[] {}, Locale.forLanguageTag(locale)),
+            "{col6}", messageSource.getMessage("reporting.tableTopLevelInstitution.bibliographies",
+                new Object[] {}, Locale.forLanguageTag(locale))
+        );
+
+        var commissionId = assessmentResponses.getFirst().getCommissionId();
+        var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
+        var subOUs =
+            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnitId);
+        subOUs.add(organisationUnitId);
+
+        List<List<String>> tableData = new ArrayList<>();
+        Set<Integer> handledPublicationIds = new HashSet<>();
+        assessmentResponses.forEach(assessmentResponse -> {
+            assessmentResponse.getPublicationsPerCategory().forEach((code, publications) -> {
+                publications.forEach(publication -> {
+                    if (!handledPublicationIds.contains(publication.c) &&
+                        ClassificationPriorityMapping.isOnSciList(code)) {
+                        var institutionIds =
+                            assessmentResponse.getPublicationToInstitution().get(publication.c);
+                        var color = TableRowColors.RED;
+                        if (institutionIds.isEmpty()) {
+                            color = TableRowColors.YELLOW;
+                        } else if (new HashSet<>(subOUs).containsAll(institutionIds)) {
+                            color = TableRowColors.WHITE;
+                        }
+
+                        tableData.add(
+                            List.of(String.valueOf(tableData.size() + 1),
+                                publication.a + "§" + color, code));
+                        handledPublicationIds.add(publication.c);
+                    }
+                });
+            });
+        });
+
+        return new Pair<>(replacements, tableData.stream().sorted(Comparator.comparingInt(
+            rowA -> ClassificationPriorityMapping.getSciListPriority((rowA.get(2))))).toList());
+    }
+
+    public static Pair<Map<String, String>, List<List<String>>> constructDataForTableForAllPublications(
+        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, Boolean colored) {
+        if (assessmentResponses.isEmpty()) {
+            return new Pair<>(new HashMap<>(), new ArrayList<>());
+        }
+
+        var commissionId = assessmentResponses.getFirst().getCommissionId();
+        var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
+        var subOUs =
+            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnitId);
+        subOUs.add(organisationUnitId);
 
         Map<String, Pair<String, Integer>> publicationsPerGroup = new TreeMap<>(
             Comparator.comparingInt(ClassificationPriorityMapping::getSciListPriority).reversed());
@@ -391,10 +584,20 @@ public class ReportGenerationUtil {
             assessmentResponse.getPublicationsPerCategory().forEach((code, publications) -> {
                 publications.forEach(publication -> {
                     if (!handledPublicationIds.contains(publication.c)) {
+                        var institutionIds =
+                            assessmentResponse.getPublicationToInstitution().get(publication.c);
+                        var color = TableRowColors.RED;
+                        if (institutionIds.isEmpty()) {
+                            color = TableRowColors.YELLOW;
+                        } else if (new HashSet<>(subOUs).containsAll(institutionIds)) {
+                            color = TableRowColors.WHITE;
+                        }
+
                         var existingPair =
                             publicationsPerGroup.getOrDefault(code, new Pair<>("", 0));
                         existingPair.b += 1;
-                        existingPair.a += "\n" + existingPair.b + " " + publication.a;
+                        existingPair.a += "\n" + existingPair.b + " " + publication.a + (colored ?
+                            ("§" + color) : "");
                         publicationsPerGroup.put(code, existingPair);
                         handledPublicationIds.add(publication.c);
                     }
@@ -410,6 +613,19 @@ public class ReportGenerationUtil {
         });
 
         return new Pair<>(new HashMap<>(), tableData);
+    }
+
+    public static List<String> constructDataForCommissionColumns(List<Integer> commissionIds,
+                                                                 String locale) {
+        var commissionNames = new ArrayList<String>();
+        commissionIds.forEach(commissionId -> {
+            var commission = commissionService.findOne(commissionId);
+            commissionNames.add(getContent(
+                MultilingualContentConverter.getMultilingualContentDTO(commission.getDescription()),
+                locale.toUpperCase()));
+        });
+
+        return commissionNames;
     }
 
     private static String getContent(List<MultilingualContentDTO> contentList,

@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -137,8 +138,8 @@ public class PersonAssessmentClassificationServiceImpl
         var commission = commissionService.findOneWithFetchedRelations(commissionId);
         var organisationUnit = userRepository.findOUForCommission(commissionId)
             .orElseThrow(() -> new NotFoundException("commissionNotBoundToOUMessage"));
-        var subOUs = new ArrayList<>(
-            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnit.getId()));
+        var subOUs =
+            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnit.getId());
         subOUs.add(organisationUnit.getId());
 
         var subOUsForTopLevelInstitution = new ArrayList<Integer>();
@@ -383,22 +384,26 @@ public class PersonAssessmentClassificationServiceImpl
         }
 
         var knownAuthorIds = new HashSet<>(publication.getAuthorIds());
-        var sameTopLevelEmploymentInstitutions = new HashSet<Integer>();
+        var sameTopLevelEmploymentInstitutions = new ArrayList<Integer>();
         knownAuthorIds.forEach(authorId -> {
             var topLevelInstitutionEmployments =
                 involvementRepository.findActiveEmploymentsForPersonAndInstitutions(
-                    subOUsForTopLevelInstitution, personIndex.getDatabaseId());
-            if (topLevelInstitutionEmployments.isEmpty()) {
+                        subOUsForTopLevelInstitution, authorId).stream()
+                    .map(employment -> employment.getOrganisationUnit().getId()).toList();
+            if (topLevelInstitutionEmployments.isEmpty() ||
+                Collections.disjoint(topLevelInstitutionEmployments,
+                    publication.getOrganisationUnitIds())) {
                 return;
             }
             sameTopLevelEmploymentInstitutions.add(
-                topLevelInstitutionEmployments.getFirst().getOrganisationUnit().getId());
+                organisationUnitsRelationRepository.getOneLevelBelowTopOU(
+                    topLevelInstitutionEmployments.getFirst(),
+                    subOUsForTopLevelInstitution.getLast()));
         });
 
         if (knownAuthorIds.size() == sameTopLevelEmploymentInstitutions.size()) {
             assessmentResult.getPublicationToInstitution()
-                .put(publication.getDatabaseId(),
-                    sameTopLevelEmploymentInstitutions.stream().toList());
+                .put(publication.getDatabaseId(), sameTopLevelEmploymentInstitutions);
         } else {
             assessmentResult.getPublicationToInstitution()
                 .put(publication.getDatabaseId(), List.of());

@@ -31,13 +31,16 @@ public class ReportingController {
     public void scheduleReportGeneration(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("type") ReportType reportType,
-        @RequestParam("commissionId") Integer commissionId,
+        @RequestParam("commissionId") List<Integer> commissionIds,
         @RequestParam("year") Integer year,
         @RequestParam("lang") String lang,
         @RequestParam(value = "topLevelInstitutionId", required = false)
         Integer topLevelInstitutionId,
         @RequestHeader("Authorization") String bearerToken) {
-        reportingService.scheduleReportGeneration(timestamp, reportType, year, commissionId, lang,
+        if (commissionIds.isEmpty()) {
+            return;
+        }
+        reportingService.scheduleReportGeneration(timestamp, reportType, year, commissionIds, lang,
             topLevelInstitutionId, tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
