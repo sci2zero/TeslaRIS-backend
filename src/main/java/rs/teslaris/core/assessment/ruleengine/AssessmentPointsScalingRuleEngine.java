@@ -56,14 +56,15 @@ public class AssessmentPointsScalingRuleEngine {
             if (authorNumber > 10) {
                 return points / (1 + 0.2 * (authorNumber - 10));
             }
+            return points;
         }
 
         // Treat it as experimental by default
         if (authorNumber > 7) {
             return points / (1 + 0.2 * (authorNumber - 7));
-        } else {
-            return points;
         }
+
+        return points;
     }
 
     private EntityIndicator findIndicatorByCode(String code) {
