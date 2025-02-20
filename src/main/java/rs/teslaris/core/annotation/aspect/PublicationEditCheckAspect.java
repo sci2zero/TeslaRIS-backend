@@ -22,7 +22,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.exceptionhandling.exception.CantEditPublicationException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @Aspect
@@ -40,7 +40,7 @@ public class PublicationEditCheckAspect {
 
 
     @Around("@annotation(rs.teslaris.core.annotation.PublicationEditCheck)")
-    public Object checkApiKey(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object checkPublicationEdit(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
@@ -97,18 +97,18 @@ public class PublicationEditCheckAspect {
                 break;
             case RESEARCHER:
                 if (!contributors.contains(userId)) {
-                    throw new CantEditPublicationException(
-                        "unauthorizedPublicationEditAttemptMessage");
+                    throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
                 }
                 break;
             case INSTITUTIONAL_EDITOR:
                 if (contributors.stream().noneMatch(
                     personId -> personService.isPersonEmployedInOrganisationUnit(personId,
                         userService.getUserOrganisationUnitId(userId)))) {
-                    throw new CantEditPublicationException(
-                        "unauthorizedPublicationEditAttemptMessage");
+                    throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
                 }
                 break;
+            default:
+                throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
         }
     }
 }

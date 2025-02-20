@@ -1,6 +1,6 @@
 package rs.teslaris.core.repository.document;
 
-import java.util.Optional;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -28,7 +28,7 @@ public interface PublicationSeriesRepository extends JpaRepository<PublicationSe
 
     @Query("SELECT ps FROM PublicationSeries ps WHERE (ps.printISSN = :printISSN AND " +
         "ps.eISSN = :eISSN) OR (ps.eISSN = :printISSN AND ps.printISSN = :eISSN)")
-    Optional<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN,
-                                                                        String printISSN);
+    List<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN,
+                                                                    String printISSN);
 
 }

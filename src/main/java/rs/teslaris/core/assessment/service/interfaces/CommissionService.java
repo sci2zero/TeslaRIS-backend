@@ -14,7 +14,9 @@ public interface CommissionService extends JPAService<Commission> {
 
     Page<CommissionResponseDTO> readAllCommissions(Pageable pageable,
                                                    String searchExpression,
-                                                   String language);
+                                                   String language,
+                                                   Boolean selectOnlyLoadCommissions,
+                                                   Boolean selectOnlyClassificationCommissions);
 
     CommissionResponseDTO readCommissionById(Integer commissionId);
 
@@ -25,4 +27,8 @@ public interface CommissionService extends JPAService<Commission> {
     void updateCommission(Integer commissionId, CommissionDTO commissionDTO);
 
     void deleteCommission(Integer commissionId);
+
+    Commission findOneWithFetchedRelations(Integer commissionId);
+
+    Integer findInstitutionIdForCommission(Integer commissionId);
 }

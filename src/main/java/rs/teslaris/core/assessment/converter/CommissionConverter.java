@@ -11,6 +11,7 @@ public class CommissionConverter {
             MultilingualContentConverter.getMultilingualContentDTO(commission.getDescription()),
             commission.getSources().stream().toList(), commission.getAssessmentDateFrom(),
             commission.getAssessmentDateTo(),
-            commission.getFormalDescriptionOfRule());
+            commission.getFormalDescriptionOfRule(),
+            commission.getRecognisedResearchAreas().stream().toList());
     }
 }

@@ -1,10 +1,13 @@
 package rs.teslaris.core.model.person;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -83,6 +86,12 @@ public class Person extends BaseEntity {
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "person_employment_hierarchy",
+        joinColumns = @JoinColumn(name = "person_id"))
+    @Column(name = "institution_id")
+    private Set<Integer> employmentInstitutionsIdHierarchy = new HashSet<>();
 
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {

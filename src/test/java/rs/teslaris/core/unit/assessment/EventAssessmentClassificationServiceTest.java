@@ -14,11 +14,13 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.dto.EventAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
+import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.EventAssessmentClassification;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.impl.EventAssessmentClassificationServiceImpl;
 import rs.teslaris.core.assessment.service.impl.cruddelegate.EventAssessmentClassificationJPAServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
@@ -36,6 +38,9 @@ public class EventAssessmentClassificationServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private CommissionService commissionService;
 
     @InjectMocks
     private EventAssessmentClassificationServiceImpl eventAssessmentClassificationService;
@@ -75,6 +80,7 @@ public class EventAssessmentClassificationServiceTest {
         var eventAssessmentClassificationDTO = new EventAssessmentClassificationDTO();
         eventAssessmentClassificationDTO.setEventId(1);
         eventAssessmentClassificationDTO.setAssessmentClassificationId(1);
+        eventAssessmentClassificationDTO.setCommissionId(1);
 
         var newEventAssessmentClassification = new EventAssessmentClassification();
         newEventAssessmentClassification.setAssessmentClassification(
@@ -83,6 +89,8 @@ public class EventAssessmentClassificationServiceTest {
         var conference = new Conference();
         conference.setDateFrom(LocalDate.of(2020, 4, 2));
         when(eventService.findOne(1)).thenReturn(conference);
+
+        when(commissionService.findOne(1)).thenReturn(new Commission());
 
         when(eventAssessmentClassificationJPAService.save(any(EventAssessmentClassification.class)))
             .thenReturn(newEventAssessmentClassification);
@@ -106,11 +114,15 @@ public class EventAssessmentClassificationServiceTest {
         var existingEventAssessmentClassification = new EventAssessmentClassification();
         existingEventAssessmentClassification.setAssessmentClassification(
             new AssessmentClassification());
+        existingEventAssessmentClassification.setCommission(new Commission());
+
+        var event = new Conference();
+        event.setDateFrom(LocalDate.now());
 
         when(eventAssessmentClassificationJPAService.findOne(
             eventAssessmentClassificationId)).thenReturn(
             existingEventAssessmentClassification);
-        when(eventService.findOne(1)).thenReturn(new Conference());
+        when(eventService.findOne(1)).thenReturn(event);
         when(assessmentClassificationService.findOne(1)).thenReturn(new AssessmentClassification());
 
         eventAssessmentClassificationService.updateEventAssessmentClassification(

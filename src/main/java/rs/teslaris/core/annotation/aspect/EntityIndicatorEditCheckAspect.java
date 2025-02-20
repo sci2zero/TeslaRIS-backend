@@ -13,7 +13,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.assessment.service.interfaces.EntityIndicatorService;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.util.exceptionhandling.exception.CantEditEntityIndicatorException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @Aspect
@@ -43,17 +43,15 @@ public class EntityIndicatorEditCheckAspect {
         switch (UserRole.valueOf(role)) {
             case ADMIN:
                 break;
-            case RESEARCHER:
+            case RESEARCHER, COMMISSION:
                 if (!entityIndicatorService.isUserTheOwnerOfEntityIndicator(userId,
                     entityIndicatorId)) {
-                    throw new CantEditEntityIndicatorException(
+                    throw new CantEditException(
                         "unauthorizedEntityIndicatorEditAttemptMessage");
                 }
                 break;
-            case INSTITUTIONAL_EDITOR:
-                // TODO: Until we decide whether institutional admins can edit
-                throw new CantEditEntityIndicatorException(
-                    "unauthorizedEntityIndicatorEditAttemptMessage");
+            default:
+                throw new CantEditException("unauthorizedEntityIndicatorEditAttemptMessage");
         }
 
         return joinPoint.proceed();

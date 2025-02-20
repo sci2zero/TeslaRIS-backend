@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -183,7 +184,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
 
         // When
         publicationSeriesAssessmentClassificationService.scheduleClassification(timeToRun,
-            commissionId, userId, classificationYears);
+            commissionId, userId, classificationYears, new ArrayList<>());
 
         // Then
         verify(taskManagerService, times(1)).scheduleTask(

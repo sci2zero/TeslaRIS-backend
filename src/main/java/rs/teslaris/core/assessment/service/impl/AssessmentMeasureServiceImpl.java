@@ -1,6 +1,10 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,10 +15,14 @@ import rs.teslaris.core.assessment.converter.AssessmentMeasureConverter;
 import rs.teslaris.core.assessment.dto.AssessmentMeasureDTO;
 import rs.teslaris.core.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
+import rs.teslaris.core.assessment.ruleengine.AssessmentPointsRuleEngine;
+import rs.teslaris.core.assessment.ruleengine.AssessmentPointsScalingRuleEngine;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentMeasureService;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentRulebookService;
+import rs.teslaris.core.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -69,10 +77,17 @@ public class AssessmentMeasureServiceImpl extends JPAServiceImpl<AssessmentMeasu
 
     private void setCommonFields(AssessmentMeasure assessmentMeasure,
                                  AssessmentMeasureDTO assessmentMeasureDTO) {
-        assessmentMeasure.setFormalDescriptionOfRule(
-            assessmentMeasureDTO.formalDescriptionOfRule());
+        if (!getRuleEngineRules(AssessmentPointsRuleEngine.class).contains(
+            assessmentMeasureDTO.pointRule()) ||
+            !getRuleEngineRules(AssessmentPointsScalingRuleEngine.class).contains(
+                assessmentMeasureDTO.scalingRule())) {
+            throw new NotFoundException("Provided rule does not exist.");
+        }
+
+        assessmentMeasure.setPointRule(assessmentMeasureDTO.pointRule());
+        assessmentMeasure.setScalingRule(assessmentMeasureDTO.scalingRule());
+
         assessmentMeasure.setCode(assessmentMeasureDTO.code());
-        assessmentMeasure.setValue(assessmentMeasureDTO.value());
         assessmentMeasure.setTitle(
             multilingualContentService.getMultilingualContent(assessmentMeasureDTO.title()));
 
@@ -94,5 +109,26 @@ public class AssessmentMeasureServiceImpl extends JPAServiceImpl<AssessmentMeasu
         }
 
         delete(assessmentMeasureId);
+    }
+
+    @Override
+    public List<String> listAllPointRules() {
+        return getRuleEngineRules(AssessmentPointsRuleEngine.class);
+    }
+
+    @Override
+    public List<String> listAllScalingRules() {
+        return getRuleEngineRules(AssessmentPointsScalingRuleEngine.class);
+    }
+
+    @Override
+    public List<String> listAllGroupCodes() {
+        return ClassificationPriorityMapping.getAssessmentGroups();
+    }
+
+    private <T> List<String> getRuleEngineRules(Class<T> clazz) {
+        return Arrays.stream(clazz.getMethods()).map(Method::getName)
+            .filter(name -> name.contains("Rulebook")).sorted().collect(
+                Collectors.toList());
     }
 }

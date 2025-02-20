@@ -31,21 +31,21 @@ public class EventAssessmentClassificationServiceImpl
 
     private final EventService eventService;
 
+
     @Autowired
     public EventAssessmentClassificationServiceImpl(
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
-        CommissionService commissionService,
         AssessmentClassificationService assessmentClassificationService,
+        CommissionService commissionService,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         EventService eventService) {
-        super(commissionService, assessmentClassificationService,
+        super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;
     }
-
 
     @Override
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForEvent(
@@ -61,6 +61,8 @@ public class EventAssessmentClassificationServiceImpl
         EventAssessmentClassificationDTO eventAssessmentClassificationDTO) {
         var newAssessmentClassification = new EventAssessmentClassification();
 
+        newAssessmentClassification.setCommission(
+            commissionService.findOne(eventAssessmentClassificationDTO.getCommissionId()));
         setCommonFields(newAssessmentClassification, eventAssessmentClassificationDTO);
 
         var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());
@@ -74,6 +76,16 @@ public class EventAssessmentClassificationServiceImpl
                         .equals(EventsRelationType.BELONGS_TO_SERIES)) {
                         var eventInstance = eventService.findOne(relation.getSourceId());
                         var instanceClassification = new EventAssessmentClassification();
+
+                        var existingClassification =
+                            eventAssessmentClassificationRepository
+                                .findAssessmentClassificationsForEventAndCommissionAndYear(
+                                    eventInstance.getId(),
+                                    eventAssessmentClassificationDTO.getCommissionId(),
+                                    eventInstance.getDateFrom().getYear());
+                        existingClassification.ifPresent(
+                            eventAssessmentClassificationRepository::delete);
+
                         setCommonFields(instanceClassification, eventAssessmentClassificationDTO);
                         instanceClassification.setClassificationYear(
                             eventInstance.getDateFrom().getYear());
@@ -81,9 +93,16 @@ public class EventAssessmentClassificationServiceImpl
                         eventAssessmentClassificationJPAService.save(instanceClassification);
                     }
                 });
+        } else {
+            var classificationYear = event.getDateFrom().getYear();
+            newAssessmentClassification.setClassificationYear(classificationYear);
         }
 
-        newAssessmentClassification.setClassificationYear(event.getDateFrom().getYear());
+        var existingClassification =
+            eventAssessmentClassificationRepository.findAssessmentClassificationsForEventAndCommission(
+                eventAssessmentClassificationDTO.getEventId(),
+                eventAssessmentClassificationDTO.getCommissionId());
+        existingClassification.ifPresent(eventAssessmentClassificationRepository::delete);
 
         return eventAssessmentClassificationJPAService.save(newAssessmentClassification);
     }
@@ -93,10 +112,41 @@ public class EventAssessmentClassificationServiceImpl
                                                     EventAssessmentClassificationDTO eventAssessmentClassificationDTO) {
         var eventAssessmentClassificationToUpdate =
             eventAssessmentClassificationJPAService.findOne(eventAssessmentClassificationId);
+        var oldCommissionId = eventAssessmentClassificationToUpdate.getCommission().getId();
 
         setCommonFields(eventAssessmentClassificationToUpdate, eventAssessmentClassificationDTO);
-        eventAssessmentClassificationToUpdate.setEvent(
-            eventService.findOne(eventAssessmentClassificationDTO.getEventId()));
+
+        var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());
+        eventAssessmentClassificationToUpdate.setEvent(event);
+        if (event.getSerialEvent()) {
+            eventAssessmentClassificationToUpdate.setClassificationYear(null);
+
+            eventService.readSerialEventRelations(eventAssessmentClassificationDTO.getEventId())
+                .forEach((relation) -> {
+                    if (relation.getEventsRelationType()
+                        .equals(EventsRelationType.BELONGS_TO_SERIES)) {
+                        var eventInstance = eventService.findOne(relation.getSourceId());
+                        var instanceClassification = new EventAssessmentClassification();
+
+                        var existingClassification =
+                            eventAssessmentClassificationRepository
+                                .findAssessmentClassificationsForEventAndCommissionAndYear(
+                                    eventInstance.getId(), oldCommissionId,
+                                    eventInstance.getDateFrom().getYear());
+                        existingClassification.ifPresent(
+                            eventAssessmentClassificationRepository::delete);
+
+                        setCommonFields(instanceClassification, eventAssessmentClassificationDTO);
+                        instanceClassification.setClassificationYear(
+                            eventInstance.getDateFrom().getYear());
+                        instanceClassification.setEvent(eventInstance);
+                        eventAssessmentClassificationJPAService.save(instanceClassification);
+                    }
+                });
+        } else {
+            var classificationYear = event.getDateFrom().getYear();
+            eventAssessmentClassificationToUpdate.setClassificationYear(classificationYear);
+        }
 
         eventAssessmentClassificationJPAService.save(eventAssessmentClassificationToUpdate);
     }

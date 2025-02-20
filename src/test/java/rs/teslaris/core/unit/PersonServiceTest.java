@@ -339,7 +339,7 @@ public class PersonServiceTest {
         personService.setPersonMainName(2, 1);
 
         // then
-        verify(personRepository, times(1)).save(person);
+        verify(personRepository, times(2)).save(person);
         assertEquals(person.getName().getOtherName(), personName2.getOtherName());
     }
 
@@ -364,7 +364,7 @@ public class PersonServiceTest {
 
         // then
         verify(personRepository, times(1)).findById(personId);
-        verify(personRepository, times(3)).save(personToUpdate);
+        verify(personRepository, times(4)).save(personToUpdate);
     }
 
     @Test
@@ -454,7 +454,7 @@ public class PersonServiceTest {
 
         // then
         verify(personRepository, times(1)).findById(personId);
-        verify(personRepository, times(1)).save(personToUpdate);
+        verify(personRepository, times(2)).save(personToUpdate);
         assertEquals("123123", personToUpdate.getApvnt());
         assertEquals("67890", personToUpdate.getECrisId());
         assertEquals("aa123456", personToUpdate.getENaukaId());
@@ -512,7 +512,7 @@ public class PersonServiceTest {
             new PageImpl<>(List.of(new PersonIndex(), new PersonIndex())));
 
         // when
-        var result = personService.findPeopleByNameAndEmployment(tokens, pageable, false);
+        var result = personService.findPeopleByNameAndEmployment(tokens, pageable, false, 0);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -852,7 +852,7 @@ public class PersonServiceTest {
         assertEquals("Michael", person.getName().getOtherName());
         assertEquals("Doe", person.getName().getLastname());
 
-        verify(personRepository).save(person);
+        verify(personRepository, times(2)).save(person);
     }
 
     @Test

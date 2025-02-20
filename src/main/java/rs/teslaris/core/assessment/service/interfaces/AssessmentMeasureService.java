@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.service.interfaces;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,4 +21,10 @@ public interface AssessmentMeasureService extends JPAService<AssessmentMeasure> 
                                  AssessmentMeasureDTO assessmentMeasureDTO);
 
     void deleteAssessmentMeasure(Integer assessmentMeasureId);
+
+    List<String> listAllPointRules();
+
+    List<String> listAllScalingRules();
+
+    List<String> listAllGroupCodes();
 }

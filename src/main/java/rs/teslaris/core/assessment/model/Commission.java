@@ -60,5 +60,13 @@ public class Commission extends BaseEntity {
     private String formalDescriptionOfRule;
 
     @OneToMany(mappedBy = "sourceCommission", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<CommissionRelation> relations;
+    private Set<CommissionRelation> relations = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "commission_recognised_research_areas", joinColumns = @JoinColumn(name = "commission_id"))
+    @Column(name = "recognised_research_areas", nullable = false)
+    private Set<String> recognisedResearchAreas = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<Person> excludedResearchers = new HashSet<>();
 }

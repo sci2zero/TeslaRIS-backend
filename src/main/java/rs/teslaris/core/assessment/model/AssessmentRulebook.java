@@ -41,6 +41,9 @@ public class AssessmentRulebook extends BaseEntity {
     @Column(name = "issue_date")
     private LocalDate issueDate;
 
+    @Column(name = "is_default")
+    private Boolean isDefault = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pdf_file_id")
     private DocumentFile pdfFile;
@@ -49,6 +52,11 @@ public class AssessmentRulebook extends BaseEntity {
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.DETACH, orphanRemoval = true)
     private List<AssessmentMeasure> assessmentMeasures = new ArrayList<>();
+
+    public void addAssessmentMeasure(AssessmentMeasure assessmentMeasure) {
+        assessmentMeasures.add(assessmentMeasure);
+        assessmentMeasure.setRulebook(this);
+    }
 }

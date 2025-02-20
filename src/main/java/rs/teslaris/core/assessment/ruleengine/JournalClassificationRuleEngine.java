@@ -71,6 +71,26 @@ public abstract class JournalClassificationRuleEngine {
     }
 
     @Transactional
+    public void startClassification(Integer classificationYear, Commission commission,
+                                    List<Integer> journalIds) {
+        this.classificationYear = classificationYear;
+
+        journalIds.forEach((journalId) -> {
+            var journalIndexOptional =
+                journalIndexRepository.findJournalIndexByDatabaseId(journalId);
+            journalIndexOptional.ifPresent(journalIndex -> {
+                this.currentJournal =
+                    journalRepository.getReferenceById(journalIndex.getDatabaseId());
+                this.currentJournalIndicators =
+                    publicationSeriesIndicatorRepository.findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+                        journalIndex.getDatabaseId(), classificationYear, source);
+
+                performClassification(commission);
+            });
+        });
+    }
+
+    @Transactional
     private void performClassification(Commission commission) {
         List<Function<String, AssessmentClassification>> handlers = List.of(
             this::handleM21APlus,
@@ -119,9 +139,9 @@ public abstract class JournalClassificationRuleEngine {
             classification.setAssessmentClassification(assessmentClassification.a);
 
             var existingClassification =
-                assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYear(
+                assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
                     classification.getPublicationSeries().getId(), assessmentClassification.b,
-                    classificationYear);
+                    classificationYear, classification.getCommission().getId());
             existingClassification.ifPresent(assessmentClassificationRepository::delete);
 
             assessmentClassificationRepository.save(classification);

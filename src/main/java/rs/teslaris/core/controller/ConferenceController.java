@@ -102,6 +102,11 @@ public class ConferenceController {
         return conferenceService.readConference(conferenceId);
     }
 
+    @GetMapping("/old-id/{oldConferenceId}")
+    public ConferenceDTO readConferenceByOldId(@PathVariable Integer oldConferenceId) {
+        return conferenceService.readConferenceByOldId(oldConferenceId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")

@@ -1,7 +1,6 @@
 package rs.teslaris.core.assessment.service.impl;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,9 +20,9 @@ public class EntityAssessmentClassificationServiceImpl
     extends JPAServiceImpl<EntityAssessmentClassification> implements
     EntityAssessmentClassificationService {
 
-    protected final CommissionService commissionService;
-
     protected final AssessmentClassificationService assessmentClassificationService;
+
+    protected final CommissionService commissionService;
 
     private final EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
 
@@ -43,11 +42,6 @@ public class EntityAssessmentClassificationServiceImpl
         entityAssessmentClassification.setTimestamp(LocalDateTime.now());
         entityAssessmentClassification.setManual(true);
         entityAssessmentClassification.setClassificationYear(dto.getClassificationYear());
-
-        if (Objects.nonNull(dto.getCommissionId())) {
-            entityAssessmentClassification.setCommission(
-                commissionService.findOne(dto.getCommissionId()));
-        }
 
         entityAssessmentClassification.setAssessmentClassification(
             assessmentClassificationService.findOne(dto.getAssessmentClassificationId()));

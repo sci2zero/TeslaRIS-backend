@@ -1,0 +1,32 @@
+{
+  "researchAreas": [
+    {
+      "name": {
+        "sr": "Prirodno-matematičke i medicinske nauke",
+        "en": "Natural, Mathematical and Medical Sciences"
+      },
+      "code": "NATURAL"
+    },
+    {
+      "name": {
+        "sr": "Tehničko-tehnološke i biotehničke nauke",
+        "en": "Technical, Technological and Biotechnical Sciences"
+      },
+      "code": "TECHNICAL"
+    },
+    {
+      "name": {
+        "sr": "Društvene nauke",
+        "en": "Social Sciences"
+      },
+      "code": "SOCIAL"
+    },
+    {
+      "name": {
+        "sr": "Humanističke nauke",
+        "en": "Humanities"
+      },
+      "code": "HUMANITIES"
+    }
+  ]
+}

@@ -32,4 +32,6 @@ public interface AssessmentRulebookService extends JPAService<AssessmentRulebook
                                   AssessmentRulebookDTO assessmentRulebookDTO);
 
     void deleteAssessmentRulebook(Integer assessmentRulebookId);
+
+    void setDefaultRulebook(Integer assessmentRulebookId);
 }

@@ -18,6 +18,8 @@ public record AssessmentRulebookResponseDTO(
 
     Integer publisherId,
 
-    List<MultilingualContentDTO> publisherName
+    List<MultilingualContentDTO> publisherName,
+
+    Boolean isDefault
 ) {
 }

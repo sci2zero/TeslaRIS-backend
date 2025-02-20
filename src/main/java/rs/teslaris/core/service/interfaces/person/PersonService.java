@@ -28,7 +28,7 @@ public interface PersonService extends JPAService<Person> {
     Long getResearcherCount();
 
     Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
-                                                    boolean strict);
+                                                    boolean strict, Integer institutionId);
 
     Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
                                                     Pageable pageable, Boolean fetchAlumni);

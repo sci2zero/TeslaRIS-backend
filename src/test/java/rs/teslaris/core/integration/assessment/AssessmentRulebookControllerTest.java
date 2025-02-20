@@ -33,30 +33,56 @@ public class AssessmentRulebookControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAllAssessmentRulebooks() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/assessment/assessment-rulebook?page=0&size=10&lang=sr")
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAllAssessmentMeasuresForRulebook() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/assessment/assessment-rulebook/{rulebookId}/measures?page=0&size=10",
                     1)
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAssessmentRulebook() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/assessment/assessment-rulebook/{assessmentRulebookId}",
                     1)
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testSetDefaultAssessmentRulebook() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/assessment/assessment-rulebook/set-default/{assessmentRulebookId}",
+                    1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isNoContent());
     }
 
     @Test

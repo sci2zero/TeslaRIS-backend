@@ -2,6 +2,7 @@ package rs.teslaris.core.unit.assessment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -142,6 +143,25 @@ public class AssessmentRulebookServiceTest {
     }
 
     @Test
+    void shouldSetDefaultRulebook() {
+        // Given
+        var assessmentRulebookId = 1;
+        var rulebook = new AssessmentRulebook();
+        rulebook.setIsDefault(false);
+
+        when(assessmentRulebookRepository.findById(assessmentRulebookId)).thenReturn(
+            Optional.of(rulebook));
+
+        // When
+        assessmentRulebookService.setDefaultRulebook(assessmentRulebookId);
+
+        // Then
+        assertTrue(rulebook.getIsDefault());
+        verify(assessmentRulebookRepository).setAllOthersAsNonDefault(assessmentRulebookId);
+        verify(assessmentRulebookRepository).save(rulebook);
+    }
+
+    @Test
     public void shouldAddPdfFile() {
         // Given
         var rulebookId = 1;
@@ -185,12 +205,14 @@ public class AssessmentRulebookServiceTest {
         // given
         var assessmentMeasure1 = new AssessmentMeasure();
         assessmentMeasure1.setCode("code1");
-        assessmentMeasure1.setFormalDescriptionOfRule("rule1");
+        assessmentMeasure1.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure1.setScalingRule("serbianScalingRulebook2025");
         assessmentMeasure1.setRulebook(new AssessmentRulebook());
 
         var assessmentMeasure2 = new AssessmentMeasure();
         assessmentMeasure2.setCode("code2");
-        assessmentMeasure2.setFormalDescriptionOfRule("rule2");
+        assessmentMeasure2.setPointRule("serbianPointsRulebook2025");
+        assessmentMeasure2.setScalingRule("serbianScalingRulebook2025");
         assessmentMeasure2.setRulebook(new AssessmentRulebook());
 
         when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(Pageable.class),

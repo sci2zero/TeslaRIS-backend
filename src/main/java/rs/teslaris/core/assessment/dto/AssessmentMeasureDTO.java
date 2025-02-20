@@ -11,14 +11,14 @@ public record AssessmentMeasureDTO(
 
     Integer id,
 
-    @NotBlank(message = "You have to provide formal rule description.")
-    String formalDescriptionOfRule,
-
     @NotBlank(message = "You have to provide assessment measure code.")
     String code,
 
-    @NotNull(message = "You have to provide the reward value.")
-    Double value,
+    @NotBlank(message = "You have to provide point rule name.")
+    String pointRule,
+
+    @NotBlank(message = "You have to provide scaling rule name.")
+    String scalingRule,
 
     @Valid
     @NotNull(message = "You have to provide assessment measure title.")

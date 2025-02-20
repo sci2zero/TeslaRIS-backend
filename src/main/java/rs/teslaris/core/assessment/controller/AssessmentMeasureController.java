@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ public class AssessmentMeasureController {
 
 
     @GetMapping
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_MEASURES')")
     public Page<AssessmentMeasureDTO> searchAssessmentMeasures(
         @RequestParam String searchExpression,
         Pageable pageable) {
@@ -36,8 +38,27 @@ public class AssessmentMeasureController {
     }
 
     @GetMapping("/{assessmentMeasureId}")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_MEASURES')")
     public AssessmentMeasureDTO readAssessmentMeasure(@PathVariable Integer assessmentMeasureId) {
         return assessmentMeasureService.readAssessmentMeasureById(assessmentMeasureId);
+    }
+
+    @GetMapping("/point-rules")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_MEASURES')")
+    public List<String> readPointRules() {
+        return assessmentMeasureService.listAllPointRules();
+    }
+
+    @GetMapping("/scaling-rules")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_MEASURES')")
+    public List<String> readScalingRules() {
+        return assessmentMeasureService.listAllScalingRules();
+    }
+
+    @GetMapping("/assessment-groups")
+    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_MEASURES')")
+    public List<String> readAssessmentGroups() {
+        return assessmentMeasureService.listAllGroupCodes();
     }
 
     @PostMapping

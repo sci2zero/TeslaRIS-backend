@@ -32,6 +32,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @Transactional
@@ -67,6 +68,13 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     public Page<ConferenceDTO> readAllConferences(Pageable pageable) {
         return conferenceJPAService.findAll(pageable).map(ConferenceConverter::toDTO);
+    }
+
+    @Override
+    public ConferenceDTO readConferenceByOldId(Integer oldId) {
+        return ConferenceConverter.toDTO(conferenceRepository.findConferenceByOldId(oldId)
+            .orElseThrow(() -> new NotFoundException(
+                "Conference with old ID " + oldId + " does not exist.")));
     }
 
     @Override

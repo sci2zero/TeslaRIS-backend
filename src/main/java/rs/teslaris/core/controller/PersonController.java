@@ -96,10 +96,11 @@ public class PersonController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(required = false, defaultValue = "false") boolean strict,
+        @RequestParam(required = false, defaultValue = "0") Integer institutionId,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return personService.findPeopleByNameAndEmployment(tokens,
-            pageable, strict);
+            pageable, strict, institutionId);
     }
 
     @GetMapping("/scopus-author/{scopusId}")

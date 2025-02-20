@@ -16,6 +16,8 @@ public record CommissionResponseDTO(
 
     LocalDate assessmentDateTo,
 
-    String formalDescriptionOfRule
+    String formalDescriptionOfRule,
+
+    List<String> recognisedResearchAreas
 ) {
 }

@@ -28,25 +28,46 @@ public class CommissionControllerTest extends BaseTest {
 
         return new CommissionDTO(null, dummyMC, List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1),
-            List.of(1, 2), List.of(1, 2), "rule");
+            List.of(1, 2), List.of(1, 2), "load-mno", List.of("SOCIAL"));
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadAllCommissions() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/commission?page=0&size=10&lang=sr")
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                    "http://localhost:8081/api/assessment/commission?page=0&size=10&lang=sr&onlyLoad=false&onlyClassification=false")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadCommission() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/assessment/commission/{commissionId}", 1)
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testInstitutionIdForCommission() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/assessment/commission/institution/{commissionId}", 5)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+        ).andExpect(status().isOk());
     }
 
     @Test
@@ -63,7 +84,7 @@ public class CommissionControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_COMMISSION")).andExpect(status().isCreated())
-            .andExpect(jsonPath("$.formalDescriptionOfRule").value("rule"));
+            .andExpect(jsonPath("$.formalDescriptionOfRule").value("load-mno"));
     }
 
     @Test

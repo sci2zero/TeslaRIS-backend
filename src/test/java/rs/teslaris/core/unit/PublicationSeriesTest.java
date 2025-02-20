@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -39,7 +39,7 @@ public class PublicationSeriesTest {
         // Given
         when(publicationSeriesRepository.findPublicationSeriesByeISSNOrPrintISSN("1234-5678",
             "8765-4321"))
-            .thenReturn(Optional.of(publicationSeries));
+            .thenReturn(List.of(publicationSeries));
 
         // When
         var result = publicationSeriesService.findPublicationSeriesByIssn("1234-5678", "8765-4321");
@@ -55,7 +55,7 @@ public class PublicationSeriesTest {
     void shouldFindPublicationSeriesByIssnWhenOnlyeIssnProvided() {
         // Given
         when(publicationSeriesRepository.findPublicationSeriesByeISSNOrPrintISSN("1234-5678", ""))
-            .thenReturn(Optional.of(publicationSeries));
+            .thenReturn(List.of(publicationSeries));
 
         // When
         var result = publicationSeriesService.findPublicationSeriesByIssn("1234-5678", null);
@@ -71,7 +71,7 @@ public class PublicationSeriesTest {
     void shouldFindPublicationSeriesByIssnWhenOnlyPrintIssnProvided() {
         // Given
         when(publicationSeriesRepository.findPublicationSeriesByeISSNOrPrintISSN("", "8765-4321"))
-            .thenReturn(Optional.of(publicationSeries));
+            .thenReturn(List.of(publicationSeries));
 
         // When
         var result = publicationSeriesService.findPublicationSeriesByIssn(null, "8765-4321");
@@ -88,7 +88,7 @@ public class PublicationSeriesTest {
         // Given
         when(publicationSeriesRepository.findPublicationSeriesByeISSNOrPrintISSN("1234-5678",
             "8765-4321"))
-            .thenReturn(Optional.empty());
+            .thenReturn(List.of());
 
         // When
         var result = publicationSeriesService.findPublicationSeriesByIssn("1234-5678", "8765-4321");

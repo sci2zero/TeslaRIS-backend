@@ -7,4 +7,5 @@ public enum InvolvementType {
     MEMBER_OF,
     EMPLOYED_AT,
     HIRED_BY,
+    CANDIDATE
 }

@@ -184,7 +184,7 @@ public class AssessmentClassificationServiceTest {
         var exception = assertThrows(NotFoundException.class,
             () -> assessmentClassificationService.readAssessmentClassificationByCode(code));
 
-        assertEquals("Assessment Classification with given code does not exist.",
+        assertEquals("Assessment Classification with given code does not exist - NonExistentCode.",
             exception.getMessage());
         verify(assessmentClassificationRepository, times(1)).findByCode(code);
     }

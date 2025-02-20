@@ -140,6 +140,7 @@ public class PersonConverter {
             switch (involvement.getInvolvementType()) {
                 case HIRED_BY:
                 case EMPLOYED_AT:
+                case CANDIDATE:
                     employmentIds.add(involvement.getId());
                     break;
                 case MEMBER_OF:

@@ -16,7 +16,7 @@ import rs.teslaris.core.model.document.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@DiscriminatorValue("DOCUMENT_ASSESSMENT_CLASSIFICATION")
+@DiscriminatorValue("DOCUMENT_ASSESSMENT_CLASS")
 public class DocumentAssessmentClassification extends EntityAssessmentClassification {
 
     @ManyToOne(fetch = FetchType.LAZY)

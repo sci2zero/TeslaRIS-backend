@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,11 +41,9 @@ import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
-import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 
@@ -58,43 +57,38 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private final CsvDataLoader csvDataLoader;
 
-    private final PublicationSeriesService publicationSeriesService;
-
     private final JournalService journalService;
-
-    private final LanguageTagService languageTagService;
 
     private final TaskManagerService taskManagerService;
 
     private final JournalIndexRepository journalIndexRepository;
 
-    private final String WOS_DIRECTORY = "src/main/resources/publicationSeriesIndicators/wos";
+    @Value("${assessment.indicators.publication-series.wos}")
+    private String WOS_DIRECTORY;
 
-    private final String SCIMAGO_DIRECTORY =
-        "src/main/resources/publicationSeriesIndicators/scimago";
+    @Value("${assessment.indicators.publication-series.scimago}")
+    private String SCIMAGO_DIRECTORY;
 
-    private final String ERIH_PLUS_DIRECTORY =
-        "src/main/resources/publicationSeriesIndicators/erihPlus";
+    @Value("${assessment.indicators.publication-series.erih-plus}")
+    private String ERIH_PLUS_DIRECTORY;
 
-    private final String SLAVISTS_DIRECTORY =
-        "src/main/resources/publicationSeriesIndicators/mks";
+    @Value("${assessment.indicators.publication-series.mks}")
+    private String SLAVISTS_DIRECTORY;
 
 
     @Autowired
-    public PublicationSeriesIndicatorServiceImpl(
-        EntityIndicatorRepository entityIndicatorRepository,
-        DocumentFileService documentFileService,
-        IndicatorService indicatorService,
-        PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
-        CsvDataLoader csvDataLoader, PublicationSeriesService publicationSeriesService,
-        JournalService journalService, LanguageTagService languageTagService,
-        TaskManagerService taskManagerService, JournalIndexRepository journalIndexRepository) {
+    public PublicationSeriesIndicatorServiceImpl(IndicatorService indicatorService,
+                                                 EntityIndicatorRepository entityIndicatorRepository,
+                                                 DocumentFileService documentFileService,
+                                                 PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
+                                                 CsvDataLoader csvDataLoader,
+                                                 JournalService journalService,
+                                                 TaskManagerService taskManagerService,
+                                                 JournalIndexRepository journalIndexRepository) {
         super(indicatorService, entityIndicatorRepository, documentFileService);
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.csvDataLoader = csvDataLoader;
-        this.publicationSeriesService = publicationSeriesService;
         this.journalService = journalService;
-        this.languageTagService = languageTagService;
         this.taskManagerService = taskManagerService;
         this.journalIndexRepository = journalIndexRepository;
     }
@@ -489,7 +483,6 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                EntityIndicatorSource source, String edition, LocalDate startDate,
                                LocalDate endDate) {
         if (Objects.isNull(indicatorValue)) {
-            System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
             return;
         }
 

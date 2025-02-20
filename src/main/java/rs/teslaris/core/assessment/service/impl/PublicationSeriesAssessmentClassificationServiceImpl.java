@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
@@ -73,24 +74,22 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
     private final CsvDataLoader csvDataLoader;
 
-    private final String MNO_DIRECTORY =
-        "src/main/resources/publicationSeriesClassifications/mno";
+    @Value("${assessment.classifications.publication-series.mno}")
+    private String MNO_DIRECTORY;
 
 
     @Autowired
-    public PublicationSeriesAssessmentClassificationServiceImpl(CommissionService commissionService,
-                                                                AssessmentClassificationService assessmentClassificationService,
-                                                                EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
-                                                                PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
-                                                                PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
-                                                                PublicationSeriesService publicationSeriesService,
-                                                                JournalService journalService,
-                                                                PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
-                                                                JournalRepository journalRepository,
-                                                                JournalIndexRepository journalIndexRepository,
-                                                                TaskManagerService taskManagerService,
-                                                                CsvDataLoader csvDataLoader) {
-        super(commissionService, assessmentClassificationService,
+    public PublicationSeriesAssessmentClassificationServiceImpl(
+        AssessmentClassificationService assessmentClassificationService,
+        CommissionService commissionService,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
+        PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
+        PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
+        PublicationSeriesService publicationSeriesService, JournalService journalService,
+        PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
+        JournalRepository journalRepository, JournalIndexRepository journalIndexRepository,
+        TaskManagerService taskManagerService, CsvDataLoader csvDataLoader) {
+        super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.publicationSeriesAssessmentClassificationJPAService =
             publicationSeriesAssessmentClassificationJPAService;
@@ -123,6 +122,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
         var newAssessmentClassification = new PublicationSeriesAssessmentClassification();
 
+        newAssessmentClassification.setCommission(
+            commissionService.findOne(
+                publicationSeriesAssessmentClassificationDTO.getCommissionId()));
         setCommonFields(newAssessmentClassification, publicationSeriesAssessmentClassificationDTO);
         newAssessmentClassification.setPublicationSeries(
             publicationSeriesService.findOne(
@@ -154,9 +156,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             publicationSeriesAssessmentClassificationToUpdate);
     }
 
-    @Override
-    public void performJournalClassification(Integer commissionId,
-                                             List<Integer> classificationYears) {
+    private void performJournalClassification(Integer commissionId,
+                                              List<Integer> classificationYears,
+                                              List<Integer> journalIds) {
         var commission = commissionService.findOne(commissionId);
         var className = commission.getFormalDescriptionOfRule();
         JournalClassificationRuleEngine ruleEngine;
@@ -170,34 +172,40 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                 assessmentClassificationService);
 
             classificationYears.forEach((classificationYear) -> {
-                ruleEngine.startClassification(classificationYear, commission);
+                if (journalIds.isEmpty()) {
+                    ruleEngine.startClassification(classificationYear, commission);
+                } else {
+                    ruleEngine.startClassification(classificationYear, commission, journalIds);
+                }
             });
         } catch (ClassNotFoundException e) {
-            System.err.println("Class not found: " + className);
+            log.error("Class not found: {}", className);
         } catch (NoSuchMethodException e) {
-            System.err.println("No default constructor found for: " + className);
+            log.error("No default constructor found for: {}", className);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            System.err.println("Error instantiating class: " + className);
+            log.error("Error instantiating class: {}", className);
         }
     }
 
     @Override
     public void scheduleClassification(LocalDateTime timeToRun, Integer commissionId,
-                                       Integer userId, List<Integer> classificationYears) {
+                                       Integer userId, List<Integer> classificationYears,
+                                       List<Integer> journalIds) {
         var commission = commissionService.findOne(commissionId);
         taskManagerService.scheduleTask(
             "Publication_Series_Classification-" + commission.getFormalDescriptionOfRule() +
                 "-" + StringUtils.join(classificationYears, "_") +
                 "-" + UUID.randomUUID(), timeToRun,
-            () -> performJournalClassification(commissionId, classificationYears), userId);
+            () -> performJournalClassification(commissionId, classificationYears, journalIds),
+            userId);
     }
 
     @Override
     public void scheduleClassificationLoading(LocalDateTime timeToRun,
                                               EntityClassificationSource source,
-                                              Integer userId) {
+                                              Integer userId, Integer commissionId) {
         Runnable handlerFunction = switch (source) {
-            case MNO -> this::loadPublicationSeriesClassificationsFromMNOFiles;
+            case MNO -> (() -> loadPublicationSeriesClassificationsFromMNOFiles(commissionId));
             default -> null;
         };
 
@@ -207,17 +215,19 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             handlerFunction, userId);
     }
 
-    private void loadPublicationSeriesClassificationsFromMNOFiles() {
+    private void loadPublicationSeriesClassificationsFromMNOFiles(Integer commissionId) {
+        var commission = commissionService.findOne(commissionId);
         loadPublicationSeriesClassifications(
             MNO_DIRECTORY,
-            "mno",
+            commission.getFormalDescriptionOfRule().replace("load-", ""),
             ',',
+            commission,
             path -> true
         );
     }
 
     private void loadPublicationSeriesClassifications(String directory, String configKey,
-                                                      char separator,
+                                                      char separator, Commission commission,
                                                       Predicate<Path> additionalFilter) {
         var dirPath = Paths.get(directory);
 
@@ -246,7 +256,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                         .forEach(csvFile -> {
                             csvDataLoader.loadAssessmentData(
                                 csvFile.normalize().toAbsolutePath().toString(),
-                                mapping, this::processClassificationsLine, mapping.yearParseRegex(),
+                                mapping,
+                                ((line, mappingConf, year) -> processClassificationsLine(line,
+                                    mappingConf, year, commission)), mapping.yearParseRegex(),
                                 separator,
                                 mapping.parallelize());
                             log.info("Loaded {} of {}", counter.getAndIncrement(), csvFileCount);
@@ -263,24 +275,39 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
     private void processClassificationsLine(String[] line,
                                             ClassificationMappingConfigurationLoader.ClassificationMapping mapping,
-                                            Integer year) {
+                                            Integer year, Commission commission) {
         if (line.length == 1) {
             log.info("Invalid line format. Skipping...");
+            return;
+        }
+
+        var classificationCode = line[mapping.classificationColumn()].trim();
+        if (classificationCode.isEmpty() || classificationCode.equals("-")) {
+            log.info("Classification not specified for column, skipping.");
             return;
         }
 
         var issnDetails = parseIssnDetails(line[mapping.issnColumn()], mapping.issnDelimiter());
         var publicationSeries = findOrCreatePublicationSeries(line, mapping, issnDetails);
 
-        var classification = assessmentClassificationService.readAssessmentClassificationByCode(
-            line[mapping.classificationColumn()]);
-        var commission = commissionService.findOne(mapping.commissionId());
-        var category = line[mapping.categoryColumn()];
+        var classification =
+            assessmentClassificationService.readAssessmentClassificationByCode(
+                "journal" + classificationCode);
+        var category = line[mapping.categoryColumn()].trim();
+
+        for (var discriminator : mapping.discriminators()) {
+            var discriminatorValue = line[discriminator.columnId()].trim();
+            if (!discriminator.acceptedValues().contains(discriminatorValue)) {
+                log.info("Discriminator check failed for value: {}", discriminatorValue);
+                return;
+            }
+        }
 
         saveJournalClassification(publicationSeries, commission, classification, category, year);
     }
 
     private Pair<String, String> parseIssnDetails(String issnField, String delimiter) {
+        issnField = issnField.replace("- ", "-").replace("е: ", "е:");
         var eIssn = "";
         var printIssn = "";
 
@@ -329,8 +356,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         journalClassification.setAssessmentClassification(classification);
 
         var existingClassification =
-            publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYear(
-                publicationSeries.getId(), category, year);
+            publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
+                publicationSeries.getId(), category, year, commission.getId());
         existingClassification.ifPresent(
             publicationSeriesAssessmentClassificationRepository::delete
         );
@@ -339,15 +366,19 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     }
 
     private String formatIssn(String issn) {
+        issn = issn.replace("e", "")
+            .replace("е", "") // cyrillic "е"
+            .replace("Х", "X") // cyrillic "Х"
+            .replace(":", "")
+            .replace("–", "-")
+            .replace(".", "")
+            .replace(",", "")
+            .trim()
+            .replace(" ", "");
         if (issn.isEmpty()) {
             return "";
         }
 
-        issn = issn.replace("e", "")
-            .replace("е", "") // cyrillic "е"
-            .replace(":", "")
-            .trim()
-            .replace(" ", "");
         if (!issn.contains("-")) {
             issn = issn.substring(0, 4) + "-" + issn.substring(4, 8);
         }

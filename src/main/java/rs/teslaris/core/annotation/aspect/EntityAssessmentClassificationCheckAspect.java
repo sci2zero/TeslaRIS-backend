@@ -14,7 +14,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.assessment.service.interfaces.EntityAssessmentClassificationService;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.exceptionhandling.exception.CantEditEntityClassificationException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @Aspect
@@ -53,9 +53,11 @@ public class EntityAssessmentClassificationCheckAspect {
                 break;
             case COMMISSION:
                 if (!classification.getCommission().getId().equals(user.getCommission().getId())) {
-                    throw new CantEditEntityClassificationException(
-                        "You are not part of the commission that made this classification.");
+                    throw new CantEditException("unauthorizedClassificationEditAttemptMessage");
                 }
+                break;
+            default:
+                throw new CantEditException("unauthorizedClassificationEditAttemptMessage");
         }
 
         return joinPoint.proceed();

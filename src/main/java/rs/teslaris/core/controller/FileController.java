@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -78,6 +79,14 @@ public class FileController {
                 userService.loadUserByUsername(tokenUtil.extractUsernameFromToken(token));
 
             if (!tokenUtil.validateToken(token, userDetails, fingerprintCookie)) {
+                return ErrorResponseUtil.buildUnauthorisedResponse(request,
+                    "unauthorisedToViewDocumentMessage");
+            }
+        }
+
+        if (license.equals(License.COMMISSION_ONLY)) {
+            var role = tokenUtil.extractUserRoleFromToken(bearerToken);
+            if (!role.equals(UserRole.ADMIN.name()) && !role.equals(UserRole.COMMISSION.name())) {
                 return ErrorResponseUtil.buildUnauthorisedResponse(request,
                     "unauthorisedToViewDocumentMessage");
             }

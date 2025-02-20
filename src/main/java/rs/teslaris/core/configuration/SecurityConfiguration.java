@@ -100,6 +100,7 @@ public class SecurityConfiguration {
 
                 // DOCUMENT
                 .requestMatchers(HttpMethod.GET, "/api/document/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/document/{documentId}/cite").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/for-researcher/{personId}")
                 .permitAll()
@@ -156,6 +157,9 @@ public class SecurityConfiguration {
 
                 // EVENTS
                 .requestMatchers(HttpMethod.GET, "/api/event/{eventId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/conference/{conference}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/conference/old-id/{oldConferenceId}")
+                .permitAll()
 
                 // EVENTS RELATION
                 .requestMatchers(HttpMethod.GET, "/api/events-relation/{eventId}").permitAll()
@@ -168,6 +172,8 @@ public class SecurityConfiguration {
 
                 // RESEARCH AREA
                 .requestMatchers(HttpMethod.GET, "/api/research-area").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/research-area/children/{parentId}")
+                .permitAll()
 
                 // FILE
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
@@ -181,15 +187,18 @@ public class SecurityConfiguration {
                 // ASSESSMENT
                 .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/assessment/person-indicator/{documentId}")
+                .requestMatchers(HttpMethod.GET, "/api/assessment/person-indicator/{personId}")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/assessment/event-indicator/{documentId}")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET,
-                    "/api/assessment/organisation-unit-indicator/{documentId}")
+                .requestMatchers(HttpMethod.GET, "/api/assessment/event-indicator/{eventId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,
-                    "/api/assessment/publication-series-indicator/{documentId}")
+                    "/api/assessment/organisation-unit-indicator/{organisationUnitId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/publication-series-indicator/{publicationSeriesId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/person-assessment-classification/assess/{personId}")
                 .permitAll()
 
                 // STATISTICS

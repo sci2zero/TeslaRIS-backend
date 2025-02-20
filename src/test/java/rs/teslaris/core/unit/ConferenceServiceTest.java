@@ -349,4 +349,40 @@ public class ConferenceServiceTest {
         verify(eventIndexRepository, never()).delete(any());
     }
 
+    @Test
+    void shouldReturnConferenceDTOWhenOldIdExists() {
+        // Given
+        var oldId = 100;
+        var conference = new Conference();
+        conference.setId(1);
+        conference.setOldId(oldId);
+
+        var expectedDTO = new ConferenceDTO();
+        expectedDTO.setId(1);
+        expectedDTO.setOldId(oldId);
+
+        when(conferenceRepository.findConferenceByOldId(oldId)).thenReturn(Optional.of(conference));
+
+        // When
+        var response = conferenceService.readConferenceByOldId(oldId);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(expectedDTO.getId(), response.getId());
+        assertEquals(expectedDTO.getOldId(), response.getOldId());
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenOldIdDoesNotExist() {
+        // Given
+        var oldId = 200;
+        when(conferenceRepository.findConferenceByOldId(oldId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> conferenceService.readConferenceByOldId(oldId));
+
+        assertEquals("Conference with old ID " + oldId + " does not exist.",
+            exception.getMessage());
+    }
 }

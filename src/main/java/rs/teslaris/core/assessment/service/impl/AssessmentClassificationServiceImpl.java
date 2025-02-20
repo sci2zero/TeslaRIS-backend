@@ -104,6 +104,6 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
     public AssessmentClassification readAssessmentClassificationByCode(String code) {
         return assessmentClassificationRepository.findByCode(code).orElseThrow(
             () -> new NotFoundException(
-                "Assessment Classification with given code does not exist."));
+                "Assessment Classification with given code does not exist - " + code + "."));
     }
 }

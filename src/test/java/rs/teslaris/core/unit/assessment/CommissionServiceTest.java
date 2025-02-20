@@ -31,11 +31,13 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.CommissionReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 
 @SpringBootTest
@@ -56,6 +58,9 @@ public class CommissionServiceTest {
     @Mock
     private DocumentPublicationService documentPublicationService;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private CommissionServiceImpl commissionService;
 
@@ -75,10 +80,10 @@ public class CommissionServiceTest {
             new PageImpl<>(List.of(commission1, commission2)));
 
         var response =
-            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa", "SR");
+            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa", "SR", false, false);
 
         assertNotNull(response);
-        assertEquals(2, response.getSize());
+        assertEquals(2, response.getTotalElements());
     }
 
     @Test
@@ -102,7 +107,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "rule");
+            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno", List.of("NATURAL"));
         var newCommission = new Commission();
         newCommission.setId(2);
 
@@ -128,7 +133,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "rule");
+            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno", List.of("TECHNICAL"));
         var existingCommission = new Commission();
 
         when(commissionRepository.findById(commissionId))
@@ -173,5 +178,36 @@ public class CommissionServiceTest {
             commissionService.deleteCommission(commissionId));
 
         // Then (CommissionReferenceConstraintViolationException should be thrown)
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCommissionNotFound() {
+        // Given
+        var commissionId = 1;
+
+        // Simulating that the commissionRepository does not find the commission
+        when(commissionRepository.findOneWithRelations(commissionId)).thenReturn(Optional.empty());
+
+        // When
+        assertThrows(NotFoundException.class, () ->
+            commissionService.findOneWithFetchedRelations(commissionId));
+
+        // Then (NotFoundException should be thrown with the correct message)
+    }
+
+    @Test
+    void shouldReturnInstitutionIdForCommission() {
+        // Given
+        var commissionId = 1;
+        var expectedInstitutionId = 42;
+
+        // Simulating that the userRepository returns the institution ID
+        when(userRepository.findOUIdForCommission(commissionId)).thenReturn(expectedInstitutionId);
+
+        // When
+        var institutionId = commissionService.findInstitutionIdForCommission(commissionId);
+
+        // Then (The returned institution ID should match the expected value)
+        assertEquals(expectedInstitutionId, institutionId);
     }
 }

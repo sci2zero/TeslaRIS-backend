@@ -33,6 +33,10 @@ public interface DocumentPublicationIndexRepository extends
 
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
+    Page<DocumentPublicationIndex> findByAuthorIdsAndYearBetween(Integer authorId,
+                                                                 Integer startYear, Integer endYear,
+                                                                 Pageable pageable);
+
     Page<DocumentPublicationIndex> findByOrganisationUnitIdsIn(List<Integer> organisationUnitIds,
                                                                Pageable pageable);
 

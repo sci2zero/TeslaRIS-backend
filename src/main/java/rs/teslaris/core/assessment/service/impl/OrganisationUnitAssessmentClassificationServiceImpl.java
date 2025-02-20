@@ -20,13 +20,14 @@ public class OrganisationUnitAssessmentClassificationServiceImpl
     private final OrganisationUnitAssessmentClassificationRepository
         organisationUnitAssessmentClassificationRepository;
 
+
     @Autowired
     public OrganisationUnitAssessmentClassificationServiceImpl(
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
-        CommissionService commissionService,
         AssessmentClassificationService assessmentClassificationService,
+        CommissionService commissionService,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         OrganisationUnitAssessmentClassificationRepository organisationUnitAssessmentClassificationRepository) {
-        super(commissionService, assessmentClassificationService,
+        super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.organisationUnitAssessmentClassificationRepository =
             organisationUnitAssessmentClassificationRepository;

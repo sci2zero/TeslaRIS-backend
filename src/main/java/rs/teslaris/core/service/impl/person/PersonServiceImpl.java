@@ -5,7 +5,9 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -74,6 +76,7 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonService {
 
     private final PersonRepository personRepository;
@@ -626,7 +629,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    @Transactional(readOnly = true)
     public void reindexPersons() {
         personIndexRepository.deleteAll();
         int pageNumber = 0;
@@ -713,6 +715,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexProperties(PersonIndex personIndex, Person savedPerson) {
+        personIndex.setLastEdited(
+            Objects.nonNull(savedPerson.getLastModification()) ? savedPerson.getLastModification() :
+                new Date());
         personIndex.setName(savedPerson.getName().toString());
 
         savedPerson.getOtherNames().forEach((otherName) -> {
@@ -759,6 +764,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 Objects.isNull(i.getDateTo()))
             .map(Involvement::getOrganisationUnit).toList();
 
+        var employmentOrCandidateInstitutions = savedPerson.getInvolvements().stream()
+            .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                i.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
+                i.getInvolvementType().equals(InvolvementType.CANDIDATE)) &&
+                Objects.isNull(i.getDateTo()))
+            .map(inv -> inv.getOrganisationUnit().getId()).toList();
+
         personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
@@ -767,6 +779,17 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personIndex.setEmploymentInstitutionsId(
             employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+
+        personIndex.setEmploymentInstitutionsIdHierarchy(new ArrayList<>());
+        employmentOrCandidateInstitutions.forEach(institutionId -> {
+            personIndex.getEmploymentInstitutionsIdHierarchy().add(institutionId);
+            personIndex.getEmploymentInstitutionsIdHierarchy()
+                .addAll(organisationUnitService.getSuperOUsHierarchyRecursive(institutionId));
+        });
+
+        savedPerson.getEmploymentInstitutionsIdHierarchy().addAll(
+            personIndex.getEmploymentInstitutionsIdHierarchy());
+        save(savedPerson);
 
         var employmentsSr = new StringBuilder();
         var employmentsOther = new StringBuilder();
@@ -829,8 +852,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
-                                                           boolean strict) {
-        return searchService.runQuery(buildNameAndEmploymentQuery(tokens, strict), pageable,
+                                                           boolean strict, Integer institutionId) {
+        return searchService.runQuery(buildNameAndEmploymentQuery(tokens, strict, institutionId),
+            pageable,
             PersonIndex.class, "person");
     }
 
@@ -861,7 +885,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personIndexRepository.findByScopusAuthorId(scopusAuthorId).orElse(null);
     }
 
-    private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict) {
+    private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
+                                              Integer institutionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.6);
 
         return BoolQuery.of(q -> q
@@ -895,6 +920,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
                             b.should(sb -> sb.match(m -> m.field("name").query(token)));
                         });
+
+                    if (Objects.nonNull(institutionId) && institutionId > 0) {
+                        b.must(sb -> sb.term(
+                            m -> m.field("employment_institutions_id_hierarchy").value(institutionId)));
+                    }
+
                     return b.minimumShouldMatch(Integer.toString(minShouldMatch));
                 }
             ))

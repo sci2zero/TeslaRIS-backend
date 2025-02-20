@@ -66,7 +66,7 @@ public class EntityIndicatorServiceTest {
         entityIndicatorService.deleteEntityIndicatorProof(entityIndicatorId, documentFileId);
 
         // Then
-        verify(documentFileService, times(1)).deleteDocumentFile(any());
+        verify(documentFileService, times(1)).delete(any());
     }
 
     @Test

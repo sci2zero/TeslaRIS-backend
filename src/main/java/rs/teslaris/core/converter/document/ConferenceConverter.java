@@ -12,6 +12,7 @@ public class ConferenceConverter {
         var conferenceDTO = new ConferenceDTO();
 
         conferenceDTO.setId(conference.getId());
+        conferenceDTO.setOldId(conference.getOldId());
         conferenceDTO.setName(
             MultilingualContentConverter.getMultilingualContentDTO(conference.getName()));
         conferenceDTO.setNameAbbreviation(MultilingualContentConverter.getMultilingualContentDTO(

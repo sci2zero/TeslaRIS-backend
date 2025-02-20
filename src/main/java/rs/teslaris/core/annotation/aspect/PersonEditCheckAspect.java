@@ -14,7 +14,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.exceptionhandling.exception.CantEditPersonException;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @Aspect
@@ -30,7 +30,7 @@ public class PersonEditCheckAspect {
 
 
     @Around("@annotation(rs.teslaris.core.annotation.PersonEditCheck)")
-    public Object checkApiKey(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object checkPersonEdit(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
@@ -48,15 +48,17 @@ public class PersonEditCheckAspect {
                 break;
             case RESEARCHER:
                 if (!userService.isUserAResearcher(userId, personId)) {
-                    throw new CantEditPersonException("unauthorizedPersonEditAttemptMessage");
+                    throw new CantEditException("unauthorizedPersonEditAttemptMessage");
                 }
                 break;
             case INSTITUTIONAL_EDITOR:
                 if (!personService.isPersonEmployedInOrganisationUnit(personId,
                     userService.getUserOrganisationUnitId(userId))) {
-                    throw new CantEditPersonException("unauthorizedPersonEditAttemptMessage");
+                    throw new CantEditException("unauthorizedPersonEditAttemptMessage");
                 }
                 break;
+            default:
+                throw new CantEditException("unauthorizedPersonEditAttemptMessage");
         }
 
         return joinPoint.proceed();

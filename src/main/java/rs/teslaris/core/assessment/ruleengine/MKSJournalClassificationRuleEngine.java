@@ -55,7 +55,7 @@ public class MKSJournalClassificationRuleEngine extends JournalClassificationRul
         var mksCategory = findIndicatorByCode("slavistiCategory", category);
 
         if (Objects.nonNull(mksCategory) && mksCategory.getTextualValue().equals("I kategorija")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M23");
+            return assessmentClassificationService.readAssessmentClassificationByCode("journalM23");
         }
 
         return null;

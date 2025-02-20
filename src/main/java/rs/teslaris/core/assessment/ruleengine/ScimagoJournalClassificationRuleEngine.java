@@ -47,24 +47,12 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
     @Nullable
     @Override
     public AssessmentClassification handleM22(String category) {
-        var sjr = findIndicatorByCode("sjr", category);
-
-        if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q1")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M22");
-        }
-
         return null;
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM23(String category) {
-        var sjr = findIndicatorByCode("sjr", category);
-
-        if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q2")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M23");
-        }
-
         return null;
     }
 
@@ -82,7 +70,8 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
         if (Objects.nonNull(sjr) &&
             (sjr.getTextualValue().equals("Q1") || sjr.getTextualValue().equals("Q2") ||
                 sjr.getTextualValue().equals("Q3"))) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M24Plus");
+            return assessmentClassificationService.readAssessmentClassificationByCode(
+                "journalM24Plus");
         }
 
         return null;
@@ -94,7 +83,7 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
         var sjr = findIndicatorByCode("sjr", category);
 
         if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q4")) {
-            return assessmentClassificationService.readAssessmentClassificationByCode("M24");
+            return assessmentClassificationService.readAssessmentClassificationByCode("journalM24");
         }
 
         return null;
