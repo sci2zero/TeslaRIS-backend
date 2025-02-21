@@ -1,5 +1,7 @@
 package rs.teslaris.core.assessment.service.interfaces;
 
+import io.minio.GetObjectResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -15,5 +17,8 @@ public interface ReportingService {
                                   Integer assessmentYear, List<Integer> commissionIds,
                                   String locale, Integer topLevelInstitutionId, Integer userId);
 
-    List<String> getAvailableReportsForCommission(Integer commissionId);
+    List<String> getAvailableReportsForCommission(Integer commissionId, Integer userId);
+
+    GetObjectResponse serveReportFile(String reportName, Integer userId, Integer commissionId)
+        throws IOException;
 }

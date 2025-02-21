@@ -98,6 +98,13 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             scheduledTask.id(), scheduledTask.executionTime)).collect(Collectors.toList());
     }
 
+    @Override
+    public List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks() {
+        return tasks.values().stream().filter(task -> task.id.startsWith("ReportGeneration"))
+            .map(scheduledTask -> new ScheduledTaskResponseDTO(
+                scheduledTask.id(), scheduledTask.executionTime)).collect(Collectors.toList());
+    }
+
     private record ScheduledTask(
         String id,
         ScheduledFuture<?> task,

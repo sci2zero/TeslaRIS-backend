@@ -60,6 +60,9 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     User registerCommissionUser(CommissionRegistrationRequestDTO registrationRequest)
         throws NoSuchAlgorithmException;
 
+    User registerViceDeanForScience(EmployeeRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException;
+
     AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userID,
                                          String fingerprint);
 

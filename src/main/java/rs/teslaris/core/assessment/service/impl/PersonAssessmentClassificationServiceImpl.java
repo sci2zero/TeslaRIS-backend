@@ -369,13 +369,12 @@ public class PersonAssessmentClassificationServiceImpl
                 publication.getDatabaseId()));
 
         if (!subOUsForTopLevelInstitution.isEmpty()) {
-            populateTopLevelBelongingInformation(publication, personIndex, assessmentResult,
+            populateTopLevelBelongingInformation(publication, assessmentResult,
                 subOUsForTopLevelInstitution);
         }
     }
 
     private void populateTopLevelBelongingInformation(DocumentPublicationIndex publication,
-                                                      PersonIndex personIndex,
                                                       EnrichedResearcherAssessmentResponseDTO assessmentResult,
                                                       List<Integer> subOUsForTopLevelInstitution) {
         if (publication.getAuthorIds().contains(-1)) {
@@ -395,15 +394,24 @@ public class PersonAssessmentClassificationServiceImpl
                     publication.getOrganisationUnitIds())) {
                 return;
             }
-            sameTopLevelEmploymentInstitutions.add(
-                organisationUnitsRelationRepository.getOneLevelBelowTopOU(
-                    topLevelInstitutionEmployments.getFirst(),
-                    subOUsForTopLevelInstitution.getLast()));
+
+            if (topLevelInstitutionEmployments.contains(subOUsForTopLevelInstitution.getLast())) {
+                sameTopLevelEmploymentInstitutions.add(subOUsForTopLevelInstitution.getLast());
+            } else {
+                sameTopLevelEmploymentInstitutions.add(
+                    organisationUnitsRelationRepository.getOneLevelBelowTopOU(
+                        topLevelInstitutionEmployments.getFirst(),
+                        subOUsForTopLevelInstitution.getLast()));
+            }
         });
 
         if (knownAuthorIds.size() == sameTopLevelEmploymentInstitutions.size()) {
             assessmentResult.getPublicationToInstitution()
-                .put(publication.getDatabaseId(), sameTopLevelEmploymentInstitutions);
+                .put(publication.getDatabaseId(),
+                    (new HashSet<>(
+                        sameTopLevelEmploymentInstitutions.stream().filter(Objects::nonNull)
+                            .toList())).stream()
+                        .toList());
         } else {
             assessmentResult.getPublicationToInstitution()
                 .put(publication.getDatabaseId(), List.of());

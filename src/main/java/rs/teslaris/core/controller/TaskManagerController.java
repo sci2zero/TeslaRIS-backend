@@ -22,6 +22,11 @@ public class TaskManagerController {
         return taskManagerService.listScheduledTasks();
     }
 
+    @GetMapping("/report-generation")
+    public List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks() {
+        return taskManagerService.listScheduledReportGenerationTasks();
+    }
+
     @DeleteMapping("/{taskId}")
     public void cancelTask(@PathVariable String taskId) {
         taskManagerService.cancelTask(taskId);

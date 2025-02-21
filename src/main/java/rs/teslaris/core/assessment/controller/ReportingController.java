@@ -1,8 +1,12 @@
 package rs.teslaris.core.assessment.controller;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.assessment.model.ReportType;
@@ -24,6 +29,7 @@ public class ReportingController {
     private final ReportingService reportingService;
 
     private final JwtUtil tokenUtil;
+
 
     @PostMapping("/schedule-generation")
     @Idempotent
@@ -46,7 +52,24 @@ public class ReportingController {
 
     @GetMapping("/{commissionId}")
     @PreAuthorize("hasAuthority('SCHEDULE_REPORT_GENERATION')")
-    public List<String> getAvailableReportsForCommission(@PathVariable Integer commissionId) {
-        return reportingService.getAvailableReportsForCommission(commissionId);
+    public List<String> getAvailableReportsForCommission(@PathVariable Integer commissionId,
+                                                         @RequestHeader(value = "Authorization")
+                                                         String bearerToken) {
+        return reportingService.getAvailableReportsForCommission(commissionId,
+            tokenUtil.extractUserIdFromToken(bearerToken));
+    }
+
+    @GetMapping("/download/{reportFileName}/{commissionId}")
+    @ResponseBody
+    public ResponseEntity<Object> serveFile(@PathVariable String reportFileName,
+                                            @PathVariable Integer commissionId,
+                                            @RequestHeader(value = "Authorization")
+                                            String bearerToken) throws IOException {
+        var file = reportingService.serveReportFile(reportFileName,
+            tokenUtil.extractUserIdFromToken(bearerToken), commissionId);
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
+            .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
+            .body(new InputStreamResource(file));
     }
 }

@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.service.impl;
 
+import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
 import rs.teslaris.core.assessment.model.CommissionReport;
@@ -16,8 +18,13 @@ import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.PersonAssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.ReportingService;
 import rs.teslaris.core.assessment.util.ReportGenerationUtil;
+import rs.teslaris.core.assessment.util.ReportTemplateEngine;
+import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -32,12 +39,17 @@ public class ReportingServiceImpl implements ReportingService {
 
     private final CommissionReportRepository commissionReportRepository;
 
+    private final FileService fileService;
+
+    private final UserRepository userRepository;
+
 
     @Override
     public void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
                                          Integer assessmentYear, List<Integer> commissionIds,
                                          String locale, Integer topLevelInstitutionId,
                                          Integer userId) {
+        checkCommissionAccessRights(commissionIds, userId);
         var commissionName =
             commissionService.findOne(commissionIds.getFirst()).getDescription().stream()
                 .filter(desc -> desc.getLanguage().getLanguageTag().equals(locale.toUpperCase()))
@@ -61,73 +73,111 @@ public class ReportingServiceImpl implements ReportingService {
         int startYear = getStartYear(reportType, assessmentYear);
 
         try {
-            var document = ReportGenerationUtil.loadDocumentTemplate(templateName);
-
-            List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses = new ArrayList<>();
-
-            var topLevelInstitutionReport =
-                reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION) ||
-                    reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED) ||
-                    reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY);
-            if (reportType.equals(ReportType.TABLE_64)) {
-                for (var year = startYear; year <= assessmentYear; year++) {
-                    assessmentResponses.addAll(
-                        personAssessmentClassificationService.assessResearchers(
-                            commissionIds.getFirst(), new ArrayList<>(), year, year, null));
-                    if (!assessmentResponses.isEmpty()) {
-                        assessmentResponses.getFirst().setToYear(assessmentYear);
-                    }
-                }
-            } else if (topLevelInstitutionReport) {
-                commissionIds.forEach(commissionId -> {
-                    assessmentResponses.addAll(
-                        personAssessmentClassificationService.assessResearchers(
-                            commissionId, new ArrayList<>(), startYear, assessmentYear,
-                            topLevelInstitutionId));
-                });
-            } else {
-                assessmentResponses.addAll(personAssessmentClassificationService.assessResearchers(
-                    commissionIds.getFirst(), new ArrayList<>(), startYear, assessmentYear, null));
-            }
+            var document = ReportTemplateEngine.loadDocumentTemplate(templateName);
+            var assessmentResponses =
+                fetchAssessmentResponses(reportType, commissionIds, startYear, assessmentYear,
+                    topLevelInstitutionId);
 
             if (reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY)) {
                 var columns =
                     ReportGenerationUtil.constructDataForCommissionColumns(commissionIds, locale);
-                ReportGenerationUtil.addColumnsToFirstRow(document, columns, 0);
+                ReportTemplateEngine.addColumnsToFirstRow(document, columns, 0);
             }
 
-            var reportData =
-                generateReportData(reportType, assessmentResponses, commissionIds, locale);
+            processReportData(reportType, document, assessmentResponses, commissionIds, locale);
 
-            ReportGenerationUtil.insertFields(document, reportData.a);
+            saveReport(reportType, document, commissionIds, assessmentYear, locale);
 
-            ReportGenerationUtil.dynamicallyGenerateTableRows(document, reportData.b, 0);
-
-            if (topLevelInstitutionReport) {
-                reportData = ReportGenerationUtil.constructDataForTableForAllPublications(
-                    assessmentResponses,
-                    reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED));
-                ReportGenerationUtil.dynamicallyGenerateTableRows(document, reportData.b, 1);
-            }
-
-            var reportFileName =
-                getReportFileName(reportType, commissionIds.getFirst(), assessmentYear, locale);
-
-            commissionIds.forEach(commissionId -> {
-                commissionReportRepository.getReport(commissionId, reportFileName)
-                    .ifPresent(commissionReportRepository::delete);
-                commissionReportRepository.save(
-                    new CommissionReport(commissionService.findOne(commissionId), reportFileName));
-            });
-            ReportGenerationUtil.saveReport(document, reportFileName);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to generate report for " + reportType, e);
+            throw new LoadingException(
+                "Failed to generate report for " + reportType + ". Reason: " + e.getMessage());
         }
     }
 
     @Override
-    public List<String> getAvailableReportsForCommission(Integer commissionId) {
+    public List<String> getAvailableReportsForCommission(Integer commissionId, Integer userId) {
+        checkCommissionAccessRights(List.of(commissionId), userId);
         return commissionReportRepository.getAvailableReportsForCommission(commissionId);
+    }
+
+    @Override
+    public GetObjectResponse serveReportFile(String reportName, Integer userId,
+                                             Integer commissionId) throws IOException {
+        checkCommissionAccessRights(List.of(commissionId), userId);
+        if (!commissionReportRepository.reportExists(commissionId, reportName)) {
+            throw new NotFoundException("Report " + reportName + " does not exist.");
+        }
+
+        return fileService.loadAsResource(reportName);
+    }
+
+    private List<EnrichedResearcherAssessmentResponseDTO> fetchAssessmentResponses(
+        ReportType reportType,
+        List<Integer> commissionIds, int startYear, int assessmentYear,
+        Integer topLevelInstitutionId) {
+
+        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses = new ArrayList<>();
+        boolean isTopLevelInstitutionReport = isTopLevelInstitutionReport(reportType);
+
+        if (reportType.equals(ReportType.TABLE_64)) {
+            for (int year = startYear; year <= assessmentYear; year++) {
+                var responses = personAssessmentClassificationService.assessResearchers(
+                    commissionIds.getFirst(), new ArrayList<>(), year, year, null);
+                if (!responses.isEmpty()) {
+                    responses.getFirst().setToYear(assessmentYear);
+                }
+                assessmentResponses.addAll(responses);
+            }
+        } else if (isTopLevelInstitutionReport) {
+            commissionIds.forEach(commissionId -> assessmentResponses.addAll(
+                personAssessmentClassificationService.assessResearchers(
+                    commissionId, new ArrayList<>(), startYear, assessmentYear,
+                    topLevelInstitutionId)));
+        } else {
+            assessmentResponses.addAll(personAssessmentClassificationService.assessResearchers(
+                commissionIds.getFirst(), new ArrayList<>(), startYear, assessmentYear, null));
+        }
+
+        return assessmentResponses;
+    }
+
+    private boolean isTopLevelInstitutionReport(ReportType reportType) {
+        return reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION) ||
+            reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED) ||
+            reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY);
+    }
+
+    private void processReportData(ReportType reportType, XWPFDocument document,
+                                   List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
+                                   List<Integer> commissionIds, String locale) {
+
+        var reportData = generateReportData(reportType, assessmentResponses, commissionIds, locale);
+        ReportTemplateEngine.insertFields(document, reportData.a);
+        ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
+
+        if (isTopLevelInstitutionReport(reportType)) {
+            reportData = ReportGenerationUtil.constructDataForTableForAllPublications(
+                assessmentResponses,
+                reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED));
+            ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 1);
+        }
+    }
+
+    private void saveReport(ReportType reportType, XWPFDocument document,
+                            List<Integer> commissionIds, int assessmentYear, String locale)
+        throws IOException {
+
+        String reportFileName =
+            getReportFileName(reportType, commissionIds.getFirst(), assessmentYear, locale);
+
+        commissionIds.forEach(commissionId -> {
+            commissionReportRepository.getReport(commissionId, reportFileName)
+                .ifPresent(commissionReportRepository::delete);
+            commissionReportRepository.save(
+                new CommissionReport(commissionService.findOne(commissionId), reportFileName));
+        });
+
+        ReportTemplateEngine.saveReport(document, reportFileName);
     }
 
     private String getTemplateName(ReportType reportType) {
@@ -179,5 +229,20 @@ public class ReportingServiceImpl implements ReportingService {
     private String getReportFileName(ReportType reportType, Integer commissionId,
                                      Integer assessmentYear, String locale) {
         return reportType + "_" + commissionId + "_" + assessmentYear + "_" + locale + ".docx";
+    }
+
+    private void checkCommissionAccessRights(List<Integer> commissionIds, Integer userId) {
+        var userOptional = userRepository.findByIdWithOrganisationUnit(userId);
+
+        userOptional.ifPresent((user) -> {
+            if (user.getAuthority().getAuthority().equals(UserRole.ADMIN.name())) {
+                return;
+            }
+
+            if (!commissionIds.stream().map(userRepository::findOUIdForCommission).toList()
+                .contains(user.getOrganisationUnit().getId())) {
+                throw new LoadingException("You don't have permissions to download this report.");
+            }
+        });
     }
 }

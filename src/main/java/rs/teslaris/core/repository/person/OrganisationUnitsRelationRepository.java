@@ -59,7 +59,7 @@ public interface OrganisationUnitsRelationRepository
             UNION ALL
             SELECT our.target_organisation_unit_id, our.source_organisation_unit_id
             FROM organisation_units_relations our
-            INNER JOIN hierarchy h ON our.source_organisation_unit_id = h.target_organisation_unit_id
+            INNER JOIN hierarchy h ON our.target_organisation_unit_id = h.source_organisation_unit_id
             WHERE our.approve_status = 1 AND our.relation_type = 0
         )
         SELECT source_organisation_unit_id FROM hierarchy
@@ -76,7 +76,7 @@ public interface OrganisationUnitsRelationRepository
             UNION ALL
             SELECT our.source_organisation_unit_id, our.target_organisation_unit_id
             FROM organisation_units_relations our
-            INNER JOIN hierarchy h ON our.target_organisation_unit_id = h.source_organisation_unit_id
+            INNER JOIN hierarchy h ON our.source_organisation_unit_id = h.target_organisation_unit_id
             WHERE our.approve_status = 1 AND our.relation_type = 0
         )
         SELECT DISTINCT source_organisation_unit_id

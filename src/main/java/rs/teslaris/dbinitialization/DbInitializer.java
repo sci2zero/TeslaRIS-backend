@@ -141,6 +141,7 @@ public class DbInitializer implements ApplicationRunner {
         var editDocumentAssessment = new Privilege("EDIT_DOCUMENT_ASSESSMENT");
         var editAssessmentResearchArea = new Privilege("EDIT_ASSESSMENT_RESEARCH_AREA");
         var scheduleReportGeneration = new Privilege("SCHEDULE_REPORT_GENERATION");
+        var downloadReports = new Privilege("DOWNLOAD_REPORTS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -161,7 +162,7 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityAssessmentClassifications, editEventIndicators, editPubSeriesIndicators,
                 editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
                 assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
-                editAssessmentResearchArea));
+                editAssessmentResearchArea, downloadReports));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -181,7 +182,8 @@ public class DbInitializer implements ApplicationRunner {
                 mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
                 editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
                 editPublicationSeriesAssessmentClassifications, assessDocument, updateCommission,
-                editDocumentAssessment, editAssessmentResearchArea, scheduleReportGeneration
+                editDocumentAssessment, editAssessmentResearchArea, scheduleReportGeneration,
+                downloadReports
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -202,9 +204,14 @@ public class DbInitializer implements ApplicationRunner {
                 editDocumentAssessment
             )));
 
+        var viceDeanForScienceAuthority =
+            new Authority(UserRole.VICE_DEAN_FOR_SCIENCE.toString(), new HashSet<>(List.of(
+                updateProfile, allowAccountTakeover, scheduleReportGeneration, downloadReports
+            )));
+
         authorityRepository.saveAll(
             List.of(adminAuthority, researcherAuthority, institutionalEditorAuthority,
-                commissionAuthority));
+                commissionAuthority, viceDeanForScienceAuthority));
 
         // LANGUAGES
         var serbianLanguage = new Language();

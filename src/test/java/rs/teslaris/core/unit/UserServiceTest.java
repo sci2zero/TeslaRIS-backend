@@ -301,6 +301,55 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldRegisterViceDeanForScienceWithValidData() throws NoSuchAlgorithmException {
+        // Given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("johndoe@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(1);
+        registrationRequest.setName("Name");
+        registrationRequest.setSurname("Surname");
+
+        var language = new Language();
+        language.setLanguageCode("SR");
+        when(languageService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.VICE_DEAN_FOR_SCIENCE.toString());
+        when(authorityRepository.findByName(UserRole.VICE_DEAN_FOR_SCIENCE.toString())).thenReturn(
+            Optional.of(authority));
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+
+        User newUser = new User("johndoe@example.com", "password123", "",
+            "John", "Doe", true,
+            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerViceDeanForScience(registrationRequest);
+
+        // Then
+        assertNotNull(savedUser);
+        assertEquals("johndoe@example.com", savedUser.getEmail());
+        assertEquals("John", savedUser.getFirstname());
+        assertEquals("Doe", savedUser.getLastName());
+        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(authority, savedUser.getAuthority());
+    }
+
+    @Test
     public void shouldRegisterCommissionUserWithValidData() throws NoSuchAlgorithmException {
         // Given
         var registrationRequest = new CommissionRegistrationRequestDTO();
