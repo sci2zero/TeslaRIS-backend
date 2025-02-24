@@ -2,10 +2,12 @@ package rs.teslaris.core.unit.assessment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -13,11 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.core.assessment.model.CommissionReport;
 import rs.teslaris.core.assessment.repository.CommissionReportRepository;
 import rs.teslaris.core.assessment.service.impl.ReportingServiceImpl;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 
 @SpringBootTest
@@ -28,6 +33,9 @@ public class ReportingServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
     @InjectMocks
     private ReportingServiceImpl reportingServiceService;
@@ -53,5 +61,78 @@ public class ReportingServiceTest {
         assertEquals(expectedReports.size(), reports.size());
         assertEquals(expectedReports, reports);
         verify(commissionReportRepository, times(1)).getAvailableReportsForCommission(commissionId);
+    }
+
+    @Test
+    void shouldReturnAllReportsForAdminUser() {
+        // Given
+        var userId = 1;
+        when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(null);
+
+        var reports = List.of(
+            new CommissionReport(new Commission(), "report1.pdf"),
+            new CommissionReport(new Commission(), "report2.pdf")
+        );
+
+        when(commissionReportRepository.findAll()).thenReturn(reports);
+
+        // When
+        var result = reportingServiceService.getAvailableReportsForUser(userId);
+
+        // Then
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void shouldReturnReportsForNonAdminUser() {
+        // Given
+        var userId = 2;
+        var institutionId = 100;
+        when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(institutionId);
+
+        var subOUs = List.of(101, 102);
+        when(organisationUnitsRelationRepository.getSubOUsRecursive(institutionId))
+            .thenReturn(subOUs);
+
+        var commission1 = new Commission();
+        commission1.setId(1);
+        var commission2 = new Commission();
+        commission2.setId(2);
+
+        when(userRepository.findUserCommissionForOrganisationUnit(institutionId))
+            .thenReturn(List.of(commission1));
+        when(userRepository.findUserCommissionForOrganisationUnit(101))
+            .thenReturn(List.of(commission2));
+        when(userRepository.findUserCommissionForOrganisationUnit(102))
+            .thenReturn(Collections.emptyList());
+        when(commissionReportRepository.getAvailableReportsForCommission(1))
+            .thenReturn(List.of("reportA.pdf"));
+        when(commissionReportRepository.getAvailableReportsForCommission(2))
+            .thenReturn(List.of("reportB.pdf", "reportC.pdf"));
+
+        // When
+        var result = reportingServiceService.getAvailableReportsForUser(userId);
+
+        // Then
+        assertEquals(3, result.size());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoReportsAvailable() {
+        // Given
+        var userId = 3;
+        var institutionId = 200;
+        when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(institutionId);
+        when(organisationUnitsRelationRepository.getSubOUsRecursive(institutionId))
+            .thenReturn(Collections.emptyList());
+
+        when(userRepository.findUserCommissionForOrganisationUnit(institutionId))
+            .thenReturn(Collections.emptyList());
+
+        // When
+        var result = reportingServiceService.getAvailableReportsForUser(userId);
+
+        // Then
+        assertTrue(result.isEmpty());
     }
 }

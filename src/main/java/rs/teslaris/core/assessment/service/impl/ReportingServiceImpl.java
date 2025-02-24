@@ -6,20 +6,23 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
+import rs.teslaris.core.assessment.dto.ReportDTO;
 import rs.teslaris.core.assessment.model.CommissionReport;
 import rs.teslaris.core.assessment.model.ReportType;
 import rs.teslaris.core.assessment.repository.CommissionReportRepository;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.PersonAssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.ReportingService;
-import rs.teslaris.core.assessment.util.ReportGenerationUtil;
+import rs.teslaris.core.assessment.util.AssessmentReportGenerator;
 import rs.teslaris.core.assessment.util.ReportTemplateEngine;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -43,6 +46,8 @@ public class ReportingServiceImpl implements ReportingService {
 
     private final UserRepository userRepository;
 
+    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+
 
     @Override
     public void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
@@ -57,7 +62,8 @@ public class ReportingServiceImpl implements ReportingService {
                 .orElseThrow(() -> new NotFoundException("Locale " + locale + " does not exist."))
                 .getContent().replace(" ", "_");
         taskManagerService.scheduleTask(
-            "ReportGeneration-" + commissionName +
+            "ReportGeneration-" + userRepository.findOUIdForCommission(commissionIds.getFirst()) +
+                "-" + commissionName +
                 "-" + reportType + "-" + assessmentYear +
                 "-" + UUID.randomUUID(), timeToRun,
             () -> generateReport(reportType, assessmentYear, commissionIds, locale,
@@ -80,7 +86,8 @@ public class ReportingServiceImpl implements ReportingService {
 
             if (reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY)) {
                 var columns =
-                    ReportGenerationUtil.constructDataForCommissionColumns(commissionIds, locale);
+                    AssessmentReportGenerator.constructDataForCommissionColumns(commissionIds,
+                        locale);
                 ReportTemplateEngine.addColumnsToFirstRow(document, columns, 0);
             }
 
@@ -98,6 +105,34 @@ public class ReportingServiceImpl implements ReportingService {
     public List<String> getAvailableReportsForCommission(Integer commissionId, Integer userId) {
         checkCommissionAccessRights(List.of(commissionId), userId);
         return commissionReportRepository.getAvailableReportsForCommission(commissionId);
+    }
+
+    @Override
+    public List<ReportDTO> getAvailableReportsForUser(Integer userId) {
+        var employmentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(employmentInstitutionId)) { // ADMIN user
+            return commissionReportRepository.findAll().stream()
+                .map(report -> new ReportDTO(report.getCommission().getId(),
+                    report.getReportFileName())).toList();
+        }
+
+        List<Integer> subOUs = new ArrayList<>(
+            organisationUnitsRelationRepository.getSubOUsRecursive(employmentInstitutionId));
+        subOUs.add(employmentInstitutionId);
+
+        var returnData = new ArrayList<ReportDTO>();
+        subOUs.forEach(institutionId -> {
+            userRepository.findUserCommissionForOrganisationUnit(institutionId)
+                .forEach(commission -> {
+                    commissionReportRepository.getAvailableReportsForCommission(commission.getId())
+                        .forEach(report -> {
+                            returnData.add(new ReportDTO(commission.getId(), report));
+                        });
+                });
+        });
+
+        return returnData;
     }
 
     @Override
@@ -156,7 +191,7 @@ public class ReportingServiceImpl implements ReportingService {
         ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
 
         if (isTopLevelInstitutionReport(reportType)) {
-            reportData = ReportGenerationUtil.constructDataForTableForAllPublications(
+            reportData = AssessmentReportGenerator.constructDataForTableForAllPublications(
                 assessmentResponses,
                 reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED));
             ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 1);
@@ -205,23 +240,24 @@ public class ReportingServiceImpl implements ReportingService {
         List<Integer> commissionIds, String locale) {
         return switch (reportType) {
             case TABLE_67 ->
-                ReportGenerationUtil.constructDataForTable67(assessmentResponses, locale);
+                AssessmentReportGenerator.constructDataForTable67(assessmentResponses, locale);
             case TABLE_67_POSITIONS ->
-                ReportGenerationUtil.constructDataForTable67WithPosition(assessmentResponses,
+                AssessmentReportGenerator.constructDataForTable67WithPosition(assessmentResponses,
                     locale);
             case TABLE_63 ->
-                ReportGenerationUtil.constructDataForTable63(assessmentResponses, locale);
+                AssessmentReportGenerator.constructDataForTable63(assessmentResponses, locale);
             case TABLE_64 ->
-                ReportGenerationUtil.constructDataForTable64(assessmentResponses, locale);
+                AssessmentReportGenerator.constructDataForTable64(assessmentResponses, locale);
             case TABLE_TOP_LEVEL_INSTITUTION ->
-                ReportGenerationUtil.constructDataForTableTopLevelInstitution(assessmentResponses,
+                AssessmentReportGenerator.constructDataForTableTopLevelInstitution(
+                    assessmentResponses,
                     locale);
             case TABLE_TOP_LEVEL_INSTITUTION_COLORED ->
-                ReportGenerationUtil.constructDataForTableTopLevelInstitutionColored(
+                AssessmentReportGenerator.constructDataForTableTopLevelInstitutionColored(
                     assessmentResponses,
                     locale);
             case TABLE_TOP_LEVEL_INSTITUTION_SUMMARY ->
-                ReportGenerationUtil.constructDataForTableTopLevelInstitutionSummary(
+                AssessmentReportGenerator.constructDataForTableTopLevelInstitutionSummary(
                     assessmentResponses, commissionIds, locale);
         };
     }

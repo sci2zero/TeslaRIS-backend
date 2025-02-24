@@ -16,5 +16,5 @@ public interface TaskManagerService {
 
     List<ScheduledTaskResponseDTO> listScheduledTasks();
 
-    List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks();
+    List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks(Integer userId, String role);
 }

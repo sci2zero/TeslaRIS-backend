@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.ReportGenerationCheck;
+import rs.teslaris.core.assessment.dto.ReportDTO;
 import rs.teslaris.core.assessment.model.ReportType;
 import rs.teslaris.core.assessment.service.interfaces.ReportingService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -32,8 +33,8 @@ public class ReportingController {
 
 
     @PostMapping("/schedule-generation")
-    @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_REPORT_GENERATION')")
+    @ReportGenerationCheck
     public void scheduleReportGeneration(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("type") ReportType reportType,
@@ -56,6 +57,14 @@ public class ReportingController {
                                                          @RequestHeader(value = "Authorization")
                                                          String bearerToken) {
         return reportingService.getAvailableReportsForCommission(commissionId,
+            tokenUtil.extractUserIdFromToken(bearerToken));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('SCHEDULE_REPORT_GENERATION')")
+    public List<ReportDTO> getAvailableReportsForUser(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return reportingService.getAvailableReportsForUser(
             tokenUtil.extractUserIdFromToken(bearerToken));
     }
 

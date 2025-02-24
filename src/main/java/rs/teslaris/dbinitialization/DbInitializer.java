@@ -300,7 +300,7 @@ public class DbInitializer implements ApplicationRunner {
             testingDataInitializer.initializeIntegrationTestingData(serbianTag, serbianLanguage,
                 englishTag,
                 germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
-                commission5);
+                viceDeanForScienceAuthority, commission5);
         }
     }
 

@@ -289,7 +289,8 @@ public class DocumentAssessmentClassificationServiceImpl
                     if (manualClassification.isPresent()) {
                         classifications.add(manualClassification.get().getAssessmentClassification());
                     } else if (!classificationList.isEmpty()) {
-                        classifications.add(classificationList.get(0).getAssessmentClassification());
+                        classifications.add(
+                            classificationList.getFirst().getAssessmentClassification());
                     } else {
                         handleRelationAssessments(commission,
                             (targetCommissionId) -> {

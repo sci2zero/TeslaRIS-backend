@@ -163,6 +163,7 @@ public class TestingDataInitializer {
                                                  ResearchArea researchArea3,
                                                  Authority researcherAuthority,
                                                  Authority commissionAuthority,
+                                                 Authority viceDeanForScienceAuthority,
                                                  Commission commission5) {
         var country = new Country("SRB", new HashSet<>());
         countryRepository.save(country);
@@ -719,5 +720,13 @@ public class TestingDataInitializer {
         assessmentResearchArea.setPerson(person1);
         assessmentResearchArea.setResearchAreaCode("TECHNICAL");
         assessmentResearchAreaRepository.save(assessmentResearchArea);
+
+        var viceDeanUser =
+            new User("vicedean@vicedean.com", passwordEncoder.encode("vicedean"),
+                "note note note",
+                "Nikola", "Nikolic", false, false, serbianLanguage, viceDeanForScienceAuthority,
+                null,
+                dummyOU, null, UserNotificationPeriod.WEEKLY);
+        userRepository.save(viceDeanUser);
     }
 }

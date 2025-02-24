@@ -1,6 +1,5 @@
 package rs.teslaris.core.assessment.dto;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -23,5 +22,13 @@ public class ResearcherAssessmentResponseDTO {
     private Integer commissionId;
 
     private Map<String, List<Triple<String, Double, Integer>>> publicationsPerCategory =
-        new TreeMap<>(Comparator.comparingInt(ClassificationPriorityMapping::getSciListPriority));
+        new TreeMap<>((s1, s2) -> {
+            if (ClassificationPriorityMapping.isOnSciList(s1) &&
+                ClassificationPriorityMapping.isOnSciList(s2)) {
+                return Integer.compare(ClassificationPriorityMapping.getSciListPriority(s1),
+                    ClassificationPriorityMapping.getSciListPriority(s2));
+            }
+
+            return s1.compareTo(s2);
+        });
 }

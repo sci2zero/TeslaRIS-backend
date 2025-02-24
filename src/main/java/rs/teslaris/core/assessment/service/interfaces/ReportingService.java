@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.assessment.dto.ReportDTO;
 import rs.teslaris.core.assessment.model.ReportType;
 
 @Service
@@ -18,6 +19,8 @@ public interface ReportingService {
                                   String locale, Integer topLevelInstitutionId, Integer userId);
 
     List<String> getAvailableReportsForCommission(Integer commissionId, Integer userId);
+
+    List<ReportDTO> getAvailableReportsForUser(Integer userId);
 
     GetObjectResponse serveReportFile(String reportName, Integer userId, Integer commissionId)
         throws IOException;

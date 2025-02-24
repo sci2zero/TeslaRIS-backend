@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -14,6 +15,8 @@ import org.springframework.scheduling.SchedulingException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
+import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -30,6 +33,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     private final ThreadPoolTaskScheduler taskScheduler;
 
     private final UserService userService;
+
+    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
     private final NotificationService notificationService;
 
@@ -99,10 +104,40 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     }
 
     @Override
-    public List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks() {
-        return tasks.values().stream().filter(task -> task.id.startsWith("ReportGeneration"))
-            .map(scheduledTask -> new ScheduledTaskResponseDTO(
-                scheduledTask.id(), scheduledTask.executionTime)).collect(Collectors.toList());
+    public List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks(Integer userId,
+                                                                             String role) {
+        boolean isAdmin = UserRole.ADMIN.name().equals(role);
+
+        List<Integer> subOUs = isAdmin
+            ? List.of()
+            : getUserSubOrganisationUnits(userId);
+
+        return tasks.values().stream()
+            .filter(task -> isReportGenerationTask(task.id) &&
+                (isAdmin || isTaskInSubOU(task.id, subOUs)))
+            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime))
+            .collect(Collectors.toList());
+    }
+
+    private boolean isReportGenerationTask(String taskId) {
+        return taskId.startsWith("ReportGeneration-");
+    }
+
+    private boolean isTaskInSubOU(String taskId, List<Integer> subOUs) {
+        try {
+            int ouId = Integer.parseInt(taskId.split("-")[1]);
+            return subOUs.contains(ouId);
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            return false;
+        }
+    }
+
+    private List<Integer> getUserSubOrganisationUnits(Integer userId) {
+        int employmentInstitutionId = userService.getUserOrganisationUnitId(userId);
+        List<Integer> subOUs = new ArrayList<>(
+            organisationUnitsRelationRepository.getSubOUsRecursive(employmentInstitutionId));
+        subOUs.add(employmentInstitutionId);
+        return subOUs;
     }
 
     private record ScheduledTask(

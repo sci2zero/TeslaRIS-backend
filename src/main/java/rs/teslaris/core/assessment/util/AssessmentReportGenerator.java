@@ -22,13 +22,12 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 
 @Component
-public class ReportGenerationUtil {
+public class AssessmentReportGenerator {
 
     private static MessageSource messageSource;
 
@@ -42,16 +41,17 @@ public class ReportGenerationUtil {
 
 
     @Autowired
-    public ReportGenerationUtil(MessageSource messageSource,
-                                OrganisationUnitIndexRepository organisationUnitIndexRepository,
-                                UserRepository userRepository, CommissionService commissionService,
-                                OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
-        ReportGenerationUtil.messageSource = messageSource;
-        ReportGenerationUtil.organisationUnitIndexRepository = organisationUnitIndexRepository;
-        ReportGenerationUtil.userRepository = userRepository;
-        ReportGenerationUtil.organisationUnitsRelationRepository =
+    public AssessmentReportGenerator(MessageSource messageSource,
+                                     OrganisationUnitIndexRepository organisationUnitIndexRepository,
+                                     UserRepository userRepository,
+                                     CommissionService commissionService,
+                                     OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
+        AssessmentReportGenerator.messageSource = messageSource;
+        AssessmentReportGenerator.organisationUnitIndexRepository = organisationUnitIndexRepository;
+        AssessmentReportGenerator.userRepository = userRepository;
+        AssessmentReportGenerator.organisationUnitsRelationRepository =
             organisationUnitsRelationRepository;
-        ReportGenerationUtil.commissionService = commissionService;
+        AssessmentReportGenerator.commissionService = commissionService;
     }
 
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTable63(
@@ -60,19 +60,8 @@ public class ReportGenerationUtil {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
 
-        Map<String, String> replacements = Map.of(
-            "{header}", messageSource.getMessage("reporting.table63.header",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col2}", messageSource.getMessage("reporting.table63.groupName",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col3}", messageSource.getMessage("reporting.table63.groupCode",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col4}", messageSource.getMessage("reporting.table63.NumberOfResults",
-                new Object[] {}, Locale.forLanguageTag(locale))
-        );
+        var year = String.valueOf(assessmentResponses.getFirst().getToYear());
+        Map<String, String> replacements = getTable63Headers(locale, year);
 
         Map<String, Integer> publicationsPerGroup = new TreeMap<>();
         Set<Integer> handledPublicationIds = new HashSet<>();
@@ -99,22 +88,31 @@ public class ReportGenerationUtil {
         return new Pair<>(replacements, tableData);
     }
 
+    private static Map<String, String> getTable63Headers(String locale, String year) {
+        return Map.of(
+            "{header}",
+            LocalizationUtil.getMessage("reporting.table63.header", new Object[] {year}, locale),
+            "{col1}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col2}",
+            LocalizationUtil.getMessage("reporting.table63.groupName", new Object[] {}, locale),
+            "{col3}",
+            LocalizationUtil.getMessage("reporting.table63.groupCode", new Object[] {}, locale),
+            "{col4}",
+            LocalizationUtil.getMessage("reporting.table63.NumberOfResults", new Object[] {},
+                locale)
+        );
+    }
+
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTable64(
         List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, String locale) {
         if (assessmentResponses.isEmpty()) {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
 
-        Map<String, String> replacements = Map.of(
-            "{header}", messageSource.getMessage("reporting.table64.header",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getFromYear()),
-                    String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col2}", messageSource.getMessage("reporting.table64.publications",
-                new Object[] {}, Locale.forLanguageTag(locale))
-        );
+        var fromYear = String.valueOf(assessmentResponses.getFirst().getFromYear());
+        var toYear = String.valueOf(assessmentResponses.getFirst().getToYear());
+        Map<String, String> replacements = getTable64Headers(locale, fromYear, toYear);
 
         List<List<String>> tableData = new ArrayList<>();
         Set<Integer> handledPublicationIds = new HashSet<>();
@@ -131,7 +129,22 @@ public class ReportGenerationUtil {
             });
         });
 
-        return new Pair<>(replacements, tableData);
+        return new Pair<>(replacements,
+            tableData.stream().sorted((r1, r2) -> classificationCodeSorter(r1.get(2), r2.get(2)))
+                .toList());
+    }
+
+    private static Map<String, String> getTable64Headers(String locale, String fromYear,
+                                                         String toYear) {
+        return Map.of(
+            "{header}",
+            LocalizationUtil.getMessage("reporting.table64.header", new Object[] {fromYear, toYear},
+                locale),
+            "{col1}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col2}",
+            LocalizationUtil.getMessage("reporting.table64.publications", new Object[] {}, locale)
+        );
     }
 
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTable67(
@@ -140,22 +153,9 @@ public class ReportGenerationUtil {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
 
-        Map<String, String> replacements = Map.of(
-            "{header}", messageSource.getMessage("reporting.table67.header",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getFromYear()),
-                    String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col2}", messageSource.getMessage("reporting.table67.personalIdentifier",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col3}", messageSource.getMessage("reporting.table67.nameAndSurname",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col4}", messageSource.getMessage("reporting.table67.employmentInstitutionName",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col5}", messageSource.getMessage("reporting.table67.numberOfSCIPublications",
-                new Object[] {}, Locale.forLanguageTag(locale))
-        );
+        var fromYear = String.valueOf(assessmentResponses.getFirst().getFromYear());
+        var toYear = String.valueOf(assessmentResponses.getFirst().getToYear());
+        Map<String, String> replacements = getTable67Headers(locale, fromYear, toYear);
 
         List<List<String>> tableData = new ArrayList<>();
         assessmentResponses.forEach(assessmentResponse -> {
@@ -176,28 +176,36 @@ public class ReportGenerationUtil {
         return new Pair<>(replacements, tableData);
     }
 
+    private static Map<String, String> getTable67Headers(String locale, String fromYear,
+                                                         String toYear) {
+        return Map.of(
+            "{header}",
+            LocalizationUtil.getMessage("reporting.table67.header", new Object[] {fromYear, toYear},
+                locale),
+            "{col1}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col2}",
+            LocalizationUtil.getMessage("reporting.table67.personalIdentifier", new Object[] {},
+                locale),
+            "{col3}",
+            LocalizationUtil.getMessage("reporting.table67.nameAndSurname", new Object[] {},
+                locale),
+            "{col4}", LocalizationUtil.getMessage("reporting.table67.employmentInstitutionName",
+                new Object[] {}, locale),
+            "{col5}", LocalizationUtil.getMessage("reporting.table67.numberOfSCIPublications",
+                new Object[] {}, locale)
+        );
+    }
+
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTable67WithPosition(
         List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, String locale) {
         if (assessmentResponses.isEmpty()) {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
 
-        Map<String, String> replacements = Map.of(
-            "{header}", messageSource.getMessage("reporting.table67Positions.header",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getFromYear()),
-                    String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col2}", messageSource.getMessage("reporting.table67.personalIdentifier",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col3}", messageSource.getMessage("reporting.table67.nameAndSurname",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col4}", messageSource.getMessage("reporting.table67.employmentPosition",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col5}", messageSource.getMessage("reporting.table67.numberOfSCIPublications",
-                new Object[] {}, Locale.forLanguageTag(locale))
-        );
+        var fromYear = String.valueOf(assessmentResponses.getFirst().getFromYear());
+        var toYear = String.valueOf(assessmentResponses.getFirst().getToYear());
+        Map<String, String> replacements = getTable67PositionsHeaders(locale, fromYear, toYear);
 
         List<List<String>> tableData = new ArrayList<>();
         assessmentResponses.forEach(assessmentResponse -> {
@@ -222,37 +230,35 @@ public class ReportGenerationUtil {
         return new Pair<>(replacements, tableData);
     }
 
+    private static Map<String, String> getTable67PositionsHeaders(String locale, String fromYear,
+                                                                  String toYear) {
+        return Map.of(
+            "{header}", LocalizationUtil.getMessage("reporting.table67Positions.header",
+                new Object[] {fromYear, toYear}, locale),
+            "{col1}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col2}",
+            LocalizationUtil.getMessage("reporting.table67.personalIdentifier", new Object[] {},
+                locale),
+            "{col3}",
+            LocalizationUtil.getMessage("reporting.table67.nameAndSurname", new Object[] {},
+                locale),
+            "{col4}",
+            LocalizationUtil.getMessage("reporting.table67.employmentPosition", new Object[] {},
+                locale),
+            "{col5}", LocalizationUtil.getMessage("reporting.table67.numberOfSCIPublications",
+                new Object[] {}, locale)
+        );
+    }
+
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTableTopLevelInstitution(
         List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, String locale) {
         if (assessmentResponses.isEmpty()) {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
 
-        Map<String, String> replacements = Map.of(
-            "{heading}", messageSource.getMessage("reporting.tableTopLevelInstitution.header1",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{heading2}", messageSource.getMessage("reporting.tableTopLevelInstitution.header2",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{sci}", messageSource.getMessage("reporting.table.sci",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col2}", messageSource.getMessage("reporting.tableTopLevelInstitution.institution",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col3}", messageSource.getMessage("reporting.tableTopLevelInstitution.bibliography",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col4}", messageSource.getMessage("reporting.tableTopLevelInstitution.category",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col5}", messageSource.getMessage("reporting.tableTopLevelInstitution.categories",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col6}",
-            messageSource.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col7}", messageSource.getMessage("reporting.tableTopLevelInstitution.bibliographies",
-                new Object[] {}, Locale.forLanguageTag(locale))
-        );
+        var year = String.valueOf(assessmentResponses.getFirst().getToYear());
+        Map<String, String> replacements = getTopLevelInstitutionTableHeaders(locale, year);
 
         List<List<String>> tableData = new ArrayList<>();
         Set<Integer> handledPublicationIds = new HashSet<>();
@@ -305,98 +311,164 @@ public class ReportGenerationUtil {
             rowA -> ClassificationPriorityMapping.getSciListPriority((rowA.get(3))))).toList());
     }
 
+    private static Map<String, String> getTopLevelInstitutionTableHeaders(String locale,
+                                                                          String year) {
+        return Map.of(
+            "{heading}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.header1",
+                new Object[] {year}, locale),
+            "{heading2}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.header2",
+                new Object[] {year}, locale),
+            "{sci}", LocalizationUtil.getMessage("reporting.table.sci", new Object[] {}, locale),
+            "{col1}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col2}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.institution",
+                new Object[] {}, locale),
+            "{col3}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.bibliography",
+                new Object[] {}, locale),
+            "{col4}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.category",
+                new Object[] {}, locale),
+            "{col5}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.categories",
+                new Object[] {}, locale),
+            "{col6}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
+                new Object[] {}, locale),
+            "{col7}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.bibliographies",
+                new Object[] {}, locale)
+        );
+    }
+
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTableTopLevelInstitutionSummary(
         List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
         List<Integer> commissionIds, String locale) {
+
         if (assessmentResponses.isEmpty()) {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
 
-        Map<String, String> replacements = Map.of(
-            "{heading}", messageSource.getMessage("reporting.tableTopLevelInstitution.header1",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{heading2}",
-            messageSource.getMessage("reporting.tableTopLevelInstitutionSummary.header2",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col2}", messageSource.getMessage("reporting.tableTopLevelInstitution.category",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col3}",
-            messageSource.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col4}", messageSource.getMessage("reporting.tableTopLevelInstitution.bibliographies",
-                new Object[] {}, Locale.forLanguageTag(locale))
-        );
+        String year = String.valueOf(assessmentResponses.getFirst().getToYear());
+        Map<String, String> replacements = getTopLevelInstitutionSummaryTableHeaders(locale, year);
 
-        var categoryToSums = new TreeMap<String, int[]>();
-        FunctionalUtil.forEachWithCounter(commissionIds, (index, commissionId) -> {
-            assessmentResponses.stream()
-                .filter(response -> response.getCommissionId().equals(commissionId))
-                .forEach(commissionResponse -> {
-                    commissionResponse.getPublicationsPerCategory()
-                        .forEach((category, publications) -> {
-                            categoryToSums.computeIfAbsent(category,
-                                k -> new int[commissionIds.size()]);
-                            categoryToSums.get(category)[index] += publications.size();
-                        });
-                });
-        });
+        Map<String, int[]> categoryToSums = computeCategorySums(assessmentResponses, commissionIds);
 
-        List<List<String>> tableData = new ArrayList<>();
-        categoryToSums.forEach((category, sums) -> {
-            var rowData = new ArrayList<String>();
-            rowData.add(String.valueOf(tableData.size() + 1));
-            rowData.add(category);
-            Arrays.stream(sums).forEach(sum -> {
-                rowData.add(String.valueOf(sum));
-            });
-            tableData.add(rowData);
-        });
+        List<List<String>> tableData = buildSummaryTable(categoryToSums);
 
         return new Pair<>(replacements, tableData);
     }
 
+    private static Map<String, String> getTopLevelInstitutionSummaryTableHeaders(String locale,
+                                                                                 String year) {
+        return Map.of(
+            "{heading}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.header1",
+                new Object[] {year}, locale),
+            "{heading2}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitutionSummary.header2",
+                new Object[] {year}, locale),
+            "{col1}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col2}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.category",
+                new Object[] {}, locale),
+            "{col3}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
+                new Object[] {}, locale),
+            "{col4}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.bibliographies",
+                new Object[] {}, locale)
+        );
+    }
+
+    private static Map<String, int[]> computeCategorySums(
+        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
+        List<Integer> commissionIds) {
+
+        Map<String, int[]> categoryToSums =
+            new TreeMap<>(AssessmentReportGenerator::classificationCodeSorter);
+
+        for (int i = 0; i < commissionIds.size(); i++) {
+            int commissionId = commissionIds.get(i);
+            int finalI = i;
+            assessmentResponses.stream()
+                .filter(response -> response.getCommissionId().equals(commissionId))
+                .forEach(response -> response.getPublicationsPerCategory()
+                    .forEach((category, publications) -> {
+                        categoryToSums.computeIfAbsent(category,
+                            k -> new int[commissionIds.size()]);
+                        categoryToSums.get(category)[finalI] += publications.size();
+                    })
+                );
+        }
+
+        return categoryToSums;
+    }
+
+    private static List<List<String>> buildSummaryTable(Map<String, int[]> categoryToSums) {
+        List<List<String>> tableData = new ArrayList<>();
+
+        categoryToSums.forEach((category, sums) -> {
+            List<String> rowData = new ArrayList<>();
+            rowData.add(String.valueOf(tableData.size() + 1));
+            rowData.add(category);
+            Arrays.stream(sums).mapToObj(String::valueOf).forEach(rowData::add);
+            tableData.add(rowData);
+        });
+
+        return tableData;
+    }
+
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTableTopLevelInstitutionColored(
         List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, String locale) {
+
         if (assessmentResponses.isEmpty()) {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
 
-        Map<String, String> replacements = Map.of(
-            "{heading}", messageSource.getMessage("reporting.tableTopLevelInstitution.header1",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{heading2}", messageSource.getMessage("reporting.tableTopLevelInstitution.header2",
-                new Object[] {String.valueOf(assessmentResponses.getFirst().getToYear())},
-                Locale.forLanguageTag(locale)),
-            "{sci}", messageSource.getMessage("reporting.table.sci",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col1}", messageSource.getMessage("reporting.table.rowNumber",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col2}", messageSource.getMessage("reporting.tableTopLevelInstitution.bibliography",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col3}", messageSource.getMessage("reporting.tableTopLevelInstitution.category",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col4}", messageSource.getMessage("reporting.tableTopLevelInstitution.categories",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col5}",
-            messageSource.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
-                new Object[] {}, Locale.forLanguageTag(locale)),
-            "{col6}", messageSource.getMessage("reporting.tableTopLevelInstitution.bibliographies",
-                new Object[] {}, Locale.forLanguageTag(locale))
-        );
+        String year = String.valueOf(assessmentResponses.getFirst().getToYear());
+        Map<String, String> replacements = getTopLevelInstitutionColoredTableHeaders(locale, year);
 
-        var commissionId = assessmentResponses.getFirst().getCommissionId();
-        var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
-        var subOUs =
-            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnitId);
+        int commissionId = assessmentResponses.getFirst().getCommissionId();
+        int organisationUnitId = userRepository.findOUIdForCommission(commissionId);
+        Set<Integer> subOUs = new HashSet<>(
+            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnitId));
         subOUs.add(organisationUnitId);
+
+        List<List<String>> tableData =
+            processPublicationsForColoredReport(assessmentResponses, subOUs);
+
+        return new Pair<>(replacements, tableData);
+    }
+
+    private static Map<String, String> getTopLevelInstitutionColoredTableHeaders(String locale,
+                                                                                 String year) {
+        return Map.of(
+            "{heading}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.header1",
+                new Object[] {year}, locale),
+            "{heading2}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.header2",
+                new Object[] {year}, locale),
+            "{sci}", LocalizationUtil.getMessage("reporting.table.sci", new Object[] {}, locale),
+            "{col1}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col2}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.bibliography",
+                new Object[] {}, locale),
+            "{col3}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.category",
+                new Object[] {}, locale),
+            "{col4}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.categories",
+                new Object[] {}, locale),
+            "{col5}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
+                new Object[] {}, locale),
+            "{col6}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.bibliographies",
+                new Object[] {}, locale)
+        );
+    }
+
+    private static List<List<String>> processPublicationsForColoredReport(
+        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
+        Set<Integer> subOUs) {
 
         List<List<String>> tableData = new ArrayList<>();
         Set<Integer> handledPublicationIds = new HashSet<>();
+
         assessmentResponses.forEach(assessmentResponse -> {
             assessmentResponse.getPublicationsPerCategory().forEach((code, publications) -> {
                 publications.forEach(publication -> {
@@ -404,24 +476,33 @@ public class ReportGenerationUtil {
                         ClassificationPriorityMapping.isOnSciList(code)) {
                         var institutionIds =
                             assessmentResponse.getPublicationToInstitution().get(publication.c);
-                        var color = TableRowColors.RED;
-                        if (institutionIds.isEmpty()) {
-                            color = TableRowColors.YELLOW;
-                        } else if (new HashSet<>(subOUs).containsAll(institutionIds)) {
-                            color = TableRowColors.WHITE;
-                        }
+                        var color = determineRowColor(new HashSet<>(institutionIds), subOUs);
 
-                        tableData.add(
-                            List.of(String.valueOf(tableData.size() + 1),
-                                publication.a + "§" + color, code));
+                        tableData.add(List.of(
+                            String.valueOf(tableData.size() + 1),
+                            publication.a + "§" + color,
+                            code
+                        ));
+
                         handledPublicationIds.add(publication.c);
                     }
                 });
             });
         });
 
-        return new Pair<>(replacements, tableData.stream().sorted(Comparator.comparingInt(
-            rowA -> ClassificationPriorityMapping.getSciListPriority((rowA.get(2))))).toList());
+        return tableData.stream()
+            .sorted(Comparator.comparingInt(
+                row -> ClassificationPriorityMapping.getSciListPriority(row.get(2))))
+            .toList();
+    }
+
+    private static String determineRowColor(Set<Integer> institutionIds, Set<Integer> subOUs) {
+        if (institutionIds.isEmpty()) {
+            return TableRowColors.YELLOW;
+        } else if (subOUs.containsAll(institutionIds)) {
+            return TableRowColors.WHITE;
+        }
+        return TableRowColors.RED;
     }
 
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTableForAllPublications(
@@ -436,8 +517,8 @@ public class ReportGenerationUtil {
             organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnitId);
         subOUs.add(organisationUnitId);
 
-        Map<String, Pair<String, Integer>> publicationsPerGroup = new TreeMap<>(
-            Comparator.comparingInt(ClassificationPriorityMapping::getSciListPriority).reversed());
+        Map<String, Pair<String, Integer>> publicationsPerGroup =
+            new TreeMap<>(AssessmentReportGenerator::classificationCodeSorter);
         Set<Integer> handledPublicationIds = new HashSet<>();
         assessmentResponses.forEach(assessmentResponse -> {
             assessmentResponse.getPublicationsPerCategory().forEach((code, publications) -> {
@@ -502,5 +583,15 @@ public class ReportGenerationUtil {
             .map(mc -> languageCode.equals("SR") ?
                 SerbianTransliteration.toCyrillic(mc.getContent()) : mc.getContent())
             .orElseThrow(() -> new NotFoundException("Missing container title"));
+    }
+
+    private static int classificationCodeSorter(String s1, String s2) {
+        if (ClassificationPriorityMapping.isOnSciList(s1) &&
+            ClassificationPriorityMapping.isOnSciList(s2)) {
+            return Integer.compare(ClassificationPriorityMapping.getSciListPriority(s1),
+                ClassificationPriorityMapping.getSciListPriority(s2));
+        }
+
+        return s1.compareTo(s2);
     }
 }

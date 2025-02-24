@@ -32,7 +32,7 @@ public class CommissionController {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION', 'UPDATE_COMMISSION')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ENTITY_ASSESSMENT_CLASSIFICATION', 'UPDATE_COMMISSION', 'SCHEDULE_REPORT_GENERATION')")
     public Page<CommissionResponseDTO> readCommissions(Pageable pageable,
                                                        @RequestParam(required = false)
                                                        String searchExpression,
