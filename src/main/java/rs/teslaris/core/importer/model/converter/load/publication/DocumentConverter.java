@@ -48,6 +48,7 @@ public abstract class DocumentConverter {
             return;
         }
 
+        dto.setUris(new HashSet<>());
         urls.forEach(url -> {
             if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId")) {
                 return;
