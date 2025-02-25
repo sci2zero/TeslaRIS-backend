@@ -81,7 +81,8 @@ public class ClassificationPriorityMapping {
         String classificationCode, Integer documentId) {
 
         String documentCode =
-            assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
+            assessmentConfig.classificationToAssessmentMapping.getOrDefault(classificationCode,
+                null);
 
         if (Objects.isNull(documentCode)) {
             return Optional.empty();
@@ -102,6 +103,10 @@ public class ClassificationPriorityMapping {
         }
 
         return Optional.of(documentCode);
+    }
+
+    public static String getImaginaryDocClassificationCodeBasedOnCode(String classificationCode) {
+        return assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
     }
 
     private static Optional<String> getMappedCode(String baseCode,

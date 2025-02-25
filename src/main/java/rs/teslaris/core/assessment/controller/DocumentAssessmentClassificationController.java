@@ -20,6 +20,8 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.assessment.dto.DocumentAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.dto.ImaginaryJournalPublicationAssessmentRequestDTO;
+import rs.teslaris.core.assessment.dto.ImaginaryJournalPublicationAssessmentResponseDTO;
 import rs.teslaris.core.assessment.dto.PublicationAssessmentRequestDTO;
 import rs.teslaris.core.assessment.service.interfaces.DocumentAssessmentClassificationService;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -71,6 +73,18 @@ public class DocumentAssessmentClassificationController {
             publicationAssessmentRequestDTO.getAuthorIds(),
             publicationAssessmentRequestDTO.getOrganisationUnitIds(),
             publicationAssessmentRequestDTO.getPublishedInIds());
+    }
+
+    @PostMapping("/imaginary-journal-publication")
+    public ImaginaryJournalPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
+        @RequestBody
+        ImaginaryJournalPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest) {
+        return documentAssessmentClassificationService.assessImaginaryJournalPublication(
+            imaginaryJournalPublicationAssessmentRequest.getJournalId(),
+            imaginaryJournalPublicationAssessmentRequest.getCommissionId(),
+            imaginaryJournalPublicationAssessmentRequest.getClassificationYear(),
+            imaginaryJournalPublicationAssessmentRequest.getResearchAreaCode(),
+            imaginaryJournalPublicationAssessmentRequest.getAuthorCount());
     }
 
     @PostMapping("/{documentId}")

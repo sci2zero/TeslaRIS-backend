@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.DocumentAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.dto.ImaginaryJournalPublicationAssessmentResponseDTO;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.CommissionRelation;
@@ -34,6 +35,8 @@ import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRe
 import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.ruleengine.AssessmentPointsRuleEngine;
+import rs.teslaris.core.assessment.ruleengine.AssessmentPointsScalingRuleEngine;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.DocumentAssessmentClassificationService;
@@ -359,6 +362,51 @@ public class DocumentAssessmentClassificationServiceImpl
         });
     }
 
+    @Override
+    public ImaginaryJournalPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
+        Integer journalId, Integer commissionId,
+        Integer classificationYear, String researchArea,
+        Integer authorCount) {
+        var commission = commissionService.findOne(commissionId);
+
+        return performPublicationAssessmentForImaginaryDocument(
+            (year, classifications, commissionObj) -> {
+                var classificationList = publicationSeriesAssessmentClassificationRepository
+                    .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                        journalId, commission.getId(), year);
+
+                // Check for manually set classification first
+                var manualClassification = classificationList.stream()
+                    .filter(EntityAssessmentClassification::getManual)
+                    .findFirst();
+
+                if (manualClassification.isPresent()) {
+                    classifications.add(manualClassification.get().getAssessmentClassification());
+                } else if (!classificationList.isEmpty()) {
+                    classifications.add(
+                        classificationList.getFirst().getAssessmentClassification());
+                } else {
+                    handleRelationAssessments(commission,
+                        (targetCommissionId) -> {
+                            var relatedClassifications =
+                                publicationSeriesAssessmentClassificationRepository
+                                    .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                                        journalId, targetCommissionId,
+                                        year);
+
+                            return relatedClassifications.stream()
+                                .filter(EntityAssessmentClassification::getManual)
+                                .findFirst()
+                                .or(() -> relatedClassifications.stream().findFirst());
+                        }
+                    ).ifPresent(classifications::add);
+                }
+            },
+            commission,
+            List.of(classificationYear, classificationYear - 1, classificationYear - 2),
+            researchArea, authorCount);
+    }
+
     private void performPublicationAssessment(
         TriConsumer<Integer, List<AssessmentClassification>, Commission> yearHandler,
         Integer classificationYear, Integer documentId,
@@ -378,6 +426,42 @@ public class DocumentAssessmentClassificationServiceImpl
                     commission, documentId, classificationYear);
             });
         }
+    }
+
+    private ImaginaryJournalPublicationAssessmentResponseDTO performPublicationAssessmentForImaginaryDocument(
+        TriConsumer<Integer, List<AssessmentClassification>, Commission> yearHandler,
+        Commission commission, List<Integer> yearsToConsider, String researchArea,
+        Integer authorCount) {
+        var assessmentResponse = new ImaginaryJournalPublicationAssessmentResponseDTO();
+        var classifications = new ArrayList<AssessmentClassification>();
+
+        yearsToConsider.forEach(year -> {
+            yearHandler.accept(year, classifications, commission);
+        });
+
+        if (!classifications.isEmpty()) {
+            var bestClassification =
+                ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
+                    ResultCalculationMethod.BEST_VALUE);
+            bestClassification.ifPresent((classification) -> {
+                var mappedCode =
+                    ClassificationPriorityMapping.getImaginaryDocClassificationCodeBasedOnCode(
+                        classification.getCode());
+                assessmentResponse.setAssessmentCode(mappedCode);
+
+                var pointsRuleEngine = new AssessmentPointsRuleEngine();
+                var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
+                scalingRuleEngine.setCurrentEntityIndicators(new ArrayList<>());
+
+                var points = pointsRuleEngine.serbianPointsRulebook2025(researchArea, mappedCode);
+                assessmentResponse.setRawPoints(points);
+                points =
+                    scalingRuleEngine.serbianScalingRulebook2025(authorCount, mappedCode, points);
+                assessmentResponse.setScaledPoints(points);
+            });
+        }
+
+        return assessmentResponse;
     }
 
     private List<Commission> findCommissionInHierarchy(Integer organisationUnitId) {

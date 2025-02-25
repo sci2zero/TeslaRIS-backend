@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.assessment.dto.DocumentAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.dto.ImaginaryJournalPublicationAssessmentResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 
 @Service
@@ -31,4 +32,9 @@ public interface DocumentAssessmentClassificationService {
                                            List<Integer> authorIds,
                                            List<Integer> orgUnitIds,
                                            List<Integer> journalIds);
+
+    ImaginaryJournalPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
+        Integer journalId, Integer commissionId,
+        Integer classificationYear, String researchArea,
+        Integer authorCount);
 }

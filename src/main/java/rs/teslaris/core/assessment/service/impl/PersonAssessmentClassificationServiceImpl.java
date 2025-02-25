@@ -430,7 +430,7 @@ public class PersonAssessmentClassificationServiceImpl
             pointsRuleEngine, researchAreaCode, classificationCode);
 
         return invokeRule(AssessmentPointsScalingRuleEngine.class, measure.getScalingRule(),
-            scalingRuleEngine, publication, classificationCode, basePoints);
+            scalingRuleEngine, publication.getAuthorIds().size(), classificationCode, basePoints);
     }
 
     public Query findAllPersonsByFilters(

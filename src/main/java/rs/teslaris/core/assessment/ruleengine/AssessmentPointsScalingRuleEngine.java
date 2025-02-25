@@ -5,19 +5,17 @@ import java.util.Objects;
 import lombok.Setter;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.EntityIndicator;
-import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 
 @Setter
 public class AssessmentPointsScalingRuleEngine {
 
     private List<DocumentIndicator> currentEntityIndicators;
 
-    public double serbianScalingRulebook2025(DocumentPublicationIndex publicationIndex,
+    public double serbianScalingRulebook2025(Integer authorCount,
                                              String classificationCode, Double points) {
-        var authorNumber = publicationIndex.getAuthorIds().size();
         var revisedAuthorNumber = findIndicatorByCode("revisedAuthorCount");
         if (Objects.nonNull(revisedAuthorNumber)) {
-            authorNumber = revisedAuthorNumber.getNumericValue().intValue();
+            authorCount = revisedAuthorNumber.getNumericValue().intValue();
         }
 
         var isExperimental = Objects.nonNull(findIndicatorByCode("isExperimental"));
@@ -27,32 +25,32 @@ public class AssessmentPointsScalingRuleEngine {
 
         // Theoretical works (up to 3 authors, otherwise scale)
         if (isTheoretical) {
-            if (authorNumber > 3) {
-                return points / (1 + 0.2 * (authorNumber - 3));
+            if (authorCount > 3) {
+                return points / (1 + 0.2 * (authorCount - 3));
             }
         }
         // Numerical simulations or primary data collection (up to 5 authors, otherwise scale)
         else if (isSimulation) {
-            if (authorNumber > 5) {
-                return points / (1 + 0.2 * (authorNumber - 5));
+            if (authorCount > 5) {
+                return points / (1 + 0.2 * (authorCount - 5));
             }
         }
         // Experimental works (up to 7 authors, otherwise scale)
         else if (isExperimental) {
-            if (authorNumber > 7) {
-                return points / (1 + 0.2 * (authorNumber - 7));
+            if (authorCount > 7) {
+                return points / (1 + 0.2 * (authorCount - 7));
             }
         }
         // M21a+ category (up to 10 authors, otherwise scale)
         else if (isM21aPlus) {
-            if (authorNumber > 10) {
-                return points / (1 + 0.2 * (authorNumber - 10));
+            if (authorCount > 10) {
+                return points / (1 + 0.2 * (authorCount - 10));
             }
         }
 
         // Treat it as experimental by default
-        if (authorNumber > 7) {
-            return points / (1 + 0.2 * (authorNumber - 7));
+        if (authorCount > 7) {
+            return points / (1 + 0.2 * (authorCount - 7));
         } else {
             return points;
         }
