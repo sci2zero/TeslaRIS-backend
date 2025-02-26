@@ -7,6 +7,7 @@ import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 
@@ -55,6 +56,9 @@ public class MKSJournalClassificationRuleEngine extends JournalClassificationRul
         var mksCategory = findIndicatorByCode("slavistiCategory", category);
 
         if (Objects.nonNull(mksCategory) && mksCategory.getTextualValue().equals("I kategorija")) {
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
+                    "m23MKS");
             return assessmentClassificationService.readAssessmentClassificationByCode("journalM23");
         }
 

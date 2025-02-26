@@ -7,6 +7,7 @@ import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 
@@ -50,6 +51,9 @@ public class ScimagoSocialJournalClassificationEngine extends JournalClassificat
         var sjr = findIndicatorByCode("sjr", category);
 
         if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q1")) {
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
+                    "M22SJR");
             return assessmentClassificationService.readAssessmentClassificationByCode("journalM22");
         }
 
@@ -62,6 +66,9 @@ public class ScimagoSocialJournalClassificationEngine extends JournalClassificat
         var sjr = findIndicatorByCode("sjr", category);
 
         if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q2")) {
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
+                    "m23SJR");
             return assessmentClassificationService.readAssessmentClassificationByCode("journalM23");
         }
 

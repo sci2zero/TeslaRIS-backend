@@ -16,6 +16,7 @@ import rs.teslaris.core.assessment.dto.AssessmentResearchAreaDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.language.SerbianTransliteration;
 
 @Component
 public class ResearchAreasConfigurationLoader {
@@ -68,11 +69,31 @@ public class ResearchAreasConfigurationLoader {
                         priority.getAndIncrement()));
             });
 
-
             researchAreas.add(researchAreaResponse);
         });
 
         return researchAreas;
+    }
+
+    public static List<MultilingualContentDTO> fetchAssessmentResearchAreaNameByCode(
+        String researchAreaCode) {
+        var researchAreaName = new ArrayList<MultilingualContentDTO>();
+
+        researchAreaConfiguration.researchAreas.stream()
+            .filter(area -> area.code().equals(researchAreaCode)).findFirst()
+            .ifPresent(researchArea -> {
+                var priority = new AtomicInteger(1);
+                researchArea.name().forEach((languageCode, content) -> {
+                    var languageTag = languageTagService.findLanguageTagByValue(languageCode);
+                    researchAreaName.add(
+                        new MultilingualContentDTO(languageTag.getId(), languageCode,
+                            languageCode.equalsIgnoreCase("SR") ?
+                                SerbianTransliteration.toCyrillic(content) : content,
+                            priority.getAndIncrement()));
+                });
+            });
+
+        return researchAreaName;
     }
 
     public static Optional<AssessmentResearchAreaDTO> fetchAssessmentResearchAreaByCode(

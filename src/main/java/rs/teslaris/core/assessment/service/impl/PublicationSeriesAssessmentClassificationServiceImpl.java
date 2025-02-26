@@ -34,6 +34,7 @@ import rs.teslaris.core.assessment.service.impl.cruddelegate.PublicationSeriesAs
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
+import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.PublicationSeries;
@@ -121,6 +122,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         }
 
         var newAssessmentClassification = new PublicationSeriesAssessmentClassification();
+        newAssessmentClassification.setClassificationReason(
+            AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
+                "manual"));
 
         newAssessmentClassification.setCommission(
             commissionService.findOne(

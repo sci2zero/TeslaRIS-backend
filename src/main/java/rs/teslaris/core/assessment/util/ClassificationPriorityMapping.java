@@ -5,23 +5,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
@@ -62,18 +64,18 @@ public class ClassificationPriorityMapping {
         );
     }
 
-    public static Optional<AssessmentClassification> getClassificationBasedOnCriteria(
-        ArrayList<AssessmentClassification> classifications,
+    public static Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> getClassificationBasedOnCriteria(
+        List<Pair<AssessmentClassification, Set<MultiLingualContent>>> classifications,
         ResultCalculationMethod resultCalculationMethod) {
         return switch (resultCalculationMethod) {
             case BEST_VALUE -> classifications.stream()
                 .min(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
-                        assessmentClassification.getCode(), Integer.MAX_VALUE)));
+                        assessmentClassification.a.getCode(), Integer.MAX_VALUE)));
             case WORST_VALUE -> classifications.stream()
                 .max(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
-                        assessmentClassification.getCode(), Integer.MIN_VALUE)));
+                        assessmentClassification.a.getCode(), Integer.MIN_VALUE)));
         };
     }
 

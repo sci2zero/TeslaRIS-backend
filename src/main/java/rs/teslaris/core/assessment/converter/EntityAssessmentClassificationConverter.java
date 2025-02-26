@@ -26,7 +26,9 @@ public class EntityAssessmentClassificationConverter {
             entityAssessmentClassification.getClassificationYear(),
             entityAssessmentClassification.getTimestamp(),
             entityAssessmentClassification.getAssessmentClassification().getApplicableTypes()
-                .stream().toList(), entityAssessmentClassification.getManual());
+                .stream().toList(), entityAssessmentClassification.getManual(),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                entityAssessmentClassification.getClassificationReason()));
     }
 
     public static EntityAssessmentClassificationResponseDTO toDTO(
@@ -46,6 +48,8 @@ public class EntityAssessmentClassificationConverter {
             entityAssessmentClassification.getClassificationYear(),
             entityAssessmentClassification.getTimestamp(),
             entityAssessmentClassification.getAssessmentClassification().getApplicableTypes()
-                .stream().toList(), entityAssessmentClassification.getManual());
+                .stream().toList(), entityAssessmentClassification.getManual(),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                entityAssessmentClassification.getClassificationReason()));
     }
 }

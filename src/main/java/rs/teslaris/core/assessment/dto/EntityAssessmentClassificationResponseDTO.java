@@ -24,6 +24,8 @@ public record EntityAssessmentClassificationResponseDTO(
 
     List<ApplicableEntityType> applicableEntityTypes,
 
-    Boolean manual
+    Boolean manual,
+
+    List<MultilingualContentDTO> assessmentReason
 ) {
 }
