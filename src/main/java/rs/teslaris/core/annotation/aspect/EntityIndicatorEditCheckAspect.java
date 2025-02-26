@@ -50,10 +50,6 @@ public class EntityIndicatorEditCheckAspect {
                         "unauthorizedEntityIndicatorEditAttemptMessage");
                 }
                 break;
-            case INSTITUTIONAL_EDITOR:
-                // TODO: Until we decide whether institutional admins can edit
-                throw new CantEditException(
-                    "unauthorizedEntityIndicatorEditAttemptMessage");
             default:
                 throw new CantEditException("unauthorizedEntityIndicatorEditAttemptMessage");
         }

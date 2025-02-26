@@ -98,6 +98,11 @@ public class AssessmentPointsRuleEngine {
                     return 2;
                 }
                 break;
+            case "M69":
+                if (researchArea.equals("HUMANITIES")) {
+                    return 6;
+                }
+                break;
 
             // MONOGRAPHS
             case "M11":
