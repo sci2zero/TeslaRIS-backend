@@ -359,6 +359,12 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         journalClassification.setCategoryIdentifier(category);
         journalClassification.setAssessmentClassification(classification);
 
+        // TODO: Is this one necessary, it is not adherent to the generic logic
+        //  but was also too much of a hassle to put into configuration file. What should we do?
+        journalClassification.setClassificationReason(
+            AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
+                classification.getCode().equals("journalM24") ? "M24MNO" : "MNO"));
+
         var existingClassification =
             publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
                 publicationSeries.getId(), category, year, commission.getId());

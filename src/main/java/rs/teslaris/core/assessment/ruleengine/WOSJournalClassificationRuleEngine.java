@@ -1,6 +1,9 @@
 package rs.teslaris.core.assessment.ruleengine;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
@@ -9,6 +12,7 @@ import rs.teslaris.core.assessment.model.PublicationSeriesIndicator;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 
@@ -33,31 +37,31 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
     @Override
     @Transactional
     public AssessmentClassification handleM21APlus(String category) {
-        return handlePercentileClassification("journalM21APlus", category, 0.05);
+        return handlePercentileClassification("journalM21APlus", category, 0.05, "M21APlus");
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM21A(String category) {
-        return handlePercentileClassification("journalM21A", category, 0.15);
+        return handlePercentileClassification("journalM21A", category, 0.15, "M21A");
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM21(String category) {
-        return handlePercentileClassification("journalM21", category, 0.35);
+        return handlePercentileClassification("journalM21", category, 0.35, "M21");
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM22(String category) {
-        return handlePercentileClassification("journalM22", category, 0.75);
+        return handlePercentileClassification("journalM22", category, 0.75, "M22");
     }
 
     @Nullable
     @Override
     public AssessmentClassification handleM23(String category) {
-        return handlePercentileClassification("journalM23", category, 1.0);
+        return handlePercentileClassification("journalM23", category, 1.0, "M23");
     }
 
     @Nullable
@@ -73,6 +77,9 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
         var jcrConditionPassed = Objects.nonNull(jcr) && jcr.getBooleanValue();
 
         if (jcrConditionPassed) {
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
+                    "M24PlusJCI");
             return assessmentClassificationService.readAssessmentClassificationByCode(
                 "journalM24Plus");
         }
@@ -100,22 +107,39 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
     @Nullable
     private AssessmentClassification handlePercentileClassification(String classificationCode,
                                                                     String category,
-                                                                    double topPercentage) {
-        var jci = findIndicatorByCode("jciPercentile", null);
-        var jif2 = findIndicatorByCode("currentJIFRank", category);
-        var jif5 = findIndicatorByCode("fiveYearJIFRank", category);
+                                                                    double topPercentage,
+                                                                    String rulePrefix) {
+        Map<String, PublicationSeriesIndicator> indicators = new LinkedHashMap<>();
+        Optional.ofNullable(findIndicatorByCode("currentJIFRank", category))
+            .ifPresent(i -> indicators.put("IF2", i));
+        Optional.ofNullable(findIndicatorByCode("fiveYearJIFRank", category))
+            .ifPresent(i -> indicators.put("IF5", i));
+        Optional.ofNullable(findIndicatorByCode("jciPercentile", null))
+            .ifPresent(i -> indicators.put("JCI", i));
 
-        var jif2ConditionPassed = isRankConditionPassed(jif2, topPercentage);
-        var jif5ConditionPassed = isRankConditionPassed(jif5, topPercentage);
-        var jciConditionPassed = isJciConditionPassed(jci, topPercentage);
+        for (var entry : indicators.entrySet()) {
+            var suffix = entry.getKey();
+            var indicator = entry.getValue();
+            boolean conditionPassed =
+                suffix.equals("JCI") ? isJciConditionPassed(indicator, topPercentage)
+                    : isRankConditionPassed(indicator, topPercentage);
 
-        if (jif2ConditionPassed || jif5ConditionPassed || jciConditionPassed) {
-            return assessmentClassificationService.readAssessmentClassificationByCode(
-                classificationCode);
+            if (conditionPassed) {
+                var ruleCode = rulePrefix + suffix;
+                var rank = suffix.equals("JCI") ? String.valueOf(indicator.getNumericValue()) :
+                    indicator.getTextualValue();
+
+                reasoningProcess = AssessmentRulesConfigurationLoader.getRuleDescription(
+                    "journalClassificationRules", ruleCode, rank);
+
+                return assessmentClassificationService.readAssessmentClassificationByCode(
+                    classificationCode);
+            }
         }
 
         return null;
     }
+
 
     private boolean isJciConditionPassed(PublicationSeriesIndicator jci, double topPercentage) {
         return Objects.nonNull(jci) && Objects.nonNull(jci.getNumericValue()) &&

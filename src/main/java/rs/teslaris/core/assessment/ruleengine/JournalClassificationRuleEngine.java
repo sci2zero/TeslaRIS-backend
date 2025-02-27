@@ -192,6 +192,7 @@ public abstract class JournalClassificationRuleEngine {
     @Nullable
     abstract protected AssessmentClassification handleM24(String category);
 
+    @Nullable
     protected PublicationSeriesIndicator findIndicatorByCode(String code, String category) {
         return currentJournalIndicators.stream()
             .filter(journalIndicator ->

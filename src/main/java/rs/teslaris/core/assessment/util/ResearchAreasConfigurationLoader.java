@@ -16,7 +16,6 @@ import rs.teslaris.core.assessment.dto.AssessmentResearchAreaDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
-import rs.teslaris.core.util.language.SerbianTransliteration;
 
 @Component
 public class ResearchAreasConfigurationLoader {
@@ -86,9 +85,7 @@ public class ResearchAreasConfigurationLoader {
                 researchArea.name().forEach((languageCode, content) -> {
                     var languageTag = languageTagService.findLanguageTagByValue(languageCode);
                     researchAreaName.add(
-                        new MultilingualContentDTO(languageTag.getId(), languageCode,
-                            languageCode.equalsIgnoreCase("SR") ?
-                                SerbianTransliteration.toCyrillic(content) : content,
+                        new MultilingualContentDTO(languageTag.getId(), languageCode, content,
                             priority.getAndIncrement()));
                 });
             });

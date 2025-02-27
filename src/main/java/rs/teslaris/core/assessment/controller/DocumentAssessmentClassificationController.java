@@ -76,6 +76,7 @@ public class DocumentAssessmentClassificationController {
     }
 
     @PostMapping("/imaginary-journal-publication")
+    @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
     public ImaginaryJournalPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
         @RequestBody
         ImaginaryJournalPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest) {

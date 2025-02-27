@@ -15,6 +15,7 @@ import rs.teslaris.core.assessment.service.impl.cruddelegate.EventAssessmentClas
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificationService;
+import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
@@ -64,6 +65,9 @@ public class EventAssessmentClassificationServiceImpl
         newAssessmentClassification.setCommission(
             commissionService.findOne(eventAssessmentClassificationDTO.getCommissionId()));
         setCommonFields(newAssessmentClassification, eventAssessmentClassificationDTO);
+        newAssessmentClassification.setClassificationReason(
+            AssessmentRulesConfigurationLoader.getRuleDescription("eventClassificationRules",
+                "manual"));
 
         var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());
         newAssessmentClassification.setEvent(event);
@@ -90,6 +94,9 @@ public class EventAssessmentClassificationServiceImpl
                         instanceClassification.setClassificationYear(
                             eventInstance.getDateFrom().getYear());
                         instanceClassification.setEvent(eventInstance);
+                        instanceClassification.setClassificationReason(
+                            AssessmentRulesConfigurationLoader.getRuleDescription(
+                                "eventClassificationRules", "manual"));
                         eventAssessmentClassificationJPAService.save(instanceClassification);
                     }
                 });
