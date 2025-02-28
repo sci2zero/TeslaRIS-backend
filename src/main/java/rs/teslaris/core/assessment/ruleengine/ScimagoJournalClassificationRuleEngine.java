@@ -73,7 +73,7 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
                 sjr.getTextualValue().equals("Q3"))) {
             reasoningProcess =
                 AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
-                    "M24PlusSJR");
+                    "M24PlusSJR", this.classificationYear, category);
             return assessmentClassificationService.readAssessmentClassificationByCode(
                 "journalM24Plus");
         }
@@ -89,7 +89,7 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
         if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q4")) {
             reasoningProcess =
                 AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
-                    "M24SJR");
+                    "M24SJR", this.classificationYear, category);
             return assessmentClassificationService.readAssessmentClassificationByCode("journalM24");
         }
 

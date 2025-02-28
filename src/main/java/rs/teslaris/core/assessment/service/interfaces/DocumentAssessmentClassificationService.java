@@ -36,5 +36,5 @@ public interface DocumentAssessmentClassificationService {
     ImaginaryJournalPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
         Integer journalId, Integer commissionId,
         Integer classificationYear, String researchArea,
-        Integer authorCount);
+        Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation);
 }

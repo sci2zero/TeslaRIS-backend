@@ -35,7 +35,8 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var requestPayload =
-            new ImaginaryJournalPublicationAssessmentRequestDTO(1, 5, 2021, "TECHNICAL", 3);
+            new ImaginaryJournalPublicationAssessmentRequestDTO(1, 5, 2021, "TECHNICAL", 3, true,
+                false, false);
         String requestBody = objectMapper.writeValueAsString(requestPayload);
         mockMvc.perform(
             MockMvcRequestBuilders.post(

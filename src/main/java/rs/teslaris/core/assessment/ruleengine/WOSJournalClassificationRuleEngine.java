@@ -130,7 +130,8 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
                     indicator.getTextualValue();
 
                 reasoningProcess = AssessmentRulesConfigurationLoader.getRuleDescription(
-                    "journalClassificationRules", ruleCode, rank);
+                    "journalClassificationRules", ruleCode, rank, this.classificationYear,
+                    category);
 
                 return assessmentClassificationService.readAssessmentClassificationByCode(
                     classificationCode);

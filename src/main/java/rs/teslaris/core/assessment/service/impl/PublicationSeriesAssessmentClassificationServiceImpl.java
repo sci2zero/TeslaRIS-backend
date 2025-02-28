@@ -363,7 +363,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         //  but was also too much of a hassle to put into configuration file. What should we do?
         journalClassification.setClassificationReason(
             AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
-                classification.getCode().equals("journalM24") ? "M24MNO" : "MNO"));
+                classification.getCode().equals("journalM24") ? "M24MNO" : "MNO", year, category));
 
         var existingClassification =
             publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(

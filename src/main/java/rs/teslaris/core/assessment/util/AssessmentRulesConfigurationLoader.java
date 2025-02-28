@@ -75,14 +75,21 @@ public class AssessmentRulesConfigurationLoader {
                                 .filter(item -> item instanceof MultilingualContentDTO)
                                 .map(item -> (MultilingualContentDTO) item)
                                 .filter(dto -> dto.getLanguageTag()
-                                    .equals(languageCode)) // Match language
+                                    .equals(languageCode))
                                 .map(MultilingualContentDTO::getContent)
-                                .findFirst() // Take the first match
-                                .orElse(""); // Default if not found
+                                .findFirst()
+                                .orElse("");
+                        } else if (param instanceof Integer) {
+                            return String.valueOf(param);
                         }
                         return param;
                     })
                     .toArray();
+
+                if (ruleGroupCode.equals("journalClassificationRules")) {
+                    content = assessmentRulesConfiguration.ruleDescriptions.get(ruleGroupCode)
+                        .get("generalAssessmentRulePrefix").get(languageCode) + " " + content;
+                }
 
                 mc.setContent(MessageFormat.format(content, processedParams));
                 mc.setPriority(priority.getAndAdd(1));

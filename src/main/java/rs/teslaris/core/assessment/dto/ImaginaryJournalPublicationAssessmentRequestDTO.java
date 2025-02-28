@@ -20,4 +20,10 @@ public class ImaginaryJournalPublicationAssessmentRequestDTO {
     private String researchAreaCode;
 
     private Integer authorCount;
+
+    private Boolean experimental;
+
+    private Boolean theoretical;
+
+    private Boolean simulation;
 }

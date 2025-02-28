@@ -58,7 +58,7 @@ public class MKSJournalClassificationRuleEngine extends JournalClassificationRul
         if (Objects.nonNull(mksCategory) && mksCategory.getTextualValue().equals("I kategorija")) {
             reasoningProcess =
                 AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
-                    "m23MKS");
+                    "m23MKS", this.classificationYear, category);
             return assessmentClassificationService.readAssessmentClassificationByCode("journalM23");
         }
 

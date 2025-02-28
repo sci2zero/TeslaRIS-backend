@@ -85,7 +85,10 @@ public class DocumentAssessmentClassificationController {
             imaginaryJournalPublicationAssessmentRequest.getCommissionId(),
             imaginaryJournalPublicationAssessmentRequest.getClassificationYear(),
             imaginaryJournalPublicationAssessmentRequest.getResearchAreaCode(),
-            imaginaryJournalPublicationAssessmentRequest.getAuthorCount());
+            imaginaryJournalPublicationAssessmentRequest.getAuthorCount(),
+            imaginaryJournalPublicationAssessmentRequest.getExperimental(),
+            imaginaryJournalPublicationAssessmentRequest.getTheoretical(),
+            imaginaryJournalPublicationAssessmentRequest.getSimulation());
     }
 
     @PostMapping("/{documentId}")

@@ -29,101 +29,105 @@
       }
     },
     "journalClassificationRules": {
+      "generalAssessmentRulePrefix": {
+        "sr": "Rad publikovan u časopisu dobija najpovoljniju kategoriju za godinu publikovanja iz perioda od tri godine (dve godine pre publikovanja i godine publikovanja) ako u tom periodu ima bar u jednoj godini dvogodišnji (IF2) ili petogodišnji (IF5) Impakt Faktor.",
+        "en": "A paper published in a journal receives the most favorable category for the year of publication from a three-year period (two years before publication and the year of publication) if, during that period, it has at least one year with either a two-year (IF2) or five-year (IF5) Impact Factor."
+      },
       "M21APlusIF2": {
-        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}).",
-        "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCR IF2 ({0})."
+        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M21APlusIF5": {
-        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}).",
-        "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCR IF5 ({0})."
+        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCR IF5 ({0}) in {1} for category {2}."
       },
       "M21APlusJCI": {
-        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}).",
-        "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCI ({0})."
+        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "M21AIF2": {
-        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}).",
-        "en": "The journal is ranked between 5% and 15% in its scientific field according to JCR IF2 ({0})."
+        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 5% and 15% in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M21AIF5": {
-        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}).",
-        "en": "The journal is ranked between 5% and 15% in its scientific field according to JCR IF5 ({0})."
+        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 5% and 15% in its scientific field according to JCR IF5 ({0}) in {1} for category {2}."
       },
       "M21AJCI": {
-        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}).",
-        "en": "The journal is ranked between 5% and 15% in its scientific field according to JCI ({0})."
+        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 5% and 15% in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "M21IF2": {
-        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}).",
-        "en": "The journal is ranked between 15% and 35% in its scientific field according to JCR IF2 ({0})."
+        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 15% and 35% in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M21IF5": {
-        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}).",
-        "en": "The journal is ranked between 15% and 35% in its scientific field according to IF5 ({0})."
+        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 15% and 35% in its scientific field according to IF5 ({0}) in {1} for category {2}."
       },
       "M21JCI": {
-        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}).",
-        "en": "The journal is ranked between 15% and 35% in its scientific field according to JCI ({0})."
+        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 15% and 35% in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "M22IF2": {
-        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}).",
-        "en": "The journal is ranked between 35% and 75% in its scientific field according to JCR IF2 ({0})."
+        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 35% and 75% in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M22IF5": {
-        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}).",
-        "en": "The journal is ranked between 35% and 75% in its scientific field according to JCR IF5 ({0})."
+        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 35% and 75% in its scientific field according to JCR IF5 ({0}) in {1} for category {2}."
       },
       "M22JCI": {
-        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}).",
-        "en": "The journal is ranked between 35% and 75% in its scientific field according to JCI ({0})."
+        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 35% and 75% in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "M22SJR": {
-        "sr": "Časopis je u oblasti društvenih i humanističkih nauka referisan na SJR-u u Q1.",
-        "en": "The journal is referenced in SJR Q1 in the field of social and humanities sciences."
+        "sr": "Časopis je u oblasti društvenih i humanističkih nauka referisan na SJR-u u Q1 u {0}. godini za oblast {1}.",
+        "en": "The journal is referenced in SJR Q1 in the field of social and humanities sciences in {0} for category {1}."
       },
       "M23IF2": {
-        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}).",
-        "en": "The journal is ranked between 75% and 100% in its scientific field according to JCR IF2 ({0})."
+        "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 75% and 100% in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M23IF5": {
-        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}).",
-        "en": "The journal is ranked between 75% and 100% in its scientific field according to JCR IF5 ({0})."
+        "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 75% and 100% in its scientific field according to JCR IF5 ({0}) in {1} for category {2}."
       },
       "M23JCI": {
-        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}).",
-        "en": "The journal is ranked between 75% and 100% in its scientific field according to JCI ({0})."
+        "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "en": "The journal is ranked between 75% and 100% in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "m23SJR": {
-        "sr": "Časopis je u oblasti društvenih i humanističkih nauka referisan na SJR-u u Q2.",
-        "en": "The journal is referenced in SJR Q2 in the field of social and humanities sciences."
+        "sr": "Časopis je u oblasti društvenih i humanističkih nauka referisan na SJR-u u Q2 u {0}. godini za oblast {1}.",
+        "en": "The journal is referenced in SJR Q2 in the field of social and humanities sciences in {0} for category {1}."
       },
       "m23MKS": {
-        "sr": "Časopis je u oblasti humanističkih nauka, sa liste MKS – I kategorija.",
-        "en": "The journal is in the field of humanities and is listed in MKS – Category I."
+        "sr": "Časopis je u oblasti humanističkih nauka, sa liste MKS – I kategorija u {0}. godini za oblast {1}.",
+        "en": "The journal is in the field of humanities and is listed in MKS – Category I in {0} for category {1}."
       },
       "m23e": {
-        "sr": "Časopis je iz oblasti društvenih i humanističkih nauka i nalazi se na listi ERIH Plus, na predlog matičnog naučnog odbora.",
-        "en": "The journal is in the field of social and humanities sciences and is listed in ERIH Plus, as proposed by the relevant scientific committee."
+        "sr": "Časopis je iz oblasti društvenih i humanističkih nauka i nalazi se na listi ERIH Plus, na predlog matičnog naučnog odbora u {0}. godini za oblast {1}.",
+        "en": "The journal is in the field of social and humanities sciences and is listed in ERIH Plus, as proposed by the relevant scientific committee in {0} for category {1}."
       },
       "M24PlusSJR": {
-        "sr": "Međunarodni časopis je referisan na SJR-u u {0}.",
-        "en": "The international journal is referenced in SJR in {0}."
+        "sr": "Međunarodni časopis je referisan na SJR-u u {0} u {1}. godini za oblast {2}.",
+        "en": "The international journal is referenced in SJR in {0} in {1} for category {2}."
       },
       "M24PlusJCI": {
-        "sr": "Časopis se nalazi na JCR-u ali bez IF2, IF5 i JCI.",
-        "en": "The journal is listed in JCR but without IF2, IF5, and JCI."
+        "sr": "Časopis se nalazi na JCR-u ali bez IF2, IF5 i JCI u {0}. godini za oblast {1}.",
+        "en": "The journal is listed in JCR but without IF2, IF5, and JCI in {0} for category {1}."
       },
       "M24MNO": {
-        "sr": "Časopis domaćeg izdavača se prema pokazateljima godišnjeg postupka analize naučnih časopisa domaćih izdavača u okviru odgovarajuće liste nalazi u prvih 10% (15% u oblasti društvenih i humanističkih nauka) časopisa koji nisu već rangirani u višim kategorijama ili je na JCR-u bez IF2, IF5 i JCI.",
-        "en": "A journal of a domestic publisher, according to the indicators of the annual analysis of domestic publishers' scientific journals, is among the top 10% (15% in the field of social and humanities sciences) of journals that are not already ranked in higher categories or is listed on JCR without IF2, IF5 and JCI."
+        "sr": "Časopis domaćeg izdavača se prema pokazateljima godišnjeg postupka analize naučnih časopisa domaćih izdavača u okviru odgovarajuće liste nalazi u prvih 10% (15% u oblasti društvenih i humanističkih nauka) časopisa koji nisu već rangirani u višim kategorijama ili je na JCR-u bez IF2, IF5 i JCI u {0}. godini za oblast {1}.",
+        "en": "A journal of a domestic publisher, according to the indicators of the annual analysis of domestic publishers' scientific journals, is among the top 10% (15% in the field of social and humanities sciences) of journals that are not already ranked in higher categories or is listed on JCR without IF2, IF5 and JCI in {0} for category {1}."
       },
       "M24SJR": {
-        "sr": "Časopis je referisan na SJR-u u Q4.",
-        "en": "The journal is referenced in SJR Q4."
+        "sr": "Časopis je referisan na SJR-u u Q4 u {0}. godini za oblast {1}.",
+        "en": "The journal is referenced in SJR Q4 in {0} for category {1}."
       },
       "MNO": {
-        "sr": "Odluka matičnog naučnog odbora (MNO).",
-        "en": "Decision of the relevant scientific committee (MNO)."
+        "sr": "Odluka matičnog naučnog odbora (MNO) u {0}. godini za oblast {1}.",
+        "en": "Decision of the relevant scientific committee (MNO) in {0} for category {1}."
       },
       "manual": {
         "sr": "Eksplicitno postavljeno od strane komisije na osnovu priloženih indikatora.",

@@ -30,11 +30,13 @@ import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.CommissionRelation;
 import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
+import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.EntityAssessmentClassification;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.ruleengine.AssessmentPointsRuleEngine;
 import rs.teslaris.core.assessment.ruleengine.AssessmentPointsScalingRuleEngine;
@@ -45,6 +47,7 @@ import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -85,6 +88,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final EventAssessmentClassificationRepository eventAssessmentClassificationRepository;
 
+    private final IndicatorRepository indicatorRepository;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -98,7 +103,8 @@ public class DocumentAssessmentClassificationServiceImpl
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
         DocumentRepository documentRepository, TaskManagerService taskManagerService,
         SearchService<DocumentPublicationIndex> searchService,
-        EventAssessmentClassificationRepository eventAssessmentClassificationRepository) {
+        EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
+        IndicatorRepository indicatorRepository) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -112,6 +118,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.taskManagerService = taskManagerService;
         this.searchService = searchService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
+        this.indicatorRepository = indicatorRepository;
     }
 
     @Override
@@ -375,9 +382,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     @Override
     public ImaginaryJournalPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
-        Integer journalId, Integer commissionId,
-        Integer classificationYear, String researchArea,
-        Integer authorCount) {
+        Integer journalId, Integer commissionId, Integer classificationYear, String researchArea,
+        Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation) {
         var commission = commissionService.findOne(commissionId);
 
         return performPublicationAssessmentForImaginaryDocument(
@@ -418,7 +424,7 @@ public class DocumentAssessmentClassificationServiceImpl
             },
             commission,
             List.of(classificationYear, classificationYear - 1, classificationYear - 2),
-            researchArea, authorCount);
+            researchArea, authorCount, isExperimental, isTheoretical, isExperimental);
     }
 
     private void performPublicationAssessment(
@@ -446,49 +452,88 @@ public class DocumentAssessmentClassificationServiceImpl
     private ImaginaryJournalPublicationAssessmentResponseDTO performPublicationAssessmentForImaginaryDocument(
         TriConsumer<Integer, List<Pair<AssessmentClassification, Set<MultiLingualContent>>>, Commission> yearHandler,
         Commission commission, List<Integer> yearsToConsider, String researchArea,
-        Integer authorCount) {
+        Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation) {
+
         var assessmentResponse = new ImaginaryJournalPublicationAssessmentResponseDTO();
         var classifications =
             new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
 
-        yearsToConsider.forEach(year -> {
-            yearHandler.accept(year, classifications, commission);
-        });
+        yearsToConsider.forEach(year -> yearHandler.accept(year, classifications, commission));
 
-        if (!classifications.isEmpty()) {
-            var bestClassification =
-                ClassificationPriorityMapping.getClassificationBasedOnCriteria(
-                    classifications, ResultCalculationMethod.BEST_VALUE);
-            bestClassification.ifPresent((classification) -> {
-                var mappedCode =
-                    ClassificationPriorityMapping.getImaginaryDocClassificationCodeBasedOnCode(
-                        classification.a.getCode());
-                assessmentResponse.setAssessmentCode(mappedCode);
-                assessmentResponse.setAssessmentReason(
-                    MultilingualContentConverter.getMultilingualContentDTO(classification.b));
-
-                var pointsRuleEngine = new AssessmentPointsRuleEngine();
-                var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
-                scalingRuleEngine.setCurrentEntityIndicators(new ArrayList<>());
-
-                var points = pointsRuleEngine.serbianPointsRulebook2025(researchArea, mappedCode);
-                assessmentResponse.setRawPoints(points);
-                assessmentResponse.setRawPointsReason(
-                    MultilingualContentConverter.getMultilingualContentDTO(
-                        AssessmentRulesConfigurationLoader.getRuleDescription("pointRules",
-                            "generalPointRule", mappedCode,
-                            (ResearchAreasConfigurationLoader.fetchAssessmentResearchAreaNameByCode(
-                                researchArea)), points)));
-                points =
-                    scalingRuleEngine.serbianScalingRulebook2025(authorCount, mappedCode, points);
-                assessmentResponse.setScaledPoints(points);
-                assessmentResponse.setScaledPointsReason(
-                    MultilingualContentConverter.getMultilingualContentDTO(
-                        scalingRuleEngine.getReasoningProcess()));
-            });
+        if (classifications.isEmpty()) {
+            return assessmentResponse;
         }
 
+        ClassificationPriorityMapping
+            .getClassificationBasedOnCriteria(classifications, ResultCalculationMethod.BEST_VALUE)
+            .ifPresent(classification -> processClassification(
+                classification, assessmentResponse, researchArea, authorCount,
+                isExperimental, isTheoretical, isSimulation
+            ));
+
         return assessmentResponse;
+    }
+
+    private void processClassification(
+        Pair<AssessmentClassification, Set<MultiLingualContent>> classification,
+        ImaginaryJournalPublicationAssessmentResponseDTO response,
+        String researchArea, Integer authorCount,
+        boolean isExperimental, boolean isTheoretical, boolean isSimulation) {
+
+        var mappedCode = ClassificationPriorityMapping.getImaginaryDocClassificationCodeBasedOnCode(
+            classification.a.getCode());
+
+        response.setAssessmentCode(mappedCode);
+        response.setAssessmentReason(
+            MultilingualContentConverter.getMultilingualContentDTO(classification.b));
+
+        var pointsRuleEngine = new AssessmentPointsRuleEngine();
+        var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
+
+        applyIndicatorScalingRule(scalingRuleEngine, isExperimental, isTheoretical, isSimulation);
+
+        var rawPoints = pointsRuleEngine.serbianPointsRulebook2025(researchArea, mappedCode);
+        response.setRawPoints(rawPoints);
+        response.setRawPointsReason(getPointsReason(mappedCode, researchArea, rawPoints));
+
+        var scaledPoints =
+            scalingRuleEngine.serbianScalingRulebook2025(authorCount, mappedCode, rawPoints);
+        response.setScaledPoints(scaledPoints);
+        response.setScaledPointsReason(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                scalingRuleEngine.getReasoningProcess()));
+    }
+
+    private void applyIndicatorScalingRule(AssessmentPointsScalingRuleEngine scalingRuleEngine,
+                                           boolean isExperimental, boolean isTheoretical,
+                                           boolean isSimulation) {
+
+        String indicatorCode = null;
+
+        if (isExperimental) {
+            indicatorCode = "isExperimental";
+        } else if (isTheoretical) {
+            indicatorCode = "isTheoretical";
+        } else if (isSimulation) {
+            indicatorCode = "isSimulation";
+        }
+
+        if (indicatorCode != null) {
+            var indicator = new DocumentIndicator();
+            indicator.setIndicator(indicatorRepository.findByCode(indicatorCode));
+            scalingRuleEngine.setCurrentEntityIndicators(List.of(indicator));
+        } else {
+            scalingRuleEngine.setCurrentEntityIndicators(new ArrayList<>());
+        }
+    }
+
+    private List<MultilingualContentDTO> getPointsReason(String mappedCode, String researchArea,
+                                                         double points) {
+        return MultilingualContentConverter.getMultilingualContentDTO(
+            AssessmentRulesConfigurationLoader.getRuleDescription(
+                "pointRules", "generalPointRule", mappedCode,
+                ResearchAreasConfigurationLoader.fetchAssessmentResearchAreaNameByCode(
+                    researchArea), points));
     }
 
     private List<Commission> findCommissionInHierarchy(Integer organisationUnitId) {

@@ -52,6 +52,7 @@ public class AssessmentPointsScalingRuleEngine {
             if (authorCount > 3) {
                 return points / (1 + 0.2 * (authorCount - 3));
             }
+            return points;
         }
         // Numerical simulations or primary data collection (up to 5 authors, otherwise scale)
         else if (isSimulation) {
@@ -61,6 +62,7 @@ public class AssessmentPointsScalingRuleEngine {
             if (authorCount > 5) {
                 return points / (1 + 0.2 * (authorCount - 5));
             }
+            return points;
         }
         // Experimental works or M80 category (up to 7 authors, otherwise scale)
         else if (isExperimental || isM80) {
@@ -70,6 +72,7 @@ public class AssessmentPointsScalingRuleEngine {
             if (authorCount > 7) {
                 return points / (1 + 0.2 * (authorCount - 7));
             }
+            return points;
         }
         // M21a+ or M90 category (up to 10 authors, otherwise scale)
         else if (isM21aPlus || isM90) {

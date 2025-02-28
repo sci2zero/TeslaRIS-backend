@@ -23,6 +23,12 @@ public interface PublicationSeriesIndicatorRepository extends
 
     @Query("SELECT psi FROM PublicationSeriesIndicator psi " +
         "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
+        "psi.indicator.code = :code")
+    List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndCode(
+        Integer publicationSeriesId, String code);
+
+    @Query("SELECT psi FROM PublicationSeriesIndicator psi " +
+        "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
         "psi.indicator.accessLevel <= :accessLevel")
     List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndIndicatorAccessLevel(
         Integer publicationSeriesId,
