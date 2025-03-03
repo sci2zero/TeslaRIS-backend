@@ -31,5 +31,6 @@ public interface PublicationSeriesIndicatorService {
     void scheduleIF5RankComputation(LocalDateTime timeToRun, List<Integer> classificationYears,
                                     Integer userId);
 
-    List<IFTableContentDTO> getIFTableContent(Integer publicationSeriesId);
+    List<IFTableContentDTO> getIFTableContent(Integer publicationSeriesId, Integer fromYear,
+                                              Integer toYear);
 }

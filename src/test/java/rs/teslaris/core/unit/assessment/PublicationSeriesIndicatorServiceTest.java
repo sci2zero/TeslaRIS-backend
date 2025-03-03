@@ -90,13 +90,14 @@ public class PublicationSeriesIndicatorServiceTest {
         var publicationSeriesIndicator4 =
             createPublicationSeriesIndicator("METALLURGY", indicator4, 2022, null, "5/50");
 
-        when(publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndCode(
-            eq(publicationSeriesId), anyString()))
+        when(publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndCodeInPeriod(
+            eq(publicationSeriesId), anyString(), eq(2020), eq(2023)))
             .thenReturn(List.of(publicationSeriesIndicator1, publicationSeriesIndicator2,
                 publicationSeriesIndicator3, publicationSeriesIndicator4));
 
         // When
-        var result = publicationSeriesIndicatorService.getIFTableContent(publicationSeriesId);
+        var result =
+            publicationSeriesIndicatorService.getIFTableContent(publicationSeriesId, 2020, 2023);
 
         // Then
         assertNotNull(result);

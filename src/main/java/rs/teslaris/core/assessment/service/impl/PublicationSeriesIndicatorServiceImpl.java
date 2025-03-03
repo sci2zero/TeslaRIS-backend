@@ -218,14 +218,15 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
-    public ArrayList<IFTableContentDTO> getIFTableContent(Integer publicationSeriesId) {
+    public ArrayList<IFTableContentDTO> getIFTableContent(Integer publicationSeriesId,
+                                                          Integer fromYear, Integer toYear) {
         var contentIndicators = IndicatorMappingConfigurationLoader.getIFTableContent();
         var indicatorValues = new ArrayList<PublicationSeriesIndicator>();
 
         contentIndicators.forEach(indicatorCode -> {
             indicatorValues.addAll(
-                publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndCode(
-                    publicationSeriesId, indicatorCode));
+                publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndCodeInPeriod(
+                    publicationSeriesId, indicatorCode, fromYear, toYear));
         });
 
         var categories =

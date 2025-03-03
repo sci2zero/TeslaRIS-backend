@@ -29,7 +29,7 @@ public class PublicationSeriesIndicatorControllerTest extends BaseTest {
 
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/publication-series-indicator/if-table/{publicationSeriesId}",
+                    "http://localhost:8081/api/assessment/publication-series-indicator/if-table/{publicationSeriesId}?fromYear=2010",
                     1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)

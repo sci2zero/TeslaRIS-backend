@@ -23,9 +23,11 @@ public interface PublicationSeriesIndicatorRepository extends
 
     @Query("SELECT psi FROM PublicationSeriesIndicator psi " +
         "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
+        "extract(year from psi.fromDate) >= :fromYear AND " +
+        "extract(year from psi.fromDate) <= :toYear AND " +
         "psi.indicator.code = :code")
-    List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndCode(
-        Integer publicationSeriesId, String code);
+    List<PublicationSeriesIndicator> findIndicatorsForPublicationSeriesAndCodeInPeriod(
+        Integer publicationSeriesId, String code, Integer fromYear, Integer toYear);
 
     @Query("SELECT psi FROM PublicationSeriesIndicator psi " +
         "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
