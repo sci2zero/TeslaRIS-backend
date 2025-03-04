@@ -101,7 +101,7 @@ public class PublicationSeriesIndicatorServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(2, result.size());
+        assertEquals(2, result.getIfTableContent().size());
     }
 
     private PublicationSeriesIndicator createPublicationSeriesIndicator(String category,

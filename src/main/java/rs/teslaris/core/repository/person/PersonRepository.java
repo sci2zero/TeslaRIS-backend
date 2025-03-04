@@ -63,6 +63,8 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Person> findAllModifiedInLast24Hours(Pageable pageable);
 
-    @Query("SELECT i.organisationUnit.id FROM Involvement i WHERE i.personInvolved.id = :personId AND (i.involvementType = 4 OR i.involvementType = 5)")
+    @Query("SELECT i.organisationUnit.id FROM Involvement i WHERE " +
+        "i.personInvolved.id = :personId AND " +
+        "(i.involvementType = 4 OR i.involvementType = 5)")
     List<Integer> findInstitutionIdsForPerson(Integer personId);
 }

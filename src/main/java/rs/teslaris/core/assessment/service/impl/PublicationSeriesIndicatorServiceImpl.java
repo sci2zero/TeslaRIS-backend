@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.core.assessment.dto.IFTableContentDTO;
+import rs.teslaris.core.assessment.dto.IFTableResponseDTO;
 import rs.teslaris.core.assessment.dto.PublicationSeriesIndicatorResponseDTO;
 import rs.teslaris.core.assessment.model.EntityIndicator;
 import rs.teslaris.core.assessment.model.EntityIndicatorSource;
@@ -218,70 +218,65 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
-    public ArrayList<IFTableContentDTO> getIFTableContent(Integer publicationSeriesId,
-                                                          Integer fromYear, Integer toYear) {
+    public IFTableResponseDTO getIFTableContent(Integer publicationSeriesId,
+                                                Integer fromYear, Integer toYear) {
         var contentIndicators = IndicatorMappingConfigurationLoader.getIFTableContent();
-        var indicatorValues = new ArrayList<PublicationSeriesIndicator>();
+        var indicatorValues = contentIndicators.stream()
+            .flatMap(indicatorCode -> publicationSeriesIndicatorRepository
+                .findIndicatorsForPublicationSeriesAndCodeInPeriod(
+                    publicationSeriesId, indicatorCode, fromYear, toYear)
+                .stream())
+            .toList();
 
-        contentIndicators.forEach(indicatorCode -> {
-            indicatorValues.addAll(
-                publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeriesAndCodeInPeriod(
-                    publicationSeriesId, indicatorCode, fromYear, toYear));
-        });
+        var ifResponse = new IFTableResponseDTO();
+        ifResponse.setIf2Values(extractIFValues(indicatorValues, contentIndicators.getFirst()));
+        ifResponse.setIf5Values(extractIFValues(indicatorValues, contentIndicators.get(2)));
 
-        var categories =
-            indicatorValues.stream().map(PublicationSeriesIndicator::getCategoryIdentifier)
-                .filter(Objects::nonNull).collect(
-                    Collectors.toSet());
+        var groupedByCategory = indicatorValues.stream()
+            .filter(ind -> ind.getCategoryIdentifier() != null)
+            .collect(Collectors.groupingBy(PublicationSeriesIndicator::getCategoryIdentifier));
 
-        var tableContent = new ArrayList<IFTableContentDTO>();
-        categories.forEach(category -> {
-            var categoryContent = new IFTableContentDTO();
-            categoryContent.setCategory(category);
+        var tableContent = groupedByCategory.entrySet().stream()
+            .map(
+                entry -> createCategoryContent(entry.getKey(), entry.getValue(), contentIndicators))
+            .toList();
 
-            var if2values = indicatorValues.stream()
-                .filter(indicator ->
-                    indicator.getIndicator().getCode().equals(contentIndicators.getFirst()))
-                .sorted(Comparator.comparingInt(indicator -> indicator.getFromDate().getYear()))
-                .map(indicator -> new Pair<>(indicator.getFromDate().getYear(),
-                    String.valueOf(indicator.getNumericValue())))
-                .collect(Collectors.toList());
+        ifResponse.setIfTableContent(tableContent);
+        return ifResponse;
+    }
 
-            var if2Ranks = indicatorValues.stream()
-                .filter(indicator ->
-                    indicator.getIndicator().getCode().equals(contentIndicators.get(1)) &&
-                        indicator.getCategoryIdentifier().equals(category))
-                .sorted(Comparator.comparingInt(indicator -> indicator.getFromDate().getYear()))
-                .map(indicator -> new Pair<>(indicator.getFromDate().getYear(),
-                    indicator.getTextualValue()))
-                .collect(Collectors.toList());
+    private List<Pair<Integer, String>> extractIFValues(List<PublicationSeriesIndicator> indicators,
+                                                        String indicatorCode) {
+        return indicators.stream()
+            .filter(ind -> ind.getIndicator().getCode().equals(indicatorCode))
+            .sorted(Comparator.comparingInt(ind -> ind.getFromDate().getYear()))
+            .map(ind -> new Pair<>(ind.getFromDate().getYear(),
+                String.valueOf(ind.getNumericValue())))
+            .toList();
+    }
 
-            var if5Values = indicatorValues.stream()
-                .filter(indicator ->
-                    indicator.getIndicator().getCode().equals(contentIndicators.get(2)))
-                .sorted(Comparator.comparingInt(indicator -> indicator.getFromDate().getYear()))
-                .map(indicator -> new Pair<>(indicator.getFromDate().getYear(),
-                    String.valueOf(indicator.getNumericValue())))
-                .collect(Collectors.toList());
+    private IFTableContentDTO createCategoryContent(String category,
+                                                    List<PublicationSeriesIndicator> indicators,
+                                                    List<String> contentIndicators) {
+        var categoryContent = new IFTableContentDTO();
+        categoryContent.setCategory(category);
 
-            var if5Ranks = indicatorValues.stream()
-                .filter(indicator ->
-                    indicator.getIndicator().getCode().equals(contentIndicators.getLast()) &&
-                        indicator.getCategoryIdentifier().equals(category))
-                .sorted(Comparator.comparingInt(indicator -> indicator.getFromDate().getYear()))
-                .map(indicator -> new Pair<>(indicator.getFromDate().getYear(),
-                    indicator.getTextualValue()))
-                .collect(Collectors.toList());
+        categoryContent.setIf2Ranks(
+            extractCategoryRanks(indicators, contentIndicators.get(1), category));
+        categoryContent.setIf5Ranks(
+            extractCategoryRanks(indicators, contentIndicators.getLast(), category));
 
-            categoryContent.setIf2Ranks(if2Ranks);
-            categoryContent.setIf5Ranks(if5Ranks);
-            categoryContent.setIf2Values(if2values);
-            categoryContent.setIf5Values(if5Values);
+        return categoryContent;
+    }
 
-            tableContent.add(categoryContent);
-        });
-
-        return tableContent;
+    private List<Pair<Integer, String>> extractCategoryRanks(
+        List<PublicationSeriesIndicator> indicators, String indicatorCode, String category) {
+        return indicators.stream()
+            .filter(ind -> ind.getIndicator().getCode().equals(indicatorCode) &&
+                category.equals(ind.getCategoryIdentifier()))
+            .sorted(Comparator.comparingInt(ind -> ind.getFromDate().getYear()))
+            .map(ind -> new Pair<>(ind.getFromDate().getYear(), ind.getTextualValue()))
+            .toList();
     }
 
     @Override

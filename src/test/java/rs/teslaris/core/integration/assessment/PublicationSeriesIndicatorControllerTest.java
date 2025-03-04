@@ -24,12 +24,12 @@ public class PublicationSeriesIndicatorControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testScheduleIF5RankCompute() throws Exception {
+    public void testFetchIFTableContent() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/assessment/publication-series-indicator/if-table/{publicationSeriesId}?fromYear=2010",
+                    "http://localhost:8081/api/assessment/publication-series-indicator/if-table/{publicationSeriesId}?fromYear=2010&toYear=2013",
                     1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)

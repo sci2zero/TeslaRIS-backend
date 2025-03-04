@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.person;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Service;
@@ -42,4 +43,6 @@ public interface PersonContributionService extends JPAService<PersonContribution
 
     PersonDocumentContribution findContributionForResearcherAndDocument(Integer personId,
                                                                         Integer documentId);
+
+    List<Integer> getIdsOfNonRelatedDocuments(Integer organisationUnitId, Integer personId);
 }

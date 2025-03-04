@@ -95,6 +95,28 @@ public class DocumentPublicationController {
         return documentPublicationService.findResearcherPublications(personId, pageable);
     }
 
+    @GetMapping("/non-affiliated/{organisationUnitId}")
+    public Page<DocumentPublicationIndex> findNonAffiliatedPublications(
+        @PathVariable Integer organisationUnitId,
+        @RequestHeader("Authorization") String bearerToken,
+        Pageable pageable) {
+        return documentPublicationService.findNonAffiliatedDocuments(organisationUnitId,
+            personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken)),
+            pageable);
+    }
+
+    @PatchMapping("/add-affiliation/{organisationUnitId}")
+    public void addInstitutionToDocuments(
+        @RequestParam("documentIds")
+        @NotNull(message = "You have to provide a valid search input.") List<Integer> documentIds,
+        @RequestParam("deleteOthers") Boolean deleteOthers,
+        @PathVariable Integer organisationUnitId,
+        @RequestHeader("Authorization") String bearerToken) {
+        documentPublicationService.massAssignContributionInstitution(organisationUnitId,
+            personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken)),
+            documentIds, deleteOthers);
+    }
+
     @GetMapping("/for-publisher/{publisherId}")
     public Page<DocumentPublicationIndex> findPublicationsForPublisher(
         @PathVariable Integer publisherId,

@@ -50,6 +50,13 @@ public interface DocumentPublicationService extends JPAService<Document> {
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
                                                           String scopusId);
 
+    Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
+                                                              Integer personId,
+                                                              Pageable pageable);
+
+    void massAssignContributionInstitution(Integer organisationUnitId, Integer personId,
+                                           List<Integer> documentIds, Boolean deleteOthers);
+
     void deleteIndexes();
 
     void reorderDocumentContributions(Integer documentId, Integer contributionId,

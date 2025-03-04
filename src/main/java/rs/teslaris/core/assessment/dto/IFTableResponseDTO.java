@@ -11,11 +11,11 @@ import rs.teslaris.core.util.Pair;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class IFTableContentDTO {
+public class IFTableResponseDTO {
 
-    private String category;
+    private List<Pair<Integer, String>> if2Values;
 
-    private List<Pair<Integer, String>> if2Ranks;
+    private List<Pair<Integer, String>> if5Values;
 
-    private List<Pair<Integer, String>> if5Ranks;
+    private List<IFTableContentDTO> ifTableContent;
 }

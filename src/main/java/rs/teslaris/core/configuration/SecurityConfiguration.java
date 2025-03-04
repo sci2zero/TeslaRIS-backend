@@ -209,6 +209,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/statistics/document/{documentId}")
                 .permitAll()
 
+                // BRANDING INFORMATION
+                .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );
