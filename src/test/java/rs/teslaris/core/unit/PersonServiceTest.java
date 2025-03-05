@@ -907,6 +907,76 @@ public class PersonServiceTest {
         verifyNoInteractions(fileService);
     }
 
+    @Test
+    void shouldReturnTrueWhenIdentifierExistsInOrcid() {
+        // Given
+        String identifier = "0000-0001-2345-6789";
+        Integer personId = 1;
+
+        when(personRepository.existsByOrcid(identifier, personId)).thenReturn(true);
+
+        // When
+        boolean result = personService.isIdentifierInUse(identifier, personId);
+
+        // Then
+        assertTrue(result);
+        verify(personRepository).existsByOrcid(identifier, personId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenIdentifierExistsInScopus() {
+        // Given
+        String identifier = "123456789";
+        Integer personId = 1;
+
+        when(personRepository.existsByScopusAuthorId(identifier, personId)).thenReturn(true);
+
+        // When
+        boolean result = personService.isIdentifierInUse(identifier, personId);
+
+        // Then
+        assertTrue(result);
+        verify(personRepository).existsByScopusAuthorId(identifier, personId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenIdentifierExistsInOtherRepositories() {
+        // Given
+        String identifier = "ecris-987";
+        Integer personId = 2;
+
+        when(personRepository.existsByeCrisId(identifier, personId)).thenReturn(true);
+
+        // When
+        boolean result = personService.isIdentifierInUse(identifier, personId);
+
+        // Then
+        assertTrue(result);
+        verify(personRepository).existsByeCrisId(identifier, personId);
+    }
+
+    @Test
+    void shouldReturnFalseWhenIdentifierDoesNotExistAnywhere() {
+        // Given
+        String identifier = "9999-0000";
+        Integer personId = 3;
+
+        when(personRepository.existsByOrcid(identifier, personId)).thenReturn(false);
+        when(personRepository.existsByScopusAuthorId(identifier, personId)).thenReturn(false);
+        when(personRepository.existsByeCrisId(identifier, personId)).thenReturn(false);
+        when(personRepository.existsByeNaukaId(identifier, personId)).thenReturn(false);
+
+        // When
+        boolean result = personService.isIdentifierInUse(identifier, personId);
+
+        // Then
+        assertFalse(result);
+        verify(personRepository).existsByOrcid(identifier, personId);
+        verify(personRepository).existsByScopusAuthorId(identifier, personId);
+        verify(personRepository).existsByeCrisId(identifier, personId);
+        verify(personRepository).existsByeNaukaId(identifier, personId);
+    }
+
     private MultipartFile createMockMultipartFile() {
         return new MockMultipartFile("file", "test.txt", "text/plain",
             "Test file content".getBytes());

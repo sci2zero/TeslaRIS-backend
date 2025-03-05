@@ -95,4 +95,6 @@ public interface PersonService extends JPAService<Person> {
         throws IOException;
 
     void removePersonProfileImage(Integer personId);
+
+    boolean isIdentifierInUse(String identifier, Integer personId);
 }

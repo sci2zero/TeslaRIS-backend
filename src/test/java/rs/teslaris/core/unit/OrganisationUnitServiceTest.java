@@ -557,7 +557,7 @@ public class OrganisationUnitServiceTest {
         // When
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
-                SearchRequestType.SIMPLE);
+                SearchRequestType.SIMPLE, null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

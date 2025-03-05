@@ -23,6 +23,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
+import rs.teslaris.core.dto.document.DocumentAffiliationRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -107,14 +108,12 @@ public class DocumentPublicationController {
 
     @PatchMapping("/add-affiliation/{organisationUnitId}")
     public void addInstitutionToDocuments(
-        @RequestParam("documentIds")
-        @NotNull(message = "You have to provide a valid search input.") List<Integer> documentIds,
-        @RequestParam("deleteOthers") Boolean deleteOthers,
+        @RequestBody @Valid DocumentAffiliationRequestDTO documentAffiliationRequest,
         @PathVariable Integer organisationUnitId,
         @RequestHeader("Authorization") String bearerToken) {
         documentPublicationService.massAssignContributionInstitution(organisationUnitId,
             personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken)),
-            documentIds, deleteOthers);
+            documentAffiliationRequest.documentIds(), documentAffiliationRequest.deleteOthers());
     }
 
     @GetMapping("/for-publisher/{publisherId}")

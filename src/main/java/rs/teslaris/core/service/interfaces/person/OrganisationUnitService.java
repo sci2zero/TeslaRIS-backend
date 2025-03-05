@@ -37,7 +37,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable);
 
     Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens, Pageable pageable,
-                                                        SearchRequestType searchType);
+                                                        SearchRequestType searchType, Integer personId);
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 

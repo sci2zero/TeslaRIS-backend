@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
@@ -39,6 +40,7 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -84,6 +86,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final IndexBulkUpdateService indexBulkUpdateService;
 
     private final UserAccountIndexRepository userAccountIndexRepository;
+
+    private final InvolvementRepository involvementRepository;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -153,9 +157,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     public Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens,
                                                                Pageable pageable,
-                                                               SearchRequestType type) {
+                                                               SearchRequestType type,
+                                                               Integer personId) {
         if (type.equals(SearchRequestType.SIMPLE)) {
-            return searchService.runQuery(buildSimpleSearchQuery(tokens),
+            return searchService.runQuery(buildSimpleSearchQuery(tokens, personId),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -165,10 +170,24 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             OrganisationUnitIndex.class, "organisation_unit");
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer personId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+
+            if (Objects.nonNull(personId)) {
+                var allowedInstitutions =
+                    involvementRepository.findActiveEmploymentInstitutionIds(personId);
+
+                b.must(sb -> sb.terms(t -> t
+                    .field("databaseId")
+                    .terms(v -> v.value(allowedInstitutions.stream()
+                        .map(String::valueOf)
+                        .map(FieldValue::of)
+                        .toList()))
+                ));
+            }
+
             tokens.forEach(token -> {
 
                 if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
