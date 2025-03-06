@@ -82,4 +82,11 @@ public class MonographController {
         monographService.forceDeleteMonograph(documentId);
         deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
     }
+
+    @GetMapping("/identifier-usage/{documentId}/{identifier}")
+    @PublicationEditCheck
+    public boolean checkIdentifierUsage(@PathVariable Integer documentId,
+                                        @PathVariable String identifier) {
+        return monographService.isIdentifierInUse(identifier, documentId);
+    }
 }

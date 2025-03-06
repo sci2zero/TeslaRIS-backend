@@ -52,4 +52,6 @@ public interface JournalService {
     void reindexJournals();
 
     void indexJournal(Journal journal, JournalIndex index);
+
+    boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
 }

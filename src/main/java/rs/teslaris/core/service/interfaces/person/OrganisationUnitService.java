@@ -37,7 +37,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     Page<OrganisationUnitDTO> findOrganisationUnits(Pageable pageable);
 
     Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens, Pageable pageable,
-                                                        SearchRequestType searchType, Integer personId);
+                                                        SearchRequestType searchType,
+                                                        Integer personId);
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
@@ -84,4 +85,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     void reindexOrganisationUnits();
 
     List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId);
+
+    boolean isIdentifierInUse(String identifier, Integer organisationUnitId);
 }

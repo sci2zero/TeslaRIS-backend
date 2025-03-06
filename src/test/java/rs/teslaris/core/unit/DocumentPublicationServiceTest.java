@@ -1,11 +1,13 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -534,5 +536,84 @@ public class DocumentPublicationServiceTest {
             personId);
         verify(documentPublicationIndexRepository,
             times(1)).findDocumentPublicationIndexByDatabaseIdIn(List.of(), pageable);
+    }
+
+    @Test
+    void shouldReturnFalseWhenNeitherDoiNorScopusIdExists() {
+        // given
+        var identifier = "10.1234/example-doi";
+        var documentPublicationId = 1;
+        when(documentRepository.existsByDoi(identifier, documentPublicationId)).thenReturn(false);
+        when(documentRepository.existsByScopusId(identifier, documentPublicationId)).thenReturn(
+            false);
+
+        // when
+        var result =
+            documentPublicationService.isIdentifierInUse(identifier, documentPublicationId);
+
+        // then
+        assertFalse(result);
+        verify(documentRepository).existsByDoi(identifier, documentPublicationId);
+        verify(documentRepository).existsByScopusId(identifier, documentPublicationId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenDoiExists() {
+        // given
+        var identifier = "10.1234/example-doi";
+        var documentPublicationId = 1;
+        when(documentRepository.existsByDoi(identifier, documentPublicationId)).thenReturn(true);
+        when(documentRepository.existsByScopusId(identifier, documentPublicationId)).thenReturn(
+            false);
+
+        // when
+        var result =
+            documentPublicationService.isIdentifierInUse(identifier, documentPublicationId);
+
+        // then
+        assertTrue(result);
+        verify(documentRepository, atMostOnce()).existsByDoi(identifier, documentPublicationId);
+        verify(documentRepository, atMostOnce()).existsByScopusId(identifier,
+            documentPublicationId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenScopusIdExists() {
+        // given
+        var identifier = "SCOPUS123456";
+        var documentPublicationId = 1;
+        when(documentRepository.existsByDoi(identifier, documentPublicationId)).thenReturn(false);
+        when(documentRepository.existsByScopusId(identifier, documentPublicationId)).thenReturn(
+            true);
+
+        // when
+        var result =
+            documentPublicationService.isIdentifierInUse(identifier, documentPublicationId);
+
+        // then
+        assertTrue(result);
+        verify(documentRepository, atMostOnce()).existsByDoi(identifier, documentPublicationId);
+        verify(documentRepository, atMostOnce()).existsByScopusId(identifier,
+            documentPublicationId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenBothDoiAndScopusIdExist() {
+        // given
+        var identifier = "10.1234/example-doi";
+        var documentPublicationId = 1;
+        when(documentRepository.existsByDoi(identifier, documentPublicationId)).thenReturn(true);
+        when(documentRepository.existsByScopusId(identifier, documentPublicationId)).thenReturn(
+            true);
+
+        // when
+        var result =
+            documentPublicationService.isIdentifierInUse(identifier, documentPublicationId);
+
+        // then
+        assertTrue(result);
+        verify(documentRepository, atMostOnce()).existsByDoi(identifier, documentPublicationId);
+        verify(documentRepository, atMostOnce()).existsByScopusId(identifier,
+            documentPublicationId);
     }
 }

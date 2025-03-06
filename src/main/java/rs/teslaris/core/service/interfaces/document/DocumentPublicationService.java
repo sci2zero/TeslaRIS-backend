@@ -64,4 +64,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                       Integer newContributionOrderNumber);
 
     void unbindResearcherFromContribution(Integer personId, Integer documentId);
+
+    boolean isIdentifierInUse(String identifier, Integer documentPublicationId);
 }

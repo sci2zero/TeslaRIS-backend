@@ -75,7 +75,7 @@ public class AssessmentRulesConfigurationLoader {
                                 .filter(item -> item instanceof MultilingualContentDTO)
                                 .map(item -> (MultilingualContentDTO) item)
                                 .filter(dto -> dto.getLanguageTag()
-                                    .equals(languageCode))
+                                    .equalsIgnoreCase(languageCode))
                                 .map(MultilingualContentDTO::getContent)
                                 .findFirst()
                                 .orElse("");

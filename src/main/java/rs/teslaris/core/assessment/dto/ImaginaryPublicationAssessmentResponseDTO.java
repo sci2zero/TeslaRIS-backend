@@ -11,7 +11,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ImaginaryJournalPublicationAssessmentResponseDTO {
+public class ImaginaryPublicationAssessmentResponseDTO {
 
     private String assessmentCode;
 

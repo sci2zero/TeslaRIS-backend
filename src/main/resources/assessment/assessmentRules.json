@@ -136,8 +136,8 @@
     },
     "eventClassificationRules": {
       "manual": {
-        "sr": "Eksplicitno postavljeno od strane komisije na osnovu priloženih indikatora.",
-        "en": "Explicitly assigned by the committee based on the submitted indicators."
+        "sr": "Klasifikacija ''{0}'' je eksplicitno postavljena od strane komisije na osnovu priloženih indikatora.",
+        "en": "Classification ''{0}'' is explicitly assigned by the committee based on the submitted indicators."
       }
     }
   }

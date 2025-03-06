@@ -16,6 +16,7 @@ import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationSe
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificationService;
 import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
@@ -65,9 +66,13 @@ public class EventAssessmentClassificationServiceImpl
         newAssessmentClassification.setCommission(
             commissionService.findOne(eventAssessmentClassificationDTO.getCommissionId()));
         setCommonFields(newAssessmentClassification, eventAssessmentClassificationDTO);
+
+        var assessmentClassification = assessmentClassificationService.findOne(
+            eventAssessmentClassificationDTO.getAssessmentClassificationId());
         newAssessmentClassification.setClassificationReason(
             AssessmentRulesConfigurationLoader.getRuleDescription("eventClassificationRules",
-                "manual"));
+                "manual", MultilingualContentConverter.getMultilingualContentDTO(
+                    assessmentClassification.getTitle())));
 
         var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());
         newAssessmentClassification.setEvent(event);
@@ -96,7 +101,9 @@ public class EventAssessmentClassificationServiceImpl
                         instanceClassification.setEvent(eventInstance);
                         instanceClassification.setClassificationReason(
                             AssessmentRulesConfigurationLoader.getRuleDescription(
-                                "eventClassificationRules", "manual"));
+                                "eventClassificationRules", "manual",
+                                MultilingualContentConverter.getMultilingualContentDTO(
+                                    assessmentClassification.getTitle())));
                         eventAssessmentClassificationJPAService.save(instanceClassification);
                     }
                 });

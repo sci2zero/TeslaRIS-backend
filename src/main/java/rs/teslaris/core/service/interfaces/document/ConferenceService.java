@@ -46,4 +46,6 @@ public interface ConferenceService {
                                         Integer newContributionOrderNumber);
 
     ConferenceDTO readConferenceByOldId(Integer oldId);
+
+    boolean isIdentifierInUse(String identifier, Integer conferenceId);
 }

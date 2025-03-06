@@ -411,6 +411,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
     }
 
+    @Override
+    public boolean isIdentifierInUse(String identifier, Integer organisationUnitId) {
+        return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId);
+    }
+
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                        OrganisationUnitIndex index) {
         index.setDatabaseId(organisationUnit.getId());

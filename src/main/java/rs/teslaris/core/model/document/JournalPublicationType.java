@@ -1,6 +1,6 @@
 package rs.teslaris.core.model.document;
 
-public enum JournalPublicationType {
+public enum JournalPublicationType implements PublicationType {
     REVIEW_ARTICLE,
     RESEARCH_ARTICLE,
     PREFACE,
@@ -8,5 +8,5 @@ public enum JournalPublicationType {
     CORRECTION,
     LEXICOGRAPHIC_UNIT,
     POLEMICS,
-    SCIENTIFIC_CRITIC,
+    SCIENTIFIC_CRITIC;
 }

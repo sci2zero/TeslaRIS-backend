@@ -154,4 +154,11 @@ public class OrganisationUnitController {
     public boolean doesAdminExistForOrganisationUnit(@PathVariable Integer organisationUnitId) {
         return organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
     }
+
+    @GetMapping("/identifier-usage/{organisationUnitId}/{identifier}")
+    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    public boolean checkIdentifierUsage(@PathVariable Integer organisationUnitId,
+                                        @PathVariable String identifier) {
+        return organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
+    }
 }

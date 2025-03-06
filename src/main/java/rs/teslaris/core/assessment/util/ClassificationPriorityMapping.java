@@ -21,6 +21,7 @@ import rs.teslaris.core.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.util.Pair;
@@ -107,8 +108,27 @@ public class ClassificationPriorityMapping {
         return Optional.of(documentCode);
     }
 
-    public static String getImaginaryDocClassificationCodeBasedOnCode(String classificationCode) {
-        return assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
+    public static String getImaginaryDocClassificationCodeBasedOnCode(
+        String classificationCode, PublicationType publicationType) {
+
+        var documentCode =
+            assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
+
+        if (publicationType instanceof JournalPublicationType) {
+            if (documentCode.equals("M24") ||
+                assessmentConfig.classificationPriorities.get(classificationCode) <
+                    assessmentConfig.classificationPriorities.get("journalM24")) {
+                return getMappedCode(documentCode, (JournalPublicationType) publicationType).orElse(
+                    null);
+            }
+        } else if (publicationType instanceof ProceedingsPublicationType) {
+            if (documentCode.equals("M30") || documentCode.equals("M60")) {
+                return getMappedCode(documentCode,
+                    (ProceedingsPublicationType) publicationType).orElse(null);
+            }
+        }
+
+        return documentCode;
     }
 
     private static Optional<String> getMappedCode(String baseCode,
@@ -129,7 +149,8 @@ public class ClassificationPriorityMapping {
         );
 
         return Optional.ofNullable(
-            baseCode.equals("M30") ? mappingM30.get(type) : mappingM60.get(type)
+            baseCode.equals("M30") ? mappingM30.getOrDefault(type, null) :
+                mappingM60.getOrDefault(type, null)
         );
     }
 

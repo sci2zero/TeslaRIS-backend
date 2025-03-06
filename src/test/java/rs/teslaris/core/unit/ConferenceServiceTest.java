@@ -1,8 +1,10 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -384,5 +386,35 @@ public class ConferenceServiceTest {
 
         assertEquals("Conference with old ID " + oldId + " does not exist.",
             exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnFalseWhenConfIdDoesNotExist() {
+        // given
+        var identifier = "123456";
+        var organisationUnitId = 1;
+        when(eventRepository.existsByConfId(identifier, organisationUnitId)).thenReturn(false);
+
+        // when
+        var result = conferenceService.isIdentifierInUse(identifier, organisationUnitId);
+
+        // then
+        assertFalse(result);
+        verify(eventRepository).existsByConfId(identifier, organisationUnitId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenConfIdExists() {
+        // given
+        var identifier = "123456";
+        var organisationUnitId = 1;
+        when(eventRepository.existsByConfId(identifier, organisationUnitId)).thenReturn(true);
+
+        // when
+        var result = conferenceService.isIdentifierInUse(identifier, organisationUnitId);
+
+        // then
+        assertTrue(result);
+        verify(eventRepository).existsByConfId(identifier, organisationUnitId);
     }
 }

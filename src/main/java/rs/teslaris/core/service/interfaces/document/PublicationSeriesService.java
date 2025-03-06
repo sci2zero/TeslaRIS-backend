@@ -8,4 +8,6 @@ import rs.teslaris.core.service.interfaces.JPAService;
 public interface PublicationSeriesService extends JPAService<PublicationSeries> {
 
     PublicationSeries findPublicationSeriesByIssn(String eIssn, String printIssn);
+
+    boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
 }

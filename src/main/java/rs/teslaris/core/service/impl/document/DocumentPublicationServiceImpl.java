@@ -445,6 +445,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         );
     }
 
+    @Override
+    public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
+        return documentRepository.existsByDoi(identifier, documentPublicationId) ||
+            documentRepository.existsByScopusId(identifier, documentPublicationId);
+    }
+
     protected void clearCommonFields(Document publication) {
         publication.getTitle().clear();
         publication.getSubTitle().clear();

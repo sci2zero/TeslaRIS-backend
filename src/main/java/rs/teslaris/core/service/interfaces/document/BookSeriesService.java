@@ -33,4 +33,6 @@ public interface BookSeriesService {
     void forceDeleteBookSeries(Integer journalId);
 
     void reindexBookSeries();
+
+    boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
 }

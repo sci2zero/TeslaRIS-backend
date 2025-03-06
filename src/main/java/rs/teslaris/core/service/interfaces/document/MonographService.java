@@ -27,4 +27,6 @@ public interface MonographService {
     void reindexMonographs();
 
     void indexMonograph(Monograph monograph, DocumentPublicationIndex index);
+
+    boolean isIdentifierInUse(String identifier, Integer monographId);
 }

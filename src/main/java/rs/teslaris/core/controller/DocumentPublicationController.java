@@ -191,4 +191,11 @@ public class DocumentPublicationController {
 
         documentPublicationService.unbindResearcherFromContribution(personId, documentId);
     }
+
+    @GetMapping("/identifier-usage/{documentId}/{identifier}")
+    @PublicationEditCheck
+    public boolean checkIdentifierUsage(@PathVariable Integer documentId,
+                                        @PathVariable String identifier) {
+        return documentPublicationService.isIdentifierInUse(identifier, documentId);
+    }
 }

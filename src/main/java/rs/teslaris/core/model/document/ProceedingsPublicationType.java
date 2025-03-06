@@ -1,6 +1,6 @@
 package rs.teslaris.core.model.document;
 
-public enum ProceedingsPublicationType {
+public enum ProceedingsPublicationType implements PublicationType {
     REGULAR_FULL_ARTICLE,
     INVITED_FULL_ARTICLE,
     INVITED_ABSTRACT_ARTICLE,
@@ -8,5 +8,5 @@ public enum ProceedingsPublicationType {
     PREFACE,
     LEXICOGRAPHIC_UNIT,
     POLEMICS,
-    SCIENTIFIC_CRITIC,
+    SCIENTIFIC_CRITIC;
 }

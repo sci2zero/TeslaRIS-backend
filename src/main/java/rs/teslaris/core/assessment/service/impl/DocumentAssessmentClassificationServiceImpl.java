@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.DocumentAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
-import rs.teslaris.core.assessment.dto.ImaginaryJournalPublicationAssessmentResponseDTO;
+import rs.teslaris.core.assessment.dto.ImaginaryPublicationAssessmentResponseDTO;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.CommissionRelation;
@@ -51,7 +51,9 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -90,6 +92,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final IndicatorRepository indicatorRepository;
 
+    private final EventIndexRepository eventIndexRepository;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -104,7 +108,7 @@ public class DocumentAssessmentClassificationServiceImpl
         DocumentRepository documentRepository, TaskManagerService taskManagerService,
         SearchService<DocumentPublicationIndex> searchService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
-        IndicatorRepository indicatorRepository) {
+        IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -119,6 +123,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.searchService = searchService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.indicatorRepository = indicatorRepository;
+        this.eventIndexRepository = eventIndexRepository;
     }
 
     @Override
@@ -297,7 +302,6 @@ public class DocumentAssessmentClassificationServiceImpl
                         .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
                             journalPublicationIndex.getJournalId(), commission.getId(), year);
 
-                    // Check for manually set classification first
                     var manualClassification = classificationList.stream()
                         .filter(EntityAssessmentClassification::getManual)
                         .findFirst();
@@ -381,9 +385,10 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
-    public ImaginaryJournalPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
+    public ImaginaryPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
         Integer journalId, Integer commissionId, Integer classificationYear, String researchArea,
-        Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation) {
+        Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation,
+        PublicationType publicationType) {
         var commission = commissionService.findOne(commissionId);
 
         return performPublicationAssessmentForImaginaryDocument(
@@ -392,7 +397,6 @@ public class DocumentAssessmentClassificationServiceImpl
                     .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
                         journalId, commission.getId(), year);
 
-                // Check for manually set classification first
                 var manualClassification = classificationList.stream()
                     .filter(EntityAssessmentClassification::getManual)
                     .findFirst();
@@ -424,7 +428,47 @@ public class DocumentAssessmentClassificationServiceImpl
             },
             commission,
             List.of(classificationYear, classificationYear - 1, classificationYear - 2),
-            researchArea, authorCount, isExperimental, isTheoretical, isExperimental);
+            researchArea, publicationType, authorCount, isExperimental, isTheoretical,
+            isSimulation);
+    }
+
+    @Override
+    public ImaginaryPublicationAssessmentResponseDTO assessImaginaryProceedingsPublication(
+        Integer conferenceId, Integer commissionId, String researchArea, Integer authorCount,
+        boolean isExperimental, boolean isTheoretical, boolean isSimulation,
+        PublicationType publicationType) {
+        var commission = commissionService.findOne(commissionId);
+        var eventIndex = eventIndexRepository.findByDatabaseId(conferenceId).orElseThrow(
+            () -> new NotFoundException("Commission with id " + commissionId + " does not exist."));
+
+        return performPublicationAssessmentForImaginaryDocument(
+            (year, classifications, commissionObj) -> {
+                var classification = eventAssessmentClassificationRepository
+                    .findAssessmentClassificationsForEventAndCommissionAndYear(
+                        conferenceId, commission.getId(), year);
+
+                if (classification.isPresent()) {
+                    classifications.add(
+                        new Pair<>(classification.get().getAssessmentClassification(),
+                            classification.get().getClassificationReason()));
+                } else {
+                    handleRelationAssessments(commission,
+                        (targetCommissionId) -> {
+                            var assessmentClassification = eventAssessmentClassificationRepository
+                                .findAssessmentClassificationsForEventAndCommissionAndYear(
+                                    conferenceId, targetCommissionId,
+                                    year)
+                                .orElse(null);
+                            return Objects.nonNull(assessmentClassification) ? Optional.of(
+                                assessmentClassification) : Optional.empty();
+                        }
+                    ).ifPresent(classifications::add);
+                }
+            },
+            commission,
+            List.of(eventIndex.getDateSortable().getYear()),
+            researchArea, publicationType, authorCount, isExperimental, isTheoretical,
+            isSimulation);
     }
 
     private void performPublicationAssessment(
@@ -449,12 +493,13 @@ public class DocumentAssessmentClassificationServiceImpl
         }
     }
 
-    private ImaginaryJournalPublicationAssessmentResponseDTO performPublicationAssessmentForImaginaryDocument(
+    private ImaginaryPublicationAssessmentResponseDTO performPublicationAssessmentForImaginaryDocument(
         TriConsumer<Integer, List<Pair<AssessmentClassification, Set<MultiLingualContent>>>, Commission> yearHandler,
         Commission commission, List<Integer> yearsToConsider, String researchArea,
-        Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation) {
+        PublicationType publicationType, Integer authorCount, boolean isExperimental,
+        boolean isTheoretical, boolean isSimulation) {
 
-        var assessmentResponse = new ImaginaryJournalPublicationAssessmentResponseDTO();
+        var assessmentResponse = new ImaginaryPublicationAssessmentResponseDTO();
         var classifications =
             new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
 
@@ -467,7 +512,7 @@ public class DocumentAssessmentClassificationServiceImpl
         ClassificationPriorityMapping
             .getClassificationBasedOnCriteria(classifications, ResultCalculationMethod.BEST_VALUE)
             .ifPresent(classification -> processClassification(
-                classification, assessmentResponse, researchArea, authorCount,
+                classification, assessmentResponse, researchArea, authorCount, publicationType,
                 isExperimental, isTheoretical, isSimulation
             ));
 
@@ -476,12 +521,16 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private void processClassification(
         Pair<AssessmentClassification, Set<MultiLingualContent>> classification,
-        ImaginaryJournalPublicationAssessmentResponseDTO response,
-        String researchArea, Integer authorCount,
+        ImaginaryPublicationAssessmentResponseDTO response,
+        String researchArea, Integer authorCount, PublicationType publicationType,
         boolean isExperimental, boolean isTheoretical, boolean isSimulation) {
 
         var mappedCode = ClassificationPriorityMapping.getImaginaryDocClassificationCodeBasedOnCode(
-            classification.a.getCode());
+            classification.a.getCode(), publicationType);
+
+        if (Objects.isNull(mappedCode)) {
+            return;
+        }
 
         response.setAssessmentCode(mappedCode);
         response.setAssessmentReason(

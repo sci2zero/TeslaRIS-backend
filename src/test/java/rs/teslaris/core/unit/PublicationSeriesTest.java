@@ -1,8 +1,11 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -97,5 +100,85 @@ public class PublicationSeriesTest {
         assertNull(result);
         verify(publicationSeriesRepository).findPublicationSeriesByeISSNOrPrintISSN("1234-5678",
             "8765-4321");
+    }
+
+    @Test
+    void shouldReturnTrueWhenEISSNExists() {
+        // given
+        var identifier = "1234-5678";
+        var publicationSeriesId = 1;
+        when(publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId)).thenReturn(
+            true);
+        when(publicationSeriesRepository.existsByPrintISSN(identifier,
+            publicationSeriesId)).thenReturn(false);
+
+        // when
+        var result = publicationSeriesService.isIdentifierInUse(identifier, publicationSeriesId);
+
+        // then
+        assertTrue(result);
+        verify(publicationSeriesRepository, atMostOnce()).existsByeISSN(identifier,
+            publicationSeriesId);
+        verify(publicationSeriesRepository, atMostOnce()).existsByPrintISSN(identifier,
+            publicationSeriesId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenPrintISSNExists() {
+        // given
+        var identifier = "1234-5678";
+        var publicationSeriesId = 1;
+        when(publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId)).thenReturn(
+            false);
+        when(publicationSeriesRepository.existsByPrintISSN(identifier,
+            publicationSeriesId)).thenReturn(true);
+
+        // when
+        var result = publicationSeriesService.isIdentifierInUse(identifier, publicationSeriesId);
+
+        // then
+        assertTrue(result);
+        verify(publicationSeriesRepository).existsByeISSN(identifier, publicationSeriesId);
+        verify(publicationSeriesRepository).existsByPrintISSN(identifier, publicationSeriesId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenBothISSNsExist() {
+        // given
+        var identifier = "1234-5678";
+        var publicationSeriesId = 1;
+        when(publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId)).thenReturn(
+            true);
+        when(publicationSeriesRepository.existsByPrintISSN(identifier,
+            publicationSeriesId)).thenReturn(true);
+
+        // when
+        var result = publicationSeriesService.isIdentifierInUse(identifier, publicationSeriesId);
+
+        // then
+        assertTrue(result);
+        verify(publicationSeriesRepository, atMostOnce()).existsByeISSN(identifier,
+            publicationSeriesId);
+        verify(publicationSeriesRepository, atMostOnce()).existsByPrintISSN(identifier,
+            publicationSeriesId);
+    }
+
+    @Test
+    void shouldReturnFalseWhenNeitherISSNExists() {
+        // given
+        var identifier = "1234-5678";
+        var publicationSeriesId = 1;
+        when(publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId)).thenReturn(
+            false);
+        when(publicationSeriesRepository.existsByPrintISSN(identifier,
+            publicationSeriesId)).thenReturn(false);
+
+        // when
+        var result = publicationSeriesService.isIdentifierInUse(identifier, publicationSeriesId);
+
+        // then
+        assertFalse(result);
+        verify(publicationSeriesRepository).existsByeISSN(identifier, publicationSeriesId);
+        verify(publicationSeriesRepository).existsByPrintISSN(identifier, publicationSeriesId);
     }
 }

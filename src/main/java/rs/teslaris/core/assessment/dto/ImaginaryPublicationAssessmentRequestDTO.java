@@ -4,14 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ImaginaryJournalPublicationAssessmentRequestDTO {
+public class ImaginaryPublicationAssessmentRequestDTO {
 
-    private Integer journalId;
+    private Integer containingEntityId;
 
     private Integer commissionId;
 
@@ -26,4 +28,8 @@ public class ImaginaryJournalPublicationAssessmentRequestDTO {
     private Boolean theoretical;
 
     private Boolean simulation;
+
+    private JournalPublicationType journalPublicationType;
+
+    private ProceedingsPublicationType proceedingsPublicationType;
 }

@@ -44,6 +44,7 @@ public class ProceedingsController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PublicationEditCheck(value = "CREATE")
     @Idempotent
     public ProceedingsDTO createProceedings(@RequestBody @Valid ProceedingsDTO proceedings) {
         var savedProceedings = proceedingsService.createProceedings(proceedings, true);
@@ -73,5 +74,12 @@ public class ProceedingsController {
     public void forceDeleteProceedings(@PathVariable Integer documentId) {
         proceedingsService.forceDeleteProceedings(documentId);
         deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
+    }
+
+    @GetMapping("/identifier-usage/{documentId}/{identifier}")
+    @PublicationEditCheck
+    public boolean checkIdentifierUsage(@PathVariable Integer documentId,
+                                        @PathVariable String identifier) {
+        return proceedingsService.isIdentifierInUse(identifier, documentId);
     }
 }

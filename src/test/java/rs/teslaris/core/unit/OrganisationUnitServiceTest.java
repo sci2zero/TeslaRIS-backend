@@ -830,4 +830,36 @@ public class OrganisationUnitServiceTest {
         verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(
             organisationUnitId);
     }
+
+    @Test
+    void shouldReturnFalseWhenScopusAfidDoesNotExist() {
+        // given
+        var identifier = "123456";
+        var organisationUnitId = 1;
+        when(organisationUnitRepository.existsByScopusAfid(identifier,
+            organisationUnitId)).thenReturn(false);
+
+        // when
+        var result = organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
+
+        // then
+        assertFalse(result);
+        verify(organisationUnitRepository).existsByScopusAfid(identifier, organisationUnitId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenScopusAfidExists() {
+        // given
+        var identifier = "123456";
+        var organisationUnitId = 1;
+        when(organisationUnitRepository.existsByScopusAfid(identifier,
+            organisationUnitId)).thenReturn(true);
+
+        // when
+        var result = organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
+
+        // then
+        assertTrue(result);
+        verify(organisationUnitRepository).existsByScopusAfid(identifier, organisationUnitId);
+    }
 }
