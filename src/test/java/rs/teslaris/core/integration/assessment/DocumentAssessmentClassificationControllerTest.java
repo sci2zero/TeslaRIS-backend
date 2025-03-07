@@ -38,11 +38,11 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
 
         var requestPayload =
             new ImaginaryPublicationAssessmentRequestDTO(1, 5, 2021, "TECHNICAL", 3, true,
-                false, false, JournalPublicationType.RESEARCH_ARTICLE, null);
+                false, false, JournalPublicationType.RESEARCH_ARTICLE, null, null, null);
         String requestBody = objectMapper.writeValueAsString(requestPayload);
         mockMvc.perform(
             MockMvcRequestBuilders.post(
-                    "http://localhost:8081/api/assessment/document-assessment-classification/imaginary-journal-publication")
+                    "http://localhost:8081/api/assessment/document-assessment-classification/imaginary-journal-publication?token=everythingPasses")
                 .content(requestBody)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -56,11 +56,11 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
 
         var requestPayload =
             new ImaginaryPublicationAssessmentRequestDTO(1, 5, 2021, "TECHNICAL", 3, true,
-                false, false, null, ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+                false, false, null, ProceedingsPublicationType.REGULAR_FULL_ARTICLE, null, null);
         String requestBody = objectMapper.writeValueAsString(requestPayload);
         mockMvc.perform(
             MockMvcRequestBuilders.post(
-                    "http://localhost:8081/api/assessment/document-assessment-classification/imaginary-proceedings-publication")
+                    "http://localhost:8081/api/assessment/document-assessment-classification/imaginary-proceedings-publication?token=everythingPasses")
                 .content(requestBody)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)

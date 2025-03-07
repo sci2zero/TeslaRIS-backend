@@ -148,6 +148,7 @@ public class DbInitializer implements ApplicationRunner {
         var downloadReports = new Privilege("DOWNLOAD_REPORTS");
         var listAssessmentClassifications = new Privilege("LIST_ASSESSMENT_CLASSIFICATIONS");
         var updateBrandingInformation = new Privilege("UPDATE_BRANDING_INFORMATION");
+        var manageApiKeys = new Privilege("MANAGE_API_KEYS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -169,7 +170,7 @@ public class DbInitializer implements ApplicationRunner {
                 editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
                 assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
                 editAssessmentResearchArea, downloadReports, listAssessmentClassifications,
-                updateBrandingInformation));
+                updateBrandingInformation, manageApiKeys));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -190,7 +191,8 @@ public class DbInitializer implements ApplicationRunner {
                 editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
                 editPublicationSeriesAssessmentClassifications, assessDocument, updateCommission,
                 editDocumentAssessment, editAssessmentResearchArea, scheduleReportGeneration,
-                downloadReports, listAssessmentClassifications, updateBrandingInformation
+                downloadReports, listAssessmentClassifications, updateBrandingInformation,
+                manageApiKeys
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

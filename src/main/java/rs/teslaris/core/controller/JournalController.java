@@ -119,10 +119,10 @@ public class JournalController {
         deduplicationService.deleteSuggestion(journalId, EntityType.JOURNAL);
     }
 
-    @GetMapping("/identifier-usage/{journalId}/{identifier}")
+    @GetMapping("/identifier-usage/{journalId}")
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
     public boolean checkIdentifierUsage(@PathVariable Integer journalId,
-                                        @PathVariable String identifier) {
+                                        @RequestParam String identifier) {
         return journalService.isIdentifierInUse(identifier, journalId);
     }
 }

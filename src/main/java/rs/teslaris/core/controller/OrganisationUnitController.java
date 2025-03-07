@@ -155,10 +155,10 @@ public class OrganisationUnitController {
         return organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
     }
 
-    @GetMapping("/identifier-usage/{organisationUnitId}/{identifier}")
+    @GetMapping("/identifier-usage/{organisationUnitId}")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     public boolean checkIdentifierUsage(@PathVariable Integer organisationUnitId,
-                                        @PathVariable String identifier) {
+                                        @RequestParam String identifier) {
         return organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
     }
 }

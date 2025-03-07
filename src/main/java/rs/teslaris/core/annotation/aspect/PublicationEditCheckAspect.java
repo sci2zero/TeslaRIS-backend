@@ -1,7 +1,6 @@
 package rs.teslaris.core.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -44,8 +42,8 @@ public class PublicationEditCheckAspect {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
-        Method method = getMethod(joinPoint);
-        PublicationEditCheck annotation = method.getAnnotation(PublicationEditCheck.class);
+        var method = AspectUtil.getMethod(joinPoint);
+        var annotation = method.getAnnotation(PublicationEditCheck.class);
 
         String tokenValue = request.getHeader("Authorization").split(" ")[1];
         Map<String, String> attributeMap = (Map<String, String>) request.getAttribute(
@@ -59,14 +57,6 @@ public class PublicationEditCheckAspect {
         checkPermission(role, personId, contributors);
 
         return joinPoint.proceed();
-    }
-
-    private Method getMethod(ProceedingJoinPoint joinPoint) {
-        var signature = joinPoint.getSignature();
-        if (!(signature instanceof MethodSignature)) {
-            throw new IllegalArgumentException("Aspect should be applied to a method.");
-        }
-        return ((MethodSignature) signature).getMethod();
     }
 
     private List<Integer> getContributors(PublicationEditCheck annotation,

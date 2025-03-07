@@ -53,6 +53,8 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
@@ -389,6 +391,10 @@ public class DocumentAssessmentClassificationServiceImpl
         Integer journalId, Integer commissionId, Integer classificationYear, String researchArea,
         Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation,
         PublicationType publicationType) {
+        if (Objects.isNull(publicationType)) {
+            publicationType = JournalPublicationType.RESEARCH_ARTICLE;
+        }
+
         var commission = commissionService.findOne(commissionId);
 
         return performPublicationAssessmentForImaginaryDocument(
@@ -437,6 +443,10 @@ public class DocumentAssessmentClassificationServiceImpl
         Integer conferenceId, Integer commissionId, String researchArea, Integer authorCount,
         boolean isExperimental, boolean isTheoretical, boolean isSimulation,
         PublicationType publicationType) {
+        if (Objects.isNull(publicationType)) {
+            publicationType = ProceedingsPublicationType.REGULAR_FULL_ARTICLE;
+        }
+
         var commission = commissionService.findOne(commissionId);
         var eventIndex = eventIndexRepository.findByDatabaseId(conferenceId).orElseThrow(
             () -> new NotFoundException("Commission with id " + commissionId + " does not exist."));

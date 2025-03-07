@@ -162,10 +162,10 @@ public class ConferenceController {
             reorderRequest.getNewContributionOrderNumber());
     }
 
-    @GetMapping("/identifier-usage/{conferenceId}/{identifier}")
+    @GetMapping("/identifier-usage/{conferenceId}")
     @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
     public boolean checkIdentifierUsage(@PathVariable Integer conferenceId,
-                                        @PathVariable String identifier) {
+                                        @RequestParam String identifier) {
         return conferenceService.isIdentifierInUse(identifier, conferenceId);
     }
 }

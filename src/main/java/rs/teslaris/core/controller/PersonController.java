@@ -248,11 +248,11 @@ public class PersonController {
         personService.removePersonProfileImage(personId);
     }
 
-    @GetMapping("/identifier-usage/{personId}/{identifier}")
+    @GetMapping("/identifier-usage/{personId}")
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @PersonEditCheck
     public boolean checkIdentifierUsage(@PathVariable Integer personId,
-                                        @PathVariable String identifier) {
+                                        @RequestParam String identifier) {
         return personService.isIdentifierInUse(identifier, personId);
     }
 }

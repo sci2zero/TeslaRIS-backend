@@ -212,6 +212,14 @@ public class SecurityConfiguration {
                 // BRANDING INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()
 
+                // ASSESSMENT OPEN API
+                .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/document-assessment-classification/journal-m-service")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/document-assessment-classification/conference-m-service")
+                .permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );
