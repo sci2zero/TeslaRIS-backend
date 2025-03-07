@@ -448,8 +448,11 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         var commission = commissionService.findOne(commissionId);
-        var eventIndex = eventIndexRepository.findByDatabaseId(conferenceId).orElseThrow(
-            () -> new NotFoundException("Commission with id " + commissionId + " does not exist."));
+        var eventIndex = eventIndexRepository.findByDatabaseId(conferenceId);
+
+        if (eventIndex.isEmpty()) {
+            return new ImaginaryPublicationAssessmentResponseDTO();
+        }
 
         return performPublicationAssessmentForImaginaryDocument(
             (year, classifications, commissionObj) -> {
@@ -476,7 +479,7 @@ public class DocumentAssessmentClassificationServiceImpl
                 }
             },
             commission,
-            List.of(eventIndex.getDateSortable().getYear()),
+            List.of(eventIndex.get().getDateSortable().getYear()),
             researchArea, publicationType, authorCount, isExperimental, isTheoretical,
             isSimulation);
     }
