@@ -91,7 +91,6 @@ public class DocumentAssessmentClassificationController {
     }
 
     @PostMapping("/imaginary-journal-publication")
-    @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
     public ImaginaryPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
         @RequestBody @Valid
         ImaginaryPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest,
@@ -113,7 +112,6 @@ public class DocumentAssessmentClassificationController {
     }
 
     @PostMapping("/imaginary-proceedings-publication")
-    @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
     public ImaginaryPublicationAssessmentResponseDTO assessImaginaryProceedingsPublication(
         @RequestBody @Valid
         ImaginaryPublicationAssessmentRequestDTO imaginaryProceedingsPublicationAssessmentRequest,

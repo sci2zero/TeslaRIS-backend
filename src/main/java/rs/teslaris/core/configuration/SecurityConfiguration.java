@@ -158,6 +158,7 @@ public class SecurityConfiguration {
                 // EVENTS
                 .requestMatchers(HttpMethod.GET, "/api/event/{eventId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/conference/{conference}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/conference/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/conference/old-id/{oldConferenceId}")
                 .permitAll()
 
@@ -200,6 +201,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,
                     "/api/assessment/person-assessment-classification/assess/{personId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/assessment/research-area").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/assessment/commission").permitAll()
 
                 // STATISTICS
                 .requestMatchers(HttpMethod.GET, "/api/statistics/{statisticsType}").permitAll()
@@ -212,11 +215,19 @@ public class SecurityConfiguration {
                 // BRANDING INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()
 
-                // ASSESSMENT OPEN API
-                .requestMatchers(HttpMethod.GET,
+                // PUBLIC ASSESSMENT SERVICE
+                // through WEB UI
+                .requestMatchers(HttpMethod.POST,
+                    "/api/assessment/document-assessment-classification/imaginary-journal-publication")
+                .permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/assessment/document-assessment-classification/imaginary-proceedings-publication")
+                .permitAll()
+                // through open API
+                .requestMatchers(HttpMethod.POST,
                     "/api/assessment/document-assessment-classification/journal-m-service")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET,
+                .requestMatchers(HttpMethod.POST,
                     "/api/assessment/document-assessment-classification/conference-m-service")
                 .permitAll()
 

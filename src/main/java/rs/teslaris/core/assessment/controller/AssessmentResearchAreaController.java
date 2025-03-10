@@ -28,7 +28,6 @@ public class AssessmentResearchAreaController {
     private final AssessmentResearchAreaService assessmentResearchAreaService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('EDIT_ASSESSMENT_RESEARCH_AREA', 'UPDATE_COMMISSION')")
     public List<AssessmentResearchAreaDTO> readAssessmentResearchAreas() {
         return assessmentResearchAreaService.readAllAssessmentResearchAreas();
     }

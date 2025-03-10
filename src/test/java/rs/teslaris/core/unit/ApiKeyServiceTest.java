@@ -8,20 +8,25 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.MessageSource;
 import rs.teslaris.core.dto.commontypes.ApiKeyRequest;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.ApiKey;
 import rs.teslaris.core.model.commontypes.ApiKeyType;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.commontypes.ApiKeyRepository;
 import rs.teslaris.core.service.impl.commontypes.ApiKeyServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.email.EmailUtil;
 
 @SpringBootTest
 public class ApiKeyServiceTest {
@@ -32,6 +37,15 @@ public class ApiKeyServiceTest {
     @Mock
     private MultilingualContentService multilingualContentService;
 
+    @Mock
+    private MessageSource messageSource;
+
+    @Mock
+    private EmailUtil emailUtil;
+
+    @Mock
+    private LanguageService languageService;
+
     @InjectMocks
     private ApiKeyServiceImpl apiKeyService;
 
@@ -40,10 +54,12 @@ public class ApiKeyServiceTest {
     public void shouldCreateApiKey() {
         // Given
         var request = new ApiKeyRequest(List.of(new MultilingualContentDTO(1, "SR", "Content", 1)),
-            ApiKeyType.M_SERVICE);
-        var generatedKey = "randomapikey123456";
+            ApiKeyType.M_SERVICE, LocalDate.of(2035, 1, 1), "test@test.com", 1);
         var encodedKey = "$2a$10$hashedValue";
-        var lookupHash = "truncatedArgon2Hash";
+        var lookupHash = "truncatedSHA256Hash";
+
+        var language = new Language();
+        language.setLanguageCode("SR");
 
         var apiKey = new ApiKey();
         apiKey.setValue(encodedKey);
@@ -53,6 +69,7 @@ public class ApiKeyServiceTest {
         when(apiKeyRepository.save(any())).thenReturn(apiKey);
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
+        when(languageService.findOne(1)).thenReturn(language);
 
         // When
         var response = apiKeyService.createApiKey(request);

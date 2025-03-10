@@ -14,6 +14,8 @@ public interface ApiKeyService extends JPAService<ApiKey> {
 
     ApiKeyResponse createApiKey(ApiKeyRequest apiKeyRequest);
 
+    void updateApiKey(Integer apiKeyId, ApiKeyRequest apiKeyRequest);
+
     Page<ApiKeyResponse> listAllApiKeys(Pageable pageable);
 
     void deleteApiKey(Integer apiKeyId);

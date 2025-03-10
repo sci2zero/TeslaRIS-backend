@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -32,4 +33,13 @@ public class ApiKey extends BaseEntity {
 
     @Column(name = "lookup_hash")
     private String lookupHash;
+
+    @Column(name = "valid_until")
+    private LocalDate validUntil;
+
+    @Column(name = "client_email")
+    private String clientEmail;
+
+    @Column(name = "preferred_language")
+    private String preferredLanguage;
 }
