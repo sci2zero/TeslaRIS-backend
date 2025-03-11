@@ -9,6 +9,7 @@ public record ApiKeyRequest(
     ApiKeyType type,
     LocalDate validUntil,
     String clientEmail,
-    Integer clientPreferredLanguageId
+    Integer clientPreferredLanguageId,
+    Integer dailyRequests
 ) {
 }

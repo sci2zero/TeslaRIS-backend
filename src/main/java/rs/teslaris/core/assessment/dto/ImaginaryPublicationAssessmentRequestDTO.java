@@ -17,8 +17,6 @@ import rs.teslaris.core.model.document.ProceedingsPublicationType;
 @AllArgsConstructor
 public class ImaginaryPublicationAssessmentRequestDTO {
 
-    @NotNull(message = "You have to provide containing entity ID.")
-    @Positive
     private Integer containingEntityId;
 
     @NotNull(message = "You have to provide commission ID.")

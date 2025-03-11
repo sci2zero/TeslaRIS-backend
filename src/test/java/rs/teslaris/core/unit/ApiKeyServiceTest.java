@@ -54,7 +54,7 @@ public class ApiKeyServiceTest {
     public void shouldCreateApiKey() {
         // Given
         var request = new ApiKeyRequest(List.of(new MultilingualContentDTO(1, "SR", "Content", 1)),
-            ApiKeyType.M_SERVICE, LocalDate.of(2035, 1, 1), "test@test.com", 1);
+            ApiKeyType.M_SERVICE, LocalDate.of(2035, 1, 1), "test@test.com", 1, 100);
         var encodedKey = "$2a$10$hashedValue";
         var lookupHash = "truncatedSHA256Hash";
 
@@ -91,6 +91,8 @@ public class ApiKeyServiceTest {
         apiKey.setValue(storedHash);
         apiKey.setLookupHash(lookupHash);
         apiKey.setUsageType(ApiKeyType.M_SERVICE);
+        apiKey.setDailyRequests(1000);
+        apiKey.setValidUntil(LocalDate.of(LocalDate.now().getYear() + 1, 5, 1));
 
         when(apiKeyRepository.findByLookupHashAndType(eq(lookupHash), eq(ApiKeyType.M_SERVICE)))
             .thenReturn(List.of(apiKey));

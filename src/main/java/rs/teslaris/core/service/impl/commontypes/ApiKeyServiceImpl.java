@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.ApiKeyRequest;
 import rs.teslaris.core.dto.commontypes.ApiKeyResponse;
@@ -33,6 +35,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.InvalidApiKeyException;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyService {
 
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -87,6 +90,7 @@ public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyS
         apiKey.setValidUntil(apiKeyRequest.validUntil());
         apiKey.setClientEmail(apiKeyRequest.clientEmail());
         apiKey.setPreferredLanguage(preferredLanguage);
+        apiKey.setDailyRequests(apiKeyRequest.dailyRequests());
         return apiKey;
     }
 
@@ -118,7 +122,8 @@ public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyS
             MultilingualContentConverter.getMultilingualContentDTO(savedApiKey.getName()),
             savedApiKey.getUsageType(),
             savedApiKey.getValidUntil(),
-            savedApiKey.getClientEmail()
+            savedApiKey.getClientEmail(),
+            savedApiKey.getDailyRequests()
         );
     }
 
@@ -130,6 +135,7 @@ public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyS
         apiKeyToUpdate.setName(
             multilingualContentService.getMultilingualContent(apiKeyRequest.name()));
         apiKeyToUpdate.setValidUntil(apiKeyRequest.validUntil());
+        apiKeyToUpdate.setDailyRequests(apiKeyRequest.dailyRequests());
         save(apiKeyToUpdate);
 
         log.info("Updated {} API key ({}) for {}.", apiKeyToUpdate.getUsageType().name(),
@@ -147,7 +153,8 @@ public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyS
     public Page<ApiKeyResponse> listAllApiKeys(Pageable pageable) {
         return findAll(pageable).map(apiKey -> new ApiKeyResponse(apiKey.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(apiKey.getName()),
-            apiKey.getUsageType(), apiKey.getValidUntil(), apiKey.getClientEmail()));
+            apiKey.getUsageType(), apiKey.getValidUntil(), apiKey.getClientEmail(),
+            apiKey.getDailyRequests()));
     }
 
     @Override
@@ -163,13 +170,30 @@ public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyS
 
     @Override
     public boolean validateApiKey(String apiKeyValue, ApiKeyType apiKeyType) {
-        log.info("Validating {} for accessing {}.", apiKeyValue, apiKeyType.name());
+        log.info("Validating API key for accessing {}.", apiKeyType.name());
 
         var lookupHash = truncatedLookupHash(apiKeyValue);
+        var potentialApiKeys = apiKeyRepository.findByLookupHashAndType(lookupHash, apiKeyType);
 
-        var matchedApiKeys = apiKeyRepository.findByLookupHashAndType(lookupHash, apiKeyType);
-        return matchedApiKeys.stream()
-            .anyMatch(apiKey -> encoder.matches(apiKeyValue, apiKey.getValue()));
+        var matchedApiKey = potentialApiKeys.stream()
+            .filter(apiKey -> encoder.matches(apiKeyValue, apiKey.getValue()))
+            .findFirst()
+            .orElse(null);
+
+        if (Objects.isNull(matchedApiKey) ||
+            LocalDate.now().isAfter(matchedApiKey.getValidUntil())) {
+            return false;
+        }
+
+        synchronized (matchedApiKey) {
+            if (matchedApiKey.getTimesUsedToday() >= matchedApiKey.getDailyRequests()) {
+                return false;
+            }
+            matchedApiKey.setTimesUsedToday(matchedApiKey.getTimesUsedToday() + 1);
+            save(matchedApiKey);
+        }
+
+        return true;
     }
 
     private String truncatedLookupHash(String key) {
@@ -183,14 +207,9 @@ public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyS
         }
     }
 
-    @Scheduled(cron = "0 0 7 * * ?") // Every day at 07:00 AM
-    public void cleanExpiredApiKeys() {
-        var today = LocalDate.now();
-        var expiredKeys = apiKeyRepository.findByValidUntilLessThanEqual(today);
-
-        if (!expiredKeys.isEmpty()) {
-            apiKeyRepository.deleteAll(expiredKeys);
-            log.info("Deleted {} expired API keys.", expiredKeys.size());
-        }
+    @Scheduled(cron = "0 0 0 * * ?") // Every day at 00:00 AM
+    public void resetDailyUsageAndCleanExpiredApiKeys() {
+        apiKeyRepository.resetApiKeyDailyUsage();
+        apiKeyRepository.deleteByValidUntilLessThanEqual(LocalDate.now());
     }
 }

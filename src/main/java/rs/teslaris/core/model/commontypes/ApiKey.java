@@ -42,4 +42,10 @@ public class ApiKey extends BaseEntity {
 
     @Column(name = "preferred_language")
     private String preferredLanguage;
+
+    @Column(name = "daily_requests")
+    private Integer dailyRequests;
+
+    @Column(name = "times_used_today")
+    private Integer timesUsedToday = 0;
 }

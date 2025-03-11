@@ -9,6 +9,7 @@ public record ApiKeyResponse(
     List<MultilingualContentDTO> name,
     ApiKeyType type,
     LocalDate validUntil,
-    String clientEmail
+    String clientEmail,
+    Integer dailyRequests
 ) {
 }

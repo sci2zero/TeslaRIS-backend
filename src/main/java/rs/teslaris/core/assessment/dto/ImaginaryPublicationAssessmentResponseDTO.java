@@ -24,4 +24,17 @@ public class ImaginaryPublicationAssessmentResponseDTO {
     private Double scaledPoints;
 
     private List<MultilingualContentDTO> scaledPointsReason;
+
+
+    public void setRawPoints(Double rawPoints) {
+        this.rawPoints = roundPrecision(rawPoints);
+    }
+
+    public void setScaledPoints(Double scaledPoints) {
+        this.scaledPoints = roundPrecision(scaledPoints);
+    }
+
+    private double roundPrecision(double value) {
+        return Math.floor(value * 100) / 100;
+    }
 }
