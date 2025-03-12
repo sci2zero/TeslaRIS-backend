@@ -24,6 +24,7 @@ import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 
 @Component
@@ -166,7 +167,7 @@ public class AssessmentReportGenerator {
                 }
             });
             tableData.add(List.of(String.valueOf(tableData.size() + 1), "",
-                locale.equalsIgnoreCase("SR") ?
+                locale.equalsIgnoreCase(LanguageAbbreviations.SERBIAN) ?
                     SerbianTransliteration.toCyrillic(assessmentResponse.getPersonName()) :
                     assessmentResponse.getPersonName(),
                 getContent(assessmentResponse.getInstitutionName(), locale.toUpperCase()),
@@ -216,7 +217,7 @@ public class AssessmentReportGenerator {
                 }
             });
             tableData.add(List.of(String.valueOf(tableData.size() + 1), "",
-                locale.equalsIgnoreCase("SR") ?
+                locale.equalsIgnoreCase(LanguageAbbreviations.SERBIAN) ?
                     SerbianTransliteration.toCyrillic(assessmentResponse.getPersonName()) :
                     assessmentResponse.getPersonName(),
                 Objects.nonNull(assessmentResponse.getPersonPosition()) ?
@@ -287,7 +288,7 @@ public class AssessmentReportGenerator {
                                     break;
                                 }
 
-                                if (locale.equalsIgnoreCase("SR")) {
+                                if (locale.equalsIgnoreCase(LanguageAbbreviations.SERBIAN)) {
                                     institutionName.append(
                                             SerbianTransliteration.toCyrillic(index.get().getNameSr()))
                                         .append(",");
@@ -573,14 +574,14 @@ public class AssessmentReportGenerator {
         var localisedContent = contentList.stream()
             .filter(mc -> mc.getLanguageTag().equals(languageCode)).findFirst();
         if (localisedContent.isPresent()) {
-            return languageCode.equalsIgnoreCase("SR") ?
+            return languageCode.equalsIgnoreCase(LanguageAbbreviations.SERBIAN) ?
                 SerbianTransliteration.toCyrillic(localisedContent.get().getContent()) :
                 localisedContent.get().getContent();
         }
 
         return contentList.stream()
             .findFirst()
-            .map(mc -> languageCode.equals("SR") ?
+            .map(mc -> languageCode.equals(LanguageAbbreviations.SERBIAN) ?
                 SerbianTransliteration.toCyrillic(mc.getContent()) : mc.getContent())
             .orElseThrow(() -> new NotFoundException("Missing container title"));
     }

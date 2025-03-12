@@ -4,9 +4,9 @@ public class LanguageAbbreviations {
 
     public static String SERBIAN = "SR";
 
-    public static String SERBIAN_LATIN = "SR_LAT";
+    public static String SERBIAN_LATIN = "SR-LAT";
 
-    public static String SERBIAN_CYRILLIC = "SR_CYR";
+    public static String SERBIAN_CYRILLIC = "SR-CYR";
 
     public static String ENGLISH = "EN";
 

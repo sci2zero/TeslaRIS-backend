@@ -26,6 +26,7 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.service.impl.commontypes.CountryServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 @RequiredArgsConstructor
@@ -187,13 +188,14 @@ public class CountryServiceTest {
         // given
         var countryPage = new PageImpl<>(List.of(new Country()));
         var pageable = PageRequest.of(0, 10);
-        when(countryRepository.searchCountries("", "SR", pageable)).thenReturn(countryPage);
+        when(countryRepository.searchCountries("", LanguageAbbreviations.SERBIAN,
+            pageable)).thenReturn(countryPage);
 
         // when
-        var result = countryService.searchCountries(pageable, "*", "SR");
+        var result = countryService.searchCountries(pageable, "*", LanguageAbbreviations.SERBIAN);
 
         // then
         assertNotNull(result);
-        verify(countryRepository).searchCountries("", "SR", pageable);
+        verify(countryRepository).searchCountries("", LanguageAbbreviations.SERBIAN, pageable);
     }
 }

@@ -27,6 +27,7 @@ import rs.teslaris.core.service.impl.commontypes.ApiKeyServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 public class ApiKeyServiceTest {
@@ -53,13 +54,14 @@ public class ApiKeyServiceTest {
     @Test
     public void shouldCreateApiKey() {
         // Given
-        var request = new ApiKeyRequest(List.of(new MultilingualContentDTO(1, "SR", "Content", 1)),
+        var request = new ApiKeyRequest(
+            List.of(new MultilingualContentDTO(1, LanguageAbbreviations.SERBIAN, "Content", 1)),
             ApiKeyType.M_SERVICE, LocalDate.of(2035, 1, 1), "test@test.com", 1, 100);
         var encodedKey = "$2a$10$hashedValue";
         var lookupHash = "truncatedSHA256Hash";
 
         var language = new Language();
-        language.setLanguageCode("SR");
+        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
 
         var apiKey = new ApiKey();
         apiKey.setValue(encodedKey);
