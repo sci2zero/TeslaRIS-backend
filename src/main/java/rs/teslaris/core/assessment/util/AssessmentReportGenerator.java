@@ -166,7 +166,7 @@ public class AssessmentReportGenerator {
                 }
             });
             tableData.add(List.of(String.valueOf(tableData.size() + 1), "",
-                locale.equals("sr") ?
+                locale.equalsIgnoreCase("SR") ?
                     SerbianTransliteration.toCyrillic(assessmentResponse.getPersonName()) :
                     assessmentResponse.getPersonName(),
                 getContent(assessmentResponse.getInstitutionName(), locale.toUpperCase()),
@@ -216,7 +216,7 @@ public class AssessmentReportGenerator {
                 }
             });
             tableData.add(List.of(String.valueOf(tableData.size() + 1), "",
-                locale.equals("sr") ?
+                locale.equalsIgnoreCase("SR") ?
                     SerbianTransliteration.toCyrillic(assessmentResponse.getPersonName()) :
                     assessmentResponse.getPersonName(),
                 Objects.nonNull(assessmentResponse.getPersonPosition()) ?
@@ -287,7 +287,7 @@ public class AssessmentReportGenerator {
                                     break;
                                 }
 
-                                if (locale.equals("sr")) {
+                                if (locale.equalsIgnoreCase("SR")) {
                                     institutionName.append(
                                             SerbianTransliteration.toCyrillic(index.get().getNameSr()))
                                         .append(",");
@@ -573,7 +573,7 @@ public class AssessmentReportGenerator {
         var localisedContent = contentList.stream()
             .filter(mc -> mc.getLanguageTag().equals(languageCode)).findFirst();
         if (localisedContent.isPresent()) {
-            return languageCode.equals("SR") ?
+            return languageCode.equalsIgnoreCase("SR") ?
                 SerbianTransliteration.toCyrillic(localisedContent.get().getContent()) :
                 localisedContent.get().getContent();
         }

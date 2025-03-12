@@ -254,6 +254,7 @@ public class DbInitializer implements ApplicationRunner {
         // LANGUAGE TAGS
         var englishTag = new LanguageTag(LanguageAbbreviations.ENGLISH, "English");
         var serbianTag = new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski");
+        var serbianCyrillicTag = new LanguageTag(LanguageAbbreviations.SERBIAN_CYRILLIC, "Српски");
         var hungarianTag = new LanguageTag(LanguageAbbreviations.HUNGARIAN, "Magyar");
         var germanTag = new LanguageTag(LanguageAbbreviations.GERMAN, "Deutsch");
         var frenchTag = new LanguageTag(LanguageAbbreviations.FRENCH, "Français");
@@ -264,7 +265,7 @@ public class DbInitializer implements ApplicationRunner {
         var slovenianTag = new LanguageTag(LanguageAbbreviations.SLOVENIAN, "Slovenian");
         languageTagRepository.saveAll(
             List.of(englishTag, serbianTag, hungarianTag, germanTag, frenchTag, spanishTag,
-                russianTag, croatianTag, italianTag, slovenianTag));
+                russianTag, croatianTag, italianTag, slovenianTag, serbianCyrillicTag));
 
         // ADMIN USER
         var adminUser =
