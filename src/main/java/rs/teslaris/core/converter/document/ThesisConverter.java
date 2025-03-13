@@ -1,6 +1,5 @@
 package rs.teslaris.core.converter.document;
 
-import java.util.ArrayList;
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
@@ -29,12 +28,14 @@ public class ThesisConverter extends DocumentPublicationConverter {
         thesisDTO.setThesisType(thesis.getThesisType());
         thesisDTO.setNumberOfPages(thesis.getNumberOfPages());
 
-        thesisDTO.setLanguageTagIds(new ArrayList<>());
-        thesisDTO.setLanguageTagNames(new ArrayList<>());
-        thesis.getLanguages().forEach(languageTag -> {
-            thesisDTO.getLanguageTagNames().add(languageTag.getLanguageTag());
-            thesisDTO.getLanguageTagIds().add(languageTag.getId());
-        });
+        if (Objects.nonNull(thesis.getLanguage())) {
+            thesisDTO.setLanguageCode(thesis.getLanguage().getLanguageCode());
+            thesisDTO.setLanguageId(thesis.getLanguage().getId());
+        }
+
+        if (Objects.nonNull(thesis.getWritingLanguage())) {
+            thesisDTO.setWritingLanguageTagId(thesis.getWritingLanguage().getId());
+        }
 
         if (Objects.nonNull(thesis.getResearchArea())) {
             thesisDTO.setResearchAreaId(thesis.getResearchArea().getId());

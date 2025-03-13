@@ -1,22 +1,35 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.document.ThesisAttachmentType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -28,6 +41,7 @@ import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 
 @Service
@@ -40,7 +54,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private final ResearchAreaService researchAreaService;
 
-    private final LanguageTagService languageService;
+    private final LanguageService languageService;
+
+    private final LanguageTagService languageTagService;
+
+    private final ThesisRepository thesisRepository;
 
 
     @Autowired
@@ -48,7 +66,6 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
                              SearchService<DocumentPublicationIndex> searchService,
                              OrganisationUnitService organisationUnitService,
-                             StatisticsService statisticsIndexService,
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              PersonContributionService personContributionService,
@@ -56,7 +73,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              EventService eventService, ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              ResearchAreaService researchAreaService,
-                             LanguageTagService languageService) {
+                             LanguageService languageService,
+                             LanguageTagService languageTagService,
+                             ThesisRepository thesisRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService, expressionTransformer, eventService);
@@ -64,6 +83,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;
         this.languageService = languageService;
+        this.languageTagService = languageTagService;
+        this.thesisRepository = thesisRepository;
     }
 
     @Override
@@ -154,6 +175,82 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
     }
 
+    @Override
+    public DocumentFileResponseDTO addThesisAttachment(Integer thesisId, DocumentFileDTO document,
+                                                       ThesisAttachmentType attachmentType) {
+        var thesis = thesisJPAService.findOne(thesisId);
+
+        document.setResourceType(attachmentType.getResourceType());
+        var documentFile = documentFileService.saveNewPreliminaryDocument(document);
+
+        switch (attachmentType) {
+            case FILE -> {
+                thesis.getPreliminaryFiles().forEach(file -> file.setLatest(false));
+                thesis.getPreliminaryFiles().add(documentFile);
+            }
+            case SUPPLEMENT -> {
+                thesis.getPreliminarySupplements().forEach(file -> file.setLatest(false));
+                thesis.getPreliminarySupplements().add(documentFile);
+            }
+            case COMMISSION_REPORTS -> {
+                thesis.getCommissionReports().forEach(file -> file.setLatest(false));
+                thesis.getCommissionReports().add(documentFile);
+            }
+        }
+
+        thesisJPAService.save(thesis);
+        return DocumentFileConverter.toDTO(documentFile);
+    }
+
+    @Override
+    public void deleteThesisAttachment(Integer thesisId, Integer documentFileId,
+                                       ThesisAttachmentType attachmentType) {
+        var thesis = thesisJPAService.findOne(thesisId);
+        var documentFile = documentFileService.findDocumentFileById(documentFileId);
+
+        removeAttachment(thesis, documentFile, attachmentType);
+
+        thesisJPAService.save(thesis);
+        documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+    }
+
+    private void removeAttachment(Thesis thesis, DocumentFile documentFile,
+                                  ThesisAttachmentType attachmentType) {
+        Set<DocumentFile> attachments = switch (attachmentType) {
+            case FILE -> thesis.getPreliminaryFiles();
+            case SUPPLEMENT -> thesis.getPreliminarySupplements();
+            case COMMISSION_REPORTS -> thesis.getCommissionReports();
+        };
+
+        attachments.remove(documentFile);
+        updateLatestFlag(attachments);
+    }
+
+    private void updateLatestFlag(Set<DocumentFile> attachments) {
+        attachments.forEach(file -> file.setLatest(false));
+        attachments.stream()
+            .max(Comparator.comparing(DocumentFile::getTimestamp))
+            .ifPresent(file -> file.setLatest(true));
+    }
+
+    @Override
+    public void putOnPublicReview(Integer thesisId) {
+        var thesis = thesisJPAService.findOne(thesisId);
+
+        if (!thesis.getThesisType().equals(ThesisType.PHD) &&
+            !thesis.getThesisType().equals(ThesisType.PHD_ART_PROJECT)) {
+            throw new ThesisException("Only PHD theses can be put on public reviews.");
+        }
+
+        if (thesis.getIsOnPublicReview()) {
+            throw new ThesisException("Already on public review.");
+        }
+
+        thesis.setIsOnPublicReview(true);
+        thesis.getPublicReviewStartDates().add(LocalDate.now());
+        thesisJPAService.save(thesis);
+    }
+
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {
         thesis.setThesisType(thesisDTO.getThesisType());
         thesis.setNumberOfPages(thesisDTO.getNumberOfPages());
@@ -166,10 +263,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesis.setResearchArea(researchAreaService.findOne(thesisDTO.getResearchAreaId()));
         }
 
-        if (Objects.nonNull(thesisDTO.getLanguageTagIds())) {
-            thesisDTO.getLanguageTagIds().forEach(languageTagId -> {
-                thesis.getLanguages().add(languageService.findOne(languageTagId));
-            });
+        if (Objects.nonNull(thesisDTO.getLanguageId())) {
+            thesis.setLanguage(languageService.findOne(thesisDTO.getLanguageId()));
+        }
+
+        if (Objects.nonNull(thesisDTO.getWritingLanguageTagId())) {
+            thesis.setWritingLanguage(
+                languageTagService.findOne(thesisDTO.getWritingLanguageTagId()));
         }
 
         if (Objects.nonNull(thesisDTO.getOrganisationUnitId())) {
@@ -197,5 +297,24 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    public void removeFromPublicReview() {
+        var thesesOnPublicReview = thesisRepository.findAllOnPublicReview();
+
+        var now = new Date();
+        var thirtyDaysAgo = (new Date(now.getTime() - (30L * 24 * 60 * 60 * 1000))).toInstant()
+            .atZone(ZoneId.systemDefault()).toLocalDate();
+
+        thesesOnPublicReview.stream()
+            .filter(thesis -> thesis.getPublicReviewStartDates().stream()
+                .max(Comparator.naturalOrder())
+                .filter(publicReviewStartDate -> publicReviewStartDate.isBefore(thirtyDaysAgo))
+                .isPresent())
+            .forEach(thesis -> {
+                thesis.setIsOnPublicReview(false);
+                thesisJPAService.save(thesis);
+            });
     }
 }

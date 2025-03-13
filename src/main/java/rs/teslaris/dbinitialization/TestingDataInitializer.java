@@ -1,6 +1,7 @@
 package rs.teslaris.dbinitialization;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -361,7 +362,8 @@ public class TestingDataInitializer {
             Set.of(
                 new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate.pdf", "1111.pdf",
                     new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
-                    License.CREATIVE_COMMONS, ApproveStatus.APPROVED))));
+                    License.CREATIVE_COMMONS, ApproveStatus.APPROVED, true, LocalDateTime.now(),
+                    false))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -377,7 +379,8 @@ public class TestingDataInitializer {
                 1)),
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-                License.OPEN_ACCESS, ApproveStatus.APPROVED)), LocalDate.of(2023, 4, 17)));
+                License.OPEN_ACCESS, ApproveStatus.APPROVED, true, LocalDateTime.now(), false)),
+            LocalDate.of(2023, 4, 17)));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
@@ -533,7 +536,7 @@ public class TestingDataInitializer {
         thesis1.setOrganisationUnit(dummyOU2);
         thesis1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
-        thesis1.getLanguages().addAll(List.of(serbianTag, englishTag));
+        thesis1.setLanguage(serbianLanguage);
         thesisRepository.save(thesis1);
 
         var thesis2 = new Thesis();
@@ -676,7 +679,7 @@ public class TestingDataInitializer {
 
         documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
             new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-            License.OPEN_ACCESS, ApproveStatus.APPROVED));
+            License.OPEN_ACCESS, ApproveStatus.APPROVED, true, LocalDateTime.now(), false));
         documentIndicatorRepository.save(documentIndicator1);
 
         var eventIndicator1 = new EventIndicator();

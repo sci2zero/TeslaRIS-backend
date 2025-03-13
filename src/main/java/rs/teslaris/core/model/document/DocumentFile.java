@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -49,4 +50,13 @@ public class DocumentFile extends BaseEntity {
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
+
+    @Column(name = "can_edit")
+    private Boolean canEdit = true;
+
+    @Column(name = "timestamp")
+    private LocalDateTime timestamp;
+
+    @Column(name = "latest")
+    private Boolean latest = false;
 }

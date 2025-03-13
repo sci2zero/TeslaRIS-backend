@@ -149,6 +149,9 @@ public class DbInitializer implements ApplicationRunner {
         var listAssessmentClassifications = new Privilege("LIST_ASSESSMENT_CLASSIFICATIONS");
         var updateBrandingInformation = new Privilege("UPDATE_BRANDING_INFORMATION");
         var manageApiKeys = new Privilege("MANAGE_API_KEYS");
+        var manageThesisAttachments = new Privilege("MANAGE_THESIS_ATTACHMENTS");
+        var deleteThesisAttachments = new Privilege("DELETE_THESIS_ATTACHMENTS");
+        var putThesisOnPublicReview = new Privilege("PUT_THESIS_ON_PUBLIC_REVIEW");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -170,7 +173,8 @@ public class DbInitializer implements ApplicationRunner {
                 editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
                 assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
                 editAssessmentResearchArea, downloadReports, listAssessmentClassifications,
-                updateBrandingInformation, manageApiKeys));
+                updateBrandingInformation, manageApiKeys, manageThesisAttachments,
+                putThesisOnPublicReview, deleteThesisAttachments));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -192,7 +196,8 @@ public class DbInitializer implements ApplicationRunner {
                 editPublicationSeriesAssessmentClassifications, assessDocument, updateCommission,
                 editDocumentAssessment, editAssessmentResearchArea, scheduleReportGeneration,
                 downloadReports, listAssessmentClassifications, updateBrandingInformation,
-                manageApiKeys
+                manageApiKeys, manageThesisAttachments, putThesisOnPublicReview,
+                deleteThesisAttachments
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -203,7 +208,9 @@ public class DbInitializer implements ApplicationRunner {
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
-                List.of(new Privilege[] {updateProfile, allowAccountTakeover})));
+                List.of(
+                    new Privilege[] {updateProfile, allowAccountTakeover, manageThesisAttachments,
+                        putThesisOnPublicReview})));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -222,35 +229,6 @@ public class DbInitializer implements ApplicationRunner {
             List.of(adminAuthority, researcherAuthority, institutionalEditorAuthority,
                 commissionAuthority, viceDeanForScienceAuthority));
 
-        // LANGUAGES
-        var serbianLanguage = new Language();
-        serbianLanguage.setLanguageCode(LanguageAbbreviations.SERBIAN);
-        var englishLanguage = new Language();
-        englishLanguage.setLanguageCode(LanguageAbbreviations.ENGLISH);
-        // We will maybe need YU, I don't know
-        var yuLanguage = new Language();
-        yuLanguage.setLanguageCode(LanguageAbbreviations.YUGOSLAV);
-        yuLanguage.setDeleted(true);
-        var germanLanguage = new Language();
-        germanLanguage.setLanguageCode(LanguageAbbreviations.GERMAN);
-        var frenchLanguage = new Language();
-        frenchLanguage.setLanguageCode(LanguageAbbreviations.FRENCH);
-        var spanishLanguage = new Language();
-        spanishLanguage.setLanguageCode(LanguageAbbreviations.SPANISH);
-        var russianLanguage = new Language();
-        russianLanguage.setLanguageCode(LanguageAbbreviations.RUSSIAN);
-        var croatianLanguage = new Language();
-        croatianLanguage.setLanguageCode(LanguageAbbreviations.CROATIAN);
-        var italianLanguage = new Language();
-        italianLanguage.setLanguageCode(LanguageAbbreviations.ITALIAN);
-        var slovenianLanguage = new Language();
-        slovenianLanguage.setLanguageCode(LanguageAbbreviations.SLOVENIAN);
-
-        languageRepository.saveAll(
-            List.of(serbianLanguage, englishLanguage, yuLanguage, germanLanguage, frenchLanguage,
-                spanishLanguage, russianLanguage, croatianLanguage, italianLanguage,
-                slovenianLanguage));
-
         // LANGUAGE TAGS
         var englishTag = new LanguageTag(LanguageAbbreviations.ENGLISH, "English");
         var serbianTag = new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski");
@@ -266,6 +244,53 @@ public class DbInitializer implements ApplicationRunner {
         languageTagRepository.saveAll(
             List.of(englishTag, serbianTag, hungarianTag, germanTag, frenchTag, spanishTag,
                 russianTag, croatianTag, italianTag, slovenianTag, serbianCyrillicTag));
+
+        // LANGUAGES
+        var serbianLanguage = new Language();
+        serbianLanguage.setLanguageCode(LanguageAbbreviations.SERBIAN);
+        serbianLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Srpski", 1))));
+        var englishLanguage = new Language();
+        englishLanguage.setLanguageCode(LanguageAbbreviations.ENGLISH);
+        englishLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Engleski", 1))));
+        // We will maybe need YU, I don't know
+        var yuLanguage = new Language();
+        yuLanguage.setLanguageCode(LanguageAbbreviations.YUGOSLAV);
+        yuLanguage.setDeleted(true);
+        var germanLanguage = new Language();
+        germanLanguage.setLanguageCode(LanguageAbbreviations.GERMAN);
+        germanLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Nemački", 1))));
+        var frenchLanguage = new Language();
+        frenchLanguage.setLanguageCode(LanguageAbbreviations.FRENCH);
+        frenchLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Francuski", 1))));
+        var spanishLanguage = new Language();
+        spanishLanguage.setLanguageCode(LanguageAbbreviations.SPANISH);
+        spanishLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Španski", 1))));
+        var russianLanguage = new Language();
+        russianLanguage.setLanguageCode(LanguageAbbreviations.RUSSIAN);
+        russianLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Ruski", 1))));
+        var croatianLanguage = new Language();
+        croatianLanguage.setLanguageCode(LanguageAbbreviations.CROATIAN);
+        croatianLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Hrvatski", 1))));
+        var italianLanguage = new Language();
+        italianLanguage.setLanguageCode(LanguageAbbreviations.ITALIAN);
+        italianLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Italijanski", 1))));
+        var slovenianLanguage = new Language();
+        slovenianLanguage.setLanguageCode(LanguageAbbreviations.SLOVENIAN);
+        slovenianLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Slovenački", 1))));
+
+        languageRepository.saveAll(
+            List.of(serbianLanguage, englishLanguage, yuLanguage, germanLanguage, frenchLanguage,
+                spanishLanguage, russianLanguage, croatianLanguage, italianLanguage,
+                slovenianLanguage));
 
         // ADMIN USER
         var adminUser =

@@ -282,9 +282,9 @@ public class ExportDocumentConverter extends ExportConverterBase {
             ExportOrganisationUnitConverter.toCommonExportModel(thesis.getOrganisationUnit(),
                 false));
 
-        thesis.getLanguages().forEach(languageTag -> {
-            commonExportDocument.getLanguageTags().add(languageTag.getLanguageTag());
-        });
+        if (Objects.nonNull(thesis.getLanguage())) {
+            commonExportDocument.getLanguageTags().add(thesis.getLanguage().getLanguageCode());
+        }
 
         if (Objects.nonNull(thesis.getPublisher())) {
             commonExportDocument.getPublishers().add(new ExportPublisher(

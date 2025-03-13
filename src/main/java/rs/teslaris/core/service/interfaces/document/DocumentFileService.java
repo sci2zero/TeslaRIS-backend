@@ -28,6 +28,8 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
 
     DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index);
 
+    DocumentFile saveNewPreliminaryDocument(DocumentFileDTO documentFile);
+
     DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index);
 
     void deleteDocumentFile(String serverFilename);

@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.validator.constraints.Length;
 import rs.teslaris.core.model.user.User;
 
 @Getter
@@ -26,6 +27,7 @@ import rs.teslaris.core.model.user.User;
 @SQLRestriction("deleted=false")
 public class Notification extends BaseEntity {
 
+    @Length(max = 10000)
     @Column(name = "notification_text", nullable = false)
     private String notificationText;
 

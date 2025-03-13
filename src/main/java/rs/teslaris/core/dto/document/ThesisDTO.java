@@ -27,8 +27,11 @@ public class ThesisDTO extends DocumentDTO {
     @Positive(message = "Number of pages cannot be a negative number.")
     private Integer numberOfPages;
 
-    @NotNull(message = "You have to provide language tag ids array, even if it's empty.")
-    private List<Integer> languageTagIds;
+    @Positive
+    private Integer languageId;
+
+    @Positive
+    private Integer writingLanguageTagId;
 
     @Positive(message = "Research area id cannot be a negative number.")
     private Integer researchAreaId;

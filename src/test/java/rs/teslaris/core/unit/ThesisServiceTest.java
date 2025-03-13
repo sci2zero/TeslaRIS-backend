@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -29,6 +31,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -37,8 +40,11 @@ import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.document.ThesisAttachmentType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
@@ -55,6 +61,7 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 
 @SpringBootTest
 public class ThesisServiceTest {
@@ -228,5 +235,110 @@ public class ThesisServiceTest {
         verify(thesisJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(documentPublicationIndexRepository, atLeastOnce()).save(
             any(DocumentPublicationIndex.class));
+    }
+
+    @Test
+    public void shouldDeleteThesisAttachmentAndUpdateLatestFile() {
+        // given
+        var thesisId = 1;
+        var documentFileId = 100;
+        var attachmentType = ThesisAttachmentType.FILE;
+
+        var thesis = new Thesis();
+        var documentFile = new DocumentFile();
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(documentFileService.findDocumentFileById(documentFileId)).thenReturn(documentFile);
+
+        // when
+        thesisService.deleteThesisAttachment(thesisId, documentFileId, attachmentType);
+
+        // then
+        verify(thesisJPAService).findOne(thesisId);
+        verify(documentFileService).findDocumentFileById(documentFileId);
+        verify(thesisJPAService).save(thesis);
+        verify(documentFileService).deleteDocumentFile(documentFile.getServerFilename());
+    }
+
+    @Test
+    public void shouldPutThesisOnPublicReview() {
+        // given
+        var thesisId = 1;
+        var thesis = mock(Thesis.class);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(thesis.getIsOnPublicReview()).thenReturn(false);
+        when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
+
+        // when
+        thesisService.putOnPublicReview(thesisId);
+
+        // then
+        verify(thesisJPAService).findOne(thesisId);
+        verify(thesisJPAService).save(thesis);
+    }
+
+    @Test
+    public void shouldThrowExceptionIfAlreadyOnPublicReview() {
+        // given
+        var thesisId = 1;
+        var thesis = mock(Thesis.class);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
+        when(thesis.getIsOnPublicReview()).thenReturn(true);
+
+        // when / then
+        assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId));
+        verify(thesisJPAService).findOne(thesisId);
+        verify(thesis, never()).setIsOnPublicReview(true);
+        verify(thesisJPAService, never()).save(any());
+    }
+
+    @Test
+    public void shouldThrowExceptionIfThesisIsNotPHDThesis() {
+        // given
+        var thesisId = 1;
+        var thesis = mock(Thesis.class);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(thesis.getThesisType()).thenReturn(ThesisType.BACHELOR);
+
+        // when / then
+        assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId));
+        verify(thesisJPAService).findOne(thesisId);
+        verify(thesis, never()).setIsOnPublicReview(true);
+        verify(thesisJPAService, never()).save(any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(ThesisAttachmentType.class)
+    public void shouldAddThesisAttachmentAndSetLatest(ThesisAttachmentType attachmentType) {
+        // given
+        var thesisId = 1;
+        var thesis = mock(Thesis.class);
+        var document = new DocumentFileDTO();
+        var documentFile = mock(DocumentFile.class);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(documentFileService.saveNewPreliminaryDocument(document)).thenReturn(documentFile);
+
+        Set<DocumentFile> fileSet = mock(Set.class);
+        when(fileSet.add(documentFile)).thenReturn(true);
+        switch (attachmentType) {
+            case FILE -> when(thesis.getPreliminaryFiles()).thenReturn(fileSet);
+            case SUPPLEMENT -> when(thesis.getPreliminarySupplements()).thenReturn(fileSet);
+            case COMMISSION_REPORTS -> when(thesis.getCommissionReports()).thenReturn(fileSet);
+        }
+
+        // when
+        var response = thesisService.addThesisAttachment(thesisId, document, attachmentType);
+
+        // then
+        verify(thesisJPAService).findOne(thesisId);
+        verify(documentFileService).saveNewPreliminaryDocument(document);
+
+        verify(thesisJPAService).save(thesis);
+        assertNotNull(response);
     }
 }

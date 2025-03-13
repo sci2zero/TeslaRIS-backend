@@ -4,7 +4,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.MethodOrderer;
@@ -40,7 +39,6 @@ public class ThesisControllerTest extends BaseTest {
         thesisDTO.setDescription(dummyMC);
         thesisDTO.setKeywords(dummyMC);
         thesisDTO.setDocumentDate("2004-11-06");
-        thesisDTO.setLanguageTagIds(new ArrayList<>());
         thesisDTO.setThesisType(ThesisType.PHD);
         thesisDTO.setOrganisationUnitId(1);
 
@@ -93,6 +91,19 @@ public class ThesisControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.put("http://localhost:8081/api/thesis/{thesisId}", 10)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testPutThesisOnPublicReview() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/public-review/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

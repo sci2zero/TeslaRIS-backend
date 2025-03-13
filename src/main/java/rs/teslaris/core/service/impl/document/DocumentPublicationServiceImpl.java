@@ -69,9 +69,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected final OrganisationUnitService organisationUnitService;
 
-    private final DocumentRepository documentRepository;
+    protected final DocumentRepository documentRepository;
 
-    private final DocumentFileService documentFileService;
+    protected final DocumentFileService documentFileService;
 
     private final PersonContributionService personContributionService;
 
