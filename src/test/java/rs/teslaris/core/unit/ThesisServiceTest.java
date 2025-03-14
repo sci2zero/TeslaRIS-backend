@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,14 +13,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
@@ -269,6 +274,9 @@ public class ThesisServiceTest {
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
         when(thesis.getIsOnPublicReview()).thenReturn(false);
         when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
+        when(thesis.getPreliminaryFiles()).thenReturn(Set.of(new DocumentFile()));
+        when(thesis.getPreliminarySupplements()).thenReturn(Set.of(new DocumentFile()));
+        when(thesis.getCommissionReports()).thenReturn(Set.of(new DocumentFile()));
 
         // when
         thesisService.putOnPublicReview(thesisId);
@@ -311,6 +319,73 @@ public class ThesisServiceTest {
         verify(thesisJPAService, never()).save(any());
     }
 
+    @Test
+    void shouldRemoveThesisFromPublicReview() {
+        // Given
+        var thesisId = 1;
+        var thesis = new Thesis();
+        thesis.setIsOnPublicReview(true);
+        thesis.getPublicReviewStartDates().add(LocalDate.of(2024, 1, 1));
+        thesis.getPublicReviewStartDates().add(LocalDate.of(2024, 1, 10));
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When
+        thesisService.removeFromPublicReview(thesisId);
+
+        // Then
+        assertFalse(thesis.getIsOnPublicReview());
+        assertEquals(1, thesis.getPublicReviewStartDates().size());
+        assertFalse(thesis.getPublicReviewStartDates().contains(LocalDate.of(2024, 1, 10)));
+        verify(thesisJPAService).findOne(thesisId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenThesisNotOnPublicReview() {
+        // Given
+        var thesisId = 1;
+        var thesis = new Thesis();
+        thesis.setIsOnPublicReview(false);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When / Then
+        ThesisException exception = assertThrows(ThesisException.class,
+            () -> thesisService.removeFromPublicReview(thesisId));
+        assertEquals("Thesis is not on public review.", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenThesisHasNeverBeenOnPublicReview() {
+        // Given
+        var thesisId = 1;
+        var thesis = new Thesis();
+        thesis.setIsOnPublicReview(true);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When / Then
+        ThesisException exception = assertThrows(ThesisException.class,
+            () -> thesisService.removeFromPublicReview(thesisId));
+        assertEquals("Never been on public review.", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenThesisNeverBeenOnPublicReview() {
+        // Given
+        var thesisId = 1;
+        var thesis = new Thesis();
+        thesis.setIsOnPublicReview(true);
+        thesis.setPublicReviewStartDates(new HashSet<>()); // Empty set
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When / Then
+        ThesisException exception = assertThrows(ThesisException.class,
+            () -> thesisService.removeFromPublicReview(thesisId));
+        assertEquals("Never been on public review.", exception.getMessage());
+    }
+
     @ParameterizedTest
     @EnumSource(ThesisAttachmentType.class)
     public void shouldAddThesisAttachmentAndSetLatest(ThesisAttachmentType attachmentType) {
@@ -328,7 +403,7 @@ public class ThesisServiceTest {
         switch (attachmentType) {
             case FILE -> when(thesis.getPreliminaryFiles()).thenReturn(fileSet);
             case SUPPLEMENT -> when(thesis.getPreliminarySupplements()).thenReturn(fileSet);
-            case COMMISSION_REPORTS -> when(thesis.getCommissionReports()).thenReturn(fileSet);
+            case COMMISSION_REPORT -> when(thesis.getCommissionReports()).thenReturn(fileSet);
         }
 
         // when
@@ -340,5 +415,53 @@ public class ThesisServiceTest {
 
         verify(thesisJPAService).save(thesis);
         assertNotNull(response);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAttachmentsAreMissing() {
+        // Given
+        var thesis = new Thesis();
+        thesis.setThesisType(ThesisType.PHD);
+        thesis.setIsOnPublicReview(false);
+        var thesisId = 1;
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When & Then
+        ThesisException exception =
+            assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId));
+        assertEquals("noAttachmentsMessage", exception.getMessage());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "1, 2, 3",
+        "3, 1, 3",
+        "2, 2, 1"
+    })
+    void shouldThrowExceptionWhenAttachmentsAreUnequal(int files, int supplements, int reports) {
+        // Given
+        var thesis = new Thesis();
+        thesis.setThesisType(ThesisType.PHD);
+        thesis.setIsOnPublicReview(false);
+        var thesisId = 1;
+        thesis.getPreliminaryFiles().addAll(createMockDocuments(files));
+        thesis.getPreliminarySupplements().addAll(createMockDocuments(supplements));
+        thesis.getCommissionReports().addAll(createMockDocuments(reports));
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When & Then
+        ThesisException exception =
+            assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId));
+        assertEquals("missingAttachmentsMessage", exception.getMessage());
+    }
+
+    private Set<DocumentFile> createMockDocuments(int count) {
+        return IntStream.range(0, count).mapToObj(i -> {
+                var docFile = new DocumentFile();
+                docFile.setId(i);
+                return docFile;
+            })
+            .collect(Collectors.toSet());
     }
 }

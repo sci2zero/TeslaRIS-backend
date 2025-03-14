@@ -40,6 +40,7 @@ import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.ruleengine.AssessmentPointsRuleEngine;
 import rs.teslaris.core.assessment.ruleengine.AssessmentPointsScalingRuleEngine;
+import rs.teslaris.core.assessment.service.impl.cruddelegate.DocumentClassificationJPAServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.DocumentAssessmentClassificationService;
@@ -53,9 +54,11 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -64,6 +67,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 
 @Service
 @Transactional
@@ -96,6 +100,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final EventIndexRepository eventIndexRepository;
 
+    private final DocumentClassificationJPAServiceImpl documentClassificationJPAService;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -110,7 +116,8 @@ public class DocumentAssessmentClassificationServiceImpl
         DocumentRepository documentRepository, TaskManagerService taskManagerService,
         SearchService<DocumentPublicationIndex> searchService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
-        IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository) {
+        IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository,
+        DocumentClassificationJPAServiceImpl documentClassificationJPAService) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -126,6 +133,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.indicatorRepository = indicatorRepository;
         this.eventIndexRepository = eventIndexRepository;
+        this.documentClassificationJPAService = documentClassificationJPAService;
     }
 
     @Override
@@ -151,6 +159,7 @@ public class DocumentAssessmentClassificationServiceImpl
                 .orElseThrow(() -> new NotFoundException(
                     "Document with ID " + documentAssessmentClassificationDTO.getDocumentId() +
                         " does not exist."));
+        checkIfDocumentIsAThesis(document);
 
         if (Objects.isNull(document.getDocumentDate()) || document.getDocumentDate().isEmpty()) {
             throw new CantEditException("Document does not have publication date.");
@@ -168,11 +177,18 @@ public class DocumentAssessmentClassificationServiceImpl
             documentAssessmentClassificationRepository.save(newDocumentClassification));
     }
 
+    private void checkIfDocumentIsAThesis(Document document) {
+        if (document instanceof Thesis && ((Thesis) document).getIsOnPublicReview()) {
+            throw new ThesisException("Thesis is on public review, can't edit classifications.");
+        }
+    }
+
     @Override
     public void editDocumentAssessmentClassification(Integer classificationId,
                                                      DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
-        var documentClassification = findOne(classificationId);
+        var documentClassification = documentClassificationJPAService.findOne(classificationId);
 
+        checkIfDocumentIsAThesis(documentClassification.getDocument());
         setCommonFields(documentClassification, documentAssessmentClassificationDTO);
 
         save(documentClassification);

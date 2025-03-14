@@ -4,9 +4,13 @@ import lombok.Getter;
 
 @Getter
 public enum ThesisAttachmentType {
+
     FILE(ResourceType.PREPRINT),
+
     SUPPLEMENT(ResourceType.SUPPLEMENT),
-    COMMISSION_REPORTS(ResourceType.SUPPLEMENT);
+
+    COMMISSION_REPORT(ResourceType.SUPPLEMENT);
+
 
     private final ResourceType resourceType;
 

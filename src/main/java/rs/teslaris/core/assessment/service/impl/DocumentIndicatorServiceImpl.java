@@ -15,9 +15,12 @@ import rs.teslaris.core.assessment.service.impl.cruddelegate.DocumentIndicatorJP
 import rs.teslaris.core.assessment.service.interfaces.DocumentIndicatorService;
 import rs.teslaris.core.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 
 @Service
 @Transactional
@@ -64,10 +67,18 @@ public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
         setCommonFields(newDocumentIndicator, documentIndicatorDTO);
         newDocumentIndicator.setUser(userService.findOne(userId));
 
-        newDocumentIndicator.setDocument(
-            documentPublicationService.findOne(documentIndicatorDTO.getDocumentId()));
+        var document = documentPublicationService.findOne(documentIndicatorDTO.getDocumentId());
+        checkIfDocumentIsAThesis(document);
+
+        newDocumentIndicator.setDocument(document);
 
         return documentIndicatorJPAService.save(newDocumentIndicator);
+    }
+
+    private void checkIfDocumentIsAThesis(Document document) {
+        if (document instanceof Thesis && ((Thesis) document).getIsOnPublicReview()) {
+            throw new ThesisException("Thesis is on public review, can't add indicators.");
+        }
     }
 
     @Override
@@ -76,6 +87,9 @@ public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
         var documentIndicatorToUpdate = documentIndicatorJPAService.findOne(documentIndicatorId);
 
         setCommonFields(documentIndicatorToUpdate, documentIndicatorDTO);
+
+        var document = documentPublicationService.findOne(documentIndicatorDTO.getDocumentId());
+        checkIfDocumentIsAThesis(document);
 
         documentIndicatorToUpdate.setDocument(
             documentPublicationService.findOne(documentIndicatorDTO.getDocumentId()));

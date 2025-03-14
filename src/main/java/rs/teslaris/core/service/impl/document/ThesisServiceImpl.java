@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -59,6 +60,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     private final LanguageTagService languageTagService;
 
     private final ThesisRepository thesisRepository;
+
+    @Value("${thesis.public-review.duration-days}")
+    private Integer daysOnPublicReview;
 
 
     @Autowired
@@ -127,6 +131,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
+        checkIfThesisIsOnPublicReview(thesisToUpdate);
+
         clearCommonFields(thesisToUpdate);
         thesisToUpdate.setOrganisationUnit(null);
 
@@ -152,6 +158,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     public void deleteThesis(Integer thesisId) {
+        var thesisToDelete = thesisJPAService.findOne(thesisId);
+        checkIfThesisIsOnPublicReview(thesisToDelete);
+
         thesisJPAService.delete(thesisId);
     }
 
@@ -180,6 +189,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
 
+        checkIfThesisIsOnPublicReview(thesis);
+
         document.setResourceType(attachmentType.getResourceType());
         var documentFile = documentFileService.saveNewPreliminaryDocument(document);
 
@@ -192,7 +203,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 thesis.getPreliminarySupplements().forEach(file -> file.setLatest(false));
                 thesis.getPreliminarySupplements().add(documentFile);
             }
-            case COMMISSION_REPORTS -> {
+            case COMMISSION_REPORT -> {
                 thesis.getCommissionReports().forEach(file -> file.setLatest(false));
                 thesis.getCommissionReports().add(documentFile);
             }
@@ -206,6 +217,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void deleteThesisAttachment(Integer thesisId, Integer documentFileId,
                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
+
+        checkIfThesisIsOnPublicReview(thesis);
+
         var documentFile = documentFileService.findDocumentFileById(documentFileId);
 
         removeAttachment(thesis, documentFile, attachmentType);
@@ -219,7 +233,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         Set<DocumentFile> attachments = switch (attachmentType) {
             case FILE -> thesis.getPreliminaryFiles();
             case SUPPLEMENT -> thesis.getPreliminarySupplements();
-            case COMMISSION_REPORTS -> thesis.getCommissionReports();
+            case COMMISSION_REPORT -> thesis.getCommissionReports();
         };
 
         attachments.remove(documentFile);
@@ -246,9 +260,39 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             throw new ThesisException("Already on public review.");
         }
 
+        if (thesis.getPreliminaryFiles().isEmpty() ||
+            thesis.getPreliminarySupplements().isEmpty() ||
+            thesis.getCommissionReports().isEmpty()) {
+            throw new ThesisException("noAttachmentsMessage");
+        }
+
+        if (thesis.getPreliminaryFiles().size() != thesis.getPreliminarySupplements().size() ||
+            thesis.getPreliminarySupplements().size() != thesis.getCommissionReports().size()) {
+            throw new ThesisException("missingAttachmentsMessage");
+        }
+
         thesis.setIsOnPublicReview(true);
         thesis.getPublicReviewStartDates().add(LocalDate.now());
         thesisJPAService.save(thesis);
+    }
+
+    @Override
+    public void removeFromPublicReview(Integer thesisId) {
+        var thesis = thesisJPAService.findOne(thesisId);
+
+        if (!thesis.getIsOnPublicReview()) {
+            throw new ThesisException("Thesis is not on public review.");
+        }
+
+        var lastPublicReviewDate = thesis.getPublicReviewStartDates().stream()
+            .max(Comparator.naturalOrder()).stream().findFirst();
+
+        if (lastPublicReviewDate.isEmpty()) {
+            throw new ThesisException("Never been on public review.");
+        }
+
+        thesis.setIsOnPublicReview(false);
+        thesis.getPublicReviewStartDates().remove(lastPublicReviewDate.get());
     }
 
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {
@@ -299,13 +343,20 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         documentPublicationIndexRepository.save(index);
     }
 
+    private void checkIfThesisIsOnPublicReview(Thesis thesis) {
+        if (thesis.getIsOnPublicReview()) {
+            throw new ThesisException("Public review is in progress, can't edit.");
+        }
+    }
+
     @Scheduled(cron = "0 0 0 * * *") // every day at midnight
     public void removeFromPublicReview() {
         var thesesOnPublicReview = thesisRepository.findAllOnPublicReview();
 
         var now = new Date();
-        var thirtyDaysAgo = (new Date(now.getTime() - (30L * 24 * 60 * 60 * 1000))).toInstant()
-            .atZone(ZoneId.systemDefault()).toLocalDate();
+        var thirtyDaysAgo =
+            (new Date(now.getTime() - (daysOnPublicReview * 24 * 60 * 60 * 1000))).toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
 
         thesesOnPublicReview.stream()
             .filter(thesis -> thesis.getPublicReviewStartDates().stream()

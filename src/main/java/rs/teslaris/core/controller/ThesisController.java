@@ -74,12 +74,20 @@ public class ThesisController {
         return thesisService.addThesisAttachment(documentId, file, attachmentType);
     }
 
-    @PatchMapping("/public-review/{documentId}")
+    @PatchMapping("/put-on-public-review/{documentId}")
     @PreAuthorize("hasAuthority('PUT_THESIS_ON_PUBLIC_REVIEW')")
     @PublicationEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void putOnPublicReview(@PathVariable Integer documentId) {
         thesisService.putOnPublicReview(documentId);
+    }
+
+    @PatchMapping("/remove-from-public-review/{documentId}")
+    @PreAuthorize("hasAuthority('REMOVE_THESIS_FROM_PUBLIC_REVIEW')")
+    @PublicationEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFromPublicReview(@PathVariable Integer documentId) {
+        thesisService.removeFromPublicReview(documentId);
     }
 
     @DeleteMapping("/{attachmentType}/{documentId}/{documentFileId}")

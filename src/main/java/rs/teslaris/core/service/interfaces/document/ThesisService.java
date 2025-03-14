@@ -28,4 +28,6 @@ public interface ThesisService {
                                 ThesisAttachmentType attachmentType);
 
     void putOnPublicReview(Integer thesisId);
+
+    void removeFromPublicReview(Integer thesisId);
 }

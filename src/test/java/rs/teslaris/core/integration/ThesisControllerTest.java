@@ -97,15 +97,29 @@ public class ThesisControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testPutThesisOnPublicReview() throws Exception {
+    public void testPutThesisOnPublicReviewFailsForEmptyAttachmentList() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(
-                        "http://localhost:8081/api/thesis/public-review/{thesisId}", 10)
+                        "http://localhost:8081/api/thesis/put-on-public-review/{thesisId}", 10)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-            .andExpect(status().isNoContent());
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    @Order(Integer.MAX_VALUE)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testRemoveFromPublicReviewFailsWhenNotOnPublicReview() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/remove-from-public-review/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isConflict());
     }
 
     @Test

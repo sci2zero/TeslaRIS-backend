@@ -28,6 +28,7 @@ import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
 import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.impl.DocumentAssessmentClassificationServiceImpl;
+import rs.teslaris.core.assessment.service.impl.cruddelegate.DocumentClassificationJPAServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -58,6 +59,9 @@ public class DocumentAssessmentClassificationServiceTest {
 
     @Mock
     private EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
+
+    @Mock
+    private DocumentClassificationJPAServiceImpl documentClassificationJPAService;
 
     @InjectMocks
     private DocumentAssessmentClassificationServiceImpl documentAssessmentClassificationService;
@@ -197,8 +201,7 @@ public class DocumentAssessmentClassificationServiceTest {
 
         var classification = new DocumentAssessmentClassification();
         classification.setId(1);
-        when(documentAssessmentClassificationRepository.findById(1))
-            .thenReturn(java.util.Optional.of(classification));
+        when(documentClassificationJPAService.findOne(1)).thenReturn(classification);
         when(entityAssessmentClassificationRepository.findById(1)).thenReturn(
             Optional.of(new DocumentAssessmentClassification()));
 
@@ -219,7 +222,7 @@ public class DocumentAssessmentClassificationServiceTest {
         classificationDTO.setDocumentId(1);
         classificationDTO.setCommissionId(1);
 
-        when(entityAssessmentClassificationRepository.findById(1)).thenReturn(Optional.empty());
+        when(documentClassificationJPAService.findOne(1)).thenThrow(NotFoundException.class);
 
         // When & Then
         assertThrows(NotFoundException.class, () ->
