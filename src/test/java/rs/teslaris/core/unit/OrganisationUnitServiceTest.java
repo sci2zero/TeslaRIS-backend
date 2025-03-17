@@ -27,6 +27,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -55,6 +58,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
@@ -99,9 +103,21 @@ public class OrganisationUnitServiceTest {
     @Mock
     private IndexBulkUpdateService indexBulkUpdateService;
 
+    @Mock
+    private InvolvementRepository involvementRepository;
+
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
 
+
+    private static Stream<Arguments> argumentSources() {
+        return Stream.of(
+            Arguments.of(null, null),
+            Arguments.of(null, 2),
+            Arguments.of(1, null),
+            Arguments.of(1, 2)
+        );
+    }
 
     @BeforeEach
     public void setUp() {
@@ -432,7 +448,6 @@ public class OrganisationUnitServiceTest {
         verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));
     }
 
-
     @Test
     void shouldEditOrganisationUnits() {
         // given
@@ -545,19 +560,23 @@ public class OrganisationUnitServiceTest {
         });
     }
 
-    @Test
-    public void shouldFindOrganisationUnitWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @MethodSource("argumentSources")
+    public void shouldFindOrganisationUnitWhenSearchingWithSimpleQuery(Integer personId,
+                                                                       Integer topLevelInstitutionId) {
         // Given
         var tokens = Arrays.asList("Fakultet tehnickih nauka", "FTN");
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
             new PageImpl<>(List.of(new OrganisationUnitIndex(), new OrganisationUnitIndex())));
+        when(involvementRepository.findActiveEmploymentInstitutionIds(any())).thenReturn(
+            List.of(1, 2));
 
         // When
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
-                SearchRequestType.SIMPLE, null);
+                SearchRequestType.SIMPLE, personId, topLevelInstitutionId);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

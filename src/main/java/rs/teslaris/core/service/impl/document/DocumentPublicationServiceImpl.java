@@ -484,9 +484,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     public Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                                      Pageable pageable,
-                                                                     SearchRequestType type) {
+                                                                     SearchRequestType type,
+                                                                     Integer institutionId) {
         if (type.equals(SearchRequestType.SIMPLE)) {
-            return searchService.runQuery(buildSimpleSearchQuery(tokens),
+            return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
@@ -630,13 +631,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         })))._toQuery();
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
+                        if (Objects.nonNull(institutionId) && institutionId > 0) {
+                            b.must(sb -> sb.term(
+                                m -> m.field("organisation_unit_ids").value(institutionId)));
+                        }
+
                         if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
                             b.must(mp ->
                                 mp.bool(m -> {

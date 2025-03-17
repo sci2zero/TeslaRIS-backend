@@ -1,6 +1,7 @@
 package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +25,8 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/thesis")
@@ -30,6 +34,9 @@ import rs.teslaris.core.service.interfaces.document.ThesisService;
 public class ThesisController {
 
     private final ThesisService thesisService;
+
+    private final JwtUtil tokenUtil;
+
 
     @GetMapping("/{documentId}")
     public ThesisResponseDTO readThesis(
@@ -41,7 +48,10 @@ public class ThesisController {
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")
     @Idempotent
-    public ThesisDTO createThesis(@RequestBody @Valid ThesisDTO thesis) {
+    public ThesisDTO createThesis(@RequestBody @Valid ThesisDTO thesis,
+                                  @RequestHeader("Authorization") String bearerToken) {
+        performReferenceAdditionChecks(thesis, bearerToken);
+
         var savedThesis = thesisService.createThesis(thesis, true);
         thesis.setId(savedThesis.getId());
         return thesis;
@@ -51,7 +61,10 @@ public class ThesisController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
     public void editThesis(@PathVariable Integer documentId,
-                           @RequestBody @Valid ThesisDTO thesis) {
+                           @RequestBody @Valid ThesisDTO thesis,
+                           @RequestHeader("Authorization") String bearerToken) {
+        performReferenceAdditionChecks(thesis, bearerToken);
+
         thesisService.editThesis(documentId, thesis);
     }
 
@@ -99,5 +112,13 @@ public class ThesisController {
                                        @PathVariable Integer documentId,
                                        @PathVariable Integer documentFileId) {
         thesisService.deleteThesisAttachment(documentId, documentFileId, attachmentType);
+    }
+
+    private void performReferenceAdditionChecks(ThesisDTO thesis, String bearerToken) {
+        if (tokenUtil.extractUserRoleFromToken(bearerToken).equals("RESEARCHER") &&
+            (Objects.isNull(thesis.getDocumentDate()) || thesis.getDocumentDate().isEmpty())) {
+            throw new ThesisException(
+                "You have to provide document date when adding thesis as reference.");
+        }
     }
 }

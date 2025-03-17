@@ -211,7 +211,7 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
                 List.of(
                     new Privilege[] {updateProfile, allowAccountTakeover, manageThesisAttachments,
-                        putThesisOnPublicReview})));
+                        putThesisOnPublicReview, createUserBasic, editPersonalInfo})));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -339,7 +339,7 @@ public class DbInitializer implements ApplicationRunner {
             testingDataInitializer.initializeIntegrationTestingData(serbianTag, serbianLanguage,
                 englishTag,
                 germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
-                viceDeanForScienceAuthority, commission5);
+                viceDeanForScienceAuthority, institutionalEditorAuthority, commission5);
         }
     }
 

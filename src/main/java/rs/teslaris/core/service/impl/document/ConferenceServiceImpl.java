@@ -246,6 +246,17 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    public void reindexVolatileConferenceInformation(Integer conferenceId) {
+        eventIndexRepository.findByDatabaseId(conferenceId).ifPresent(eventIndex -> {
+            eventIndex.setRelatedInstitutionIds(
+                eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId)
+                    .stream().toList());
+
+            eventIndexRepository.save(eventIndex);
+        });
+    }
+
+    @Override
     public void reorderConferenceContributions(Integer conferenceId, Integer contributionId,
                                                Integer oldContributionOrderNumber,
                                                Integer newContributionOrderNumber) {

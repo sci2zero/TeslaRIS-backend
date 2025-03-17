@@ -123,6 +123,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         if (publicationToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
             indexJournalPublication(publicationToUpdate, indexToUpdate);
+            journalService.reindexJournalVolatileInformation(
+                publicationToUpdate.getJournal().getId());
         }
 
         journalPublicationJPAService.save(publicationToUpdate);

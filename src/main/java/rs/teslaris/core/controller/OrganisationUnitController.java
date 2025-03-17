@@ -84,10 +84,12 @@ public class OrganisationUnitController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(value = "personId", required = false) Integer personId,
+        @RequestParam(value = "topLevelInstitutionId", required = false)
+        Integer topLevelInstitutionId,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.SIMPLE, personId);
+            SearchRequestType.SIMPLE, personId, topLevelInstitutionId);
     }
 
     @GetMapping("/advanced-search")
@@ -96,7 +98,7 @@ public class OrganisationUnitController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.ADVANCED, null);
+            SearchRequestType.ADVANCED, null, null);
     }
 
     @PostMapping

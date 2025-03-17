@@ -200,7 +200,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var person = findOne(personId);
 
         for (var personInvolvement : person.getInvolvements()) {
-            Integer personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
+            var personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
+
             if (personInvolvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
                 Objects.equals(personOrganisationUnitId, organisationUnitId)) {
                 return true;

@@ -152,9 +152,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         proceedingPublicationJPAService.save(publicationToUpdate);
 
-        conferenceService.reindexConference(publicationToUpdate.getEvent().getId());
+        conferenceService.reindexVolatileConferenceInformation(
+            publicationToUpdate.getEvent().getId());
         if (!publicationToUpdate.getEvent().getId().equals(oldConferenceId)) {
-            conferenceService.reindexConference(oldConferenceId);
+            conferenceService.reindexVolatileConferenceInformation(oldConferenceId);
         }
 
         sendNotifications(publicationToUpdate);

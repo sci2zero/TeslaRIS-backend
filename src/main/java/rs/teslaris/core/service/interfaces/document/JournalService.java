@@ -18,7 +18,8 @@ public interface JournalService {
 
     Page<JournalResponseDTO> readAllJournals(Pageable pageable);
 
-    Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable);
+    Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
+                                      Integer institutionId);
 
     Journal findJournalByJournalName(String journalName, LanguageTag defaultLanguage,
                                      String eIssn, String printIssn);
@@ -52,6 +53,8 @@ public interface JournalService {
     void reindexJournals();
 
     void indexJournal(Journal journal, JournalIndex index);
+
+    void reindexJournalVolatileInformation(Integer journalId);
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
 }

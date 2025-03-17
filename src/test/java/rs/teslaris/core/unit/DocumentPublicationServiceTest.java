@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -236,8 +238,9 @@ public class DocumentPublicationServiceTest {
         verify(documentRepository, times(1)).save(document);
     }
 
-    @Test
-    public void shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    public void shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery(Integer institutionId) {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -249,7 +252,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.SIMPLE);
+                pageable, SearchRequestType.SIMPLE, institutionId);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -268,7 +271,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.ADVANCED);
+                pageable, SearchRequestType.ADVANCED, null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);

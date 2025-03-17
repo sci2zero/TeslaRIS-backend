@@ -41,6 +41,8 @@ public interface ConferenceService {
 
     void reindexConference(Integer conferenceId);
 
+    void reindexVolatileConferenceInformation(Integer conferenceId);
+
     void reorderConferenceContributions(Integer conferenceId, Integer contributionId,
                                         Integer oldContributionOrderNumber,
                                         Integer newContributionOrderNumber);

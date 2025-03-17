@@ -127,6 +127,7 @@ public class PersonController {
     @PostMapping("/basic")
     @PreAuthorize("hasAuthority('REGISTER_PERSON')")
     @Idempotent
+    @PersonEditCheck("CREATE")
     public BasicPersonDTO createPersonWithBasicInfo(@RequestBody @Valid BasicPersonDTO person) {
         var createdPerson = personService.createPersonWithBasicInfo(person, true);
         person.setId(createdPerson.getId());

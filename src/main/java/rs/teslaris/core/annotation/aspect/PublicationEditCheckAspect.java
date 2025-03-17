@@ -50,11 +50,12 @@ public class PublicationEditCheckAspect {
             HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 
         String role = tokenUtil.extractUserRoleFromToken(tokenValue);
+        var userId = tokenUtil.extractUserIdFromToken(tokenValue);
         int personId = userService.getPersonIdForUser(tokenUtil.extractUserIdFromToken(tokenValue));
 
         List<Integer> contributors = getContributors(annotation, attributeMap, joinPoint);
 
-        checkPermission(role, personId, contributors);
+        checkPermission(role, personId, userId, contributors);
 
         return joinPoint.proceed();
     }
@@ -80,20 +81,24 @@ public class PublicationEditCheckAspect {
         return documentPublicationService.getContributorIds(publicationId);
     }
 
-    private void checkPermission(String role, int userId, List<Integer> contributors) {
+    private void checkPermission(String role, int personId, int userId,
+                                 List<Integer> contributors) {
         UserRole userRole = UserRole.valueOf(role);
         switch (userRole) {
             case ADMIN:
                 break;
             case RESEARCHER:
-                if (!contributors.contains(userId)) {
+                if (!contributors.contains(personId)) {
                     throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
                 }
                 break;
             case INSTITUTIONAL_EDITOR:
-                if (contributors.stream().noneMatch(
-                    personId -> personService.isPersonEmployedInOrganisationUnit(personId,
-                        userService.getUserOrganisationUnitId(userId)))) {
+                if (contributors.stream()
+                    .filter(contributorId -> contributorId > 0) // filter out external affiliates
+                    .noneMatch(
+                        contributorId -> personService.isPersonEmployedInOrganisationUnit(
+                            contributorId,
+                            userService.getUserOrganisationUnitId(userId)))) {
                     throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
                 }
                 break;

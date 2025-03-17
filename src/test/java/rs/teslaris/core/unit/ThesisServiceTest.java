@@ -434,18 +434,16 @@ public class ThesisServiceTest {
 
     @ParameterizedTest
     @CsvSource({
-        "1, 2, 3",
-        "3, 1, 3",
-        "2, 2, 1"
+        "1, 3",
+        "2, 1"
     })
-    void shouldThrowExceptionWhenAttachmentsAreUnequal(int files, int supplements, int reports) {
+    void shouldThrowExceptionWhenAttachmentsAreUnequal(int files, int reports) {
         // Given
         var thesis = new Thesis();
         thesis.setThesisType(ThesisType.PHD);
         thesis.setIsOnPublicReview(false);
         var thesisId = 1;
         thesis.getPreliminaryFiles().addAll(createMockDocuments(files));
-        thesis.getPreliminarySupplements().addAll(createMockDocuments(supplements));
         thesis.getCommissionReports().addAll(createMockDocuments(reports));
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);

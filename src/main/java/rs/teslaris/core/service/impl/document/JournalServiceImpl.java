@@ -82,9 +82,10 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
-    public Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens), pageable, JournalIndex.class,
-            "journal");
+    public Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
+                                             Integer institutionId) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId),
+            pageable, JournalIndex.class, "journal");
     }
 
     @Override
@@ -230,6 +231,17 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public void reindexJournalVolatileInformation(Integer journalId) {
+        journalIndexRepository.findJournalIndexByDatabaseId(journalId).ifPresent(journalIndex -> {
+            journalIndex.setRelatedInstitutionIds(
+                journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journalId)
+                    .stream().toList());
+
+            journalIndexRepository.save(journalIndex);
+        });
+    }
+
+    @Override
     public PublicationSeries findOrCreatePublicationSeries(String[] line,
                                                            String defaultLanguageTag,
                                                            String journalName,
@@ -261,7 +273,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                                             LanguageTag defaultLanguage,
                                             String eIssn, String printIssn) {
         var potentialHits = searchJournals(
-            Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2)).getContent();
+            Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2),
+            null).getContent();
 
         for (var potentialHit : potentialHits) {
             for (var title : potentialHit.getTitleOther().split("\\|")) {
@@ -321,12 +334,21 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(journal.getEISSN());
         index.setPrintISSN(journal.getPrintISSN());
+
+        index.setRelatedInstitutionIds(
+            journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journal.getId())
+                .stream().toList());
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            if (Objects.nonNull(institutionId) && institutionId > 0) {
+                b.must(sb -> sb.term(
+                    m -> m.field("related_institution_ids").value(institutionId)));
+            }
+
             tokens.forEach(token -> {
                 if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
                     b.must(mp ->

@@ -68,10 +68,10 @@ public class DocumentPublicationController {
     public Page<DocumentPublicationIndex> simpleSearch(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
-        Pageable pageable) {
+        @RequestParam(required = false) Integer institutionId, Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
-            SearchRequestType.SIMPLE);
+            SearchRequestType.SIMPLE, institutionId);
     }
 
     @GetMapping("/advanced-search")
@@ -80,7 +80,7 @@ public class DocumentPublicationController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
-            SearchRequestType.ADVANCED);
+            SearchRequestType.ADVANCED, null);
     }
 
     @GetMapping("/deduplication-search")

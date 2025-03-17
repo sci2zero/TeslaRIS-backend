@@ -261,13 +261,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         if (thesis.getPreliminaryFiles().isEmpty() ||
-            thesis.getPreliminarySupplements().isEmpty() ||
             thesis.getCommissionReports().isEmpty()) {
             throw new ThesisException("noAttachmentsMessage");
         }
 
-        if (thesis.getPreliminaryFiles().size() != thesis.getPreliminarySupplements().size() ||
-            thesis.getPreliminarySupplements().size() != thesis.getCommissionReports().size()) {
+        if (thesis.getPreliminaryFiles().size() != thesis.getCommissionReports().size()) {
             throw new ThesisException("missingAttachmentsMessage");
         }
 

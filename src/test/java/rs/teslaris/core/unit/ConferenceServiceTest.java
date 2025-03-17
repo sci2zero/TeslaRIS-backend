@@ -15,8 +15,10 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -416,5 +418,58 @@ public class ConferenceServiceTest {
         // then
         assertTrue(result);
         verify(eventRepository).existsByConfId(identifier, organisationUnitId);
+    }
+
+    @Test
+    void shouldReindexVolatileConferenceInformationWhenConferenceExists() {
+        // Given
+        var conferenceId = 123;
+        var eventIndex = new EventIndex();
+        var institutionIds = Set.of(1, 2, 3);
+
+        when(eventIndexRepository.findByDatabaseId(conferenceId))
+            .thenReturn(Optional.of(eventIndex));
+        when(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId))
+            .thenReturn(institutionIds);
+
+        // When
+        conferenceService.reindexVolatileConferenceInformation(conferenceId);
+
+        // Then
+        assertEquals(institutionIds.stream().toList(), eventIndex.getRelatedInstitutionIds());
+        verify(eventIndexRepository).save(eventIndex);
+    }
+
+    @Test
+    void shouldNotReindexWhenConferenceDoesNotExist() {
+        // Given
+        var conferenceId = 456;
+        when(eventIndexRepository.findByDatabaseId(conferenceId))
+            .thenReturn(Optional.empty());
+
+        // When
+        conferenceService.reindexVolatileConferenceInformation(conferenceId);
+
+        // Then
+        verify(eventRepository, never()).findInstitutionIdsByEventIdAndAuthorContribution(any());
+        verify(eventIndexRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldHandleEmptyInstitutionList() {
+        // Given
+        var conferenceId = 789;
+        var eventIndex = new EventIndex();
+        when(eventIndexRepository.findByDatabaseId(conferenceId))
+            .thenReturn(Optional.of(eventIndex));
+        when(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId))
+            .thenReturn(Collections.emptySet());
+
+        // When
+        conferenceService.reindexVolatileConferenceInformation(conferenceId);
+
+        // Then
+        assertTrue(eventIndex.getRelatedInstitutionIds().isEmpty());
+        verify(eventIndexRepository).save(eventIndex);
     }
 }

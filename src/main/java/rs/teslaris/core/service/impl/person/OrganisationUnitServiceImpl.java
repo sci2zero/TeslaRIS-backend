@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.person;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -158,9 +159,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens,
                                                                Pageable pageable,
                                                                SearchRequestType type,
-                                                               Integer personId) {
+                                                               Integer personId,
+                                                               Integer topLevelInstitutionId) {
         if (type.equals(SearchRequestType.SIMPLE)) {
-            return searchService.runQuery(buildSimpleSearchQuery(tokens, personId),
+            return searchService.runQuery(
+                buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -170,23 +173,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             OrganisationUnitIndex.class, "organisation_unit");
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, Integer personId) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
+                                         Integer topLevelInstitutionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
 
-            if (Objects.nonNull(personId)) {
-                var allowedInstitutions =
-                    involvementRepository.findActiveEmploymentInstitutionIds(personId);
-
-                b.must(sb -> sb.terms(t -> t
-                    .field("databaseId")
-                    .terms(v -> v.value(allowedInstitutions.stream()
-                        .map(String::valueOf)
-                        .map(FieldValue::of)
-                        .toList()))
-                ));
-            }
+            addInstitutionFilter(b, personId, topLevelInstitutionId);
 
             tokens.forEach(token -> {
 
@@ -228,6 +221,31 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             });
             return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();
+    }
+
+    private void addInstitutionFilter(BoolQuery.Builder b, Integer personId,
+                                      Integer topLevelInstitutionId) {
+        if (Objects.nonNull(personId)) {
+            var allowedInstitutions =
+                involvementRepository.findActiveEmploymentInstitutionIds(personId);
+            b.must(createTermsQuery("databaseId", allowedInstitutions));
+        }
+        if (Objects.nonNull(topLevelInstitutionId)) {
+            var allowedInstitutions =
+                organisationUnitsRelationRepository.getSubOUsRecursive(topLevelInstitutionId);
+            allowedInstitutions.add(topLevelInstitutionId);
+            b.must(createTermsQuery("databaseId", allowedInstitutions));
+        }
+    }
+
+    private Query createTermsQuery(String field, List<Integer> values) {
+        return TermsQuery.of(t -> t
+            .field(field)
+            .terms(v -> v.value(values.stream()
+                .map(String::valueOf)
+                .map(FieldValue::of)
+                .toList()))
+        )._toQuery();
     }
 
     @Override
