@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -73,8 +74,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              PersonContributionService personContributionService,
-                             ExpressionTransformer expressionTransformer,
-                             EventService eventService, ThesisJPAServiceImpl thesisJPAService,
+                             ExpressionTransformer expressionTransformer, EventService eventService,
+                             CommissionRepository commissionRepository,
+                             ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              ResearchAreaService researchAreaService,
                              LanguageService languageService,
@@ -82,7 +84,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              ThesisRepository thesisRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService, expressionTransformer, eventService);
+            personContributionService,
+            expressionTransformer, eventService, commissionRepository);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;

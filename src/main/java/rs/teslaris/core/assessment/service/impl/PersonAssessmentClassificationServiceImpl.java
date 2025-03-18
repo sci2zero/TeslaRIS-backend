@@ -51,6 +51,8 @@ import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -92,6 +94,8 @@ public class PersonAssessmentClassificationServiceImpl
     public PersonAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService,
+        DocumentPublicationService documentPublicationService,
+        ConferenceService conferenceService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         PersonAssessmentClassificationRepository personAssessmentClassificationRepository,
         SearchService<PersonIndex> searchService,
@@ -103,8 +107,8 @@ public class PersonAssessmentClassificationServiceImpl
         PersonIndexRepository personIndexRepository, UserRepository userRepository,
         CitationService citationService, InvolvementRepository involvementRepository,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
-        super(assessmentClassificationService, commissionService,
-            entityAssessmentClassificationRepository);
+        super(assessmentClassificationService, commissionService, documentPublicationService,
+            conferenceService, entityAssessmentClassificationRepository);
         this.personAssessmentClassificationRepository = personAssessmentClassificationRepository;
         this.searchService = searchService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;

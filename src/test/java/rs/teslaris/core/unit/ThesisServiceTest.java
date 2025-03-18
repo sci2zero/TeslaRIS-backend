@@ -36,6 +36,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -103,6 +104,9 @@ public class ThesisServiceTest {
 
     @Mock
     private LanguageTagService languageService;
+
+    @Mock
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;

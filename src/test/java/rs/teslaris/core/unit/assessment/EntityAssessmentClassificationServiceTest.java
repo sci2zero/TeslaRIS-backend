@@ -12,12 +12,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
 import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.impl.EntityAssessmentClassificationServiceImpl;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
 @SpringBootTest
 public class EntityAssessmentClassificationServiceTest {
 
     @Mock
     private EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
+
+    @Mock
+    private DocumentPublicationService documentPublicationService;
 
     @InjectMocks
     private EntityAssessmentClassificationServiceImpl entityAssessmentClassificationService;
@@ -28,6 +33,7 @@ public class EntityAssessmentClassificationServiceTest {
         // Given
         var entityAssessmentClassificationId = 1;
         var entityAssessmentClassification = new DocumentAssessmentClassification();
+        entityAssessmentClassification.setDocument(new Monograph());
 
         when(entityAssessmentClassificationRepository.findById(
             entityAssessmentClassificationId)).thenReturn(

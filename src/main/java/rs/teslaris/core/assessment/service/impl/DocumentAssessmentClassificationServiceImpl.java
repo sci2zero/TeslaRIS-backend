@@ -63,6 +63,8 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
@@ -106,7 +108,8 @@ public class DocumentAssessmentClassificationServiceImpl
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        CommissionService commissionService,
+        CommissionService commissionService, DocumentPublicationService documentPublicationService,
+        ConferenceService conferenceService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
@@ -118,8 +121,8 @@ public class DocumentAssessmentClassificationServiceImpl
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository,
         DocumentClassificationJPAServiceImpl documentClassificationJPAService) {
-        super(assessmentClassificationService, commissionService,
-            entityAssessmentClassificationRepository);
+        super(assessmentClassificationService, commissionService, documentPublicationService,
+            conferenceService, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -173,8 +176,11 @@ public class DocumentAssessmentClassificationServiceImpl
             Integer.parseInt(document.getDocumentDate().split("-")[0]));
         newDocumentClassification.setDocument(document);
 
-        return EntityAssessmentClassificationConverter.toDTO(
-            documentAssessmentClassificationRepository.save(newDocumentClassification));
+        var savedDocument =
+            documentAssessmentClassificationRepository.save(newDocumentClassification);
+        documentPublicationService.reindexDocumentVolatileInformation(document.getId());
+
+        return EntityAssessmentClassificationConverter.toDTO(savedDocument);
     }
 
     private void checkIfDocumentIsAThesis(Document document) {
@@ -192,6 +198,8 @@ public class DocumentAssessmentClassificationServiceImpl
         setCommonFields(documentClassification, documentAssessmentClassificationDTO);
 
         save(documentClassification);
+        documentPublicationService.reindexDocumentVolatileInformation(
+            documentClassification.getDocument().getId());
     }
 
     @Override
@@ -740,6 +748,7 @@ public class DocumentAssessmentClassificationServiceImpl
         documentClassification.setDocument(documentRepository.getReferenceById(documentId));
 
         documentAssessmentClassificationRepository.save(documentClassification);
+        documentPublicationService.reindexDocumentVolatileInformation(documentId);
     }
 
     private void setCommonFields(DocumentAssessmentClassification documentClassification,

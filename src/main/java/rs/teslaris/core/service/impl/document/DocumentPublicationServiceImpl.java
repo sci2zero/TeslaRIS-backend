@@ -24,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -78,6 +79,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final ExpressionTransformer expressionTransformer;
 
     private final EventService eventService;
+
+    private final CommissionRepository commissionRepository;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -295,6 +298,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             });
         index.setAuthorNamesSortable(index.getAuthorNames());
         index.setOrganisationUnitIds(organisationUnitIds);
+        index.setAssessedBy(
+            commissionRepository.findCommissionsThatClassifiedEvent(document.getId()));
+    }
+
+    @Override
+    public void reindexDocumentVolatileInformation(Integer documentId) {
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(documentIndex -> {
+                documentIndex.setAssessedBy(
+                    commissionRepository.findCommissionsThatAssessedDocument(documentId));
+                documentPublicationIndexRepository.save(documentIndex);
+            });
     }
 
     @Override
@@ -637,12 +652,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
-                    tokens.forEach(token -> {
-                        if (Objects.nonNull(institutionId) && institutionId > 0) {
-                            b.must(sb -> sb.term(
-                                m -> m.field("organisation_unit_ids").value(institutionId)));
-                        }
+                    if (Objects.nonNull(institutionId) && institutionId > 0) {
+                        b.must(sb -> sb.term(
+                            m -> m.field("organisation_unit_ids").value(institutionId)));
+                    }
 
+                    tokens.forEach(token -> {
                         if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
                             b.must(mp ->
                                 mp.bool(m -> {

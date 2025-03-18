@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -50,15 +51,18 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  MultilingualContentService multilingualContentService,
                                  PersonContributionService personContributionService,
                                  EventRepository eventRepository,
+                                 IndexBulkUpdateService indexBulkUpdateService,
                                  EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService, EmailUtil emailUtil,
                                  CountryService countryService,
-                                 IndexBulkUpdateService indexBulkUpdateService,
+                                 CommissionRepository commissionRepository,
                                  ConferenceJPAServiceImpl conferenceJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                  ConferenceRepository conferenceRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
-            eventRepository, indexBulkUpdateService, eventsRelationRepository, searchService,
+            eventRepository, indexBulkUpdateService, commissionRepository,
+            eventsRelationRepository,
+            searchService,
             emailUtil, countryService);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -251,6 +255,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             eventIndex.setRelatedInstitutionIds(
                 eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId)
                     .stream().toList());
+            eventIndex.setClassifiedBy(
+                commissionRepository.findCommissionsThatClassifiedEvent(conferenceId));
 
             eventIndexRepository.save(eventIndex);
         });

@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
@@ -63,6 +64,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected final IndexBulkUpdateService indexBulkUpdateService;
 
+    protected final CommissionRepository commissionRepository;
+
     private final EventsRelationRepository eventsRelationRepository;
 
     private final SearchService<EventIndex> searchService;
@@ -70,7 +73,6 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private final EmailUtil emailUtil;
 
     private final CountryService countryService;
-
 
     @Override
     @Nullable
@@ -399,6 +401,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         index.setRelatedInstitutionIds(
             eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(event.getId()).stream()
                 .toList());
+        index.setClassifiedBy(
+            commissionRepository.findCommissionsThatClassifiedEvent(event.getId()));
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,

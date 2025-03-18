@@ -16,12 +16,14 @@ import rs.teslaris.core.assessment.dto.EventAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.EventAssessmentClassification;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.service.impl.EventAssessmentClassificationServiceImpl;
 import rs.teslaris.core.assessment.service.impl.cruddelegate.EventAssessmentClassificationJPAServiceImpl;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
 @SpringBootTest
@@ -41,6 +43,12 @@ public class EventAssessmentClassificationServiceTest {
 
     @Mock
     private CommissionService commissionService;
+
+    @Mock
+    private CommissionRepository commissionRepository;
+
+    @Mock
+    private ConferenceService conferenceService;
 
     @InjectMocks
     private EventAssessmentClassificationServiceImpl eventAssessmentClassificationService;

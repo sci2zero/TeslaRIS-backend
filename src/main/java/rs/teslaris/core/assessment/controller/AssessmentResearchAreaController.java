@@ -33,7 +33,6 @@ public class AssessmentResearchAreaController {
     }
 
     @GetMapping("/{personId}")
-    @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RESEARCH_AREA')")
     public AssessmentResearchAreaDTO readPersonAssessmentResearchArea(
         @PathVariable Integer personId) {
         return assessmentResearchAreaService.readPersonAssessmentResearchArea(personId);

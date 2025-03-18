@@ -11,6 +11,8 @@ import rs.teslaris.core.assessment.repository.OrganisationUnitAssessmentClassifi
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.OrganisationUnitAssessmentClassificationService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
 @Service
 public class OrganisationUnitAssessmentClassificationServiceImpl
@@ -25,10 +27,12 @@ public class OrganisationUnitAssessmentClassificationServiceImpl
     public OrganisationUnitAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService,
+        DocumentPublicationService documentPublicationService,
+        ConferenceService conferenceService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         OrganisationUnitAssessmentClassificationRepository organisationUnitAssessmentClassificationRepository) {
-        super(assessmentClassificationService, commissionService,
-            entityAssessmentClassificationRepository);
+        super(assessmentClassificationService, commissionService, documentPublicationService,
+            conferenceService, entityAssessmentClassificationRepository);
         this.organisationUnitAssessmentClassificationRepository =
             organisationUnitAssessmentClassificationRepository;
     }

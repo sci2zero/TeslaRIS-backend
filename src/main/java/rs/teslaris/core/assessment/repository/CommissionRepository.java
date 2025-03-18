@@ -1,5 +1,6 @@
 package rs.teslaris.core.assessment.repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,4 +34,14 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
 
     @Query("SELECT c FROM Commission c LEFT JOIN FETCH c.relations LEFT JOIN FETCH c.relations.targetCommissions WHERE c.id = :commissionId")
     Optional<Commission> findOneWithRelations(Integer commissionId);
+
+    @Query("SELECT c.id FROM Commission c LEFT JOIN EventAssessmentClassification eac " +
+        "ON eac.commission.id = c.id " +
+        "WHERE eac.event.id = :eventId")
+    List<Integer> findCommissionsThatClassifiedEvent(Integer eventId);
+
+    @Query("SELECT c.id FROM Commission c LEFT JOIN DocumentAssessmentClassification eac " +
+        "ON eac.commission.id = c.id " +
+        "WHERE eac.document.id = :documentId")
+    List<Integer> findCommissionsThatAssessedDocument(Integer documentId);
 }

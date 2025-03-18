@@ -132,4 +132,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
+
+    @Field(type = FieldType.Integer, name = "assessed_by", store = true)
+    private List<Integer> assessedBy = new ArrayList<>();
 }

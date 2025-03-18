@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,6 +29,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -85,6 +87,9 @@ public class ConferenceServiceTest {
 
     @Mock
     private IndexBulkUpdateService indexBulkUpdateService;
+
+    @Mock
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private ConferenceServiceImpl conferenceService;
@@ -470,6 +475,29 @@ public class ConferenceServiceTest {
 
         // Then
         assertTrue(eventIndex.getRelatedInstitutionIds().isEmpty());
+        verify(eventIndexRepository).save(eventIndex);
+    }
+
+    @Test
+    void shouldUpdateFieldsAndSave_whenReindexVolatileConferenceInformation() {
+        // Given
+        var conferenceId = 3;
+        var eventIndex = mock(EventIndex.class);
+        when(eventIndexRepository.findByDatabaseId(conferenceId))
+            .thenReturn(Optional.of(eventIndex));
+        var institutionIds = Set.of(100, 200, 300);
+        var classifiedBy = List.of(1, 2);
+        when(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
+            conferenceId)).thenReturn(institutionIds);
+        when(commissionRepository.findCommissionsThatClassifiedEvent(conferenceId)).thenReturn(
+            classifiedBy);
+
+        // When
+        conferenceService.reindexVolatileConferenceInformation(conferenceId);
+
+        // Then
+        verify(eventIndex).setRelatedInstitutionIds(institutionIds.stream().toList());
+        verify(eventIndex).setClassifiedBy(classifiedBy);
         verify(eventIndexRepository).save(eventIndex);
     }
 }

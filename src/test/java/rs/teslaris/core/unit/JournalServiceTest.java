@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -571,6 +572,25 @@ public class JournalServiceTest {
 
         // Then
         assertTrue(journalIndex.getRelatedInstitutionIds().isEmpty());
+        verify(journalIndexRepository).save(journalIndex);
+    }
+
+    @Test
+    void shouldUpdateRelatedInstitutionIdsWhenReindexJournalVolatileInformation() {
+        // Given
+        var journalId = 2;
+        var journalIndex = mock(JournalIndex.class);
+        when(journalIndexRepository.findJournalIndexByDatabaseId(journalId))
+            .thenReturn(Optional.of(journalIndex));
+        var institutionIds = Set.of(10, 20, 30);
+        when(journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(
+            journalId)).thenReturn(institutionIds);
+
+        // When
+        journalService.reindexJournalVolatileInformation(journalId);
+
+        // Then
+        verify(journalIndex).setRelatedInstitutionIds(institutionIds.stream().toList());
         verify(journalIndexRepository).save(journalIndex);
     }
 }

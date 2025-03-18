@@ -18,6 +18,8 @@ import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificat
 import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.model.document.EventsRelationType;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
 @Service
@@ -38,12 +40,14 @@ public class EventAssessmentClassificationServiceImpl
     public EventAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService,
+        DocumentPublicationService documentPublicationService,
+        ConferenceService conferenceService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         EventService eventService) {
-        super(assessmentClassificationService, commissionService,
-            entityAssessmentClassificationRepository);
+        super(assessmentClassificationService, commissionService, documentPublicationService,
+            conferenceService, entityAssessmentClassificationRepository);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;
@@ -63,8 +67,9 @@ public class EventAssessmentClassificationServiceImpl
         EventAssessmentClassificationDTO eventAssessmentClassificationDTO) {
         var newAssessmentClassification = new EventAssessmentClassification();
 
-        newAssessmentClassification.setCommission(
-            commissionService.findOne(eventAssessmentClassificationDTO.getCommissionId()));
+        var commission =
+            commissionService.findOne(eventAssessmentClassificationDTO.getCommissionId());
+        newAssessmentClassification.setCommission(commission);
         setCommonFields(newAssessmentClassification, eventAssessmentClassificationDTO);
 
         var assessmentClassification = assessmentClassificationService.findOne(
@@ -99,12 +104,16 @@ public class EventAssessmentClassificationServiceImpl
                         instanceClassification.setClassificationYear(
                             eventInstance.getDateFrom().getYear());
                         instanceClassification.setEvent(eventInstance);
+                        instanceClassification.setCommission(commission);
                         instanceClassification.setClassificationReason(
                             AssessmentRulesConfigurationLoader.getRuleDescription(
                                 "eventClassificationRules", "manual",
                                 MultilingualContentConverter.getMultilingualContentDTO(
                                     assessmentClassification.getTitle())));
+
                         eventAssessmentClassificationJPAService.save(instanceClassification);
+                        conferenceService.reindexVolatileConferenceInformation(
+                            eventInstance.getId());
                     }
                 });
         } else {
@@ -118,7 +127,11 @@ public class EventAssessmentClassificationServiceImpl
                 eventAssessmentClassificationDTO.getCommissionId());
         existingClassification.ifPresent(eventAssessmentClassificationRepository::delete);
 
-        return eventAssessmentClassificationJPAService.save(newAssessmentClassification);
+        var savedClassification =
+            eventAssessmentClassificationJPAService.save(newAssessmentClassification);
+        conferenceService.reindexVolatileConferenceInformation(event.getId());
+
+        return savedClassification;
     }
 
     @Override
@@ -155,6 +168,8 @@ public class EventAssessmentClassificationServiceImpl
                             eventInstance.getDateFrom().getYear());
                         instanceClassification.setEvent(eventInstance);
                         eventAssessmentClassificationJPAService.save(instanceClassification);
+                        conferenceService.reindexVolatileConferenceInformation(
+                            eventInstance.getId());
                     }
                 });
         } else {
@@ -163,5 +178,7 @@ public class EventAssessmentClassificationServiceImpl
         }
 
         eventAssessmentClassificationJPAService.save(eventAssessmentClassificationToUpdate);
+        conferenceService.reindexVolatileConferenceInformation(
+            eventAssessmentClassificationToUpdate.getEvent().getId());
     }
 }

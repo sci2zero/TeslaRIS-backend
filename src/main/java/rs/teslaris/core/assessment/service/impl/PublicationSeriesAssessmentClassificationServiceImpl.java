@@ -40,6 +40,8 @@ import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.util.Pair;
@@ -83,6 +85,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     public PublicationSeriesAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService,
+        DocumentPublicationService documentPublicationService,
+        ConferenceService conferenceService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
@@ -90,8 +94,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
         JournalRepository journalRepository, JournalIndexRepository journalIndexRepository,
         TaskManagerService taskManagerService, CsvDataLoader csvDataLoader) {
-        super(assessmentClassificationService, commissionService,
-            entityAssessmentClassificationRepository);
+        super(assessmentClassificationService, commissionService, documentPublicationService,
+            conferenceService, entityAssessmentClassificationRepository);
         this.publicationSeriesAssessmentClassificationJPAService =
             publicationSeriesAssessmentClassificationJPAService;
         this.publicationSeriesAssessmentClassificationRepository =

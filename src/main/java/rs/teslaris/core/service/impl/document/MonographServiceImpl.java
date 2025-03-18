@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -62,14 +63,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 PersonContributionService personContributionService,
                                 ExpressionTransformer expressionTransformer,
                                 EventService eventService,
+                                CommissionRepository commissionRepository,
                                 MonographJPAServiceImpl monographJPAService,
                                 LanguageTagService languageTagService,
-                                JournalService journalService, BookSeriesService bookSeriesService,
+                                JournalService journalService,
+                                BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
                                 MonographRepository monographRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService, expressionTransformer, eventService);
+            personContributionService,
+            expressionTransformer, eventService, commissionRepository);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
         this.journalService = journalService;

@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.assessment.service.interfaces.statistics.StatisticsService;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.SoftwareConverter;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -39,16 +39,18 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                SearchService<DocumentPublicationIndex> searchService,
                                OrganisationUnitService organisationUnitService,
-                               StatisticsService statisticsIndexService,
                                DocumentRepository documentRepository,
                                DocumentFileService documentFileService,
                                PersonContributionService personContributionService,
                                ExpressionTransformer expressionTransformer,
-                               EventService eventService, SoftwareJPAServiceImpl softwareJPAService,
+                               EventService eventService,
+                               CommissionRepository commissionRepository,
+                               SoftwareJPAServiceImpl softwareJPAService,
                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService, expressionTransformer, eventService);
+            personContributionService,
+            expressionTransformer, eventService, commissionRepository);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }

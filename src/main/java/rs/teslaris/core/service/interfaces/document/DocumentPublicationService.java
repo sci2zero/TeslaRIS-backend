@@ -41,6 +41,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     void indexCommonFields(Document document, DocumentPublicationIndex index);
 
+    void reindexDocumentVolatileInformation(Integer documentId);
+
     DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId);
 
     Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,

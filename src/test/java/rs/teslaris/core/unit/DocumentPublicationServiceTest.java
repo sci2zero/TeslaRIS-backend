@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -76,6 +78,9 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;
@@ -618,5 +623,24 @@ public class DocumentPublicationServiceTest {
         verify(documentRepository, atMostOnce()).existsByDoi(identifier, documentPublicationId);
         verify(documentRepository, atMostOnce()).existsByScopusId(identifier,
             documentPublicationId);
+    }
+
+    @Test
+    void shouldUpdateAssessedByWhenReindexDocumentVolatileInformation() {
+        // Given
+        var documentId = 1;
+        var documentIndex = mock(DocumentPublicationIndex.class);
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(documentIndex));
+        var commissions = List.of(1, 2);
+        when(commissionRepository.findCommissionsThatAssessedDocument(documentId)).thenReturn(
+            commissions);
+
+        // When
+        documentPublicationService.reindexDocumentVolatileInformation(documentId);
+
+        // Then
+        verify(documentIndex).setAssessedBy(commissions);
     }
 }
