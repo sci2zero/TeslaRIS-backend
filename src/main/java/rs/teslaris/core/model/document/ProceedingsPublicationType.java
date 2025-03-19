@@ -8,5 +8,5 @@ public enum ProceedingsPublicationType implements PublicationType {
     PREFACE,
     LEXICOGRAPHIC_UNIT,
     POLEMICS,
-    SCIENTIFIC_CRITIC;
+    SCIENTIFIC_CRITIC,
 }

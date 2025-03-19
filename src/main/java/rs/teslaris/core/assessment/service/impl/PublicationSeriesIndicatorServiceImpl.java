@@ -26,7 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityIndicatorConverter;
-import rs.teslaris.core.assessment.dto.IFTableContentDTO;
+import rs.teslaris.core.assessment.dto.IFCategoryRanksDTO;
 import rs.teslaris.core.assessment.dto.IFTableResponseDTO;
 import rs.teslaris.core.assessment.dto.PublicationSeriesIndicatorResponseDTO;
 import rs.teslaris.core.assessment.model.EntityIndicator;
@@ -255,10 +255,10 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             .toList();
     }
 
-    private IFTableContentDTO createCategoryContent(String category,
-                                                    List<PublicationSeriesIndicator> indicators,
-                                                    List<String> contentIndicators) {
-        var categoryContent = new IFTableContentDTO();
+    private IFCategoryRanksDTO createCategoryContent(String category,
+                                                     List<PublicationSeriesIndicator> indicators,
+                                                     List<String> contentIndicators) {
+        var categoryContent = new IFCategoryRanksDTO();
         categoryContent.setCategory(category);
 
         categoryContent.setIf2Ranks(

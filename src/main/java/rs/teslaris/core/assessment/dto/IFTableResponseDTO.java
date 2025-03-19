@@ -17,5 +17,5 @@ public class IFTableResponseDTO {
 
     private List<Pair<Integer, String>> if5Values;
 
-    private List<IFTableContentDTO> ifTableContent;
+    private List<IFCategoryRanksDTO> ifTableContent;
 }

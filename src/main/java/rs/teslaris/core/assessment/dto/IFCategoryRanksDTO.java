@@ -11,7 +11,7 @@ import rs.teslaris.core.util.Pair;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class IFTableContentDTO {
+public class IFCategoryRanksDTO {
 
     private String category;
 

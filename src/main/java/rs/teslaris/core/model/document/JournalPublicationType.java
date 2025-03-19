@@ -8,5 +8,5 @@ public enum JournalPublicationType implements PublicationType {
     CORRECTION,
     LEXICOGRAPHIC_UNIT,
     POLEMICS,
-    SCIENTIFIC_CRITIC;
+    SCIENTIFIC_CRITIC,
 }
