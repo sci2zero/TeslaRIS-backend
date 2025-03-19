@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -49,7 +50,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               Pageable pageable,
                                                               SearchRequestType type,
                                                               Integer institutionId,
-                                                              Integer commissionId);
+                                                              Integer commissionId,
+                                                              List<DocumentPublicationType> allowedTypes);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
                                                           String scopusId);

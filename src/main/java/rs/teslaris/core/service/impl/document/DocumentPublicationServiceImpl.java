@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import jakarta.annotation.Nullable;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -501,10 +503,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      Pageable pageable,
                                                                      SearchRequestType type,
                                                                      Integer institutionId,
-                                                                     Integer commissionId) {
+                                                                     Integer commissionId,
+                                                                     List<DocumentPublicationType> allowedTypes) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
-                buildSimpleSearchQuery(tokens, institutionId, commissionId),
+                buildSimpleSearchQuery(tokens, institutionId, commissionId, allowedTypes),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
@@ -649,7 +652,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
-                                         Integer commissionId) {
+                                         Integer commissionId,
+                                         List<DocumentPublicationType> allowedTypes) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -663,6 +667,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     if (Objects.nonNull(commissionId) && commissionId > 0) {
                         b.mustNot(sb -> sb.term(
                             m -> m.field("assessed_by").value(commissionId)));
+                    }
+
+                    if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
+                        b.must(createTypeTermsQuery(allowedTypes));
                     }
 
                     tokens.forEach(token -> {
@@ -720,6 +728,16 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
             return b;
         })))._toQuery();
+    }
+
+    private Query createTypeTermsQuery(List<DocumentPublicationType> values) {
+        return TermsQuery.of(t -> t
+            .field("type")
+            .terms(v -> v.value(values.stream()
+                .map(DocumentPublicationType::name)
+                .map(FieldValue::of)
+                .toList()))
+        )._toQuery();
     }
 
     protected void sendNotifications(Document document) {
