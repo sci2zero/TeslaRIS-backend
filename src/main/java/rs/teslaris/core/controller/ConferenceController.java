@@ -73,19 +73,23 @@ public class ConferenceController {
         @RequestParam("returnOnlySerialEvents")
         @NotNull(message = "You have to provide search range.") Boolean returnOnlySerialEvents,
         @RequestParam(value = "forMyInstitution", defaultValue = "false") Boolean forMyInstitution,
+        @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
 
-        if (forMyInstitution && !bearerToken.isEmpty() &&
+        if (!bearerToken.isEmpty() &&
             tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
+            var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+
             return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, userService.getUserOrganisationUnitId(
-                    tokenUtil.extractUserIdFromToken(bearerToken)));
+                returnOnlySerialEvents,
+                forMyInstitution ? userService.getUserOrganisationUnitId(userId) : null,
+                unclassified ? userService.getUserCommissionId(userId) : null);
         }
 
         return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, null);
+            returnOnlySerialEvents, null, null);
     }
 
     @GetMapping("/import-search")

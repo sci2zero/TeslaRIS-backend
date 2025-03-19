@@ -500,9 +500,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                                      Pageable pageable,
                                                                      SearchRequestType type,
-                                                                     Integer institutionId) {
+                                                                     Integer institutionId,
+                                                                     Integer commissionId) {
         if (type.equals(SearchRequestType.SIMPLE)) {
-            return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId),
+            return searchService.runQuery(
+                buildSimpleSearchQuery(tokens, institutionId, commissionId),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
@@ -646,7 +648,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         })))._toQuery();
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
+                                         Integer commissionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -655,6 +658,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     if (Objects.nonNull(institutionId) && institutionId > 0) {
                         b.must(sb -> sb.term(
                             m -> m.field("organisation_unit_ids").value(institutionId)));
+                    }
+
+                    if (Objects.nonNull(commissionId) && commissionId > 0) {
+                        b.mustNot(sb -> sb.term(
+                            m -> m.field("assessed_by").value(commissionId)));
                     }
 
                     tokens.forEach(token -> {

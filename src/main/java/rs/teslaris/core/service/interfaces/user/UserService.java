@@ -33,6 +33,8 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     int getUserOrganisationUnitId(Integer userId);
 
+    int getUserCommissionId(Integer userId);
+
     Integer getPersonIdForUser(Integer userId);
 
     boolean isUserAResearcher(Integer userId, Integer personId);

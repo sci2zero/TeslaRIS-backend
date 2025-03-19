@@ -18,10 +18,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -85,6 +87,14 @@ public class DocumentPublicationServiceTest {
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;
 
+    static Stream<Arguments> shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery() {
+        return Stream.of(
+            Arguments.of(null, null),
+            Arguments.of(1, null),
+            Arguments.of(null, 1),
+            Arguments.of(1, 1)
+        );
+    }
 
     @BeforeEach
     public void setUp() {
@@ -244,8 +254,9 @@ public class DocumentPublicationServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, 1})
-    public void shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery(Integer institutionId) {
+    @MethodSource("shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery")
+    public void shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery(Integer institutionId,
+                                                                           Integer commissionId) {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -257,7 +268,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.SIMPLE, institutionId);
+                pageable, SearchRequestType.SIMPLE, institutionId, commissionId);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -276,7 +287,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.ADVANCED, null);
+                pageable, SearchRequestType.ADVANCED, null, null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);

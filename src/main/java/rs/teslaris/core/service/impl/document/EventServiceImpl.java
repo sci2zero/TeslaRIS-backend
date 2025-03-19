@@ -152,10 +152,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
                                          EventType eventType, Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
-                                         Integer commissionInstitutionId) {
+                                         Integer commissionInstitutionId,
+                                         Integer commissionId) {
         return searchService.runQuery(
             buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId),
+                returnOnlySerialEvents, commissionInstitutionId, commissionId),
             pageable, EventIndex.class, "events");
     }
 
@@ -274,7 +275,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
                                          Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
-                                         Integer commissionInstitutionId) {
+                                         Integer commissionInstitutionId,
+                                         Integer commissionId) {
         boolean onlyYearTokens = tokens.stream().allMatch(token -> token.matches("\\d{4}"));
 
         // If only searching by years, disable minimum_should_match, otherwise set it
@@ -332,6 +334,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 });
                 return bq;
             });
+
             b.must(sb -> {
                 sb.match(m -> m.field("event_type").query(eventType.name()));
 
@@ -343,13 +346,21 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     sb.match(m -> m.field("is_serial_event").query(true));
                 }
 
-                if (Objects.nonNull(commissionInstitutionId)) {
-                    sb.match(
-                        m -> m.field("related_institution_ids").query(commissionInstitutionId));
+                if (Objects.nonNull(commissionInstitutionId) && commissionInstitutionId > 0) {
+                    sb.term(
+                        m -> m.field("related_institution_ids").value(commissionInstitutionId));
                 }
 
                 return sb;
             });
+
+            if (Objects.nonNull(commissionId)) {
+                b.mustNot(mnb -> {
+                    mnb.term(m -> m.field("classified_by").value(commissionId));
+                    return mnb;
+                });
+            }
+
             return b;
         })))._toQuery();
     }

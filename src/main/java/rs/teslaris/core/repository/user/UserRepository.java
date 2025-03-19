@@ -17,6 +17,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.organisationUnit ou WHERE u.id = :userId")
     Optional<User> findByIdWithOrganisationUnit(Integer userId);
 
+    @Query("SELECT u.commission.id FROM User u WHERE u.id = :userId")
+    Optional<Integer> findCommissionIdForUser(Integer userId);
+
     @Query("SELECT u.organisationUnit.id FROM User u WHERE u.id = :userId")
     Integer findOrganisationUnitIdForUser(Integer userId);
 

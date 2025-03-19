@@ -48,7 +48,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
     Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                               Pageable pageable,
                                                               SearchRequestType type,
-                                                              Integer institutionId);
+                                                              Integer institutionId,
+                                                              Integer commissionId);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
                                                           String scopusId);

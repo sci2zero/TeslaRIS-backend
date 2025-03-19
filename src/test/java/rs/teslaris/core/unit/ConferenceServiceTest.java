@@ -20,9 +20,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -94,6 +96,14 @@ public class ConferenceServiceTest {
     @InjectMocks
     private ConferenceServiceImpl conferenceService;
 
+    static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery() {
+        return Stream.of(
+            Arguments.of(true, true, null, null),
+            Arguments.of(true, false, 1, null),
+            Arguments.of(false, true, null, 1),
+            Arguments.of(false, false, 1, 1)
+        );
+    }
 
     @Test
     public void shouldReturnConferenceWhenItExists() {
@@ -292,8 +302,11 @@ public class ConferenceServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    public void shouldFindConferenceWhenSearchingWithSimpleQuery(Boolean returnOnlySerialEvents) {
+    @MethodSource("shouldFindConferenceWhenSearchingWithSimpleQuery")
+    public void shouldFindConferenceWhenSearchingWithSimpleQuery(boolean returnOnlyNonSerialEvents,
+                                                                 boolean returnOnlySerialEvents,
+                                                                 Integer commissionInstitutionId,
+                                                                 Integer commissionId) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -303,8 +316,8 @@ public class ConferenceServiceTest {
 
         // When
         var result =
-            conferenceService.searchConferences(tokens, pageable, returnOnlySerialEvents, false,
-                null);
+            conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
+                returnOnlySerialEvents, commissionInstitutionId, commissionId);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

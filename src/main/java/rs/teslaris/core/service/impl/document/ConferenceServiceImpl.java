@@ -85,9 +85,10 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable,
                                               Boolean returnOnlyNonSerialEvents,
                                               Boolean returnOnlySerialEvents,
-                                              Integer commissionInstitutionId) {
+                                              Integer commissionInstitutionId,
+                                              Integer commissionId) {
         return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, commissionInstitutionId);
+            returnOnlySerialEvents, commissionInstitutionId, commissionId);
     }
 
     @Override

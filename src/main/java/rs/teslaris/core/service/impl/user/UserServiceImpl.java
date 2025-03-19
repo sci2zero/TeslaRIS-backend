@@ -158,6 +158,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    public int getUserCommissionId(Integer userId) {
+        return userRepository.findCommissionIdForUser(userId).orElseThrow(
+            () -> new NotFoundException(
+                "User with ID " + userId + " either does not exist or is not a commission user."));
+    }
+
+    @Override
     @Transactional
     public Integer getPersonIdForUser(Integer userId) {
         var user = findOne(userId);
