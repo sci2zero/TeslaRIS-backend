@@ -72,8 +72,12 @@ public class FileServiceFileSystemImpl implements FileService {
 
     @Override
     public GetObjectResponse loadAsResource(String filename) throws IOException {
-        var filepath = Paths.get(rootLocation, filename)
-            .normalize().toAbsolutePath();
+        var filepath = Paths.get(rootLocation, filename).normalize().toAbsolutePath();
+
+        // Ensure file stays within rootLocation
+        if (!filepath.startsWith(Paths.get(rootLocation).toAbsolutePath())) {
+            throw new StorageException("Access denied: " + filename);
+        }
 
         Resource resource;
         try {
@@ -82,15 +86,14 @@ public class FileServiceFileSystemImpl implements FileService {
             throw new StorageException("Could not read file: " + filename);
         }
 
-        if (resource.exists() || resource.isReadable()) {
-            var inputStream = resource.getInputStream();
+        if (resource.exists() && resource.isReadable()) {
+            try (var inputStream = resource.getInputStream()) {
+                var headersMap = new HashMap<String, String>();
+                headersMap.put("Content-Type", "application/octet-stream");
+                var headers = Headers.of(headersMap);
 
-            // Create dummy headers (if required, extract metadata from your resource or service)
-            var headersMap = new HashMap<String, String>();
-            headersMap.put("Content-Type", "application/octet-stream");
-            var headers = Headers.of(headersMap);
-
-            return new GetObjectResponse(headers, null, null, null, inputStream);
+                return new GetObjectResponse(headers, null, null, null, inputStream);
+            }
         } else {
             throw new StorageException("Could not read file: " + filename);
         }

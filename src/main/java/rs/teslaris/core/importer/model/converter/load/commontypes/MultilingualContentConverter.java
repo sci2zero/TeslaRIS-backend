@@ -104,6 +104,8 @@ public class MultilingualContentConverter {
 
         if (content.length() < 50 &&
             !contentLanguageDetected.equals(LanguageAbbreviations.SERBIAN) &&
+            !contentLanguageDetected.equals(LanguageAbbreviations.SERBIAN_CYRILLIC) &&
+            !contentLanguageDetected.equals(LanguageAbbreviations.SERBIAN_LATIN) &&
             !contentLanguageDetected.equals(LanguageAbbreviations.ENGLISH)) {
             contentLanguageDetected = LanguageAbbreviations.ENGLISH;
         }

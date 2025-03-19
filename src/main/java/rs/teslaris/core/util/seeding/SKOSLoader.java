@@ -19,6 +19,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Component
 @Slf4j
@@ -76,9 +77,10 @@ public class SKOSLoader {
                     priority.getAndAdd(1)));
             }
 
-            if (languageTag.equals("EN")) {
+            if (languageTag.equals(LanguageAbbreviations.ENGLISH)) {
                 names.add(new MultiLingualContent(
-                    languageTagService.findLanguageTagByValue("SR"), label.getString(),
+                    languageTagService.findLanguageTagByValue(LanguageAbbreviations.SERBIAN),
+                    label.getString(),
                     priority.getAndAdd(1)));
             }
         });

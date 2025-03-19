@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,28 +25,43 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.core.assessment.dto.DocumentAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.dto.ImaginaryPublicationAssessmentResponseDTO;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.Commission;
 import rs.teslaris.core.assessment.model.CommissionRelation;
 import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
+import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.EntityAssessmentClassification;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.core.assessment.ruleengine.AssessmentPointsRuleEngine;
+import rs.teslaris.core.assessment.ruleengine.AssessmentPointsScalingRuleEngine;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.assessment.service.interfaces.DocumentAssessmentClassificationService;
+import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.assessment.util.ClassificationPriorityMapping;
+import rs.teslaris.core.assessment.util.ResearchAreasConfigurationLoader;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -76,6 +92,10 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final EventAssessmentClassificationRepository eventAssessmentClassificationRepository;
 
+    private final IndicatorRepository indicatorRepository;
+
+    private final EventIndexRepository eventIndexRepository;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -89,7 +109,8 @@ public class DocumentAssessmentClassificationServiceImpl
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
         DocumentRepository documentRepository, TaskManagerService taskManagerService,
         SearchService<DocumentPublicationIndex> searchService,
-        EventAssessmentClassificationRepository eventAssessmentClassificationRepository) {
+        EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
+        IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository) {
         super(assessmentClassificationService, commissionService,
             entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -103,6 +124,8 @@ public class DocumentAssessmentClassificationServiceImpl
         this.taskManagerService = taskManagerService;
         this.searchService = searchService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
+        this.indicatorRepository = indicatorRepository;
+        this.eventIndexRepository = eventIndexRepository;
     }
 
     @Override
@@ -281,15 +304,18 @@ public class DocumentAssessmentClassificationServiceImpl
                         .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
                             journalPublicationIndex.getJournalId(), commission.getId(), year);
 
-                    // Check for manually set classification first
                     var manualClassification = classificationList.stream()
                         .filter(EntityAssessmentClassification::getManual)
                         .findFirst();
 
                     if (manualClassification.isPresent()) {
-                        classifications.add(manualClassification.get().getAssessmentClassification());
+                        classifications.add(
+                            new Pair<>(manualClassification.get().getAssessmentClassification(),
+                                manualClassification.get().getClassificationReason()));
                     } else if (!classificationList.isEmpty()) {
-                        classifications.add(classificationList.get(0).getAssessmentClassification());
+                        classifications.add(
+                            new Pair<>(classificationList.getFirst().getAssessmentClassification(),
+                                classificationList.getFirst().getClassificationReason()));
                     } else {
                         handleRelationAssessments(commission,
                             (targetCommissionId) -> {
@@ -338,7 +364,9 @@ public class DocumentAssessmentClassificationServiceImpl
                             proceedingsPublicationIndex.getEventId(), commission.getId(), year);
 
                     if (classification.isPresent()) {
-                        classifications.add(classification.get().getAssessmentClassification());
+                        classifications.add(
+                            new Pair<>(classification.get().getAssessmentClassification(),
+                                classification.get().getClassificationReason()));
                     } else {
                         handleRelationAssessments(commission,
                             (targetCommissionId) -> {
@@ -358,11 +386,110 @@ public class DocumentAssessmentClassificationServiceImpl
         });
     }
 
+    @Override
+    public ImaginaryPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
+        Integer journalId, Integer commissionId, Integer classificationYear, String researchArea,
+        Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation,
+        PublicationType publicationType) {
+        if (Objects.isNull(publicationType)) {
+            publicationType = JournalPublicationType.RESEARCH_ARTICLE;
+        }
+
+        var commission = commissionService.findOne(commissionId);
+
+        return performPublicationAssessmentForImaginaryDocument(
+            (year, classifications, commissionObj) -> {
+                var classificationList = publicationSeriesAssessmentClassificationRepository
+                    .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                        journalId, commission.getId(), year);
+
+                var manualClassification = classificationList.stream()
+                    .filter(EntityAssessmentClassification::getManual)
+                    .findFirst();
+
+                if (manualClassification.isPresent()) {
+                    classifications.add(
+                        new Pair<>(manualClassification.get().getAssessmentClassification(),
+                            manualClassification.get().getClassificationReason()));
+                } else if (!classificationList.isEmpty()) {
+                    classifications.add(
+                        new Pair<>(classificationList.getFirst().getAssessmentClassification(),
+                            classificationList.getFirst().getClassificationReason()));
+                } else {
+                    handleRelationAssessments(commission,
+                        (targetCommissionId) -> {
+                            var relatedClassifications =
+                                publicationSeriesAssessmentClassificationRepository
+                                    .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
+                                        journalId, targetCommissionId,
+                                        year);
+
+                            return relatedClassifications.stream()
+                                .filter(EntityAssessmentClassification::getManual)
+                                .findFirst()
+                                .or(() -> relatedClassifications.stream().findFirst());
+                        }
+                    ).ifPresent(classifications::add);
+                }
+            },
+            commission,
+            List.of(classificationYear, classificationYear - 1, classificationYear - 2),
+            researchArea, publicationType, authorCount, isExperimental, isTheoretical,
+            isSimulation);
+    }
+
+    @Override
+    public ImaginaryPublicationAssessmentResponseDTO assessImaginaryProceedingsPublication(
+        Integer conferenceId, Integer commissionId, String researchArea, Integer authorCount,
+        boolean isExperimental, boolean isTheoretical, boolean isSimulation,
+        PublicationType publicationType) {
+        if (Objects.isNull(publicationType)) {
+            publicationType = ProceedingsPublicationType.REGULAR_FULL_ARTICLE;
+        }
+
+        var commission = commissionService.findOne(commissionId);
+        var eventIndex = eventIndexRepository.findByDatabaseId(conferenceId);
+
+        if (eventIndex.isEmpty()) {
+            return new ImaginaryPublicationAssessmentResponseDTO();
+        }
+
+        return performPublicationAssessmentForImaginaryDocument(
+            (year, classifications, commissionObj) -> {
+                var classification = eventAssessmentClassificationRepository
+                    .findAssessmentClassificationsForEventAndCommissionAndYear(
+                        conferenceId, commission.getId(), year);
+
+                if (classification.isPresent()) {
+                    classifications.add(
+                        new Pair<>(classification.get().getAssessmentClassification(),
+                            classification.get().getClassificationReason()));
+                } else {
+                    handleRelationAssessments(commission,
+                        (targetCommissionId) -> {
+                            var assessmentClassification = eventAssessmentClassificationRepository
+                                .findAssessmentClassificationsForEventAndCommissionAndYear(
+                                    conferenceId, targetCommissionId,
+                                    year)
+                                .orElse(null);
+                            return Objects.nonNull(assessmentClassification) ? Optional.of(
+                                assessmentClassification) : Optional.empty();
+                        }
+                    ).ifPresent(classifications::add);
+                }
+            },
+            commission,
+            List.of(eventIndex.get().getDateSortable().getYear()),
+            researchArea, publicationType, authorCount, isExperimental, isTheoretical,
+            isSimulation);
+    }
+
     private void performPublicationAssessment(
-        TriConsumer<Integer, List<AssessmentClassification>, Commission> yearHandler,
+        TriConsumer<Integer, ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>, Commission> yearHandler,
         Integer classificationYear, Integer documentId,
         Commission commission, List<Integer> yearsToConsider) {
-        var classifications = new ArrayList<AssessmentClassification>();
+        var classifications =
+            new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
 
         yearsToConsider.forEach(year -> {
             yearHandler.accept(year, classifications, commission);
@@ -373,10 +500,102 @@ public class DocumentAssessmentClassificationServiceImpl
                 ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
                     ResultCalculationMethod.BEST_VALUE);
             bestClassification.ifPresent((documentClassification) -> {
-                handleClassification(documentClassification,
+                handleClassification(documentClassification.a,
                     commission, documentId, classificationYear);
             });
         }
+    }
+
+    private ImaginaryPublicationAssessmentResponseDTO performPublicationAssessmentForImaginaryDocument(
+        TriConsumer<Integer, List<Pair<AssessmentClassification, Set<MultiLingualContent>>>, Commission> yearHandler,
+        Commission commission, List<Integer> yearsToConsider, String researchArea,
+        PublicationType publicationType, Integer authorCount, boolean isExperimental,
+        boolean isTheoretical, boolean isSimulation) {
+
+        var assessmentResponse = new ImaginaryPublicationAssessmentResponseDTO();
+        var classifications =
+            new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
+
+        yearsToConsider.forEach(year -> yearHandler.accept(year, classifications, commission));
+
+        if (classifications.isEmpty()) {
+            return assessmentResponse;
+        }
+
+        ClassificationPriorityMapping
+            .getClassificationBasedOnCriteria(classifications, ResultCalculationMethod.BEST_VALUE)
+            .ifPresent(classification -> processClassification(
+                classification, assessmentResponse, researchArea, authorCount, publicationType,
+                isExperimental, isTheoretical, isSimulation
+            ));
+
+        return assessmentResponse;
+    }
+
+    private void processClassification(
+        Pair<AssessmentClassification, Set<MultiLingualContent>> classification,
+        ImaginaryPublicationAssessmentResponseDTO response,
+        String researchArea, Integer authorCount, PublicationType publicationType,
+        boolean isExperimental, boolean isTheoretical, boolean isSimulation) {
+
+        var mappedCode = ClassificationPriorityMapping.getImaginaryDocClassificationCodeBasedOnCode(
+            classification.a.getCode(), publicationType);
+
+        if (Objects.isNull(mappedCode)) {
+            return;
+        }
+
+        response.setAssessmentCode(mappedCode);
+        response.setAssessmentReason(
+            MultilingualContentConverter.getMultilingualContentDTO(classification.b));
+
+        var pointsRuleEngine = new AssessmentPointsRuleEngine();
+        var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
+
+        applyIndicatorScalingRule(scalingRuleEngine, isExperimental, isTheoretical, isSimulation);
+
+        var rawPoints = pointsRuleEngine.serbianPointsRulebook2025(researchArea, mappedCode);
+        response.setRawPoints(rawPoints);
+        response.setRawPointsReason(getPointsReason(mappedCode, researchArea, rawPoints));
+
+        var scaledPoints =
+            scalingRuleEngine.serbianScalingRulebook2025(authorCount, mappedCode, rawPoints);
+        response.setScaledPoints(scaledPoints);
+        response.setScaledPointsReason(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                scalingRuleEngine.getReasoningProcess()));
+    }
+
+    private void applyIndicatorScalingRule(AssessmentPointsScalingRuleEngine scalingRuleEngine,
+                                           boolean isExperimental, boolean isTheoretical,
+                                           boolean isSimulation) {
+
+        String indicatorCode = null;
+
+        if (isExperimental) {
+            indicatorCode = "isExperimental";
+        } else if (isTheoretical) {
+            indicatorCode = "isTheoretical";
+        } else if (isSimulation) {
+            indicatorCode = "isSimulation";
+        }
+
+        if (indicatorCode != null) {
+            var indicator = new DocumentIndicator();
+            indicator.setIndicator(indicatorRepository.findByCode(indicatorCode));
+            scalingRuleEngine.setCurrentEntityIndicators(List.of(indicator));
+        } else {
+            scalingRuleEngine.setCurrentEntityIndicators(new ArrayList<>());
+        }
+    }
+
+    private List<MultilingualContentDTO> getPointsReason(String mappedCode, String researchArea,
+                                                         double points) {
+        return MultilingualContentConverter.getMultilingualContentDTO(
+            AssessmentRulesConfigurationLoader.getRuleDescription(
+                "pointRules", "generalPointRule", mappedCode,
+                ResearchAreasConfigurationLoader.fetchAssessmentResearchAreaNameByCode(
+                    researchArea), points));
     }
 
     private List<Commission> findCommissionInHierarchy(Integer organisationUnitId) {
@@ -410,7 +629,7 @@ public class DocumentAssessmentClassificationServiceImpl
             classificationYear);
     }
 
-    private Optional<AssessmentClassification> handleRelationAssessments(
+    private Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> handleRelationAssessments(
         Commission commission,
         Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
         var sortedRelations = commission.getRelations().stream()
@@ -421,25 +640,31 @@ public class DocumentAssessmentClassificationServiceImpl
             var respectedClassification =
                 respectRelationAssessment(relation, classificationFinder);
             if (respectedClassification.isPresent()) {
-                return respectedClassification;
+                return Optional.of(
+                    new Pair<>(respectedClassification.get().a, respectedClassification.get().b));
             }
         }
 
         return Optional.empty();
     }
 
-    private Optional<AssessmentClassification> respectRelationAssessment(
+    private Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> respectRelationAssessment(
         CommissionRelation commissionRelation,
         Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
-        var classifications = new ArrayList<AssessmentClassification>();
+        var classifications =
+            new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
 
         for (var targetCommission : commissionRelation.getTargetCommissions()) {
             var foundClassification = classificationFinder.apply(targetCommission.getId());
             if (foundClassification.isPresent()) {
                 if (foundClassification.get().getManual()) {
-                    return Optional.of(foundClassification.get().getAssessmentClassification());
+                    return Optional.of(
+                        new Pair<>(foundClassification.get().getAssessmentClassification(),
+                            foundClassification.get().getClassificationReason()));
                 }
-                classifications.add(foundClassification.get().getAssessmentClassification());
+                classifications.add(
+                    new Pair<>(foundClassification.get().getAssessmentClassification(),
+                        foundClassification.get().getClassificationReason()));
             }
         }
 

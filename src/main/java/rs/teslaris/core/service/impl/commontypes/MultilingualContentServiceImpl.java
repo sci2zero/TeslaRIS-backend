@@ -52,8 +52,10 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
             return new HashSet<>();
         }
 
-        ensureLanguageContentExists(multilingualContent, "EN", "SR");
-        ensureLanguageContentExists(multilingualContent, "SR", "EN");
+        ensureLanguageContentExists(multilingualContent, LanguageAbbreviations.ENGLISH,
+            LanguageAbbreviations.SERBIAN);
+        ensureLanguageContentExists(multilingualContent, LanguageAbbreviations.SERBIAN,
+            LanguageAbbreviations.ENGLISH);
 
         return new HashSet<>(multilingualContent);
     }

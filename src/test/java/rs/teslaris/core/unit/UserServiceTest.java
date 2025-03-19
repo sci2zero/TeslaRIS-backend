@@ -83,6 +83,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 public class UserServiceTest {
@@ -210,7 +211,7 @@ public class UserServiceTest {
         registrationRequest.setPersonId(1);
 
         var language = new Language();
-        language.setLanguageCode("SR");
+        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
         when(languageService.findOne(1)).thenReturn(language);
 
         Authority authority = new Authority();
@@ -226,7 +227,8 @@ public class UserServiceTest {
 
         var organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
-            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
         var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
             false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
@@ -263,7 +265,7 @@ public class UserServiceTest {
         registrationRequest.setSurname("Surname");
 
         var language = new Language();
-        language.setLanguageCode("SR");
+        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
         when(languageService.findOne(1)).thenReturn(language);
 
         var authority = new Authority();
@@ -273,7 +275,8 @@ public class UserServiceTest {
 
         var organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
-            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         User newUser = new User("johndoe@example.com", "password123", "",
@@ -301,6 +304,56 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldRegisterViceDeanForScienceWithValidData() throws NoSuchAlgorithmException {
+        // Given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("johndoe@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(1);
+        registrationRequest.setName("Name");
+        registrationRequest.setSurname("Surname");
+
+        var language = new Language();
+        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
+        when(languageService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.VICE_DEAN_FOR_SCIENCE.toString());
+        when(authorityRepository.findByName(UserRole.VICE_DEAN_FOR_SCIENCE.toString())).thenReturn(
+            Optional.of(authority));
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+
+        User newUser = new User("johndoe@example.com", "password123", "",
+            "John", "Doe", true,
+            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerViceDeanForScience(registrationRequest);
+
+        // Then
+        assertNotNull(savedUser);
+        assertEquals("johndoe@example.com", savedUser.getEmail());
+        assertEquals("John", savedUser.getFirstname());
+        assertEquals("Doe", savedUser.getLastName());
+        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(authority, savedUser.getAuthority());
+    }
+
+    @Test
     public void shouldRegisterCommissionUserWithValidData() throws NoSuchAlgorithmException {
         // Given
         var registrationRequest = new CommissionRegistrationRequestDTO();
@@ -313,7 +366,7 @@ public class UserServiceTest {
         registrationRequest.setSurname("Surname");
 
         var language = new Language();
-        language.setLanguageCode("SR");
+        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
         when(languageService.findOne(1)).thenReturn(language);
 
         var authority = new Authority();
@@ -323,7 +376,8 @@ public class UserServiceTest {
 
         var organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
-            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         when(commissionService.findOne(1)).thenReturn(new Commission());
@@ -458,7 +512,8 @@ public class UserServiceTest {
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
         orgUnit.setName(
-            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
         orgUnit.setId(4);
         user.setOrganisationUnit(orgUnit);
 
@@ -519,7 +574,8 @@ public class UserServiceTest {
         var preferredLanguage = new Language();
         var organisationalUnit = new OrganisationUnit();
         organisationalUnit.setName(
-            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageService.findOne(1)).thenReturn(preferredLanguage);
@@ -736,7 +792,7 @@ public class UserServiceTest {
 
         var user = new User();
         user.setEmail("test@example.com");
-        user.setPreferredLanguage(new Language("SR", new HashSet<>()));
+        user.setPreferredLanguage(new Language(LanguageAbbreviations.SERBIAN, new HashSet<>()));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
@@ -802,7 +858,8 @@ public class UserServiceTest {
         var person = new Person();
         var orgUnit = new OrganisationUnit();
         orgUnit.setName(
-            Set.of(new MultiLingualContent(new LanguageTag("SR", "Srpski"), "Content", 1)));
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
         var involvement = new Involvement();
         involvement.setInvolvementType(InvolvementType.EMPLOYED_AT);
         involvement.setOrganisationUnit(orgUnit);

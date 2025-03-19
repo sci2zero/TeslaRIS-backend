@@ -106,4 +106,10 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
             "printIssnExistsError"
         );
     }
+
+    @Override
+    public boolean isIdentifierInUse(String identifier, Integer publicationSeriesId) {
+        return publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId) ||
+            publicationSeriesRepository.existsByPrintISSN(identifier, publicationSeriesId);
+    }
 }

@@ -1,8 +1,11 @@
 package rs.teslaris.core.assessment.controller;
 
+import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,15 +19,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.ApiKeyValidation;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.assessment.dto.DocumentAssessmentClassificationDTO;
 import rs.teslaris.core.assessment.dto.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.core.assessment.dto.ImaginaryPublicationAssessmentRequestDTO;
+import rs.teslaris.core.assessment.dto.ImaginaryPublicationAssessmentResponseDTO;
 import rs.teslaris.core.assessment.dto.PublicationAssessmentRequestDTO;
 import rs.teslaris.core.assessment.service.interfaces.DocumentAssessmentClassificationService;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.ApiKeyType;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.commontypes.ReCaptchaService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
@@ -37,6 +48,12 @@ public class DocumentAssessmentClassificationController {
     private final JwtUtil tokenUtil;
 
     private final UserService userService;
+
+    private final ConferenceService conferenceService;
+
+    private final JournalService journalService;
+
+    private final ReCaptchaService reCaptchaService;
 
 
     @GetMapping("/{documentId}/can-classify")
@@ -71,6 +88,47 @@ public class DocumentAssessmentClassificationController {
             publicationAssessmentRequestDTO.getAuthorIds(),
             publicationAssessmentRequestDTO.getOrganisationUnitIds(),
             publicationAssessmentRequestDTO.getPublishedInIds());
+    }
+
+    @PostMapping("/imaginary-journal-publication")
+    public ImaginaryPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
+        @RequestBody @Valid
+        ImaginaryPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest,
+        @RequestParam String token) {
+        if (reCaptchaService.isCaptchaValid(token)) {
+            throw new CaptchaException("Invalid captcha solution.");
+        }
+
+        return documentAssessmentClassificationService.assessImaginaryJournalPublication(
+            imaginaryJournalPublicationAssessmentRequest.getContainingEntityId(),
+            imaginaryJournalPublicationAssessmentRequest.getCommissionId(),
+            imaginaryJournalPublicationAssessmentRequest.getClassificationYear(),
+            imaginaryJournalPublicationAssessmentRequest.getResearchAreaCode(),
+            imaginaryJournalPublicationAssessmentRequest.getAuthorCount(),
+            imaginaryJournalPublicationAssessmentRequest.getExperimental(),
+            imaginaryJournalPublicationAssessmentRequest.getTheoretical(),
+            imaginaryJournalPublicationAssessmentRequest.getSimulation(),
+            imaginaryJournalPublicationAssessmentRequest.getJournalPublicationType());
+    }
+
+    @PostMapping("/imaginary-proceedings-publication")
+    public ImaginaryPublicationAssessmentResponseDTO assessImaginaryProceedingsPublication(
+        @RequestBody @Valid
+        ImaginaryPublicationAssessmentRequestDTO imaginaryProceedingsPublicationAssessmentRequest,
+        @RequestParam String token) {
+        if (reCaptchaService.isCaptchaValid(token)) {
+            throw new CaptchaException("Invalid captcha solution.");
+        }
+
+        return documentAssessmentClassificationService.assessImaginaryProceedingsPublication(
+            imaginaryProceedingsPublicationAssessmentRequest.getContainingEntityId(),
+            imaginaryProceedingsPublicationAssessmentRequest.getCommissionId(),
+            imaginaryProceedingsPublicationAssessmentRequest.getResearchAreaCode(),
+            imaginaryProceedingsPublicationAssessmentRequest.getAuthorCount(),
+            imaginaryProceedingsPublicationAssessmentRequest.getExperimental(),
+            imaginaryProceedingsPublicationAssessmentRequest.getTheoretical(),
+            imaginaryProceedingsPublicationAssessmentRequest.getSimulation(),
+            imaginaryProceedingsPublicationAssessmentRequest.getProceedingsPublicationType());
     }
 
     @PostMapping("/{documentId}")
@@ -114,5 +172,53 @@ public class DocumentAssessmentClassificationController {
     @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
     public void assessProceedingsPublication(@PathVariable Integer documentId) {
         documentAssessmentClassificationService.classifyProceedingsPublication(documentId);
+    }
+
+    @PostMapping("/journal-m-service")
+    @ApiKeyValidation(ApiKeyType.M_SERVICE)
+    public ImaginaryPublicationAssessmentResponseDTO journalMService(
+        @RequestBody @Valid
+        ImaginaryPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest) {
+        if (Objects.isNull(imaginaryJournalPublicationAssessmentRequest.getIssn())) {
+            throw new ValidationException("You have to provide journal ISSN");
+        }
+
+        var journalId = journalService.readJournalByIssn(
+            imaginaryJournalPublicationAssessmentRequest.getIssn(),
+            imaginaryJournalPublicationAssessmentRequest.getIssn()).getDatabaseId();
+
+        return documentAssessmentClassificationService.assessImaginaryJournalPublication(
+            journalId,
+            imaginaryJournalPublicationAssessmentRequest.getCommissionId(),
+            imaginaryJournalPublicationAssessmentRequest.getClassificationYear(),
+            imaginaryJournalPublicationAssessmentRequest.getResearchAreaCode(),
+            imaginaryJournalPublicationAssessmentRequest.getAuthorCount(),
+            imaginaryJournalPublicationAssessmentRequest.getExperimental(),
+            imaginaryJournalPublicationAssessmentRequest.getTheoretical(),
+            imaginaryJournalPublicationAssessmentRequest.getSimulation(),
+            imaginaryJournalPublicationAssessmentRequest.getJournalPublicationType());
+    }
+
+    @PostMapping("/conference-m-service")
+    @ApiKeyValidation(ApiKeyType.M_SERVICE)
+    public ImaginaryPublicationAssessmentResponseDTO conferenceMService(
+        @RequestBody @Valid
+        ImaginaryPublicationAssessmentRequestDTO imaginaryProceedingsPublicationAssessmentRequest) {
+        if (Objects.isNull(imaginaryProceedingsPublicationAssessmentRequest.getConfId())) {
+            throw new ValidationException("You have to provide conf ID");
+        }
+
+        var conferenceId = conferenceService.findConferenceByConfId(
+            imaginaryProceedingsPublicationAssessmentRequest.getConfId()).getId();
+
+        return documentAssessmentClassificationService.assessImaginaryProceedingsPublication(
+            conferenceId,
+            imaginaryProceedingsPublicationAssessmentRequest.getCommissionId(),
+            imaginaryProceedingsPublicationAssessmentRequest.getResearchAreaCode(),
+            imaginaryProceedingsPublicationAssessmentRequest.getAuthorCount(),
+            imaginaryProceedingsPublicationAssessmentRequest.getExperimental(),
+            imaginaryProceedingsPublicationAssessmentRequest.getTheoretical(),
+            imaginaryProceedingsPublicationAssessmentRequest.getSimulation(),
+            imaginaryProceedingsPublicationAssessmentRequest.getProceedingsPublicationType());
     }
 }

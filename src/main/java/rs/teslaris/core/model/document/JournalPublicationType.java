@@ -1,6 +1,6 @@
 package rs.teslaris.core.model.document;
 
-public enum JournalPublicationType {
+public enum JournalPublicationType implements PublicationType {
     REVIEW_ARTICLE,
     RESEARCH_ARTICLE,
     PREFACE,

@@ -357,6 +357,22 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    public User registerViceDeanForScience(EmployeeRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
+        var authorityName = UserRole.VICE_DEAN_FOR_SCIENCE.toString();
+        return registerUser(
+            registrationRequest.getEmail(),
+            registrationRequest.getNote(),
+            registrationRequest.getName(),
+            registrationRequest.getSurname(),
+            registrationRequest.getPreferredLanguageId(),
+            registrationRequest.getOrganisationUnitId(),
+            null, // No commission for vice dean for science
+            authorityName
+        );
+    }
+
+    @Override
     public User registerCommissionUser(CommissionRegistrationRequestDTO registrationRequest)
         throws NoSuchAlgorithmException {
         var authorityName = UserRole.COMMISSION.toString();
@@ -458,17 +474,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var preferredLanguage = languageService.findOne(userUpdateRequest.getPreferredLanguageId());
 
-        if (userToUpdate.getAuthority().getName()
-            .equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
+        var userRole = userToUpdate.getAuthority().getName();
+        if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
             userToUpdate.setFirstname(userUpdateRequest.getFirstname());
             userToUpdate.setLastName(userUpdateRequest.getLastName());
             var orgUnit =
                 organisationUnitService.findOne(userUpdateRequest.getOrganisationalUnitId());
             userToUpdate.setOrganisationUnit(orgUnit);
-        } else if (userToUpdate.getAuthority().getName().equals(UserRole.ADMIN.toString())) {
-            userToUpdate.setFirstname(userUpdateRequest.getFirstname());
-            userToUpdate.setLastName(userUpdateRequest.getLastName());
-        } else if (userToUpdate.getAuthority().getName().equals(UserRole.COMMISSION.toString())) {
+        } else if (userRole.equals(UserRole.ADMIN.toString()) ||
+            userRole.equals(UserRole.COMMISSION.toString()) ||
+            userRole.equals(UserRole.VICE_DEAN_FOR_SCIENCE.toString())) {
             userToUpdate.setFirstname(userUpdateRequest.getFirstname());
             userToUpdate.setLastName(userUpdateRequest.getLastName());
         }

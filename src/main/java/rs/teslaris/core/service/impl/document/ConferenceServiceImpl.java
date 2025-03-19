@@ -214,7 +214,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         conference.setFee(conferenceDTO.getFee());
 
         IdentifierUtil.validateAndSetIdentifier(
-            conference.getConfId(),
+            conferenceDTO.getConfId(),
             conference.getId(),
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
             eventRepository::existsByConfId,
@@ -222,6 +222,11 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             "confIdFormatError",
             "confIdExistsError"
         );
+    }
+
+    @Override
+    public boolean isIdentifierInUse(String identifier, Integer conferenceId) {
+        return eventRepository.existsByConfId(identifier, conferenceId);
     }
 
     private void indexConference(Conference conference, EventIndex index) {

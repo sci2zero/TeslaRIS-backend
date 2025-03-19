@@ -2,23 +2,29 @@ package rs.teslaris.core.assessment.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
 import rs.teslaris.core.assessment.model.ResultCalculationMethod;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
@@ -59,18 +65,18 @@ public class ClassificationPriorityMapping {
         );
     }
 
-    public static Optional<AssessmentClassification> getClassificationBasedOnCriteria(
-        ArrayList<AssessmentClassification> classifications,
+    public static Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> getClassificationBasedOnCriteria(
+        List<Pair<AssessmentClassification, Set<MultiLingualContent>>> classifications,
         ResultCalculationMethod resultCalculationMethod) {
         return switch (resultCalculationMethod) {
             case BEST_VALUE -> classifications.stream()
                 .min(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
-                        assessmentClassification.getCode(), Integer.MAX_VALUE)));
+                        assessmentClassification.a.getCode(), Integer.MAX_VALUE)));
             case WORST_VALUE -> classifications.stream()
                 .max(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
-                        assessmentClassification.getCode(), Integer.MIN_VALUE)));
+                        assessmentClassification.a.getCode(), Integer.MIN_VALUE)));
         };
     }
 
@@ -78,7 +84,8 @@ public class ClassificationPriorityMapping {
         String classificationCode, Integer documentId) {
 
         String documentCode =
-            assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
+            assessmentConfig.classificationToAssessmentMapping.getOrDefault(classificationCode,
+                null);
 
         if (Objects.isNull(documentCode)) {
             return Optional.empty();
@@ -101,6 +108,29 @@ public class ClassificationPriorityMapping {
         return Optional.of(documentCode);
     }
 
+    public static String getImaginaryDocClassificationCodeBasedOnCode(
+        String classificationCode, PublicationType publicationType) {
+
+        var documentCode =
+            assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
+
+        if (publicationType instanceof JournalPublicationType) {
+            if (documentCode.equals("M24") ||
+                assessmentConfig.classificationPriorities.get(classificationCode) <
+                    assessmentConfig.classificationPriorities.get("journalM24")) {
+                return getMappedCode(documentCode, (JournalPublicationType) publicationType).orElse(
+                    null);
+            }
+        } else if (publicationType instanceof ProceedingsPublicationType) {
+            if (documentCode.equals("M30") || documentCode.equals("M60")) {
+                return getMappedCode(documentCode,
+                    (ProceedingsPublicationType) publicationType).orElse(null);
+            }
+        }
+
+        return documentCode;
+    }
+
     private static Optional<String> getMappedCode(String baseCode,
                                                   ProceedingsPublicationType type) {
         Map<ProceedingsPublicationType, String> mappingM30 = Map.of(
@@ -119,7 +149,8 @@ public class ClassificationPriorityMapping {
         );
 
         return Optional.ofNullable(
-            baseCode.equals("M30") ? mappingM30.get(type) : mappingM60.get(type)
+            baseCode.equals("M30") ? mappingM30.getOrDefault(type, null) :
+                mappingM60.getOrDefault(type, null)
         );
     }
 
@@ -154,10 +185,45 @@ public class ClassificationPriorityMapping {
             .replace("plus", "+");
     }
 
+    public static String getCodeOriginalValue(String displayValue) {
+        return displayValue.toUpperCase()
+            .replace("+", "Plus")
+            .replace("E", "e");
+    }
+
+    public static boolean isOnSciList(String assessmentCode) {
+        return assessmentConfig.sciList().contains(getCodeOriginalValue(assessmentCode));
+    }
+
+    public static int getSciListPriority(String assessmentCode) {
+        return assessmentConfig.sciListPriorities().get(getCodeOriginalValue(assessmentCode));
+    }
+
+    @Nullable
+    public static String getGroupCode(String assessmentCode) {
+        AtomicReference<String> resultingGroupCode = new AtomicReference<>();
+        assessmentConfig.groupToClassificationsMapping.forEach(
+            (groupCode, relatedAssessmentCodes) -> {
+                if (relatedAssessmentCodes.contains(getCodeOriginalValue(assessmentCode))) {
+                    resultingGroupCode.set(groupCode);
+                }
+            });
+
+        return resultingGroupCode.get();
+    }
+
+    public static String getGroupNameBasedOnCode(String groupCode, String locale) {
+        return assessmentConfig.groupToNameMapping.getOrDefault(groupCode, new HashMap<>())
+            .getOrDefault(locale, "");
+    }
+
     private record AssessmentConfig(
         @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
-        @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping
+        @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping,
+        @JsonProperty("groupToNameMapping") Map<String, Map<String, String>> groupToNameMapping,
+        @JsonProperty("sciList") List<String> sciList,
+        @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities
     ) {
     }
 }

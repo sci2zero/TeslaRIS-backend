@@ -4,6 +4,7 @@ import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -309,6 +310,12 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                                                                                Integer documentId) {
         return personContributionRepository.fetchPersonDocumentContributionOnDocument(personId,
             documentId).orElse(null);
+    }
+
+    @Override
+    public List<Integer> getIdsOfNonRelatedDocuments(Integer organisationUnitId, Integer personId) {
+        return personContributionRepository.fetchAllDocumentsWhereInstitutionIsNotListed(personId,
+            organisationUnitId);
     }
 
     @Override

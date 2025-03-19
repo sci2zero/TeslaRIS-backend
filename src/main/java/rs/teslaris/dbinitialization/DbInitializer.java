@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import rs.teslaris.core.model.commontypes.BrandingInformation;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -26,6 +27,7 @@ import rs.teslaris.core.model.user.Privilege;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.commontypes.BrandingInformationRepository;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
@@ -68,6 +70,8 @@ public class DbInitializer implements ApplicationRunner {
     private final TestingDataInitializer testingDataInitializer;
 
     private final AssessmentDataInitializer assessmentDataInitializer;
+
+    private final BrandingInformationRepository brandingInformationRepository;
 
 
     @Override
@@ -140,6 +144,11 @@ public class DbInitializer implements ApplicationRunner {
         var assessDocument = new Privilege("ASSESS_DOCUMENT");
         var editDocumentAssessment = new Privilege("EDIT_DOCUMENT_ASSESSMENT");
         var editAssessmentResearchArea = new Privilege("EDIT_ASSESSMENT_RESEARCH_AREA");
+        var scheduleReportGeneration = new Privilege("SCHEDULE_REPORT_GENERATION");
+        var downloadReports = new Privilege("DOWNLOAD_REPORTS");
+        var listAssessmentClassifications = new Privilege("LIST_ASSESSMENT_CLASSIFICATIONS");
+        var updateBrandingInformation = new Privilege("UPDATE_BRANDING_INFORMATION");
+        var manageApiKeys = new Privilege("MANAGE_API_KEYS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -159,8 +168,9 @@ public class DbInitializer implements ApplicationRunner {
                 unbindYourselfFromPublication, editEntityIndicators, editLanguageTags,
                 editEntityAssessmentClassifications, editEventIndicators, editPubSeriesIndicators,
                 editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
-                assessDocument, updateCommission, editDocumentAssessment,
-                editAssessmentResearchArea));
+                assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
+                editAssessmentResearchArea, downloadReports, listAssessmentClassifications,
+                updateBrandingInformation, manageApiKeys));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -180,7 +190,9 @@ public class DbInitializer implements ApplicationRunner {
                 mergePublishersMetadata, editEntityIndicators, editEntityAssessmentClassifications,
                 editEventIndicators, editEventAssessmentClassification, editPubSeriesIndicators,
                 editPublicationSeriesAssessmentClassifications, assessDocument, updateCommission,
-                editDocumentAssessment, editAssessmentResearchArea
+                editDocumentAssessment, editAssessmentResearchArea, scheduleReportGeneration,
+                downloadReports, listAssessmentClassifications, updateBrandingInformation,
+                manageApiKeys
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -198,12 +210,17 @@ public class DbInitializer implements ApplicationRunner {
                 editEventAssessmentClassification, updateProfile, editEventIndicators,
                 editPublicationSeriesAssessmentClassifications, editPubSeriesIndicators,
                 allowAccountTakeover, editEntityIndicatorProofs, updateCommission,
-                editDocumentAssessment
+                editDocumentAssessment, listAssessmentClassifications
+            )));
+
+        var viceDeanForScienceAuthority =
+            new Authority(UserRole.VICE_DEAN_FOR_SCIENCE.toString(), new HashSet<>(List.of(
+                updateProfile, allowAccountTakeover, scheduleReportGeneration, downloadReports
             )));
 
         authorityRepository.saveAll(
             List.of(adminAuthority, researcherAuthority, institutionalEditorAuthority,
-                commissionAuthority));
+                commissionAuthority, viceDeanForScienceAuthority));
 
         // LANGUAGES
         var serbianLanguage = new Language();
@@ -237,6 +254,7 @@ public class DbInitializer implements ApplicationRunner {
         // LANGUAGE TAGS
         var englishTag = new LanguageTag(LanguageAbbreviations.ENGLISH, "English");
         var serbianTag = new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski");
+        var serbianCyrillicTag = new LanguageTag(LanguageAbbreviations.SERBIAN_CYRILLIC, "Српски");
         var hungarianTag = new LanguageTag(LanguageAbbreviations.HUNGARIAN, "Magyar");
         var germanTag = new LanguageTag(LanguageAbbreviations.GERMAN, "Deutsch");
         var frenchTag = new LanguageTag(LanguageAbbreviations.FRENCH, "Français");
@@ -247,7 +265,7 @@ public class DbInitializer implements ApplicationRunner {
         var slovenianTag = new LanguageTag(LanguageAbbreviations.SLOVENIAN, "Slovenian");
         languageTagRepository.saveAll(
             List.of(englishTag, serbianTag, hungarianTag, germanTag, frenchTag, spanishTag,
-                russianTag, croatianTag, italianTag, slovenianTag));
+                russianTag, croatianTag, italianTag, slovenianTag, serbianCyrillicTag));
 
         // ADMIN USER
         var adminUser =
@@ -268,6 +286,9 @@ public class DbInitializer implements ApplicationRunner {
             new HashSet<>(), researchArea2);
 
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
+
+        // DEFAULT BRANDING
+        setupDefaultBranding(serbianTag, englishTag);
 
         // COUNTRIES
         csvDataLoader.loadData("countries.csv", this::processCountryLine, ',');
@@ -292,7 +313,7 @@ public class DbInitializer implements ApplicationRunner {
             testingDataInitializer.initializeIntegrationTestingData(serbianTag, serbianLanguage,
                 englishTag,
                 germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
-                commission5);
+                viceDeanForScienceAuthority, commission5);
         }
     }
 
@@ -325,5 +346,22 @@ public class DbInitializer implements ApplicationRunner {
         }
         country.setName(names);
         countryRepository.save(country);
+    }
+
+    private void setupDefaultBranding(LanguageTag serbianTag, LanguageTag englishTag) {
+        var brandingInformation = new BrandingInformation();
+        brandingInformation.setTitle(new HashSet<>(Set.of(
+            new MultiLingualContent(serbianTag, "CRIS UNS", 1),
+            new MultiLingualContent(englishTag, "CRIS UNS", 2)
+        )));
+        brandingInformation.setDescription(new HashSet<>(Set.of(
+            new MultiLingualContent(serbianTag,
+                "CRIS UNS je informacioni sistem naučno-istraživačke delatnosti Univerziteta u Novom Sadu. U ovom sistemu možete pronaći informacije o istraživačima, organizacionim jedinicama i objavljenim rezultatima ovog univerziteta. Informacioni sistem je barizan na TeslaRIS open-source platformi.",
+                1),
+            new MultiLingualContent(englishTag,
+                "CRIS UNS is the information system of scientific research activities at the University of Novi Sad. In this system, you can find information about researchers, organisation units, and scientific results of this university. The information system is based on the TeslaRIS open-source platform.",
+                2)
+        )));
+        brandingInformationRepository.save(brandingInformation);
     }
 }

@@ -148,6 +148,22 @@ public class UserController {
             newUser.getUserNotificationPeriod());
     }
 
+    @PostMapping("/register-vice-dean-for-science")
+    @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public UserResponseDTO registerViceDeanForScience(
+        @RequestBody @Valid EmployeeRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
+        var newUser = userService.registerViceDeanForScience(registrationRequest);
+
+        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
+            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
+            newUser.getPreferredLanguage().getLanguageCode(),
+            registrationRequest.getOrganisationUnitId(), null, null, null,
+            newUser.getUserNotificationPeriod());
+    }
+
     @PostMapping("/register-commission")
     @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
     @ResponseStatus(HttpStatus.CREATED)

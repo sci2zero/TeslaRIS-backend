@@ -33,7 +33,6 @@ public class CountryControllerTest extends BaseTest {
         return countryDTO;
     }
 
-
     @Test
     public void testReadCountry() throws Exception {
         mockMvc.perform(

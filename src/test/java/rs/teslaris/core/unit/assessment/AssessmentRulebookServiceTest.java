@@ -34,6 +34,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 public class AssessmentRulebookServiceTest {
@@ -63,11 +64,13 @@ public class AssessmentRulebookServiceTest {
         assessmentRulebook2.setName(
             Set.of(new MultiLingualContent(new LanguageTag(), "Name 2", 1)));
 
-        when(assessmentRulebookRepository.readAll(eq("SR"), any(Pageable.class))).thenReturn(
+        when(assessmentRulebookRepository.readAll(eq(LanguageAbbreviations.SERBIAN),
+            any(Pageable.class))).thenReturn(
             new PageImpl<>(List.of(assessmentRulebook1, assessmentRulebook2)));
 
         var response =
-            assessmentRulebookService.readAllAssessmentRulebooks(PageRequest.of(0, 10), "SR");
+            assessmentRulebookService.readAllAssessmentRulebooks(PageRequest.of(0, 10),
+                LanguageAbbreviations.SERBIAN);
 
         assertNotNull(response);
         assertEquals(2, response.getSize());

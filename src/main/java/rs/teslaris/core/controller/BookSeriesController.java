@@ -102,4 +102,11 @@ public class BookSeriesController {
         @PathVariable Integer bookSeriesId, Pageable pageable) {
         return bookSeriesService.findPublicationsForBookSeries(bookSeriesId, pageable);
     }
+
+    @GetMapping("/identifier-usage/{bookSeriesId}")
+    @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
+    public boolean checkIdentifierUsage(@PathVariable Integer bookSeriesId,
+                                        @RequestParam String identifier) {
+        return bookSeriesService.isIdentifierInUse(identifier, bookSeriesId);
+    }
 }

@@ -68,11 +68,29 @@ public class ResearchAreasConfigurationLoader {
                         priority.getAndIncrement()));
             });
 
-
             researchAreas.add(researchAreaResponse);
         });
 
         return researchAreas;
+    }
+
+    public static List<MultilingualContentDTO> fetchAssessmentResearchAreaNameByCode(
+        String researchAreaCode) {
+        var researchAreaName = new ArrayList<MultilingualContentDTO>();
+
+        researchAreaConfiguration.researchAreas.stream()
+            .filter(area -> area.code().equals(researchAreaCode)).findFirst()
+            .ifPresent(researchArea -> {
+                var priority = new AtomicInteger(1);
+                researchArea.name().forEach((languageCode, content) -> {
+                    var languageTag = languageTagService.findLanguageTagByValue(languageCode);
+                    researchAreaName.add(
+                        new MultilingualContentDTO(languageTag.getId(), languageCode, content,
+                            priority.getAndIncrement()));
+                });
+            });
+
+        return researchAreaName;
     }
 
     public static Optional<AssessmentResearchAreaDTO> fetchAssessmentResearchAreaByCode(

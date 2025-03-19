@@ -15,4 +15,6 @@ public interface TaskManagerService {
     boolean isTaskScheduled(String taskId);
 
     List<ScheduledTaskResponseDTO> listScheduledTasks();
+
+    List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks(Integer userId, String role);
 }

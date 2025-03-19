@@ -7,6 +7,7 @@ import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 
@@ -70,6 +71,9 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
         if (Objects.nonNull(sjr) &&
             (sjr.getTextualValue().equals("Q1") || sjr.getTextualValue().equals("Q2") ||
                 sjr.getTextualValue().equals("Q3"))) {
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
+                    "M24PlusSJR", this.classificationYear, category);
             return assessmentClassificationService.readAssessmentClassificationByCode(
                 "journalM24Plus");
         }
@@ -83,6 +87,9 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
         var sjr = findIndicatorByCode("sjr", category);
 
         if (Objects.nonNull(sjr) && sjr.getTextualValue().equals("Q4")) {
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
+                    "M24SJR", this.classificationYear, category);
             return assessmentClassificationService.readAssessmentClassificationByCode("journalM24");
         }
 

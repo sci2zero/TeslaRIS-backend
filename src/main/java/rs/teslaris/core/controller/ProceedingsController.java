@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -44,6 +45,7 @@ public class ProceedingsController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PublicationEditCheck(value = "CREATE")
     @Idempotent
     public ProceedingsDTO createProceedings(@RequestBody @Valid ProceedingsDTO proceedings) {
         var savedProceedings = proceedingsService.createProceedings(proceedings, true);
@@ -73,5 +75,12 @@ public class ProceedingsController {
     public void forceDeleteProceedings(@PathVariable Integer documentId) {
         proceedingsService.forceDeleteProceedings(documentId);
         deduplicationService.deleteSuggestion(documentId, EntityType.PUBLICATION);
+    }
+
+    @GetMapping("/identifier-usage/{documentId}")
+    @PublicationEditCheck
+    public boolean checkIdentifierUsage(@PathVariable Integer documentId,
+                                        @RequestParam String identifier) {
+        return proceedingsService.isIdentifierInUse(identifier, documentId);
     }
 }

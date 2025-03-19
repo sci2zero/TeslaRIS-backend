@@ -274,4 +274,11 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             "printIsbnExistsError"
         );
     }
+
+    @Override
+    public boolean isIdentifierInUse(String identifier, Integer proceedingsId) {
+        return proceedingsRepository.existsByeISBN(identifier, proceedingsId) ||
+            proceedingsRepository.existsByPrintISBN(identifier, proceedingsId) ||
+            super.isIdentifierInUse(identifier, proceedingsId);
+    }
 }

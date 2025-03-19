@@ -25,6 +25,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceCons
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.InvalidApiKeyException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -344,5 +345,13 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleValidationException(HttpServletRequest request,
                                           ValidationException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(InvalidApiKeyException.class)
+    @ResponseBody
+    ErrorObject handleInvalidApiKeyException(HttpServletRequest request,
+                                             InvalidApiKeyException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 }

@@ -83,10 +83,11 @@ public class OrganisationUnitController {
     public Page<OrganisationUnitIndex> searchOrganisationUnitSimple(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "personId", required = false) Integer personId,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.SIMPLE);
+            SearchRequestType.SIMPLE, personId);
     }
 
     @GetMapping("/advanced-search")
@@ -95,7 +96,7 @@ public class OrganisationUnitController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.ADVANCED);
+            SearchRequestType.ADVANCED, null);
     }
 
     @PostMapping
@@ -152,5 +153,12 @@ public class OrganisationUnitController {
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     public boolean doesAdminExistForOrganisationUnit(@PathVariable Integer organisationUnitId) {
         return organisationUnitService.checkIfInstitutionalAdminsExist(organisationUnitId);
+    }
+
+    @GetMapping("/identifier-usage/{organisationUnitId}")
+    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    public boolean checkIdentifierUsage(@PathVariable Integer organisationUnitId,
+                                        @RequestParam String identifier) {
+        return organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
     }
 }

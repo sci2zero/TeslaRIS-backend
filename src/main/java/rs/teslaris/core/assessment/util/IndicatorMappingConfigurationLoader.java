@@ -66,10 +66,15 @@ public class IndicatorMappingConfigurationLoader {
             mappingName, null);
     }
 
+    public static List<String> getIFTableContent() {
+        return indicatorMappingConfiguration.ifTableContent;
+    }
+
     private record IndicatorMappingConfiguration(
         @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings,
         @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets,
-        @JsonProperty(value = "publicationSeriesCSVIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesCSVIndicatorMapping
+        @JsonProperty(value = "publicationSeriesCSVIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesCSVIndicatorMapping,
+        @JsonProperty(value = "ifTableContent") List<String> ifTableContent
     ) {
     }
 

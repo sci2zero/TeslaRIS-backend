@@ -987,4 +987,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             "scopusAuthorIdExistsError"
         );
     }
+
+    @Override
+    public boolean isIdentifierInUse(String identifier, Integer personId) {
+        return personRepository.existsByOrcid(identifier, personId) ||
+            personRepository.existsByScopusAuthorId(identifier, personId) ||
+            personRepository.existsByApvnt(identifier, personId) ||
+            personRepository.existsByeCrisId(identifier, personId) ||
+            personRepository.existsByeNaukaId(identifier, personId);
+    }
 }

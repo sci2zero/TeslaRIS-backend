@@ -38,6 +38,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.CommissionReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 
 @SpringBootTest
@@ -75,12 +76,13 @@ public class CommissionServiceTest {
         commission2.setId(2);
         commission2.setFormalDescriptionOfRule("rule2");
 
-        when(commissionRepository.searchCommissions(eq("aaa"), eq("SR"),
+        when(commissionRepository.searchCommissions(eq("aaa"), eq(LanguageAbbreviations.SERBIAN),
             any(Pageable.class))).thenReturn(
             new PageImpl<>(List.of(commission1, commission2)));
 
         var response =
-            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa", "SR", false, false);
+            commissionService.readAllCommissions(PageRequest.of(0, 10), "aaa",
+                LanguageAbbreviations.SERBIAN, false, false);
 
         assertNotNull(response);
         assertEquals(2, response.getTotalElements());

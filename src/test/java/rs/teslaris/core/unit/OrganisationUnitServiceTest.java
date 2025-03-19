@@ -557,7 +557,7 @@ public class OrganisationUnitServiceTest {
         // When
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
-                SearchRequestType.SIMPLE);
+                SearchRequestType.SIMPLE, null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
@@ -829,5 +829,37 @@ public class OrganisationUnitServiceTest {
         assertFalse(result, "Expected institutional admins to not exist");
         verify(organisationUnitRepository, times(1)).checkIfInstitutionalAdminsExist(
             organisationUnitId);
+    }
+
+    @Test
+    void shouldReturnFalseWhenScopusAfidDoesNotExist() {
+        // given
+        var identifier = "123456";
+        var organisationUnitId = 1;
+        when(organisationUnitRepository.existsByScopusAfid(identifier,
+            organisationUnitId)).thenReturn(false);
+
+        // when
+        var result = organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
+
+        // then
+        assertFalse(result);
+        verify(organisationUnitRepository).existsByScopusAfid(identifier, organisationUnitId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenScopusAfidExists() {
+        // given
+        var identifier = "123456";
+        var organisationUnitId = 1;
+        when(organisationUnitRepository.existsByScopusAfid(identifier,
+            organisationUnitId)).thenReturn(true);
+
+        // when
+        var result = organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
+
+        // then
+        assertTrue(result);
+        verify(organisationUnitRepository).existsByScopusAfid(identifier, organisationUnitId);
     }
 }

@@ -15,6 +15,9 @@ public interface DocumentPublicationIndexRepository extends
 
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseId(Integer databaseId);
 
+    Page<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseIdIn(
+        List<Integer> databaseIds, Pageable pageable);
+
     long count();
 
     Page<DocumentPublicationIndex> findByTypeAndEventId(String type, Integer eventId,

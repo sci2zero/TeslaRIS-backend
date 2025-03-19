@@ -267,6 +267,13 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         );
     }
 
+    @Override
+    public boolean isIdentifierInUse(String identifier, Integer monographId) {
+        return monographRepository.existsByeISBN(identifier, monographId) ||
+            monographRepository.existsByPrintISBN(identifier, monographId) ||
+            super.isIdentifierInUse(identifier, monographId);
+    }
+
     private Query buildSimpleSearchQuery(List<String> tokens) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 

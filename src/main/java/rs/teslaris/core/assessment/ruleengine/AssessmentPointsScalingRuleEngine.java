@@ -1,23 +1,31 @@
 package rs.teslaris.core.assessment.ruleengine;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import lombok.Getter;
 import lombok.Setter;
 import rs.teslaris.core.assessment.model.DocumentIndicator;
 import rs.teslaris.core.assessment.model.EntityIndicator;
-import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Setter
 public class AssessmentPointsScalingRuleEngine {
 
     private List<DocumentIndicator> currentEntityIndicators;
 
-    public double serbianScalingRulebook2025(DocumentPublicationIndex publicationIndex,
+    @Getter
+    private Set<MultiLingualContent> reasoningProcess = new HashSet<>();
+
+    public double serbianScalingRulebook2025(Integer authorCount,
                                              String classificationCode, Double points) {
-        var authorNumber = publicationIndex.getAuthorIds().size();
+        reasoningProcess.clear();
+
         var revisedAuthorNumber = findIndicatorByCode("revisedAuthorCount");
         if (Objects.nonNull(revisedAuthorNumber)) {
-            authorNumber = revisedAuthorNumber.getNumericValue().intValue();
+            authorCount = revisedAuthorNumber.getNumericValue().intValue();
         }
 
         var isExperimental = Objects.nonNull(findIndicatorByCode("isExperimental"));
@@ -30,38 +38,59 @@ public class AssessmentPointsScalingRuleEngine {
 
         // No scaling for M10 and M40
         if (isM10OrM40) {
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
+                    "m10OrM40Results");
             return points;
         }
 
         // Theoretical works (up to 3 authors, otherwise scale)
         if (isTheoretical) {
-            if (authorNumber > 3) {
-                return points / (1 + 0.2 * (authorNumber - 3));
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
+                    "theoreticalResults");
+            if (authorCount > 3) {
+                return points / (1 + 0.2 * (authorCount - 3));
             }
+            return points;
         }
         // Numerical simulations or primary data collection (up to 5 authors, otherwise scale)
         else if (isSimulation) {
-            if (authorNumber > 5) {
-                return points / (1 + 0.2 * (authorNumber - 5));
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
+                    "simulationResults");
+            if (authorCount > 5) {
+                return points / (1 + 0.2 * (authorCount - 5));
             }
+            return points;
         }
         // Experimental works or M80 category (up to 7 authors, otherwise scale)
         else if (isExperimental || isM80) {
-            if (authorNumber > 7) {
-                return points / (1 + 0.2 * (authorNumber - 7));
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
+                    "experimentalOrM80Results");
+            if (authorCount > 7) {
+                return points / (1 + 0.2 * (authorCount - 7));
             }
+            return points;
         }
         // M21a+ or M90 category (up to 10 authors, otherwise scale)
         else if (isM21aPlus || isM90) {
-            if (authorNumber > 10) {
-                return points / (1 + 0.2 * (authorNumber - 10));
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
+                    "m21APlusOrM90Results");
+            if (authorCount > 10) {
+                return points / (1 + 0.2 * (authorCount - 10));
             }
             return points;
         }
 
         // Treat it as experimental by default
-        if (authorNumber > 7) {
-            return points / (1 + 0.2 * (authorNumber - 7));
+        reasoningProcess =
+            AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
+                "experimentalOrM80Results");
+        if (authorCount > 7) {
+            return points / (1 + 0.2 * (authorCount - 7));
         }
 
         return points;

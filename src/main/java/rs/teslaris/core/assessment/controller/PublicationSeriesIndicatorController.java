@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.assessment.dto.IFTableResponseDTO;
 import rs.teslaris.core.assessment.model.EntityIndicatorSource;
 import rs.teslaris.core.assessment.service.interfaces.PublicationSeriesIndicatorService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -69,5 +70,13 @@ public class PublicationSeriesIndicatorController {
                                        String bearerToken) {
         publicationSeriesIndicatorService.scheduleIF5RankComputation(timestamp, classificationYears,
             tokenUtil.extractUserIdFromToken(bearerToken));
+    }
+
+    @GetMapping("/if-table/{publicationSeriesId}")
+    public IFTableResponseDTO scheduleIF5RankCompute(
+        @PathVariable Integer publicationSeriesId, @RequestParam("fromYear") Integer fromYear,
+        @RequestParam("toYear") Integer toYear) {
+        return publicationSeriesIndicatorService.getIFTableContent(publicationSeriesId, fromYear,
+            toYear);
     }
 }

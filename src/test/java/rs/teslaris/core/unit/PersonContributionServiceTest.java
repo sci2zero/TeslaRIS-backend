@@ -2,10 +2,13 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.PersonContributionServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
@@ -47,6 +51,9 @@ public class PersonContributionServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PersonContributionRepository personContributionRepository;
 
     @InjectMocks
     private PersonContributionServiceImpl personContributionService;
@@ -94,5 +101,25 @@ public class PersonContributionServiceTest {
         // Then
         var contributions = document.getContributors();
         assertTrue(contributions.size() > 0);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoDocumentsFound() {
+        // Given
+        var organisationUnitId = 1;
+        var personId = 100;
+
+        when(personContributionRepository.fetchAllDocumentsWhereInstitutionIsNotListed(personId,
+            organisationUnitId))
+            .thenReturn(List.of());
+
+        // When
+        var result =
+            personContributionService.getIdsOfNonRelatedDocuments(organisationUnitId, personId);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(personContributionRepository, times(1))
+            .fetchAllDocumentsWhereInstitutionIsNotListed(personId, organisationUnitId);
     }
 }

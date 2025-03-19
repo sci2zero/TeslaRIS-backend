@@ -1,6 +1,6 @@
 package rs.teslaris.core.model.document;
 
-public enum ProceedingsPublicationType {
+public enum ProceedingsPublicationType implements PublicationType {
     REGULAR_FULL_ARTICLE,
     INVITED_FULL_ARTICLE,
     INVITED_ABSTRACT_ARTICLE,

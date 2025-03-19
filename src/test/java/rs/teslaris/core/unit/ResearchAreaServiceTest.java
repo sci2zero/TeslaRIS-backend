@@ -32,6 +32,7 @@ import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.service.impl.commontypes.ResearchAreaServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 public class ResearchAreaServiceTest {
@@ -229,15 +230,19 @@ public class ResearchAreaServiceTest {
         // given
         var researchAreaPage = new PageImpl<>(List.of(new ResearchArea()));
         var pageable = PageRequest.of(0, 10);
-        when(researchAreaRepository.searchResearchAreas("Search Term", "SR", pageable)).thenReturn(
+        when(
+            researchAreaRepository.searchResearchAreas("Search Term", LanguageAbbreviations.SERBIAN,
+                pageable)).thenReturn(
             researchAreaPage);
 
         // when
-        var result = researchAreaService.searchResearchAreas(pageable, "Search Term", "SR");
+        var result = researchAreaService.searchResearchAreas(pageable, "Search Term",
+            LanguageAbbreviations.SERBIAN);
 
         // then
         assertNotNull(result);
-        verify(researchAreaRepository).searchResearchAreas("Search Term", "SR", pageable);
+        verify(researchAreaRepository).searchResearchAreas("Search Term",
+            LanguageAbbreviations.SERBIAN, pageable);
     }
 
     @Test

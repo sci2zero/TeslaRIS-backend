@@ -23,6 +23,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
+import rs.teslaris.core.dto.document.DocumentAffiliationRequestDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -93,6 +94,26 @@ public class DocumentPublicationController {
     public Page<DocumentPublicationIndex> findResearcherPublications(@PathVariable Integer personId,
                                                                      Pageable pageable) {
         return documentPublicationService.findResearcherPublications(personId, pageable);
+    }
+
+    @GetMapping("/non-affiliated/{organisationUnitId}")
+    public Page<DocumentPublicationIndex> findNonAffiliatedPublications(
+        @PathVariable Integer organisationUnitId,
+        @RequestHeader("Authorization") String bearerToken,
+        Pageable pageable) {
+        return documentPublicationService.findNonAffiliatedDocuments(organisationUnitId,
+            personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken)),
+            pageable);
+    }
+
+    @PatchMapping("/add-affiliation/{organisationUnitId}")
+    public void addInstitutionToDocuments(
+        @RequestBody @Valid DocumentAffiliationRequestDTO documentAffiliationRequest,
+        @PathVariable Integer organisationUnitId,
+        @RequestHeader("Authorization") String bearerToken) {
+        documentPublicationService.massAssignContributionInstitution(organisationUnitId,
+            personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken)),
+            documentAffiliationRequest.documentIds(), documentAffiliationRequest.deleteOthers());
     }
 
     @GetMapping("/for-publisher/{publisherId}")
@@ -169,5 +190,12 @@ public class DocumentPublicationController {
         var personId = personService.getPersonIdForUserId(userId);
 
         documentPublicationService.unbindResearcherFromContribution(personId, documentId);
+    }
+
+    @GetMapping("/identifier-usage/{documentId}")
+    @PublicationEditCheck
+    public boolean checkIdentifierUsage(@PathVariable Integer documentId,
+                                        @RequestParam String identifier) {
+        return documentPublicationService.isIdentifierInUse(identifier, documentId);
     }
 }

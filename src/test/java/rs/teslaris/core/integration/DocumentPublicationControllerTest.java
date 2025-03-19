@@ -34,6 +34,18 @@ public class DocumentPublicationControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testFindNonAffiliatedPublications() throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/document/non-affiliated/{organisationUnitId}", 1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
     public void testUnbindResearcherFromPublication() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
 

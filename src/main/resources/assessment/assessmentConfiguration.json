@@ -40,6 +40,55 @@
     "M60": ["M61", "M62", "M63", "M64", "M67", "M68", "M69"],
     "M70": ["M70"],
     "M80": ["M81", "M82", "M83", "M84"],
-    "M90": ["M91a", "M91", "M62", "M93", "M94", "M95", "M96", "M97", "M98"]
+    "M90": ["M91a", "M91", "M92", "M93", "M94", "M95", "M96", "M97", "M98"]
+  },
+  "groupToNameMapping": {
+    "M10": {
+      "sr": "Монографије, монографске студије, тематски зборници, лексикографске и картографске публикације међународног значаја",
+      "en": "Monographs, monographic studies, thematic collections, lexicographic and cartographic publications of international importance"
+    },
+    "M20": {
+      "sr": "Радови објављени у научним часописима међународног значаја",
+      "en": "Papers published in scientific journals of international importance"
+    },
+    "M30": {
+      "sr": "Зборници међународних научних скупова",
+      "en": "Proceedings of international scientific conferences"
+    },
+    "M40": {
+      "sr": "Монографије националног значаја",
+      "en": "Monographs of national importance"
+    },
+    "M50": {
+      "sr": "Радови у часописима националног значаја",
+      "en": "Papers in journals of national importance"
+    },
+    "M60": {
+      "sr": "Зборници националних научних скупова, критичко приређивање извора",
+      "en": "Proceedings of national scientific conferences, critical editions of sources"
+    },
+    "M70": {
+      "sr": "Одбрањена докторска дисертација",
+      "en": "Defended doctoral dissertation"
+    },
+    "M80": {
+      "sr": "Техничка решења",
+      "en": "Technical solutions"
+    },
+    "M90": {
+      "sr": "Патенти, сорте, расе или сојеви",
+      "en": "Patents, varieties, breeds, or strains"
+    }
+},
+  "sciList": ["M21APlus", "M21A", "M21", "M22", "M23", "M23e", "M24Plus", "M24"],
+  "sciListPriorities": {
+    "M21APlus": 1,
+    "M21A": 2,
+    "M21": 3,
+    "M22": 4,
+    "M23": 5,
+    "M23e": 6,
+    "M24Plus": 7,
+    "M24": 8
   }
 }

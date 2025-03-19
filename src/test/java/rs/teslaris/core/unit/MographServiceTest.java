@@ -1,11 +1,14 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -353,4 +356,83 @@ public class MographServiceTest {
         verify(documentPublicationIndexRepository, never()).delete(any());
     }
 
+    @Test
+    void shouldReturnTrueWhenEISBNExists() {
+        // given
+        var identifier = "1234-5678";
+        var publicationSeriesId = 1;
+        when(monographRepository.existsByeISBN(identifier, publicationSeriesId)).thenReturn(
+            true);
+        when(monographRepository.existsByPrintISBN(identifier, publicationSeriesId)).thenReturn(
+            false);
+
+        // when
+        var result = monographService.isIdentifierInUse(identifier, publicationSeriesId);
+
+        // then
+        assertTrue(result);
+        verify(monographRepository, atMostOnce()).existsByeISBN(identifier,
+            publicationSeriesId);
+        verify(monographRepository, atMostOnce()).existsByPrintISBN(identifier,
+            publicationSeriesId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenPrintISBNExists() {
+        // given
+        var identifier = "1234-5678";
+        var publicationSeriesId = 1;
+        when(monographRepository.existsByeISBN(identifier, publicationSeriesId)).thenReturn(
+            false);
+        when(monographRepository.existsByPrintISBN(identifier, publicationSeriesId)).thenReturn(
+            true);
+
+        // when
+        var result = monographService.isIdentifierInUse(identifier, publicationSeriesId);
+
+        // then
+        assertTrue(result);
+        verify(monographRepository).existsByeISBN(identifier, publicationSeriesId);
+        verify(monographRepository).existsByPrintISBN(identifier, publicationSeriesId);
+    }
+
+    @Test
+    void shouldReturnTrueWhenBothISBNsExist() {
+        // given
+        var identifier = "1234-5678";
+        var publicationSeriesId = 1;
+        when(monographRepository.existsByeISBN(identifier, publicationSeriesId)).thenReturn(
+            true);
+        when(monographRepository.existsByPrintISBN(identifier, publicationSeriesId)).thenReturn(
+            true);
+
+        // when
+        var result = monographService.isIdentifierInUse(identifier, publicationSeriesId);
+
+        // then
+        assertTrue(result);
+        verify(monographRepository, atMostOnce()).existsByeISBN(identifier,
+            publicationSeriesId);
+        verify(monographRepository, atMostOnce()).existsByPrintISBN(identifier,
+            publicationSeriesId);
+    }
+
+    @Test
+    void shouldReturnFalseWhenNeitherISBNExists() {
+        // given
+        var identifier = "1234-5678";
+        var publicationSeriesId = 1;
+        when(monographRepository.existsByeISBN(identifier, publicationSeriesId)).thenReturn(
+            false);
+        when(monographRepository.existsByPrintISBN(identifier, publicationSeriesId)).thenReturn(
+            false);
+
+        // when
+        var result = monographService.isIdentifierInUse(identifier, publicationSeriesId);
+
+        // then
+        assertFalse(result);
+        verify(monographRepository).existsByeISBN(identifier, publicationSeriesId);
+        verify(monographRepository).existsByPrintISBN(identifier, publicationSeriesId);
+    }
 }

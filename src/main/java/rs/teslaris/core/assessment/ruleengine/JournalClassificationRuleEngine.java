@@ -2,9 +2,12 @@ package rs.teslaris.core.assessment.ruleengine;
 
 import jakarta.annotation.Nullable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
+import lombok.Getter;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.model.AssessmentClassification;
@@ -17,6 +20,7 @@ import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorReposito
 import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.util.Pair;
@@ -43,6 +47,10 @@ public abstract class JournalClassificationRuleEngine {
 
     protected AssessmentClassificationService assessmentClassificationService;
 
+    @Getter
+    protected Set<MultiLingualContent> reasoningProcess = new HashSet<>();
+
+
     @Transactional
     public void startClassification(Integer classificationYear, Commission commission) {
         int pageNumber = 0;
@@ -63,6 +71,7 @@ public abstract class JournalClassificationRuleEngine {
                         journalIndex.getDatabaseId(), classificationYear, source);
 
                 performClassification(commission);
+                reasoningProcess.clear();
             });
 
             pageNumber++;
@@ -137,6 +146,7 @@ public abstract class JournalClassificationRuleEngine {
         if (Objects.nonNull(assessmentClassification.a)) {
             classification.setCategoryIdentifier(assessmentClassification.b);
             classification.setAssessmentClassification(assessmentClassification.a);
+            classification.setClassificationReason(reasoningProcess);
 
             var existingClassification =
                 assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
@@ -182,6 +192,7 @@ public abstract class JournalClassificationRuleEngine {
     @Nullable
     abstract protected AssessmentClassification handleM24(String category);
 
+    @Nullable
     protected PublicationSeriesIndicator findIndicatorByCode(String code, String category) {
         return currentJournalIndicators.stream()
             .filter(journalIndicator ->

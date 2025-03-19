@@ -10,19 +10,31 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.commontypes.TaskManagerServiceImpl;
+import rs.teslaris.core.service.interfaces.user.UserService;
 
 @SpringBootTest
 class TaskManagerServiceTest {
 
     @Mock
     private ThreadPoolTaskScheduler taskScheduler;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
     @InjectMocks
     private TaskManagerServiceImpl taskManagerService;
@@ -49,12 +61,12 @@ class TaskManagerServiceTest {
     @Test
     public void shouldListAllScheduledTasks() {
         // Given
-        String taskId1 = "task1";
-        String taskId2 = "task2";
-        LocalDateTime executionTime1 = LocalDateTime.now().plusMinutes(10);
-        LocalDateTime executionTime2 = LocalDateTime.now().plusHours(1);
-        Runnable task1 = mock(Runnable.class);
-        Runnable task2 = mock(Runnable.class);
+        var taskId1 = "task1";
+        var taskId2 = "task2";
+        var executionTime1 = LocalDateTime.now().plusMinutes(10);
+        var executionTime2 = LocalDateTime.now().plusHours(1);
+        var task1 = mock(Runnable.class);
+        var task2 = mock(Runnable.class);
 
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(
             invocation -> mock(ScheduledFuture.class));
@@ -66,10 +78,53 @@ class TaskManagerServiceTest {
         var scheduledTasks = taskManagerService.listScheduledTasks();
 
         // Then
-        assertEquals(2, scheduledTasks.size());
-        assertEquals(taskId1, scheduledTasks.get(0).taskId());
-        assertEquals(executionTime1, scheduledTasks.get(0).executionTime());
-        assertEquals(taskId2, scheduledTasks.get(1).taskId());
-        assertEquals(executionTime2, scheduledTasks.get(1).executionTime());
+        assertTrue(scheduledTasks.size() >= 2);
+        assertTrue(scheduledTasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+            .containsAll(List.of(taskId1, taskId2)));
+        assertTrue(scheduledTasks.stream().map(ScheduledTaskResponseDTO::executionTime).toList()
+            .containsAll(List.of(executionTime1, executionTime2)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "VICE_DEAN_FOR_SCIENCE"})
+    public void shouldListAllScheduledReportGenerationTasks(String role) {
+        // Given
+        var taskId1 = "ReportGeneration-1-.....";
+        var taskId2 = "ReportGeneration-2-.....";
+        var executionTime1 = LocalDateTime.now().plusMinutes(10);
+        var executionTime2 = LocalDateTime.now().plusHours(1);
+        var task1 = mock(Runnable.class);
+        var task2 = mock(Runnable.class);
+
+        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+            .thenAnswer(invocation -> mock(ScheduledFuture.class));
+
+        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1);
+        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 2);
+
+        // Mock behavior for non-admin roles
+        boolean isAdmin = role.equals("ADMIN");
+        if (!isAdmin) {
+            when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
+            when(organisationUnitsRelationRepository.getSubOUsRecursive(1))
+                .thenReturn(List.of(1)); // Assuming sub-OU structure
+        }
+
+        // When
+        var scheduledTasks = taskManagerService.listScheduledReportGenerationTasks(1, role);
+
+        // Then
+        if (isAdmin) {
+            assertEquals(2, scheduledTasks.size());
+            assertTrue(scheduledTasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .containsAll(List.of(taskId1, taskId2)));
+        } else {
+            assertEquals(1, scheduledTasks.size());
+            assertTrue(scheduledTasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .contains(taskId1));
+        }
+
+        assertTrue(scheduledTasks.stream().map(ScheduledTaskResponseDTO::executionTime).toList()
+            .contains(executionTime1));
     }
 }

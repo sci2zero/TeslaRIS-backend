@@ -2,6 +2,7 @@ package rs.teslaris.core.importer.model.converter.load.publication;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -36,8 +37,17 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
         if (languageTagValue.isEmpty()) {
             languageTagValue = LanguageAbbreviations.ENGLISH;
         }
+
+        if (languageTagValue.equals("GE")) {
+            languageTagValue = LanguageAbbreviations.GERMAN;
+        }
+
         var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
-        dto.setLanguageTagIds(List.of(languageTag.getId()));
+        if (Objects.nonNull(languageTag.getId())) {
+            dto.setLanguageTagIds(List.of(languageTag.getId()));
+        } else {
+            dto.setLanguageTagIds(new ArrayList<>());
+        }
 
         return dto;
     }

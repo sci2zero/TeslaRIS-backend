@@ -445,6 +445,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         );
     }
 
+    @Override
+    public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
+        return documentRepository.existsByDoi(identifier, documentPublicationId) ||
+            documentRepository.existsByScopusId(identifier, documentPublicationId);
+    }
+
     protected void clearCommonFields(Document publication) {
         publication.getTitle().clear();
         publication.getSubTitle().clear();
@@ -497,6 +503,37 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return searchService.runQuery(query,
             Pageable.ofSize(5),
             DocumentPublicationIndex.class, "document_publication");
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
+                                                                     Integer personId,
+                                                                     Pageable pageable) {
+        var nonAffiliatedDocumentIds =
+            personContributionService.getIdsOfNonRelatedDocuments(organisationUnitId, personId);
+        return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdIn(
+            nonAffiliatedDocumentIds, pageable);
+    }
+
+    @Override
+    public void massAssignContributionInstitution(Integer organisationUnitId, Integer personId,
+                                                  List<Integer> documentIds, Boolean deleteOthers) {
+        documentIds.forEach(documentId -> {
+            var document = findOne(documentId);
+            var contributionToUpdate = document.getContributors().stream()
+                .filter(contribution -> contribution.getPerson().getId().equals(personId))
+                .findFirst();
+            contributionToUpdate.ifPresent(contribution -> {
+                if (deleteOthers) {
+                    contribution.getInstitutions().clear();
+                }
+
+                contribution.getInstitutions()
+                    .add(organisationUnitService.findOne(organisationUnitId));
+            });
+
+            save(document);
+        });
     }
 
     @Override
