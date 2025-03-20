@@ -12,10 +12,11 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -45,9 +46,8 @@ public class PublicationEditCheckAspect {
         var method = AspectUtil.getMethod(joinPoint);
         var annotation = method.getAnnotation(PublicationEditCheck.class);
 
-        String tokenValue = request.getHeader("Authorization").split(" ")[1];
-        Map<String, String> attributeMap = (Map<String, String>) request.getAttribute(
-            HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        var tokenValue = AspectUtil.extractToken(request);
+        var attributeMap = AspectUtil.getUriVariables(request);
 
         String role = tokenUtil.extractUserRoleFromToken(tokenValue);
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
@@ -55,7 +55,7 @@ public class PublicationEditCheckAspect {
 
         List<Integer> contributors = getContributors(annotation, attributeMap, joinPoint);
 
-        checkPermission(role, personId, userId, contributors);
+        checkPermission(role, personId, userId, contributors, joinPoint, annotation, attributeMap);
 
         return joinPoint.proceed();
     }
@@ -76,34 +76,70 @@ public class PublicationEditCheckAspect {
             .filter(Objects::nonNull).collect(Collectors.toList());
     }
 
+    private boolean isDocumentAThesis(ProceedingJoinPoint joinPoint,
+                                      PublicationEditCheck annotation,
+                                      Map<String, String> attributeMap) {
+        if (annotation.value().equalsIgnoreCase("CREATE")) {
+            var publicationDTO = (DocumentDTO) joinPoint.getArgs()[0];
+            return publicationDTO instanceof ThesisDTO;
+        }
+
+        var document =
+            documentPublicationService.findOne(Integer.parseInt(attributeMap.get("documentId")));
+        return document instanceof Thesis;
+    }
+
     private List<Integer> getContributorsFromDatabase(Map<String, String> attributeMap) {
         int publicationId = Integer.parseInt(attributeMap.get("documentId"));
         return documentPublicationService.getContributorIds(publicationId);
     }
 
     private void checkPermission(String role, int personId, int userId,
-                                 List<Integer> contributors) {
+                                 List<Integer> contributors,
+                                 ProceedingJoinPoint joinPoint,
+                                 PublicationEditCheck annotation,
+                                 Map<String, String> attributeMap) {
         UserRole userRole = UserRole.valueOf(role);
         switch (userRole) {
             case ADMIN:
                 break;
             case RESEARCHER:
                 if (!contributors.contains(personId)) {
-                    throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
+                    handleUnauthorisedUser();
                 }
                 break;
             case INSTITUTIONAL_EDITOR:
-                if (contributors.stream()
-                    .filter(contributorId -> contributorId > 0) // filter out external affiliates
-                    .noneMatch(
-                        contributorId -> personService.isPersonEmployedInOrganisationUnit(
-                            contributorId,
-                            userService.getUserOrganisationUnitId(userId)))) {
-                    throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
+                if (noResearchersFromUserInstitution(contributors, userId)) {
+                    handleUnauthorisedUser();
+                }
+                break;
+            case INSTITUTIONAL_LIBRARIAN:
+                if (noResearchersFromUserInstitution(contributors, userId) ||
+                    !isDocumentAThesis(joinPoint, annotation, attributeMap)) {
+                    handleUnauthorisedUser();
+                }
+                break;
+            case HEAD_OF_LIBRARY:
+                if (noResearchersFromUserInstitution(contributors, userId) ||
+                    !annotation.value().equalsIgnoreCase("PUBLIC_REVIEW")) {
+                    handleUnauthorisedUser();
                 }
                 break;
             default:
-                throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
+                handleUnauthorisedUser();
         }
+    }
+
+    private void handleUnauthorisedUser() {
+        throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
+    }
+
+    private boolean noResearchersFromUserInstitution(List<Integer> contributors, Integer userId) {
+        return contributors.stream()
+            .filter(contributorId -> contributorId > 0) // filter out external affiliates
+            .noneMatch(
+                contributorId -> personService.isPersonEmployedInOrganisationUnit(
+                    contributorId,
+                    userService.getUserOrganisationUnitId(userId)));
     }
 }

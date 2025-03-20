@@ -1,16 +1,11 @@
 package rs.teslaris.core.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Map;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.servlet.HandlerMapping;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.model.user.UserRole;
@@ -36,9 +31,9 @@ public class PersonEditCheckAspect {
 
     @Around("@annotation(rs.teslaris.core.annotation.PersonEditCheck)")
     public Object checkPersonEdit(ProceedingJoinPoint joinPoint) throws Throwable {
-        HttpServletRequest request = getRequest();
-        var tokenValue = extractToken(request);
-        var attributeMap = getUriVariables(request);
+        HttpServletRequest request = AspectUtil.getRequest();
+        var tokenValue = AspectUtil.extractToken(request);
+        var attributeMap = AspectUtil.getUriVariables(request);
 
         var role = UserRole.valueOf(tokenUtil.extractUserRoleFromToken(tokenValue));
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
@@ -50,26 +45,15 @@ public class PersonEditCheckAspect {
             return joinPoint.proceed();
         }
 
+        if (annotation.value().equalsIgnoreCase("ADD_EMPLOYMENT") &&
+            role.equals(UserRole.INSTITUTIONAL_EDITOR)) {
+            return joinPoint.proceed();
+        }
+
         var personId = Integer.parseInt(attributeMap.get("personId"));
         validateEditPermission(role, userId, personId);
 
         return joinPoint.proceed();
-    }
-
-    private HttpServletRequest getRequest() {
-        return ((ServletRequestAttributes) Objects.requireNonNull(
-            RequestContextHolder.getRequestAttributes()))
-            .getRequest();
-    }
-
-    private String extractToken(HttpServletRequest request) {
-        var bearerToken = request.getHeader("Authorization");
-        return bearerToken.split(" ")[1];
-    }
-
-    private Map<String, String> getUriVariables(HttpServletRequest request) {
-        return (Map<String, String>) request.getAttribute(
-            HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
     }
 
     private void validateCreatePermission(UserRole role, ProceedingJoinPoint joinPoint,

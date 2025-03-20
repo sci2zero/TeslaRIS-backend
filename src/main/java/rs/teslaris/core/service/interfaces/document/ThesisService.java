@@ -27,7 +27,7 @@ public interface ThesisService {
     void deleteThesisAttachment(Integer thesisId, Integer documentFileId,
                                 ThesisAttachmentType attachmentType);
 
-    void putOnPublicReview(Integer thesisId);
+    void putOnPublicReview(Integer thesisId, Boolean continueLastReview);
 
     void removeFromPublicReview(Integer thesisId);
 }

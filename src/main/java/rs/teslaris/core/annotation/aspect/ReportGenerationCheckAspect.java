@@ -35,8 +35,7 @@ public class ReportGenerationCheckAspect {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
-        var bearerToken = request.getHeader("Authorization");
-        var tokenValue = bearerToken.split(" ")[1];
+        var tokenValue = AspectUtil.extractToken(request);
         String[] commissionIdStrings = request.getParameterValues("commissionId");
 
         var role = tokenUtil.extractUserRoleFromToken(tokenValue);

@@ -91,6 +91,7 @@ public class DbInitializer implements ApplicationRunner {
         var approvePublication = new Privilege("APPROVE_PUBLICATION");
         var editResearchAreas = new Privilege("EDIT_RESEARCH_AREAS");
         var editOrganisationUnit = new Privilege("EDIT_ORGANISATION_UNITS");
+        var editEmploymentInstitution = new Privilege("EDIT_EMPLOYMENT_INSTITUTION");
         var editOURelations = new Privilege("EDIT_OU_RELATIONS");
         var editPublishers = new Privilege("EDIT_PUBLISHERS");
         var editPublicationSeries = new Privilege("EDIT_PUBLICATION_SERIES");
@@ -175,6 +176,7 @@ public class DbInitializer implements ApplicationRunner {
                 assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
                 editAssessmentResearchArea, downloadReports, listAssessmentClassifications,
                 updateBrandingInformation, manageApiKeys, manageThesisAttachments,
+                editEmploymentInstitution,
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview));
 
         // AUTHORITIES
@@ -211,7 +213,8 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
                 List.of(
                     new Privilege[] {updateProfile, allowAccountTakeover, manageThesisAttachments,
-                        putThesisOnPublicReview, createUserBasic, editPersonalInfo})));
+                        putThesisOnPublicReview, createUserBasic, editPersonalInfo,
+                        editEmploymentInstitution})));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -226,9 +229,22 @@ public class DbInitializer implements ApplicationRunner {
                 updateProfile, allowAccountTakeover, scheduleReportGeneration, downloadReports
             )));
 
+        var institutionalLibrarianAuthority =
+            new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
+                updateProfile, allowAccountTakeover, manageThesisAttachments,
+                putThesisOnPublicReview
+            )));
+
+        var headOfLibraryAuthority =
+            new Authority(UserRole.HEAD_OF_LIBRARY.toString(), new HashSet<>(List.of(
+                updateProfile, allowAccountTakeover, deleteThesisAttachments,
+                removeThesisFromPublicReview, putThesisOnPublicReview
+            )));
+
         authorityRepository.saveAll(
             List.of(adminAuthority, researcherAuthority, institutionalEditorAuthority,
-                commissionAuthority, viceDeanForScienceAuthority));
+                commissionAuthority, viceDeanForScienceAuthority, institutionalLibrarianAuthority,
+                headOfLibraryAuthority));
 
         // LANGUAGE TAGS
         var englishTag = new LanguageTag(LanguageAbbreviations.ENGLISH, "English");
@@ -339,7 +355,8 @@ public class DbInitializer implements ApplicationRunner {
             testingDataInitializer.initializeIntegrationTestingData(serbianTag, serbianLanguage,
                 englishTag,
                 germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
-                viceDeanForScienceAuthority, institutionalEditorAuthority, commission5);
+                viceDeanForScienceAuthority, institutionalEditorAuthority,
+                institutionalLibrarianAuthority, headOfLibraryAuthority, commission5);
         }
     }
 

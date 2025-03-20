@@ -292,7 +292,8 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         // When
-        var savedUser = userService.registerInstitutionAdmin(registrationRequest);
+        var savedUser = userService.registerInstitutionEmployee(registrationRequest,
+            UserRole.INSTITUTIONAL_EDITOR);
 
         // Then
         assertNotNull(savedUser);
@@ -342,7 +343,8 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         // When
-        var savedUser = userService.registerViceDeanForScience(registrationRequest);
+        var savedUser = userService.registerInstitutionEmployee(registrationRequest,
+            UserRole.VICE_DEAN_FOR_SCIENCE);
 
         // Then
         assertNotNull(savedUser);

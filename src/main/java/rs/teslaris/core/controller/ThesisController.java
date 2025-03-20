@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -24,7 +25,9 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
+import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
@@ -36,6 +39,10 @@ public class ThesisController {
     private final ThesisService thesisService;
 
     private final JwtUtil tokenUtil;
+
+    private final UserService userService;
+
+    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
 
     @GetMapping("/{documentId}")
@@ -89,15 +96,16 @@ public class ThesisController {
 
     @PatchMapping("/put-on-public-review/{documentId}")
     @PreAuthorize("hasAuthority('PUT_THESIS_ON_PUBLIC_REVIEW')")
-    @PublicationEditCheck
+    @PublicationEditCheck("PUBLIC_REVIEW")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void putOnPublicReview(@PathVariable Integer documentId) {
-        thesisService.putOnPublicReview(documentId);
+    public void putOnPublicReview(@PathVariable Integer documentId,
+                                  @RequestParam(name = "continue", required = false, defaultValue = "false")
+                                  Boolean continueLastReview) {
+        thesisService.putOnPublicReview(documentId, continueLastReview);
     }
 
     @PatchMapping("/remove-from-public-review/{documentId}")
     @PreAuthorize("hasAuthority('REMOVE_THESIS_FROM_PUBLIC_REVIEW')")
-    @PublicationEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFromPublicReview(@PathVariable Integer documentId) {
         thesisService.removeFromPublicReview(documentId);
@@ -115,10 +123,23 @@ public class ThesisController {
     }
 
     private void performReferenceAdditionChecks(ThesisDTO thesis, String bearerToken) {
-        if (tokenUtil.extractUserRoleFromToken(bearerToken).equals("RESEARCHER") &&
+        var role = tokenUtil.extractUserRoleFromToken(bearerToken);
+
+        if (role.equals("RESEARCHER") &&
             (Objects.isNull(thesis.getDocumentDate()) || thesis.getDocumentDate().isEmpty())) {
             throw new ThesisException(
                 "You have to provide document date when adding thesis as reference.");
+        } else if (role.equals("INSTITUTIONAL_LIBRARIAN")) {
+            var userInstitutionId = userService.getUserOrganisationUnitId(
+                tokenUtil.extractUserIdFromToken(bearerToken));
+            var possibleInstitutions =
+                organisationUnitsRelationRepository.getSubOUsRecursive(userInstitutionId);
+            possibleInstitutions.add(userInstitutionId);
+
+            if (!possibleInstitutions.contains(thesis.getOrganisationUnitId())) {
+                throw new ThesisException(
+                    "Librarian can only add theses to his/her own institution.");
+            }
         }
     }
 }

@@ -84,7 +84,7 @@ public class InvolvementController {
     @PostMapping("/employment/{personId}")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
-    @PersonEditCheck
+    @PersonEditCheck("ADD_EMPLOYMENT")
     @Idempotent
     public EmploymentDTO addEmployment(@RequestBody @Valid EmploymentDTO employment,
                                        @PathVariable Integer personId) {

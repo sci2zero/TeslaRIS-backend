@@ -348,9 +348,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    public User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest)
-        throws NoSuchAlgorithmException {
-        var authorityName = UserRole.INSTITUTIONAL_EDITOR.toString();
+    public User registerInstitutionEmployee(EmployeeRegistrationRequestDTO registrationRequest,
+                                            UserRole userRole) throws NoSuchAlgorithmException {
+        var authorityName = userRole.toString();
         return registerUser(
             registrationRequest.getEmail(),
             registrationRequest.getNote(),
@@ -358,23 +358,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             registrationRequest.getSurname(),
             registrationRequest.getPreferredLanguageId(),
             registrationRequest.getOrganisationUnitId(),
-            null, // No commission for institutional admin
-            authorityName
-        );
-    }
-
-    @Override
-    public User registerViceDeanForScience(EmployeeRegistrationRequestDTO registrationRequest)
-        throws NoSuchAlgorithmException {
-        var authorityName = UserRole.VICE_DEAN_FOR_SCIENCE.toString();
-        return registerUser(
-            registrationRequest.getEmail(),
-            registrationRequest.getNote(),
-            registrationRequest.getName(),
-            registrationRequest.getSurname(),
-            registrationRequest.getPreferredLanguageId(),
-            registrationRequest.getOrganisationUnitId(),
-            null, // No commission for vice dean for science
+            null, // No commission for institutional employee
             authorityName
         );
     }
@@ -485,12 +469,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
             userToUpdate.setFirstname(userUpdateRequest.getFirstname());
             userToUpdate.setLastName(userUpdateRequest.getLastName());
+            // TODO: Why did we allow this?
             var orgUnit =
                 organisationUnitService.findOne(userUpdateRequest.getOrganisationalUnitId());
             userToUpdate.setOrganisationUnit(orgUnit);
         } else if (userRole.equals(UserRole.ADMIN.toString()) ||
             userRole.equals(UserRole.COMMISSION.toString()) ||
-            userRole.equals(UserRole.VICE_DEAN_FOR_SCIENCE.toString())) {
+            userRole.equals(UserRole.VICE_DEAN_FOR_SCIENCE.toString()) ||
+            userRole.equals(UserRole.INSTITUTIONAL_LIBRARIAN.toString()) ||
+            userRole.equals(UserRole.HEAD_OF_LIBRARY.toString())) {
             userToUpdate.setFirstname(userUpdateRequest.getFirstname());
             userToUpdate.setLastName(userUpdateRequest.getLastName());
         }

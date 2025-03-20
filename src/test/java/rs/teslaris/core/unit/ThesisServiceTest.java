@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -283,7 +284,7 @@ public class ThesisServiceTest {
         when(thesis.getCommissionReports()).thenReturn(Set.of(new DocumentFile()));
 
         // when
-        thesisService.putOnPublicReview(thesisId);
+        thesisService.putOnPublicReview(thesisId, false);
 
         // then
         verify(thesisJPAService).findOne(thesisId);
@@ -301,7 +302,7 @@ public class ThesisServiceTest {
         when(thesis.getIsOnPublicReview()).thenReturn(true);
 
         // when / then
-        assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId));
+        assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId, false));
         verify(thesisJPAService).findOne(thesisId);
         verify(thesis, never()).setIsOnPublicReview(true);
         verify(thesisJPAService, never()).save(any());
@@ -317,7 +318,7 @@ public class ThesisServiceTest {
         when(thesis.getThesisType()).thenReturn(ThesisType.BACHELOR);
 
         // when / then
-        assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId));
+        assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId, false));
         verify(thesisJPAService).findOne(thesisId);
         verify(thesis, never()).setIsOnPublicReview(true);
         verify(thesisJPAService, never()).save(any());
@@ -339,9 +340,63 @@ public class ThesisServiceTest {
 
         // Then
         assertFalse(thesis.getIsOnPublicReview());
-        assertEquals(1, thesis.getPublicReviewStartDates().size());
-        assertFalse(thesis.getPublicReviewStartDates().contains(LocalDate.of(2024, 1, 10)));
+        assertEquals(2, thesis.getPublicReviewStartDates().size());
+        assertTrue(thesis.getPublicReviewStartDates().contains(LocalDate.of(2024, 1, 10)));
         verify(thesisJPAService).findOne(thesisId);
+    }
+
+    @Test
+    public void shouldContinueLastPublicReviewIfThesisWasPaused() {
+        // given
+        var thesisId = 1;
+        var thesis = mock(Thesis.class);
+        var lastReviewDate = LocalDate.of(2024, 1, 1);
+        var reviewDates = new HashSet<>(List.of(lastReviewDate));
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
+        when(thesis.getIsOnPublicReview()).thenReturn(false);
+        when(thesis.getIsOnPublicReviewPause()).thenReturn(true);
+        when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
+        when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
+        when(thesis.getCommissionReports()).thenReturn(Set.of(mock(DocumentFile.class)));
+
+        // when
+        thesisService.putOnPublicReview(thesisId, true);
+
+        // then
+        verify(thesisJPAService).findOne(thesisId);
+        verify(thesis).setIsOnPublicReview(true);
+        verify(thesisJPAService).save(thesis);
+        assertEquals(1, thesis.getPublicReviewStartDates().size());
+        assertTrue(thesis.getPublicReviewStartDates().contains(lastReviewDate));
+    }
+
+    @Test
+    public void shouldNotRemoveLastPublicReviewDateIfContinuingLastReview() {
+        // given
+        var thesisId = 1;
+        var thesis = mock(Thesis.class);
+        var lastReviewDate = LocalDate.of(2024, 1, 1);
+        var reviewDates = new HashSet<>(List.of(lastReviewDate));
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
+        when(thesis.getIsOnPublicReview()).thenReturn(false);
+        when(thesis.getIsOnPublicReviewPause()).thenReturn(true);
+        when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
+        when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
+        when(thesis.getCommissionReports()).thenReturn(Set.of(mock(DocumentFile.class)));
+
+        // when
+        thesisService.putOnPublicReview(thesisId, true);
+
+        // then
+        verify(thesisJPAService).findOne(thesisId);
+        verify(thesis).setIsOnPublicReview(true);
+        verify(thesisJPAService).save(thesis);
+        assertEquals(1, thesis.getPublicReviewStartDates().size());
+        assertTrue(thesis.getPublicReviewStartDates().contains(lastReviewDate));
     }
 
     @Test
@@ -432,7 +487,8 @@ public class ThesisServiceTest {
 
         // When & Then
         ThesisException exception =
-            assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId));
+            assertThrows(ThesisException.class,
+                () -> thesisService.putOnPublicReview(thesisId, false));
         assertEquals("noAttachmentsMessage", exception.getMessage());
     }
 
@@ -454,7 +510,8 @@ public class ThesisServiceTest {
 
         // When & Then
         ThesisException exception =
-            assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId));
+            assertThrows(ThesisException.class,
+                () -> thesisService.putOnPublicReview(thesisId, false));
         assertEquals("missingAttachmentsMessage", exception.getMessage());
     }
 

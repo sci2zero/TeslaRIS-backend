@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.OrgUnitEditCheck;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
@@ -42,7 +43,8 @@ public class OrganisationUnitController {
 
 
     @GetMapping("/{organisationUnitId}/can-edit")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ORGANISATION_UNITS', 'EDIT_EMPLOYMENT_INSTITUTION')")
+    @OrgUnitEditCheck
     public boolean canEditOrganisationUnit() {
         return true;
     }
@@ -112,7 +114,8 @@ public class OrganisationUnitController {
 
 
     @PutMapping("/{organisationUnitId}")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ORGANISATION_UNITS', 'EDIT_EMPLOYMENT_INSTITUTION')")
+    @OrgUnitEditCheck
     @ResponseStatus(HttpStatus.OK)
     public OrganisationUnitDTO updateOrganisationUnit(
         @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitRequestDTO,
@@ -126,7 +129,7 @@ public class OrganisationUnitController {
     @PatchMapping("/{organisationUnitId}/approve-status")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.OK)
-    public OrganisationUnitDTO updateOrganisationUnit(
+    public OrganisationUnitDTO updateOrganisationUnitApproveStatus(
         @RequestBody @Valid ApproveStatus approveStatus,
         @PathVariable Integer organisationUnitId) {
         var organisationUnit =
@@ -158,7 +161,8 @@ public class OrganisationUnitController {
     }
 
     @GetMapping("/identifier-usage/{organisationUnitId}")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ORGANISATION_UNITS', 'EDIT_EMPLOYMENT_INSTITUTION')")
+    @OrgUnitEditCheck
     public boolean checkIdentifierUsage(@PathVariable Integer organisationUnitId,
                                         @RequestParam String identifier) {
         return organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);

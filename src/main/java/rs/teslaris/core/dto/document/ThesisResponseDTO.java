@@ -18,6 +18,8 @@ public class ThesisResponseDTO extends ThesisDTO {
 
     private Boolean isOnPublicReview;
 
+    private Boolean isOnPublicReviewPause;
+
     private List<LocalDate> publicReviewDates;
 
     private LocalDate publicReviewEnd;

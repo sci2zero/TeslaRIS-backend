@@ -166,6 +166,8 @@ public class TestingDataInitializer {
                                                  Authority commissionAuthority,
                                                  Authority viceDeanForScienceAuthority,
                                                  Authority institutionalEditorAuthority,
+                                                 Authority institutionalLibrarianAuthority,
+                                                 Authority headOfLibraryAuthority,
                                                  Commission commission5) {
         var country = new Country("SRB", new HashSet<>());
         countryRepository.save(country);
@@ -737,6 +739,22 @@ public class TestingDataInitializer {
                 "Nikola", "Markovic", false, false, serbianLanguage, institutionalEditorAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
-        userRepository.saveAll(List.of(viceDeanUser, institutionalEditorUser));
+
+        var institutionalLibrarianUser =
+            new User("librarian@librarian.com", passwordEncoder.encode("librarian"),
+                "note note note",
+                "Mirka", "Maric", false, false, serbianLanguage, institutionalLibrarianAuthority,
+                null,
+                dummyOU, null, UserNotificationPeriod.WEEKLY);
+
+        var headOfLibraryUser =
+            new User("head_of_library@library.com", passwordEncoder.encode("head_of_library"),
+                "note note note",
+                "Djordje", "Perovic", false, false, serbianLanguage, headOfLibraryAuthority,
+                null,
+                dummyOU, null, UserNotificationPeriod.WEEKLY);
+        userRepository.saveAll(
+            List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
+                headOfLibraryUser));
     }
 }

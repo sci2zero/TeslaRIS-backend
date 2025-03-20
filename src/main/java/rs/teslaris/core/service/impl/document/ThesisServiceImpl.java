@@ -251,7 +251,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
-    public void putOnPublicReview(Integer thesisId) {
+    public void putOnPublicReview(Integer thesisId, Boolean continueLastReview) {
         var thesis = thesisJPAService.findOne(thesisId);
 
         if (!thesis.getThesisType().equals(ThesisType.PHD) &&
@@ -273,7 +273,19 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         thesis.setIsOnPublicReview(true);
-        thesis.getPublicReviewStartDates().add(LocalDate.now());
+
+        if (thesis.getIsOnPublicReviewPause()) {
+            if (!continueLastReview) {
+                var lastPublicReviewDate = thesis.getPublicReviewStartDates().stream()
+                    .max(Comparator.naturalOrder()).stream().findFirst();
+                lastPublicReviewDate.ifPresent((lastDate) -> {
+                    thesis.getPublicReviewStartDates().remove(lastDate);
+                });
+            }
+        } else {
+            thesis.getPublicReviewStartDates().add(LocalDate.now());
+        }
+
         thesisJPAService.save(thesis);
     }
 
@@ -293,7 +305,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         thesis.setIsOnPublicReview(false);
-        thesis.getPublicReviewStartDates().remove(lastPublicReviewDate.get());
+        thesis.setIsOnPublicReviewPause(true);
+
+        thesisJPAService.save(thesis);
     }
 
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {

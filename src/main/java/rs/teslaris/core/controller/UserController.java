@@ -37,6 +37,8 @@ import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
+import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -132,31 +134,29 @@ public class UserController {
             newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
     }
 
-    @PostMapping("/register-institution-admin")
+    @PostMapping("/register-employee/{role}")
     @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
-    public UserResponseDTO registerInstitutionAdmin(
+    public UserResponseDTO registerEmployee(
+        @PathVariable String role,
         @RequestBody @Valid EmployeeRegistrationRequestDTO registrationRequest)
         throws NoSuchAlgorithmException {
-        var newUser = userService.registerInstitutionAdmin(registrationRequest);
 
-        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
-            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(),
-            registrationRequest.getOrganisationUnitId(), null, null, null,
-            newUser.getUserNotificationPeriod());
+        UserRole userRole = switch (role) {
+            case "institution-admin" -> UserRole.INSTITUTIONAL_EDITOR;
+            case "vice-dean-for-science" -> UserRole.VICE_DEAN_FOR_SCIENCE;
+            case "institution-librarian" -> UserRole.INSTITUTIONAL_LIBRARIAN;
+            case "head-of-library" -> UserRole.HEAD_OF_LIBRARY;
+            default -> throw new IllegalArgumentException("Invalid employee role: " + role);
+        };
+
+        var newUser = userService.registerInstitutionEmployee(registrationRequest, userRole);
+        return constructEmployeeResponse(newUser, registrationRequest);
     }
 
-    @PostMapping("/register-vice-dean-for-science")
-    @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Idempotent
-    public UserResponseDTO registerViceDeanForScience(
-        @RequestBody @Valid EmployeeRegistrationRequestDTO registrationRequest)
-        throws NoSuchAlgorithmException {
-        var newUser = userService.registerViceDeanForScience(registrationRequest);
-
+    private UserResponseDTO constructEmployeeResponse(User newUser,
+                                                      EmployeeRegistrationRequestDTO registrationRequest) {
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
             newUser.getPreferredLanguage().getLanguageCode(),

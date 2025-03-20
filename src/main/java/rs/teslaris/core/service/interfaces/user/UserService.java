@@ -20,6 +20,7 @@ import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
@@ -56,13 +57,10 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest);
 
-    User registerInstitutionAdmin(EmployeeRegistrationRequestDTO registrationRequest)
-        throws NoSuchAlgorithmException;
+    User registerInstitutionEmployee(EmployeeRegistrationRequestDTO registrationRequest,
+                                     UserRole userRole) throws NoSuchAlgorithmException;
 
     User registerCommissionUser(CommissionRegistrationRequestDTO registrationRequest)
-        throws NoSuchAlgorithmException;
-
-    User registerViceDeanForScience(EmployeeRegistrationRequestDTO registrationRequest)
         throws NoSuchAlgorithmException;
 
     AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest, Integer userID,

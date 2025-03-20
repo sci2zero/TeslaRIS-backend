@@ -61,6 +61,9 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @Column(name = "is_on_public_review")
     private Boolean isOnPublicReview = false;
 
+    @Column(name = "is_on_public_review_pause")
+    private Boolean isOnPublicReviewPause = false;
+
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<LocalDate> publicReviewStartDates = new HashSet<>();
 
