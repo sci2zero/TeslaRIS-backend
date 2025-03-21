@@ -7,6 +7,7 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -29,7 +30,14 @@ import rs.teslaris.core.model.user.User;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "persons")
+@Table(name = "persons", indexes = {
+    @Index(name = "idx_person_apvnt", columnList = "apvnt"),
+    @Index(name = "idx_person_e_cris_id", columnList = "e_cris_id"),
+    @Index(name = "idx_person_e_nauka_id", columnList = "e_nauka_id"),
+    @Index(name = "idx_person_orcid", columnList = "orcid"),
+    @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id"),
+    @Index(name = "idx_person_old_id", columnList = "cris_uns_id")
+})
 @SQLRestriction("deleted=false")
 public class Person extends BaseEntity {
 

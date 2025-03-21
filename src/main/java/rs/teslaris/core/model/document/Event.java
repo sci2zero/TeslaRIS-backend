@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
@@ -24,7 +25,9 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Getter
 @Setter
 @Entity
-@Table(name = "events")
+@Table(name = "events", indexes = {
+    @Index(name = "idx_event_old_id", columnList = "cris_uns_id")
+})
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class Event extends BaseEntity {

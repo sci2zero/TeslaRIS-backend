@@ -238,7 +238,7 @@ public class DbInitializer implements ApplicationRunner {
         var headOfLibraryAuthority =
             new Authority(UserRole.HEAD_OF_LIBRARY.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, deleteThesisAttachments,
-                removeThesisFromPublicReview, putThesisOnPublicReview
+                removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments
             )));
 
         authorityRepository.saveAll(

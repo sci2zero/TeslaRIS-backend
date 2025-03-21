@@ -6,6 +6,7 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -28,7 +29,10 @@ import rs.teslaris.core.model.person.Contact;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "organisation_units")
+@Table(name = "organisation_units", indexes = {
+    @Index(name = "idx_org_unit_scopus_afid", columnList = "scopus_afid"),
+    @Index(name = "idx_org_unit_old_id", columnList = "cris_uns_id")
+})
 @SQLRestriction("deleted=false")
 public class OrganisationUnit extends BaseEntity {
 

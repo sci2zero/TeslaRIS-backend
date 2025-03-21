@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
@@ -20,7 +21,9 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "countries")
+@Table(name = "countries", indexes = {
+    @Index(name = "idx_country_code", columnList = "code")
+})
 @SQLRestriction("deleted=false")
 public class Country extends BaseEntity {
 

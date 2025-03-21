@@ -540,6 +540,20 @@ public class TestingDataInitializer {
         thesis1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
         thesis1.setLanguage(serbianLanguage);
+
+        var thesisContribution = new PersonDocumentContribution();
+        thesisContribution.setPerson(person1);
+        thesisContribution.setContributionType(DocumentContributionType.AUTHOR);
+        thesisContribution.setIsMainContributor(true);
+        thesisContribution.setIsCorrespondingContributor(true);
+        thesisContribution.setOrderNumber(1);
+        thesisContribution.setDocument(thesis1);
+        thesisContribution.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), new PersonName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        thesis1.setContributors(Set.of(thesisContribution));
         thesisRepository.save(thesis1);
 
         var thesis2 = new Thesis();

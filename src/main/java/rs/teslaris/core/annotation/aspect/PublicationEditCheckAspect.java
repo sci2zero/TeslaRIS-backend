@@ -121,7 +121,7 @@ public class PublicationEditCheckAspect {
                 break;
             case HEAD_OF_LIBRARY:
                 if (noResearchersFromUserInstitution(contributors, userId) ||
-                    !annotation.value().equalsIgnoreCase("PUBLIC_REVIEW")) {
+                    !annotation.value().equalsIgnoreCase("THESIS")) {
                     handleUnauthorisedUser();
                 }
                 break;

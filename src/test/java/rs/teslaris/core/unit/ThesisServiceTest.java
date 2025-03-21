@@ -58,6 +58,7 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -108,6 +109,9 @@ public class ThesisServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private ThesisResearchOutputRepository thesisResearchOutputRepository;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -368,7 +372,7 @@ public class ThesisServiceTest {
         verify(thesisJPAService).findOne(thesisId);
         verify(thesis).setIsOnPublicReview(true);
         verify(thesisJPAService).save(thesis);
-        assertEquals(1, thesis.getPublicReviewStartDates().size());
+        assertEquals(2, thesis.getPublicReviewStartDates().size());
         assertTrue(thesis.getPublicReviewStartDates().contains(lastReviewDate));
     }
 
@@ -395,7 +399,7 @@ public class ThesisServiceTest {
         verify(thesisJPAService).findOne(thesisId);
         verify(thesis).setIsOnPublicReview(true);
         verify(thesisJPAService).save(thesis);
-        assertEquals(1, thesis.getPublicReviewStartDates().size());
+        assertEquals(2, thesis.getPublicReviewStartDates().size());
         assertTrue(thesis.getPublicReviewStartDates().contains(lastReviewDate));
     }
 

@@ -30,6 +30,7 @@ import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -62,6 +63,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private final ThesisRepository thesisRepository;
 
+    private final ThesisResearchOutputRepository thesisResearchOutputRepository;
+
     @Value("${thesis.public-review.duration-days}")
     private Integer daysOnPublicReview;
 
@@ -81,7 +84,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              ResearchAreaService researchAreaService,
                              LanguageService languageService,
                              LanguageTagService languageTagService,
-                             ThesisRepository thesisRepository) {
+                             ThesisRepository thesisRepository,
+                             ThesisResearchOutputRepository thesisResearchOutputRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
@@ -92,6 +96,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         this.languageService = languageService;
         this.languageTagService = languageTagService;
         this.thesisRepository = thesisRepository;
+        this.thesisResearchOutputRepository = thesisResearchOutputRepository;
+    }
+
+    @Override
+    public Thesis getThesisById(Integer thesisId) {
+        return thesisJPAService.findOne(thesisId);
     }
 
     @Override
@@ -253,9 +263,17 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Override
     public void putOnPublicReview(Integer thesisId, Boolean continueLastReview) {
         var thesis = thesisJPAService.findOne(thesisId);
+        validateThesisForPublicReview(thesis);
 
-        if (!thesis.getThesisType().equals(ThesisType.PHD) &&
-            !thesis.getThesisType().equals(ThesisType.PHD_ART_PROJECT)) {
+        thesis.setIsOnPublicReview(true);
+        updatePublicReviewDates(thesis, continueLastReview);
+
+        thesis.setIsOnPublicReviewPause(false);
+        thesisJPAService.save(thesis);
+    }
+
+    private void validateThesisForPublicReview(Thesis thesis) {
+        if (!isPhdThesis(thesis)) {
             throw new ThesisException("Only PHD theses can be put on public reviews.");
         }
 
@@ -263,30 +281,28 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             throw new ThesisException("Already on public review.");
         }
 
-        if (thesis.getPreliminaryFiles().isEmpty() ||
-            thesis.getCommissionReports().isEmpty()) {
+        if (thesis.getPreliminaryFiles().isEmpty() || thesis.getCommissionReports().isEmpty()) {
             throw new ThesisException("noAttachmentsMessage");
         }
 
         if (thesis.getPreliminaryFiles().size() != thesis.getCommissionReports().size()) {
             throw new ThesisException("missingAttachmentsMessage");
         }
+    }
 
-        thesis.setIsOnPublicReview(true);
+    private boolean isPhdThesis(Thesis thesis) {
+        return thesis.getThesisType() == ThesisType.PHD ||
+            thesis.getThesisType() == ThesisType.PHD_ART_PROJECT;
+    }
 
-        if (thesis.getIsOnPublicReviewPause()) {
-            if (!continueLastReview) {
-                var lastPublicReviewDate = thesis.getPublicReviewStartDates().stream()
-                    .max(Comparator.naturalOrder()).stream().findFirst();
-                lastPublicReviewDate.ifPresent((lastDate) -> {
-                    thesis.getPublicReviewStartDates().remove(lastDate);
-                });
-            }
-        } else {
-            thesis.getPublicReviewStartDates().add(LocalDate.now());
+    private void updatePublicReviewDates(Thesis thesis, Boolean continueLastReview) {
+        if (thesis.getIsOnPublicReviewPause() && !continueLastReview) {
+            thesis.getPublicReviewStartDates()
+                .stream()
+                .max(Comparator.naturalOrder())
+                .ifPresent(thesis.getPublicReviewStartDates()::remove);
         }
-
-        thesisJPAService.save(thesis);
+        thesis.getPublicReviewStartDates().add(LocalDate.now());
     }
 
     @Override
@@ -354,6 +370,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         if (Objects.nonNull(thesis.getPublisher())) {
             index.setPublisherId(thesis.getPublisher().getId());
         }
+
+        index.setResearchOutputIds(
+            thesisResearchOutputRepository.findResearchOutputIdsForThesis(thesis.getId()));
 
         documentPublicationIndexRepository.save(index);
     }

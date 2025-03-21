@@ -11,6 +11,8 @@ import rs.teslaris.core.model.document.ThesisAttachmentType;
 @Service
 public interface ThesisService {
 
+    Thesis getThesisById(Integer thesisId);
+
     ThesisResponseDTO readThesisById(Integer thesisId);
 
     Thesis createThesis(ThesisDTO thesisDTO, Boolean index);

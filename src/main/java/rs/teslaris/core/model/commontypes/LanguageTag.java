@@ -2,6 +2,7 @@ package rs.teslaris.core.model.commontypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,7 +15,9 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "language_tag")
+@Table(name = "language_tag", indexes = {
+    @Index(name = "idx_language_tag", columnList = "language_tag")
+})
 @SQLRestriction("deleted=false")
 public class LanguageTag extends BaseEntity {
 

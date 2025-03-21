@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
@@ -22,7 +23,9 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "assessment_classifications")
+@Table(name = "assessment_classifications", indexes = {
+    @Index(name = "idx_assessment_classification_code", columnList = "code")
+})
 @SQLRestriction("deleted=false")
 public class AssessmentClassification extends BaseEntity {
 

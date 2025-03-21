@@ -84,7 +84,7 @@ public class ThesisController {
 
     @PatchMapping("/{attachmentType}/{documentId}")
     @PreAuthorize("hasAuthority('MANAGE_THESIS_ATTACHMENTS')")
-    @PublicationEditCheck
+    @PublicationEditCheck("THESIS")
     @Idempotent
     public DocumentFileResponseDTO addThesisAttachment(@PathVariable
                                                        ThesisAttachmentType attachmentType,
@@ -96,7 +96,7 @@ public class ThesisController {
 
     @PatchMapping("/put-on-public-review/{documentId}")
     @PreAuthorize("hasAuthority('PUT_THESIS_ON_PUBLIC_REVIEW')")
-    @PublicationEditCheck("PUBLIC_REVIEW")
+    @PublicationEditCheck("THESIS")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void putOnPublicReview(@PathVariable Integer documentId,
                                   @RequestParam(name = "continue", required = false, defaultValue = "false")
@@ -106,6 +106,7 @@ public class ThesisController {
 
     @PatchMapping("/remove-from-public-review/{documentId}")
     @PreAuthorize("hasAuthority('REMOVE_THESIS_FROM_PUBLIC_REVIEW')")
+    @PublicationEditCheck("THESIS")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFromPublicReview(@PathVariable Integer documentId) {
         thesisService.removeFromPublicReview(documentId);
@@ -113,7 +114,7 @@ public class ThesisController {
 
     @DeleteMapping("/{attachmentType}/{documentId}/{documentFileId}")
     @PreAuthorize("hasAuthority('DELETE_THESIS_ATTACHMENTS')")
-    @PublicationEditCheck
+    @PublicationEditCheck("THESIS")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteThesisAttachment(@PathVariable
                                        ThesisAttachmentType attachmentType,

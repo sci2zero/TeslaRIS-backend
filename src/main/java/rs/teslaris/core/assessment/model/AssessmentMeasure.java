@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -23,7 +24,9 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "assessment_measures")
+@Table(name = "assessment_measures", indexes = {
+    @Index(name = "idx_assessment_measure_code", columnList = "code")
+})
 @SQLRestriction("deleted=false")
 public class AssessmentMeasure extends BaseEntity {
 
