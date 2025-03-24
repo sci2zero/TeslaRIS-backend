@@ -767,7 +767,7 @@ public class DocumentAssessmentClassificationServiceImpl
             assessmentClassificationService.findOne(dto.getAssessmentClassificationId()));
     }
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "${assessment.document.notify-period}")
     protected void sendNotificationsToCommissions() {
         userService.findAllCommissionUsers().forEach(user -> {
             var totalAndInstitutionCount =

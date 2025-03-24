@@ -195,7 +195,7 @@ public class EventAssessmentClassificationServiceImpl
             eventAssessmentClassificationToUpdate.getEvent().getId());
     }
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "${assessment.event.notify-period}")
     protected void sendNotificationsToCommissions() {
         userService.findAllCommissionUsers().forEach(user -> {
             var totalAndInstitutionCount = eventService.getEventCountsBelongingToInstitution(
