@@ -50,6 +50,7 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
@@ -108,8 +109,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
+                                                                     List<Integer> ignore,
                                                                      Pageable pageable) {
-        return documentPublicationIndexRepository.findByAuthorIds(authorId, pageable);
+        return documentPublicationIndexRepository.findByAuthorIdsAndDatabaseIdNotIn(
+            authorId, ignore, pageable);
+    }
+
+    @Override
+    public List<Integer> getResearchOutputIdsForDocument(Integer documentId) {
+        return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                documentId).orElseThrow(
+                () -> new NotFoundException("Document with ID " + documentId + " does not exist."))
+            .getResearchOutputIds();
     }
 
     @Override
@@ -466,6 +477,20 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
             documentRepository.existsByScopusId(identifier, documentPublicationId);
+    }
+
+    @Override
+    public Pair<Long, Long> getDocumentCountsBelongingToInstitution(Integer institutionId) {
+        return new Pair<>(documentPublicationIndexRepository.countAssessable(),
+            documentPublicationIndexRepository.countAssessableByOrganisationUnitIds(institutionId));
+    }
+
+    @Override
+    public Pair<Long, Long> getAssessedDocumentCountsForCommission(Integer institutionId,
+                                                                   Integer commissionId) {
+        return new Pair<>(documentPublicationIndexRepository.countByAssessedBy(commissionId),
+            documentPublicationIndexRepository.countByOrganisationUnitIdsAndAssessedBy(
+                institutionId, commissionId));
     }
 
     protected void clearCommonFields(Document publication) {

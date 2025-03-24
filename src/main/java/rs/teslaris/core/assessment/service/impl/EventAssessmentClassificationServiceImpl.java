@@ -1,8 +1,11 @@
 package rs.teslaris.core.assessment.service.impl;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
@@ -18,9 +21,12 @@ import rs.teslaris.core.assessment.service.interfaces.EventAssessmentClassificat
 import rs.teslaris.core.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.model.document.EventsRelationType;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
 @Transactional
@@ -35,6 +41,10 @@ public class EventAssessmentClassificationServiceImpl
 
     private final EventService eventService;
 
+    private final UserService userService;
+
+    private final NotificationService notificationService;
+
 
     @Autowired
     public EventAssessmentClassificationServiceImpl(
@@ -45,12 +55,15 @@ public class EventAssessmentClassificationServiceImpl
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
-        EventService eventService) {
+        EventService eventService, UserService userService,
+        NotificationService notificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, entityAssessmentClassificationRepository);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;
+        this.userService = userService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -180,5 +193,32 @@ public class EventAssessmentClassificationServiceImpl
         eventAssessmentClassificationJPAService.save(eventAssessmentClassificationToUpdate);
         conferenceService.reindexVolatileConferenceInformation(
             eventAssessmentClassificationToUpdate.getEvent().getId());
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    protected void sendNotificationsToCommissions() {
+        userService.findAllCommissionUsers().forEach(user -> {
+            var totalAndInstitutionCount = eventService.getEventCountsBelongingToInstitution(
+                user.getOrganisationUnit().getId());
+
+            var totalClassifiedAndInstitutionCount =
+                eventService.getClassifiedEventCountsForCommission(
+                    user.getOrganisationUnit().getId(), user.getCommission().getId());
+
+            notificationService.createNotification(
+                NotificationFactory.contructNewEventsForClassificationNotification(
+                    Map.of("totalCount", String.valueOf(
+                            longValue(totalAndInstitutionCount.a) -
+                                longValue(totalClassifiedAndInstitutionCount.a)),
+                        "fromMyInstitutionCount", String.valueOf(
+                            longValue(totalAndInstitutionCount.b) -
+                                longValue(totalClassifiedAndInstitutionCount.b))),
+                    user)
+            );
+        });
+    }
+
+    private long longValue(Long value) {
+        return Objects.requireNonNullElse(value, 0).longValue();
     }
 }

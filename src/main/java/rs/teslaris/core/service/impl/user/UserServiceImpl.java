@@ -623,6 +623,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         return userRepository.findUserCommissionForOrganisationUnit(organisationUnitId);
     }
 
+    @Override
+    public List<User> findAllCommissionUsers() {
+        return userRepository.findAllCommissionUsers();
+    }
+
     @Transactional(propagation = Propagation.MANDATORY)
     private String createAndSaveRefreshTokenForUser(User user) {
         var refreshTokenValue = UUID.randomUUID().toString();

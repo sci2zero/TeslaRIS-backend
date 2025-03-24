@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.assessment.converter.EntityAssessmentClassificationConverter;
@@ -61,6 +63,7 @@ import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -70,6 +73,7 @@ import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
 @Transactional
@@ -104,6 +108,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final DocumentClassificationJPAServiceImpl documentClassificationJPAService;
 
+    private final NotificationService notificationService;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -120,7 +126,8 @@ public class DocumentAssessmentClassificationServiceImpl
         SearchService<DocumentPublicationIndex> searchService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository,
-        DocumentClassificationJPAServiceImpl documentClassificationJPAService) {
+        DocumentClassificationJPAServiceImpl documentClassificationJPAService,
+        NotificationService notificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -137,6 +144,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.indicatorRepository = indicatorRepository;
         this.eventIndexRepository = eventIndexRepository;
         this.documentClassificationJPAService = documentClassificationJPAService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -757,5 +765,33 @@ public class DocumentAssessmentClassificationServiceImpl
         documentClassification.setManual(true);
         documentClassification.setAssessmentClassification(
             assessmentClassificationService.findOne(dto.getAssessmentClassificationId()));
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    protected void sendNotificationsToCommissions() {
+        userService.findAllCommissionUsers().forEach(user -> {
+            var totalAndInstitutionCount =
+                documentPublicationService.getDocumentCountsBelongingToInstitution(
+                    user.getOrganisationUnit().getId());
+
+            var totalClassifiedAndInstitutionCount =
+                documentPublicationService.getAssessedDocumentCountsForCommission(
+                    user.getOrganisationUnit().getId(), user.getCommission().getId());
+
+            notificationService.createNotification(
+                NotificationFactory.contructNewPublicationsForAssessmentNotification(
+                    Map.of("totalCount", String.valueOf(
+                            longValue(totalAndInstitutionCount.a) -
+                                longValue(totalClassifiedAndInstitutionCount.a)),
+                        "fromMyInstitutionCount", String.valueOf(
+                            longValue(totalAndInstitutionCount.b) -
+                                longValue(totalClassifiedAndInstitutionCount.b))),
+                    user)
+            );
+        });
+    }
+
+    private long longValue(Long value) {
+        return Objects.requireNonNullElse(value, 0).longValue();
     }
 }

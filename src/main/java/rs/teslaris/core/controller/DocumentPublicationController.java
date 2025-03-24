@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -109,8 +110,16 @@ public class DocumentPublicationController {
 
     @GetMapping("/for-researcher/{personId}")
     public Page<DocumentPublicationIndex> findResearcherPublications(@PathVariable Integer personId,
+                                                                     @RequestParam(value = "ignore", required = false)
+                                                                     List<Integer> ignore,
                                                                      Pageable pageable) {
-        return documentPublicationService.findResearcherPublications(personId, pageable);
+        return documentPublicationService.findResearcherPublications(personId,
+            Objects.requireNonNullElse(ignore, List.of()), pageable);
+    }
+
+    @GetMapping("/research-output/{documentId}")
+    public List<Integer> findResearchOutputForDocument(@PathVariable Integer documentId) {
+        return documentPublicationService.getResearchOutputIdsForDocument(documentId);
     }
 
     @GetMapping("/non-affiliated/{organisationUnitId}")

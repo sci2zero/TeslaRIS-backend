@@ -10,6 +10,7 @@ import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.Pair;
 
 @Service
 public interface EventService extends JPAService<Event> {
@@ -36,4 +37,9 @@ public interface EventService extends JPAService<Event> {
     void addEventsRelation(EventsRelationDTO eventsRelationDTO);
 
     void deleteEventsRelation(Integer relationId);
+
+    Pair<Long, Long> getEventCountsBelongingToInstitution(Integer institutionId);
+
+    Pair<Long, Long> getClassifiedEventCountsForCommission(Integer institutionId,
+                                                           Integer commissionId);
 }

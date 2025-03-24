@@ -96,6 +96,12 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             case DEDUPLICATION_SCAN_FINISHED:
                 // Redirection to deduplication page done by frontend logic.
                 break;
+            case NEW_EVENTS_TO_CLASSIFY:
+                // Redirection to events page done by frontend logic.
+                break;
+            case NEW_PUBLICATIONS_TO_ASSESS:
+                // Redirection to scientific results page done by frontend logic.
+                break;
         }
 
         delete(notificationId);

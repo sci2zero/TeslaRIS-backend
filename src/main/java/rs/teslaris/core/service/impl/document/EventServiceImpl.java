@@ -41,6 +41,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -243,6 +244,20 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         eventsRelationRepository.delete(relationToDelete.get());
+    }
+
+    @Override
+    public Pair<Long, Long> getEventCountsBelongingToInstitution(Integer institutionId) {
+        return new Pair<>(eventIndexRepository.count(),
+            eventIndexRepository.countByRelatedInstitutionIds(institutionId));
+    }
+
+    @Override
+    public Pair<Long, Long> getClassifiedEventCountsForCommission(Integer institutionId,
+                                                                  Integer commissionId) {
+        return new Pair<>(eventIndexRepository.countByClassifiedBy(commissionId),
+            eventIndexRepository.countByRelatedInstitutionIdsAndClassifiedBy(institutionId,
+                commissionId));
     }
 
     private Query buildEventImportSearchQuery(List<String> names, String dateFrom, String dateTo) {

@@ -2,6 +2,8 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +34,8 @@ public class ThesisResearchOutputServiceImpl implements ThesisResearchOutputServ
     private final DocumentPublicationService documentPublicationService;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    private final Lock lock = new ReentrantLock();
 
 
     @Override
@@ -92,8 +96,16 @@ public class ThesisResearchOutputServiceImpl implements ThesisResearchOutputServ
     }
 
     private void updateDocumentPublicationIndex(Integer thesisId, Integer researchOutputId) {
-        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
-            .ifPresent(thesisIndex -> thesisIndex.getResearchOutputIds().add(researchOutputId));
+        lock.lock();
+        try {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+                .ifPresent(thesisIndex -> {
+                    thesisIndex.getResearchOutputIds().add(researchOutputId);
+                    documentPublicationIndexRepository.save(thesisIndex);
+                });
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -105,11 +117,17 @@ public class ThesisResearchOutputServiceImpl implements ThesisResearchOutputServ
         existingResearchOutput.ifPresentOrElse(researchOutput -> {
                 thesisResearchOutputRepository.delete(researchOutput);
 
-                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
-                    .ifPresent(thesisIndex -> {
-                        thesisIndex.getResearchOutputIds().remove(researchOutputId);
-                        documentPublicationIndexRepository.save(thesisIndex);
-                    });
+                lock.lock();
+                try {
+                    documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                            thesisId)
+                        .ifPresent(thesisIndex -> {
+                            thesisIndex.getResearchOutputIds().remove(researchOutputId);
+                            documentPublicationIndexRepository.save(thesisIndex);
+                        });
+                } finally {
+                    lock.unlock();
+                }
             },
             () -> {
                 throw new NotFoundException("Document with ID " + researchOutputId +

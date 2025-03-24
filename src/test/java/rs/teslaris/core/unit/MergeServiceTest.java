@@ -383,9 +383,9 @@ public class MergeServiceTest {
             List.of(publicationIndex1, publicationIndex2));
         var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
 
-        when(documentPublicationService.findResearcherPublications(sourceId,
+        when(documentPublicationService.findResearcherPublications(sourceId, List.of(),
             PageRequest.of(0, 10))).thenReturn(page1);
-        when(documentPublicationService.findResearcherPublications(sourceId,
+        when(documentPublicationService.findResearcherPublications(sourceId, List.of(),
             PageRequest.of(1, 10))).thenReturn(page2);
 
         var contribution = new PersonDocumentContribution();

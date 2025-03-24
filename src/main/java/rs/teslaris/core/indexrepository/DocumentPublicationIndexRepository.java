@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.annotations.CountQuery;
+import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -33,6 +35,22 @@ public interface DocumentPublicationIndexRepository extends
     List<DocumentPublicationIndex> findByTypeAndMonographIdAndAuthorIds(String type,
                                                                         Integer monographId,
                                                                         Integer authorId);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "terms": { "author_ids": [?0] } }
+            ],
+            "must_not": [
+              { "terms": { "databaseId": ?1 } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> findByAuthorIdsAndDatabaseIdNotIn(Integer authorId,
+                                                                     List<Integer> databaseIds,
+                                                                     Pageable pageable);
 
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
@@ -68,4 +86,64 @@ public interface DocumentPublicationIndexRepository extends
     void deleteByAuthorIdsAndType(Integer authorId, String type);
 
     Page<DocumentPublicationIndex> findByClaimerIds(Integer claimerId, Pageable pageable);
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "range": { "year": { "gt": -1 } } }
+            ],
+            "must_not": [
+              { "term": { "type": "PROCEEDINGS" } }
+            ]
+          }
+        }
+        """)
+    Long countAssessable();
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "terms": { "organisationUnitIds": [?0] } },
+              { "range": { "year": { "gt": -1 } } }
+            ],
+            "must_not": [
+              { "term": { "type": "PROCEEDINGS" } }
+            ]
+          }
+        }
+        """)
+    Long countAssessableByOrganisationUnitIds(Integer organisationUnitId);
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "terms": { "assessedBy": [?0] } },
+              { "range": { "year": { "gt": -1 } } }
+            ],
+            "must_not": [
+              { "term": { "type": "PROCEEDINGS" } }
+            ]
+          }
+        }
+        """)
+    Long countByAssessedBy(Integer assessedBy);
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "terms": { "organisationUnitIds": [?0] } },
+              { "terms": { "assessedBy": [?1] } },
+              { "range": { "year": { "gt": -1 } } }
+            ],
+            "must_not": [
+              { "term": { "type": "PROCEEDINGS" } }
+            ]
+          }
+        }
+        """)
+    Long countByOrganisationUnitIdsAndAssessedBy(Integer organisationUnitId, Integer assessedBy);
 }

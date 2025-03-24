@@ -361,16 +361,17 @@ public class DocumentPublicationServiceTest {
         var authorId = 123;
         var pageable = PageRequest.of(0, 10);
         var expectedPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
-        when(documentPublicationIndexRepository.findByAuthorIds(anyInt(),
+        when(documentPublicationIndexRepository.findByAuthorIdsAndDatabaseIdNotIn(anyInt(), any(),
             any(Pageable.class))).thenReturn(expectedPage);
 
         // when
         var resultPage =
-            documentPublicationService.findResearcherPublications(authorId, pageable);
+            documentPublicationService.findResearcherPublications(authorId, List.of(), pageable);
 
         // then
         assertEquals(expectedPage, resultPage);
-        verify(documentPublicationIndexRepository).findByAuthorIds(authorId, pageable);
+        verify(documentPublicationIndexRepository).findByAuthorIdsAndDatabaseIdNotIn(authorId,
+            List.of(), pageable);
     }
 
     @Test
@@ -653,5 +654,76 @@ public class DocumentPublicationServiceTest {
 
         // Then
         verify(documentIndex).setAssessedBy(commissions);
+    }
+
+    @Test
+    void shouldReturnResearchOutputIdsWhenDocumentExists() {
+        // given
+        var documentId = 1;
+        var expectedResearchOutputIds = List.of(101, 102, 103);
+        var documentIndex = new DocumentPublicationIndex();
+        documentIndex.setResearchOutputIds(expectedResearchOutputIds);
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(documentIndex));
+
+        // when
+        var result = documentPublicationService.getResearchOutputIdsForDocument(documentId);
+
+        // then
+        assertEquals(expectedResearchOutputIds, result);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenFetchingOutputsAndDocumentDoesNotExist() {
+        // given
+        var documentId = 999;
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // when / then
+        var exception = assertThrows(NotFoundException.class,
+            () -> documentPublicationService.getResearchOutputIdsForDocument(documentId));
+
+        assertEquals("Document with ID " + documentId + " does not exist.", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnDocumentCountsBelongingToInstitution() {
+        // given
+        var institutionId = 1;
+        when(documentPublicationIndexRepository.countAssessable()).thenReturn(200L);
+        when(documentPublicationIndexRepository.countAssessableByOrganisationUnitIds(institutionId))
+            .thenReturn(80L);
+
+        // when
+        var result =
+            documentPublicationService.getDocumentCountsBelongingToInstitution(institutionId);
+
+        // then
+        assertEquals(200L, result.a);
+        assertEquals(80L, result.b);
+    }
+
+    @Test
+    void shouldReturnAssessedDocumentCountsForCommission() {
+        // given
+        var institutionId = 1;
+        var commissionId = 2;
+        when(documentPublicationIndexRepository.countByAssessedBy(commissionId)).thenReturn(60L);
+        when(documentPublicationIndexRepository.countByOrganisationUnitIdsAndAssessedBy(
+            institutionId, commissionId))
+            .thenReturn(25L);
+
+        // when
+        var result =
+            documentPublicationService.getAssessedDocumentCountsForCommission(institutionId,
+                commissionId);
+
+        // then
+        assertEquals(60L, result.a);
+        assertEquals(25L, result.b);
     }
 }

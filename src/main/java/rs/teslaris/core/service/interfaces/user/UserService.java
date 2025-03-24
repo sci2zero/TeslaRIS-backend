@@ -79,4 +79,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     void reindexUsers();
 
     List<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId);
+
+    List<User> findAllCommissionUsers();
 }

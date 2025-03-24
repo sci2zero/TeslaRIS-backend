@@ -549,8 +549,9 @@ public class TestingDataInitializer {
         thesisContribution.setOrderNumber(1);
         thesisContribution.setDocument(thesis1);
         thesisContribution.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution.setInstitutions(Set.of(dummyOU));
         thesisContribution.setAffiliationStatement(
-            new AffiliationStatement(new HashSet<>(), new PersonName(),
+            new AffiliationStatement(new HashSet<>(), person1.getName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
 
         thesis1.setContributors(Set.of(thesisContribution));

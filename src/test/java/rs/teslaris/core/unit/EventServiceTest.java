@@ -30,6 +30,7 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -68,6 +69,9 @@ public class EventServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private EventIndexRepository eventIndexRepository;
 
     @InjectMocks
     private EventServiceImpl eventService;
@@ -484,5 +488,39 @@ public class EventServiceTest {
 
         // Then
         assertEquals("Serial event with this ID does not exist.", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnEventCountsBelongingToInstitution() {
+        // given
+        var institutionId = 1;
+        when(eventIndexRepository.count()).thenReturn(100L);
+        when(eventIndexRepository.countByRelatedInstitutionIds(institutionId)).thenReturn(30L);
+
+        // when
+        var result = eventService.getEventCountsBelongingToInstitution(institutionId);
+
+        // then
+        assertEquals(100L, result.a);
+        assertEquals(30L, result.b);
+    }
+
+    @Test
+    void shouldReturnClassifiedEventCountsForCommission() {
+        // given
+        var institutionId = 1;
+        var commissionId = 2;
+        when(eventIndexRepository.countByClassifiedBy(commissionId)).thenReturn(50L);
+        when(eventIndexRepository.countByRelatedInstitutionIdsAndClassifiedBy(institutionId,
+            commissionId))
+            .thenReturn(20L);
+
+        // when
+        var result =
+            eventService.getClassifiedEventCountsForCommission(institutionId, commissionId);
+
+        // then
+        assertEquals(50L, result.a);
+        assertEquals(20L, result.b);
     }
 }
