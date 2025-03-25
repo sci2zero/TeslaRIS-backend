@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -38,4 +39,6 @@ public class ThesisDTO extends DocumentDTO {
 
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;
+
+    private LocalDate topicAcceptanceDate;
 }

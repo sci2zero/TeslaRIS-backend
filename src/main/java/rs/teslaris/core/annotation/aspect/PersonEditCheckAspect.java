@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
@@ -24,7 +24,7 @@ public class PersonEditCheckAspect {
 
     private final PersonService personService;
 
-    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private final OrganisationUnitService organisationUnitService;
 
     private final JwtUtil tokenUtil;
 
@@ -65,8 +65,7 @@ public class PersonEditCheckAspect {
         var researcherEmploymentInstitution = getEmploymentInstitutionFromDTO(joinPoint);
         var editorInstitution = userService.getUserOrganisationUnitId(userId);
         var allPossibleInstitutions =
-            organisationUnitsRelationRepository.getSubOUsRecursive(editorInstitution);
-        allPossibleInstitutions.add(editorInstitution);
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(editorInstitution);
 
         if (!allPossibleInstitutions.contains(researcherEmploymentInstitution)) {
             throw new CantEditException("unauthorizedPersonEditAttemptMessage");

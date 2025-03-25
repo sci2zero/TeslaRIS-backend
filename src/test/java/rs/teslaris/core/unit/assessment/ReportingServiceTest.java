@@ -22,8 +22,8 @@ import rs.teslaris.core.assessment.service.impl.ReportingServiceImpl;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 
 @SpringBootTest
 public class ReportingServiceTest {
@@ -35,7 +35,7 @@ public class ReportingServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private OrganisationUnitService organisationUnitService;
 
     @InjectMocks
     private ReportingServiceImpl reportingServiceService;
@@ -90,8 +90,8 @@ public class ReportingServiceTest {
         var institutionId = 100;
         when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(institutionId);
 
-        var subOUs = List.of(101, 102);
-        when(organisationUnitsRelationRepository.getSubOUsRecursive(institutionId))
+        var subOUs = List.of(100, 101, 102);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
             .thenReturn(subOUs);
 
         var commission1 = new Commission();
@@ -123,7 +123,7 @@ public class ReportingServiceTest {
         var userId = 3;
         var institutionId = 200;
         when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(institutionId);
-        when(organisationUnitsRelationRepository.getSubOUsRecursive(institutionId))
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
             .thenReturn(Collections.emptyList());
 
         when(userRepository.findUserCommissionForOrganisationUnit(institutionId))

@@ -137,12 +137,13 @@ public class ThesisServiceTest {
     @Test
     public void shouldCreateThesis() {
         // Given
+        var ou = new OrganisationUnit();
+        ou.setId(1);
         var dto = new ThesisDTO();
-        dto.setOrganisationUnitId(1);
-        var thesis = new Thesis();
-        thesis.setId(1);
+        dto.setOrganisationUnitId(ou.getId());
         var document = new Thesis();
         document.setDocumentDate("2023");
+        document.setOrganisationUnit(ou);
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -235,6 +236,8 @@ public class ThesisServiceTest {
         // Given
         var thesis = new Thesis();
         thesis.setDocumentDate("2024");
+        thesis.setOrganisationUnit(new OrganisationUnit());
+
         var theses = List.of(thesis);
         var page1 = new PageImpl<>(theses.subList(0, 1), PageRequest.of(0, 10),
             theses.size());

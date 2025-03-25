@@ -16,9 +16,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
@@ -34,7 +34,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     private final UserService userService;
 
-    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private final OrganisationUnitService organisationUnitService;
 
     private final NotificationService notificationService;
 
@@ -134,10 +134,9 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     private List<Integer> getUserSubOrganisationUnits(Integer userId) {
         int employmentInstitutionId = userService.getUserOrganisationUnitId(userId);
-        List<Integer> subOUs = new ArrayList<>(
-            organisationUnitsRelationRepository.getSubOUsRecursive(employmentInstitutionId));
-        subOUs.add(employmentInstitutionId);
-        return subOUs;
+        return new ArrayList<>(
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                employmentInstitutionId));
     }
 
     private record ScheduledTask(

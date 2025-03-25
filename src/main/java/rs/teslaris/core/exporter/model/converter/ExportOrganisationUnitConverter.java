@@ -74,14 +74,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             superRelation = organisationUnitsRelationRepository.getSuperOU(currentId);
         } while (superRelation.isPresent());
 
-        var subUnits = organisationUnitsRelationRepository.getOuSubUnits(organisationUnitId);
-
-        for (var subUnit : subUnits) {
-            var childrenSubUnits =
-                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                    subUnit.getSourceOrganisationUnit().getId());
-            relations.addAll(childrenSubUnits);
-        }
+        relations.addAll(
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId));
 
         return relations;
     }

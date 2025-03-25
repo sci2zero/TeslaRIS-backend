@@ -22,10 +22,10 @@ import rs.teslaris.core.assessment.service.interfaces.ReportingService;
 import rs.teslaris.core.assessment.util.AssessmentReportGenerator;
 import rs.teslaris.core.assessment.util.ReportTemplateEngine;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -46,7 +46,7 @@ public class ReportingServiceImpl implements ReportingService {
 
     private final UserRepository userRepository;
 
-    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private final OrganisationUnitService organisationUnitService;
 
 
     @Override
@@ -117,9 +117,8 @@ public class ReportingServiceImpl implements ReportingService {
                     report.getReportFileName())).toList();
         }
 
-        List<Integer> subOUs = new ArrayList<>(
-            organisationUnitsRelationRepository.getSubOUsRecursive(employmentInstitutionId));
-        subOUs.add(employmentInstitutionId);
+        var subOUs =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(employmentInstitutionId);
 
         var returnData = new ArrayList<ReportDTO>();
         subOUs.forEach(institutionId -> {

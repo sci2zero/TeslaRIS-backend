@@ -39,6 +39,9 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @Column(name = "thesis_type", nullable = false)
     private ThesisType thesisType;
 
+    @Column(name = "topic_acceptance_date")
+    private LocalDate topicAcceptanceDate;
+
     @Column(name = "number_of_pages")
     private Integer numberOfPages;
 

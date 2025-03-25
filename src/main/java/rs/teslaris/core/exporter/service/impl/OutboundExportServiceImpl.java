@@ -433,19 +433,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     }
 
     private HashSet<Integer> getAllOUSubUnitsIds(Integer organisationUnitId) {
-        var relations = new HashSet<Integer>();
-        relations.add(organisationUnitId);
-
-        var subUnits = organisationUnitsRelationRepository.getOuSubUnits(organisationUnitId);
-
-        for (var subUnit : subUnits) {
-            var childrenSubUnits =
-                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                    subUnit.getSourceOrganisationUnit().getId());
-            relations.addAll(childrenSubUnits);
-        }
-
-        return relations;
+        return new HashSet<>(
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId));
     }
 
     @Override

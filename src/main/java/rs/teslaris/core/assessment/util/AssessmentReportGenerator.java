@@ -20,8 +20,8 @@ import rs.teslaris.core.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -36,7 +36,7 @@ public class AssessmentReportGenerator {
 
     private static UserRepository userRepository;
 
-    private static OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private static OrganisationUnitService organisationUnitService;
 
     private static CommissionService commissionService;
 
@@ -46,13 +46,12 @@ public class AssessmentReportGenerator {
                                      OrganisationUnitIndexRepository organisationUnitIndexRepository,
                                      UserRepository userRepository,
                                      CommissionService commissionService,
-                                     OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
+                                     OrganisationUnitService organisationUnitService) {
         AssessmentReportGenerator.messageSource = messageSource;
         AssessmentReportGenerator.organisationUnitIndexRepository = organisationUnitIndexRepository;
         AssessmentReportGenerator.userRepository = userRepository;
-        AssessmentReportGenerator.organisationUnitsRelationRepository =
-            organisationUnitsRelationRepository;
         AssessmentReportGenerator.commissionService = commissionService;
+        AssessmentReportGenerator.organisationUnitService = organisationUnitService;
     }
 
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTable63(
@@ -429,8 +428,7 @@ public class AssessmentReportGenerator {
         int commissionId = assessmentResponses.getFirst().getCommissionId();
         int organisationUnitId = userRepository.findOUIdForCommission(commissionId);
         Set<Integer> subOUs = new HashSet<>(
-            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnitId));
-        subOUs.add(organisationUnitId);
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId));
 
         List<List<String>> tableData =
             processPublicationsForColoredReport(assessmentResponses, subOUs);
@@ -515,8 +513,7 @@ public class AssessmentReportGenerator {
         var commissionId = assessmentResponses.getFirst().getCommissionId();
         var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
         var subOUs =
-            organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnitId);
-        subOUs.add(organisationUnitId);
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
         Map<String, Pair<String, Integer>> publicationsPerGroup =
             new TreeMap<>(AssessmentReportGenerator::classificationCodeSorter);

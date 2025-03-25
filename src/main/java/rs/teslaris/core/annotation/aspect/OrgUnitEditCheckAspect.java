@@ -7,7 +7,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -21,7 +21,7 @@ public class OrgUnitEditCheckAspect {
 
     private final UserService userService;
 
-    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private final OrganisationUnitService organisationUnitService;
 
 
     @Around("@annotation(rs.teslaris.core.annotation.OrgUnitEditCheck)")
@@ -34,19 +34,19 @@ public class OrgUnitEditCheckAspect {
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
         var organisationUnitId = Integer.parseInt(attributeMap.get("organisationUnitId"));
 
-        var subUnitIds = organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnitId);
-        subUnitIds.add(organisationUnitId);
+        var subUnitIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
         switch (role) {
             case ADMIN:
                 break;
             case INSTITUTIONAL_EDITOR:
                 if (!subUnitIds.contains(userService.getUserOrganisationUnitId(userId))) {
-                    throw new CantEditException("unauthorizedPersonEditAttemptMessage");
+                    throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
                 }
                 break;
             default:
-                throw new CantEditException("unauthorizedPersonEditAttemptMessage");
+                throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
         }
 
         return joinPoint.proceed();

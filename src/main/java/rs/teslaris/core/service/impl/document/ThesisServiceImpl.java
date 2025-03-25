@@ -329,6 +329,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {
         thesis.setThesisType(thesisDTO.getThesisType());
         thesis.setNumberOfPages(thesisDTO.getNumberOfPages());
+        thesis.setTopicAcceptanceDate(thesisDTO.getTopicAcceptanceDate());
 
         if (Objects.nonNull(thesisDTO.getPublisherId())) {
             thesis.setPublisher(publisherService.findOne(thesisDTO.getPublisherId()));
@@ -371,6 +372,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             index.setPublisherId(thesis.getPublisher().getId());
         }
 
+        index.getOrganisationUnitIds().add(thesis.getOrganisationUnit().getId());
         index.setResearchOutputIds(
             thesisResearchOutputRepository.findResearchOutputIdsForThesis(thesis.getId()));
 

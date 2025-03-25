@@ -25,8 +25,8 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -42,7 +42,7 @@ public class ThesisController {
 
     private final UserService userService;
 
-    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private final OrganisationUnitService organisationUnitService;
 
 
     @GetMapping("/{documentId}")
@@ -134,8 +134,7 @@ public class ThesisController {
             var userInstitutionId = userService.getUserOrganisationUnitId(
                 tokenUtil.extractUserIdFromToken(bearerToken));
             var possibleInstitutions =
-                organisationUnitsRelationRepository.getSubOUsRecursive(userInstitutionId);
-            possibleInstitutions.add(userInstitutionId);
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitutionId);
 
             if (!possibleInstitutions.contains(thesis.getOrganisationUnitId())) {
                 throw new ThesisException(
