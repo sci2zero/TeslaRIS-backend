@@ -9,7 +9,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import rs.teslaris.core.assessment.service.interfaces.EntityIndicatorService;
+import rs.teslaris.assessment.service.interfaces.EntityIndicatorService;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;

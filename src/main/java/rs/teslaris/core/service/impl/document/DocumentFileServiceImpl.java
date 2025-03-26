@@ -30,11 +30,13 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
+import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -57,6 +59,10 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private final FileService fileService;
 
     private final DocumentFileRepository documentFileRepository;
+
+    private final DocumentRepository documentRepository;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final MultilingualContentService multilingualContentService;
 
@@ -165,6 +171,23 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index,
+                                                    Integer documentId) {
+        var documentFileResponse = editDocumentFile(documentFile, index);
+
+        if (Objects.nonNull(documentId) && index) {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+                .ifPresent(documentIndex -> {
+                    documentIndex.setIsOpenAccess(
+                        documentRepository.isDocumentPubliclyAvailable(documentId));
+                    documentPublicationIndexRepository.save(documentIndex);
+                });
+        }
+
+        return documentFileResponse;
+    }
+
+    @Override
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index) {
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
 
@@ -191,6 +214,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                         findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
                     parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
                         documentFileToEdit.getServerFilename(), documentIndexToUpdate);
+
+
                 } catch (NotFoundException e) {
                     return DocumentFileConverter.toDTO(
                         documentFileRepository.save(documentFileToEdit));

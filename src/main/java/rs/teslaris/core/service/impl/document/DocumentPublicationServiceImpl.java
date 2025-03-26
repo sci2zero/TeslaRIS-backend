@@ -26,7 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.repository.CommissionRepository;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -231,6 +231,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setTitleOtherSortable(index.getTitleOther());
         index.setDoi(document.getDoi());
         index.setScopusId(document.getScopusId());
+        index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
         indexDescription(document, index);
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
@@ -336,14 +337,21 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
         index.setFullTextSr("");
         index.setFullTextOther("");
+        index.setIsOpenAccess(false);
+
         document.getFileItems().forEach(documentFile -> {
+            index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
+
             if (!documentFile.getMimeType().contains("pdf")) {
                 return;
             }
+
             var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
             index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
             index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
         });
+
+        documentPublicationIndexRepository.save(index);
     }
 
     private void indexTitle(Document document, DocumentPublicationIndex index) {

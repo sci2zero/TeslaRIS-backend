@@ -10,7 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.assessment.dto.ImaginaryPublicationAssessmentRequestDTO;
+import rs.teslaris.assessment.dto.ImaginaryPublicationAssessmentRequestDTO;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;

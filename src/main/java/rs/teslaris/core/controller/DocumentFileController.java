@@ -50,7 +50,10 @@ public class DocumentFileController {
 
     @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('EDIT_DOCUMENT_FILES')")
-    DocumentFileResponseDTO editDocumentFile(@ModelAttribute @Valid DocumentFileDTO documentFile) {
-        return documentFileService.editDocumentFile(documentFile, true);
+    DocumentFileResponseDTO editDocumentFile(@ModelAttribute @Valid DocumentFileDTO documentFile,
+                                             @RequestParam(required = false, defaultValue = "false")
+                                             Boolean isProof,
+                                             @RequestParam(required = false) Integer documentId) {
+        return documentFileService.editDocumentFile(documentFile, !isProof, documentId);
     }
 }

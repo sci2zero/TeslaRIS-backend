@@ -10,10 +10,10 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.assessment.model.Indicator;
-import rs.teslaris.core.assessment.model.PersonIndicator;
-import rs.teslaris.core.assessment.repository.PersonIndicatorRepository;
-import rs.teslaris.core.assessment.service.impl.PersonIndicatorServiceImpl;
+import rs.teslaris.assessment.model.Indicator;
+import rs.teslaris.assessment.model.PersonIndicator;
+import rs.teslaris.assessment.repository.PersonIndicatorRepository;
+import rs.teslaris.assessment.service.impl.PersonIndicatorServiceImpl;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 
 @SpringBootTest

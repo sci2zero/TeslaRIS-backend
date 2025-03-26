@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
-import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
-import rs.teslaris.core.assessment.service.impl.EntityAssessmentClassificationServiceImpl;
+import rs.teslaris.assessment.model.DocumentAssessmentClassification;
+import rs.teslaris.assessment.repository.EntityAssessmentClassificationRepository;
+import rs.teslaris.assessment.service.impl.EntityAssessmentClassificationServiceImpl;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 

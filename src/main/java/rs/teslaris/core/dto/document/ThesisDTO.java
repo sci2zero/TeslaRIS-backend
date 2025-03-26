@@ -41,4 +41,6 @@ public class ThesisDTO extends DocumentDTO {
     private Integer publisherId;
 
     private LocalDate topicAcceptanceDate;
+
+    private LocalDate thesisDefenceDate;
 }

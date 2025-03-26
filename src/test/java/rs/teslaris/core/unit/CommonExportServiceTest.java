@@ -17,10 +17,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
-import rs.teslaris.core.exporter.model.common.ExportEvent;
-import rs.teslaris.core.exporter.model.common.ExportOrganisationUnit;
-import rs.teslaris.core.exporter.model.common.ExportPerson;
-import rs.teslaris.core.exporter.service.impl.CommonExportServiceImpl;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
@@ -40,6 +36,10 @@ import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.exporter.model.common.ExportEvent;
+import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
+import rs.teslaris.exporter.model.common.ExportPerson;
+import rs.teslaris.exporter.service.impl.CommonExportServiceImpl;
 
 @SpringBootTest
 public class CommonExportServiceTest {

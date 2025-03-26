@@ -13,7 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.repository.CommissionRepository;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -270,6 +270,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         thesis.setIsOnPublicReviewPause(false);
         thesisJPAService.save(thesis);
+        indexThesis(thesis,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+                .orElse(new DocumentPublicationIndex()));
     }
 
     private void validateThesisForPublicReview(Thesis thesis) {
@@ -324,12 +327,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setIsOnPublicReviewPause(true);
 
         thesisJPAService.save(thesis);
+        indexThesis(thesis,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+                .orElse(new DocumentPublicationIndex()));
     }
 
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {
         thesis.setThesisType(thesisDTO.getThesisType());
         thesis.setNumberOfPages(thesisDTO.getNumberOfPages());
         thesis.setTopicAcceptanceDate(thesisDTO.getTopicAcceptanceDate());
+        thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
 
         if (Objects.nonNull(thesisDTO.getPublisherId())) {
             thesis.setPublisher(publisherService.findOne(thesisDTO.getPublisherId()));
@@ -368,13 +375,19 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         indexCommonFields(thesis, index);
 
         index.setType(DocumentPublicationType.THESIS.name());
+        index.setPublicationType(thesis.getThesisType().name());
         if (Objects.nonNull(thesis.getPublisher())) {
             index.setPublisherId(thesis.getPublisher().getId());
         }
 
-        index.getOrganisationUnitIds().add(thesis.getOrganisationUnit().getId());
+        if (!index.getOrganisationUnitIds().contains(thesis.getOrganisationUnit().getId())) {
+            index.getOrganisationUnitIds().add(thesis.getOrganisationUnit().getId());
+        }
         index.setResearchOutputIds(
             thesisResearchOutputRepository.findResearchOutputIdsForThesis(thesis.getId()));
+        index.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());
+        index.setThesisDefenceDate(thesis.getThesisDefenceDate());
+        index.setPublicReviewStartDates(thesis.getPublicReviewStartDates().stream().toList());
 
         documentPublicationIndexRepository.save(index);
     }

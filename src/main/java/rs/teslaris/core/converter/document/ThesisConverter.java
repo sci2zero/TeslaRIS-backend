@@ -34,6 +34,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
         thesisDTO.setThesisType(thesis.getThesisType());
         thesisDTO.setNumberOfPages(thesis.getNumberOfPages());
         thesisDTO.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());
+        thesisDTO.setThesisDefenceDate(thesis.getThesisDefenceDate());
         thesisDTO.setIsOnPublicReview(thesis.getIsOnPublicReview());
         thesisDTO.setIsOnPublicReviewPause(thesis.getIsOnPublicReviewPause());
         thesisDTO.setPublicReviewDates(

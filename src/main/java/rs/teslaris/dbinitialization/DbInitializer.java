@@ -214,6 +214,7 @@ public class DbInitializer implements ApplicationRunner {
                 List.of(
                     new Privilege[] {updateProfile, allowAccountTakeover, manageThesisAttachments,
                         putThesisOnPublicReview, createUserBasic, editPersonalInfo,
+                        editDocumentFiles,
                         editEmploymentInstitution})));
 
         var commissionAuthority =
@@ -232,12 +233,12 @@ public class DbInitializer implements ApplicationRunner {
         var institutionalLibrarianAuthority =
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
-                putThesisOnPublicReview
+                putThesisOnPublicReview, editDocumentFiles
             )));
 
         var headOfLibraryAuthority =
             new Authority(UserRole.HEAD_OF_LIBRARY.toString(), new HashSet<>(List.of(
-                updateProfile, allowAccountTakeover, deleteThesisAttachments,
+                updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments
             )));
 

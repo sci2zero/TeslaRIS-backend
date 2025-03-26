@@ -1,6 +1,7 @@
 package rs.teslaris.core.indexrepository;
 
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -146,4 +147,103 @@ public interface DocumentPublicationIndexRepository extends
         }
         """)
     Long countByOrganisationUnitIdsAndAssessedBy(Integer organisationUnitId, Integer assessedBy);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "type": "THESIS" } },
+              { "range": {
+                  "thesis_defence_date": {
+                    "gte": "?0",
+                    "lte": "?1"
+                  }
+                }
+              },
+              { "terms": { "organisation_unit_ids": ?2 } },
+              { "term": { "publication_type": "?3" } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchDefendedThesesInPeriod(LocalDate startDate,
+                                                               LocalDate endDate,
+                                                               List<Integer> institutionIds,
+                                                               String thesisType,
+                                                               Pageable pageable);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "type": "THESIS" } },
+              { "range": {
+                  "topic_acceptance_date": {
+                    "gte": "?0",
+                    "lte": "?1"
+                  }
+                }
+              },
+              { "terms": { "organisation_unit_ids": ?2 } },
+              { "term": { "publication_type": "?3" } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchAcceptedThesesInPeriod(LocalDate startDate,
+                                                               LocalDate endDate,
+                                                               List<Integer> institutionIds,
+                                                               String thesisType,
+                                                               Pageable pageable);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "type": "THESIS" } },
+              { "range": {
+                  "public_review_start_dates": {
+                    "gte": "?0",
+                    "lte": "?1"
+                  }
+                }
+              },
+              { "terms": { "organisation_unit_ids": ?2 } },
+              { "term": { "publication_type": "?3" } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchThesesWithPublicReviewInPeriod(LocalDate startDate,
+                                                                       LocalDate endDate,
+                                                                       List<Integer> institutionIds,
+                                                                       String thesisType,
+                                                                       Pageable pageable);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "type": "THESIS" } },
+              { "range": {
+                  "thesis_defence_date": {
+                    "gte": "?0",
+                    "lte": "?1"
+                  }
+                }
+              },
+              { "terms": { "organisation_unit_ids": ?2 } },
+              { "term": { "publication_type": "?3" } }
+            ],
+            "filter": [
+              { "term": { "is_open_access": true } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchPubliclyAvailableDefendedThesesInPeriod(LocalDate startDate,
+                                                                                LocalDate endDate,
+                                                                                List<Integer> institutionIds,
+                                                                                String thesisType,
+                                                                                Pageable pageable);
 }

@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.assessment.model.AssessmentClassification;
-import rs.teslaris.core.assessment.model.PersonAssessmentClassification;
-import rs.teslaris.core.assessment.repository.PersonAssessmentClassificationRepository;
-import rs.teslaris.core.assessment.service.impl.PersonAssessmentClassificationServiceImpl;
+import rs.teslaris.assessment.model.AssessmentClassification;
+import rs.teslaris.assessment.model.PersonAssessmentClassification;
+import rs.teslaris.assessment.repository.PersonAssessmentClassificationRepository;
+import rs.teslaris.assessment.service.impl.PersonAssessmentClassificationServiceImpl;
 
 @SpringBootTest
 public class PersonAssessmentClassificationServiceTest {

@@ -32,6 +32,9 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
 
     DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index);
 
+    DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index,
+                                             Integer documentId);
+
     void deleteDocumentFile(String serverFilename);
 
     void changeApproveStatus(Integer documentFileId, Boolean approved) throws IOException;

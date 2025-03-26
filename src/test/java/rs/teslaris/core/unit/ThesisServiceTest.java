@@ -37,7 +37,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.assessment.repository.CommissionRepository;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -144,6 +144,7 @@ public class ThesisServiceTest {
         var document = new Thesis();
         document.setDocumentDate("2023");
         document.setOrganisationUnit(ou);
+        document.setThesisType(ThesisType.PHD);
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -235,6 +236,7 @@ public class ThesisServiceTest {
     public void shouldReindexThesiss() {
         // Given
         var thesis = new Thesis();
+        thesis.setThesisType(ThesisType.UNDERGRADUATE_THESIS);
         thesis.setDocumentDate("2024");
         thesis.setOrganisationUnit(new OrganisationUnit());
 
@@ -285,6 +287,7 @@ public class ThesisServiceTest {
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
         when(thesis.getIsOnPublicReview()).thenReturn(false);
+        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit());
         when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(new DocumentFile()));
         when(thesis.getPreliminarySupplements()).thenReturn(Set.of(new DocumentFile()));
@@ -336,6 +339,8 @@ public class ThesisServiceTest {
         // Given
         var thesisId = 1;
         var thesis = new Thesis();
+        thesis.setThesisType(ThesisType.BACHELOR);
+        thesis.setOrganisationUnit(new OrganisationUnit());
         thesis.setIsOnPublicReview(true);
         thesis.getPublicReviewStartDates().add(LocalDate.of(2024, 1, 1));
         thesis.getPublicReviewStartDates().add(LocalDate.of(2024, 1, 10));
@@ -363,6 +368,7 @@ public class ThesisServiceTest {
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
         when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
         when(thesis.getIsOnPublicReview()).thenReturn(false);
+        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit());
         when(thesis.getIsOnPublicReviewPause()).thenReturn(true);
         when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
@@ -390,6 +396,7 @@ public class ThesisServiceTest {
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
         when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
         when(thesis.getIsOnPublicReview()).thenReturn(false);
+        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit());
         when(thesis.getIsOnPublicReviewPause()).thenReturn(true);
         when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));

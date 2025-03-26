@@ -26,15 +26,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.exporter.model.common.ExportDocument;
-import rs.teslaris.core.exporter.model.common.ExportPublicationType;
-import rs.teslaris.core.exporter.model.converter.ExportConverterBase;
-import rs.teslaris.core.exporter.service.impl.OutboundExportServiceImpl;
-import rs.teslaris.core.exporter.util.ExportHandlersConfigurationLoader;
-import rs.teslaris.core.importer.model.oaipmh.common.OAIPMHResponse;
+import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.exporter.model.common.ExportDocument;
+import rs.teslaris.exporter.model.common.ExportPublicationType;
+import rs.teslaris.exporter.model.converter.ExportConverterBase;
+import rs.teslaris.exporter.service.impl.OutboundExportServiceImpl;
+import rs.teslaris.exporter.util.ExportHandlersConfigurationLoader;
 
 @SpringBootTest
 public class OutboundExportServiceTest {
