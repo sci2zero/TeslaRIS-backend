@@ -1,5 +1,6 @@
 package rs.teslaris.assessment.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -135,6 +137,16 @@ public class ReportTemplateEngine {
             text = text.replace(entry.getKey(), entry.getValue());
         }
         return text;
+    }
+
+    public static InputStreamResource getReportAsResource(XWPFDocument document)
+        throws IOException {
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+        document.write(byteArrayOutputStream);
+        document.close();
+
+        return new InputStreamResource(
+            new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
     }
 
     public static void saveReport(XWPFDocument document, String reportName) throws IOException {

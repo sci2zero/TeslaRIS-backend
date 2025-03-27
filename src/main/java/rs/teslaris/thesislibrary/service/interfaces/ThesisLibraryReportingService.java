@@ -1,7 +1,7 @@
 package rs.teslaris.thesislibrary.service.interfaces;
 
-import java.io.InputStream;
 import java.util.List;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,5 +27,6 @@ public interface ThesisLibraryReportingService {
         ThesisReportRequestDTO request,
         Pageable pageable);
 
-    InputStream generatePhdLibraryReportDocument(ThesisReportRequestDTO request, String locale);
+    InputStreamResource generatePhdLibraryReportDocument(ThesisReportRequestDTO request,
+                                                         String locale);
 }

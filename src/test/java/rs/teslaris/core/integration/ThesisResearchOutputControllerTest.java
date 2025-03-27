@@ -19,7 +19,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "test.librarian@test.com", password = "librarian")
     public void testReadThesisResearchOutput() throws Exception {
-        String jwtToken = authenticateAdminAndGetToken();
+        String jwtToken = authenticateLibrarianAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
@@ -32,7 +32,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
     @Test
     @WithMockUser(username = "test.librarian@test.com", password = "librarian")
     public void testAddThesisResearchOutput() throws Exception {
-        String jwtToken = authenticateAdminAndGetToken();
+        String jwtToken = authenticateLibrarianAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(
@@ -47,7 +47,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
     @Order(Integer.MAX_VALUE)
     @WithMockUser(username = "test.librarian@test.com", password = "librarian")
     public void testRemoveThesisResearchOutput() throws Exception {
-        String jwtToken = authenticateAdminAndGetToken();
+        String jwtToken = authenticateLibrarianAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(

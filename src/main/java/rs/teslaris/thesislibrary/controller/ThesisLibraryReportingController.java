@@ -3,8 +3,13 @@ package rs.teslaris.thesislibrary.controller;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,5 +56,17 @@ public class ThesisLibraryReportingController {
         @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
         return thesisLibraryReportingService.fetchPubliclyAvailableThesesInPeriod(reportRequest,
             pageable);
+    }
+
+    @PostMapping("/download/{lang}")
+    public ResponseEntity<InputStreamResource> generateThesisLibraryReportDocument(
+        @PathVariable String lang, @RequestBody @Valid ThesisReportRequestDTO reportRequest) {
+        var document = thesisLibraryReportingService.generatePhdLibraryReportDocument(reportRequest,
+            lang.toUpperCase());
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.docx")
+            .body(document);
     }
 }

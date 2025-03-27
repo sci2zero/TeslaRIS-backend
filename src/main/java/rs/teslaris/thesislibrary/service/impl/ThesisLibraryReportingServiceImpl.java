@@ -1,15 +1,20 @@
 package rs.teslaris.thesislibrary.service.impl;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,8 +32,6 @@ import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
-import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingService;
@@ -44,9 +47,25 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
 
     private final OrganisationUnitService organisationUnitService;
 
+    private final LoadingCache<ThesisReportRequestDTO, List<ThesisReportCountsDTO>>
+        thesisReportCache =
+        CacheBuilder.newBuilder()
+            .expireAfterWrite(20, TimeUnit.SECONDS)  // Cache expiry period
+            .build(new CacheLoader<>() {
+                @NotNull
+                @Override
+                public List<ThesisReportCountsDTO> load(@NotNull ThesisReportRequestDTO request) {
+                    return fetchThesisCounts(request);
+                }
+            });
+
 
     @Override
     public List<ThesisReportCountsDTO> createThesisCountsReport(ThesisReportRequestDTO request) {
+        return thesisReportCache.getUnchecked(request);
+    }
+
+    private List<ThesisReportCountsDTO> fetchThesisCounts(ThesisReportRequestDTO request) {
         return request.topLevelInstitutionIds().stream()
             .map(institutionId -> {
                 var institutionIds =
@@ -116,10 +135,12 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
     }
 
     @Override
-    public InputStream generatePhdLibraryReportDocument(ThesisReportRequestDTO request,
-                                                        String locale) {
-        if (!request.thesisType().equals(ThesisType.PHD)) {
-            throw new ThesisException("This report is only available for PHD dissertations.");
+    public InputStreamResource generatePhdLibraryReportDocument(ThesisReportRequestDTO request,
+                                                                String locale) {
+        if (!request.thesisType().equals(ThesisType.PHD) &&
+            !request.thesisType().equals(ThesisType.PHD_ART_PROJECT)) {
+            throw new ThesisException(
+                "This report is only available for PHD dissertations and art projects.");
         }
 
         try {
@@ -131,13 +152,11 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
             ReportTemplateEngine.insertFields(document, reportData.a);
             ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
 
-            // TODO: return generated report
+            return ReportTemplateEngine.getReportAsResource(document);
         } catch (IOException e) {
             throw new LoadingException(
                 "Unable to load report template file."); // Should never happen
         }
-
-        return null;
     }
 
     private Pair<Map<String, String>, List<List<String>>> generateReportData(
@@ -170,7 +189,7 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
         });
 
         rowData.add(List.of(String.valueOf(counter.get()),
-            LocalizationUtil.getMessage("reporting.phdReport.faculty", new Object[] {}, locale),
+            LocalizationUtil.getMessage("reporting.phdReport.total", new Object[] {}, locale),
             String.valueOf(totalDefendedCount.get()),
             String.valueOf(totalPublicReviewCount.get()),
             String.valueOf(totalAcceptedCount.get()),
@@ -219,15 +238,12 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
         var localisedContent = contentList.stream()
             .filter(mc -> mc.getLanguageTag().equals(languageCode)).findFirst();
         if (localisedContent.isPresent()) {
-            return languageCode.equalsIgnoreCase(LanguageAbbreviations.SERBIAN) ?
-                SerbianTransliteration.toCyrillic(localisedContent.get().getContent()) :
-                localisedContent.get().getContent();
+            return localisedContent.get().getContent();
         }
 
         return contentList.stream()
             .findFirst()
-            .map(mc -> languageCode.equals(LanguageAbbreviations.SERBIAN) ?
-                SerbianTransliteration.toCyrillic(mc.getContent()) : mc.getContent())
+            .map(MultilingualContentDTO::getContent)
             .orElseThrow(() -> new NotFoundException("Missing container title"));
     }
 }

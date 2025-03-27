@@ -1,5 +1,6 @@
 package rs.teslaris.core.controller;
 
+import io.minio.GetObjectResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,59 +52,29 @@ public class FileController {
 
     @GetMapping("/{filename}")
     @ResponseBody
-    public ResponseEntity<Object> serveFile(HttpServletRequest request,
-                                            @PathVariable String filename,
-                                            @RequestHeader(value = "Authorization", required = false)
-                                            String bearerToken,
-                                            @CookieValue("jwt-security-fingerprint")
-                                            String fingerprintCookie) throws IOException {
-        var file = fileService.loadAsResource(filename);
+    public ResponseEntity<Object> serveFile(
+        HttpServletRequest request,
+        @PathVariable String filename,
+        @RequestHeader(value = "Authorization", required = false) String bearerToken,
+        @CookieValue("jwt-security-fingerprint") String fingerprintCookie) throws IOException {
 
+        var file = fileService.loadAsResource(filename);
         var license = documentFileService.getDocumentAccessLevel(filename);
 
-        if (!license.equals(License.OPEN_ACCESS) && !license.equals(License.PUBLIC_DOMAIN)) {
-            if (Objects.isNull(bearerToken)) {
-                return ErrorResponseUtil.buildUnavailableResponse(request,
-                    "loginToViewDocumentMessage");
-            }
-
-            var tokenParts = bearerToken.split(" ");
-            if (tokenParts.length != 2) {
-                return ErrorResponseUtil.buildUnauthorisedResponse(request,
-                    "unauthorisedToViewDocumentMessage");
-            }
-
-            var token = bearerToken.split(" ")[1];
-
-            var userDetails =
-                userService.loadUserByUsername(tokenUtil.extractUsernameFromToken(token));
-
-            if (!tokenUtil.validateToken(token, userDetails, fingerprintCookie)) {
-                return ErrorResponseUtil.buildUnauthorisedResponse(request,
-                    "unauthorisedToViewDocumentMessage");
-            }
+        if (!isOpenAccess(license) && !isAuthorizedUser(bearerToken, fingerprintCookie)) {
+            return ErrorResponseUtil.buildUnavailableResponse(request,
+                "loginToViewDocumentMessage");
         }
 
-        if (license.equals(License.COMMISSION_ONLY)) {
-            var role = tokenUtil.extractUserRoleFromToken(bearerToken);
-            if (!role.equals(UserRole.ADMIN.name()) && !role.equals(UserRole.COMMISSION.name())) {
-                return ErrorResponseUtil.buildUnauthorisedResponse(request,
-                    "unauthorisedToViewDocumentMessage");
-            }
+        if (license.equals(License.COMMISSION_ONLY) && !isCommissionUser(bearerToken)) {
+            return ErrorResponseUtil.buildUnauthorisedResponse(request,
+                "unauthorisedToViewDocumentMessage");
         }
 
-        var resourceType = documentFileService.getDocumentResourceType(filename);
-        if (resourceType.equals(ResourceType.OFFICIAL_PUBLICATION) ||
-            resourceType.equals(ResourceType.PREPRINT)) {
-            var documentId = documentFileService.findDocumentIdForFilename(filename);
-            if (Objects.nonNull(documentId)) {
-                statisticsIndexService.saveDocumentDownload(documentId);
-            }
-        }
+        recordDownloadIfApplicable(filename);
 
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
-            .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
+            .headers(getFileHeaders(file))
             .body(new InputStreamResource(file));
     }
 
@@ -135,5 +106,48 @@ public class FileController {
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .body(fullSize ? new InputStreamResource(fileService.loadAsResource(filename)) :
                 new ByteArrayResource(outputStream.toByteArray()));
+    }
+
+    private boolean isOpenAccess(License license) {
+        return license.equals(License.OPEN_ACCESS) || license.equals(License.PUBLIC_DOMAIN);
+    }
+
+    private boolean isAuthorizedUser(String bearerToken, String fingerprintCookie) {
+        if (Objects.isNull(bearerToken)) {
+            return false;
+        }
+
+        var tokenParts = bearerToken.split(" ");
+        if (tokenParts.length != 2) {
+            return false;
+        }
+
+        var token = tokenParts[1];
+        var userDetails = userService.loadUserByUsername(tokenUtil.extractUsernameFromToken(token));
+
+        return tokenUtil.validateToken(token, userDetails, fingerprintCookie);
+    }
+
+    private boolean isCommissionUser(String bearerToken) {
+        var role = tokenUtil.extractUserRoleFromToken(bearerToken);
+        return role.equals(UserRole.ADMIN.name()) || role.equals(UserRole.COMMISSION.name());
+    }
+
+    private void recordDownloadIfApplicable(String filename) {
+        var resourceType = documentFileService.getDocumentResourceType(filename);
+        if (resourceType.equals(ResourceType.OFFICIAL_PUBLICATION) ||
+            resourceType.equals(ResourceType.PREPRINT)) {
+            var documentId = documentFileService.findDocumentIdForFilename(filename);
+            if (Objects.nonNull(documentId)) {
+                statisticsIndexService.saveDocumentDownload(documentId);
+            }
+        }
+    }
+
+    private HttpHeaders getFileHeaders(GetObjectResponse file) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"));
+        headers.set(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"));
+        return headers;
     }
 }

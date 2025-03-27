@@ -39,6 +39,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -53,6 +54,7 @@ import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -640,10 +642,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         personContributionService.save(contribution);
 
         var document = documentRepository.findById(documentId);
+
         var indexOptional =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
 
         if (document.isPresent() && indexOptional.isPresent()) {
+            if (document.get() instanceof Thesis) {
+                throw new ThesisException("You can't unbind yourself from thesis.");
+            }
+
             var index = indexOptional.get();
             indexCommonFields(document.get(), index);
             documentPublicationIndexRepository.save(index);
