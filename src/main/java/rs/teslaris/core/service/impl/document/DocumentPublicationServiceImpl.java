@@ -15,6 +15,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +41,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -223,9 +226,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
         clearCommonIndexFields(index);
 
-        index.setLastEdited(
-            Objects.nonNull(document.getLastModification()) ? document.getLastModification() :
-                new Date());
+        setBasicMetadata(document, index);
+        setContributors(document, index);
+        setAdditionalMetadata(document, index);
+    }
+
+    private void setBasicMetadata(Document document, DocumentPublicationIndex index) {
+        index.setLastEdited(Objects.nonNull(document.getLastModification())
+            ? document.getLastModification()
+            : new Date());
         index.setDatabaseId(document.getId());
         index.setYear(parseYear(document.getDocumentDate()));
         indexTitle(document, index);
@@ -241,79 +250,81 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         if (Objects.nonNull(document.getEvent())) {
             index.setEventId(document.getEvent().getId());
         }
+    }
 
+    private void setContributors(Document document, DocumentPublicationIndex index) {
         var organisationUnitIds = new ArrayList<Integer>();
 
-        document.getContributors()
-            .stream().sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
-            .forEach(contribution -> {
-                var personExists = Objects.nonNull(contribution.getPerson());
+        document.getContributors().stream()
+            .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
+            .forEach(contribution -> processContribution(contribution, index, organisationUnitIds));
 
-                var contributorName =
-                    contribution.getAffiliationStatement().getDisplayPersonName().toString();
-
-                organisationUnitIds.addAll(
-                    contribution.getInstitutions().stream().map((BaseEntity::getId)).toList());
-
-                switch (contribution.getContributionType()) {
-                    case AUTHOR:
-                        if (contribution.getIsCorrespondingContributor()) {
-                            contributorName += "*";
-                        }
-
-                        if (personExists) {
-                            index.getAuthorIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getAuthorIds().add(-1);
-                        }
-
-                        index.setAuthorNames(StringUtil.removeLeadingColonSpace(
-                            index.getAuthorNames() + "; " + contributorName));
-                        break;
-                    case EDITOR:
-                        if (personExists) {
-                            index.getEditorIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getEditorIds().add(-1);
-                        }
-
-                        index.setEditorNames(StringUtil.removeLeadingColonSpace(
-                            index.getEditorNames() + "; " + contributorName));
-                        break;
-                    case ADVISOR:
-                        if (personExists) {
-                            index.getAdvisorIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getAdvisorIds().add(-1);
-                        }
-
-                        index.setAdvisorNames(StringUtil.removeLeadingColonSpace(
-                            index.getAdvisorNames() + "; " + contributorName));
-                        break;
-                    case REVIEWER:
-                        if (personExists) {
-                            index.getReviewerIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getReviewerIds().add(-1);
-                        }
-
-                        index.setReviewerNames(StringUtil.removeLeadingColonSpace(
-                            index.getReviewerNames() + "; " + contributorName));
-                        break;
-                    case BOARD_MEMBER:
-                        if (personExists) {
-                            index.getBoardMemberIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getBoardMemberIds().add(-1);
-                        }
-
-                        index.setBoardMemberNames(StringUtil.removeLeadingColonSpace(
-                            index.getBoardMemberNames() + "; " + contributorName));
-                        break;
-                }
-            });
-        index.setAuthorNamesSortable(index.getAuthorNames());
         index.setOrganisationUnitIds(organisationUnitIds);
+        index.setAuthorNamesSortable(index.getAuthorNames());
+    }
+
+    private void processContribution(PersonDocumentContribution contribution,
+                                     DocumentPublicationIndex index,
+                                     List<Integer> organisationUnitIds) {
+        var personExists = Objects.nonNull(contribution.getPerson());
+        var contributorName =
+            contribution.getAffiliationStatement().getDisplayPersonName().toString();
+
+        organisationUnitIds.addAll(contribution.getInstitutions().stream()
+            .map(BaseEntity::getId)
+            .toList());
+
+        switch (contribution.getContributionType()) {
+            case AUTHOR ->
+                handleAuthorContribution(contribution, index, contributorName, personExists);
+            case EDITOR -> handleGenericContribution(contribution, index::getEditorIds,
+                index::setEditorNames, contributorName, personExists);
+            case ADVISOR -> handleGenericContribution(contribution, index::getAdvisorIds,
+                index::setAdvisorNames, contributorName, personExists);
+            case REVIEWER -> handleGenericContribution(contribution, index::getReviewerIds,
+                index::setReviewerNames, contributorName, personExists);
+            case BOARD_MEMBER ->
+                handleBoardMember(contribution, index, contributorName, personExists);
+        }
+    }
+
+    private void handleAuthorContribution(PersonDocumentContribution contribution,
+                                          DocumentPublicationIndex index,
+                                          String contributorName, boolean personExists) {
+        if (contribution.getIsCorrespondingContributor()) {
+            contributorName += "*";
+        }
+
+        index.getAuthorIds().add(personExists ? contribution.getPerson().getId() : -1);
+        index.setAuthorNames(StringUtil.removeLeadingColonSpace(
+            index.getAuthorNames() + "; " + contributorName));
+    }
+
+    private void handleGenericContribution(PersonContribution contribution,
+                                           Supplier<List<Integer>> idGetter,
+                                           Consumer<String> nameSetter,
+                                           String contributorName, boolean personExists) {
+        idGetter.get().add(personExists ? contribution.getPerson().getId() : -1);
+        nameSetter.accept(StringUtil.removeLeadingColonSpace("; " + contributorName));
+    }
+
+    private void handleBoardMember(PersonDocumentContribution contribution,
+                                   DocumentPublicationIndex index,
+                                   String contributorName, boolean personExists) {
+        index.getBoardMemberIds().add(personExists ? contribution.getPerson().getId() : -1);
+
+        if (contribution.getIsBoardPresident()) {
+            if (personExists) {
+                index.setBoardPresidentId(contribution.getPerson().getId());
+            }
+            index.setBoardPresidentName(contributorName);
+        }
+
+        index.setBoardMemberNames(StringUtil.removeLeadingColonSpace(
+            index.getBoardMemberNames() + "; " + contributorName));
+    }
+
+    private void setAdditionalMetadata(Document document, DocumentPublicationIndex index) {
         index.setAssessedBy(
             commissionRepository.findCommissionsThatClassifiedEvent(document.getId()));
     }

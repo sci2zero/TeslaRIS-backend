@@ -36,6 +36,7 @@ public class PersonContributionConverter {
             if (Objects.nonNull(contribution)) {
                 contribution.setIsMainContributor(i == 0);
                 contribution.setIsCorrespondingContributor(false);
+                contribution.setIsBoardPresident(false);
                 contributions.add(contribution);
             }
         }

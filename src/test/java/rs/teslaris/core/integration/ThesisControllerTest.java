@@ -43,7 +43,7 @@ public class ThesisControllerTest extends BaseTest {
         thesisDTO.setOrganisationUnitId(1);
 
         var contribution =
-            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
+            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false);
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);

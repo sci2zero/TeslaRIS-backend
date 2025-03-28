@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +25,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
@@ -151,7 +153,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         if (Objects.nonNull(thesisDTO.getContributions()) &&
             !thesisDTO.getContributions().isEmpty()) {
-            thesisDTO.setContributions(thesisDTO.getContributions().subList(0, 1));
+            AtomicBoolean firstAuthorFound = new AtomicBoolean(false);
+
+            var filteredContributions = thesisDTO.getContributions().stream()
+                .filter(contribution ->
+                    !contribution.getContributionType().equals(DocumentContributionType.AUTHOR) ||
+                        firstAuthorFound.compareAndSet(false, true)
+                )
+                .toList();
+
+            thesisDTO.setContributions(filteredContributions);
         }
 
         setCommonFields(thesisToUpdate, thesisDTO);

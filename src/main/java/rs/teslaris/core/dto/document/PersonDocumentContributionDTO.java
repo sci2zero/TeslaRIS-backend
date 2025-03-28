@@ -21,4 +21,7 @@ public class PersonDocumentContributionDTO extends PersonContributionDTO {
 
     @NotNull(message = "You have to specify weather the contributor is the corresponding one.")
     private Boolean isCorrespondingContributor;
+
+    @NotNull(message = "You have to specify weather the contributor is board president.")
+    private Boolean isBoardPresident;
 }

@@ -85,6 +85,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contribution.setIsMainContributor(contributionDTO.getIsMainContributor());
             contribution.setIsCorrespondingContributor(
                 contributionDTO.getIsCorrespondingContributor());
+            contribution.setIsBoardPresident(
+                contributionDTO.getIsBoardPresident());
 
             var addedPrevoiusly = document.getContributors().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
@@ -250,6 +252,21 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
     private boolean compareContributions(PersonContribution previousContribution,
                                          PersonContribution contribution) {
+        if (contribution instanceof PersonDocumentContribution &&
+            !((PersonDocumentContribution) previousContribution).getContributionType()
+                .equals(((PersonDocumentContribution) contribution).getContributionType())) {
+            return false;
+        } else if (contribution instanceof PersonEventContribution &&
+            !((PersonEventContribution) previousContribution).getContributionType()
+                .equals(((PersonEventContribution) contribution).getContributionType())) {
+            return false;
+        } else if (contribution instanceof PersonPublicationSeriesContribution &&
+            !((PersonPublicationSeriesContribution) previousContribution).getContributionType()
+                .equals(
+                    ((PersonPublicationSeriesContribution) contribution).getContributionType())) {
+            return false;
+        }
+
         if (Objects.nonNull(previousContribution.getPerson()) &&
             Objects.nonNull(contribution.getPerson())) {
             return previousContribution.getPerson().getId()
