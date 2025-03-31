@@ -112,6 +112,22 @@ public class ThesisController {
         thesisService.removeFromPublicReview(documentId);
     }
 
+    @PatchMapping("/archive/{documentId}")
+    @PreAuthorize("hasAuthority('ARCHIVE_THESIS')")
+    @PublicationEditCheck("THESIS")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void archiveThesis(@PathVariable Integer documentId) {
+        thesisService.archiveThesis(documentId);
+    }
+
+    @PatchMapping("/unarchive/{documentId}")
+    @PreAuthorize("hasAuthority('UNARCHIVE_THESIS')")
+    @PublicationEditCheck("THESIS")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unarchiveThesis(@PathVariable Integer documentId) {
+        thesisService.unarchiveThesis(documentId);
+    }
+
     @DeleteMapping("/{attachmentType}/{documentId}/{documentFileId}")
     @PreAuthorize("hasAuthority('DELETE_THESIS_ATTACHMENTS')")
     @PublicationEditCheck("THESIS")

@@ -32,4 +32,8 @@ public interface ThesisService {
     void putOnPublicReview(Integer thesisId, Boolean continueLastReview);
 
     void removeFromPublicReview(Integer thesisId);
+
+    void archiveThesis(Integer thesisId);
+
+    void unarchiveThesis(Integer thesisId);
 }

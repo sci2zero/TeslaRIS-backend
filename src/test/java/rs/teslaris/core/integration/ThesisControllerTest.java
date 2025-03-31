@@ -109,7 +109,7 @@ public class ThesisControllerTest extends BaseTest {
     }
 
     @Test
-    @Order(Integer.MAX_VALUE)
+    @Order(1)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testRemoveFromPublicReviewFailsWhenNotOnPublicReview() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
@@ -120,6 +120,34 @@ public class ThesisControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isConflict());
+    }
+
+    @Test
+    @Order(2)
+    @WithMockUser(username = "test.library@test.com", password = "library")
+    public void testArchiveThesis() throws Exception {
+        String jwtToken = authenticateLibrarianAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/archive/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(3)
+    @WithMockUser(username = "test.head_of_library@test.com", password = "head_of_library")
+    public void testUnarchiveThesis() throws Exception {
+        String jwtToken = authenticateHeadOfLibraryAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/unarchive/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test

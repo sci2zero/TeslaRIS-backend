@@ -529,6 +529,59 @@ public class ThesisServiceTest {
         assertEquals("missingAttachmentsMessage", exception.getMessage());
     }
 
+    @Test
+    void shouldThrowExceptionWhenMissingDataForArchiving() {
+        // Given
+        var thesisId = 1;
+        var thesis = new Thesis();
+        thesis.setTitle(new HashSet<>());
+        thesis.setThesisDefenceDate(null);
+        thesis.setDocumentDate(null);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When / Then
+        ThesisException exception = assertThrows(ThesisException.class,
+            () -> thesisService.archiveThesis(thesisId));
+        assertEquals("missingDataToArchiveMessage", exception.getMessage());
+    }
+
+    @Test
+    void shouldArchiveThesisSuccessfully() {
+        // Given
+        var thesisId = 1;
+        var thesis = new Thesis();
+        thesis.setTitle(new HashSet<>(Set.of(new MultiLingualContent())));
+        thesis.setThesisDefenceDate(LocalDate.now());
+        thesis.setDocumentDate(String.valueOf(thesis.getThesisDefenceDate().getYear()));
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When
+        thesisService.archiveThesis(thesisId);
+
+        // Then
+        assertTrue(thesis.getIsArchived());
+        verify(thesisJPAService).save(thesis);
+    }
+
+    @Test
+    void shouldUnarchiveThesisSuccessfully() {
+        // Given
+        var thesisId = 1;
+        var thesis = new Thesis();
+        thesis.setIsArchived(true);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When
+        thesisService.unarchiveThesis(thesisId);
+
+        // Then
+        assertFalse(thesis.getIsArchived());
+        verify(thesisJPAService).save(thesis);
+    }
+
     private Set<DocumentFile> createMockDocuments(int count) {
         return IntStream.range(0, count).mapToObj(i -> {
                 var docFile = new DocumentFile();

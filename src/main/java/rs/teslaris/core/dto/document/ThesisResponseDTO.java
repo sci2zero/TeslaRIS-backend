@@ -29,4 +29,6 @@ public class ThesisResponseDTO extends ThesisDTO {
     private List<DocumentFileResponseDTO> preliminarySupplements = new ArrayList<>();
 
     private List<DocumentFileResponseDTO> commissionReports = new ArrayList<>();
+
+    private Boolean isArchived;
 }

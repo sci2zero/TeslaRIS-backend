@@ -154,6 +154,8 @@ public class DbInitializer implements ApplicationRunner {
         var deleteThesisAttachments = new Privilege("DELETE_THESIS_ATTACHMENTS");
         var putThesisOnPublicReview = new Privilege("PUT_THESIS_ON_PUBLIC_REVIEW");
         var removeThesisFromPublicReview = new Privilege("REMOVE_THESIS_FROM_PUBLIC_REVIEW");
+        var archiveThesis = new Privilege("ARCHIVE_THESIS");
+        var unarchiveThesis = new Privilege("UNARCHIVE_THESIS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -176,7 +178,7 @@ public class DbInitializer implements ApplicationRunner {
                 assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
                 editAssessmentResearchArea, downloadReports, listAssessmentClassifications,
                 updateBrandingInformation, manageApiKeys, manageThesisAttachments,
-                editEmploymentInstitution,
+                editEmploymentInstitution, archiveThesis, unarchiveThesis,
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview));
 
         // AUTHORITIES
@@ -200,7 +202,8 @@ public class DbInitializer implements ApplicationRunner {
                 editDocumentAssessment, editAssessmentResearchArea, scheduleReportGeneration,
                 downloadReports, listAssessmentClassifications, updateBrandingInformation,
                 manageApiKeys, manageThesisAttachments, putThesisOnPublicReview,
-                deleteThesisAttachments, removeThesisFromPublicReview
+                deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
+                unarchiveThesis
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -233,13 +236,14 @@ public class DbInitializer implements ApplicationRunner {
         var institutionalLibrarianAuthority =
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
-                putThesisOnPublicReview, editDocumentFiles
+                putThesisOnPublicReview, editDocumentFiles, archiveThesis
             )));
 
         var headOfLibraryAuthority =
             new Authority(UserRole.HEAD_OF_LIBRARY.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
-                removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments
+                removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
+                unarchiveThesis
             )));
 
         authorityRepository.saveAll(

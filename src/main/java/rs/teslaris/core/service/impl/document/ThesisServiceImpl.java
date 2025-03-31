@@ -146,7 +146,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
-        checkIfThesisIsOnPublicReview(thesisToUpdate);
+        checkIfAvailableForEditing(thesisToUpdate);
 
         clearCommonFields(thesisToUpdate);
         thesisToUpdate.setOrganisationUnit(null);
@@ -183,7 +183,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Override
     public void deleteThesis(Integer thesisId) {
         var thesisToDelete = thesisJPAService.findOne(thesisId);
-        checkIfThesisIsOnPublicReview(thesisToDelete);
+        checkIfAvailableForEditing(thesisToDelete);
 
         thesisJPAService.delete(thesisId);
     }
@@ -213,7 +213,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
 
-        checkIfThesisIsOnPublicReview(thesis);
+        checkIfAvailableForEditing(thesis);
 
         document.setResourceType(attachmentType.getResourceType());
         var documentFile = documentFileService.saveNewPreliminaryDocument(document);
@@ -242,7 +242,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
 
-        checkIfThesisIsOnPublicReview(thesis);
+        checkIfAvailableForEditing(thesis);
 
         var documentFile = documentFileService.findDocumentFileById(documentFileId);
 
@@ -343,11 +343,36 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 .orElse(new DocumentPublicationIndex()));
     }
 
+    @Override
+    public void archiveThesis(Integer thesisId) {
+        var thesis = thesisJPAService.findOne(thesisId);
+
+        if (thesis.getTitle().isEmpty() || Objects.isNull(thesis.getThesisDefenceDate()) ||
+            Objects.isNull(thesis.getDocumentDate())) {
+            throw new ThesisException("missingDataToArchiveMessage");
+        }
+
+        thesis.setIsArchived(true);
+        thesisJPAService.save(thesis);
+    }
+
+    @Override
+    public void unarchiveThesis(Integer thesisId) {
+        var thesis = thesisJPAService.findOne(thesisId);
+        thesis.setIsArchived(false);
+
+        thesisJPAService.save(thesis);
+    }
+
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {
         thesis.setThesisType(thesisDTO.getThesisType());
         thesis.setNumberOfPages(thesisDTO.getNumberOfPages());
         thesis.setTopicAcceptanceDate(thesisDTO.getTopicAcceptanceDate());
+
         thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
+        if (Objects.nonNull(thesisDTO.getThesisDefenceDate())) {
+            thesis.setDocumentDate(String.valueOf(thesisDTO.getThesisDefenceDate().getYear()));
+        }
 
         if (Objects.nonNull(thesisDTO.getPublisherId())) {
             thesis.setPublisher(publisherService.findOne(thesisDTO.getPublisherId()));
@@ -403,9 +428,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         documentPublicationIndexRepository.save(index);
     }
 
-    private void checkIfThesisIsOnPublicReview(Thesis thesis) {
+    private void checkIfAvailableForEditing(Thesis thesis) {
         if (thesis.getIsOnPublicReview()) {
             throw new ThesisException("Public review is in progress, can't edit.");
+        }
+
+        if (thesis.getIsArchived()) {
+            throw new ThesisException("Thesis is archived, can't edit.");
         }
     }
 

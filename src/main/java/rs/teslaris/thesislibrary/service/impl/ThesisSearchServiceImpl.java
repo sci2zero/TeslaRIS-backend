@@ -16,6 +16,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
@@ -40,6 +41,17 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
     public Page<DocumentPublicationIndex> performAdvancedThesisSearch(
         ThesisSearchRequestDTO searchRequest, Pageable pageable) {
         return performQuery(searchRequest, pageable, SearchRequestType.ADVANCED);
+    }
+
+    @Override
+    public List<Pair<String, String>> getSearchFields() {
+        return List.of(new Pair<>("title_sr", "text"), new Pair<>("title_other", "text"),
+            new Pair<>("description_sr", "text"), new Pair<>("description_other", "text"),
+            new Pair<>("keywords_sr", "text"), new Pair<>("keywords_other", "text"),
+            new Pair<>("full_text_sr", "text"), new Pair<>("full_text_other", "text"),
+            new Pair<>("author_names", "text"), new Pair<>("editor_names", "text"),
+            new Pair<>("board_member_names", "text"), new Pair<>("board_president_name", "text"),
+            new Pair<>("advisor_names", "text"));
     }
 
     private Page<DocumentPublicationIndex> performQuery(ThesisSearchRequestDTO searchRequest,
