@@ -772,5 +772,30 @@ public class TestingDataInitializer {
         userRepository.saveAll(
             List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
                 headOfLibraryUser));
+
+        var software2 = new Software();
+        software2.setTitle(Set.of(new MultiLingualContent(englishTag,
+            "CRIS UNS", 1)));
+        software2.setInternalNumber("654321");
+        software2.setApproveStatus(ApproveStatus.APPROVED);
+
+        var softwareContribution3 = new PersonDocumentContribution();
+        softwareContribution3.setPerson(person1);
+        softwareContribution3.setContributionType(DocumentContributionType.AUTHOR);
+        softwareContribution3.setIsMainContributor(true);
+        softwareContribution3.setIsCorrespondingContributor(false);
+        softwareContribution3.setOrderNumber(1);
+        softwareContribution3.setDocument(dataset);
+        softwareContribution3.setApproveStatus(ApproveStatus.APPROVED);
+        softwareContribution3.getInstitutions().add(dummyOU);
+        softwareContribution3.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), new PersonName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+        softwareContribution3.getAffiliationStatement().setDisplayPersonName(
+            new PersonName("Ivan", "", "R. M.", LocalDate.of(2000, 1, 31), null));
+        personContributionRepository.save(softwareContribution3);
+
+        software2.addDocumentContribution(softwareContribution3);
+        softwareRepository.save(software2);
     }
 }

@@ -37,7 +37,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(
                         "http://localhost:8081/api/thesis-research-output/add/{documentId}/{researchOutputId}",
-                        10, 7)
+                        10, 13)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -52,7 +52,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(
                         "http://localhost:8081/api/thesis-research-output/remove/{documentId}/{researchOutputId}",
-                        10, 7)
+                        10, 13)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
