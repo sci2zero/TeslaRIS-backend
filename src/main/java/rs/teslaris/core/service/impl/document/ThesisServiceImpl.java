@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import jakarta.xml.bind.JAXBException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +22,7 @@ import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -48,9 +51,11 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @Service
 @Transactional
+@Slf4j
 public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements ThesisService {
 
     private final ThesisJPAServiceImpl thesisJPAService;
@@ -362,6 +367,21 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setIsArchived(false);
 
         thesisJPAService.save(thesis);
+    }
+
+    @Override
+    public ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(Integer thesisId) {
+        var thesis = thesisJPAService.findOne(thesisId);
+        try {
+            return new ThesisLibraryFormatsResponseDTO(
+                XMLUtil.convertToXml(ThesisConverter.toETDMSModel(thesis)),
+                XMLUtil.convertToXml(ThesisConverter.toDCModel(thesis)),
+                XMLUtil.convertToXml(ThesisConverter.convertToMarc21(thesis)));
+        } catch (JAXBException e) {
+            log.error("Unable to create library references. Reason: {}", e.getMessage());
+            throw new ThesisException(
+                "Unable to create library references."); // Should never happen
+        }
     }
 
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {

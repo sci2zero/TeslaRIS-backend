@@ -23,6 +23,7 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
@@ -137,6 +138,12 @@ public class ThesisController {
                                        @PathVariable Integer documentId,
                                        @PathVariable Integer documentFileId) {
         thesisService.deleteThesisAttachment(documentId, documentFileId, attachmentType);
+    }
+
+    @GetMapping("/library-formats/{documentId}")
+    public ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(
+        @PathVariable Integer documentId) {
+        return thesisService.getLibraryReferenceFormat(documentId);
     }
 
     private void performReferenceAdditionChecks(ThesisDTO thesis, String bearerToken) {

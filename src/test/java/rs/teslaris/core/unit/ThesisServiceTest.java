@@ -70,6 +70,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @SpringBootTest
 public class ThesisServiceTest {
@@ -88,6 +89,9 @@ public class ThesisServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private XMLUtil xmlUtil;
 
     @Mock
     private PersonContributionService personContributionService;

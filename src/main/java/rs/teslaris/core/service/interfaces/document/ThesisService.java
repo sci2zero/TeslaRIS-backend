@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
+import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
@@ -36,4 +37,6 @@ public interface ThesisService {
     void archiveThesis(Integer thesisId);
 
     void unarchiveThesis(Integer thesisId);
+
+    ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(Integer thesisId);
 }
