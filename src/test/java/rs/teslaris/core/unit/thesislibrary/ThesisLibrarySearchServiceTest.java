@@ -22,6 +22,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.impl.ThesisSearchServiceImpl;
 
@@ -33,6 +34,9 @@ public class ThesisLibrarySearchServiceTest {
 
     @Mock
     private ExpressionTransformer expressionTransformer;
+
+    @Mock
+    private SearchFieldsLoader searchFieldsLoader;
 
     @InjectMocks
     private ThesisSearchServiceImpl thesisSearchService;
@@ -56,7 +60,7 @@ public class ThesisLibrarySearchServiceTest {
     }
 
     @Test
-    void performSimpleThesisSearch_shouldCallPerformQuery() {
+    void shouldCallPerformQueryWhenPerformingSimpleThesisSearch() {
         var expectedPage = new PageImpl<>(documentList);
         when(searchService.runQuery(any(), any(), eq(DocumentPublicationIndex.class), any()))
             .thenReturn(expectedPage);
@@ -70,7 +74,7 @@ public class ThesisLibrarySearchServiceTest {
     }
 
     @Test
-    void performAdvancedThesisSearch_shouldCallPerformQuery() {
+    void shouldCallPerformQueryWhenPerformingAdvancedThesisSearch() {
         Page<DocumentPublicationIndex> expectedPage = new PageImpl<>(documentList);
         when(searchService.runQuery(any(), any(), eq(DocumentPublicationIndex.class), any()))
             .thenReturn(expectedPage);

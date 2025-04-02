@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
@@ -24,7 +25,7 @@ public class ThesisLibrarySearchController {
 
 
     @GetMapping("/fields")
-    public List<Pair<String, String>> getSearchFields() {
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
         return thesisSearchService.getSearchFields();
     }
 

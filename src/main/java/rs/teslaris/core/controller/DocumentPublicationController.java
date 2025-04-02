@@ -26,6 +26,7 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.dto.document.DocumentAffiliationRequestDTO;
+import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -63,6 +64,11 @@ public class DocumentPublicationController {
     @PublicationEditCheck
     public boolean canEditDocumentPublication() {
         return true;
+    }
+
+    @GetMapping("/{documentId}")
+    public DocumentDTO readDocumentPublication(@PathVariable Integer documentId) {
+        return documentPublicationService.readDocumentPublication(documentId);
     }
 
     @GetMapping("/{documentId}/cite")

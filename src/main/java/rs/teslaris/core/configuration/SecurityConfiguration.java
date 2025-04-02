@@ -99,6 +99,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/language/tags").permitAll()
 
                 // DOCUMENT
+                .requestMatchers(HttpMethod.GET, "/api/document/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/{documentId}/cite").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/simple-search").permitAll()
@@ -230,6 +231,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST,
                     "/api/assessment/document-assessment-classification/conference-m-service")
                 .permitAll()
+
+                // CSV EXPORT
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

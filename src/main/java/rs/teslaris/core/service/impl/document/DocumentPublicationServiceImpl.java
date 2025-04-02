@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
+import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -97,6 +98,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     protected JpaRepository<Document, Integer> getEntityRepository() {
         return documentRepository;
+    }
+
+    @Override
+    public DocumentDTO readDocumentPublication(Integer documentId) {
+        return DocumentPublicationConverter.toDTO(findOne(documentId));
     }
 
     @Override

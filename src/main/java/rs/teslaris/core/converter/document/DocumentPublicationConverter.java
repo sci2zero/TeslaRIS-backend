@@ -1,12 +1,20 @@
 package rs.teslaris.core.converter.document;
 
 import java.util.Objects;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.model.document.Document;
 
+@Transactional
 public class DocumentPublicationConverter {
+
+    public static DocumentDTO toDTO(Document document) {
+        var dto = new DocumentDTO();
+        setCommonFields(document, dto);
+        return dto;
+    }
 
     protected static void setCommonFields(Document publication, DocumentDTO publicationDTO) {
         publicationDTO.setId(publication.getId());

@@ -5,31 +5,45 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
 @Service
-@RequiredArgsConstructor
 public class ThesisSearchServiceImpl implements ThesisSearchService {
+
+    private final SearchFieldsLoader searchFieldsLoader;
+
+    private final String configFileName = "thesisSearchFieldConfiguration.json";
 
     private final SearchService<DocumentPublicationIndex> searchService;
 
     private final ExpressionTransformer expressionTransformer;
 
+
+    public ThesisSearchServiceImpl(SearchFieldsLoader searchFieldsLoader,
+                                   SearchService<DocumentPublicationIndex> searchService,
+                                   ExpressionTransformer expressionTransformer) throws IOException {
+        this.searchFieldsLoader = searchFieldsLoader;
+        this.searchService = searchService;
+        this.expressionTransformer = expressionTransformer;
+        this.searchFieldsLoader.loadConfiguration(configFileName);
+    }
 
     @Override
     public Page<DocumentPublicationIndex> performSimpleThesisSearch(
@@ -44,14 +58,8 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
     }
 
     @Override
-    public List<Pair<String, String>> getSearchFields() {
-        return List.of(new Pair<>("title_sr", "text"), new Pair<>("title_other", "text"),
-            new Pair<>("description_sr", "text"), new Pair<>("description_other", "text"),
-            new Pair<>("keywords_sr", "text"), new Pair<>("keywords_other", "text"),
-            new Pair<>("full_text_sr", "text"), new Pair<>("full_text_other", "text"),
-            new Pair<>("author_names", "text"), new Pair<>("editor_names", "text"),
-            new Pair<>("board_member_names", "text"), new Pair<>("board_president_name", "text"),
-            new Pair<>("advisor_names", "text"));
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
+        return searchFieldsLoader.getSearchFields(configFileName);
     }
 
     private Page<DocumentPublicationIndex> performQuery(ThesisSearchRequestDTO searchRequest,

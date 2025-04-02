@@ -109,7 +109,8 @@ public class CitationServiceImpl implements CitationService {
 
     private String getContent(Set<MultiLingualContent> contentList, String languageCode) {
         var localisedContent = contentList.stream()
-            .filter(mc -> mc.getLanguage().getLanguageTag().equals(languageCode)).findFirst();
+            .filter(mc -> mc.getLanguage().getLanguageTag().equalsIgnoreCase(languageCode))
+            .findFirst();
         if (localisedContent.isPresent()) {
             return localisedContent.get().getContent();
         }

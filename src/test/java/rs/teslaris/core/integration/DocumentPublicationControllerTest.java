@@ -33,6 +33,13 @@ public class DocumentPublicationControllerTest extends BaseTest {
     }
 
     @Test
+    public void testReadDocumentPublication() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                "http://localhost:8081/api/document/{documentId}", 13)
+            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
     public void testFindNonAffiliatedPublications() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();

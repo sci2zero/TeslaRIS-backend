@@ -102,6 +102,20 @@ public class DocumentPublicationServiceTest {
     }
 
     @Test
+    public void shouldReadDocumentPublicationWhenItExists() {
+        // given
+        var expected = new MonographPublication();
+        expected.setId(1);
+        when(documentRepository.findById(1)).thenReturn(Optional.of(expected));
+
+        // when
+        var result = documentPublicationService.readDocumentPublication(1);
+
+        // then
+        assertEquals(expected.getId(), result.getId());
+    }
+
+    @Test
     public void shouldReturnDocumentWhenItExists() {
         // given
         var expected = new MonographPublication();
