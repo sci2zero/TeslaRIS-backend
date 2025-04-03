@@ -19,6 +19,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.Triple;
 
 @Service
 public interface PersonService extends JPAService<Person> {
@@ -97,4 +98,6 @@ public interface PersonService extends JPAService<Person> {
     void removePersonProfileImage(Integer personId);
 
     boolean isIdentifierInUse(String identifier, Integer personId);
+
+    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields();
 }

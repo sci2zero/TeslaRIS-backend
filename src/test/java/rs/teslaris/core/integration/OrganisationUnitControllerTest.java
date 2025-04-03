@@ -76,4 +76,17 @@ public class OrganisationUnitControllerTest extends BaseTest {
                     1)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
+
+    @Test
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testGetSearchFields() throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/organisation-unit/fields")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
 }

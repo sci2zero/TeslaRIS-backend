@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
@@ -50,6 +51,15 @@ public class SearchFieldsLoader {
 
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         String fileName) {
+        if (!cache.containsKey(fileName)) {
+            try {
+                loadConfiguration(fileName);
+            } catch (IOException e) {
+                throw new LoadingException(
+                    "Unable to load search configuration " + fileName); // should never happen
+            }
+        }
+
         return cache.get(fileName).fields().stream()
             .map(thesisSearchField -> {
                 var displayFieldName = new ArrayList<MultilingualContentDTO>();
@@ -94,6 +104,7 @@ public class SearchFieldsLoader {
     public record SearchField(
         @JsonProperty(value = "fieldName", required = true) String fieldName,
         @JsonProperty(value = "type", required = true) String type,
+        @JsonProperty(value = "rule") String rule,
         @JsonProperty(value = "displayName", required = true) Map<String, String> displayName
     ) {
     }

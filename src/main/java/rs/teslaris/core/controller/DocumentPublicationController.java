@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.dto.document.DocumentAffiliationRequestDTO;
@@ -38,6 +39,7 @@ import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
@@ -229,5 +231,10 @@ public class DocumentPublicationController {
     public boolean checkIdentifierUsage(@PathVariable Integer documentId,
                                         @RequestParam String identifier) {
         return documentPublicationService.isIdentifierInUse(identifier, documentId);
+    }
+
+    @GetMapping("/fields")
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
+        return documentPublicationService.getSearchFields();
     }
 }

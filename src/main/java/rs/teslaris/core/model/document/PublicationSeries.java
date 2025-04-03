@@ -11,7 +11,9 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.text.MessageFormat;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
@@ -66,5 +68,17 @@ public abstract class PublicationSeries extends BaseEntity {
     public void removeContribution(PersonPublicationSeriesContribution contribution) {
         contribution.setPublicationSeries(null);
         contributions.remove(contribution);
+    }
+
+    public String getIssnString() {
+        if (Objects.nonNull(printISSN) && Objects.nonNull(eISSN)) {
+            return MessageFormat.format("({0}, {1})", printISSN, eISSN);
+        } else if (Objects.nonNull(printISSN)) {
+            return MessageFormat.format("({0})", printISSN);
+        } else if (Objects.nonNull(eISSN)) {
+            return MessageFormat.format("({0})", eISSN);
+        } else {
+            return "";
+        }
     }
 }

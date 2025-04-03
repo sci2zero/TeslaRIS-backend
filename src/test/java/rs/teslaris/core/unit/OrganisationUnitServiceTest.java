@@ -68,9 +68,11 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @SpringBootTest
@@ -105,6 +107,9 @@ public class OrganisationUnitServiceTest {
 
     @Mock
     private InvolvementRepository involvementRepository;
+
+    @Mock
+    private SearchFieldsLoader searchFieldsLoader;
 
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
@@ -870,5 +875,23 @@ public class OrganisationUnitServiceTest {
         // then
         assertTrue(result);
         verify(organisationUnitRepository).existsByScopusAfid(identifier, organisationUnitId);
+    }
+
+    @Test
+    void shouldReturnSearchFields() {
+        // Given
+        var expectedFields = List.of(
+            new Triple<>("field1", List.of(new MultilingualContentDTO()), "Type1"),
+            new Triple<>("field2", List.of(new MultilingualContentDTO()), "Type2")
+        );
+
+        when(searchFieldsLoader.getSearchFields(any())).thenReturn(expectedFields);
+
+        // When
+        var result = organisationUnitService.getSearchFields();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedFields.size(), result.size());
     }
 }

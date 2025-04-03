@@ -21,4 +21,6 @@ public class CSVExportRequest {
     private Integer bulkExportOffset;
 
     private String exportLanguage;
+
+    private ExportFileType exportFileType;
 }

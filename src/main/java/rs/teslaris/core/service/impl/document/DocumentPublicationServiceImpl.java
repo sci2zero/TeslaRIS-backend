@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -56,11 +57,13 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -90,6 +93,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final EventService eventService;
 
     private final CommissionRepository commissionRepository;
+
+    private final SearchFieldsLoader searchFieldsLoader;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -518,6 +523,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return new Pair<>(documentPublicationIndexRepository.countByAssessedBy(commissionId),
             documentPublicationIndexRepository.countByOrganisationUnitIdsAndAssessedBy(
                 institutionId, commissionId));
+    }
+
+    @Override
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
+        return searchFieldsLoader.getSearchFields("documentSearchFieldConfiguration.json");
     }
 
     protected void clearCommonFields(Document publication) {

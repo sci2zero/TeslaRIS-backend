@@ -133,7 +133,7 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
         });
     }
 
-    public String html2text(String html) {
+    private String html2text(String html) {
         return Jsoup.parse(html).text();
     }
 }

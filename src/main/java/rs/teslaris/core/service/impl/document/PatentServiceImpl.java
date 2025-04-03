@@ -26,6 +26,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
@@ -46,12 +47,13 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
+                             SearchFieldsLoader searchFieldsLoader,
                              PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
     }

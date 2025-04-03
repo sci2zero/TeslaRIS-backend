@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
@@ -15,6 +16,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
@@ -88,4 +90,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId);
 
     boolean isIdentifierInUse(String identifier, Integer organisationUnitId);
+
+    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields();
 }

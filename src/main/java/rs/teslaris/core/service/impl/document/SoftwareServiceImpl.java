@@ -25,6 +25,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implements SoftwareService {
@@ -45,12 +46,13 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                ExpressionTransformer expressionTransformer,
                                EventService eventService,
                                CommissionRepository commissionRepository,
+                               SearchFieldsLoader searchFieldsLoader,
                                SoftwareJPAServiceImpl softwareJPAService,
                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }

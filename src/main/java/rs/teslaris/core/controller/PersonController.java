@@ -37,6 +37,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -255,5 +256,10 @@ public class PersonController {
     public boolean checkIdentifierUsage(@PathVariable Integer personId,
                                         @RequestParam String identifier) {
         return personService.isIdentifierInUse(identifier, personId);
+    }
+
+    @GetMapping("/fields")
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
+        return personService.getSearchFields();
     }
 }

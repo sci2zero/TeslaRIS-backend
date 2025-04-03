@@ -35,6 +35,7 @@ import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
@@ -69,6 +70,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   ExpressionTransformer expressionTransformer,
                                   EventService eventService,
                                   CommissionRepository commissionRepository,
+                                  SearchFieldsLoader searchFieldsLoader,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
@@ -79,7 +81,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;

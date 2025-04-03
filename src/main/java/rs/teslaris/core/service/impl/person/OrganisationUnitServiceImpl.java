@@ -25,6 +25,7 @@ import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitGraphRelationDTO;
@@ -53,10 +54,12 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -89,6 +92,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final UserAccountIndexRepository userAccountIndexRepository;
 
     private final InvolvementRepository involvementRepository;
+
+    private final SearchFieldsLoader searchFieldsLoader;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -425,6 +430,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     public boolean isIdentifierInUse(String identifier, Integer organisationUnitId) {
         return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId);
+    }
+
+    @Override
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
+        return searchFieldsLoader.getSearchFields("organisationUnitSearchFieldConfiguration.json");
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,

@@ -51,6 +51,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @Service
@@ -86,6 +87,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
+                             SearchFieldsLoader searchFieldsLoader,
                              ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              ResearchAreaService researchAreaService,
@@ -96,7 +98,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;

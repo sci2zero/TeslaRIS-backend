@@ -28,6 +28,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
@@ -50,12 +51,13 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            ExpressionTransformer expressionTransformer,
                                            EventService eventService,
                                            CommissionRepository commissionRepository,
+                                           SearchFieldsLoader searchFieldsLoader,
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
     }

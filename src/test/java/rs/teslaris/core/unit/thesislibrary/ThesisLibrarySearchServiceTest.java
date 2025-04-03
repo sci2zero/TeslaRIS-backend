@@ -18,9 +18,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
@@ -85,5 +87,23 @@ public class ThesisLibrarySearchServiceTest {
         assertNotNull(result);
         assertEquals(expectedPage, result);
         verify(searchService).runQuery(any(), any(), eq(DocumentPublicationIndex.class), any());
+    }
+
+    @Test
+    void shouldReturnSearchFields() {
+        // Given
+        var expectedFields = List.of(
+            new Triple<>("field1", List.of(new MultilingualContentDTO()), "Type1"),
+            new Triple<>("field2", List.of(new MultilingualContentDTO()), "Type2")
+        );
+
+        when(searchFieldsLoader.getSearchFields(any())).thenReturn(expectedFields);
+
+        // When
+        var result = thesisSearchService.getSearchFields();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedFields.size(), result.size());
     }
 }

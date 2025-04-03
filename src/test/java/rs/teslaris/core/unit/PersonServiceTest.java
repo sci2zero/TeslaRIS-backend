@@ -78,9 +78,11 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @SpringBootTest
 public class PersonServiceTest {
@@ -105,6 +107,9 @@ public class PersonServiceTest {
 
     @Mock
     private SearchService<PersonIndex> searchService;
+
+    @Mock
+    private SearchFieldsLoader searchFieldsLoader;
 
     @Mock
     private ExpressionTransformer expressionTransformer;
@@ -975,6 +980,24 @@ public class PersonServiceTest {
         verify(personRepository).existsByScopusAuthorId(identifier, personId);
         verify(personRepository).existsByeCrisId(identifier, personId);
         verify(personRepository).existsByeNaukaId(identifier, personId);
+    }
+
+    @Test
+    void shouldReturnSearchFields() {
+        // Given
+        var expectedFields = List.of(
+            new Triple<>("field1", List.of(new MultilingualContentDTO()), "Type1"),
+            new Triple<>("field2", List.of(new MultilingualContentDTO()), "Type2")
+        );
+
+        when(searchFieldsLoader.getSearchFields(any())).thenReturn(expectedFields);
+
+        // When
+        var result = personService.getSearchFields();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedFields.size(), result.size());
     }
 
     private MultipartFile createMockMultipartFile() {

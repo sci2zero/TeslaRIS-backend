@@ -13,4 +13,6 @@ public interface CSVExportService {
     InputStreamResource exportPersonsToCSV(CSVExportRequest request);
 
     InputStreamResource exportOrganisationUnitsToCSV(CSVExportRequest request);
+
+    Integer getMaxRecordsPerPage();
 }

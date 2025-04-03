@@ -38,7 +38,8 @@
         "sr": "Ključne reči na srpskom",
         "en": "Serbian keywords"
       },
-      "type": "text"
+      "type": "text",
+      "rule": "INLINE"
     },
     {
       "fieldName": "keywords_other",
@@ -46,7 +47,8 @@
         "sr": "Ključne reči na stranom jeziku",
         "en": "Foreigh language keywords"
       },
-      "type": "text"
+      "type": "text",
+      "rule": "INLINE"
     },
     {
       "fieldName": "full_text_sr",
@@ -118,7 +120,8 @@
         "sr": "Godina",
         "en": "Year"
       },
-      "type": "number"
+      "type": "number",
+      "rule": "POSITIVE"
     },
     {
       "fieldName": "type",
@@ -159,6 +162,24 @@
         "en": "Publicly available"
       },
       "type": "boolean"
+    },
+    {
+      "fieldName": "event_id",
+      "displayName": {
+        "sr": "Konferencija",
+        "en": "Conference"
+      },
+      "type": "number",
+      "rule": "EVENT"
+    },
+    {
+      "fieldName": "journal_id",
+      "displayName": {
+        "sr": "Časopis",
+        "en": "Journal"
+      },
+      "type": "number",
+      "rule": "JOURNAL"
     }
   ]
 }

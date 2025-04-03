@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.CSVExportRequest;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
 
 @SpringBootTest
 public class CSVExportControllerTest extends BaseTest {
@@ -18,7 +19,8 @@ public class CSVExportControllerTest extends BaseTest {
     private ObjectMapper objectMapper;
 
     private CSVExportRequest getTestPayload() {
-        return new CSVExportRequest(List.of("title_sr", "year"), List.of(), true, 0, "sr");
+        return new CSVExportRequest(List.of("title_sr", "year"), List.of(), true, 0, "sr",
+            ExportFileType.CSV);
     }
 
     @Test

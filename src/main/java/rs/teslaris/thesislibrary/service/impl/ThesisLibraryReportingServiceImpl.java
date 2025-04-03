@@ -32,6 +32,7 @@ import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingService;
@@ -238,7 +239,9 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
         var localisedContent = contentList.stream()
             .filter(mc -> mc.getLanguageTag().equals(languageCode)).findFirst();
         if (localisedContent.isPresent()) {
-            return localisedContent.get().getContent();
+            return languageCode.equalsIgnoreCase("SR") ?
+                SerbianTransliteration.toCyrillic(localisedContent.get().getContent()) :
+                localisedContent.get().getContent();
         }
 
         return contentList.stream()

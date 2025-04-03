@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.OrgUnitEditCheck;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -29,6 +30,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -166,5 +168,10 @@ public class OrganisationUnitController {
     public boolean checkIdentifierUsage(@PathVariable Integer organisationUnitId,
                                         @RequestParam String identifier) {
         return organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
+    }
+
+    @GetMapping("/fields")
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
+        return organisationUnitService.getSearchFields();
     }
 }

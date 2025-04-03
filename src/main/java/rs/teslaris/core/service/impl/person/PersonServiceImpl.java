@@ -68,10 +68,12 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -104,6 +106,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final MultilingualContentService multilingualContentService;
 
     private final FileService fileService;
+
+    private final SearchFieldsLoader searchFieldsLoader;
 
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
@@ -996,5 +1000,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personRepository.existsByApvnt(identifier, personId) ||
             personRepository.existsByeCrisId(identifier, personId) ||
             personRepository.existsByeNaukaId(identifier, personId);
+    }
+
+    @Override
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
+        return searchFieldsLoader.getSearchFields("personSearchFieldConfiguration.json");
     }
 }

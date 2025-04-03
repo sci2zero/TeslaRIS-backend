@@ -18,4 +18,20 @@ public class MultilingualContentConverter {
                 mc.getPriority()
             )).collect(Collectors.toList());
     }
+
+    public static String getLocalizedContent(
+        Set<MultiLingualContent> multilingualContent, String locale) {
+        var content = multilingualContent.stream()
+            .filter(mc -> mc.getLanguage().getLanguageTag().equalsIgnoreCase(locale)).findFirst();
+
+        if (content.isEmpty()) {
+            content = multilingualContent.stream().findAny();
+        }
+
+        if (content.isPresent()) {
+            return content.get().getContent();
+        } else {
+            return "";
+        }
+    }
 }

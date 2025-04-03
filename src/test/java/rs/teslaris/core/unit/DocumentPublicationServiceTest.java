@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +34,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -50,8 +52,10 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @SpringBootTest
@@ -83,6 +87,9 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private SearchFieldsLoader searchFieldsLoader;
 
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;
@@ -739,5 +746,23 @@ public class DocumentPublicationServiceTest {
         // then
         assertEquals(60L, result.a);
         assertEquals(25L, result.b);
+    }
+
+    @Test
+    void shouldReturnSearchFields() {
+        // Given
+        var expectedFields = List.of(
+            new Triple<>("field1", List.of(new MultilingualContentDTO()), "Type1"),
+            new Triple<>("field2", List.of(new MultilingualContentDTO()), "Type2")
+        );
+
+        when(searchFieldsLoader.getSearchFields(any())).thenReturn(expectedFields);
+
+        // When
+        var result = documentPublicationService.getSearchFields();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedFields.size(), result.size());
     }
 }

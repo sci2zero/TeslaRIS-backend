@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.service.impl.commontypes.CSVExportServiceImpl;
@@ -63,13 +67,18 @@ class CSVExportServiceTest {
         ReflectionTestUtils.setField(csvExportService, "maximumExportAmount", 500);
     }
 
-    @Test
-    void shouldExportCSVForSelectedDocuments() {
+    @ParameterizedTest
+    @EnumSource(ExportFileType.class)
+    void shouldExportCSVForSelectedDocuments(ExportFileType exportFileType) {
         // Given
+        request.setExportFileType(exportFileType);
+
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(1))
             .thenReturn(Optional.of(mockDocument));
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(2))
             .thenReturn(Optional.empty());
+        when(searchFieldsLoader.getConfiguration(anyString())).thenReturn(
+            new SearchFieldsLoader.SearchFields(List.of()));
 
         // When
         var result = csvExportService.exportDocumentsToCSV(request);
@@ -82,15 +91,19 @@ class CSVExportServiceTest {
             .findDocumentPublicationIndexByDatabaseId(2);
     }
 
-    @Test
-    void shouldExportCSVForMaxPossibleAmount() {
+    @ParameterizedTest
+    @EnumSource(ExportFileType.class)
+    void shouldExportCSVForMaxPossibleAmount(ExportFileType exportFileType) {
         // Given
         request.setExportMaxPossibleAmount(true);
         request.setBulkExportOffset(0);
+        request.setExportFileType(exportFileType);
         var page = new PageImpl<>(List.of(mockDocument));
 
         when(documentPublicationIndexRepository.findAll(PageRequest.of(0, 500)))
             .thenReturn(page);
+        when(searchFieldsLoader.getConfiguration(anyString())).thenReturn(
+            new SearchFieldsLoader.SearchFields(List.of()));
 
         // When
         var result = csvExportService.exportDocumentsToCSV(request);
@@ -101,9 +114,11 @@ class CSVExportServiceTest {
             .findAll(PageRequest.of(0, 500));
     }
 
-    @Test
-    void shouldHandleEmptyDocumentsListGracefully() {
+    @ParameterizedTest
+    @EnumSource(ExportFileType.class)
+    void shouldHandleEmptyDocumentsListGracefully(ExportFileType exportFileType) {
         // Given
+        request.setExportFileType(exportFileType);
         request.setExportEntityIds(new ArrayList<>());
 
         // When
