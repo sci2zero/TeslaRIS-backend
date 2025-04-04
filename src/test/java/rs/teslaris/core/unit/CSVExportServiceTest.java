@@ -2,7 +2,6 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,10 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,16 +25,12 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.service.impl.commontypes.CSVExportServiceImpl;
 import rs.teslaris.core.service.interfaces.document.CitationService;
-import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @SpringBootTest
 class CSVExportServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
-
-    @Mock
-    private SearchFieldsLoader searchFieldsLoader;
 
     @Mock
     private CitationService citationService;
@@ -61,9 +54,6 @@ class CSVExportServiceTest {
         mockDocument = new DocumentPublicationIndex();
         mockDocument.setDatabaseId(1);
 
-        when(searchFieldsLoader.getSearchFieldLocalizedName(anyString(), anyString(), anyString()))
-            .thenReturn("Localized Field");
-
         ReflectionTestUtils.setField(csvExportService, "maximumExportAmount", 500);
     }
 
@@ -77,8 +67,6 @@ class CSVExportServiceTest {
             .thenReturn(Optional.of(mockDocument));
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(2))
             .thenReturn(Optional.empty());
-        when(searchFieldsLoader.getConfiguration(anyString())).thenReturn(
-            new SearchFieldsLoader.SearchFields(List.of()));
 
         // When
         var result = csvExportService.exportDocumentsToCSV(request);
@@ -102,8 +90,6 @@ class CSVExportServiceTest {
 
         when(documentPublicationIndexRepository.findAll(PageRequest.of(0, 500)))
             .thenReturn(page);
-        when(searchFieldsLoader.getConfiguration(anyString())).thenReturn(
-            new SearchFieldsLoader.SearchFields(List.of()));
 
         // When
         var result = csvExportService.exportDocumentsToCSV(request);

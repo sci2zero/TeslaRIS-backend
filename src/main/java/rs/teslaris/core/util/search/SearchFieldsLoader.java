@@ -51,14 +51,7 @@ public class SearchFieldsLoader {
 
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         String fileName) {
-        if (!cache.containsKey(fileName)) {
-            try {
-                loadConfiguration(fileName);
-            } catch (IOException e) {
-                throw new LoadingException(
-                    "Unable to load search configuration " + fileName); // should never happen
-            }
-        }
+        lazyLoadCache(fileName);
 
         return cache.get(fileName).fields().stream()
             .map(thesisSearchField -> {
@@ -78,6 +71,8 @@ public class SearchFieldsLoader {
 
     public String getSearchFieldLocalizedName(String fileName, String searchFieldName,
                                               String lang) {
+        lazyLoadCache(fileName);
+
         lang = lang.toLowerCase();
         var foundField = cache.get(fileName).fields().stream()
             .filter(field -> field.fieldName.equals(searchFieldName)).findFirst();
@@ -92,7 +87,19 @@ public class SearchFieldsLoader {
         return foundField.get().displayName.getOrDefault(lang, searchFieldName);
     }
 
+    private void lazyLoadCache(String fileName) {
+        if (!cache.containsKey(fileName)) {
+            try {
+                loadConfiguration(fileName);
+            } catch (IOException e) {
+                throw new LoadingException(
+                    "Unable to load search configuration " + fileName); // should never happen
+            }
+        }
+    }
+
     public SearchFields getConfiguration(String fileName) {
+        lazyLoadCache(fileName);
         return cache.get(fileName);
     }
 

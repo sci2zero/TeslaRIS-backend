@@ -18,18 +18,39 @@ public class CSVExportControllerTest extends BaseTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private CSVExportRequest getTestPayload() {
-        return new CSVExportRequest(List.of("title_sr", "year"), List.of(), true, 0, "sr",
-            ExportFileType.CSV);
-    }
 
     @Test
     public void testExportCSVDocuments() throws Exception {
-        var request = getTestPayload();
+        var request = new CSVExportRequest(List.of("title_sr", "year"), List.of(), true, 0, "sr",
+            ExportFileType.CSV, null, List.of());
 
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/csv-export/documents")
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testExportCSVPersons() throws Exception {
+        var request = new CSVExportRequest(List.of("name", "orcid"), List.of(), true, 0, "sr",
+            ExportFileType.CSV, null, List.of());
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/csv-export/persons")
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testExportCSVOrganisationUnits() throws Exception {
+        var request = new CSVExportRequest(List.of("name_sr"), List.of(), true, 0, "sr",
+            ExportFileType.CSV, null, List.of());
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/csv-export/organisation-units")
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }

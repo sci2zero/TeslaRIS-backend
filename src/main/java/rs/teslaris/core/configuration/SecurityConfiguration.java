@@ -234,6 +234,8 @@ public class SecurityConfiguration {
 
                 // CSV EXPORT
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

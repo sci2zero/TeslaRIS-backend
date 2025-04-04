@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.model.commontypes.ExportableEndpointType;
 
 @Getter
 @Setter
@@ -23,4 +24,8 @@ public class CSVExportRequest {
     private String exportLanguage;
 
     private ExportFileType exportFileType;
+
+    private ExportableEndpointType endpointType;
+
+    private List<String> endpointTokenParameters;
 }
