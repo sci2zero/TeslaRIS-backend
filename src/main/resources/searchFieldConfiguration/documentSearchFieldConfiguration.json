@@ -6,7 +6,8 @@
         "sr": "Naslov na srpskom",
         "en": "Serbian title"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "title_other",
@@ -14,7 +15,8 @@
         "sr": "Naslov na stranom jeziku",
         "en": "Foreign language title"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "description_sr",
@@ -22,7 +24,8 @@
         "sr": "Apstrakt na srpskom",
         "en": "Serbian abstract"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "description_other",
@@ -30,7 +33,8 @@
         "sr": "Apstrakt na stranom jeziku",
         "en": "Abstract on foreign language"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "keywords_sr",
@@ -39,7 +43,8 @@
         "en": "Serbian keywords"
       },
       "type": "text",
-      "rule": "INLINE"
+      "rule": "INLINE",
+      "canExport": true
     },
     {
       "fieldName": "keywords_other",
@@ -48,7 +53,8 @@
         "en": "Foreigh language keywords"
       },
       "type": "text",
-      "rule": "INLINE"
+      "rule": "INLINE",
+      "canExport": true
     },
     {
       "fieldName": "full_text_sr",
@@ -56,7 +62,8 @@
         "sr": "Sadržaj na srpskom",
         "en": "Serbian full-text"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": false
     },
     {
       "fieldName": "full_text_other",
@@ -64,7 +71,8 @@
         "sr": "Sadržaj na stranom jeziku",
         "en": "Foreign language full-text"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": false
     },
     {
       "fieldName": "author_names",
@@ -72,7 +80,8 @@
         "sr": "Imena autora",
         "en": "Author names"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "editor_names",
@@ -80,7 +89,8 @@
         "sr": "Imena urednika",
         "en": "Editor names"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "board_member_names",
@@ -88,7 +98,8 @@
         "sr": "Imena članova odbora",
         "en": "Board member names"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "board_president_name",
@@ -96,7 +107,8 @@
         "sr": "Ime predsednika komisije",
         "en": "Board president name"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "advisor_names",
@@ -104,7 +116,8 @@
         "sr": "Imena savetnika",
         "en": "Advisor names"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "reviewer_names",
@@ -112,7 +125,8 @@
         "sr": "Imena recenzenata",
         "en": "Reviewer names"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "year",
@@ -121,7 +135,8 @@
         "en": "Year"
       },
       "type": "number",
-      "rule": "POSITIVE"
+      "rule": "POSITIVE",
+      "canExport": true
     },
     {
       "fieldName": "type",
@@ -129,7 +144,8 @@
         "sr": "Tip",
         "en": "Type"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "publication_type",
@@ -137,7 +153,8 @@
         "sr": "Tip publikacije",
         "en": "Publication type"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "doi",
@@ -145,7 +162,8 @@
         "sr": "DOI",
         "en": "DOI"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "scopus_id",
@@ -153,7 +171,8 @@
         "sr": "Scopus ID",
         "en": "Scopus ID"
       },
-      "type": "text"
+      "type": "text",
+      "canExport": true
     },
     {
       "fieldName": "is_open_access",
@@ -161,7 +180,8 @@
         "sr": "Javno dostupno",
         "en": "Publicly available"
       },
-      "type": "boolean"
+      "type": "boolean",
+      "canExport": true
     },
     {
       "fieldName": "event_id",
@@ -170,7 +190,8 @@
         "en": "Conference"
       },
       "type": "number",
-      "rule": "EVENT"
+      "rule": "EVENT",
+      "canExport": true
     },
     {
       "fieldName": "journal_id",
@@ -179,7 +200,8 @@
         "en": "Journal"
       },
       "type": "number",
-      "rule": "JOURNAL"
+      "rule": "JOURNAL",
+      "canExport": true
     }
   ]
 }

@@ -156,6 +156,8 @@ public class DbInitializer implements ApplicationRunner {
         var removeThesisFromPublicReview = new Privilege("REMOVE_THESIS_FROM_PUBLIC_REVIEW");
         var archiveThesis = new Privilege("ARCHIVE_THESIS");
         var unarchiveThesis = new Privilege("UNARCHIVE_THESIS");
+        var performThesisReport = new Privilege("PERFORM_THESIS_REPORT");
+        var performThesisSearch = new Privilege("PERFORM_THESIS_SEARCH");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -178,8 +180,9 @@ public class DbInitializer implements ApplicationRunner {
                 assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
                 editAssessmentResearchArea, downloadReports, listAssessmentClassifications,
                 updateBrandingInformation, manageApiKeys, manageThesisAttachments,
-                editEmploymentInstitution, archiveThesis, unarchiveThesis,
-                putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview));
+                editEmploymentInstitution, archiveThesis, unarchiveThesis, performThesisReport,
+                putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview,
+                performThesisSearch));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -203,22 +206,21 @@ public class DbInitializer implements ApplicationRunner {
                 downloadReports, listAssessmentClassifications, updateBrandingInformation,
                 manageApiKeys, manageThesisAttachments, putThesisOnPublicReview,
                 deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
-                unarchiveThesis
+                unarchiveThesis, performThesisReport, performThesisSearch
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
-                unbindYourselfFromPublication, editEntityIndicators)));
+                unbindYourselfFromPublication, editEntityIndicators, performThesisSearch)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
                 List.of(
                     new Privilege[] {updateProfile, allowAccountTakeover, manageThesisAttachments,
                         putThesisOnPublicReview, createUserBasic, editPersonalInfo,
-                        editDocumentFiles,
-                        editEmploymentInstitution})));
+                        editDocumentFiles, performThesisSearch, editEmploymentInstitution})));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -236,14 +238,14 @@ public class DbInitializer implements ApplicationRunner {
         var institutionalLibrarianAuthority =
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
-                putThesisOnPublicReview, editDocumentFiles, archiveThesis
+                putThesisOnPublicReview, editDocumentFiles, archiveThesis, performThesisSearch
             )));
 
         var headOfLibraryAuthority =
             new Authority(UserRole.HEAD_OF_LIBRARY.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
-                unarchiveThesis
+                unarchiveThesis, performThesisReport, performThesisSearch
             )));
 
         authorityRepository.saveAll(

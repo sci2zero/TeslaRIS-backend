@@ -5,10 +5,12 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -25,17 +27,20 @@ public class ThesisLibrarySearchController {
 
 
     @GetMapping("/fields")
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
-        return thesisSearchService.getSearchFields();
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_SEARCH')")
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(@RequestParam("export") Boolean onlyExportFields) {
+        return thesisSearchService.getSearchFields(onlyExportFields);
     }
 
     @PostMapping("/simple")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_SEARCH')")
     public Page<DocumentPublicationIndex> performSimpleSearch(
         @RequestBody @Valid ThesisSearchRequestDTO searchRequest, Pageable pageable) {
         return thesisSearchService.performSimpleThesisSearch(searchRequest, pageable);
     }
 
     @PostMapping("/advanced")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_SEARCH')")
     public Page<DocumentPublicationIndex> performAdvancedSearch(
         @RequestBody @Valid ThesisSearchRequestDTO searchRequest, Pageable pageable) {
         return thesisSearchService.performAdvancedThesisSearch(searchRequest, pageable);

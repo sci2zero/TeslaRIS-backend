@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -748,18 +750,19 @@ public class DocumentPublicationServiceTest {
         assertEquals(25L, result.b);
     }
 
-    @Test
-    void shouldReturnSearchFields() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldReturnSearchFields(Boolean onlyExportFields) {
         // Given
         var expectedFields = List.of(
             new Triple<>("field1", List.of(new MultilingualContentDTO()), "Type1"),
             new Triple<>("field2", List.of(new MultilingualContentDTO()), "Type2")
         );
 
-        when(searchFieldsLoader.getSearchFields(any())).thenReturn(expectedFields);
+        when(searchFieldsLoader.getSearchFields(any(), anyBoolean())).thenReturn(expectedFields);
 
         // When
-        var result = documentPublicationService.getSearchFields();
+        var result = documentPublicationService.getSearchFields(onlyExportFields);
 
         // Then
         assertNotNull(result);

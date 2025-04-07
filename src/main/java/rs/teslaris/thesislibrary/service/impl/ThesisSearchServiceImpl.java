@@ -58,8 +58,9 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
     }
 
     @Override
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
-        return searchFieldsLoader.getSearchFields(configFileName);
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields) {
+        return searchFieldsLoader.getSearchFields(configFileName, onlyExportFields);
     }
 
     private Page<DocumentPublicationIndex> performQuery(ThesisSearchRequestDTO searchRequest,

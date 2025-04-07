@@ -1003,7 +1003,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
-        return searchFieldsLoader.getSearchFields("personSearchFieldConfiguration.json");
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(Boolean onlyExportFields) {
+        return searchFieldsLoader.getSearchFields("personSearchFieldConfiguration.json", onlyExportFields);
     }
 }

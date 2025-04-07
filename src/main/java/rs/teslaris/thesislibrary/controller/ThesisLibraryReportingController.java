@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,24 +28,28 @@ public class ThesisLibraryReportingController {
     private final ThesisLibraryReportingService thesisLibraryReportingService;
 
     @PostMapping("/counts")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
     public List<ThesisReportCountsDTO> getReportCounts(
         @RequestBody @Valid ThesisReportRequestDTO reportRequest) {
         return thesisLibraryReportingService.createThesisCountsReport(reportRequest);
     }
 
     @PostMapping("/defended")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
     public Page<DocumentPublicationIndex> getDefendedThesesForPeriod(
         @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
         return thesisLibraryReportingService.fetchDefendedThesesInPeriod(reportRequest, pageable);
     }
 
     @PostMapping("/accepted")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
     public Page<DocumentPublicationIndex> getAcceptedThesesForPeriod(
         @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
         return thesisLibraryReportingService.fetchAcceptedThesesInPeriod(reportRequest, pageable);
     }
 
     @PostMapping("/public-review")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
     public Page<DocumentPublicationIndex> getPublicReviewThesesForPeriod(
         @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
         return thesisLibraryReportingService.fetchPublicReviewThesesInPeriod(reportRequest,
@@ -52,6 +57,7 @@ public class ThesisLibraryReportingController {
     }
 
     @PostMapping("/public-access")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
     public Page<DocumentPublicationIndex> getPubliclyAvailableThesesForPeriod(
         @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
         return thesisLibraryReportingService.fetchPubliclyAvailableThesesInPeriod(reportRequest,
@@ -59,6 +65,7 @@ public class ThesisLibraryReportingController {
     }
 
     @PostMapping("/download/{lang}")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
     public ResponseEntity<InputStreamResource> generateThesisLibraryReportDocument(
         @PathVariable String lang, @RequestBody @Valid ThesisReportRequestDTO reportRequest) {
         var document = thesisLibraryReportingService.generatePhdLibraryReportDocument(reportRequest,

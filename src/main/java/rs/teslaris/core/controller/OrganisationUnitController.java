@@ -171,7 +171,7 @@ public class OrganisationUnitController {
     }
 
     @GetMapping("/fields")
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
-        return organisationUnitService.getSearchFields();
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(@RequestParam("export") Boolean onlyExportFields) {
+        return organisationUnitService.getSearchFields(onlyExportFields);
     }
 }

@@ -88,5 +88,5 @@ public interface DocumentPublicationService extends JPAService<Document> {
     Pair<Long, Long> getAssessedDocumentCountsForCommission(Integer institutionId,
                                                             Integer commissionId);
 
-    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields();
+    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(Boolean onlyExportFields);
 }

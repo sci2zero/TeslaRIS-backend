@@ -234,7 +234,7 @@ public class DocumentPublicationController {
     }
 
     @GetMapping("/fields")
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields() {
-        return documentPublicationService.getSearchFields();
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(@RequestParam("export") Boolean onlyExportFields) {
+        return documentPublicationService.getSearchFields(onlyExportFields);
     }
 }

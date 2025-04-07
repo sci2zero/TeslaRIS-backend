@@ -50,10 +50,12 @@ public class SearchFieldsLoader {
     }
 
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
-        String fileName) {
+        String fileName, Boolean onlyExportFields) {
         lazyLoadCache(fileName);
 
         return cache.get(fileName).fields().stream()
+            .filter(searchField -> !onlyExportFields ||
+                searchField.canExport().equals(true))
             .map(thesisSearchField -> {
                 var displayFieldName = new ArrayList<MultilingualContentDTO>();
                 AtomicInteger priority = new AtomicInteger(1);
@@ -75,7 +77,8 @@ public class SearchFieldsLoader {
 
         lang = lang.toLowerCase();
         var foundField = cache.get(fileName).fields().stream()
-            .filter(field -> field.fieldName.equals(searchFieldName)).findFirst();
+            .filter(field -> field.canExport() && field.fieldName.equals(searchFieldName))
+            .findFirst();
         if (foundField.isEmpty()) {
             return searchFieldName;
         }
@@ -112,7 +115,8 @@ public class SearchFieldsLoader {
         @JsonProperty(value = "fieldName", required = true) String fieldName,
         @JsonProperty(value = "type", required = true) String type,
         @JsonProperty(value = "rule") String rule,
-        @JsonProperty(value = "displayName", required = true) Map<String, String> displayName
+        @JsonProperty(value = "displayName", required = true) Map<String, String> displayName,
+        @JsonProperty(value = "canExport", defaultValue = "false") Boolean canExport
     ) {
     }
 }

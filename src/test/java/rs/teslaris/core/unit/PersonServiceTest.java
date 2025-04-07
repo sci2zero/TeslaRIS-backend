@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -982,18 +983,19 @@ public class PersonServiceTest {
         verify(personRepository).existsByeNaukaId(identifier, personId);
     }
 
-    @Test
-    void shouldReturnSearchFields() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldReturnSearchFields(Boolean onlyExportFields) {
         // Given
         var expectedFields = List.of(
             new Triple<>("field1", List.of(new MultilingualContentDTO()), "Type1"),
             new Triple<>("field2", List.of(new MultilingualContentDTO()), "Type2")
         );
 
-        when(searchFieldsLoader.getSearchFields(any())).thenReturn(expectedFields);
+        when(searchFieldsLoader.getSearchFields(any(), anyBoolean())).thenReturn(expectedFields);
 
         // When
-        var result = personService.getSearchFields();
+        var result = personService.getSearchFields(onlyExportFields);
 
         // Then
         assertNotNull(result);
