@@ -2,6 +2,7 @@ package rs.teslaris.dbinitialization;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -95,6 +96,8 @@ import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.thesislibrary.model.Promotion;
+import rs.teslaris.thesislibrary.repository.PromotionRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -157,6 +160,8 @@ public class TestingDataInitializer {
     private final IndicatorRepository indicatorRepository;
 
     private final AssessmentResearchAreaRepository assessmentResearchAreaRepository;
+
+    private final PromotionRepository promotionRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -797,5 +802,11 @@ public class TestingDataInitializer {
 
         software2.addDocumentContribution(softwareContribution3);
         softwareRepository.save(software2);
+
+        var promotion1 = new Promotion();
+        promotion1.setPromotionDate(LocalDate.of(2023, 5, 1));
+        promotion1.setPromotionTime(LocalTime.NOON);
+        promotion1.setPlaceOrVenue("Some place");
+        promotionRepository.save(promotion1);
     }
 }

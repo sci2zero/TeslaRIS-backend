@@ -36,6 +36,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferen
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
@@ -361,6 +362,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleThesisException(HttpServletRequest request,
                                       ThesisException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(PromotionException.class)
+    @ResponseBody
+    ErrorObject handlePromotionException(HttpServletRequest request,
+                                         PromotionException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }
