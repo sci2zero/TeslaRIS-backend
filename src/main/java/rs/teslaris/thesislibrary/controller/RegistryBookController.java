@@ -27,7 +27,8 @@ public class RegistryBookController {
 
 
     @GetMapping("/for-promotion/{promotionId}")
-    public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(@PathVariable Integer promotionId, Pageable pageable) {
+    public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(
+        @PathVariable Integer promotionId, Pageable pageable) {
         return registryBookService.getRegistryBookEntriesForPromotion(promotionId, pageable);
     }
 

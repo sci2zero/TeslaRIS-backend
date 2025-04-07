@@ -25,7 +25,8 @@ public class RegistryBookEntryConverter {
                 dissertationInfo.getDissertationTitle()));
 
         if (Objects.nonNull(dissertationInfo.getOrganisationUnit())) {
-            dissertationInfoDTO.setOrganisationUnitId(dissertationInfo.getOrganisationUnit().getId());
+            dissertationInfoDTO.setOrganisationUnitId(
+                dissertationInfo.getOrganisationUnit().getId());
         }
 
         dissertationInfoDTO.setMentor(dissertationInfo.getMentor());

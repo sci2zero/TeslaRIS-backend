@@ -1,7 +1,6 @@
 package rs.teslaris.thesislibrary.service.interfaces;
 
 import java.util.List;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.thesislibrary.dto.PromotionDTO;

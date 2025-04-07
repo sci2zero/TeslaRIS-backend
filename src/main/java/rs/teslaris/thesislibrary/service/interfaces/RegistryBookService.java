@@ -10,7 +10,8 @@ import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 @Service
 public interface RegistryBookService extends JPAService<RegistryBookEntry> {
 
-    Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId, Pageable pageable);
+    Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
+                                                                  Pageable pageable);
 
     RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO registryBookEntryDTO);
 
