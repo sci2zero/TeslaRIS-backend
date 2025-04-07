@@ -94,6 +94,17 @@ public class BeanConfiguration {
         return threadPoolTaskExecutor;
     }
 
+    @Bean(name = "reindexExecutor")
+    public Executor reindexExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(8);
+        executor.setMaxPoolSize(16);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("ReindexThread-");
+        executor.initialize();
+        return executor;
+    }
+
     @Bean
     public ThreadPoolTaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();

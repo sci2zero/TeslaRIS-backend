@@ -2,6 +2,7 @@ package rs.teslaris.core.service.interfaces.document;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,7 @@ public interface JournalService {
 
     void forceDeleteJournal(Integer journalId);
 
-    void reindexJournals();
+    CompletableFuture<Void> reindexJournals();
 
     void indexJournal(Journal journal, JournalIndex index);
 

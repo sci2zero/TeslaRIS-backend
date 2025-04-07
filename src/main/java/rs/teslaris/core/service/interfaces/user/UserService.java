@@ -2,6 +2,7 @@ package rs.teslaris.core.service.interfaces.user;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -76,7 +77,7 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     List<Integer> getAccountsWithRoleTakingAllowed();
 
-    void reindexUsers();
+    CompletableFuture<Void> reindexUsers();
 
     List<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId);
 

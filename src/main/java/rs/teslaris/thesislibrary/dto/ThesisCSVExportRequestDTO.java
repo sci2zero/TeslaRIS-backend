@@ -1,5 +1,6 @@
 package rs.teslaris.thesislibrary.dto;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,6 @@ import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ThesisCSVExportRequestDTO extends DocumentCSVExportRequest {
-
+    @Valid
     private ThesisSearchRequestDTO thesisSearchRequest;
 }

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -600,8 +602,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexUsers() {
+    public CompletableFuture<Void> reindexUsers() {
         userAccountIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -616,6 +619,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     @Override

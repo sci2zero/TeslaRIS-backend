@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.person;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -85,7 +86,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId);
 
-    void reindexOrganisationUnits();
+    CompletableFuture<Void> reindexOrganisationUnits();
 
     List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId);
 

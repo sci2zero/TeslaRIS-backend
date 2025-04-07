@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
@@ -728,8 +730,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexOrganisationUnits() {
+    public CompletableFuture<Void> reindexOrganisationUnits() {
         organisationUnitIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -746,5 +749,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 }

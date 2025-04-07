@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -634,7 +636,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public void reindexPersons() {
+    @Async("reindexExecutor")
+    public CompletableFuture<Void> reindexPersons() {
         personIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 50;
@@ -649,6 +652,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     @Transactional

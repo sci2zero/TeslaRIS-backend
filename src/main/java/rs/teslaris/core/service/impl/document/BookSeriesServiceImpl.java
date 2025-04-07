@@ -4,10 +4,12 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
@@ -152,8 +154,9 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexBookSeries() {
+    public CompletableFuture<Void> reindexBookSeries() {
         bookSeriesIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -169,6 +172,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {

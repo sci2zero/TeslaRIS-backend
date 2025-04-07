@@ -7,11 +7,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
@@ -196,8 +198,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexJournals() {
+    public CompletableFuture<Void> reindexJournals() {
         journalIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -213,6 +216,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     private void setJournalRelatedFields(Journal journal, PublicationSeriesDTO journalDTO) {

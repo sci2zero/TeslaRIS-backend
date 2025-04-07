@@ -1,10 +1,12 @@
 package rs.teslaris.thesislibrary.dto;
 
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 import rs.teslaris.core.model.document.ThesisType;
 
 public record ThesisSearchRequestDTO(
+    @NotNull(message = "You have to provide search tokens.")
     List<String> tokens,
     List<Integer> facultyIds,
     List<Integer> authorIds,

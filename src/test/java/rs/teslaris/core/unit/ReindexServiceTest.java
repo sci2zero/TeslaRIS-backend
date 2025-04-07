@@ -3,8 +3,10 @@ package rs.teslaris.core.unit;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -112,6 +114,19 @@ public class ReindexServiceTest {
         // Given
         var indexesToRepopulate = List.of(indexType);
 
+        // Return completed futures for all mocked services
+        when(userService.reindexUsers()).thenReturn(CompletableFuture.completedFuture(null));
+        when(journalService.reindexJournals()).thenReturn(CompletableFuture.completedFuture(null));
+        when(publisherService.reindexPublishers()).thenReturn(
+            CompletableFuture.completedFuture(null));
+        when(personService.reindexPersons()).thenReturn(CompletableFuture.completedFuture(null));
+        when(organisationUnitService.reindexOrganisationUnits()).thenReturn(
+            CompletableFuture.completedFuture(null));
+        when(bookSeriesService.reindexBookSeries()).thenReturn(
+            CompletableFuture.completedFuture(null));
+        when(conferenceService.reindexConferences()).thenReturn(
+            CompletableFuture.completedFuture(null));
+
         // When
         reindexService.reindexDatabase(indexesToRepopulate);
 
@@ -130,14 +145,31 @@ public class ReindexServiceTest {
             indexType.equals(EntityType.BOOK_SERIES) ? times(1) : never()).reindexBookSeries();
         verify(conferenceService,
             indexType.equals(EntityType.EVENT) ? times(1) : never()).reindexConferences();
-        verify(documentFileService,
-            indexType.equals(EntityType.PUBLICATION) ? times(1) : never()).deleteIndexes();
-        verify(documentPublicationService,
-            indexType.equals(EntityType.PUBLICATION) ? times(1) : never()).deleteIndexes();
-        verify(journalPublicationService, indexType.equals(EntityType.PUBLICATION) ? times(1) :
-            never()).reindexJournalPublications();
-        verify(proceedingsPublicationService, indexType.equals(EntityType.PUBLICATION) ? times(1) :
-            never()).reindexProceedingsPublications();
-    }
 
+        if (indexType.equals(EntityType.PUBLICATION)) {
+            verify(documentFileService).deleteIndexes();
+            verify(documentPublicationService).deleteIndexes();
+            verify(journalPublicationService).reindexJournalPublications();
+            verify(proceedingsPublicationService).reindexProceedingsPublications();
+            verify(patentService).reindexPatents();
+            verify(softwareService).reindexSoftware();
+            verify(datasetService).reindexDatasets();
+            verify(monographService).reindexMonographs();
+            verify(monographPublicationService).reindexMonographPublications();
+            verify(proceedingsService).reindexProceedings();
+            verify(thesisService).reindexTheses();
+        } else {
+            verify(documentFileService, never()).deleteIndexes();
+            verify(documentPublicationService, never()).deleteIndexes();
+            verify(journalPublicationService, never()).reindexJournalPublications();
+            verify(proceedingsPublicationService, never()).reindexProceedingsPublications();
+            verify(patentService, never()).reindexPatents();
+            verify(softwareService, never()).reindexSoftware();
+            verify(datasetService, never()).reindexDatasets();
+            verify(monographService, never()).reindexMonographs();
+            verify(monographPublicationService, never()).reindexMonographPublications();
+            verify(proceedingsService, never()).reindexProceedings();
+            verify(thesisService, never()).reindexTheses();
+        }
+    }
 }

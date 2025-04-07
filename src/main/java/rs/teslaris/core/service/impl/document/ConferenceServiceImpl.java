@@ -2,11 +2,13 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.repository.CommissionRepository;
@@ -195,8 +197,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexConferences() {
+    public CompletableFuture<Void> reindexConferences() {
         eventIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -212,6 +215,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {

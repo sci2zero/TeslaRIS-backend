@@ -3,6 +3,7 @@ package rs.teslaris.core.service.interfaces.person;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -78,7 +79,7 @@ public interface PersonService extends JPAService<Person> {
 
     InvolvementDTO getLatestResearcherInvolvement(Integer personId);
 
-    void reindexPersons();
+    CompletableFuture<Void> reindexPersons();
 
     void indexPerson(Person savedPerson, Integer personDatabaseId);
 
