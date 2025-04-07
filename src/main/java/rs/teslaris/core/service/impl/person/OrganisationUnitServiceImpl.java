@@ -433,8 +433,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(Boolean onlyExportFields) {
-        return searchFieldsLoader.getSearchFields("organisationUnitSearchFieldConfiguration.json", onlyExportFields);
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields) {
+        return searchFieldsLoader.getSearchFields("organisationUnitSearchFieldConfiguration.json",
+            onlyExportFields);
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,

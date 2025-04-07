@@ -11,6 +11,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -26,13 +27,21 @@ public class ApiKeyValidationAspect {
 
     private final Map<String, Integer> tokenBuckets = new ConcurrentHashMap<>();
 
-    private final int MAX_TOKENS = 20; // Max requests per API key at any moment
+    private final int maxTokens;
 
-    private final int REFILL_RATE = 1; // 1 token per second
+    private final int refillRate;
+
+    private final int refillPeriod;
 
 
     @Autowired
-    public ApiKeyValidationAspect(ApiKeyService apiKeyService) {
+    public ApiKeyValidationAspect(@Value("${rate-limiting.max-tokens}") int maxTokens,
+                                  @Value("${rate-limiting.refill-rate}") int refillRate,
+                                  @Value("${rate-limiting.refill-period-seconds}") int refillPeriod,
+                                  ApiKeyService apiKeyService) {
+        this.maxTokens = maxTokens;
+        this.refillRate = refillRate;
+        this.refillPeriod = refillPeriod;
         this.apiKeyService = apiKeyService;
         startTokenRefillTask();
     }
@@ -41,15 +50,15 @@ public class ApiKeyValidationAspect {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(() -> {
             tokenBuckets.forEach((apiKey, tokens) -> {
-                if (tokens < MAX_TOKENS) {
-                    tokenBuckets.put(apiKey, tokens + REFILL_RATE);
+                if (tokens < maxTokens) {
+                    tokenBuckets.put(apiKey, tokens + refillRate);
                 }
             });
-        }, 0, 1, TimeUnit.SECONDS);
+        }, 0, refillPeriod, TimeUnit.SECONDS);
     }
 
     @Around("@annotation(rs.teslaris.core.annotation.ApiKeyValidation)")
-    public Object checkPublicationEdit(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object validateAPIKey(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
@@ -64,7 +73,7 @@ public class ApiKeyValidationAspect {
         }
 
         // Token bucket rate limiting
-        tokenBuckets.putIfAbsent(apiKeyValue, MAX_TOKENS);
+        tokenBuckets.putIfAbsent(apiKeyValue, maxTokens);
         synchronized (tokenBuckets) {
             int remainingTokens = tokenBuckets.get(apiKeyValue);
             if (remainingTokens <= 0) {

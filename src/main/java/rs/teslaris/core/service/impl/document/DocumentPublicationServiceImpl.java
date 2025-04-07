@@ -526,8 +526,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(Boolean onlyExportFields) {
-        return searchFieldsLoader.getSearchFields("documentSearchFieldConfiguration.json", onlyExportFields);
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields) {
+        return searchFieldsLoader.getSearchFields("documentSearchFieldConfiguration.json",
+            onlyExportFields);
     }
 
     protected void clearCommonFields(Document publication) {

@@ -28,7 +28,8 @@ public class ThesisLibrarySearchController {
 
     @GetMapping("/fields")
     @PreAuthorize("hasAuthority('PERFORM_THESIS_SEARCH')")
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(@RequestParam("export") Boolean onlyExportFields) {
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        @RequestParam("export") Boolean onlyExportFields) {
         return thesisSearchService.getSearchFields(onlyExportFields);
     }
 

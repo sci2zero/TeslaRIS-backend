@@ -99,5 +99,6 @@ public interface PersonService extends JPAService<Person> {
 
     boolean isIdentifierInUse(String identifier, Integer personId);
 
-    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(Boolean onlyExportFields);
+    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields);
 }

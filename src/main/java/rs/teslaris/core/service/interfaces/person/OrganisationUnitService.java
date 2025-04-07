@@ -91,5 +91,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     boolean isIdentifierInUse(String identifier, Integer organisationUnitId);
 
-    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(Boolean onlyExportFields);
+    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields);
 }

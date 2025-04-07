@@ -85,7 +85,8 @@ public class OrganisationUnitControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/organisation-unit/fields?export={export}", onlyExportFields)
+                        "http://localhost:8081/api/organisation-unit/fields?export={export}",
+                        onlyExportFields)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

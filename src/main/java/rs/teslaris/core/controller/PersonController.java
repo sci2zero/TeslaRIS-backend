@@ -259,7 +259,8 @@ public class PersonController {
     }
 
     @GetMapping("/fields")
-    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(@RequestParam("export") Boolean onlyExportFields) {
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        @RequestParam("export") Boolean onlyExportFields) {
         return personService.getSearchFields(onlyExportFields);
     }
 }

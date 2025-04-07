@@ -18,5 +18,6 @@ public interface ThesisSearchService {
     Page<DocumentPublicationIndex> performAdvancedThesisSearch(
         ThesisSearchRequestDTO searchRequest, Pageable pageable);
 
-    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(Boolean onlyExportFields);
+    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields);
 }
