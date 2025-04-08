@@ -26,6 +26,7 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
+import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Membership;
@@ -164,5 +165,10 @@ public class InvolvementController {
     public void terminateEmployment(@PathVariable Integer organisationUnitId,
                                     @PathVariable Integer personId) {
         involvementService.endEmployment(organisationUnitId, personId);
+    }
+
+    @GetMapping("/employment-title/{personId}")
+    public EmploymentTitle getCurrentEmploymentTitle(@PathVariable Integer personId) {
+        return involvementService.getCurrentEmploymentTitle(personId);
     }
 }

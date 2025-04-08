@@ -3,6 +3,8 @@ package rs.teslaris.thesislibrary.controller;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +26,11 @@ public class PromotionController {
 
     private final PromotionService promotionService;
 
+
+    @GetMapping
+    public Page<PromotionDTO> getAllPromotions(Pageable pageable) {
+        return promotionService.getAllPromotions(pageable);
+    }
 
     @GetMapping("/non-finished")
     public List<PromotionDTO> getNonFinishedPromotionList() {

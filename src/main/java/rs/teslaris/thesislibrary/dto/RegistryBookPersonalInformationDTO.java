@@ -1,5 +1,6 @@
 package rs.teslaris.thesislibrary.dto;
 
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 @AllArgsConstructor
 public class RegistryBookPersonalInformationDTO {
 
+    @Valid
     private PersonNameDTO authorName;
 
     private LocalDate localBirthDate;

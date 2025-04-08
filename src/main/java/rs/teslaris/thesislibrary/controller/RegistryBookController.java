@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.thesislibrary.dto.PhdThesisPrePopulatedDataDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
 
@@ -56,5 +57,10 @@ public class RegistryBookController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRegistryBookEntry(@PathVariable Integer registryBookEntryId) {
         registryBookService.deleteRegistryBookEntry(registryBookEntryId);
+    }
+
+    @GetMapping("/pre-populate/{thesisId}")
+    public PhdThesisPrePopulatedDataDTO getEntryPrePopulatedData(@PathVariable Integer thesisId) {
+        return registryBookService.getPrePopulatedPHDThesisInformation(thesisId);
     }
 }

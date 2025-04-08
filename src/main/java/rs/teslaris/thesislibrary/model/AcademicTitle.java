@@ -1,0 +1,9 @@
+package rs.teslaris.thesislibrary.model;
+
+public enum AcademicTitle {
+    BASIC_ACADEMIC_STUDIES,
+    MASTER_ACADEMIC_STUDIES,
+    INTEGRATED_ACADEMIC_STUDIES,
+    SPECIALIZED_ACADEMIC_STUDIES,
+    MAGISTER_STUDIES
+}

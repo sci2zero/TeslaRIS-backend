@@ -1,5 +1,8 @@
 package rs.teslaris.thesislibrary.dto;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,12 +18,16 @@ public class RegistryBookEntryDTO {
 
     private DissertationInformationDTO dissertationInformation;
 
+    @Valid
     private RegistryBookPersonalInformationDTO personalInformation;
 
+    @Valid
     private RegistryBookContactInformationDTO contactInformation;
 
     private PreviousTitleInformationDTO previousTitleInformation;
 
+    @NotNull(message = "You have to provide promotion ID.")
+    @Positive
     private Integer promotionId;
 }
 

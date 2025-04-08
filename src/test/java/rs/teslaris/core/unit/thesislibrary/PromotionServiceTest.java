@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit.thesislibrary;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -117,5 +120,25 @@ public class PromotionServiceTest {
 
         // Then
         assertEquals(1, result.size());
+    }
+
+    @Test
+    void shouldReturnAllPromotions() {
+        // Given
+        var pageable = PageRequest.of(0, 2);
+        var promotion1 = new Promotion();
+        var promotion2 = new Promotion();
+        var promotions = List.of(promotion1, promotion2);
+        var promotionPage = new PageImpl<>(promotions, pageable, 2);
+
+        when(promotionRepository.findAll(pageable)).thenReturn(promotionPage);
+
+        // When
+        var result = service.getAllPromotions(pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(2);
+        verify(promotionRepository).findAll(pageable);
     }
 }

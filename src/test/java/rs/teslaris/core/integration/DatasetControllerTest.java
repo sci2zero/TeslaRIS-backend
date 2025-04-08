@@ -40,7 +40,8 @@ public class DatasetControllerTest extends BaseTest {
         datasetDTO.setDocumentDate("2004-11-06");
 
         var contribution =
-            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false);
+            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false,
+                null, null);
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);

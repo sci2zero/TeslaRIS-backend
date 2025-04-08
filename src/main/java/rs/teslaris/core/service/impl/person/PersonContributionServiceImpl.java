@@ -85,8 +85,12 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contribution.setIsMainContributor(contributionDTO.getIsMainContributor());
             contribution.setIsCorrespondingContributor(
                 contributionDTO.getIsCorrespondingContributor());
+
+            // TODO: Should we add some checks for these 3?
             contribution.setIsBoardPresident(
                 contributionDTO.getIsBoardPresident());
+            contribution.setPersonalTitle(contributionDTO.getPersonalTitle());
+            contribution.setEmploymentTitle(contributionDTO.getEmploymentTitle());
 
             var addedPrevoiusly = document.getContributors().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));

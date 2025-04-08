@@ -1,5 +1,6 @@
 package rs.teslaris.thesislibrary.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,5 +23,6 @@ public class RegistryBookContactInformationDTO {
 
     private String postalCode;
 
+    @NotNull(message = "You have to provide contact information.")
     private ContactDTO contact;
 }

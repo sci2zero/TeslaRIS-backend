@@ -2,13 +2,15 @@ package rs.teslaris.thesislibrary.service.impl;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
+import rs.teslaris.thesislibrary.converter.PromotionConverter;
 import rs.teslaris.thesislibrary.dto.PromotionDTO;
 import rs.teslaris.thesislibrary.model.Promotion;
 import rs.teslaris.thesislibrary.repository.PromotionRepository;
@@ -30,12 +32,14 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     }
 
     @Override
+    public Page<PromotionDTO> getAllPromotions(Pageable pageable) {
+        return promotionRepository.findAll(pageable).map(PromotionConverter::toDTO);
+    }
+
+    @Override
     public List<PromotionDTO> getNonFinishedPromotions() {
-        return promotionRepository.getNonFinishedPromotions().stream().map(
-            promotion -> new PromotionDTO(promotion.getId(), promotion.getPromotionDate(),
-                promotion.getPromotionTime(),
-                promotion.getPlaceOrVenue(), MultilingualContentConverter.getMultilingualContentDTO(
-                promotion.getDescription()))).toList();
+        return promotionRepository.getNonFinishedPromotions().stream()
+            .map(PromotionConverter::toDTO).toList();
     }
 
     @Override

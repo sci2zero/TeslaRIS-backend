@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.thesislibrary.dto.PhdThesisPrePopulatedDataDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
 import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 
@@ -19,4 +20,6 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
                                  RegistryBookEntryDTO registryBookEntryDTO);
 
     void deleteRegistryBookEntry(Integer registryBookEntryId);
+
+    PhdThesisPrePopulatedDataDTO getPrePopulatedPHDThesisInformation(Integer thesisId);
 }

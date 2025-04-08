@@ -1,6 +1,7 @@
 package rs.teslaris.core.util.language;
 
 import com.ibm.icu.text.Transliterator;
+import java.util.Objects;
 
 public class SerbianTransliteration {
     private static final String SERBIAN_RULES = """
@@ -40,6 +41,10 @@ public class SerbianTransliteration {
             Transliterator.FORWARD);
 
     public static String toCyrillic(String latinText) {
+        if (Objects.isNull(latinText)) {
+            return "";
+        }
+
         return CUSTOM_LATIN_TO_CYRILLIC.transliterate(latinText);
     }
 }

@@ -32,4 +32,10 @@ public class PersonDocumentContribution extends PersonContribution {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
+
+    @Column(name = "employment_title")
+    private EmploymentTitle employmentTitle;
+
+    @Column(name = "personal_title")
+    private PersonalTitle personalTitle;
 }

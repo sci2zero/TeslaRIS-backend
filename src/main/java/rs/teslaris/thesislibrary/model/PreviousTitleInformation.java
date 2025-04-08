@@ -26,4 +26,7 @@ public class PreviousTitleInformation {
 
     @Column(name = "school_year")
     private String schoolYear;
+
+    @Column(name = "academic_title")
+    private AcademicTitle academicTitle;
 }

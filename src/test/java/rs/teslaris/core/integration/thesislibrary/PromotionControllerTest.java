@@ -33,6 +33,20 @@ public class PromotionControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetAllPromotions() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("http://localhost:8081/api/promotion?page0&size=1")
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testGetNonFinishedPromotions() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
         var request = getTestPayload();

@@ -2,6 +2,7 @@ package rs.teslaris.core.unit.thesislibrary;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -22,11 +23,26 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AffiliationStatement;
+import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.EmploymentTitle;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.PersonalTitle;
+import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonalInfo;
+import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
 import rs.teslaris.thesislibrary.dto.PreviousTitleInformationDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookContactInformationDTO;
@@ -59,6 +75,9 @@ class RegistryBookServiceTest {
 
     @Mock
     private PromotionService promotionService;
+
+    @Mock
+    private ThesisService thesisService;
 
     @InjectMocks
     private RegistryBookServiceImpl service;
@@ -210,5 +229,85 @@ class RegistryBookServiceTest {
         assertEquals(2, result.getTotalElements());
         assertTrue(result.getContent().stream().allMatch(Objects::nonNull));
         verify(registryBookEntryRepository).getBookEntriesForPromotion(promotionId, pageable);
+    }
+
+    @Test
+    void shouldReturnPrePopulatedPhdThesisInformationWhenValidPhdThesisExists() {
+        // Given
+        var thesis = new Thesis();
+        thesis.setThesisType(ThesisType.PHD);
+        thesis.setThesisDefenceDate(LocalDate.of(2024, 6, 1));
+
+        var author = new PersonDocumentContribution();
+        author.setContributionType(DocumentContributionType.AUTHOR);
+        var authorPerson = new Person();
+        var personalInfo = new PersonalInfo();
+        personalInfo.setLocalBirthDate(LocalDate.of(1990, 1, 1));
+        personalInfo.setPlaceOfBrith("Novi Sad");
+        personalInfo.setPostalAddress(new PostalAddress());
+        personalInfo.setContact(new Contact("email@example.com", "+381111111"));
+        authorPerson.setPersonalInfo(personalInfo);
+        author.setPerson(authorPerson);
+        var affiliationStatement = new AffiliationStatement();
+        affiliationStatement.setDisplayPersonName(
+            new PersonName("Ime", null, "Prezime", null, null));
+        author.setAffiliationStatement(affiliationStatement);
+
+        var advisor = new PersonDocumentContribution();
+        advisor.setContributionType(DocumentContributionType.ADVISOR);
+        advisor.setPersonalTitle(PersonalTitle.MR);
+        advisor.setEmploymentTitle(EmploymentTitle.ASSOCIATE_PROFESSOR);
+        var affiliationStatement2 = new AffiliationStatement();
+        affiliationStatement2.setDisplayPersonName(
+            new PersonName("Mentor", null, "Prezime", null, null));
+        advisor.setAffiliationStatement(affiliationStatement2);
+        var advisorInstitution = new OrganisationUnit();
+        advisorInstitution.setName(Set.of());
+        advisorInstitution.setLocation(new GeoLocation());
+        advisor.setInstitutions(Set.of(advisorInstitution));
+
+        thesis.setContributors(Set.of(author, advisor));
+
+        thesis.setTitle(Set.of());
+        thesis.setOrganisationUnit(advisorInstitution);
+        thesis.getOrganisationUnit().setName(Set.of());
+
+        when(thesisService.getThesisById(1)).thenReturn(thesis);
+
+        // When
+        var result = service.getPrePopulatedPHDThesisInformation(1);
+
+        // Then
+        assertEquals(LocalDate.of(1990, 1, 1), result.getLocalBirthDate());
+        assertEquals("Novi Sad", result.getPlaceOfBirth());
+        assertEquals("мр Mentor Prezime, ванр. проф.", result.getMentor());
+        assertEquals("email@example.com", result.getContact().getContactEmail());
+        assertEquals("+381111111", result.getContact().getPhoneNumber());
+    }
+
+    @Test
+    void shouldThrowThesisExceptionWhenThesisDoesNotHaveDefenceDate() {
+        // Given
+        var thesis = new Thesis();
+        thesis.setThesisType(ThesisType.PHD);
+        thesis.setThesisDefenceDate(null);
+        when(thesisService.getThesisById(1)).thenReturn(thesis);
+
+        // Then
+        assertThrows(ThesisException.class, () ->
+            service.getPrePopulatedPHDThesisInformation(1));
+    }
+
+    @Test
+    void shouldThrowThesisExceptionWhenThesisTypeIsNotPHDOrArtProject() {
+        // Given
+        var thesis = new Thesis();
+        thesis.setThesisType(ThesisType.BACHELOR);
+        thesis.setThesisDefenceDate(LocalDate.of(2024, 6, 1));
+        when(thesisService.getThesisById(1)).thenReturn(thesis);
+
+        // Then
+        assertThrows(ThesisException.class, () ->
+            service.getPrePopulatedPHDThesisInformation(1));
     }
 }
