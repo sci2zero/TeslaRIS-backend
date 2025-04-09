@@ -1,12 +1,10 @@
 package rs.teslaris.thesislibrary.dto;
 
 import java.time.LocalDate;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 @Getter
 @Setter
@@ -14,7 +12,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @AllArgsConstructor
 public class DissertationInformationDTO {
 
-    private List<MultilingualContentDTO> dissertationTitle;
+    private String dissertationTitle;
 
     private Integer organisationUnitId;
 
@@ -22,7 +20,7 @@ public class DissertationInformationDTO {
 
     private String commission;
 
-    private Integer grade;
+    private String grade;
 
     private String acquiredTitle;
 

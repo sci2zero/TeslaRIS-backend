@@ -17,12 +17,11 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
-import rs.teslaris.core.repository.person.EmploymentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
-import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.thesislibrary.converter.RegistryBookEntryConverter;
@@ -49,8 +48,6 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
     private final RegistryBookEntryRepository registryBookEntryRepository;
 
-    private final MultilingualContentService multilingualContentService;
-
     private final OrganisationUnitService organisationUnitService;
 
     private final CountryService countryService;
@@ -59,12 +56,16 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
     private final ThesisService thesisService;
 
-    private final EmploymentRepository employmentRepository;
-
 
     @Override
     protected JpaRepository<RegistryBookEntry, Integer> getEntityRepository() {
         return registryBookEntryRepository;
+    }
+
+    @Override
+    public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Pageable pageable) {
+        return registryBookEntryRepository.getNonPromotedBookEntries(pageable)
+            .map(RegistryBookEntryConverter::toDTO);
     }
 
     @Override
@@ -102,13 +103,11 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         entry.setContactInformation(toContactInformation(dto.getContactInformation()));
         entry.setPreviousTitleInformation(
             toPreviousTitleInformation(dto.getPreviousTitleInformation()));
-        entry.setPromotion(promotionService.findOne(dto.getPromotionId()));
     }
 
     private DissertationInformation toDissertationInformation(DissertationInformationDTO dto) {
         var di = new DissertationInformation();
-        di.setDissertationTitle(
-            multilingualContentService.getMultilingualContent(dto.getDissertationTitle()));
+        di.setDissertationTitle(dto.getDissertationTitle());
 
         if (Objects.nonNull(dto.getOrganisationUnitId())) {
             di.setOrganisationUnit(organisationUnitService.findOne(dto.getOrganisationUnitId()));
@@ -199,6 +198,30 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         return prePopulatedData;
     }
 
+    @Override
+    public void addToPromotion(Integer registryBookEntryId, Integer promotionId) {
+        var entry = findOne(registryBookEntryId);
+
+        if (Objects.nonNull(entry.getPromotion())) {
+            throw new PromotionException("Already in promotion.");
+        }
+
+        entry.setPromotion(promotionService.findOne(promotionId));
+        save(entry);
+    }
+
+    @Override
+    public void removeFromPromotion(Integer registryBookEntryId) {
+        var entry = findOne(registryBookEntryId);
+
+        if (Objects.isNull(entry.getPromotion())) {
+            throw new PromotionException("Already not in promotion.");
+        }
+
+        entry.setPromotion(null);
+        save(entry);
+    }
+
     private void populateAuthorInformation(Thesis phdThesis, PhdThesisPrePopulatedDataDTO dto) {
         phdThesis.getContributors().stream()
             .filter(c -> DocumentContributionType.AUTHOR.equals(c.getContributionType()))
@@ -260,6 +283,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         if (Objects.nonNull(phdThesis.getOrganisationUnit())) {
             dto.setInstitutionName(
                 getTransliteratedContent(phdThesis.getOrganisationUnit().getName()));
+            dto.setInstitutionId(phdThesis.getOrganisationUnit().getId());
             dto.setPlace(SerbianTransliteration.toCyrillic(
                 phdThesis.getOrganisationUnit().getLocation().getAddress()));
         } else {

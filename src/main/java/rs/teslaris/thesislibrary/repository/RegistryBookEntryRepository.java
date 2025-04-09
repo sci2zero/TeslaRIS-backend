@@ -12,4 +12,7 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
 
     @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE rbe.promotion.id = :promotionId")
     Page<RegistryBookEntry> getBookEntriesForPromotion(Integer promotionId, Pageable pageable);
+
+    @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE rbe.promotion IS NULL")
+    Page<RegistryBookEntry> getNonPromotedBookEntries(Pageable pageable);
 }

@@ -2,6 +2,7 @@ package rs.teslaris.core.unit.thesislibrary;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,7 +20,6 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.commontypes.Country;
@@ -42,6 +42,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
 import rs.teslaris.thesislibrary.dto.PreviousTitleInformationDTO;
@@ -87,15 +88,13 @@ class RegistryBookServiceTest {
     void shouldCreateRegistryBookEntry() {
         // Given
         var dto = new RegistryBookEntryDTO();
-        dto.setPromotionId(1);
 
         var dissertationInfo = new DissertationInformationDTO();
-        dissertationInfo.setDissertationTitle(
-            List.of(new MultilingualContentDTO(1, "en", "Title", 1)));
+        dissertationInfo.setDissertationTitle("Dissertation title");
         dissertationInfo.setOrganisationUnitId(2);
         dissertationInfo.setMentor("Mentor");
         dissertationInfo.setCommission("Commission");
-        dissertationInfo.setGrade(5);
+        dissertationInfo.setGrade("A");
         dissertationInfo.setAcquiredTitle("PhD");
         dissertationInfo.setDefenceDate(LocalDate.now());
         dissertationInfo.setDiplomaNumber("123");
@@ -164,7 +163,6 @@ class RegistryBookServiceTest {
         var id = 1;
         RegistryBookEntry entry = new RegistryBookEntry();
         RegistryBookEntryDTO dto = new RegistryBookEntryDTO();
-        dto.setPromotionId(5);
         dto.setDissertationInformation(new DissertationInformationDTO());
         dto.setPersonalInformation(personalInfo);
         dto.setContactInformation(contactInfo);
@@ -309,5 +307,86 @@ class RegistryBookServiceTest {
         // Then
         assertThrows(ThesisException.class, () ->
             service.getPrePopulatedPHDThesisInformation(1));
+    }
+
+    @Test
+    void shouldAddToPromotion() {
+        // Given
+        var entryId = 1;
+        var promotionId = 2;
+        var entry = new RegistryBookEntry();
+        var promotion = new Promotion();
+
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+        when(promotionService.findOne(promotionId)).thenReturn(promotion);
+
+        // When
+        service.addToPromotion(entryId, promotionId);
+
+        // Then
+        assertEquals(promotion, entry.getPromotion());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAlreadyAddedToPromotion() {
+        // Given
+        var entryId = 1;
+        var entry = new RegistryBookEntry();
+        entry.setPromotion(new Promotion());
+
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When / Then
+        assertThrows(PromotionException.class, () -> service.addToPromotion(entryId, 5));
+    }
+
+    @Test
+    void shouldRemoveFromPromotion() {
+        // Given
+        var entryId = 1;
+        var promotion = new Promotion();
+        var entry = new RegistryBookEntry();
+        entry.setPromotion(promotion);
+
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        service.removeFromPromotion(entryId);
+
+        // Then
+        assertNull(entry.getPromotion());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenNoPromotionSet() {
+        // Given
+        var entryId = 1;
+        var entry = new RegistryBookEntry();
+
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When / Then
+        assertThrows(PromotionException.class, () -> service.removeFromPromotion(entryId));
+    }
+
+    @Test
+    void shouldGetNonPromotedEntries() {
+        // Given
+        var pageable = PageRequest.of(0, 10);
+        var entry = new RegistryBookEntry();
+        entry.setDissertationInformation(new DissertationInformation());
+        entry.setPersonalInformation(new RegistryBookPersonalInformation());
+        entry.setContactInformation(new RegistryBookContactInformation());
+        entry.setPreviousTitleInformation(new PreviousTitleInformation());
+        var page = new PageImpl<>(List.of(entry));
+
+        when(registryBookEntryRepository.getNonPromotedBookEntries(pageable)).thenReturn(page);
+
+        // When
+        var result = service.getNonPromotedRegistryBookEntries(pageable);
+
+        // Then
+        assertEquals(1, result.getTotalElements());
+        verify(registryBookEntryRepository).getNonPromotedBookEntries(pageable);
     }
 }

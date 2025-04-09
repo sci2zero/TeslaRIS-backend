@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,6 +32,12 @@ public class RegistryBookController {
     public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(
         @PathVariable Integer promotionId, Pageable pageable) {
         return registryBookService.getRegistryBookEntriesForPromotion(promotionId, pageable);
+    }
+
+
+    @GetMapping("/non-promoted")
+    public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Pageable pageable) {
+        return registryBookService.getNonPromotedRegistryBookEntries(pageable);
     }
 
     @PostMapping
@@ -62,5 +69,18 @@ public class RegistryBookController {
     @GetMapping("/pre-populate/{thesisId}")
     public PhdThesisPrePopulatedDataDTO getEntryPrePopulatedData(@PathVariable Integer thesisId) {
         return registryBookService.getPrePopulatedPHDThesisInformation(thesisId);
+    }
+
+    @PatchMapping("/add/{registryBookEntryId}/{promotionId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addRegistryBookEntryForPromotion(@PathVariable Integer registryBookEntryId,
+                                                 @PathVariable Integer promotionId) {
+        registryBookService.addToPromotion(registryBookEntryId, promotionId);
+    }
+
+    @PatchMapping("/remove/{registryBookEntryId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeRegistryBookEntryFromPromotion(@PathVariable Integer registryBookEntryId) {
+        registryBookService.removeFromPromotion(registryBookEntryId);
     }
 }

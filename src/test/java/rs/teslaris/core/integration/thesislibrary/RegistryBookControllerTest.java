@@ -4,7 +4,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
-import java.util.List;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.integration.BaseTest;
@@ -34,15 +32,13 @@ public class RegistryBookControllerTest extends BaseTest {
 
     private RegistryBookEntryDTO getTestPayload() {
         var dto = new RegistryBookEntryDTO();
-        dto.setPromotionId(1);
 
         var dissertationInfo = new DissertationInformationDTO();
-        dissertationInfo.setDissertationTitle(
-            List.of(new MultilingualContentDTO(1, "en", "Title", 1)));
+        dissertationInfo.setDissertationTitle("Dissertation title");
         dissertationInfo.setOrganisationUnitId(2);
         dissertationInfo.setMentor("Mentor");
         dissertationInfo.setCommission("Commission");
-        dissertationInfo.setGrade(5);
+        dissertationInfo.setGrade("10");
         dissertationInfo.setAcquiredTitle("PhD");
         dissertationInfo.setDefenceDate(LocalDate.now());
         dissertationInfo.setDiplomaNumber("123");
@@ -101,6 +97,21 @@ public class RegistryBookControllerTest extends BaseTest {
     }
 
     @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetNonPromotedRegistryBookEntries() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/registry-book/non-promoted?page=0&size=10")
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
     @Order(1)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateRegistryBookEntry() throws Exception {
@@ -133,7 +144,7 @@ public class RegistryBookControllerTest extends BaseTest {
     }
 
     @Test
-    @Order(3)
+    @Order(5)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeleteRegistryBookEntry() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
@@ -157,5 +168,34 @@ public class RegistryBookControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(3)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testAddToPromotion() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/registry-book/add/{registryBookEntryId}/{promotionId}",
+                        1, 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(4)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testRemoveFromPromotion() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/registry-book/remove/{registryBookEntryId}", 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 }

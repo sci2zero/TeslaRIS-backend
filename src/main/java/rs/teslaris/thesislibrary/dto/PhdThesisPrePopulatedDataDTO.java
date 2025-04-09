@@ -27,6 +27,8 @@ public class PhdThesisPrePopulatedDataDTO {
 
     private String institutionName;
 
+    private Integer institutionId;
+
     private String place;
 
     private String title;

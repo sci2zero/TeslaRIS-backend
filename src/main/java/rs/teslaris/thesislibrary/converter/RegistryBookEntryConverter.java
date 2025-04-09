@@ -1,7 +1,7 @@
 package rs.teslaris.thesislibrary.converter;
 
 import java.util.Objects;
-import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import org.jetbrains.annotations.NotNull;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
@@ -16,30 +16,8 @@ public class RegistryBookEntryConverter {
     public static RegistryBookEntryDTO toDTO(RegistryBookEntry registryBookEntry) {
         var dto = new RegistryBookEntryDTO();
         dto.setId(registryBookEntry.getId());
-        dto.setPromotionId(registryBookEntry.getPromotion().getId());
 
-        var dissertationInfo = registryBookEntry.getDissertationInformation();
-        var dissertationInfoDTO = new DissertationInformationDTO();
-        dissertationInfoDTO.setDissertationTitle(
-            MultilingualContentConverter.getMultilingualContentDTO(
-                dissertationInfo.getDissertationTitle()));
-
-        if (Objects.nonNull(dissertationInfo.getOrganisationUnit())) {
-            dissertationInfoDTO.setOrganisationUnitId(
-                dissertationInfo.getOrganisationUnit().getId());
-        }
-
-        dissertationInfoDTO.setMentor(dissertationInfo.getMentor());
-        dissertationInfoDTO.setCommission(dissertationInfo.getCommission());
-        dissertationInfoDTO.setGrade(dissertationInfo.getGrade());
-        dissertationInfoDTO.setAcquiredTitle(dissertationInfo.getAcquiredTitle());
-        dissertationInfoDTO.setDefenceDate(dissertationInfo.getDefenceDate());
-        dissertationInfoDTO.setDiplomaNumber(dissertationInfo.getDiplomaNumber());
-        dissertationInfoDTO.setDiplomaIssueDate(dissertationInfo.getDiplomaIssueDate());
-        dissertationInfoDTO.setDiplomaSupplementsNumber(
-            dissertationInfo.getDiplomaSupplementsNumber());
-        dissertationInfoDTO.setDiplomaSupplementsIssueDate(
-            dissertationInfo.getDiplomaSupplementsIssueDate());
+        var dissertationInfoDTO = getDissertationInfoDTO(registryBookEntry);
         dto.setDissertationInformation(dissertationInfoDTO);
 
         var authorInfo = registryBookEntry.getPersonalInformation();
@@ -87,5 +65,31 @@ public class RegistryBookEntryConverter {
         dto.setPreviousTitleInformation(prevTitleDTO);
 
         return dto;
+    }
+
+    @NotNull
+    private static DissertationInformationDTO getDissertationInfoDTO(
+        RegistryBookEntry registryBookEntry) {
+        var dissertationInfo = registryBookEntry.getDissertationInformation();
+        var dissertationInfoDTO = new DissertationInformationDTO();
+        dissertationInfoDTO.setDissertationTitle(dissertationInfo.getDissertationTitle());
+
+        if (Objects.nonNull(dissertationInfo.getOrganisationUnit())) {
+            dissertationInfoDTO.setOrganisationUnitId(
+                dissertationInfo.getOrganisationUnit().getId());
+        }
+
+        dissertationInfoDTO.setMentor(dissertationInfo.getMentor());
+        dissertationInfoDTO.setCommission(dissertationInfo.getCommission());
+        dissertationInfoDTO.setGrade(dissertationInfo.getGrade());
+        dissertationInfoDTO.setAcquiredTitle(dissertationInfo.getAcquiredTitle());
+        dissertationInfoDTO.setDefenceDate(dissertationInfo.getDefenceDate());
+        dissertationInfoDTO.setDiplomaNumber(dissertationInfo.getDiplomaNumber());
+        dissertationInfoDTO.setDiplomaIssueDate(dissertationInfo.getDiplomaIssueDate());
+        dissertationInfoDTO.setDiplomaSupplementsNumber(
+            dissertationInfo.getDiplomaSupplementsNumber());
+        dissertationInfoDTO.setDiplomaSupplementsIssueDate(
+            dissertationInfo.getDiplomaSupplementsIssueDate());
+        return dissertationInfoDTO;
     }
 }
