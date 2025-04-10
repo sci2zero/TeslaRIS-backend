@@ -18,7 +18,8 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
                                                                   Pageable pageable);
 
-    RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO registryBookEntryDTO, Integer thesisId);
+    RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO registryBookEntryDTO,
+                                              Integer thesisId);
 
     void updateRegistryBookEntry(Integer registryBookEntryId,
                                  RegistryBookEntryDTO registryBookEntryDTO);

@@ -356,7 +356,8 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldRegisterPromotionRegistryAdminWithValidData() throws NoSuchAlgorithmException {
+    public void shouldRegisterPromotionRegistryAdminWithValidData()
+        throws NoSuchAlgorithmException {
         // Given
         var registrationRequest = new EmployeeRegistrationRequestDTO();
         registrationRequest.setEmail("regadmin@example.com");
@@ -372,18 +373,21 @@ public class UserServiceTest {
 
         var authority = new Authority();
         authority.setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString());
-        when(authorityRepository.findByName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString())).thenReturn(
+        when(authorityRepository.findByName(
+            UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString())).thenReturn(
             Optional.of(authority));
 
         var organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
-            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
-                "University", 1)));
+            Set.of(
+                new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
+                    "University", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("regadmin@example.com", "password123", "",
             "Promotion", "Admin", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.WEEKLY);
+            false, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.WEEKLY);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
