@@ -98,6 +98,21 @@ public class RegistryBookControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetCanAdd() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/registry-book/can-add/{thesisId}", 10)
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testGetNonPromotedRegistryBookEntries() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
         var request = getTestPayload();
@@ -120,7 +135,7 @@ public class RegistryBookControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/registry-book")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/registry-book/{thesisId}", 10)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_REGISTRY_BOOK_ENTRY"))
@@ -194,6 +209,20 @@ public class RegistryBookControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(
                         "http://localhost:8081/api/registry-book/remove/{registryBookEntryId}", 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(5)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testPromoteAll() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/registry-book/promote-all/{promotionId}", 1)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

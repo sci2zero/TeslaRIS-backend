@@ -2,6 +2,7 @@ package rs.teslaris.thesislibrary.converter;
 
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
@@ -16,6 +17,7 @@ public class RegistryBookEntryConverter {
     public static RegistryBookEntryDTO toDTO(RegistryBookEntry registryBookEntry) {
         var dto = new RegistryBookEntryDTO();
         dto.setId(registryBookEntry.getId());
+        dto.setInPromotion(Objects.nonNull(registryBookEntry.getPromotion()));
 
         var dissertationInfoDTO = getDissertationInfoDTO(registryBookEntry);
         dto.setDissertationInformation(dissertationInfoDTO);
@@ -77,6 +79,9 @@ public class RegistryBookEntryConverter {
         if (Objects.nonNull(dissertationInfo.getOrganisationUnit())) {
             dissertationInfoDTO.setOrganisationUnitId(
                 dissertationInfo.getOrganisationUnit().getId());
+            dissertationInfoDTO.setInstitutionName(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    dissertationInfo.getOrganisationUnit().getName()));
         }
 
         dissertationInfoDTO.setMentor(dissertationInfo.getMentor());

@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,12 +17,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.commontypes.Country;
@@ -42,8 +48,10 @@ import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.thesislibrary.converter.RegistryBookEntryConverter;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
 import rs.teslaris.thesislibrary.dto.PreviousTitleInformationDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookContactInformationDTO;
@@ -80,9 +88,21 @@ class RegistryBookServiceTest {
     @Mock
     private ThesisService thesisService;
 
-    @InjectMocks
-    private RegistryBookServiceImpl service;
+    @Mock
+    private EmailUtil emailUtil;
 
+    @Mock
+    private MessageSource messageSource;
+
+    @InjectMocks
+    private RegistryBookServiceImpl registryBookService;
+
+
+    @BeforeEach
+    public void setUp() {
+        ReflectionTestUtils.setField(registryBookService, "clientAppAddress",
+            "protocol://test.test/");
+    }
 
     @Test
     void shouldCreateRegistryBookEntry() {
@@ -139,12 +159,13 @@ class RegistryBookServiceTest {
         when(countryService.findOne(4)).thenReturn(new Country());
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
+        when(thesisService.getThesisById(1)).thenReturn(new Thesis());
 
         when(registryBookEntryRepository.save(any(RegistryBookEntry.class))).thenAnswer(
             invocation -> invocation.getArgument(0));
 
         // When
-        RegistryBookEntry result = service.createRegistryBookEntry(dto);
+        RegistryBookEntry result = registryBookService.createRegistryBookEntry(dto, 1);
 
         // Then
         assertNotNull(result);
@@ -172,7 +193,7 @@ class RegistryBookServiceTest {
         when(promotionService.findOne(5)).thenReturn(new Promotion());
 
         // When
-        service.updateRegistryBookEntry(id, dto);
+        registryBookService.updateRegistryBookEntry(id, dto);
 
         // Then
         verify(registryBookEntryRepository).save(entry);
@@ -186,7 +207,7 @@ class RegistryBookServiceTest {
         when(registryBookEntryRepository.findById(id)).thenReturn(Optional.of(entry));
 
         // When
-        service.deleteRegistryBookEntry(id);
+        registryBookService.deleteRegistryBookEntry(id);
 
         // Then
         verify(registryBookEntryRepository).delete(entry);
@@ -220,7 +241,7 @@ class RegistryBookServiceTest {
             pageable)).thenReturn(page);
 
         // When
-        var result = service.getRegistryBookEntriesForPromotion(promotionId, pageable);
+        var result = registryBookService.getRegistryBookEntriesForPromotion(promotionId, pageable);
 
         // Then
         assertNotNull(result);
@@ -273,7 +294,7 @@ class RegistryBookServiceTest {
         when(thesisService.getThesisById(1)).thenReturn(thesis);
 
         // When
-        var result = service.getPrePopulatedPHDThesisInformation(1);
+        var result = registryBookService.getPrePopulatedPHDThesisInformation(1);
 
         // Then
         assertEquals(LocalDate.of(1990, 1, 1), result.getLocalBirthDate());
@@ -293,7 +314,7 @@ class RegistryBookServiceTest {
 
         // Then
         assertThrows(ThesisException.class, () ->
-            service.getPrePopulatedPHDThesisInformation(1));
+            registryBookService.getPrePopulatedPHDThesisInformation(1));
     }
 
     @Test
@@ -306,7 +327,7 @@ class RegistryBookServiceTest {
 
         // Then
         assertThrows(ThesisException.class, () ->
-            service.getPrePopulatedPHDThesisInformation(1));
+            registryBookService.getPrePopulatedPHDThesisInformation(1));
     }
 
     @Test
@@ -315,13 +336,19 @@ class RegistryBookServiceTest {
         var entryId = 1;
         var promotionId = 2;
         var entry = new RegistryBookEntry();
+        var personalInfo = new RegistryBookPersonalInformation();
+        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null));
+        entry.setPersonalInformation(personalInfo);
+        var contactInfo = new RegistryBookContactInformation();
+        contactInfo.setContact(new Contact("email", "phone"));
+        entry.setContactInformation(contactInfo);
         var promotion = new Promotion();
 
         when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
         when(promotionService.findOne(promotionId)).thenReturn(promotion);
 
         // When
-        service.addToPromotion(entryId, promotionId);
+        registryBookService.addToPromotion(entryId, promotionId);
 
         // Then
         assertEquals(promotion, entry.getPromotion());
@@ -337,7 +364,8 @@ class RegistryBookServiceTest {
         when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
 
         // When / Then
-        assertThrows(PromotionException.class, () -> service.addToPromotion(entryId, 5));
+        assertThrows(PromotionException.class,
+            () -> registryBookService.addToPromotion(entryId, 5));
     }
 
     @Test
@@ -346,12 +374,18 @@ class RegistryBookServiceTest {
         var entryId = 1;
         var promotion = new Promotion();
         var entry = new RegistryBookEntry();
+        var personalInfo = new RegistryBookPersonalInformation();
+        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null));
+        entry.setPersonalInformation(personalInfo);
+        var contactInfo = new RegistryBookContactInformation();
+        contactInfo.setContact(new Contact("email", "phone"));
+        entry.setContactInformation(contactInfo);
         entry.setPromotion(promotion);
 
         when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
 
         // When
-        service.removeFromPromotion(entryId);
+        registryBookService.removeFromPromotion(entryId);
 
         // Then
         assertNull(entry.getPromotion());
@@ -366,7 +400,8 @@ class RegistryBookServiceTest {
         when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
 
         // When / Then
-        assertThrows(PromotionException.class, () -> service.removeFromPromotion(entryId));
+        assertThrows(PromotionException.class,
+            () -> registryBookService.removeFromPromotion(entryId));
     }
 
     @Test
@@ -383,10 +418,75 @@ class RegistryBookServiceTest {
         when(registryBookEntryRepository.getNonPromotedBookEntries(pageable)).thenReturn(page);
 
         // When
-        var result = service.getNonPromotedRegistryBookEntries(pageable);
+        var result = registryBookService.getNonPromotedRegistryBookEntries(pageable);
 
         // Then
         assertEquals(1, result.getTotalElements());
         verify(registryBookEntryRepository).getNonPromotedBookEntries(pageable);
+    }
+
+    @Test
+    void shouldPromoteAllEntriesAndMarkPromotionAsFinished() {
+        // Given
+        var promotionId = 1;
+        var promotion = new Promotion();
+        promotion.setId(promotionId);
+        promotion.setFinished(false);
+        promotion.setPromotionDate(LocalDate.of(2024, 4, 4));
+
+        var entry1 = new RegistryBookEntry();
+        var entry2 = new RegistryBookEntry();
+
+        when(promotionService.findOne(promotionId)).thenReturn(promotion);
+        when(registryBookEntryRepository.getLastRegistryBookNumber()).thenReturn(5);
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any()))
+            .thenReturn(new PageImpl<>(List.of(entry1, entry2)));
+
+        // When
+        registryBookService.promoteAll(promotionId);
+
+        // Then
+        verify(registryBookEntryRepository, atLeastOnce()).save(entry1);
+        verify(registryBookEntryRepository, atLeastOnce()).save(entry2);
+        verify(promotionService).save(promotion);
+
+        assertEquals(6, entry1.getRegistryBookNumber());
+        assertEquals(7, entry2.getRegistryBookNumber());
+        assertNull(entry1.getAttendanceIdentifier());
+        assertNull(entry2.getAttendanceIdentifier());
+        assertTrue(promotion.getFinished());
+    }
+
+    @Test
+    void shouldReadRegistryBookEntryById() {
+        // Given
+        var entryId = 42;
+        var entry = new RegistryBookEntry();
+        var expectedDto = new RegistryBookEntryDTO();
+
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+        mockStatic(RegistryBookEntryConverter.class);
+        when(RegistryBookEntryConverter.toDTO(any())).thenReturn(expectedDto);
+
+        // When
+        var result = registryBookService.readRegistryBookEntry(entryId);
+
+        // Then
+        assertEquals(expectedDto, result);
+        verify(registryBookEntryRepository).findById(entryId);
+    }
+
+    @Test
+    void shouldReturnTrueIfThesisHasRegistryBookEntry() {
+        // Given
+        var thesisId = 123;
+        when(registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId)).thenReturn(true);
+
+        // When
+        var result = registryBookService.hasThesisRegistryBookEntry(thesisId);
+
+        // Then
+        assertTrue(result);
+        verify(registryBookEntryRepository).hasThesisRegistryBookEntry(thesisId);
     }
 }

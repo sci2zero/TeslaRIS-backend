@@ -102,6 +102,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             case NEW_PUBLICATIONS_TO_ASSESS:
                 // Redirection to scientific results page done by frontend logic.
                 break;
+            case PROMOTION_NOTIFICATION:
+                // Redirection to promotions management page done by frontend logic.
+                break;
         }
 
         delete(notificationId);

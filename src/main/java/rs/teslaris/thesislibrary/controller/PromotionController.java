@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,16 +29,19 @@ public class PromotionController {
 
 
     @GetMapping
+    @PreAuthorize("hasAuthority('MANAGE_PROMOTIONS')")
     public Page<PromotionDTO> getAllPromotions(Pageable pageable) {
         return promotionService.getAllPromotions(pageable);
     }
 
     @GetMapping("/non-finished")
+    @PreAuthorize("hasAuthority('MANAGE_PROMOTIONS')")
     public List<PromotionDTO> getNonFinishedPromotionList() {
         return promotionService.getNonFinishedPromotions();
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('MANAGE_PROMOTIONS')")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public PromotionDTO createPromotion(@RequestBody @Valid PromotionDTO promotionDTO) {
@@ -48,6 +52,7 @@ public class PromotionController {
     }
 
     @PutMapping("/{promotionId}")
+    @PreAuthorize("hasAuthority('MANAGE_PROMOTIONS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updatePromotion(@PathVariable Integer promotionId,
                                 @RequestBody @Valid PromotionDTO promotionDTO) {
@@ -55,6 +60,7 @@ public class PromotionController {
     }
 
     @DeleteMapping("/{promotionId}")
+    @PreAuthorize("hasAuthority('MANAGE_PROMOTIONS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePromotion(@PathVariable Integer promotionId) {
         promotionService.deletePromotion(promotionId);

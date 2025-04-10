@@ -23,5 +23,7 @@ public class RegistryBookEntryDTO {
     private RegistryBookContactInformationDTO contactInformation;
 
     private PreviousTitleInformationDTO previousTitleInformation;
+
+    private Boolean inPromotion = false;
 }
 

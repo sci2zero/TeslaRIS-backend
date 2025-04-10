@@ -158,6 +158,12 @@ public class DbInitializer implements ApplicationRunner {
         var unarchiveThesis = new Privilege("UNARCHIVE_THESIS");
         var performThesisReport = new Privilege("PERFORM_THESIS_REPORT");
         var performThesisSearch = new Privilege("PERFORM_THESIS_SEARCH");
+        var addToPromotion = new Privilege("ADD_TO_PROMOTION");
+        var removeFromPromotion = new Privilege("REMOVE_FROM_PROMOTION");
+        var addToRegistryBook = new Privilege("ADD_TO_REGISTRY_BOOK");
+        var updateRegistryBook = new Privilege("UPDATE_REGISTRY_BOOK");
+        var removeFromRegistryBook = new Privilege("REMOVE_FROM_REGISTRY_BOOK");
+        var managePromotions = new Privilege("MANAGE_PROMOTIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -182,7 +188,8 @@ public class DbInitializer implements ApplicationRunner {
                 updateBrandingInformation, manageApiKeys, manageThesisAttachments,
                 editEmploymentInstitution, archiveThesis, unarchiveThesis, performThesisReport,
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview,
-                performThesisSearch));
+                performThesisSearch, addToPromotion, removeFromPromotion, addToRegistryBook,
+                removeFromRegistryBook, updateRegistryBook, managePromotions));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -204,9 +211,10 @@ public class DbInitializer implements ApplicationRunner {
                 editPublicationSeriesAssessmentClassifications, assessDocument, updateCommission,
                 editDocumentAssessment, editAssessmentResearchArea, scheduleReportGeneration,
                 downloadReports, listAssessmentClassifications, updateBrandingInformation,
-                manageApiKeys, manageThesisAttachments, putThesisOnPublicReview,
+                manageApiKeys, manageThesisAttachments, putThesisOnPublicReview, managePromotions,
                 deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
-                unarchiveThesis, performThesisReport, performThesisSearch
+                unarchiveThesis, performThesisReport, performThesisSearch, addToPromotion,
+                removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -238,7 +246,8 @@ public class DbInitializer implements ApplicationRunner {
         var institutionalLibrarianAuthority =
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
-                putThesisOnPublicReview, editDocumentFiles, archiveThesis, performThesisSearch
+                putThesisOnPublicReview, editDocumentFiles, archiveThesis, performThesisSearch,
+                addToRegistryBook
             )));
 
         var headOfLibraryAuthority =
@@ -248,10 +257,17 @@ public class DbInitializer implements ApplicationRunner {
                 unarchiveThesis, performThesisReport, performThesisSearch
             )));
 
+        var promotionRegistryAdministratorAuthority =
+            new Authority(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString(),
+                new HashSet<>(List.of(
+                    updateProfile, allowAccountTakeover, addToPromotion, removeFromPromotion,
+                    updateRegistryBook, managePromotions
+                )));
+
         authorityRepository.saveAll(
             List.of(adminAuthority, researcherAuthority, institutionalEditorAuthority,
                 commissionAuthority, viceDeanForScienceAuthority, institutionalLibrarianAuthority,
-                headOfLibraryAuthority));
+                headOfLibraryAuthority, promotionRegistryAdministratorAuthority));
 
         // LANGUAGE TAGS
         var englishTag = new LanguageTag(LanguageAbbreviations.ENGLISH, "English");
@@ -363,7 +379,8 @@ public class DbInitializer implements ApplicationRunner {
                 englishTag,
                 germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
                 viceDeanForScienceAuthority, institutionalEditorAuthority,
-                institutionalLibrarianAuthority, headOfLibraryAuthority, commission5);
+                institutionalLibrarianAuthority, headOfLibraryAuthority,
+                promotionRegistryAdministratorAuthority, commission5);
         }
     }
 

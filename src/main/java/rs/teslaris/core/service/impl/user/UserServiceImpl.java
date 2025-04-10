@@ -479,7 +479,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             userRole.equals(UserRole.COMMISSION.toString()) ||
             userRole.equals(UserRole.VICE_DEAN_FOR_SCIENCE.toString()) ||
             userRole.equals(UserRole.INSTITUTIONAL_LIBRARIAN.toString()) ||
-            userRole.equals(UserRole.HEAD_OF_LIBRARY.toString())) {
+            userRole.equals(UserRole.HEAD_OF_LIBRARY.toString()) ||
+            userRole.equals(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString())) {
             userToUpdate.setFirstname(userUpdateRequest.getFirstname());
             userToUpdate.setLastName(userUpdateRequest.getLastName());
         }

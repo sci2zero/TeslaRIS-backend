@@ -36,5 +36,5 @@ public class Promotion extends BaseEntity {
     private Set<MultiLingualContent> description = new HashSet<>();
 
     @Column(name = "finished")
-    private Boolean finished;
+    private Boolean finished = false;
 }

@@ -11,12 +11,14 @@ import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 @Service
 public interface RegistryBookService extends JPAService<RegistryBookEntry> {
 
+    RegistryBookEntryDTO readRegistryBookEntry(Integer registryBookEntryId);
+
     Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Pageable pageable);
 
     Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
                                                                   Pageable pageable);
 
-    RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO registryBookEntryDTO);
+    RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO registryBookEntryDTO, Integer thesisId);
 
     void updateRegistryBookEntry(Integer registryBookEntryId,
                                  RegistryBookEntryDTO registryBookEntryDTO);
@@ -28,4 +30,10 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     void addToPromotion(Integer registryBookEntryId, Integer promotionId);
 
     void removeFromPromotion(Integer registryBookEntryId);
+
+    void removeFromPromotion(String attendanceIdentifier);
+
+    void promoteAll(Integer promotionId);
+
+    boolean hasThesisRegistryBookEntry(Integer thesisId);
 }

@@ -214,7 +214,7 @@ public class UserServiceTest {
         language.setLanguageCode(LanguageAbbreviations.SERBIAN);
         when(languageService.findOne(1)).thenReturn(language);
 
-        Authority authority = new Authority();
+        var authority = new Authority();
         authority.setName(UserRole.RESEARCHER.toString());
         when(authorityRepository.findByName(UserRole.RESEARCHER.toString())).thenReturn(
             Optional.of(authority));
@@ -279,7 +279,7 @@ public class UserServiceTest {
                 "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
-        User newUser = new User("johndoe@example.com", "password123", "",
+        var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
             false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
@@ -330,7 +330,7 @@ public class UserServiceTest {
                 "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
-        User newUser = new User("johndoe@example.com", "password123", "",
+        var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
             false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
@@ -351,6 +351,57 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
+        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(authority, savedUser.getAuthority());
+    }
+
+    @Test
+    public void shouldRegisterPromotionRegistryAdminWithValidData() throws NoSuchAlgorithmException {
+        // Given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("regadmin@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(1);
+        registrationRequest.setName("Promotion");
+        registrationRequest.setSurname("Admin");
+
+        var language = new Language();
+        language.setLanguageCode(LanguageAbbreviations.ENGLISH);
+        when(languageService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString());
+        when(authorityRepository.findByName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString())).thenReturn(
+            Optional.of(authority));
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
+                "University", 1)));
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+
+        var newUser = new User("regadmin@example.com", "password123", "",
+            "Promotion", "Admin", true,
+            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.WEEKLY);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerInstitutionEmployee(registrationRequest,
+            UserRole.PROMOTION_REGISTRY_ADMINISTRATOR);
+
+        // Then
+        assertNotNull(savedUser);
+        assertEquals("regadmin@example.com", savedUser.getEmail());
+        assertEquals("Promotion", savedUser.getFirstname());
+        assertEquals("Admin", savedUser.getLastName());
         assertEquals(language, savedUser.getPreferredLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }

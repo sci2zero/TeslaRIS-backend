@@ -1,15 +1,18 @@
 package rs.teslaris.thesislibrary.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.document.Thesis;
 
 @Getter
 @Setter
@@ -33,4 +36,17 @@ public class RegistryBookEntry extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "thesis_id")
+    private Thesis thesis;
+
+    @Column(name = "attendance_identifier", unique = true)
+    private String attendanceIdentifier;
+
+    @Column(name = "promotion_school_year")
+    private String promotionSchoolYear;
+
+    @Column(name = "registry_book_number")
+    private Integer registryBookNumber;
 }

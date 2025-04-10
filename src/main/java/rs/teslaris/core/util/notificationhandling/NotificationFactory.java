@@ -152,6 +152,25 @@ public class NotificationFactory {
             NotificationType.NEW_PUBLICATIONS_TO_ASSESS, user);
     }
 
+    public static Notification contructCandidatePulledFromPromotionNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("candidateName"),
+                notificationValues.get("promotionDate")};
+        try {
+            message = messageSource.getMessage(
+                "promotion.candidatePulledFromPromotion",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.PROMOTION_NOTIFICATION, user);
+    }
+
     public static Notification contructScheduledTaskCompletedNotification(
         Map<String, String> notificationValues, User user, boolean success) {
         String message;

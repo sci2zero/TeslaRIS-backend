@@ -148,6 +148,7 @@ public class UserController {
             case "vice-dean-for-science" -> UserRole.VICE_DEAN_FOR_SCIENCE;
             case "institution-librarian" -> UserRole.INSTITUTIONAL_LIBRARIAN;
             case "head-of-library" -> UserRole.HEAD_OF_LIBRARY;
+            case "promotion-registry-administrator" -> UserRole.PROMOTION_REGISTRY_ADMINISTRATOR;
             default -> throw new IllegalArgumentException("Invalid employee role: " + role);
         };
 

@@ -173,6 +173,7 @@ public class TestingDataInitializer {
                                                  Authority institutionalEditorAuthority,
                                                  Authority institutionalLibrarianAuthority,
                                                  Authority headOfLibraryAuthority,
+                                                 Authority promotionRegistryAdminAuthority,
                                                  Commission commission5) {
         var country = new Country("SRB", new HashSet<>());
         countryRepository.save(country);
@@ -774,9 +775,17 @@ public class TestingDataInitializer {
                 "Djordje", "Perovic", false, false, serbianLanguage, headOfLibraryAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
+
+        var promotionRegistryAdminUser =
+            new User("promotion@registry.com", passwordEncoder.encode("promotion_registry"),
+                "note note note",
+                "Davor", "Kontić", false, false, serbianLanguage, promotionRegistryAdminAuthority,
+                null,
+                dummyOU, null, UserNotificationPeriod.DAILY);
+
         userRepository.saveAll(
             List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
-                headOfLibraryUser));
+                headOfLibraryUser, promotionRegistryAdminUser));
 
         var software2 = new Software();
         software2.setTitle(Set.of(new MultiLingualContent(englishTag,

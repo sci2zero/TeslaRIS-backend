@@ -1,8 +1,16 @@
 package rs.teslaris.thesislibrary.service.impl;
 
+import java.time.LocalDate;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,13 +25,17 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.language.SerbianTransliteration;
+import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.thesislibrary.converter.RegistryBookEntryConverter;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
 import rs.teslaris.thesislibrary.dto.PhdThesisPrePopulatedDataDTO;
@@ -33,6 +45,7 @@ import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookPersonalInformationDTO;
 import rs.teslaris.thesislibrary.model.DissertationInformation;
 import rs.teslaris.thesislibrary.model.PreviousTitleInformation;
+import rs.teslaris.thesislibrary.model.Promotion;
 import rs.teslaris.thesislibrary.model.RegistryBookContactInformation;
 import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 import rs.teslaris.thesislibrary.model.RegistryBookPersonalInformation;
@@ -56,10 +69,26 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
     private final ThesisService thesisService;
 
+    private final EmailUtil emailUtil;
+
+    private final UserRepository userRepository;
+
+    private final NotificationService notificationService;
+
+    private final MessageSource messageSource;
+
+    @Value("${frontend.application.address}")
+    private String clientAppAddress;
+
 
     @Override
     protected JpaRepository<RegistryBookEntry, Integer> getEntityRepository() {
         return registryBookEntryRepository;
+    }
+
+    @Override
+    public RegistryBookEntryDTO readRegistryBookEntry(Integer registryBookEntryId) {
+        return RegistryBookEntryConverter.toDTO(findOne(registryBookEntryId));
     }
 
     @Override
@@ -76,8 +105,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    public RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO dto) {
+    public RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO dto, Integer thesisId) {
         var newEntry = new RegistryBookEntry();
+        newEntry.setThesis(thesisService.getThesisById(thesisId));
         setCommonFields(newEntry, dto);
         return save(newEntry);
     }
@@ -207,7 +237,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         }
 
         entry.setPromotion(promotionService.findOne(promotionId));
+        entry.setAttendanceIdentifier(UUID.randomUUID().toString());
         save(entry);
+
+        notifyCandidate(entry.getPromotion(), entry, true, entry.getAttendanceIdentifier(), "sr");
     }
 
     @Override
@@ -218,8 +251,121 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             throw new PromotionException("Already not in promotion.");
         }
 
+        performRemoval(entry, entry.getPromotion());
+    }
+
+    @Override
+    public void removeFromPromotion(String attendanceIdentifier) {
+        var entry = registryBookEntryRepository.findByAttendanceIdentifier(attendanceIdentifier);
+
+        if (entry.isEmpty() || Objects.isNull(entry.get().getPromotion())) {
+            throw new PromotionException("Already not in promotion.");
+        }
+
+        performRemoval(entry.get(), entry.get().getPromotion());
+
+        userRepository.findAllRegistryAdmins().forEach(userToNotify -> {
+            notificationService.createNotification(
+                NotificationFactory.contructCandidatePulledFromPromotionNotification(
+                    Map.of("candidateName",
+                        entry.get().getPersonalInformation().getAuthorName().toString(),
+                        "promotionDate", entry.get().getPromotion().getPromotionDate().toString()),
+                    userToNotify)
+            );
+        });
+    }
+
+    private void performRemoval(RegistryBookEntry entry, Promotion promotion) {
         entry.setPromotion(null);
+        entry.setAttendanceIdentifier(null);
         save(entry);
+
+        // TODO: Language is hardcoded for now, should we make it parametrized somewhere?
+        notifyCandidate(promotion, entry, false, entry.getAttendanceIdentifier(), "sr");
+    }
+
+    private void notifyCandidate(Promotion promotion, RegistryBookEntry entry, boolean added,
+                                 String attendanceToken, String lang) {
+        String emailSubject, emailBody;
+
+        if (Objects.isNull(entry.getContactInformation().getContact()) ||
+            entry.getContactInformation().getContact().getContactEmail().isEmpty()) {
+            return;
+        }
+
+        if (added) {
+            var cancellationLink =
+                clientAppAddress + (clientAppAddress.endsWith("/") ? "sr" : "/" + "sr") +
+                    "/cancel-attendance/" + attendanceToken;
+            emailSubject = messageSource.getMessage(
+                "promotion.inviteEmailSubject",
+                new Object[] {entry.getPersonalInformation().getAuthorName().toString()},
+                Locale.forLanguageTag(lang)
+            );
+            emailBody = messageSource.getMessage(
+                "promotion.inviteEmailBody",
+                new Object[] {entry.getPersonalInformation().getAuthorName().toString(),
+                    promotion.getPlaceOrVenue(), promotion.getPromotionDate(),
+                    promotion.getPromotionTime(), cancellationLink},
+                Locale.forLanguageTag(lang));
+        } else {
+            emailSubject = messageSource.getMessage(
+                "promotion.cancelConfirmationSubject",
+                new Object[] {},
+                Locale.forLanguageTag(lang)
+            );
+            emailBody = messageSource.getMessage(
+                "promotion.cancelConfirmationBody",
+                new Object[] {entry.getPersonalInformation().getAuthorName().toString(),
+                    promotion.getPlaceOrVenue(), promotion.getPromotionDate(),
+                    promotion.getPromotionTime()},
+                Locale.forLanguageTag(lang));
+        }
+
+        emailUtil.sendSimpleEmail(entry.getContactInformation().getContact().getContactEmail(),
+            emailSubject, emailBody);
+    }
+
+    @Override
+    public void promoteAll(Integer promotionId) {
+        var promotion = promotionService.findOne(promotionId);
+        var finalPromotionSchoolYear = getPromotionSchoolYear(promotion);
+        AtomicInteger registryBookNumber = new AtomicInteger(
+            Objects.requireNonNullElse(registryBookEntryRepository.getLastRegistryBookNumber(), 0) +
+                1);
+        registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
+            .forEach(registryBookEntry -> {
+                registryBookEntry.setPromotionSchoolYear(finalPromotionSchoolYear);
+                registryBookEntry.setRegistryBookNumber(registryBookNumber.getAndIncrement());
+                registryBookEntry.setAttendanceIdentifier(null);
+
+                registryBookEntryRepository.save(registryBookEntry);
+            });
+
+        promotion.setFinished(true);
+        promotionService.save(promotion);
+    }
+
+    @Override
+    public boolean hasThesisRegistryBookEntry(Integer thesisId) {
+        return registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId);
+    }
+
+    @NotNull
+    private String getPromotionSchoolYear(Promotion promotion) {
+        if (promotion.getFinished()) {
+            throw new PromotionException("Promotion is already finished.");
+        }
+
+        var promotionSchoolYear = "";
+        var promotionYear = promotion.getPromotionDate().getYear();
+        if (promotion.getPromotionDate().isBefore(LocalDate.of(promotionYear, 10, 1))) {
+            promotionSchoolYear = (promotionYear - 1) + "/" + promotionYear;
+        } else {
+            promotionSchoolYear = promotionYear + "/" + (promotionYear + 1);
+        }
+
+        return promotionSchoolYear;
     }
 
     private void populateAuthorInformation(Thesis phdThesis, PhdThesisPrePopulatedDataDTO dto) {
