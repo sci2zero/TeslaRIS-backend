@@ -10,6 +10,6 @@ public class PromotionConverter {
         return new PromotionDTO(promotion.getId(), promotion.getPromotionDate(),
             promotion.getPromotionTime(),
             promotion.getPlaceOrVenue(), MultilingualContentConverter.getMultilingualContentDTO(
-            promotion.getDescription()));
+            promotion.getDescription()), promotion.getInstitution().getId());
     }
 }

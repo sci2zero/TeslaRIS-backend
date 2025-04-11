@@ -1,6 +1,7 @@
 package rs.teslaris.thesislibrary.service.impl;
 
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.thesislibrary.converter.PromotionConverter;
 import rs.teslaris.thesislibrary.dto.PromotionDTO;
@@ -25,6 +27,8 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
 
     private final MultilingualContentService multilingualContentService;
 
+    private final OrganisationUnitService organisationUnitService;
+
 
     @Override
     protected JpaRepository<Promotion, Integer> getEntityRepository() {
@@ -32,12 +36,22 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     }
 
     @Override
-    public Page<PromotionDTO> getAllPromotions(Pageable pageable) {
+    public Page<PromotionDTO> getAllPromotions(Integer institutionId, Pageable pageable) {
+        if (Objects.nonNull(institutionId) && institutionId > 0) {
+            return promotionRepository.findAll(institutionId, pageable)
+                .map(PromotionConverter::toDTO);
+        }
+
         return promotionRepository.findAll(pageable).map(PromotionConverter::toDTO);
     }
 
     @Override
-    public List<PromotionDTO> getNonFinishedPromotions() {
+    public List<PromotionDTO> getNonFinishedPromotions(Integer institutionId) {
+        if (Objects.nonNull(institutionId)) {
+            return promotionRepository.getNonFinishedPromotions(institutionId).stream()
+                .map(PromotionConverter::toDTO).toList();
+        }
+
         return promotionRepository.getNonFinishedPromotions().stream()
             .map(PromotionConverter::toDTO).toList();
     }
@@ -66,6 +80,7 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
         promotion.setPlaceOrVenue(promotionDTO.getPlaceOrVenue());
         promotion.setDescription(
             multilingualContentService.getMultilingualContent(promotionDTO.getDescription()));
+        promotion.setInstitution(organisationUnitService.findOne(promotionDTO.getInstitutionId()));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package rs.teslaris.thesislibrary.service.interfaces;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
 
     RegistryBookEntryDTO readRegistryBookEntry(Integer registryBookEntryId);
 
-    Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Pageable pageable);
+    Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Integer userId, Pageable pageable);
 
     Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
                                                                   Pageable pageable);
@@ -37,4 +38,8 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     void promoteAll(Integer promotionId);
 
     boolean hasThesisRegistryBookEntry(Integer thesisId);
+
+    List<String> getPromoteesList(Integer promotionId);
+
+    List<String> getAddressesList(Integer promotionId);
 }

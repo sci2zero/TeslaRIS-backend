@@ -16,9 +16,11 @@ public class DissertationInformationDTO {
 
     private String dissertationTitle;
 
-    private Integer organisationUnitId;
+    private Integer organisationUnitId; // Ignored by backend
 
     private List<MultilingualContentDTO> institutionName;
+
+    private String institutionPlace;
 
     private String mentor;
 

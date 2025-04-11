@@ -1,6 +1,7 @@
 package rs.teslaris.thesislibrary.controller;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,10 +14,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.thesislibrary.annotation.PromotionEditAndUsageCheck;
+import rs.teslaris.thesislibrary.annotation.RegistryBookEntryEditCheck;
 import rs.teslaris.thesislibrary.dto.PhdThesisPrePopulatedDataDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
@@ -28,11 +34,14 @@ public class RegistryBookController {
 
     private final RegistryBookService registryBookService;
 
+    private final JwtUtil tokenUtil;
 
-    @GetMapping("/can-add/{thesisId}")
+
+    @GetMapping("/can-add/{documentId}")
     @PreAuthorize("hasAuthority('ADD_TO_REGISTRY_BOOK')")
-    public boolean getCanAdd(@PathVariable Integer thesisId) {
-        return !registryBookService.hasThesisRegistryBookEntry(thesisId);
+    @PublicationEditCheck("THESIS")
+    public boolean getCanAdd(@PathVariable Integer documentId) {
+        return !registryBookService.hasThesisRegistryBookEntry(documentId);
     }
 
     @GetMapping("/{registryBookEntryId}")
@@ -44,6 +53,7 @@ public class RegistryBookController {
 
     @GetMapping("/for-promotion/{promotionId}")
     @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRY_BOOK', 'REMOVE_FROM_PROMOTION')")
+    @PromotionEditAndUsageCheck
     public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(
         @PathVariable Integer promotionId, Pageable pageable) {
         return registryBookService.getRegistryBookEntriesForPromotion(promotionId, pageable);
@@ -51,19 +61,22 @@ public class RegistryBookController {
 
     @GetMapping("/non-promoted")
     @PreAuthorize("hasAuthority('ADD_TO_PROMOTION')")
-    public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Pageable pageable) {
-        return registryBookService.getNonPromotedRegistryBookEntries(pageable);
+    public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(
+        @RequestHeader("Authorization") String bearerToken, Pageable pageable) {
+        return registryBookService.getNonPromotedRegistryBookEntries(
+            tokenUtil.extractUserIdFromToken(bearerToken), pageable);
     }
 
-    @PostMapping("/{thesisId}")
+    @PostMapping("/{documentId}")
     @PreAuthorize("hasAuthority('ADD_TO_REGISTRY_BOOK')")
+    @PublicationEditCheck("THESIS")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public RegistryBookEntryDTO createRegistryBookEntry(
         @RequestBody @Valid RegistryBookEntryDTO registryBookEntryDTO,
-        @PathVariable Integer thesisId) {
+        @PathVariable Integer documentId) {
         var newRegistryBookEntry =
-            registryBookService.createRegistryBookEntry(registryBookEntryDTO, thesisId);
+            registryBookService.createRegistryBookEntry(registryBookEntryDTO, documentId);
         registryBookEntryDTO.setId(newRegistryBookEntry.getId());
 
         return registryBookEntryDTO;
@@ -71,6 +84,7 @@ public class RegistryBookController {
 
     @PutMapping("/{registryBookEntryId}")
     @PreAuthorize("hasAuthority('UPDATE_REGISTRY_BOOK')")
+    @RegistryBookEntryEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateRegistryBookEntry(@PathVariable Integer registryBookEntryId,
                                         @RequestBody
@@ -80,19 +94,23 @@ public class RegistryBookController {
 
     @DeleteMapping("/{registryBookEntryId}")
     @PreAuthorize("hasAuthority('REMOVE_FROM_REGISTRY_BOOK')")
+    @RegistryBookEntryEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRegistryBookEntry(@PathVariable Integer registryBookEntryId) {
         registryBookService.deleteRegistryBookEntry(registryBookEntryId);
     }
 
-    @GetMapping("/pre-populate/{thesisId}")
+    @GetMapping("/pre-populate/{documentId}")
     @PreAuthorize("hasAuthority('ADD_TO_REGISTRY_BOOK')")
-    public PhdThesisPrePopulatedDataDTO getEntryPrePopulatedData(@PathVariable Integer thesisId) {
-        return registryBookService.getPrePopulatedPHDThesisInformation(thesisId);
+    @PublicationEditCheck("THESIS")
+    public PhdThesisPrePopulatedDataDTO getEntryPrePopulatedData(@PathVariable Integer documentId) {
+        return registryBookService.getPrePopulatedPHDThesisInformation(documentId);
     }
 
     @PatchMapping("/add/{registryBookEntryId}/{promotionId}")
     @PreAuthorize("hasAuthority('ADD_TO_PROMOTION')")
+    @PromotionEditAndUsageCheck
+    @RegistryBookEntryEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addRegistryBookEntryForPromotion(@PathVariable Integer registryBookEntryId,
                                                  @PathVariable Integer promotionId) {
@@ -101,20 +119,34 @@ public class RegistryBookController {
 
     @PatchMapping("/remove/{registryBookEntryId}")
     @PreAuthorize("hasAuthority('REMOVE_FROM_PROMOTION')")
+    @RegistryBookEntryEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeRegistryBookEntryFromPromotion(@PathVariable Integer registryBookEntryId) {
         registryBookService.removeFromPromotion(registryBookEntryId);
     }
 
-    @PatchMapping("/remove-attendance/{attendanceId}")
+    @PatchMapping("/cancel-attendance/{attendanceId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeRegistryBookEntryFromPromotion(@PathVariable String attendanceId) {
         registryBookService.removeFromPromotion(attendanceId);
     }
 
     @PatchMapping("/promote-all/{promotionId}")
+    @PromotionEditAndUsageCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void promoteAllFromPromotion(@PathVariable Integer promotionId) {
         registryBookService.promoteAll(promotionId);
+    }
+
+    @GetMapping("/addresses/{promotionId}")
+    @PromotionEditAndUsageCheck
+    public List<String> getAddressList(@PathVariable Integer promotionId) {
+        return registryBookService.getAddressesList(promotionId);
+    }
+
+    @GetMapping("/promotees/{promotionId}")
+    @PromotionEditAndUsageCheck
+    public List<String> getPromoteesList(@PathVariable Integer promotionId) {
+        return registryBookService.getPromoteesList(promotionId);
     }
 }

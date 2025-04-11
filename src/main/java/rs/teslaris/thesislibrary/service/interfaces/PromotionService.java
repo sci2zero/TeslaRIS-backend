@@ -11,9 +11,9 @@ import rs.teslaris.thesislibrary.model.Promotion;
 @Service
 public interface PromotionService extends JPAService<Promotion> {
 
-    Page<PromotionDTO> getAllPromotions(Pageable pageable);
+    Page<PromotionDTO> getAllPromotions(Integer institutionId, Pageable pageable);
 
-    List<PromotionDTO> getNonFinishedPromotions();
+    List<PromotionDTO> getNonFinishedPromotions(Integer institutionId);
 
     Promotion createPromotion(PromotionDTO promotionDTO);
 

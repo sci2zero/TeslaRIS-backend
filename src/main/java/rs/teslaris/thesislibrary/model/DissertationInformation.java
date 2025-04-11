@@ -26,6 +26,9 @@ public class DissertationInformation {
     @JoinColumn(name = "org_unit_id")
     private OrganisationUnit organisationUnit;
 
+    @Column(name = "dissertation_institution_place")
+    private String institutionPlace;
+
     @Column(name = "mentor")
     private String mentor;
 

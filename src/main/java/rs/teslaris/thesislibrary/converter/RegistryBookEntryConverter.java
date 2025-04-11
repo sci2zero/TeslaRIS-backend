@@ -64,6 +64,7 @@ public class RegistryBookEntryConverter {
         prevTitleDTO.setGraduationDate(prevTitle.getGraduationDate());
         prevTitleDTO.setInstitutionPlace(prevTitle.getInstitutionPlace());
         prevTitleDTO.setSchoolYear(prevTitle.getSchoolYear());
+        prevTitleDTO.setAcademicTitle(prevTitle.getAcademicTitle());
         dto.setPreviousTitleInformation(prevTitleDTO);
 
         return dto;
@@ -84,6 +85,7 @@ public class RegistryBookEntryConverter {
                     dissertationInfo.getOrganisationUnit().getName()));
         }
 
+        dissertationInfoDTO.setInstitutionPlace(dissertationInfo.getInstitutionPlace());
         dissertationInfoDTO.setMentor(dissertationInfo.getMentor());
         dissertationInfoDTO.setCommission(dissertationInfo.getCommission());
         dissertationInfoDTO.setGrade(dissertationInfo.getGrade());

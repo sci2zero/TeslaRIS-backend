@@ -28,7 +28,7 @@ public class PromotionControllerTest extends BaseTest {
 
 
     private PromotionDTO getTestPayload() {
-        return new PromotionDTO(null, LocalDate.now(), LocalTime.now(), "some place", List.of());
+        return new PromotionDTO(null, LocalDate.now(), LocalTime.now(), "some place", List.of(), 1);
     }
 
     @Test

@@ -19,6 +19,8 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,6 +46,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
@@ -93,6 +96,9 @@ class RegistryBookServiceTest {
 
     @Mock
     private MessageSource messageSource;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private RegistryBookServiceImpl registryBookService;
@@ -182,8 +188,9 @@ class RegistryBookServiceTest {
         contactInfo.setContact(new ContactDTO());
 
         var id = 1;
-        RegistryBookEntry entry = new RegistryBookEntry();
-        RegistryBookEntryDTO dto = new RegistryBookEntryDTO();
+        var entry = new RegistryBookEntry();
+        entry.setDissertationInformation(new DissertationInformation());
+        var dto = new RegistryBookEntryDTO();
         dto.setDissertationInformation(new DissertationInformationDTO());
         dto.setPersonalInformation(personalInfo);
         dto.setContactInformation(contactInfo);
@@ -404,8 +411,9 @@ class RegistryBookServiceTest {
             () -> registryBookService.removeFromPromotion(entryId));
     }
 
-    @Test
-    void shouldGetNonPromotedEntries() {
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void shouldGetNonPromotedEntries(Integer userId) {
         // Given
         var pageable = PageRequest.of(0, 10);
         var entry = new RegistryBookEntry();
@@ -416,9 +424,13 @@ class RegistryBookServiceTest {
         var page = new PageImpl<>(List.of(entry));
 
         when(registryBookEntryRepository.getNonPromotedBookEntries(pageable)).thenReturn(page);
+        when(registryBookEntryRepository.getNonPromotedBookEntries(List.of(1, 2),
+            pageable)).thenReturn(page);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(any())).thenReturn(
+            List.of(1, 2));
 
         // When
-        var result = registryBookService.getNonPromotedRegistryBookEntries(pageable);
+        var result = registryBookService.getNonPromotedRegistryBookEntries(userId, pageable);
 
         // Then
         assertEquals(1, result.getTotalElements());
@@ -429,16 +441,19 @@ class RegistryBookServiceTest {
     void shouldPromoteAllEntriesAndMarkPromotionAsFinished() {
         // Given
         var promotionId = 1;
+        var institution = new OrganisationUnit();
+        institution.setId(1);
         var promotion = new Promotion();
         promotion.setId(promotionId);
         promotion.setFinished(false);
+        promotion.setInstitution(institution);
         promotion.setPromotionDate(LocalDate.of(2024, 4, 4));
 
         var entry1 = new RegistryBookEntry();
         var entry2 = new RegistryBookEntry();
 
         when(promotionService.findOne(promotionId)).thenReturn(promotion);
-        when(registryBookEntryRepository.getLastRegistryBookNumber()).thenReturn(5);
+        when(registryBookEntryRepository.getLastRegistryBookNumber(1)).thenReturn(5);
         when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any()))
             .thenReturn(new PageImpl<>(List.of(entry1, entry2)));
 

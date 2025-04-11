@@ -13,6 +13,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 
 @Getter
 @Setter
@@ -49,4 +50,8 @@ public class RegistryBookEntry extends BaseEntity {
 
     @Column(name = "registry_book_number")
     private Integer registryBookNumber;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "registry_book_institution_id")
+    private OrganisationUnit registryBookInstitution;
 }

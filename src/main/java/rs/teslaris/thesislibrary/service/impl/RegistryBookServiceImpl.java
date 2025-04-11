@@ -1,6 +1,10 @@
 package rs.teslaris.thesislibrary.service.impl;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -77,6 +81,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
     private final MessageSource messageSource;
 
+    private final DateTimeFormatter DATE_FORMATTER =
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.GERMANY);
+
     @Value("${frontend.application.address}")
     private String clientAppAddress;
 
@@ -92,7 +99,15 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Pageable pageable) {
+    public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Integer userId,
+                                                                        Pageable pageable) {
+        var userEmploymentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
+        if (Objects.nonNull(userEmploymentInstitutionId) && userEmploymentInstitutionId > 0) {
+            registryBookEntryRepository.getNonPromotedBookEntries(
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                    userEmploymentInstitutionId), pageable).map(RegistryBookEntryConverter::toDTO);
+        }
+
         return registryBookEntryRepository.getNonPromotedBookEntries(pageable)
             .map(RegistryBookEntryConverter::toDTO);
     }
@@ -107,8 +122,15 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Override
     public RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO dto, Integer thesisId) {
         var newEntry = new RegistryBookEntry();
+        var thesis = thesisService.getThesisById(thesisId);
+
         newEntry.setThesis(thesisService.getThesisById(thesisId));
         setCommonFields(newEntry, dto);
+
+        if (Objects.nonNull(dto.getDissertationInformation().getOrganisationUnitId())) {
+            newEntry.getDissertationInformation().setOrganisationUnit(thesis.getOrganisationUnit());
+        }
+
         return save(newEntry);
     }
 
@@ -116,7 +138,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     public void updateRegistryBookEntry(Integer registryBookEntryId,
                                         RegistryBookEntryDTO dto) {
         var entry = findOne(registryBookEntryId);
+        var presetOrgUnit = entry.getDissertationInformation().getOrganisationUnit();
         setCommonFields(entry, dto);
+        entry.getDissertationInformation().setOrganisationUnit(presetOrgUnit);
         save(entry);
     }
 
@@ -139,10 +163,6 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var di = new DissertationInformation();
         di.setDissertationTitle(dto.getDissertationTitle());
 
-        if (Objects.nonNull(dto.getOrganisationUnitId())) {
-            di.setOrganisationUnit(organisationUnitService.findOne(dto.getOrganisationUnitId()));
-        }
-
         di.setMentor(dto.getMentor());
         di.setCommission(dto.getCommission());
         di.setGrade(dto.getGrade());
@@ -152,6 +172,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         di.setDiplomaIssueDate(dto.getDiplomaIssueDate());
         di.setDiplomaSupplementsNumber(dto.getDiplomaSupplementsNumber());
         di.setDiplomaSupplementsIssueDate(dto.getDiplomaSupplementsIssueDate());
+        di.setInstitutionPlace(dto.getInstitutionPlace());
         return di;
     }
 
@@ -262,14 +283,14 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             throw new PromotionException("Already not in promotion.");
         }
 
-        performRemoval(entry.get(), entry.get().getPromotion());
+        var promotionDate = entry.get().getPromotion().getPromotionDate();
 
         userRepository.findAllRegistryAdmins().forEach(userToNotify -> {
             notificationService.createNotification(
                 NotificationFactory.contructCandidatePulledFromPromotionNotification(
                     Map.of("candidateName",
                         entry.get().getPersonalInformation().getAuthorName().toString(),
-                        "promotionDate", entry.get().getPromotion().getPromotionDate().toString()),
+                        "promotionDate", promotionDate.format(DATE_FORMATTER)),
                     userToNotify)
             );
         });
@@ -281,7 +302,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         save(entry);
 
         // TODO: Language is hardcoded for now, should we make it parametrized somewhere?
-        notifyCandidate(promotion, entry, false, entry.getAttendanceIdentifier(), "sr");
+        notifyCandidate(promotion, entry, false, entry.getAttendanceIdentifier(), "SR");
     }
 
     private void notifyCandidate(Promotion promotion, RegistryBookEntry entry, boolean added,
@@ -305,7 +326,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             emailBody = messageSource.getMessage(
                 "promotion.inviteEmailBody",
                 new Object[] {entry.getPersonalInformation().getAuthorName().toString(),
-                    promotion.getPlaceOrVenue(), promotion.getPromotionDate(),
+                    promotion.getPlaceOrVenue(),
+                    promotion.getPromotionDate().format(DATE_FORMATTER),
                     promotion.getPromotionTime(), cancellationLink},
                 Locale.forLanguageTag(lang));
         } else {
@@ -317,7 +339,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             emailBody = messageSource.getMessage(
                 "promotion.cancelConfirmationBody",
                 new Object[] {entry.getPersonalInformation().getAuthorName().toString(),
-                    promotion.getPlaceOrVenue(), promotion.getPromotionDate(),
+                    promotion.getPlaceOrVenue(),
+                    promotion.getPromotionDate().format(DATE_FORMATTER),
                     promotion.getPromotionTime()},
                 Locale.forLanguageTag(lang));
         }
@@ -331,13 +354,14 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var promotion = promotionService.findOne(promotionId);
         var finalPromotionSchoolYear = getPromotionSchoolYear(promotion);
         AtomicInteger registryBookNumber = new AtomicInteger(
-            Objects.requireNonNullElse(registryBookEntryRepository.getLastRegistryBookNumber(), 0) +
-                1);
+            Objects.requireNonNullElse(registryBookEntryRepository.getLastRegistryBookNumber(
+                promotion.getInstitution().getId()), 0) + 1);
         registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
             .forEach(registryBookEntry -> {
                 registryBookEntry.setPromotionSchoolYear(finalPromotionSchoolYear);
                 registryBookEntry.setRegistryBookNumber(registryBookNumber.getAndIncrement());
                 registryBookEntry.setAttendanceIdentifier(null);
+                registryBookEntry.setRegistryBookInstitution(promotion.getInstitution());
 
                 registryBookEntryRepository.save(registryBookEntry);
             });
@@ -349,6 +373,41 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Override
     public boolean hasThesisRegistryBookEntry(Integer thesisId) {
         return registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId);
+    }
+
+    @Override
+    public List<String> getPromoteesList(Integer promotionId) {
+        var promotees = new ArrayList<String>();
+        registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
+            .forEach(entry -> {
+                String sb = entry.getPersonalInformation().getAuthorName().toString() + ", " +
+                    entry.getDissertationInformation().getAcquiredTitle() +
+                    " (email: " +
+                    entry.getContactInformation().getContact().getContactEmail() + ")\n";
+                promotees.add(sb);
+            });
+
+        return promotees;
+    }
+
+    @Override
+    public List<String> getAddressesList(Integer promotionId) {
+        var addresses = new ArrayList<String>();
+        registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
+            .forEach(entry -> {
+                var contactInfo = entry.getContactInformation();
+                String sb = entry.getPersonalInformation().getAuthorName().toString() + "\n" +
+                    contactInfo.getStreetAndNumber() + "\n" +
+                    contactInfo.getPlace() + "\n" +
+                    contactInfo.getPostalCode() + "\n" +
+                    getTransliteratedContent(contactInfo.getResidenceCountry().getName()) +
+                    "\n" +
+                    contactInfo.getContact().getContactEmail() + "\n" +
+                    "tel: " + contactInfo.getContact().getPhoneNumber() + "\n\n";
+                addresses.add(sb);
+            });
+
+        return addresses;
     }
 
     @NotNull

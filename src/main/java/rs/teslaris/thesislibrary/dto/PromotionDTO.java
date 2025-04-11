@@ -15,13 +15,15 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @AllArgsConstructor
 public class PromotionDTO {
 
-    Integer id;
+    private Integer id;
 
-    LocalDate promotionDate;
+    private LocalDate promotionDate;
 
-    LocalTime promotionTime;
+    private LocalTime promotionTime;
 
-    String placeOrVenue;
+    private String placeOrVenue;
 
-    List<MultilingualContentDTO> description;
+    private List<MultilingualContentDTO> description;
+
+    private Integer institutionId;
 }

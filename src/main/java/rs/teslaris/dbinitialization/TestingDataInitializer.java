@@ -816,6 +816,7 @@ public class TestingDataInitializer {
         promotion1.setPromotionDate(LocalDate.of(2023, 5, 1));
         promotion1.setPromotionTime(LocalTime.NOON);
         promotion1.setPlaceOrVenue("Some place");
+        promotion1.setInstitution(dummyOU);
         promotionRepository.save(promotion1);
     }
 }
