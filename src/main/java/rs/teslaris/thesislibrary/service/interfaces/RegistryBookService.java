@@ -1,10 +1,12 @@
 package rs.teslaris.thesislibrary.service.interfaces;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.thesislibrary.dto.InstitutionCountsReportDTO;
 import rs.teslaris.thesislibrary.dto.PhdThesisPrePopulatedDataDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
 import rs.teslaris.thesislibrary.model.RegistryBookEntry;
@@ -42,4 +44,17 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     List<String> getPromoteesList(Integer promotionId);
 
     List<String> getAddressesList(Integer promotionId);
+
+    Page<RegistryBookEntryDTO> getRegistryBookForInstitutionAndPeriod(Integer userId,
+                                                                      Integer institutionId,
+                                                                      LocalDate from, LocalDate to,
+                                                                      Pageable pageable);
+
+    List<InstitutionCountsReportDTO> institutionCountsReport(Integer userId,
+                                                             LocalDate from,
+                                                             LocalDate to);
+
+    void allowSingleUpdate(Integer registryBookEntryId);
+
+    boolean canEdit(Integer registryBookEntryId);
 }

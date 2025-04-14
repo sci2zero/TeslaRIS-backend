@@ -164,6 +164,7 @@ public class DbInitializer implements ApplicationRunner {
         var updateRegistryBook = new Privilege("UPDATE_REGISTRY_BOOK");
         var removeFromRegistryBook = new Privilege("REMOVE_FROM_REGISTRY_BOOK");
         var managePromotions = new Privilege("MANAGE_PROMOTIONS");
+        var generatePromotionReport = new Privilege("GENERATE_PROMOTION_REPORT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -189,7 +190,8 @@ public class DbInitializer implements ApplicationRunner {
                 editEmploymentInstitution, archiveThesis, unarchiveThesis, performThesisReport,
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview,
                 performThesisSearch, addToPromotion, removeFromPromotion, addToRegistryBook,
-                removeFromRegistryBook, updateRegistryBook, managePromotions));
+                removeFromRegistryBook, updateRegistryBook, managePromotions,
+                generatePromotionReport));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -214,7 +216,8 @@ public class DbInitializer implements ApplicationRunner {
                 manageApiKeys, manageThesisAttachments, putThesisOnPublicReview, managePromotions,
                 deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
                 unarchiveThesis, performThesisReport, performThesisSearch, addToPromotion,
-                removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook
+                removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook,
+                generatePromotionReport
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -261,7 +264,7 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString(),
                 new HashSet<>(List.of(
                     updateProfile, allowAccountTakeover, addToPromotion, removeFromPromotion,
-                    updateRegistryBook, managePromotions
+                    updateRegistryBook, managePromotions, generatePromotionReport
                 )));
 
         authorityRepository.saveAll(

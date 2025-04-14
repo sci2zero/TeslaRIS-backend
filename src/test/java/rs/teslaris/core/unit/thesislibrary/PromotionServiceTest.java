@@ -54,7 +54,8 @@ public class PromotionServiceTest {
     void shouldCreatePromotion() {
         // Given
         var dto =
-            new PromotionDTO(null, LocalDate.now(), LocalTime.now(), "Somewhere", List.of(), 1);
+            new PromotionDTO(null, LocalDate.now(), LocalTime.now(), "Somewhere", List.of(), 1,
+                false);
         Promotion saved = new Promotion();
         when(multilingualContentService.getMultilingualContent(any()))
             .thenReturn(Set.of(new MultiLingualContent()));
@@ -73,7 +74,8 @@ public class PromotionServiceTest {
         // Given
         var id = 1;
         var existing = new Promotion();
-        var dto = new PromotionDTO(1, LocalDate.now(), LocalTime.now(), "Somewhere", List.of(), 1);
+        var dto =
+            new PromotionDTO(1, LocalDate.now(), LocalTime.now(), "Somewhere", List.of(), 1, false);
 
         when(promotionRepository.findById(id)).thenReturn(Optional.of(existing));
         when(multilingualContentService.getMultilingualContent(any()))

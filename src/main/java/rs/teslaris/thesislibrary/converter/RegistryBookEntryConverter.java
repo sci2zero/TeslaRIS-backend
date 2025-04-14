@@ -18,6 +18,9 @@ public class RegistryBookEntryConverter {
         var dto = new RegistryBookEntryDTO();
         dto.setId(registryBookEntry.getId());
         dto.setInPromotion(Objects.nonNull(registryBookEntry.getPromotion()));
+        if (Objects.nonNull(registryBookEntry.getPromotion())) {
+            dto.setPromoted(registryBookEntry.getPromotion().getFinished());
+        }
 
         var dissertationInfoDTO = getDissertationInfoDTO(registryBookEntry);
         dto.setDissertationInformation(dissertationInfoDTO);

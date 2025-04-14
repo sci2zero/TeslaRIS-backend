@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -53,6 +55,7 @@ import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
+import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.thesislibrary.converter.RegistryBookEntryConverter;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
@@ -184,6 +187,9 @@ class RegistryBookServiceTest {
         var personalInfo = new RegistryBookPersonalInformationDTO();
         personalInfo.setAuthorName(
             new PersonNameDTO(null, "Ivan", "Radomir", "Mrsulja", null, null));
+        personalInfo.setMotherName("Maja");
+        personalInfo.setFatherName("Nikola");
+        personalInfo.setGuardianNameAndSurname("");
         var contactInfo = new RegistryBookContactInformationDTO();
         contactInfo.setContact(new ContactDTO());
 
@@ -350,6 +356,7 @@ class RegistryBookServiceTest {
         contactInfo.setContact(new Contact("email", "phone"));
         entry.setContactInformation(contactInfo);
         var promotion = new Promotion();
+        promotion.setPromotionDate(LocalDate.of(2025, 12, 15));
 
         when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
         when(promotionService.findOne(promotionId)).thenReturn(promotion);
@@ -380,6 +387,7 @@ class RegistryBookServiceTest {
         // Given
         var entryId = 1;
         var promotion = new Promotion();
+        promotion.setPromotionDate(LocalDate.of(2025, 12, 15));
         var entry = new RegistryBookEntry();
         var personalInfo = new RegistryBookPersonalInformation();
         personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null));
@@ -449,8 +457,13 @@ class RegistryBookServiceTest {
         promotion.setInstitution(institution);
         promotion.setPromotionDate(LocalDate.of(2024, 4, 4));
 
+        var dissertationInformation = new DissertationInformation();
+        dissertationInformation.setDiplomaNumber("123123");
+        dissertationInformation.setDiplomaIssueDate(LocalDate.of(2024, 3, 14));
         var entry1 = new RegistryBookEntry();
+        entry1.setDissertationInformation(dissertationInformation);
         var entry2 = new RegistryBookEntry();
+        entry2.setDissertationInformation(dissertationInformation);
 
         when(promotionService.findOne(promotionId)).thenReturn(promotion);
         when(registryBookEntryRepository.getLastRegistryBookNumber(1)).thenReturn(5);
@@ -503,5 +516,203 @@ class RegistryBookServiceTest {
         // Then
         assertTrue(result);
         verify(registryBookEntryRepository).hasThesisRegistryBookEntry(thesisId);
+    }
+
+    @Test
+    void shouldReturnCountsForSubHierarchyInstitutions() {
+        // Given
+        Integer userId = 1;
+        Integer institutionId = 10;
+        LocalDate from = LocalDate.of(2023, 1, 1);
+        LocalDate to = LocalDate.of(2023, 12, 31);
+
+        when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(institutionId);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(List.of(institutionId));
+        when(registryBookEntryRepository.getRegistryBookCountForInstitutionAndPeriodNewPromotion(
+            institutionId, from, to))
+            .thenReturn(3);
+        when(registryBookEntryRepository.getRegistryBookCountForInstitutionAndPeriodOldPromotion(
+            institutionId, from, to))
+            .thenReturn(2);
+        when(organisationUnitService.findOne(institutionId)).thenReturn(new OrganisationUnit());
+
+        // When
+        var result = registryBookService.institutionCountsReport(userId, from, to);
+
+        // Then
+        assertEquals(1, result.size());
+        var dto = result.getFirst();
+        assertEquals(3, dto.counts().a);
+        assertEquals(2, dto.counts().b);
+        assertNotNull(dto.institutionName());
+
+        verify(userRepository).findOrganisationUnitIdForUser(userId);
+        verify(organisationUnitService).getOrganisationUnitIdsFromSubHierarchy(institutionId);
+        verify(registryBookEntryRepository).getRegistryBookCountForInstitutionAndPeriodNewPromotion(
+            institutionId, from, to);
+        verify(registryBookEntryRepository).getRegistryBookCountForInstitutionAndPeriodOldPromotion(
+            institutionId, from, to);
+    }
+
+    @Test
+    void shouldReturnFormattedPromoteesListForGivenPromotionId() {
+        // Given
+        Integer promotionId = 42;
+        var entry = mock(RegistryBookEntry.class);
+        var personalInfo = mock(RegistryBookPersonalInformation.class);
+        var authorName = mock(PersonName.class);
+        var dissertationInfo = mock(DissertationInformation.class);
+        var contactInfo = mock(RegistryBookContactInformation.class);
+        var contact = mock(Contact.class);
+
+        when(authorName.toString()).thenReturn("John Doe");
+        when(personalInfo.getAuthorName()).thenReturn(authorName);
+        when(dissertationInfo.getAcquiredTitle()).thenReturn("PhD in Cybersecurity");
+        when(contact.getContactEmail()).thenReturn("john.doe@example.com");
+        when(contactInfo.getContact()).thenReturn(contact);
+
+        when(entry.getPersonalInformation()).thenReturn(personalInfo);
+        when(entry.getDissertationInformation()).thenReturn(dissertationInfo);
+        when(entry.getContactInformation()).thenReturn(contactInfo);
+
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId),
+            eq(Pageable.unpaged())))
+            .thenReturn(new PageImpl<>(List.of(entry)));
+
+        // When
+        var result = registryBookService.getPromoteesList(promotionId);
+
+        // Then
+        assertEquals(1, result.size());
+        assertTrue(result.get(0).contains("John Doe, PhD in Cybersecurity"));
+        assertTrue(result.get(0).contains("john.doe@example.com"));
+    }
+
+    @Test
+    void shouldReturnFormattedAddressesListForGivenPromotionId() {
+        // Given
+        var promotionId = 42;
+        var entry = mock(RegistryBookEntry.class);
+        var personalInfo = mock(RegistryBookPersonalInformation.class);
+        var authorName = mock(PersonName.class);
+        var contactInfo = mock(RegistryBookContactInformation.class);
+        var contact = mock(Contact.class);
+        var country = mock(Country.class);
+
+        when(authorName.toString()).thenReturn("Jane Smith");
+        when(personalInfo.getAuthorName()).thenReturn(authorName);
+
+        when(contactInfo.getStreetAndNumber()).thenReturn("123 Main St");
+        when(contactInfo.getPlace()).thenReturn("Novi Sad");
+        when(contactInfo.getPostalCode()).thenReturn("21000");
+        when(country.getName()).thenReturn(Set.of());
+        when(contactInfo.getResidenceCountry()).thenReturn(country);
+        when(contact.getContactEmail()).thenReturn("jane.smith@example.com");
+        when(contact.getPhoneNumber()).thenReturn("+381641234567");
+        when(contactInfo.getContact()).thenReturn(contact);
+
+        when(entry.getPersonalInformation()).thenReturn(personalInfo);
+        when(entry.getContactInformation()).thenReturn(contactInfo);
+
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId),
+            eq(Pageable.unpaged())))
+            .thenReturn(new PageImpl<>(List.of(entry)));
+
+        // When
+        var result = registryBookService.getAddressesList(promotionId);
+
+        // Then
+        assertEquals(1, result.size());
+        assertTrue(result.getFirst().contains("Jane Smith"));
+        assertTrue(result.getFirst().contains("123 Main St"));
+        assertTrue(result.getFirst().contains("jane.smith@example.com"));
+        assertTrue(result.getFirst().contains("+381641234567"));
+    }
+
+    @Test
+    void shouldReturnTrueWhenPromotionIsNull() {
+        // Given
+        var entryId = 1;
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(null);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canEdit(entryId);
+
+        // Then
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnTrueWhenPromotionNotFinished() {
+        // Given
+        var entryId = 2;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(false);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canEdit(entryId);
+
+        // Then
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnTrueWhenSingleEditIsAllowed() {
+        // Given
+        var entryId = 3;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(true);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(entry.getAllowSingleEdit()).thenReturn(true);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canEdit(entryId);
+
+        // Then
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldAllowSingleUpdateIfPromotionFinished() {
+        // Given
+        var entryId = 4;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(true);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        registryBookService.allowSingleUpdate(entryId);
+
+        // Then
+        verify(entry).setAllowSingleEdit(true);
+    }
+
+    @Test
+    void shouldThrowExceptionIfPromotionNotFinished() {
+        // Given
+        var entryId = 5;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(false);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When / Then
+        assertThrows(RegistryBookException.class,
+            () -> registryBookService.allowSingleUpdate(entryId));
     }
 }

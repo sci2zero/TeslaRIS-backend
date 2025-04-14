@@ -54,4 +54,7 @@ public class RegistryBookEntry extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registry_book_institution_id")
     private OrganisationUnit registryBookInstitution;
+
+    @Column(name = "allow_single_edit")
+    private Boolean allowSingleEdit = false;
 }

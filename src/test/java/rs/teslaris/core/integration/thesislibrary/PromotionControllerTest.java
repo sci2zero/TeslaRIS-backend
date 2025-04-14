@@ -28,7 +28,8 @@ public class PromotionControllerTest extends BaseTest {
 
 
     private PromotionDTO getTestPayload() {
-        return new PromotionDTO(null, LocalDate.now(), LocalTime.now(), "some place", List.of(), 1);
+        return new PromotionDTO(null, LocalDate.now(), LocalTime.now(), "some place", List.of(), 1,
+            false);
     }
 
     @Test
@@ -84,7 +85,7 @@ public class PromotionControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/promotion/{promotionId}", 1)
+                MockMvcRequestBuilders.put("http://localhost:8081/api/promotion/{promotionId}", 2)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

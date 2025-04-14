@@ -36,8 +36,39 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
     @Query("SELECT COUNT(rbe) > 0 FROM RegistryBookEntry rbe WHERE rbe.thesis.id = :thesisId")
     boolean hasThesisRegistryBookEntry(Integer thesisId);
 
-    @Query("SELECT COUNT(rbe) > 0 FROM RegistryBookEntry rbe WHERE " +
+    @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE " +
         "rbe.promotion.promotionDate >= :from AND " +
         "rbe.promotion.promotionDate <= :to")
     List<RegistryBookEntry> getRegistryBookEntriesForPeriod(LocalDate from, LocalDate to);
+
+    @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE " +
+        "rbe.registryBookInstitution.id = :institutionId AND " +
+        "rbe.promotion.finished = true AND " +
+        "rbe.promotion.promotionDate >= :from AND " +
+        "rbe.promotion.promotionDate <= :to")
+    Page<RegistryBookEntry> getRegistryBookEntriesForInstitutionAndPeriod(
+        Integer institutionId,
+        LocalDate from,
+        LocalDate to,
+        Pageable pageable);
+
+    @Query("SELECT COUNT(rbe) FROM RegistryBookEntry rbe WHERE " +
+        "rbe.registryBookInstitution.id = :institutionId AND " +
+        "rbe.previousTitleInformation.academicTitle < 4 AND " +
+        "rbe.promotion.finished = true AND " +
+        "rbe.promotion.promotionDate >= :from AND " +
+        "rbe.promotion.promotionDate <= :to")
+    Integer getRegistryBookCountForInstitutionAndPeriodNewPromotion(Integer institutionId,
+                                                                    LocalDate from,
+                                                                    LocalDate to);
+
+    @Query("SELECT COUNT(rbe) FROM RegistryBookEntry rbe WHERE " +
+        "rbe.registryBookInstitution.id = :institutionId AND " +
+        "rbe.previousTitleInformation.academicTitle = 4 AND " +
+        "rbe.promotion.finished = true AND " +
+        "rbe.promotion.promotionDate >= :from AND " +
+        "rbe.promotion.promotionDate <= :to")
+    Integer getRegistryBookCountForInstitutionAndPeriodOldPromotion(Integer institutionId,
+                                                                    LocalDate from,
+                                                                    LocalDate to);
 }

@@ -1,6 +1,7 @@
 package rs.teslaris.thesislibrary.controller;
 
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -23,6 +25,7 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.thesislibrary.annotation.PromotionEditAndUsageCheck;
 import rs.teslaris.thesislibrary.annotation.RegistryBookEntryEditCheck;
+import rs.teslaris.thesislibrary.dto.InstitutionCountsReportDTO;
 import rs.teslaris.thesislibrary.dto.PhdThesisPrePopulatedDataDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
@@ -36,6 +39,13 @@ public class RegistryBookController {
 
     private final JwtUtil tokenUtil;
 
+
+    @GetMapping("/can-edit/{registryBookEntryId}")
+    @PreAuthorize("hasAuthority('UPDATE_REGISTRY_BOOK')")
+    @RegistryBookEntryEditCheck
+    public boolean canEditEntry(@PathVariable Integer registryBookEntryId) {
+        return registryBookService.canEdit(registryBookEntryId);
+    }
 
     @GetMapping("/can-add/{documentId}")
     @PreAuthorize("hasAuthority('ADD_TO_REGISTRY_BOOK')")
@@ -148,5 +158,31 @@ public class RegistryBookController {
     @PromotionEditAndUsageCheck
     public List<String> getPromoteesList(@PathVariable Integer promotionId) {
         return registryBookService.getPromoteesList(promotionId);
+    }
+
+    @GetMapping("/count-report")
+    @PreAuthorize("hasAuthority('GENERATE_PROMOTION_REPORT')")
+    public List<InstitutionCountsReportDTO> getInstitutionCountsReport(
+        @RequestParam
+        LocalDate from,
+        @RequestParam
+        LocalDate to,
+        @RequestHeader("Authorization")
+        String bearerToken) {
+        return registryBookService.institutionCountsReport(
+            tokenUtil.extractUserIdFromToken(bearerToken), from, to);
+    }
+
+    @GetMapping("/promoted/{institutionId}")
+    @PreAuthorize("hasAuthority('GENERATE_PROMOTION_REPORT')")
+    public Page<RegistryBookEntryDTO> getRegistryBookContent(@PathVariable Integer institutionId,
+                                                             @RequestParam
+                                                             LocalDate from,
+                                                             @RequestParam LocalDate to,
+                                                             Pageable pageable,
+                                                             @RequestHeader("Authorization")
+                                                             String bearerToken) {
+        return registryBookService.getRegistryBookForInstitutionAndPeriod(
+            tokenUtil.extractUserIdFromToken(bearerToken), institutionId, from, to, pageable);
     }
 }

@@ -69,6 +69,10 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     public void updatePromotion(Integer promotionId, PromotionDTO promotionDTO) {
         var promotionToUpdate = findOne(promotionId);
 
+        if (promotionToUpdate.getFinished()) {
+            throw new PromotionException("Finished promotions cannot be updated.");
+        }
+
         setCommonFields(promotionToUpdate, promotionDTO);
 
         save(promotionToUpdate);

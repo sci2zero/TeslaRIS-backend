@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
 import rs.teslaris.core.dto.person.ContactDTO;
@@ -35,13 +38,17 @@ import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
+import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.thesislibrary.converter.RegistryBookEntryConverter;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
+import rs.teslaris.thesislibrary.dto.InstitutionCountsReportDTO;
 import rs.teslaris.thesislibrary.dto.PhdThesisPrePopulatedDataDTO;
 import rs.teslaris.thesislibrary.dto.PreviousTitleInformationDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookContactInformationDTO;
@@ -138,9 +145,16 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     public void updateRegistryBookEntry(Integer registryBookEntryId,
                                         RegistryBookEntryDTO dto) {
         var entry = findOne(registryBookEntryId);
+
+        if (Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
+            !entry.getAllowSingleEdit()) {
+            throw new RegistryBookException("Can't update a promoted entry.");
+        }
+
         var presetOrgUnit = entry.getDissertationInformation().getOrganisationUnit();
         setCommonFields(entry, dto);
         entry.getDissertationInformation().setOrganisationUnit(presetOrgUnit);
+        entry.setAllowSingleEdit(false);
         save(entry);
     }
 
@@ -178,6 +192,12 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
     private RegistryBookPersonalInformation toPersonalInformation(
         RegistryBookPersonalInformationDTO dto) {
+        if (dto.getMotherName().isBlank() && dto.getFatherName().isBlank() &&
+            dto.getGuardianNameAndSurname().isBlank()) {
+            throw new RegistryBookException(
+                "You have to provide at least one parent's or guardian's name.");
+        }
+
         var pi = new RegistryBookPersonalInformation();
         pi.setAuthorName(
             new PersonName(dto.getAuthorName().getFirstname(), dto.getAuthorName().getOtherName(),
@@ -268,8 +288,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     public void removeFromPromotion(Integer registryBookEntryId) {
         var entry = findOne(registryBookEntryId);
 
-        if (Objects.isNull(entry.getPromotion())) {
-            throw new PromotionException("Already not in promotion.");
+        if (Objects.isNull(entry.getPromotion()) || entry.getPromotion().getFinished()) {
+            throw new PromotionException("Already not in ongoing promotion.");
         }
 
         performRemoval(entry, entry.getPromotion());
@@ -358,6 +378,13 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                 promotion.getInstitution().getId()), 0) + 1);
         registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
             .forEach(registryBookEntry -> {
+                if (Objects.requireNonNullElse(
+                        registryBookEntry.getDissertationInformation().getDiplomaNumber(), "")
+                    .isBlank() || Objects.isNull(
+                    registryBookEntry.getDissertationInformation().getDiplomaIssueDate())) {
+                    throw new RegistryBookException("missingDiplomaMetadataMessage");
+                }
+
                 registryBookEntry.setPromotionSchoolYear(finalPromotionSchoolYear);
                 registryBookEntry.setRegistryBookNumber(registryBookNumber.getAndIncrement());
                 registryBookEntry.setAttendanceIdentifier(null);
@@ -408,6 +435,92 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             });
 
         return addresses;
+    }
+
+    @Override
+    public Page<RegistryBookEntryDTO> getRegistryBookForInstitutionAndPeriod(Integer userId,
+                                                                             Integer institutionId,
+                                                                             LocalDate from,
+                                                                             LocalDate to,
+                                                                             Pageable pageable) {
+        var userEmploymentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
+        if (Objects.nonNull(userEmploymentInstitutionId) && userEmploymentInstitutionId > 0 &&
+            !organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                userEmploymentInstitutionId).contains(institutionId)) {
+            throw new CantEditException(
+                "You don't have rights to view this institution's registry book.");
+        }
+
+        return registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
+            institutionId, from, to, pageable).map(RegistryBookEntryConverter::toDTO);
+    }
+
+    public List<InstitutionCountsReportDTO> institutionCountsReport(
+        Integer userId,
+        LocalDate from,
+        LocalDate to) {
+        List<Integer> institutionIds = getInstitutionIdsForUser(userId);
+        Map<Integer, Pair<Integer, Integer>> countTable =
+            getCountsForInstitutions(institutionIds, from, to);
+
+        return countTable.entrySet().stream()
+            .map(entry -> new InstitutionCountsReportDTO(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    organisationUnitService.findOne(entry.getKey()).getName()),
+                entry.getValue()))
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public void allowSingleUpdate(Integer registryBookEntryId) {
+        var entry = findOne(registryBookEntryId);
+
+        if (!entry.getPromotion().getFinished()) {
+            throw new RegistryBookException("Entry is not promoted.");
+        }
+
+        entry.setAllowSingleEdit(true);
+        save(entry);
+    }
+
+    @Override
+    public boolean canEdit(Integer registryBookEntryId) {
+        var entry = findOne(registryBookEntryId);
+        return Objects.isNull(entry.getPromotion()) || !entry.getPromotion().getFinished() ||
+            entry.getAllowSingleEdit();
+    }
+
+    private List<Integer> getInstitutionIdsForUser(Integer userId) {
+        Integer topLevelInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(topLevelInstitutionId) || topLevelInstitutionId < 1) {
+            return userRepository.findAllRegistryAdmins().stream()
+                .map(admin -> userRepository.findOrganisationUnitIdForUser(admin.getId()))
+                .collect(Collectors.toList());
+        } else {
+            return organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                topLevelInstitutionId);
+        }
+    }
+
+    private Map<Integer, Pair<Integer, Integer>> getCountsForInstitutions(
+        List<Integer> institutionIds,
+        LocalDate from,
+        LocalDate to) {
+
+        Map<Integer, Pair<Integer, Integer>> countTable = new HashMap<>();
+
+        for (Integer institutionId : institutionIds) {
+            int newPromotionCount = registryBookEntryRepository
+                .getRegistryBookCountForInstitutionAndPeriodNewPromotion(institutionId, from, to);
+
+            int oldPromotionCount = registryBookEntryRepository
+                .getRegistryBookCountForInstitutionAndPeriodOldPromotion(institutionId, from, to);
+
+            countTable.put(institutionId, new Pair<>(newPromotionCount, oldPromotionCount));
+        }
+
+        return countTable;
     }
 
     @NotNull

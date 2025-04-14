@@ -22,6 +22,7 @@ import rs.teslaris.thesislibrary.dto.PreviousTitleInformationDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookContactInformationDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookPersonalInformationDTO;
+import rs.teslaris.thesislibrary.model.AcademicTitle;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -75,6 +76,7 @@ public class RegistryBookControllerTest extends BaseTest {
         prevTitle.setGraduationDate(LocalDate.of(2015, 6, 15));
         prevTitle.setInstitutionPlace("Town");
         prevTitle.setSchoolYear("2014/2015");
+        prevTitle.setAcademicTitle(AcademicTitle.MASTER_ACADEMIC_STUDIES);
         dto.setPreviousTitleInformation(prevTitle);
 
         return dto;
@@ -145,6 +147,22 @@ public class RegistryBookControllerTest extends BaseTest {
     @Test
     @Order(2)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testCanEdit() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/registry-book/can-edit/{registryBookEntryId}", 1)
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(3)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testUpdateRegistryBookEntry() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
         var request = getTestPayload();
@@ -159,7 +177,7 @@ public class RegistryBookControllerTest extends BaseTest {
     }
 
     @Test
-    @Order(5)
+    @Order(10)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeleteRegistryBookEntry() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
@@ -186,7 +204,7 @@ public class RegistryBookControllerTest extends BaseTest {
     }
 
     @Test
-    @Order(3)
+    @Order(5)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testAddToPromotion() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
@@ -201,7 +219,7 @@ public class RegistryBookControllerTest extends BaseTest {
     }
 
     @Test
-    @Order(4)
+    @Order(6)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testRemoveFromPromotion() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
@@ -215,7 +233,7 @@ public class RegistryBookControllerTest extends BaseTest {
     }
 
     @Test
-    @Order(5)
+    @Order(7)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testPromoteAll() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
@@ -226,5 +244,34 @@ public class RegistryBookControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(8)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetCountReport() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/registry-book/count-report?from=2023-11-11&to=2023-12-12")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(9)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetPromoted() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/registry-book/promoted/{institutionId}?from=2023-11-11&to=2023-12-12",
+                        1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 }

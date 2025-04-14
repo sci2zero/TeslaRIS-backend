@@ -39,6 +39,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceCon
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
+import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
@@ -371,5 +372,13 @@ public class ErrorHandlerConfiguration {
     ErrorObject handlePromotionException(HttpServletRequest request,
                                          PromotionException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(RegistryBookException.class)
+    @ResponseBody
+    ErrorObject handleRegistryBookException(HttpServletRequest request,
+                                            RegistryBookException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }
