@@ -129,6 +129,11 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Override
     public RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO dto, Integer thesisId) {
         var newEntry = new RegistryBookEntry();
+        var existingEntryId = registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId);
+        if (Objects.nonNull(existingEntryId) && existingEntryId > 0) {
+            throw new RegistryBookException("Entry with this thesis is already created.");
+        }
+
         var thesis = thesisService.getThesisById(thesisId);
 
         newEntry.setThesis(thesisService.getThesisById(thesisId));
@@ -161,6 +166,11 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Override
     public void deleteRegistryBookEntry(Integer registryBookEntryId) {
         var entry = findOne(registryBookEntryId);
+
+        if (Objects.nonNull(entry.getPromotion())) {
+            throw new RegistryBookException("Can't delete entry that has a promotion.");
+        }
+
         registryBookEntryRepository.delete(entry);
     }
 
@@ -304,8 +314,19 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         }
 
         var promotionDate = entry.get().getPromotion().getPromotionDate();
+        performRemoval(entry.get(), entry.get().getPromotion());
 
-        userRepository.findAllRegistryAdmins().forEach(userToNotify -> {
+        var adminUsersToNotify = userRepository.findAllRegistryAdmins();
+        adminUsersToNotify.addAll(
+            userRepository.findAllSystemAdmins()); // TODO: Should we notify system admin(s) as well?
+        adminUsersToNotify.forEach(userToNotify -> {
+            if (Objects.nonNull(userToNotify.getOrganisationUnit()) &&
+                !organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                        userToNotify.getOrganisationUnit().getId())
+                    .contains(
+                        entry.get().getDissertationInformation().getOrganisationUnit().getId())) {
+                return;
+            }
             notificationService.createNotification(
                 NotificationFactory.contructCandidatePulledFromPromotionNotification(
                     Map.of("candidateName",
@@ -316,13 +337,19 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         });
     }
 
+    @Override
+    public boolean isAttendanceNotCancelled(String attendanceIdentifier) {
+        var entry = registryBookEntryRepository.findByAttendanceIdentifier(attendanceIdentifier);
+        return entry.isPresent();
+    }
+
     private void performRemoval(RegistryBookEntry entry, Promotion promotion) {
         entry.setPromotion(null);
         entry.setAttendanceIdentifier(null);
         save(entry);
 
         // TODO: Language is hardcoded for now, should we make it parametrized somewhere?
-        notifyCandidate(promotion, entry, false, entry.getAttendanceIdentifier(), "SR");
+        notifyCandidate(promotion, entry, false, entry.getAttendanceIdentifier(), "sr");
     }
 
     private void notifyCandidate(Promotion promotion, RegistryBookEntry entry, boolean added,
@@ -376,7 +403,14 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         AtomicInteger registryBookNumber = new AtomicInteger(
             Objects.requireNonNullElse(registryBookEntryRepository.getLastRegistryBookNumber(
                 promotion.getInstitution().getId()), 0) + 1);
-        registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
+
+        var entriesToPromote =
+            registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged());
+        if (entriesToPromote.isEmpty()) {
+            throw new PromotionException("Can't promote empty promotion.");
+        }
+
+        entriesToPromote
             .forEach(registryBookEntry -> {
                 if (Objects.requireNonNullElse(
                         registryBookEntry.getDissertationInformation().getDiplomaNumber(), "")
@@ -398,7 +432,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    public boolean hasThesisRegistryBookEntry(Integer thesisId) {
+    public Integer hasThesisRegistryBookEntry(Integer thesisId) {
         return registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId);
     }
 
@@ -570,8 +604,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     .append(", ").append(mentor.getEmploymentTitle().getValue());
 
                 mentor.getInstitutions().stream().findFirst()
-                    .ifPresent(
-                        inst -> sb.append(" ").append(getTransliteratedContent(inst.getName())));
+                    .ifPresentOrElse(
+                        inst -> sb.append(" ").append(getTransliteratedContent(inst.getName())),
+                        () -> sb.append(" ").append(getTransliteratedContent(
+                            mentor.getAffiliationStatement().getDisplayAffiliationStatement())));
 
                 dto.setMentor(sb.toString().trim());
             });
@@ -590,8 +626,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     .append(", ").append(member.getEmploymentTitle().getValue());
 
                 member.getInstitutions().stream().findFirst()
-                    .ifPresent(
-                        inst -> sb.append(" ").append(getTransliteratedContent(inst.getName())));
+                    .ifPresentOrElse(
+                        inst -> sb.append(" ").append(getTransliteratedContent(inst.getName())),
+                        () -> sb.append(" ").append(getTransliteratedContent(
+                            member.getAffiliationStatement().getDisplayAffiliationStatement())));
             });
         dto.setCommission(sb.toString().trim());
     }

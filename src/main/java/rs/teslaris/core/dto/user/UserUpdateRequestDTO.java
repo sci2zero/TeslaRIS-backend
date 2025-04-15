@@ -32,6 +32,10 @@ public class UserUpdateRequestDTO {
     @Positive(message = "Preferred languageID must be a positive number.")
     private Integer preferredLanguageId;
 
+    @NotNull(message = "You must provide a preferred reference language ID.")
+    @Positive(message = "Preferred reference languageID must be a positive number.")
+    private Integer preferredReferenceLanguageId;
+
     private Integer organisationalUnitId;
 
     @NotNull(message = "User notification period cannot be null.")

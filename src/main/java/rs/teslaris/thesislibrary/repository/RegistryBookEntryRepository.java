@@ -33,8 +33,8 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
 
     Optional<RegistryBookEntry> findByAttendanceIdentifier(String attendanceIdentifier);
 
-    @Query("SELECT COUNT(rbe) > 0 FROM RegistryBookEntry rbe WHERE rbe.thesis.id = :thesisId")
-    boolean hasThesisRegistryBookEntry(Integer thesisId);
+    @Query("SELECT rbe.id FROM RegistryBookEntry rbe WHERE rbe.thesis.id = :thesisId")
+    Integer hasThesisRegistryBookEntry(Integer thesisId);
 
     @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE " +
         "rbe.promotion.promotionDate >= :from AND " +

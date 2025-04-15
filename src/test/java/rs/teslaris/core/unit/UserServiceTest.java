@@ -154,7 +154,7 @@ public class UserServiceTest {
         var userId = 1;
         var user =
             new User("email@email.com", "passwd", "",
-                "Ime", "Prezime", false, true, null,
+                "Ime", "Prezime", false, true, null, null,
                 new Authority("RESEARCHER", null), null, null, null, UserNotificationPeriod.NEVER);
         user.setId(1);
 
@@ -174,7 +174,7 @@ public class UserServiceTest {
         var userId = 1;
         var user =
             new User("email@email.com", "passwd", "",
-                "Ime", "Prezime", false, true, null,
+                "Ime", "Prezime", false, true, null, null,
                 new Authority("ADMIN", null), null, null, null, UserNotificationPeriod.NEVER);
         user.setId(1);
 
@@ -231,7 +231,8 @@ public class UserServiceTest {
                 "Content", 1)));
         var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -249,7 +250,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredReferenceLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -281,7 +282,8 @@ public class UserServiceTest {
 
         var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -300,7 +302,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredNotificationLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -332,7 +334,8 @@ public class UserServiceTest {
 
         var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -351,7 +354,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredNotificationLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -386,7 +389,7 @@ public class UserServiceTest {
 
         var newUser = new User("regadmin@example.com", "password123", "",
             "Promotion", "Admin", true,
-            false, language, authority, null, organisationUnit, null,
+            false, language, language, authority, null, organisationUnit, null,
             UserNotificationPeriod.WEEKLY);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
@@ -406,7 +409,7 @@ public class UserServiceTest {
         assertEquals("regadmin@example.com", savedUser.getEmail());
         assertEquals("Promotion", savedUser.getFirstname());
         assertEquals("Admin", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredReferenceLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -441,7 +444,8 @@ public class UserServiceTest {
 
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -459,7 +463,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredNotificationLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -500,7 +504,7 @@ public class UserServiceTest {
         UserAccountActivation accountActivation = new UserAccountActivation(activationTokenValue,
             new User("johndoe@example.com", "password123", "",
                 "John", "Doe", true,
-                true, new Language(), new Authority(), null, null, null,
+                true, new Language(), new Language(), new Authority(), null, null, null,
                 UserNotificationPeriod.NEVER));
         when(
             userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
@@ -564,7 +568,8 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setLocked(false);
         user.setCanTakeRole(false);
-        user.setPreferredLanguage(new Language());
+        user.setPreferredNotificationLanguage(new Language());
+        user.setPreferredReferenceLanguage(new Language());
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
@@ -594,7 +599,7 @@ public class UserServiceTest {
         assertEquals("Jane", user.getFirstname());
         assertEquals("Doe", user.getLastName());
         assertFalse(user.getCanTakeRole());
-        assertEquals(preferredLanguage, user.getPreferredLanguage());
+        assertEquals(preferredLanguage, user.getPreferredNotificationLanguage());
         assertEquals(person, user.getPerson());
         assertNotEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
@@ -610,6 +615,7 @@ public class UserServiceTest {
         requestDTO.setFirstname("JOHN");
         requestDTO.setLastName("SMITH");
         requestDTO.setPreferredLanguageId(1);
+        requestDTO.setPreferredReferenceLanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.DAILY);
 
@@ -621,7 +627,8 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setCanTakeRole(false);
         user.setLocked(false);
-        user.setPreferredLanguage(new Language());
+        user.setPreferredNotificationLanguage(new Language());
+        user.setPreferredReferenceLanguage(new Language());
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
@@ -651,7 +658,7 @@ public class UserServiceTest {
         assertEquals("JOHN", user.getFirstname());
         assertEquals("SMITH", user.getLastName());
         assertFalse(user.getCanTakeRole());
-        assertEquals(preferredLanguage, user.getPreferredLanguage());
+        assertEquals(preferredLanguage, user.getPreferredReferenceLanguage());
         assertEquals(person, user.getPerson());
         assertEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
@@ -849,7 +856,8 @@ public class UserServiceTest {
 
         var user = new User();
         user.setEmail("test@example.com");
-        user.setPreferredLanguage(new Language(LanguageAbbreviations.SERBIAN, new HashSet<>()));
+        user.setPreferredNotificationLanguage(
+            new Language(LanguageAbbreviations.SERBIAN, new HashSet<>()));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
@@ -944,7 +952,8 @@ public class UserServiceTest {
         // Given
         var personId = 1;
         var user = new User();
-        user.setPreferredLanguage(new Language());
+        user.setPreferredNotificationLanguage(new Language());
+        user.setPreferredReferenceLanguage(new Language());
 
         when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(user));
 

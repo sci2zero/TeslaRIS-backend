@@ -318,6 +318,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new User(registrationRequest.getEmail(),
                 passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
+                languageService.findOne(registrationRequest.getPreferredLanguageId()),
                 languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
                 person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
                 null, UserNotificationPeriod.NEVER);
@@ -328,7 +329,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        var language = savedUser.getPreferredLanguage().getLanguageCode().toLowerCase();
+        var language = savedUser.getPreferredNotificationLanguage().getLanguageCode().toLowerCase();
         String activationLink =
             clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
                 "/activate-account/" + activationToken.getActivationToken();
@@ -405,6 +406,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             true,
             false,
             languageService.findOne(preferredLanguageId),
+            languageService.findOne(preferredLanguageId),
             authority,
             null,
             organisationUnit,
@@ -419,7 +421,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        var language = savedUser.getPreferredLanguage().getLanguageCode().toLowerCase();
+        var language = savedUser.getPreferredNotificationLanguage().getLanguageCode().toLowerCase();
         String activationLink =
             generateActivationLink(language, activationToken.getActivationToken());
 
@@ -465,7 +467,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                                                 Integer userId, String fingerprint) {
         var userToUpdate = findOne(userId);
 
-        var preferredLanguage = languageService.findOne(userUpdateRequest.getPreferredLanguageId());
+        var preferredNotificationLanguage =
+            languageService.findOne(userUpdateRequest.getPreferredLanguageId());
+        var preferredReferenceLanguage =
+            languageService.findOne(userUpdateRequest.getPreferredReferenceLanguageId());
 
         var userRole = userToUpdate.getAuthority().getName();
         if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
@@ -486,7 +491,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         userToUpdate.setEmail(userUpdateRequest.getEmail());
-        userToUpdate.setPreferredLanguage(preferredLanguage);
+        userToUpdate.setPreferredNotificationLanguage(preferredNotificationLanguage);
+        userToUpdate.setPreferredReferenceLanguage(preferredReferenceLanguage);
         userToUpdate.setUserNotificationPeriod(userUpdateRequest.getNotificationPeriod());
 
         if (!userToUpdate.getUserNotificationPeriod().equals(UserNotificationPeriod.NEVER) &&
@@ -532,7 +538,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         try {
             var user = (User) loadUserByUsername(userEmail);
             var resetToken = UUID.randomUUID().toString();
-            var language = user.getPreferredLanguage().getLanguageCode().toLowerCase();
+            var language = user.getPreferredNotificationLanguage().getLanguageCode().toLowerCase();
 
             String resetLink =
                 clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
@@ -540,12 +546,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             String emailSubject = messageSource.getMessage(
                 "resetPassword.mailSubject",
                 new Object[] {},
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredNotificationLanguage().getLanguageCode().toLowerCase())
             );
             String emailBody = messageSource.getMessage(
                 "resetPassword.mailBody",
                 new Object[] {resetLink},
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredNotificationLanguage().getLanguageCode().toLowerCase())
             );
 
             emailUtil.sendSimpleEmail(user.getEmail(), emailSubject, emailBody);

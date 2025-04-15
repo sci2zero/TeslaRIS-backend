@@ -1,4 +1,4 @@
-package rs.teslaris.assessment.model;
+package rs.teslaris.thesislibrary.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,19 +12,20 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "commission_report")
+@Table(name = "registry_book_report")
 @SQLRestriction("deleted=false")
-public class CommissionReport extends BaseEntity {
+public class RegistryBookReport extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "source_commission_id", nullable = false)
-    private Commission commission;
+    @JoinColumn(name = "source_institution_id", nullable = false)
+    private OrganisationUnit institution;
 
     @Column(name = "report_file_name")
     private String reportFileName;

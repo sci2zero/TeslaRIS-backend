@@ -237,6 +237,13 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
 
+                // THESIS LIBRARY
+                .requestMatchers(HttpMethod.PATCH,
+                    "/api/registry-book/cancel-attendance/{attendanceId}").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
+                .permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

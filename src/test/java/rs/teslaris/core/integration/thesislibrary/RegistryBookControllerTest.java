@@ -182,9 +182,17 @@ public class RegistryBookControllerTest extends BaseTest {
     public void testDeleteRegistryBookEntry() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
+        var testPayload = getTestPayload();
+        String requestBody = objectMapper.writeValueAsString(testPayload);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/registry-book/{thesisId}", 14)
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_REGISTRY_BOOK_ENTRY_1"))
+            .andExpect(status().isCreated());
         mockMvc.perform(
                 MockMvcRequestBuilders.delete(
-                        "http://localhost:8081/api/registry-book/{registryBookEntryId}", 1)
+                        "http://localhost:8081/api/registry-book/{registryBookEntryId}", 2)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -230,6 +238,14 @@ public class RegistryBookControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/registry-book/add/{registryBookEntryId}/{promotionId}",
+                        1, 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test
@@ -272,6 +288,16 @@ public class RegistryBookControllerTest extends BaseTest {
                         1)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testIsAttendanceNotCanceled() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/registry-book/is-attendance-cancellable/{attendanceIdentifier}",
+                        "test-test-test-test")
+                    .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 }

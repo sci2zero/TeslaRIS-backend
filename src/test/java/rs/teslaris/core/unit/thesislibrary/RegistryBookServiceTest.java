@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit.thesislibrary;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -505,16 +506,16 @@ class RegistryBookServiceTest {
     }
 
     @Test
-    void shouldReturnTrueIfThesisHasRegistryBookEntry() {
+    void shouldReturnIdIfThesisHasRegistryBookEntry() {
         // Given
         var thesisId = 123;
-        when(registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId)).thenReturn(true);
+        when(registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId)).thenReturn(1);
 
         // When
         var result = registryBookService.hasThesisRegistryBookEntry(thesisId);
 
         // Then
-        assertTrue(result);
+        assertEquals(1, result);
         verify(registryBookEntryRepository).hasThesisRegistryBookEntry(thesisId);
     }
 
@@ -714,5 +715,34 @@ class RegistryBookServiceTest {
         // When / Then
         assertThrows(RegistryBookException.class,
             () -> registryBookService.allowSingleUpdate(entryId));
+    }
+
+    @Test
+    void shouldReturnTrueWhenAttendanceIsNotCancelled() {
+        // Given
+        var identifier = "abc-123";
+        var mockEntry = new RegistryBookEntry();
+        when(registryBookEntryRepository.findByAttendanceIdentifier(identifier))
+            .thenReturn(Optional.of(mockEntry));
+
+        // When
+        var result = registryBookService.isAttendanceNotCancelled(identifier);
+
+        // Then
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenAttendanceIsCancelledOrMissing() {
+        // Given
+        var identifier = "xyz-456";
+        when(registryBookEntryRepository.findByAttendanceIdentifier(identifier))
+            .thenReturn(Optional.empty());
+
+        // When
+        var result = registryBookService.isAttendanceNotCancelled(identifier);
+
+        // Then
+        assertFalse(result);
     }
 }

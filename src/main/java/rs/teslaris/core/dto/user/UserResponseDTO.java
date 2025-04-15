@@ -28,6 +28,8 @@ public class UserResponseDTO {
 
     private String preferredLanguage;
 
+    private String referenceLanguage;
+
     private Integer organisationUnitId;
 
     private Integer commissionId;

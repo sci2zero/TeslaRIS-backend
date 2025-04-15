@@ -53,8 +53,12 @@ public class User extends BaseEntity implements UserDetails {
     private Boolean canTakeRole;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "language_id")
-    private Language preferredLanguage;
+    @JoinColumn(name = "notification_language_id")
+    private Language preferredNotificationLanguage;
+
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "reference_language_id")
+    private Language preferredReferenceLanguage;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinColumn(name = "authority_id")

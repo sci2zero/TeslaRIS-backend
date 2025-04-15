@@ -3,6 +3,7 @@ package rs.teslaris.thesislibrary.controller;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,8 +51,8 @@ public class RegistryBookController {
     @GetMapping("/can-add/{documentId}")
     @PreAuthorize("hasAuthority('ADD_TO_REGISTRY_BOOK')")
     @PublicationEditCheck("THESIS")
-    public boolean getCanAdd(@PathVariable Integer documentId) {
-        return !registryBookService.hasThesisRegistryBookEntry(documentId);
+    public Integer getCanAdd(@PathVariable Integer documentId) {
+        return registryBookService.hasThesisRegistryBookEntry(documentId);
     }
 
     @GetMapping("/{registryBookEntryId}")
@@ -137,7 +138,7 @@ public class RegistryBookController {
 
     @PatchMapping("/cancel-attendance/{attendanceId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeRegistryBookEntryFromPromotion(@PathVariable String attendanceId) {
+    public void cancelAttendance(@PathVariable String attendanceId) {
         registryBookService.removeFromPromotion(attendanceId);
     }
 
@@ -176,13 +177,29 @@ public class RegistryBookController {
     @GetMapping("/promoted/{institutionId}")
     @PreAuthorize("hasAuthority('GENERATE_PROMOTION_REPORT')")
     public Page<RegistryBookEntryDTO> getRegistryBookContent(@PathVariable Integer institutionId,
-                                                             @RequestParam
+                                                             @RequestParam(required = false)
                                                              LocalDate from,
-                                                             @RequestParam LocalDate to,
+                                                             @RequestParam(required = false)
+                                                             LocalDate to,
                                                              Pageable pageable,
                                                              @RequestHeader("Authorization")
                                                              String bearerToken) {
         return registryBookService.getRegistryBookForInstitutionAndPeriod(
-            tokenUtil.extractUserIdFromToken(bearerToken), institutionId, from, to, pageable);
+            tokenUtil.extractUserIdFromToken(bearerToken), institutionId,
+            Objects.requireNonNullElse(from, LocalDate.of(1000, 1, 1)),
+            Objects.requireNonNullElse(to, LocalDate.now()), pageable);
+    }
+
+    @PatchMapping("/allow-single-update/{registryBookEntryId}")
+    @PreAuthorize("hasAuthority('ALLOW_REG_ENTRY_SINGLE_UPDATE')")
+    @RegistryBookEntryEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void allowSingleUpdate(@PathVariable Integer registryBookEntryId) {
+        registryBookService.allowSingleUpdate(registryBookEntryId);
+    }
+
+    @GetMapping("/is-attendance-cancellable/{attendanceIdentifier}")
+    public boolean isAttendanceNotCanceled(@PathVariable String attendanceIdentifier) {
+        return registryBookService.isAttendanceNotCancelled(attendanceIdentifier);
     }
 }

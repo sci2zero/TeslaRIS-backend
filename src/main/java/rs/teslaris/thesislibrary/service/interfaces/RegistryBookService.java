@@ -37,9 +37,11 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
 
     void removeFromPromotion(String attendanceIdentifier);
 
+    boolean isAttendanceNotCancelled(String attendanceIdentifier);
+
     void promoteAll(Integer promotionId);
 
-    boolean hasThesisRegistryBookEntry(Integer thesisId);
+    Integer hasThesisRegistryBookEntry(Integer thesisId);
 
     List<String> getPromoteesList(Integer promotionId);
 

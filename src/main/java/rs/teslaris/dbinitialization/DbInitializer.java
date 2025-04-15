@@ -165,6 +165,7 @@ public class DbInitializer implements ApplicationRunner {
         var removeFromRegistryBook = new Privilege("REMOVE_FROM_REGISTRY_BOOK");
         var managePromotions = new Privilege("MANAGE_PROMOTIONS");
         var generatePromotionReport = new Privilege("GENERATE_PROMOTION_REPORT");
+        var allowRegEntrySingleUpdate = new Privilege("ALLOW_REG_ENTRY_SINGLE_UPDATE");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -191,7 +192,7 @@ public class DbInitializer implements ApplicationRunner {
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview,
                 performThesisSearch, addToPromotion, removeFromPromotion, addToRegistryBook,
                 removeFromRegistryBook, updateRegistryBook, managePromotions,
-                generatePromotionReport));
+                generatePromotionReport, allowRegEntrySingleUpdate));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -217,7 +218,7 @@ public class DbInitializer implements ApplicationRunner {
                 deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
                 unarchiveThesis, performThesisReport, performThesisSearch, addToPromotion,
                 removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook,
-                generatePromotionReport
+                generatePromotionReport, allowRegEntrySingleUpdate
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -338,7 +339,8 @@ public class DbInitializer implements ApplicationRunner {
         // ADMIN USER
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage, adminAuthority, null, null, null,
+                "Markovic", false, false, serbianLanguage, englishLanguage, adminAuthority, null,
+                null, null,
                 UserNotificationPeriod.DAILY);
         userRepository.save(adminUser);
 

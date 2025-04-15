@@ -130,7 +130,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(), null, null,
+            newUser.getPreferredNotificationLanguage().getLanguageCode(),
+            newUser.getPreferredReferenceLanguage().getLanguageCode(), null, null,
             newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
     }
 
@@ -160,7 +161,8 @@ public class UserController {
                                                       EmployeeRegistrationRequestDTO registrationRequest) {
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(),
+            newUser.getPreferredNotificationLanguage().getLanguageCode(),
+            newUser.getPreferredReferenceLanguage().getLanguageCode(),
             registrationRequest.getOrganisationUnitId(), null, null, null,
             newUser.getUserNotificationPeriod());
     }
@@ -176,7 +178,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(),
+            newUser.getPreferredNotificationLanguage().getLanguageCode(),
+            newUser.getPreferredReferenceLanguage().getLanguageCode(),
             registrationRequest.getOrganisationUnitId(), registrationRequest.getCommissionId(),
             null, null,
             newUser.getUserNotificationPeriod());

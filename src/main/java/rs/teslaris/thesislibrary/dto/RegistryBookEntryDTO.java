@@ -35,5 +35,9 @@ public class RegistryBookEntryDTO {
     private Boolean inPromotion = false;
 
     private Boolean promoted = false;
+
+    private String promotionSchoolYear;
+
+    private Integer registryBookNumber;
 }
 
