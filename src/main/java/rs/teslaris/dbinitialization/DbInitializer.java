@@ -166,6 +166,7 @@ public class DbInitializer implements ApplicationRunner {
         var managePromotions = new Privilege("MANAGE_PROMOTIONS");
         var generatePromotionReport = new Privilege("GENERATE_PROMOTION_REPORT");
         var allowRegEntrySingleUpdate = new Privilege("ALLOW_REG_ENTRY_SINGLE_UPDATE");
+        var generateRegBookReport = new Privilege("GENERATE_REG_BOOK_REPORT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -192,7 +193,7 @@ public class DbInitializer implements ApplicationRunner {
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview,
                 performThesisSearch, addToPromotion, removeFromPromotion, addToRegistryBook,
                 removeFromRegistryBook, updateRegistryBook, managePromotions,
-                generatePromotionReport, allowRegEntrySingleUpdate));
+                generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -218,7 +219,7 @@ public class DbInitializer implements ApplicationRunner {
                 deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
                 unarchiveThesis, performThesisReport, performThesisSearch, addToPromotion,
                 removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook,
-                generatePromotionReport, allowRegEntrySingleUpdate
+                generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -265,7 +266,8 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString(),
                 new HashSet<>(List.of(
                     updateProfile, allowAccountTakeover, addToPromotion, removeFromPromotion,
-                    updateRegistryBook, managePromotions, generatePromotionReport
+                    updateRegistryBook, managePromotions, generatePromotionReport,
+                    generateRegBookReport
                 )));
 
         authorityRepository.saveAll(

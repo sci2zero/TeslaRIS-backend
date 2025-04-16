@@ -71,4 +71,14 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
     Integer getRegistryBookCountForInstitutionAndPeriodOldPromotion(Integer institutionId,
                                                                     LocalDate from,
                                                                     LocalDate to);
+
+    @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE " +
+        "rbe.registryBookInstitution.id = :institutionId AND " +
+        "rbe.promotion.finished = true AND " +
+        "rbe.promotion.promotionDate >= :from AND " +
+        "rbe.promotion.promotionDate <= :to")
+    Page<RegistryBookEntry> getRegistryBookCountForInstitutionAndPeriod(Integer institutionId,
+                                                                        LocalDate from,
+                                                                        LocalDate to,
+                                                                        Pageable pageable);
 }

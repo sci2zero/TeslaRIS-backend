@@ -51,6 +51,9 @@ public class RegistryBookEntry extends BaseEntity {
     @Column(name = "registry_book_number")
     private Integer registryBookNumber;
 
+    @Column(name = "promotion_ordinal_number")
+    private Integer promotionOrdinalNumber;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registry_book_institution_id")
     private OrganisationUnit registryBookInstitution;
