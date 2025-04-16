@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.MethodOrderer;
@@ -41,6 +42,7 @@ public class ThesisControllerTest extends BaseTest {
         thesisDTO.setDocumentDate("2004-11-06");
         thesisDTO.setThesisType(ThesisType.PHD);
         thesisDTO.setOrganisationUnitId(1);
+        thesisDTO.setThesisDefenceDate(LocalDate.of(2024, 1, 31));
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false,
