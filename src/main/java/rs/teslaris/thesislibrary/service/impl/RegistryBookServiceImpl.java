@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -67,6 +68,7 @@ import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     implements RegistryBookService {
 
@@ -259,7 +261,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     public PhdThesisPrePopulatedDataDTO getPrePopulatedPHDThesisInformation(Integer thesisId) {
         var phdThesis = thesisService.getThesisById(thesisId);
 
-        if (phdThesis.getThesisDefenceDate() == null ||
+        log.info("AAAAAAAAAAAAAAAAAAAAAAAAA {} | {}", phdThesis.getThesisDefenceDate(),
+            phdThesis.getThesisType().name());
+        if (Objects.isNull(phdThesis.getThesisDefenceDate()) ||
             !(ThesisType.PHD.equals(phdThesis.getThesisType()) ||
                 ThesisType.PHD_ART_PROJECT.equals(phdThesis.getThesisType()))) {
             throw new ThesisException(
