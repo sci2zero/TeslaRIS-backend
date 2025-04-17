@@ -26,6 +26,8 @@ jobs:
         run: mvn -B package -DskipTests --file pom.xml
         env:
           DB_PASSWORD: postgres
+          MINIO_ACCESS_KEY: minio-access-key
+          MINIO_SECRET_KEY: minio-secret-key
   test:
     runs-on: ubuntu-latest
 

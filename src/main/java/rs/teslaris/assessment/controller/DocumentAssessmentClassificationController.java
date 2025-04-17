@@ -72,6 +72,7 @@ public class DocumentAssessmentClassificationController {
     @PostMapping("/schedule-publication-assessment/{documentType}")
     @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void performPublicationAssessmentForThePastYear(@RequestParam("timestamp")
                                                            LocalDateTime timestamp,
                                                            @RequestParam("dateFrom")

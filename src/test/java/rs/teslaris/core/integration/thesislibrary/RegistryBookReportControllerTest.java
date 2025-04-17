@@ -20,10 +20,10 @@ public class RegistryBookReportControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                        "http://localhost:8081/api/registry-book/report/generate?from=2022-03-03&to=2023-04-04&institutionId=1&lang=sr")
+                        "http://localhost:8081/api/registry-book/report/schedule-generation?from=2022-03-03&to=2023-04-04&institutionId=1&lang=sr")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-            .andExpect(status().isOk());
+            .andExpect(status().isAccepted());
     }
 
     @Test

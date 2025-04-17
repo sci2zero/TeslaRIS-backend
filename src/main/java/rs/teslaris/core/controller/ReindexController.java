@@ -4,12 +4,14 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.commontypes.ReindexRequestDTO;
@@ -33,6 +35,7 @@ public class ReindexController {
     @PostMapping("/schedule")
     @PreAuthorize("hasAnyAuthority('REINDEX_DATABASE', 'SCHEDULE_TASK')")
     @Idempotent
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleDatabaseReindex(@RequestParam("timestamp")
                                         LocalDateTime timestamp,
                                         @RequestHeader("Authorization")

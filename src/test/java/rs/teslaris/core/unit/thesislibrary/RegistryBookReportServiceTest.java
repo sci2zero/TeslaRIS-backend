@@ -2,19 +2,29 @@ package rs.teslaris.core.unit.thesislibrary;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.minio.GetObjectResponse;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
@@ -36,6 +46,9 @@ public class RegistryBookReportServiceTest {
 
     @Mock
     private FileService fileService;
+
+    @Mock
+    private TaskManagerService taskManagerService;
 
     @InjectMocks
     private RegistryBookReportServiceImpl registryBookReportService;
@@ -151,5 +164,71 @@ public class RegistryBookReportServiceTest {
         assertThatThrownBy(() -> registryBookReportService.serveReportFile(fileName, userId))
             .isInstanceOf(RegistryBookException.class)
             .hasMessageContaining("No report with given filename.");
+    }
+
+    @Test
+    void shouldSetCorrectTimeAndSchedulesTask() {
+        // Given
+        var from = LocalDate.of(2024, 1, 1);
+        var to = LocalDate.of(2024, 12, 31);
+        var institutionId = 123;
+        var lang = "en";
+        var userId = 456;
+
+        var mockTime = LocalDateTime.of(2025, 4, 14, 10, 30);
+
+        when(taskManagerService.findNextFreeExecutionTime()).thenReturn(mockTime);
+
+        // When
+        String result =
+            registryBookReportService.scheduleReportGeneration(from, to, institutionId, lang,
+                userId);
+
+        // Then
+        var taskCaptor = ArgumentCaptor.forClass(Runnable.class);
+        var idCaptor = ArgumentCaptor.forClass(String.class);
+
+        verify(taskManagerService).scheduleTask(
+            idCaptor.capture(),
+            eq(mockTime),
+            taskCaptor.capture(),
+            eq(userId)
+        );
+
+        assertTrue(idCaptor.getValue().startsWith("Registry_Book-" + institutionId));
+        assertEquals("10:30h", result);
+    }
+
+    @Test
+    void shouldDeleteWhenReportExists() {
+        // Given
+        String fileName = "report123.pdf";
+        RegistryBookReport mockReport = new RegistryBookReport();
+        when(registryBookReportRepository.findByReportFileName(fileName))
+            .thenReturn(Optional.of(mockReport));
+        when(userRepository.findOrganisationUnitIdForUser(1))
+            .thenReturn(0);
+
+        // When
+        registryBookReportService.deleteReportFile(fileName, 1);
+
+        // Then
+        verify(registryBookReportRepository).delete(mockReport);
+    }
+
+    @Test
+    void shouldNotDeleteWhenReportNotFound() {
+        // Given
+        String fileName = "nonexistent.pdf";
+        when(registryBookReportRepository.findByReportFileName(fileName))
+            .thenReturn(Optional.empty());
+        when(userRepository.findOrganisationUnitIdForUser(1))
+            .thenReturn(0);
+
+        // When
+        registryBookReportService.deleteReportFile(fileName, 1);
+
+        // Then
+        verify(registryBookReportRepository, never()).delete(any());
     }
 }

@@ -85,6 +85,7 @@ public class PublicationSeriesAssessmentClassificationController {
     @PostMapping("/schedule-classification")
     @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void schedulePublicationSeriesAssessmentClassificationComputation(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("commissionId") Integer commissionId,
@@ -99,6 +100,7 @@ public class PublicationSeriesAssessmentClassificationController {
     @PostMapping("/schedule-classification-load")
     @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void schedulePublicationSeriesAssessmentClassificationLoad(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("source") EntityClassificationSource source,

@@ -581,7 +581,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             .filter(c -> DocumentContributionType.AUTHOR.equals(c.getContributionType()))
             .findFirst()
             .ifPresent(author -> {
-                dto.setPersonName(PersonNameConverter.toDTO(
+                dto.setPersonName(PersonNameConverter.toTransliteratedDTO(
                     author.getAffiliationStatement().getDisplayPersonName()));
                 var person = author.getPerson();
                 if (Objects.nonNull(person) && Objects.nonNull(person.getPersonalInfo())) {

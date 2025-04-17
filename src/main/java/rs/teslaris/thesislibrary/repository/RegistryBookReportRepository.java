@@ -1,5 +1,6 @@
 package rs.teslaris.thesislibrary.repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +15,7 @@ public interface RegistryBookReportRepository extends JpaRepository<RegistryBook
 
     @Query("SELECT rbr FROM RegistryBookReport rbr WHERE rbr.institution.id = :institutionId")
     List<RegistryBookReport> findForInstitution(Integer institutionId);
+
+    @Query("SELECT rbr FROM RegistryBookReport rbr WHERE rbr.createDate <= :startDate")
+    List<RegistryBookReport> findStaleReports(Date startDate);
 }

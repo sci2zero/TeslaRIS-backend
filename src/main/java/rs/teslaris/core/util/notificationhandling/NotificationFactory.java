@@ -198,6 +198,26 @@ public class NotificationFactory {
             NotificationType.SCHEDULED_TASK_COMPLETED, user);
     }
 
+    public static Notification contructScheduledReportGenerationCompletedNotification(
+        Map<String, String> notificationValues, User user, boolean success) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("duration")};
+        try {
+            message = messageSource.getMessage(
+                success ? "notification.scheduleReportGenerationCompleted" :
+                    "notification.scheduleReportGenerationFailed",
+                args,
+                Locale.forLanguageTag(
+                    user.getPreferredNotificationLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.SCHEDULED_TASK_COMPLETED, user);
+    }
+
     private static String fallbackToDefaultLocale(Object[] args) {
         return messageSource.getMessage(
             "notification.addedToPublication",

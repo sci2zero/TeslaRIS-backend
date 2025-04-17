@@ -22,7 +22,7 @@ public class DissertationInformation {
     @Column(name = "dissertation_title")
     private String dissertationTitle;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "org_unit_id")
     private OrganisationUnit organisationUnit;
 

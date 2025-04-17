@@ -15,30 +15,34 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
 import io.minio.GetObjectResponse;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.ResourceMultipartFile;
@@ -56,6 +60,7 @@ import rs.teslaris.thesislibrary.service.interfaces.RegistryBookReportService;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class RegistryBookReportServiceImpl implements RegistryBookReportService {
 
     private final RegistryBookEntryRepository registryBookEntryRepository;
@@ -70,13 +75,27 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
 
     private final UserRepository userRepository;
 
+    private final TaskManagerService taskManagerService;
+
     private final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.GERMANY);
 
 
     @Override
-    public InputStreamResource generateReport(LocalDate from, LocalDate to, Integer institutionId,
-                                              String lang) {
+    public String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
+                                           String lang, Integer userId) {
+        var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();
+        taskManagerService.scheduleTask(
+            "Registry_Book-" + institutionId +
+                "-" + from + "_" + to + "_" + lang +
+                "-" + UUID.randomUUID(), reportGenerationTime,
+            () -> generateReport(from, to, institutionId, lang),
+            userId);
+        return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
+    }
+
+    private void generateReport(LocalDate from, LocalDate to, Integer institutionId,
+                                String lang) {
         Map<String, List<List<String>>> groupedReportTableRows =
             loadGroupedRegistryBookRows(from, to, institutionId, lang);
 
@@ -102,7 +121,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
             document.close();
             writer.close();
 
-            var reportName = "report" + "_" + institutionId + "_" + from + "_" + to + "_" + ".pdf";
+            var reportName = generateReportFileName(from, to, institutionId);
             var serverFilename =
                 fileService.store(convertToMultipartFile(out.toByteArray(), reportName),
                     reportName.split("\\.")[0]);
@@ -112,10 +131,10 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
             var reportFile = new RegistryBookReport();
             reportFile.setInstitution(organisationUnitService.findOne(institutionId));
             reportFile.setReportFileName(serverFilename);
-
-            return new InputStreamResource(new ByteArrayInputStream(out.toByteArray()));
+            registryBookReportRepository.save(reportFile);
         } catch (Exception e) {
-            throw new RuntimeException("PDF generation failed", e);
+            log.error("PDF generation failed. Reason: {}", e.getMessage());
+            throw new RegistryBookException("PDF generation failed.");
         }
     }
 
@@ -149,10 +168,26 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
         if (Objects.nonNull(userInstitution) && userInstitution > 0 &&
             !organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitution)
                 .contains(report.getInstitution().getId())) {
-            throw new RegistryBookException("Unauthorised to view report");
+            throw new RegistryBookException("Unauthorised to view report.");
         }
 
         return fileService.loadAsResource(reportFileName);
+    }
+
+    @Override
+    public void deleteReportFile(String reportFileName, Integer userId) {
+        registryBookReportRepository.findByReportFileName(reportFileName)
+            .ifPresent(report -> {
+                var userInstitution = userRepository.findOrganisationUnitIdForUser(userId);
+
+                if (Objects.nonNull(userInstitution) && userInstitution > 0 &&
+                    !organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitution)
+                        .contains(report.getInstitution().getId())) {
+                    throw new RegistryBookException("Unauthorised to delete report.");
+                }
+
+                registryBookReportRepository.delete(report);
+            });
     }
 
     private Map<String, List<List<String>>> loadGroupedRegistryBookRows(LocalDate from,
@@ -247,7 +282,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
             addAuthorInfo(rowData, entry.getPersonalInformation(), lang);
             addPreviousInstitutionInfo(rowData, entry.getPreviousTitleInformation());
             addPreviousTitleInfo(rowData, entry.getPreviousTitleInformation());
-            addDissertationInstitution(rowData, entry.getDissertationInformation(), lang);
+            addDissertationInstitution(rowData, entry.getDissertationInformation());
             addDissertationTitle(rowData, entry.getDissertationInformation(), lang);
             addCommissionAndMentor(rowData, entry.getDissertationInformation());
             addDefenceInfo(rowData, entry.getDissertationInformation(), lang);
@@ -281,8 +316,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
         rowData.add(info.getAcademicTitle().getValue() + "\n" + info.getSchoolYear());
     }
 
-    private void addDissertationInstitution(List<String> rowData, DissertationInformation info,
-                                            String lang) {
+    private void addDissertationInstitution(List<String> rowData, DissertationInformation info) {
         rowData.add(getTransliteratedContent(info.getOrganisationUnit().getName()) +
             ", " + info.getInstitutionPlace());
     }
@@ -436,6 +470,23 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
             new ByteArrayResource(byteArrayOutputStream.toByteArray()));
     }
 
+    private String generateReportFileName(LocalDate from, LocalDate to, Integer institutionId) {
+        var institution = organisationUnitService.findOne(institutionId);
+        return getTransliteratedContent(institution.getName()).replace(" ", "_") +
+            "_" + from + "_" + to + ".pdf";
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?") // Every day at 00:00 AM
+    public void deleteOldGeneratedReports() {
+        var oneYearAgo = LocalDate.now().minusYears(1);
+        registryBookReportRepository.findStaleReports(
+                Date.from(oneYearAgo.atStartOfDay(ZoneId.systemDefault()).toInstant()))
+            .forEach(registryBookReport -> {
+                fileService.delete(registryBookReport.getReportFileName());
+                registryBookReportRepository.delete(registryBookReport);
+            });
+    }
+
     private static class TableHeaderEvent extends PdfPageEventHelper {
         private final Font headerFont;
         private final List<String> headerColumns;
@@ -459,7 +510,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                 var headerCell = new PdfPCell(new Phrase(headerColumns.get(i), headerFont));
                 headerCell.setBackgroundColor(new BaseColor(224, 255, 255));
                 headerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                headerCell.setVerticalAlignment(Element.ALIGN_CENTER);
+                headerCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                 headerCell.setPadding(5);
                 table.addCell(headerCell);
             }

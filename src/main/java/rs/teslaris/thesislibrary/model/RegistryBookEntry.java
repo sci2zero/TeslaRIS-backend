@@ -34,7 +34,7 @@ public class RegistryBookEntry extends BaseEntity {
     @Embedded
     private PreviousTitleInformation previousTitleInformation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
 
