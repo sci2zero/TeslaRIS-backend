@@ -158,6 +158,7 @@ public class DbInitializer implements ApplicationRunner {
         var unarchiveThesis = new Privilege("UNARCHIVE_THESIS");
         var performThesisReport = new Privilege("PERFORM_THESIS_REPORT");
         var performThesisSearch = new Privilege("PERFORM_THESIS_SEARCH");
+        var performHealthCheck = new Privilege("PERFORM_HEALTH_CHECK");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -182,7 +183,7 @@ public class DbInitializer implements ApplicationRunner {
                 updateBrandingInformation, manageApiKeys, manageThesisAttachments,
                 editEmploymentInstitution, archiveThesis, unarchiveThesis, performThesisReport,
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview,
-                performThesisSearch));
+                performThesisSearch, performHealthCheck));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -206,7 +207,7 @@ public class DbInitializer implements ApplicationRunner {
                 downloadReports, listAssessmentClassifications, updateBrandingInformation,
                 manageApiKeys, manageThesisAttachments, putThesisOnPublicReview,
                 deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
-                unarchiveThesis, performThesisReport, performThesisSearch
+                unarchiveThesis, performThesisReport, performThesisSearch, performHealthCheck
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
