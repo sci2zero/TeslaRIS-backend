@@ -201,7 +201,9 @@ class RegistryBookServiceTest {
         dto.setDissertationInformation(new DissertationInformationDTO());
         dto.setPersonalInformation(personalInfo);
         dto.setContactInformation(contactInfo);
-        dto.setPreviousTitleInformation(new PreviousTitleInformationDTO());
+        var prevInfo = new PreviousTitleInformationDTO();
+        prevInfo.setSchoolYear("2022/2023");
+        dto.setPreviousTitleInformation(prevInfo);
 
         when(registryBookEntryRepository.findById(id)).thenReturn(Optional.of(entry));
         when(promotionService.findOne(5)).thenReturn(new Promotion());

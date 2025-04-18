@@ -17,6 +17,8 @@ public interface PromotionService extends JPAService<Promotion> {
 
     Promotion createPromotion(PromotionDTO promotionDTO);
 
+    Promotion migratePromotion(PromotionDTO promotionDTO);
+
     void updatePromotion(Integer promotionId, PromotionDTO promotionDTO);
 
     void deletePromotion(Integer promotionId);

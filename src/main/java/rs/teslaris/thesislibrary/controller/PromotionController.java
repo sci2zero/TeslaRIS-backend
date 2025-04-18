@@ -66,6 +66,20 @@ public class PromotionController {
         return promotionDTO;
     }
 
+    @PostMapping("/migrate")
+    @PreAuthorize("hasAuthority('PERFORM_MIGRATION')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public PromotionDTO migratePromotion(@RequestBody PromotionDTO promotionDTO,
+                                         @RequestHeader("Authorization") String bearerToken) {
+        handleInstitutionSetting(promotionDTO, bearerToken);
+
+        var newPromotion = promotionService.migratePromotion(promotionDTO);
+        promotionDTO.setId(newPromotion.getId());
+
+        return promotionDTO;
+    }
+
     @PutMapping("/{promotionId}")
     @PromotionEditAndUsageCheck
     @PreAuthorize("hasAuthority('MANAGE_PROMOTIONS')")

@@ -137,9 +137,34 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var thesis = thesisService.getThesisById(thesisId);
 
         newEntry.setThesis(thesisService.getThesisById(thesisId));
-        setCommonFields(newEntry, dto);
+        setCommonFields(newEntry, dto, true);
 
-        if (Objects.nonNull(dto.getDissertationInformation().getOrganisationUnitId())) {
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
+            newEntry.getDissertationInformation().setOrganisationUnit(thesis.getOrganisationUnit());
+        }
+
+        return save(newEntry);
+    }
+
+    @Override
+    public RegistryBookEntry migrateRegistryBookEntry(RegistryBookEntryDTO dto, Integer thesisId) {
+        var newEntry = new RegistryBookEntry();
+
+        var thesis = thesisService.getThesisById(thesisId);
+        newEntry.setThesis(thesisService.getThesisById(thesisId));
+
+        setCommonFields(newEntry, dto, false);
+
+        if (Objects.nonNull(dto.getPromotionId())) {
+            newEntry.setPromotionSchoolYear(dto.getPromotionSchoolYear());
+            newEntry.setRegistryBookNumber(dto.getRegistryBookNumber());
+            newEntry.setPromotionOrdinalNumber(dto.getPromotionOrdinalNumber());
+            newEntry.setPromotion(promotionService.findOne(dto.getPromotionId()));
+            newEntry.setRegistryBookInstitution(
+                organisationUnitService.findOne(dto.getPromotionInstitutionId()));
+        }
+
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
             newEntry.getDissertationInformation().setOrganisationUnit(thesis.getOrganisationUnit());
         }
 
@@ -157,7 +182,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         }
 
         var presetOrgUnit = entry.getDissertationInformation().getOrganisationUnit();
-        setCommonFields(entry, dto);
+        setCommonFields(entry, dto, true);
         entry.getDissertationInformation().setOrganisationUnit(presetOrgUnit);
         entry.setAllowSingleEdit(false);
         save(entry);
@@ -174,13 +199,14 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         registryBookEntryRepository.delete(entry);
     }
 
-    private void setCommonFields(RegistryBookEntry entry, RegistryBookEntryDTO dto) {
+    private void setCommonFields(RegistryBookEntry entry, RegistryBookEntryDTO dto,
+                                 boolean validate) {
         entry.setDissertationInformation(
             toDissertationInformation(dto.getDissertationInformation()));
-        entry.setPersonalInformation(toPersonalInformation(dto.getPersonalInformation()));
+        entry.setPersonalInformation(toPersonalInformation(dto.getPersonalInformation(), validate));
         entry.setContactInformation(toContactInformation(dto.getContactInformation()));
         entry.setPreviousTitleInformation(
-            toPreviousTitleInformation(dto.getPreviousTitleInformation()));
+            toPreviousTitleInformation(dto.getPreviousTitleInformation(), validate));
     }
 
     private DissertationInformation toDissertationInformation(DissertationInformationDTO dto) {
@@ -201,8 +227,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     private RegistryBookPersonalInformation toPersonalInformation(
-        RegistryBookPersonalInformationDTO dto) {
-        if (dto.getMotherName().isBlank() && dto.getFatherName().isBlank() &&
+        RegistryBookPersonalInformationDTO dto, boolean validate) {
+        if (validate && dto.getMotherName().isBlank() && dto.getFatherName().isBlank() &&
             dto.getGuardianNameAndSurname().isBlank()) {
             throw new RegistryBookException(
                 "You have to provide at least one parent's or guardian's name.");
@@ -245,7 +271,14 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         return ci;
     }
 
-    private PreviousTitleInformation toPreviousTitleInformation(PreviousTitleInformationDTO dto) {
+    private PreviousTitleInformation toPreviousTitleInformation(PreviousTitleInformationDTO dto,
+                                                                boolean validate) {
+        if (validate && Objects.isNull(dto.getGraduationDate()) && (
+            Objects.isNull(dto.getSchoolYear()) || dto.getSchoolYear().isBlank())) {
+            throw new RegistryBookException(
+                "You have to provide at least one graduation date period information.");
+        }
+
         var pti = new PreviousTitleInformation();
         pti.setInstitutionName(dto.getInstitutionName());
         pti.setGraduationDate(dto.getGraduationDate());
@@ -546,7 +579,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
         Map<Integer, Pair<Integer, Integer>> countTable = new HashMap<>();
 
-        for (Integer institutionId : institutionIds) {
+        for (var institutionId : institutionIds) {
             int newPromotionCount = registryBookEntryRepository
                 .getRegistryBookCountForInstitutionAndPeriodNewPromotion(institutionId, from, to);
 

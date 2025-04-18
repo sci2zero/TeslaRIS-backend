@@ -24,6 +24,8 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO registryBookEntryDTO,
                                               Integer thesisId);
 
+    RegistryBookEntry migrateRegistryBookEntry(RegistryBookEntryDTO dto, Integer thesisId);
+
     void updateRegistryBookEntry(Integer registryBookEntryId,
                                  RegistryBookEntryDTO registryBookEntryDTO);
 

@@ -167,6 +167,8 @@ public class DbInitializer implements ApplicationRunner {
         var generatePromotionReport = new Privilege("GENERATE_PROMOTION_REPORT");
         var allowRegEntrySingleUpdate = new Privilege("ALLOW_REG_ENTRY_SINGLE_UPDATE");
         var generateRegBookReport = new Privilege("GENERATE_REG_BOOK_REPORT");
+        var performMigration = new Privilege("PERFORM_MIGRATION");
+        var createJournal = new Privilege("CREATE_JOURNAL");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -188,11 +190,11 @@ public class DbInitializer implements ApplicationRunner {
                 editEventAssessmentClassification, editPublicationSeriesAssessmentClassifications,
                 assessDocument, updateCommission, editDocumentAssessment, scheduleReportGeneration,
                 editAssessmentResearchArea, downloadReports, listAssessmentClassifications,
-                updateBrandingInformation, manageApiKeys, manageThesisAttachments,
+                updateBrandingInformation, manageApiKeys, manageThesisAttachments, createJournal,
                 editEmploymentInstitution, archiveThesis, unarchiveThesis, performThesisReport,
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview,
                 performThesisSearch, addToPromotion, removeFromPromotion, addToRegistryBook,
-                removeFromRegistryBook, updateRegistryBook, managePromotions,
+                removeFromRegistryBook, updateRegistryBook, managePromotions, performMigration,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport));
 
         // AUTHORITIES
@@ -219,20 +221,22 @@ public class DbInitializer implements ApplicationRunner {
                 deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
                 unarchiveThesis, performThesisReport, performThesisSearch, addToPromotion,
                 removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook,
-                generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport
+                generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
+                performMigration, createJournal
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
                 createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
-                unbindYourselfFromPublication, editEntityIndicators, performThesisSearch)));
+                unbindYourselfFromPublication, editEntityIndicators, performThesisSearch,
+                createJournal)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
                 List.of(
                     new Privilege[] {updateProfile, allowAccountTakeover, manageThesisAttachments,
-                        putThesisOnPublicReview, createUserBasic, editPersonalInfo,
+                        putThesisOnPublicReview, createUserBasic, editPersonalInfo, createJournal,
                         editDocumentFiles, performThesisSearch, editEmploymentInstitution})));
 
         var commissionAuthority =

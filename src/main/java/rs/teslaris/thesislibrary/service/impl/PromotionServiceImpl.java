@@ -66,6 +66,16 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     }
 
     @Override
+    public Promotion migratePromotion(PromotionDTO promotionDTO) {
+        var newPromotion = new Promotion();
+
+        setCommonFields(newPromotion, promotionDTO);
+        newPromotion.setFinished(promotionDTO.getFinished());
+
+        return save(newPromotion);
+    }
+
+    @Override
     public void updatePromotion(Integer promotionId, PromotionDTO promotionDTO) {
         var promotionToUpdate = findOne(promotionId);
 

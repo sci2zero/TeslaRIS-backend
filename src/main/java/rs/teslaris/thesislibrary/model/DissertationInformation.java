@@ -19,7 +19,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Embeddable
 public class DissertationInformation {
 
-    @Column(name = "dissertation_title")
+    @Column(name = "dissertation_title", length = 2048)
     private String dissertationTitle;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -29,16 +29,16 @@ public class DissertationInformation {
     @Column(name = "dissertation_institution_place")
     private String institutionPlace;
 
-    @Column(name = "mentor")
+    @Column(name = "mentor", length = 1024)
     private String mentor;
 
-    @Column(name = "commission")
+    @Column(name = "commission", length = 1024)
     private String commission;
 
     @Column(name = "grade")
     private String grade;
 
-    @Column(name = "acquired_title")
+    @Column(name = "acquired_title", length = 1024)
     private String acquiredTitle;
 
     @Column(name = "defence_date")

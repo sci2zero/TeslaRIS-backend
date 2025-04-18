@@ -93,6 +93,21 @@ public class RegistryBookController {
         return registryBookEntryDTO;
     }
 
+    @PostMapping("/migrate/{documentId}")
+    @PreAuthorize("hasAuthority('PERFORM_MIGRATION')")
+    @PublicationEditCheck("THESIS")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public RegistryBookEntryDTO migrateRegistryBookEntry(
+        @RequestBody RegistryBookEntryDTO registryBookEntryDTO,
+        @PathVariable Integer documentId) {
+        var newRegistryBookEntry =
+            registryBookService.migrateRegistryBookEntry(registryBookEntryDTO, documentId);
+        registryBookEntryDTO.setId(newRegistryBookEntry.getId());
+
+        return registryBookEntryDTO;
+    }
+
     @PutMapping("/{registryBookEntryId}")
     @PreAuthorize("hasAuthority('UPDATE_REGISTRY_BOOK')")
     @RegistryBookEntryEditCheck

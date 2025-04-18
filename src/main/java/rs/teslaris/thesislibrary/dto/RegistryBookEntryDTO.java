@@ -39,5 +39,13 @@ public class RegistryBookEntryDTO {
     private String promotionSchoolYear;
 
     private Integer registryBookNumber;
+
+    private Integer thesisId;
+
+    private Integer promotionOrdinalNumber;
+
+    private Integer promotionId;
+
+    private Integer promotionInstitutionId;
 }
 

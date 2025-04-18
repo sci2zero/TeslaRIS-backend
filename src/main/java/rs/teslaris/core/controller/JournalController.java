@@ -77,7 +77,7 @@ public class JournalController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
+    @PreAuthorize("hasAuthority('CREATE_JOURNAL')")
     @Idempotent
     public PublicationSeriesDTO createJournal(@RequestBody @Valid PublicationSeriesDTO journalDTO) {
         var savedJournal = journalService.createJournal(journalDTO, true);

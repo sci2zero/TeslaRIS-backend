@@ -15,7 +15,7 @@ import lombok.Setter;
 @Embeddable
 public class PreviousTitleInformation {
 
-    @Column(name = "institution_name")
+    @Column(name = "institution_name", length = 1024)
     private String institutionName;
 
     @Column(name = "graduation_date")
