@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,17 +16,22 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -84,9 +90,20 @@ public class ConferenceServiceTest {
     @Mock
     private IndexBulkUpdateService indexBulkUpdateService;
 
+    @Mock
+    private CommissionRepository commissionRepository;
+
     @InjectMocks
     private ConferenceServiceImpl conferenceService;
 
+    static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery() {
+        return Stream.of(
+            Arguments.of(true, true, null, null),
+            Arguments.of(true, false, 1, null),
+            Arguments.of(false, true, null, 1),
+            Arguments.of(false, false, 1, 1)
+        );
+    }
 
     @Test
     public void shouldReturnConferenceWhenItExists() {
@@ -285,8 +302,11 @@ public class ConferenceServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    public void shouldFindConferenceWhenSearchingWithSimpleQuery(Boolean returnOnlySerialEvents) {
+    @MethodSource("shouldFindConferenceWhenSearchingWithSimpleQuery")
+    public void shouldFindConferenceWhenSearchingWithSimpleQuery(boolean returnOnlyNonSerialEvents,
+                                                                 boolean returnOnlySerialEvents,
+                                                                 Integer commissionInstitutionId,
+                                                                 Integer commissionId) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -296,8 +316,8 @@ public class ConferenceServiceTest {
 
         // When
         var result =
-            conferenceService.searchConferences(tokens, pageable, returnOnlySerialEvents, false,
-                null);
+            conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
+                returnOnlySerialEvents, commissionInstitutionId, commissionId);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
@@ -416,5 +436,81 @@ public class ConferenceServiceTest {
         // then
         assertTrue(result);
         verify(eventRepository).existsByConfId(identifier, organisationUnitId);
+    }
+
+    @Test
+    void shouldReindexVolatileConferenceInformationWhenConferenceExists() {
+        // Given
+        var conferenceId = 123;
+        var eventIndex = new EventIndex();
+        var institutionIds = Set.of(1, 2, 3);
+
+        when(eventIndexRepository.findByDatabaseId(conferenceId))
+            .thenReturn(Optional.of(eventIndex));
+        when(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId))
+            .thenReturn(institutionIds);
+
+        // When
+        conferenceService.reindexVolatileConferenceInformation(conferenceId);
+
+        // Then
+        assertEquals(institutionIds.stream().toList(), eventIndex.getRelatedInstitutionIds());
+        verify(eventIndexRepository).save(eventIndex);
+    }
+
+    @Test
+    void shouldNotReindexWhenConferenceDoesNotExist() {
+        // Given
+        var conferenceId = 456;
+        when(eventIndexRepository.findByDatabaseId(conferenceId))
+            .thenReturn(Optional.empty());
+
+        // When
+        conferenceService.reindexVolatileConferenceInformation(conferenceId);
+
+        // Then
+        verify(eventRepository, never()).findInstitutionIdsByEventIdAndAuthorContribution(any());
+        verify(eventIndexRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldHandleEmptyInstitutionList() {
+        // Given
+        var conferenceId = 789;
+        var eventIndex = new EventIndex();
+        when(eventIndexRepository.findByDatabaseId(conferenceId))
+            .thenReturn(Optional.of(eventIndex));
+        when(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId))
+            .thenReturn(Collections.emptySet());
+
+        // When
+        conferenceService.reindexVolatileConferenceInformation(conferenceId);
+
+        // Then
+        assertTrue(eventIndex.getRelatedInstitutionIds().isEmpty());
+        verify(eventIndexRepository).save(eventIndex);
+    }
+
+    @Test
+    void shouldUpdateFieldsAndSave_whenReindexVolatileConferenceInformation() {
+        // Given
+        var conferenceId = 3;
+        var eventIndex = mock(EventIndex.class);
+        when(eventIndexRepository.findByDatabaseId(conferenceId))
+            .thenReturn(Optional.of(eventIndex));
+        var institutionIds = Set.of(100, 200, 300);
+        var classifiedBy = List.of(1, 2);
+        when(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
+            conferenceId)).thenReturn(institutionIds);
+        when(commissionRepository.findCommissionsThatClassifiedEvent(conferenceId)).thenReturn(
+            classifiedBy);
+
+        // When
+        conferenceService.reindexVolatileConferenceInformation(conferenceId);
+
+        // Then
+        verify(eventIndex).setRelatedInstitutionIds(institutionIds.stream().toList());
+        verify(eventIndex).setClassifiedBy(classifiedBy);
+        verify(eventIndexRepository).save(eventIndex);
     }
 }

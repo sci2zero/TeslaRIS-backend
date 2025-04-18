@@ -114,6 +114,44 @@ public class NotificationFactory {
             NotificationType.FOUND_POTENTIAL_CLAIMS, user);
     }
 
+    public static Notification contructNewEventsForClassificationNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("totalCount"),
+                notificationValues.get("fromMyInstitutionCount")};
+        try {
+            message = messageSource.getMessage(
+                "notification.newEventsForClassification",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.NEW_EVENTS_TO_CLASSIFY, user);
+    }
+
+    public static Notification contructNewPublicationsForAssessmentNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("totalCount"),
+                notificationValues.get("fromMyInstitutionCount")};
+        try {
+            message = messageSource.getMessage(
+                "notification.newPublicationsForAssessment",
+                args,
+                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.NEW_PUBLICATIONS_TO_ASSESS, user);
+    }
+
     public static Notification contructScheduledTaskCompletedNotification(
         Map<String, String> notificationValues, User user, boolean success) {
         String message;

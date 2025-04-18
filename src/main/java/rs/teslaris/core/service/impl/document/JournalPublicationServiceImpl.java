@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -29,6 +30,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
@@ -52,12 +54,15 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          PersonContributionService personContributionService,
                                          ExpressionTransformer expressionTransformer,
                                          EventService eventService,
+                                         CommissionRepository commissionRepository,
+                                         SearchFieldsLoader searchFieldsLoader,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository,
-            documentFileService, personContributionService, expressionTransformer, eventService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
@@ -123,6 +128,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         if (publicationToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
             indexJournalPublication(publicationToUpdate, indexToUpdate);
+            journalService.reindexJournalVolatileInformation(
+                publicationToUpdate.getJournal().getId());
         }
 
         journalPublicationJPAService.save(publicationToUpdate);

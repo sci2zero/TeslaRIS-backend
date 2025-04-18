@@ -23,16 +23,16 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import rs.teslaris.core.assessment.model.Commission;
-import rs.teslaris.core.assessment.model.EventAssessmentClassification;
-import rs.teslaris.core.assessment.model.EventIndicator;
-import rs.teslaris.core.assessment.model.Indicator;
-import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
-import rs.teslaris.core.assessment.model.PublicationSeriesIndicator;
-import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
-import rs.teslaris.core.assessment.repository.EventIndicatorRepository;
-import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
-import rs.teslaris.core.assessment.repository.PublicationSeriesIndicatorRepository;
+import rs.teslaris.assessment.model.Commission;
+import rs.teslaris.assessment.model.EventAssessmentClassification;
+import rs.teslaris.assessment.model.EventIndicator;
+import rs.teslaris.assessment.model.Indicator;
+import rs.teslaris.assessment.model.PublicationSeriesAssessmentClassification;
+import rs.teslaris.assessment.model.PublicationSeriesIndicator;
+import rs.teslaris.assessment.repository.EventAssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.EventIndicatorRepository;
+import rs.teslaris.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -383,9 +383,9 @@ public class MergeServiceTest {
             List.of(publicationIndex1, publicationIndex2));
         var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
 
-        when(documentPublicationService.findResearcherPublications(sourceId,
+        when(documentPublicationService.findResearcherPublications(sourceId, List.of(),
             PageRequest.of(0, 10))).thenReturn(page1);
-        when(documentPublicationService.findResearcherPublications(sourceId,
+        when(documentPublicationService.findResearcherPublications(sourceId, List.of(),
             PageRequest.of(1, 10))).thenReturn(page2);
 
         var contribution = new PersonDocumentContribution();

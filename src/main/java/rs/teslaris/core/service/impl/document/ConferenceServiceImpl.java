@@ -2,13 +2,16 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -50,15 +53,18 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  MultilingualContentService multilingualContentService,
                                  PersonContributionService personContributionService,
                                  EventRepository eventRepository,
+                                 IndexBulkUpdateService indexBulkUpdateService,
                                  EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService, EmailUtil emailUtil,
                                  CountryService countryService,
-                                 IndexBulkUpdateService indexBulkUpdateService,
+                                 CommissionRepository commissionRepository,
                                  ConferenceJPAServiceImpl conferenceJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                  ConferenceRepository conferenceRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
-            eventRepository, indexBulkUpdateService, eventsRelationRepository, searchService,
+            eventRepository, indexBulkUpdateService, commissionRepository,
+            eventsRelationRepository,
+            searchService,
             emailUtil, countryService);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -81,9 +87,10 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable,
                                               Boolean returnOnlyNonSerialEvents,
                                               Boolean returnOnlySerialEvents,
-                                              Integer commissionInstitutionId) {
+                                              Integer commissionInstitutionId,
+                                              Integer commissionId) {
         return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, commissionInstitutionId);
+            returnOnlySerialEvents, commissionInstitutionId, commissionId);
     }
 
     @Override
@@ -190,8 +197,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexConferences() {
+    public CompletableFuture<Void> reindexConferences() {
         eventIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -207,6 +215,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
@@ -243,6 +252,19 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         var indexToUpdate =
             eventIndexRepository.findByDatabaseId(conferenceId).orElse(new EventIndex());
         indexConference(conferenceToIndex, indexToUpdate);
+    }
+
+    @Override
+    public void reindexVolatileConferenceInformation(Integer conferenceId) {
+        eventIndexRepository.findByDatabaseId(conferenceId).ifPresent(eventIndex -> {
+            eventIndex.setRelatedInstitutionIds(
+                eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId)
+                    .stream().toList());
+            eventIndex.setClassifiedBy(
+                commissionRepository.findCommissionsThatClassifiedEvent(conferenceId));
+
+            eventIndexRepository.save(eventIndex);
+        });
     }
 
     @Override

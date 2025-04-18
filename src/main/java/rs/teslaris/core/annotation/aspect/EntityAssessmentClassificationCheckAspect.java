@@ -1,7 +1,6 @@
 package rs.teslaris.core.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -10,8 +9,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.servlet.HandlerMapping;
-import rs.teslaris.core.assessment.service.interfaces.EntityAssessmentClassificationService;
+import rs.teslaris.assessment.service.interfaces.EntityAssessmentClassificationService;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
@@ -35,18 +33,17 @@ public class EntityAssessmentClassificationCheckAspect {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
-        var bearerToken = request.getHeader("Authorization");
-        var tokenValue = bearerToken.split(" ")[1];
-        var attributeMap = (Map<String, String>) request.getAttribute(
-            HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-        var entityIndicatorId =
-            Integer.parseInt(attributeMap.get("entityAssessmentClassificationId"));
+        var tokenValue = AspectUtil.extractToken(request);
+        var attributeMap = AspectUtil.getUriVariables(request);
 
+        var entityAssessmentClassificationId =
+            Integer.parseInt(attributeMap.get("entityAssessmentClassificationId"));
         var role = tokenUtil.extractUserRoleFromToken(tokenValue);
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
 
         var user = userService.findOne(userId);
-        var classification = entityAssessmentClassificationService.findOne(entityIndicatorId);
+        var classification =
+            entityAssessmentClassificationService.findOne(entityAssessmentClassificationId);
 
         switch (UserRole.valueOf(role)) {
             case ADMIN:

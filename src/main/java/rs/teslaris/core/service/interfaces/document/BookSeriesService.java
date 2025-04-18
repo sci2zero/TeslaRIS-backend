@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.document;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public interface BookSeriesService {
 
     void forceDeleteBookSeries(Integer journalId);
 
-    void reindexBookSeries();
+    CompletableFuture<Void> reindexBookSeries();
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
 }

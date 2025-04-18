@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,12 +28,19 @@ public class ThesisDTO extends DocumentDTO {
     @Positive(message = "Number of pages cannot be a negative number.")
     private Integer numberOfPages;
 
-    @NotNull(message = "You have to provide language tag ids array, even if it's empty.")
-    private List<Integer> languageTagIds;
+    @Positive
+    private Integer languageId;
+
+    @Positive
+    private Integer writingLanguageTagId;
 
     @Positive(message = "Research area id cannot be a negative number.")
     private Integer researchAreaId;
 
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;
+
+    private LocalDate topicAcceptanceDate;
+
+    private LocalDate thesisDefenceDate;
 }

@@ -3,6 +3,7 @@ package rs.teslaris.core.service.interfaces.person;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.Triple;
 
 @Service
 public interface PersonService extends JPAService<Person> {
@@ -77,7 +79,7 @@ public interface PersonService extends JPAService<Person> {
 
     InvolvementDTO getLatestResearcherInvolvement(Integer personId);
 
-    void reindexPersons();
+    CompletableFuture<Void> reindexPersons();
 
     void indexPerson(Person savedPerson, Integer personDatabaseId);
 
@@ -97,4 +99,7 @@ public interface PersonService extends JPAService<Person> {
     void removePersonProfileImage(Integer personId);
 
     boolean isIdentifierInUse(String identifier, Integer personId);
+
+    List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields);
 }

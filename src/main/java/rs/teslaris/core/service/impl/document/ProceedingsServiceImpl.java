@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -34,6 +35,7 @@ import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
@@ -67,6 +69,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   PersonContributionService personContributionService,
                                   ExpressionTransformer expressionTransformer,
                                   EventService eventService,
+                                  CommissionRepository commissionRepository,
+                                  SearchFieldsLoader searchFieldsLoader,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
@@ -76,7 +80,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService, expressionTransformer, eventService);
+            personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;

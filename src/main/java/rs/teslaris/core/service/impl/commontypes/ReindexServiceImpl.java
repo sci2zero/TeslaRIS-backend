@@ -2,9 +2,11 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
@@ -71,83 +73,62 @@ public class ReindexServiceImpl implements ReindexService {
 
     @Override
     public void reindexDatabase(List<EntityType> indexesToRepopulate) {
-        var threadPool = new ArrayList<Thread>();
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         if (indexesToRepopulate.contains(EntityType.USER_ACCOUNT)) {
-            var userThread = new Thread(userService::reindexUsers);
-            userThread.start();
-            threadPool.add(userThread);
+            futures.add(userService.reindexUsers());
         }
 
         if (indexesToRepopulate.contains(EntityType.JOURNAL)) {
-            var journalThread = new Thread(journalService::reindexJournals);
-            journalThread.start();
-            threadPool.add(journalThread);
+            futures.add(journalService.reindexJournals());
         }
 
         if (indexesToRepopulate.contains(EntityType.PUBLISHER)) {
-            var publisherThread = new Thread(publisherService::reindexPublishers);
-            publisherThread.start();
-            threadPool.add(publisherThread);
+            futures.add(publisherService.reindexPublishers());
         }
 
         if (indexesToRepopulate.contains(EntityType.PERSON)) {
-            var personThread = new Thread(personService::reindexPersons);
-            personThread.start();
-            threadPool.add(personThread);
+            futures.add(personService.reindexPersons());
         }
 
         if (indexesToRepopulate.contains(EntityType.ORGANISATION_UNIT)) {
-            var organisationUnitThread = new Thread(
-                organisationUnitService::reindexOrganisationUnits);
-            organisationUnitThread.start();
-            threadPool.add(organisationUnitThread);
+            futures.add(organisationUnitService.reindexOrganisationUnits());
         }
 
         if (indexesToRepopulate.contains(EntityType.BOOK_SERIES)) {
-            var bookSeriesThread = new Thread(bookSeriesService::reindexBookSeries);
-            bookSeriesThread.start();
-            threadPool.add(bookSeriesThread);
+            futures.add(bookSeriesService.reindexBookSeries());
         }
 
         if (indexesToRepopulate.contains(EntityType.EVENT)) {
-            var conferenceThread = new Thread(conferenceService::reindexConferences);
-            conferenceThread.start();
-            threadPool.add(conferenceThread);
+            futures.add(conferenceService.reindexConferences());
         }
 
         if (indexesToRepopulate.contains(EntityType.PUBLICATION)) {
-            var reindexPublicationsThread = getReindexPublicationsThread();
-            threadPool.add(reindexPublicationsThread);
+            futures.add(reindexPublications());
         }
 
         try {
-            for (Thread thread : threadPool) {
-                thread.join();
-            }
-        } catch (InterruptedException e) {
-            log.error("Thread interrupted while waiting for reindexing to complete", e);
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } catch (CompletionException e) {
+            log.error("Error during parallel reindexing. Reason: ", e);
         }
     }
 
-    @NotNull
-    private Thread getReindexPublicationsThread() {
-        var reindexPublicationsThread = new Thread(() -> {
-            documentFileService.deleteIndexes();
-            documentPublicationService.deleteIndexes();
+    @Async("reindexExecutor")
+    public CompletableFuture<Void> reindexPublications() {
+        documentFileService.deleteIndexes();
+        documentPublicationService.deleteIndexes();
 
-            journalPublicationService.reindexJournalPublications();
-            proceedingsPublicationService.reindexProceedingsPublications();
-            patentService.reindexPatents();
-            softwareService.reindexSoftware();
-            datasetService.reindexDatasets();
-            monographService.reindexMonographs();
-            monographPublicationService.reindexMonographPublications();
-            proceedingsService.reindexProceedings();
-            thesisService.reindexTheses();
-        });
+        journalPublicationService.reindexJournalPublications();
+        proceedingsPublicationService.reindexProceedingsPublications();
+        patentService.reindexPatents();
+        softwareService.reindexSoftware();
+        datasetService.reindexDatasets();
+        monographService.reindexMonographs();
+        monographPublicationService.reindexMonographPublications();
+        proceedingsService.reindexProceedings();
+        thesisService.reindexTheses();
 
-        reindexPublicationsThread.start();
-        return reindexPublicationsThread;
+        return CompletableFuture.completedFuture(null);
     }
 }

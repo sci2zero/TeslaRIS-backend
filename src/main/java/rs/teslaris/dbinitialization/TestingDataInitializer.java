@@ -1,6 +1,7 @@
 package rs.teslaris.dbinitialization;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,26 +9,26 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.assessment.model.ApplicableEntityType;
-import rs.teslaris.core.assessment.model.AssessmentClassification;
-import rs.teslaris.core.assessment.model.AssessmentMeasure;
-import rs.teslaris.core.assessment.model.AssessmentResearchArea;
-import rs.teslaris.core.assessment.model.AssessmentRulebook;
-import rs.teslaris.core.assessment.model.Commission;
-import rs.teslaris.core.assessment.model.DocumentIndicator;
-import rs.teslaris.core.assessment.model.EventAssessmentClassification;
-import rs.teslaris.core.assessment.model.EventIndicator;
-import rs.teslaris.core.assessment.model.Indicator;
-import rs.teslaris.core.assessment.model.PublicationSeriesAssessmentClassification;
-import rs.teslaris.core.assessment.repository.AssessmentClassificationRepository;
-import rs.teslaris.core.assessment.repository.AssessmentMeasureRepository;
-import rs.teslaris.core.assessment.repository.AssessmentResearchAreaRepository;
-import rs.teslaris.core.assessment.repository.AssessmentRulebookRepository;
-import rs.teslaris.core.assessment.repository.DocumentIndicatorRepository;
-import rs.teslaris.core.assessment.repository.EventAssessmentClassificationRepository;
-import rs.teslaris.core.assessment.repository.EventIndicatorRepository;
-import rs.teslaris.core.assessment.repository.IndicatorRepository;
-import rs.teslaris.core.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.assessment.model.ApplicableEntityType;
+import rs.teslaris.assessment.model.AssessmentClassification;
+import rs.teslaris.assessment.model.AssessmentMeasure;
+import rs.teslaris.assessment.model.AssessmentResearchArea;
+import rs.teslaris.assessment.model.AssessmentRulebook;
+import rs.teslaris.assessment.model.Commission;
+import rs.teslaris.assessment.model.DocumentIndicator;
+import rs.teslaris.assessment.model.EventAssessmentClassification;
+import rs.teslaris.assessment.model.EventIndicator;
+import rs.teslaris.assessment.model.Indicator;
+import rs.teslaris.assessment.model.PublicationSeriesAssessmentClassification;
+import rs.teslaris.assessment.repository.AssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.AssessmentMeasureRepository;
+import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
+import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
+import rs.teslaris.assessment.repository.DocumentIndicatorRepository;
+import rs.teslaris.assessment.repository.EventAssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.EventIndicatorRepository;
+import rs.teslaris.assessment.repository.IndicatorRepository;
+import rs.teslaris.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -164,6 +165,9 @@ public class TestingDataInitializer {
                                                  Authority researcherAuthority,
                                                  Authority commissionAuthority,
                                                  Authority viceDeanForScienceAuthority,
+                                                 Authority institutionalEditorAuthority,
+                                                 Authority institutionalLibrarianAuthority,
+                                                 Authority headOfLibraryAuthority,
                                                  Commission commission5) {
         var country = new Country("SRB", new HashSet<>());
         countryRepository.save(country);
@@ -361,7 +365,8 @@ public class TestingDataInitializer {
             Set.of(
                 new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate.pdf", "1111.pdf",
                     new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
-                    License.CREATIVE_COMMONS, ApproveStatus.APPROVED))));
+                    License.CREATIVE_COMMONS, ApproveStatus.APPROVED, true, LocalDateTime.now(),
+                    false))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -377,7 +382,8 @@ public class TestingDataInitializer {
                 1)),
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-                License.OPEN_ACCESS, ApproveStatus.APPROVED)), LocalDate.of(2023, 4, 17)));
+                License.OPEN_ACCESS, ApproveStatus.APPROVED, true, LocalDateTime.now(), false)),
+            LocalDate.of(2023, 4, 17)));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
@@ -530,10 +536,26 @@ public class TestingDataInitializer {
         thesis1.setApproveStatus(ApproveStatus.APPROVED);
         thesis1.setThesisType(ThesisType.PHD);
         thesis1.setDocumentDate("2021");
-        thesis1.setOrganisationUnit(dummyOU2);
+        thesis1.setOrganisationUnit(dummyOU);
         thesis1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
-        thesis1.getLanguages().addAll(List.of(serbianTag, englishTag));
+        thesis1.setLanguage(serbianLanguage);
+        thesis1.setThesisDefenceDate(LocalDate.of(2024, 1, 31));
+
+        var thesisContribution = new PersonDocumentContribution();
+        thesisContribution.setPerson(person1);
+        thesisContribution.setContributionType(DocumentContributionType.AUTHOR);
+        thesisContribution.setIsMainContributor(true);
+        thesisContribution.setIsCorrespondingContributor(true);
+        thesisContribution.setOrderNumber(1);
+        thesisContribution.setDocument(thesis1);
+        thesisContribution.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution.setInstitutions(Set.of(dummyOU));
+        thesisContribution.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), person1.getName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        thesis1.setContributors(Set.of(thesisContribution));
         thesisRepository.save(thesis1);
 
         var thesis2 = new Thesis();
@@ -676,7 +698,7 @@ public class TestingDataInitializer {
 
         documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
             new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-            License.OPEN_ACCESS, ApproveStatus.APPROVED));
+            License.OPEN_ACCESS, ApproveStatus.APPROVED, true, LocalDateTime.now(), false));
         documentIndicatorRepository.save(documentIndicator1);
 
         var eventIndicator1 = new EventIndicator();
@@ -727,6 +749,53 @@ public class TestingDataInitializer {
                 "Nikola", "Nikolic", false, false, serbianLanguage, viceDeanForScienceAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
-        userRepository.save(viceDeanUser);
+
+        var institutionalEditorUser =
+            new User("editor@editor.com", passwordEncoder.encode("editor"), "note note note",
+                "Nikola", "Markovic", false, false, serbianLanguage, institutionalEditorAuthority,
+                null,
+                dummyOU, null, UserNotificationPeriod.WEEKLY);
+
+        var institutionalLibrarianUser =
+            new User("librarian@librarian.com", passwordEncoder.encode("librarian"),
+                "note note note",
+                "Mirka", "Maric", false, false, serbianLanguage, institutionalLibrarianAuthority,
+                null,
+                dummyOU, null, UserNotificationPeriod.WEEKLY);
+
+        var headOfLibraryUser =
+            new User("head_of_library@library.com", passwordEncoder.encode("head_of_library"),
+                "note note note",
+                "Djordje", "Perovic", false, false, serbianLanguage, headOfLibraryAuthority,
+                null,
+                dummyOU, null, UserNotificationPeriod.WEEKLY);
+        userRepository.saveAll(
+            List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
+                headOfLibraryUser));
+
+        var software2 = new Software();
+        software2.setTitle(Set.of(new MultiLingualContent(englishTag,
+            "CRIS UNS", 1)));
+        software2.setInternalNumber("654321");
+        software2.setApproveStatus(ApproveStatus.APPROVED);
+
+        var softwareContribution3 = new PersonDocumentContribution();
+        softwareContribution3.setPerson(person1);
+        softwareContribution3.setContributionType(DocumentContributionType.AUTHOR);
+        softwareContribution3.setIsMainContributor(true);
+        softwareContribution3.setIsCorrespondingContributor(false);
+        softwareContribution3.setOrderNumber(1);
+        softwareContribution3.setDocument(dataset);
+        softwareContribution3.setApproveStatus(ApproveStatus.APPROVED);
+        softwareContribution3.getInstitutions().add(dummyOU);
+        softwareContribution3.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), new PersonName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+        softwareContribution3.getAffiliationStatement().setDisplayPersonName(
+            new PersonName("Ivan", "", "R. M.", LocalDate.of(2000, 1, 31), null));
+        personContributionRepository.save(softwareContribution3);
+
+        software2.addDocumentContribution(softwareContribution3);
+        softwareRepository.save(software2);
     }
 }

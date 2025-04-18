@@ -76,4 +76,19 @@ public class OrganisationUnitControllerTest extends BaseTest {
                     1)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testGetSearchFields(Boolean onlyExportFields) throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/organisation-unit/fields?export={export}",
+                        onlyExportFields)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
 }

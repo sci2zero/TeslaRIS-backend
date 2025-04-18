@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
@@ -21,7 +22,10 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @Getter
 @Setter
 @Entity
-@Table(name = "monographs")
+@Table(name = "monographs", indexes = {
+    @Index(name = "idx_monograph_e_isbn", columnList = "e_isbn"),
+    @Index(name = "idx_monograph_print_isbn", columnList = "print_isbn")
+})
 @SQLRestriction("deleted=false")
 public non-sealed class Monograph extends Document implements BookSeriesPublishable {
 

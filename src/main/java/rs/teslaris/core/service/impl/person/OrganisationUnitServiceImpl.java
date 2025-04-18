@@ -3,12 +3,14 @@ package rs.teslaris.core.service.impl.person;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -18,12 +20,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitGraphRelationDTO;
@@ -52,10 +56,12 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -88,6 +94,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final UserAccountIndexRepository userAccountIndexRepository;
 
     private final InvolvementRepository involvementRepository;
+
+    private final SearchFieldsLoader searchFieldsLoader;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -158,9 +166,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens,
                                                                Pageable pageable,
                                                                SearchRequestType type,
-                                                               Integer personId) {
+                                                               Integer personId,
+                                                               Integer topLevelInstitutionId) {
         if (type.equals(SearchRequestType.SIMPLE)) {
-            return searchService.runQuery(buildSimpleSearchQuery(tokens, personId),
+            return searchService.runQuery(
+                buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -170,23 +180,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             OrganisationUnitIndex.class, "organisation_unit");
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, Integer personId) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
+                                         Integer topLevelInstitutionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
 
-            if (Objects.nonNull(personId)) {
-                var allowedInstitutions =
-                    involvementRepository.findActiveEmploymentInstitutionIds(personId);
-
-                b.must(sb -> sb.terms(t -> t
-                    .field("databaseId")
-                    .terms(v -> v.value(allowedInstitutions.stream()
-                        .map(String::valueOf)
-                        .map(FieldValue::of)
-                        .toList()))
-                ));
-            }
+            addInstitutionFilter(b, personId, topLevelInstitutionId);
 
             tokens.forEach(token -> {
 
@@ -228,6 +228,31 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             });
             return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();
+    }
+
+    private void addInstitutionFilter(BoolQuery.Builder b, Integer personId,
+                                      Integer topLevelInstitutionId) {
+        if (Objects.nonNull(personId)) {
+            var allowedInstitutions =
+                involvementRepository.findActiveEmploymentInstitutionIds(personId);
+            b.must(createTermsQuery("databaseId", allowedInstitutions));
+        }
+        if (Objects.nonNull(topLevelInstitutionId)) {
+            var allowedInstitutions =
+                organisationUnitsRelationRepository.getSubOUsRecursive(topLevelInstitutionId);
+            allowedInstitutions.add(topLevelInstitutionId);
+            b.must(createTermsQuery("databaseId", allowedInstitutions));
+        }
+    }
+
+    private Query createTermsQuery(String field, List<Integer> values) {
+        return TermsQuery.of(t -> t
+            .field(field)
+            .terms(v -> v.value(values.stream()
+                .map(String::valueOf)
+                .map(FieldValue::of)
+                .toList()))
+        )._toQuery();
     }
 
     @Override
@@ -291,18 +316,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId) {
-        var nodeIds = new ArrayList<Integer>();
-        nodeIds.add(currentOUNodeId);
+        var ouSubUnits =
+            organisationUnitsRelationRepository.getSubOUsRecursive(currentOUNodeId);
+        ouSubUnits.add(currentOUNodeId);
 
-        var subUnits = organisationUnitsRelationRepository.getOuSubUnits(currentOUNodeId);
-
-        for (var subUnit : subUnits) {
-            var childrenSubUnits =
-                getOrganisationUnitIdsFromSubHierarchy(subUnit.getSourceOrganisationUnit().getId());
-            nodeIds.addAll(childrenSubUnits);
-        }
-
-        return nodeIds;
+        return ouSubUnits;
     }
 
     @Override
@@ -414,6 +432,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     public boolean isIdentifierInUse(String identifier, Integer organisationUnitId) {
         return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId);
+    }
+
+    @Override
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields) {
+        return searchFieldsLoader.getSearchFields("organisationUnitSearchFieldConfiguration.json",
+            onlyExportFields);
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
@@ -705,8 +730,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexOrganisationUnits() {
+    public CompletableFuture<Void> reindexOrganisationUnits() {
         organisationUnitIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -723,5 +749,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 }

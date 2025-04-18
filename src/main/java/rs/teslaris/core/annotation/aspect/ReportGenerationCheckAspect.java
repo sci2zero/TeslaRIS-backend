@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -27,7 +27,7 @@ public class ReportGenerationCheckAspect {
 
     private final UserRepository userRepository;
 
-    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private final OrganisationUnitService organisationUnitService;
 
 
     @Around("@annotation(rs.teslaris.core.annotation.ReportGenerationCheck)")
@@ -35,8 +35,7 @@ public class ReportGenerationCheckAspect {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
-        var bearerToken = request.getHeader("Authorization");
-        var tokenValue = bearerToken.split(" ")[1];
+        var tokenValue = AspectUtil.extractToken(request);
         String[] commissionIdStrings = request.getParameterValues("commissionId");
 
         var role = tokenUtil.extractUserRoleFromToken(tokenValue);
@@ -61,8 +60,8 @@ public class ReportGenerationCheckAspect {
     public boolean isAccessGranted(Integer userId, String[] commissionIdStrings) {
         var topLevelInstitutionId = userService.getUserOrganisationUnitId(userId);
         var possibleInstitutionsForGeneration =
-            organisationUnitsRelationRepository.getSubOUsRecursive(topLevelInstitutionId);
-        possibleInstitutionsForGeneration.add(topLevelInstitutionId);
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(topLevelInstitutionId);
+
         for (var commissionId : commissionIdStrings) {
             var commissionOUId =
                 userRepository.findOUIdForCommission(Integer.parseInt(commissionId));

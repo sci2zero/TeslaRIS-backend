@@ -44,7 +44,7 @@ public class MonographControllerTest extends BaseTest {
         monographDTO.setDocumentDate("2004-11-06");
 
         var contribution =
-            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
+            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false);
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);

@@ -40,8 +40,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.assessment.model.Commission;
-import rs.teslaris.core.assessment.service.interfaces.CommissionService;
+import rs.teslaris.assessment.model.Commission;
+import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
@@ -292,7 +292,8 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         // When
-        var savedUser = userService.registerInstitutionAdmin(registrationRequest);
+        var savedUser = userService.registerInstitutionEmployee(registrationRequest,
+            UserRole.INSTITUTIONAL_EDITOR);
 
         // Then
         assertNotNull(savedUser);
@@ -342,7 +343,8 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         // When
-        var savedUser = userService.registerViceDeanForScience(registrationRequest);
+        var savedUser = userService.registerInstitutionEmployee(registrationRequest,
+            UserRole.VICE_DEAN_FOR_SCIENCE);
 
         // Then
         assertNotNull(savedUser);

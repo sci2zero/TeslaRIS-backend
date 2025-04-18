@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
@@ -40,6 +41,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -63,6 +65,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected final IndexBulkUpdateService indexBulkUpdateService;
 
+    protected final CommissionRepository commissionRepository;
+
     private final EventsRelationRepository eventsRelationRepository;
 
     private final SearchService<EventIndex> searchService;
@@ -70,7 +74,6 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private final EmailUtil emailUtil;
 
     private final CountryService countryService;
-
 
     @Override
     @Nullable
@@ -150,10 +153,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
                                          EventType eventType, Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
-                                         Integer commissionInstitutionId) {
+                                         Integer commissionInstitutionId,
+                                         Integer commissionId) {
         return searchService.runQuery(
             buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId),
+                returnOnlySerialEvents, commissionInstitutionId, commissionId),
             pageable, EventIndex.class, "events");
     }
 
@@ -242,6 +246,20 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         eventsRelationRepository.delete(relationToDelete.get());
     }
 
+    @Override
+    public Pair<Long, Long> getEventCountsBelongingToInstitution(Integer institutionId) {
+        return new Pair<>(eventIndexRepository.count(),
+            eventIndexRepository.countByRelatedInstitutionIds(institutionId));
+    }
+
+    @Override
+    public Pair<Long, Long> getClassifiedEventCountsForCommission(Integer institutionId,
+                                                                  Integer commissionId) {
+        return new Pair<>(eventIndexRepository.countByClassifiedBy(commissionId),
+            eventIndexRepository.countByRelatedInstitutionIdsAndClassifiedBy(institutionId,
+                commissionId));
+    }
+
     private Query buildEventImportSearchQuery(List<String> names, String dateFrom, String dateTo) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
@@ -272,7 +290,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
                                          Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
-                                         Integer commissionInstitutionId) {
+                                         Integer commissionInstitutionId,
+                                         Integer commissionId) {
         boolean onlyYearTokens = tokens.stream().allMatch(token -> token.matches("\\d{4}"));
 
         // If only searching by years, disable minimum_should_match, otherwise set it
@@ -330,6 +349,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 });
                 return bq;
             });
+
             b.must(sb -> {
                 sb.match(m -> m.field("event_type").query(eventType.name()));
 
@@ -341,13 +361,21 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     sb.match(m -> m.field("is_serial_event").query(true));
                 }
 
-                if (Objects.nonNull(commissionInstitutionId)) {
-                    sb.match(
-                        m -> m.field("related_institution_ids").query(commissionInstitutionId));
+                if (Objects.nonNull(commissionInstitutionId) && commissionInstitutionId > 0) {
+                    sb.term(
+                        m -> m.field("related_institution_ids").value(commissionInstitutionId));
                 }
 
                 return sb;
             });
+
+            if (Objects.nonNull(commissionId)) {
+                b.mustNot(mnb -> {
+                    mnb.term(m -> m.field("classified_by").value(commissionId));
+                    return mnb;
+                });
+            }
+
             return b;
         })))._toQuery();
     }
@@ -396,10 +424,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
         index.setSerialEvent(event.getSerialEvent());
 
-        index.getRelatedInstitutionIds().clear();
-        index.getRelatedInstitutionIds()
-            .addAll(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
-                event.getId()));
+        index.setRelatedInstitutionIds(
+            eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(event.getId()).stream()
+                .toList());
+        index.setClassifiedBy(
+            commissionRepository.findCommissionsThatClassifiedEvent(event.getId()));
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,

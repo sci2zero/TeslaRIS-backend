@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,11 +16,14 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -269,8 +274,9 @@ public class JournalServiceTest {
         assertEquals(response.getPrintISSN(), journal.getPrintISSN());
     }
 
-    @Test
-    public void shouldFindJournalWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    public void shouldFindJournalWhenSearchingWithSimpleQuery(Integer institutionId) {
         // given
         var tokens = Arrays.asList("DEF CON", "DEFCON");
         var pageable = PageRequest.of(0, 10);
@@ -279,7 +285,8 @@ public class JournalServiceTest {
             new PageImpl<>(List.of(new JournalIndex(), new JournalIndex())));
 
         // when
-        var result = journalService.searchJournals(new ArrayList<>(tokens), pageable);
+        var result =
+            journalService.searchJournals(new ArrayList<>(tokens), pageable, institutionId);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -512,5 +519,78 @@ public class JournalServiceTest {
         // Then
         assertNotNull(result);
         verify(searchService).runQuery(any(), any(), any(), anyString());
+    }
+
+    @Test
+    void shouldReindexJournalVolatileInformationWhenJournalExists() {
+        // Given
+        var journalId = 123;
+        var journalIndex = new JournalIndex();
+        var institutionIds = Set.of(1, 2, 3);
+
+        when(journalIndexRepository.findJournalIndexByDatabaseId(journalId))
+            .thenReturn(Optional.of(journalIndex));
+        when(journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journalId))
+            .thenReturn(institutionIds);
+
+        // When
+        journalService.reindexJournalVolatileInformation(journalId);
+
+        // Then
+        assertEquals(institutionIds.stream().toList(), journalIndex.getRelatedInstitutionIds());
+        verify(journalIndexRepository).save(journalIndex);
+    }
+
+    @Test
+    void shouldNotReindexWhenJournalDoesNotExist() {
+        // Given
+        var journalId = 456;
+        when(journalIndexRepository.findJournalIndexByDatabaseId(journalId))
+            .thenReturn(Optional.empty());
+
+        // When
+        journalService.reindexJournalVolatileInformation(journalId);
+
+        // Then
+        verify(journalRepository, never()).findInstitutionIdsByJournalIdAndAuthorContribution(
+            any());
+        verify(journalIndexRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldHandleEmptyInstitutionList() {
+        // Given
+        var journalId = 789;
+        var journalIndex = new JournalIndex();
+        when(journalIndexRepository.findJournalIndexByDatabaseId(journalId))
+            .thenReturn(Optional.of(journalIndex));
+        when(journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journalId))
+            .thenReturn(Collections.emptySet());
+
+        // When
+        journalService.reindexJournalVolatileInformation(journalId);
+
+        // Then
+        assertTrue(journalIndex.getRelatedInstitutionIds().isEmpty());
+        verify(journalIndexRepository).save(journalIndex);
+    }
+
+    @Test
+    void shouldUpdateRelatedInstitutionIdsWhenReindexJournalVolatileInformation() {
+        // Given
+        var journalId = 2;
+        var journalIndex = mock(JournalIndex.class);
+        when(journalIndexRepository.findJournalIndexByDatabaseId(journalId))
+            .thenReturn(Optional.of(journalIndex));
+        var institutionIds = Set.of(10, 20, 30);
+        when(journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(
+            journalId)).thenReturn(institutionIds);
+
+        // When
+        journalService.reindexJournalVolatileInformation(journalId);
+
+        // Then
+        verify(journalIndex).setRelatedInstitutionIds(institutionIds.stream().toList());
+        verify(journalIndexRepository).save(journalIndex);
     }
 }

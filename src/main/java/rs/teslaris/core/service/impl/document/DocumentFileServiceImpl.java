@@ -6,6 +6,7 @@ import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -29,11 +30,13 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
+import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -56,6 +59,10 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private final FileService fileService;
 
     private final DocumentFileRepository documentFileRepository;
+
+    private final DocumentRepository documentRepository;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final MultilingualContentService multilingualContentService;
 
@@ -117,6 +124,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         documentFile.setResourceType(documentFileDTO.getResourceType());
         documentFile.setLicense(documentFileDTO.getLicense());
+        documentFile.setTimestamp(LocalDateTime.now());
     }
 
     @Override
@@ -130,6 +138,22 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 ResourceType.PROOF); // Save every non-indexed (proof) as its own type
         }
 
+        return saveDocument(documentFile, newDocumentFile, index);
+    }
+
+    @Override
+    public DocumentFile saveNewPreliminaryDocument(DocumentFileDTO documentFile) {
+        var newDocumentFile = new DocumentFile();
+
+        setCommonFields(newDocumentFile, documentFile);
+        newDocumentFile.setCanEdit(false);
+        newDocumentFile.setLatest(true);
+
+        return saveDocument(documentFile, newDocumentFile, false);
+    }
+
+    private DocumentFile saveDocument(DocumentFileDTO documentFile, DocumentFile newDocumentFile,
+                                      Boolean index) {
         var serverFilename =
             fileService.store(documentFile.getFile(), UUID.randomUUID().toString());
         newDocumentFile.setServerFilename(serverFilename);
@@ -147,8 +171,30 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index,
+                                                    Integer documentId) {
+        var documentFileResponse = editDocumentFile(documentFile, index);
+
+        if (Objects.nonNull(documentId) && index) {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+                .ifPresent(documentIndex -> {
+                    documentIndex.setIsOpenAccess(
+                        documentRepository.isDocumentPubliclyAvailable(documentId));
+                    documentPublicationIndexRepository.save(documentIndex);
+                });
+        }
+
+        return documentFileResponse;
+    }
+
+    @Override
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index) {
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
+
+        if (!documentFileToEdit.getCanEdit()) {
+            throw new StorageException(
+                "Document file with ID " + documentFile.getId() + " can't be edited.");
+        }
 
         setCommonFields(documentFileToEdit, documentFile);
 
@@ -168,6 +214,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                         findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
                     parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
                         documentFileToEdit.getServerFilename(), documentIndexToUpdate);
+
+
                 } catch (NotFoundException e) {
                     return DocumentFileConverter.toDTO(
                         documentFileRepository.save(documentFileToEdit));

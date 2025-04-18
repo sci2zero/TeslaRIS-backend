@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import jakarta.annotation.Nullable;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -13,6 +15,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +28,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
+import rs.teslaris.core.converter.document.DocumentPublicationConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -36,6 +43,8 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -47,10 +56,14 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -69,15 +82,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected final OrganisationUnitService organisationUnitService;
 
-    private final DocumentRepository documentRepository;
+    protected final DocumentRepository documentRepository;
 
-    private final DocumentFileService documentFileService;
+    protected final DocumentFileService documentFileService;
 
     private final PersonContributionService personContributionService;
 
     private final ExpressionTransformer expressionTransformer;
 
     private final EventService eventService;
+
+    private final CommissionRepository commissionRepository;
+
+    private final SearchFieldsLoader searchFieldsLoader;
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -86,6 +103,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     protected JpaRepository<Document, Integer> getEntityRepository() {
         return documentRepository;
+    }
+
+    @Override
+    public DocumentDTO readDocumentPublication(Integer documentId) {
+        return DocumentPublicationConverter.toDTO(findOne(documentId));
     }
 
     @Override
@@ -103,8 +125,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
+                                                                     List<Integer> ignore,
                                                                      Pageable pageable) {
-        return documentPublicationIndexRepository.findByAuthorIds(authorId, pageable);
+        return documentPublicationIndexRepository.findByAuthorIdsAndDatabaseIdNotIn(
+            authorId, ignore, pageable);
+    }
+
+    @Override
+    public List<Integer> getResearchOutputIdsForDocument(Integer documentId) {
+        return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                documentId).orElseThrow(
+                () -> new NotFoundException("Document with ID " + documentId + " does not exist."))
+            .getResearchOutputIds();
     }
 
     @Override
@@ -205,9 +237,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
         clearCommonIndexFields(index);
 
-        index.setLastEdited(
-            Objects.nonNull(document.getLastModification()) ? document.getLastModification() :
-                new Date());
+        setBasicMetadata(document, index);
+        setContributors(document, index);
+        setAdditionalMetadata(document, index);
+    }
+
+    private void setBasicMetadata(Document document, DocumentPublicationIndex index) {
+        index.setLastEdited(Objects.nonNull(document.getLastModification())
+            ? document.getLastModification()
+            : new Date());
         index.setDatabaseId(document.getId());
         index.setYear(parseYear(document.getDocumentDate()));
         indexTitle(document, index);
@@ -215,6 +253,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setTitleOtherSortable(index.getTitleOther());
         index.setDoi(document.getDoi());
         index.setScopusId(document.getScopusId());
+        index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
         indexDescription(document, index);
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
@@ -222,79 +261,93 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         if (Objects.nonNull(document.getEvent())) {
             index.setEventId(document.getEvent().getId());
         }
+    }
 
+    private void setContributors(Document document, DocumentPublicationIndex index) {
         var organisationUnitIds = new ArrayList<Integer>();
 
-        document.getContributors()
-            .stream().sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
-            .forEach(contribution -> {
-                var personExists = Objects.nonNull(contribution.getPerson());
+        document.getContributors().stream()
+            .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
+            .forEach(contribution -> processContribution(contribution, index, organisationUnitIds));
 
-                var contributorName =
-                    contribution.getAffiliationStatement().getDisplayPersonName().toString();
-
-                organisationUnitIds.addAll(
-                    contribution.getInstitutions().stream().map((BaseEntity::getId)).toList());
-
-                switch (contribution.getContributionType()) {
-                    case AUTHOR:
-                        if (contribution.getIsCorrespondingContributor()) {
-                            contributorName += "*";
-                        }
-
-                        if (personExists) {
-                            index.getAuthorIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getAuthorIds().add(-1);
-                        }
-
-                        index.setAuthorNames(StringUtil.removeLeadingColonSpace(
-                            index.getAuthorNames() + "; " + contributorName));
-                        break;
-                    case EDITOR:
-                        if (personExists) {
-                            index.getEditorIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getEditorIds().add(-1);
-                        }
-
-                        index.setEditorNames(StringUtil.removeLeadingColonSpace(
-                            index.getEditorNames() + "; " + contributorName));
-                        break;
-                    case ADVISOR:
-                        if (personExists) {
-                            index.getAdvisorIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getAdvisorIds().add(-1);
-                        }
-
-                        index.setAdvisorNames(StringUtil.removeLeadingColonSpace(
-                            index.getAdvisorNames() + "; " + contributorName));
-                        break;
-                    case REVIEWER:
-                        if (personExists) {
-                            index.getReviewerIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getReviewerIds().add(-1);
-                        }
-
-                        index.setReviewerNames(StringUtil.removeLeadingColonSpace(
-                            index.getReviewerNames() + "; " + contributorName));
-                        break;
-                    case BOARD_MEMBER:
-                        if (personExists) {
-                            index.getBoardMemberIds().add(contribution.getPerson().getId());
-                        } else {
-                            index.getBoardMemberIds().add(-1);
-                        }
-
-                        index.setBoardMemberNames(StringUtil.removeLeadingColonSpace(
-                            index.getBoardMemberNames() + "; " + contributorName));
-                        break;
-                }
-            });
-        index.setAuthorNamesSortable(index.getAuthorNames());
         index.setOrganisationUnitIds(organisationUnitIds);
+        index.setAuthorNamesSortable(index.getAuthorNames());
+    }
+
+    private void processContribution(PersonDocumentContribution contribution,
+                                     DocumentPublicationIndex index,
+                                     List<Integer> organisationUnitIds) {
+        var personExists = Objects.nonNull(contribution.getPerson());
+        var contributorName =
+            contribution.getAffiliationStatement().getDisplayPersonName().toString();
+
+        organisationUnitIds.addAll(contribution.getInstitutions().stream()
+            .map(BaseEntity::getId)
+            .toList());
+
+        switch (contribution.getContributionType()) {
+            case AUTHOR ->
+                handleAuthorContribution(contribution, index, contributorName, personExists);
+            case EDITOR -> handleGenericContribution(contribution, index::getEditorIds,
+                index::setEditorNames, contributorName, personExists);
+            case ADVISOR -> handleGenericContribution(contribution, index::getAdvisorIds,
+                index::setAdvisorNames, contributorName, personExists);
+            case REVIEWER -> handleGenericContribution(contribution, index::getReviewerIds,
+                index::setReviewerNames, contributorName, personExists);
+            case BOARD_MEMBER ->
+                handleBoardMember(contribution, index, contributorName, personExists);
+        }
+    }
+
+    private void handleAuthorContribution(PersonDocumentContribution contribution,
+                                          DocumentPublicationIndex index,
+                                          String contributorName, boolean personExists) {
+        if (contribution.getIsCorrespondingContributor()) {
+            contributorName += "*";
+        }
+
+        index.getAuthorIds().add(personExists ? contribution.getPerson().getId() : -1);
+        index.setAuthorNames(StringUtil.removeLeadingColonSpace(
+            index.getAuthorNames() + "; " + contributorName));
+    }
+
+    private void handleGenericContribution(PersonContribution contribution,
+                                           Supplier<List<Integer>> idGetter,
+                                           Consumer<String> nameSetter,
+                                           String contributorName, boolean personExists) {
+        idGetter.get().add(personExists ? contribution.getPerson().getId() : -1);
+        nameSetter.accept(StringUtil.removeLeadingColonSpace("; " + contributorName));
+    }
+
+    private void handleBoardMember(PersonDocumentContribution contribution,
+                                   DocumentPublicationIndex index,
+                                   String contributorName, boolean personExists) {
+        index.getBoardMemberIds().add(personExists ? contribution.getPerson().getId() : -1);
+
+        if (contribution.getIsBoardPresident()) {
+            if (personExists) {
+                index.setBoardPresidentId(contribution.getPerson().getId());
+            }
+            index.setBoardPresidentName(contributorName);
+        }
+
+        index.setBoardMemberNames(StringUtil.removeLeadingColonSpace(
+            index.getBoardMemberNames() + "; " + contributorName));
+    }
+
+    private void setAdditionalMetadata(Document document, DocumentPublicationIndex index) {
+        index.setAssessedBy(
+            commissionRepository.findCommissionsThatClassifiedEvent(document.getId()));
+    }
+
+    @Override
+    public void reindexDocumentVolatileInformation(Integer documentId) {
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(documentIndex -> {
+                documentIndex.setAssessedBy(
+                    commissionRepository.findCommissionsThatAssessedDocument(documentId));
+                documentPublicationIndexRepository.save(documentIndex);
+            });
     }
 
     @Override
@@ -308,14 +361,21 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
         index.setFullTextSr("");
         index.setFullTextOther("");
+        index.setIsOpenAccess(false);
+
         document.getFileItems().forEach(documentFile -> {
+            index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
+
             if (!documentFile.getMimeType().contains("pdf")) {
                 return;
             }
+
             var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
             index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
             index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
         });
+
+        documentPublicationIndexRepository.save(index);
     }
 
     private void indexTitle(Document document, DocumentPublicationIndex index) {
@@ -451,6 +511,27 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             documentRepository.existsByScopusId(identifier, documentPublicationId);
     }
 
+    @Override
+    public Pair<Long, Long> getDocumentCountsBelongingToInstitution(Integer institutionId) {
+        return new Pair<>(documentPublicationIndexRepository.countAssessable(),
+            documentPublicationIndexRepository.countAssessableByOrganisationUnitIds(institutionId));
+    }
+
+    @Override
+    public Pair<Long, Long> getAssessedDocumentCountsForCommission(Integer institutionId,
+                                                                   Integer commissionId) {
+        return new Pair<>(documentPublicationIndexRepository.countByAssessedBy(commissionId),
+            documentPublicationIndexRepository.countByOrganisationUnitIdsAndAssessedBy(
+                institutionId, commissionId));
+    }
+
+    @Override
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields) {
+        return searchFieldsLoader.getSearchFields("documentSearchFieldConfiguration.json",
+            onlyExportFields);
+    }
+
     protected void clearCommonFields(Document publication) {
         publication.getTitle().clear();
         publication.getSubTitle().clear();
@@ -484,9 +565,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     public Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                                      Pageable pageable,
-                                                                     SearchRequestType type) {
+                                                                     SearchRequestType type,
+                                                                     Integer institutionId,
+                                                                     Integer commissionId,
+                                                                     List<DocumentPublicationType> allowedTypes) {
         if (type.equals(SearchRequestType.SIMPLE)) {
-            return searchService.runQuery(buildSimpleSearchQuery(tokens),
+            return searchService.runQuery(
+                buildSimpleSearchQuery(tokens, institutionId, commissionId, allowedTypes),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
@@ -586,10 +671,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         personContributionService.save(contribution);
 
         var document = documentRepository.findById(documentId);
+
         var indexOptional =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
 
         if (document.isPresent() && indexOptional.isPresent()) {
+            if (document.get() instanceof Thesis) {
+                throw new ThesisException("You can't unbind yourself from thesis.");
+            }
+
             var index = indexOptional.get();
             indexCommonFields(document.get(), index);
             documentPublicationIndexRepository.save(index);
@@ -630,12 +720,28 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         })))._toQuery();
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
+                                         Integer commissionId,
+                                         List<DocumentPublicationType> allowedTypes) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
+                    if (Objects.nonNull(institutionId) && institutionId > 0) {
+                        b.must(sb -> sb.term(
+                            m -> m.field("organisation_unit_ids").value(institutionId)));
+                    }
+
+                    if (Objects.nonNull(commissionId) && commissionId > 0) {
+                        b.mustNot(sb -> sb.term(
+                            m -> m.field("assessed_by").value(commissionId)));
+                    }
+
+                    if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
+                        b.must(createTypeTermsQuery(allowedTypes));
+                    }
+
                     tokens.forEach(token -> {
                         if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
                             b.must(mp ->
@@ -691,6 +797,16 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
             return b;
         })))._toQuery();
+    }
+
+    private Query createTypeTermsQuery(List<DocumentPublicationType> values) {
+        return TermsQuery.of(t -> t
+            .field("type")
+            .terms(v -> v.value(values.stream()
+                .map(DocumentPublicationType::name)
+                .map(FieldValue::of)
+                .toList()))
+        )._toQuery();
     }
 
     protected void sendNotifications(Document document) {

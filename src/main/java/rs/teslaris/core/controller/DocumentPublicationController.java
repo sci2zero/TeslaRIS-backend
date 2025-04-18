@@ -2,7 +2,9 @@ package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,17 +23,23 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.dto.document.DocumentAffiliationRequestDTO;
+import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
@@ -51,11 +59,18 @@ public class DocumentPublicationController {
 
     private final CitationService citationService;
 
+    private final UserService userService;
+
 
     @GetMapping("/{documentId}/can-edit")
     @PublicationEditCheck
     public boolean canEditDocumentPublication() {
         return true;
+    }
+
+    @GetMapping("/{documentId}")
+    public DocumentDTO readDocumentPublication(@PathVariable Integer documentId) {
+        return documentPublicationService.readDocumentPublication(documentId);
     }
 
     @GetMapping("/{documentId}/cite")
@@ -68,10 +83,21 @@ public class DocumentPublicationController {
     public Page<DocumentPublicationIndex> simpleSearch(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(required = false) Integer institutionId,
+        @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
+        @RequestParam(value = "allowedTypes", required = false)
+        List<DocumentPublicationType> allowedTypes,
+        @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
+
+        var isCommission = !bearerToken.isEmpty() &&
+            tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name());
+
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
-            SearchRequestType.SIMPLE);
+            SearchRequestType.SIMPLE, institutionId, (isCommission && unclassified) ?
+                userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
+                null, allowedTypes);
     }
 
     @GetMapping("/advanced-search")
@@ -80,7 +106,7 @@ public class DocumentPublicationController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
-            SearchRequestType.ADVANCED);
+            SearchRequestType.ADVANCED, null, null, new ArrayList<>());
     }
 
     @GetMapping("/deduplication-search")
@@ -92,8 +118,16 @@ public class DocumentPublicationController {
 
     @GetMapping("/for-researcher/{personId}")
     public Page<DocumentPublicationIndex> findResearcherPublications(@PathVariable Integer personId,
+                                                                     @RequestParam(value = "ignore", required = false)
+                                                                     List<Integer> ignore,
                                                                      Pageable pageable) {
-        return documentPublicationService.findResearcherPublications(personId, pageable);
+        return documentPublicationService.findResearcherPublications(personId,
+            Objects.requireNonNullElse(ignore, List.of()), pageable);
+    }
+
+    @GetMapping("/research-output/{documentId}")
+    public List<Integer> findResearchOutputForDocument(@PathVariable Integer documentId) {
+        return documentPublicationService.getResearchOutputIdsForDocument(documentId);
     }
 
     @GetMapping("/non-affiliated/{organisationUnitId}")
@@ -197,5 +231,11 @@ public class DocumentPublicationController {
     public boolean checkIdentifierUsage(@PathVariable Integer documentId,
                                         @RequestParam String identifier) {
         return documentPublicationService.isIdentifierInUse(identifier, documentId);
+    }
+
+    @GetMapping("/fields")
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        @RequestParam("export") Boolean onlyExportFields) {
+        return documentPublicationService.getSearchFields(onlyExportFields);
     }
 }

@@ -7,11 +7,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
@@ -82,9 +84,10 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
-    public Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens), pageable, JournalIndex.class,
-            "journal");
+    public Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
+                                             Integer institutionId) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId),
+            pageable, JournalIndex.class, "journal");
     }
 
     @Override
@@ -195,8 +198,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexJournals() {
+    public CompletableFuture<Void> reindexJournals() {
         journalIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -212,6 +216,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     private void setJournalRelatedFields(Journal journal, PublicationSeriesDTO journalDTO) {
@@ -227,6 +232,17 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
         indexCommonFields(journal, index);
         journalIndexRepository.save(index);
+    }
+
+    @Override
+    public void reindexJournalVolatileInformation(Integer journalId) {
+        journalIndexRepository.findJournalIndexByDatabaseId(journalId).ifPresent(journalIndex -> {
+            journalIndex.setRelatedInstitutionIds(
+                journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journalId)
+                    .stream().toList());
+
+            journalIndexRepository.save(journalIndex);
+        });
     }
 
     @Override
@@ -261,7 +277,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                                             LanguageTag defaultLanguage,
                                             String eIssn, String printIssn) {
         var potentialHits = searchJournals(
-            Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2)).getContent();
+            Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2),
+            null).getContent();
 
         for (var potentialHit : potentialHits) {
             for (var title : potentialHit.getTitleOther().split("\\|")) {
@@ -321,12 +338,21 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(journal.getEISSN());
         index.setPrintISSN(journal.getPrintISSN());
+
+        index.setRelatedInstitutionIds(
+            journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journal.getId())
+                .stream().toList());
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            if (Objects.nonNull(institutionId) && institutionId > 0) {
+                b.must(sb -> sb.term(
+                    m -> m.field("related_institution_ids").value(institutionId)));
+            }
+
             tokens.forEach(token -> {
                 if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
                     b.must(mp ->

@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.OrgUnitEditCheck;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -28,6 +30,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -42,7 +45,8 @@ public class OrganisationUnitController {
 
 
     @GetMapping("/{organisationUnitId}/can-edit")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ORGANISATION_UNITS', 'EDIT_EMPLOYMENT_INSTITUTION')")
+    @OrgUnitEditCheck
     public boolean canEditOrganisationUnit() {
         return true;
     }
@@ -84,10 +88,12 @@ public class OrganisationUnitController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(value = "personId", required = false) Integer personId,
+        @RequestParam(value = "topLevelInstitutionId", required = false)
+        Integer topLevelInstitutionId,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.SIMPLE, personId);
+            SearchRequestType.SIMPLE, personId, topLevelInstitutionId);
     }
 
     @GetMapping("/advanced-search")
@@ -96,7 +102,7 @@ public class OrganisationUnitController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.ADVANCED, null);
+            SearchRequestType.ADVANCED, null, null);
     }
 
     @PostMapping
@@ -110,7 +116,8 @@ public class OrganisationUnitController {
 
 
     @PutMapping("/{organisationUnitId}")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ORGANISATION_UNITS', 'EDIT_EMPLOYMENT_INSTITUTION')")
+    @OrgUnitEditCheck
     @ResponseStatus(HttpStatus.OK)
     public OrganisationUnitDTO updateOrganisationUnit(
         @RequestBody @Valid OrganisationUnitRequestDTO organisationUnitRequestDTO,
@@ -124,7 +131,7 @@ public class OrganisationUnitController {
     @PatchMapping("/{organisationUnitId}/approve-status")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
     @ResponseStatus(HttpStatus.OK)
-    public OrganisationUnitDTO updateOrganisationUnit(
+    public OrganisationUnitDTO updateOrganisationUnitApproveStatus(
         @RequestBody @Valid ApproveStatus approveStatus,
         @PathVariable Integer organisationUnitId) {
         var organisationUnit =
@@ -156,9 +163,16 @@ public class OrganisationUnitController {
     }
 
     @GetMapping("/identifier-usage/{organisationUnitId}")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @PreAuthorize("hasAnyAuthority('EDIT_ORGANISATION_UNITS', 'EDIT_EMPLOYMENT_INSTITUTION')")
+    @OrgUnitEditCheck
     public boolean checkIdentifierUsage(@PathVariable Integer organisationUnitId,
                                         @RequestParam String identifier) {
         return organisationUnitService.isIdentifierInUse(identifier, organisationUnitId);
+    }
+
+    @GetMapping("/fields")
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        @RequestParam("export") Boolean onlyExportFields) {
+        return organisationUnitService.getSearchFields(onlyExportFields);
     }
 }

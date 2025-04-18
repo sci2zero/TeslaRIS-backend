@@ -44,4 +44,8 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         "WHERE m.id = :monographId " +
         "AND pc.contributionType = 0")
     Set<Integer> findInstitutionIdsByMonographIdAndAuthorContribution(Integer monographId);
+
+    @Query("SELECT COUNT(d) > 0 FROM Document d LEFT JOIN d.fileItems fi WHERE " +
+        "d.id = :documentId AND fi.resourceType = 1 AND fi.license = 3")
+    boolean isDocumentPubliclyAvailable(Integer documentId);
 }

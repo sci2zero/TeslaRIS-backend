@@ -3,6 +3,7 @@ package rs.teslaris.core.model.document;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
@@ -17,7 +18,10 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 @Getter
 @Setter
 @Entity
-@Table(name = "proceedings")
+@Table(name = "proceedings", indexes = {
+    @Index(name = "idx_proceedings_e_isbn", columnList = "e_isbn"),
+    @Index(name = "idx_proceedings_print_isbn", columnList = "print_isbn")
+})
 @SQLRestriction("deleted=false")
 public non-sealed class Proceedings extends Document
     implements BookSeriesPublishable, PublisherPublishable {

@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.document;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,8 @@ public interface ConferenceService {
     Page<EventIndex> searchConferences(List<String> tokens, Pageable pageable,
                                        Boolean returnOnlyNonSerialEvents,
                                        Boolean returnOnlySerialEvents,
-                                       Integer commissionInstitutionId);
+                                       Integer commissionInstitutionId,
+                                       Integer commissionId);
 
     Page<EventIndex> searchConferencesForImport(List<String> names, String dateFrom, String dateTo);
 
@@ -37,9 +39,11 @@ public interface ConferenceService {
 
     void forceDeleteConference(Integer conferenceId);
 
-    void reindexConferences();
+    CompletableFuture<Void> reindexConferences();
 
     void reindexConference(Integer conferenceId);
+
+    void reindexVolatileConferenceInformation(Integer conferenceId);
 
     void reorderConferenceContributions(Integer conferenceId, Integer contributionId,
                                         Integer oldContributionOrderNumber,

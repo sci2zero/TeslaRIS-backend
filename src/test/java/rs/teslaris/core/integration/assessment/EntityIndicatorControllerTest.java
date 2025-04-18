@@ -13,7 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.assessment.dto.EventIndicatorDTO;
+import rs.teslaris.assessment.dto.EventIndicatorDTO;
 import rs.teslaris.core.integration.BaseTest;
 
 @SpringBootTest

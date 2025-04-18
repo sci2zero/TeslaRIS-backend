@@ -20,8 +20,8 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.commontypes.TaskManagerServiceImpl;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @SpringBootTest
@@ -34,7 +34,7 @@ class TaskManagerServiceTest {
     private UserService userService;
 
     @Mock
-    private OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
+    private OrganisationUnitService organisationUnitService;
 
     @InjectMocks
     private TaskManagerServiceImpl taskManagerService;
@@ -106,7 +106,7 @@ class TaskManagerServiceTest {
         boolean isAdmin = role.equals("ADMIN");
         if (!isAdmin) {
             when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
-            when(organisationUnitsRelationRepository.getSubOUsRecursive(1))
+            when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
                 .thenReturn(List.of(1)); // Assuming sub-OU structure
         }
 

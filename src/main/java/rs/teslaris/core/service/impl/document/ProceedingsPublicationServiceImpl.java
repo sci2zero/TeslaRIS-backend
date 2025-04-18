@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -32,6 +33,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
@@ -57,13 +59,16 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              PersonContributionService personContributionService,
                                              ExpressionTransformer expressionTransformer,
                                              EventService eventService,
+                                             CommissionRepository commissionRepository,
+                                             SearchFieldsLoader searchFieldsLoader,
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository,
                                              ConferenceService conferenceService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
-            personContributionService, expressionTransformer, eventService);
+            personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
@@ -152,9 +157,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         proceedingPublicationJPAService.save(publicationToUpdate);
 
-        conferenceService.reindexConference(publicationToUpdate.getEvent().getId());
+        conferenceService.reindexVolatileConferenceInformation(
+            publicationToUpdate.getEvent().getId());
         if (!publicationToUpdate.getEvent().getId().equals(oldConferenceId)) {
-            conferenceService.reindexConference(oldConferenceId);
+            conferenceService.reindexVolatileConferenceInformation(oldConferenceId);
         }
 
         sendNotifications(publicationToUpdate);

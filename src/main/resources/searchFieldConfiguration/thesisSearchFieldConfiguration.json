@@ -1,0 +1,121 @@
+{
+  "fields": [
+    {
+      "fieldName": "title_sr",
+      "displayName": {
+        "sr": "Naslov na srpskom",
+        "en": "Serbian title"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "title_other",
+      "displayName": {
+        "sr": "Naslov na stranom jeziku",
+        "en": "Foreign language title"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "description_sr",
+      "displayName": {
+        "sr": "Apstrakt na srpskom",
+        "en": "Serbian abstract"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "description_other",
+      "displayName": {
+        "sr": "Apstrakt na stranom jeziku",
+        "en": "Abstract on foreign language"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "keywords_sr",
+      "displayName": {
+        "sr": "Ključne reči na srpskom",
+        "en": "Serbian keywords"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "keywords_other",
+      "displayName": {
+        "sr": "Ključne reči na stranom jeziku",
+        "en": "Foreigh language keywords"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "full_text_sr",
+      "displayName": {
+        "sr": "Sadržaj na srpskom",
+        "en": "Serbian full-text"
+      },
+      "type": "text",
+      "canExport": false
+    },
+    {
+      "fieldName": "full_text_other",
+      "displayName": {
+        "sr": "Sadržaj na stranom jeziku",
+        "en": "Foreign language full-text"
+      },
+      "type": "text",
+      "canExport": false
+    },
+    {
+      "fieldName": "author_names",
+      "displayName": {
+        "sr": "Imena autora",
+        "en": "Author names"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "editor_names",
+      "displayName": {
+        "sr": "Imena urednika",
+        "en": "Editor names"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "board_member_names",
+      "displayName": {
+        "sr": "Imena članova odbora",
+        "en": "Board member names"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "board_president_name",
+      "displayName": {
+        "sr": "Ime predsednika komisije",
+        "en": "Board president name"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "advisor_names",
+      "displayName": {
+        "sr": "Imena savetnika",
+        "en": "Advisor names"
+      },
+      "type": "text",
+      "canExport": true
+    }
+  ]
+}

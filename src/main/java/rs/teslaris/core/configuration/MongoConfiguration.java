@@ -6,6 +6,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -33,10 +34,16 @@ public class MongoConfiguration extends AbstractMongoClientConfiguration {
         var connectionString = new ConnectionString(host + getDatabaseName());
         var mongoClientSettings = MongoClientSettings.builder()
             .applyConnectionString(connectionString)
+            .applyToSocketSettings(builder ->
+                builder.connectTimeout(5, TimeUnit.SECONDS)
+                    .readTimeout(3, TimeUnit.SECONDS))
+            .applyToClusterSettings(builder ->
+                builder.serverSelectionTimeout(3, TimeUnit.SECONDS))
             .build();
 
         return MongoClients.create(mongoClientSettings);
     }
+
 
     @NotNull
     @Override

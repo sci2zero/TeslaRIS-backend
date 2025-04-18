@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,10 +70,12 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -104,6 +108,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final MultilingualContentService multilingualContentService;
 
     private final FileService fileService;
+
+    private final SearchFieldsLoader searchFieldsLoader;
 
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
@@ -200,7 +206,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var person = findOne(personId);
 
         for (var personInvolvement : person.getInvolvements()) {
-            Integer personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
+            var personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
+
             if (personInvolvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
                 Objects.equals(personOrganisationUnitId, organisationUnitId)) {
                 return true;
@@ -629,7 +636,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public void reindexPersons() {
+    @Async("reindexExecutor")
+    public CompletableFuture<Void> reindexPersons() {
         personIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 50;
@@ -644,6 +652,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     @Transactional
@@ -995,5 +1004,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personRepository.existsByApvnt(identifier, personId) ||
             personRepository.existsByeCrisId(identifier, personId) ||
             personRepository.existsByeNaukaId(identifier, personId);
+    }
+
+    @Override
+    public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
+        Boolean onlyExportFields) {
+        return searchFieldsLoader.getSearchFields("personSearchFieldConfiguration.json",
+            onlyExportFields);
     }
 }

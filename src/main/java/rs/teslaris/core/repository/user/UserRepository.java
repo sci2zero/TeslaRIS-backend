@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.user.User;
 
@@ -16,6 +16,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.organisationUnit ou WHERE u.id = :userId")
     Optional<User> findByIdWithOrganisationUnit(Integer userId);
+
+    @Query("SELECT u.commission.id FROM User u WHERE u.id = :userId")
+    Optional<Integer> findCommissionIdForUser(Integer userId);
 
     @Query("SELECT u.organisationUnit.id FROM User u WHERE u.id = :userId")
     Integer findOrganisationUnitIdForUser(Integer userId);
@@ -46,4 +49,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT ou FROM User u JOIN u.organisationUnit ou WHERE u.commission.id = :commissionId")
     Optional<OrganisationUnit> findOUForCommission(Integer commissionId);
+
+    @Query("SELECT u from User u where u.authority.name = 'COMMISSION'")
+    List<User> findAllCommissionUsers();
 }

@@ -16,7 +16,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import rs.teslaris.core.assessment.model.Commission;
+import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.institution.OrganisationUnit;

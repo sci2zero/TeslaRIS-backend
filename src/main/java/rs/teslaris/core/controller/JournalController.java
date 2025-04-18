@@ -59,9 +59,10 @@ public class JournalController {
     Page<JournalIndex> searchJournals(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "institutionId", required = false) Integer institutionId,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
-        return journalService.searchJournals(tokens, pageable);
+        return journalService.searchJournals(tokens, pageable, institutionId);
     }
 
     @GetMapping("/{journalId}")

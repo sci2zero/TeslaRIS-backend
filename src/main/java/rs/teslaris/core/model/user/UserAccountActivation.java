@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -19,7 +20,9 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user_account_activations")
+@Table(name = "user_account_activations", indexes = {
+    @Index(name = "idx_user_account_activation_activation_token", columnList = "activation_token")
+})
 @SQLRestriction("deleted=false")
 public class UserAccountActivation extends BaseEntity {
 

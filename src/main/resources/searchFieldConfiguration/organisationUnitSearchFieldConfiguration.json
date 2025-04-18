@@ -1,0 +1,87 @@
+{
+  "fields": [
+    {
+      "fieldName": "name_sr",
+      "displayName": {
+        "sr": "Naziv na srpskom",
+        "en": "Serbian name"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "name_other",
+      "displayName": {
+        "sr": "Naziv na stranom jeziku",
+        "en": "Foreign language name"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "keywords_sr",
+      "displayName": {
+        "sr": "Ključne reči na srpskom",
+        "en": "Serbian keywords"
+      },
+      "type": "text",
+      "rule": "INLINE",
+      "canExport": true
+    },
+    {
+      "fieldName": "keywords_other",
+      "displayName": {
+        "sr": "Ključne reči na stranom jeziku",
+        "en": "Foreigh language keywords"
+      },
+      "type": "text",
+      "rule": "INLINE",
+      "canExport": true
+    },
+    {
+      "fieldName": "research_areas_sr",
+      "displayName": {
+        "sr": "Oblasti istraživanja na srpskom",
+        "en": "Serbian research areas"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "research_areas_other",
+      "displayName": {
+        "sr": "Oblasti istraživanja na stranom jeziku",
+        "en": "Foreign language research areas"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "super_ou_name_sr",
+      "displayName": {
+        "sr": "Naziv nadjedinice na srpskom",
+        "en": "Serbian super-unit name"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "super_ou_name_other",
+      "displayName": {
+        "sr": "Naziv nadjedinice na stranom jeziku",
+        "en": "Foreign language super-unit name"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "scopus_afid",
+      "displayName": {
+        "sr": "SCOPUS AFID",
+        "en": "SCOPUS AFID"
+      },
+      "type": "text",
+      "canExport": true
+    }
+  ]
+}

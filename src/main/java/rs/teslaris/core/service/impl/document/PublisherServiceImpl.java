@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
@@ -156,8 +158,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    @Async("reindexExecutor")
     @Transactional(readOnly = true)
-    public void reindexPublishers() {
+    public CompletableFuture<Void> reindexPublishers() {
         publisherIndexRepository.deleteAll();
         int pageNumber = 0;
         int chunkSize = 10;
@@ -172,6 +175,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+        return null;
     }
 
     private void setCommonFields(Publisher publisher, PublisherDTO publisherDTO) {

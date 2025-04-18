@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.converter.document.DatasetConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -24,6 +25,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 public class DatasetServiceImpl extends DocumentPublicationServiceImpl implements DatasetService {
@@ -43,11 +45,14 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               PersonContributionService personContributionService,
                               ExpressionTransformer expressionTransformer,
                               EventService eventService,
+                              CommissionRepository commissionRepository,
+                              SearchFieldsLoader searchFieldsLoader,
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository,
-            documentFileService, personContributionService, expressionTransformer, eventService);
+            organisationUnitService, documentRepository, documentFileService,
+            personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }

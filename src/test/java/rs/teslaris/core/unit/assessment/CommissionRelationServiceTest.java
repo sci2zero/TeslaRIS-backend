@@ -13,14 +13,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.assessment.dto.CommissionRelationDTO;
-import rs.teslaris.core.assessment.dto.ReorderCommissionRelationDTO;
-import rs.teslaris.core.assessment.model.Commission;
-import rs.teslaris.core.assessment.model.CommissionRelation;
-import rs.teslaris.core.assessment.model.ResultCalculationMethod;
-import rs.teslaris.core.assessment.repository.CommissionRelationRepository;
-import rs.teslaris.core.assessment.service.impl.CommissionRelationServiceImpl;
-import rs.teslaris.core.assessment.service.interfaces.CommissionService;
+import rs.teslaris.assessment.dto.CommissionRelationDTO;
+import rs.teslaris.assessment.dto.ReorderCommissionRelationDTO;
+import rs.teslaris.assessment.model.Commission;
+import rs.teslaris.assessment.model.CommissionRelation;
+import rs.teslaris.assessment.model.ResultCalculationMethod;
+import rs.teslaris.assessment.repository.CommissionRelationRepository;
+import rs.teslaris.assessment.service.impl.CommissionRelationServiceImpl;
+import rs.teslaris.assessment.service.interfaces.CommissionService;
 
 @SpringBootTest
 public class CommissionRelationServiceTest {

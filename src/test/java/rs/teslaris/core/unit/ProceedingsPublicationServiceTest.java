@@ -32,6 +32,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -93,6 +94,9 @@ public class ProceedingsPublicationServiceTest {
 
     @Mock
     private ConferenceService conferenceService;
+
+    @Mock
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private ProceedingsPublicationServiceImpl proceedingsPublicationService;

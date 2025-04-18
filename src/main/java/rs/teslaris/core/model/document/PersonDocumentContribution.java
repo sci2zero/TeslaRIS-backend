@@ -26,6 +26,9 @@ public class PersonDocumentContribution extends PersonContribution {
     @Column(name = "corresponding_contributor", nullable = false)
     private Boolean isCorrespondingContributor;
 
+    @Column(name = "board_president", nullable = false)
+    private Boolean isBoardPresident = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;

@@ -1,0 +1,77 @@
+{
+  "fields": [
+    {
+      "fieldName": "name",
+      "displayName": {
+        "sr": "Ime i prezime",
+        "en": "Name and surname"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "biography_sr",
+      "displayName": {
+        "sr": "Biografija na srpskom",
+        "en": "Serbian biography"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "biography_other",
+      "displayName": {
+        "sr": "Biografija na stranom jeziku",
+        "en": "Foreign language boigraphy"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "employments_sr",
+      "displayName": {
+        "sr": "Institucije zaposlenja na srpskom",
+        "en": "Serbian employment institutions"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "employments_other",
+      "displayName": {
+        "sr": "Institucije zaposlenja na stranom jeziku",
+        "en": "Employment institutions on foreign language"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "orcid",
+      "displayName": {
+        "sr": "ORCID ID",
+        "en": "ORCID ID"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "scopus_author_id",
+      "displayName": {
+        "sr": "Scopus Author ID",
+        "en": "Scopus Author ID"
+      },
+      "type": "text",
+      "canExport": true
+    },
+    {
+      "fieldName": "keywords",
+      "displayName": {
+        "sr": "Ključne reči",
+        "en": "Keywords"
+      },
+      "type": "text",
+      "rule": "INLINE",
+      "canExport": true
+    }
+  ]
+}

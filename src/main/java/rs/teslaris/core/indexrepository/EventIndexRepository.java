@@ -9,4 +9,10 @@ import rs.teslaris.core.indexmodel.EventIndex;
 public interface EventIndexRepository extends ElasticsearchRepository<EventIndex, String> {
 
     Optional<EventIndex> findByDatabaseId(Integer databaseId);
+
+    Long countByRelatedInstitutionIds(Integer institutionId);
+
+    Long countByClassifiedBy(Integer classifiedBy);
+
+    Long countByRelatedInstitutionIdsAndClassifiedBy(Integer institutionId, Integer classifiedBy);
 }

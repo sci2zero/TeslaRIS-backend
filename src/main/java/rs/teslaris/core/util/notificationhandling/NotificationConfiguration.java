@@ -21,5 +21,9 @@ public class NotificationConfiguration {
         allowedActions.put(NotificationType.FOUND_POTENTIAL_CLAIMS,
             List.of(NotificationAction.BROWSE_CLAIMABLE_DOCUMENTS));
         allowedActions.put(NotificationType.SCHEDULED_TASK_COMPLETED, List.of());
+        allowedActions.put(NotificationType.NEW_EVENTS_TO_CLASSIFY,
+            List.of(NotificationAction.PERFORM_EVENT_CLASSIFICATION));
+        allowedActions.put(NotificationType.NEW_PUBLICATIONS_TO_ASSESS,
+            List.of(NotificationAction.PERFORM_DOCUMENT_ASSESSMENT));
     }
 }

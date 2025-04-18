@@ -2,6 +2,7 @@ package rs.teslaris.core.service.interfaces.document;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,8 @@ public interface JournalService {
 
     Page<JournalResponseDTO> readAllJournals(Pageable pageable);
 
-    Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable);
+    Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
+                                      Integer institutionId);
 
     Journal findJournalByJournalName(String journalName, LanguageTag defaultLanguage,
                                      String eIssn, String printIssn);
@@ -49,9 +51,11 @@ public interface JournalService {
 
     void forceDeleteJournal(Integer journalId);
 
-    void reindexJournals();
+    CompletableFuture<Void> reindexJournals();
 
     void indexJournal(Journal journal, JournalIndex index);
+
+    void reindexJournalVolatileInformation(Integer journalId);
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
 }

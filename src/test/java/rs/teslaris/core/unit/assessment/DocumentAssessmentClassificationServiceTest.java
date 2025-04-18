@@ -21,19 +21,22 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.assessment.dto.DocumentAssessmentClassificationDTO;
-import rs.teslaris.core.assessment.model.AssessmentClassification;
-import rs.teslaris.core.assessment.model.Commission;
-import rs.teslaris.core.assessment.model.DocumentAssessmentClassification;
-import rs.teslaris.core.assessment.repository.DocumentAssessmentClassificationRepository;
-import rs.teslaris.core.assessment.repository.EntityAssessmentClassificationRepository;
-import rs.teslaris.core.assessment.service.impl.DocumentAssessmentClassificationServiceImpl;
-import rs.teslaris.core.assessment.service.interfaces.AssessmentClassificationService;
-import rs.teslaris.core.assessment.service.interfaces.CommissionService;
+import rs.teslaris.assessment.dto.DocumentAssessmentClassificationDTO;
+import rs.teslaris.assessment.model.AssessmentClassification;
+import rs.teslaris.assessment.model.Commission;
+import rs.teslaris.assessment.model.DocumentAssessmentClassification;
+import rs.teslaris.assessment.repository.DocumentAssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.EntityAssessmentClassificationRepository;
+import rs.teslaris.assessment.service.impl.DocumentAssessmentClassificationServiceImpl;
+import rs.teslaris.assessment.service.impl.cruddelegate.DocumentClassificationJPAServiceImpl;
+import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -58,6 +61,12 @@ public class DocumentAssessmentClassificationServiceTest {
 
     @Mock
     private EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
+
+    @Mock
+    private DocumentClassificationJPAServiceImpl documentClassificationJPAService;
+
+    @Mock
+    private DocumentPublicationService documentPublicationService;
 
     @InjectMocks
     private DocumentAssessmentClassificationServiceImpl documentAssessmentClassificationService;
@@ -133,6 +142,7 @@ public class DocumentAssessmentClassificationServiceTest {
 
         var classification = new DocumentAssessmentClassification();
         classification.setAssessmentClassification(new AssessmentClassification());
+        classification.setDocument(new JournalPublication());
 
         when(documentRepository.findById(1)).thenReturn(Optional.of(document));
         when(commissionService.findOne(1)).thenReturn(new Commission());
@@ -196,9 +206,9 @@ public class DocumentAssessmentClassificationServiceTest {
         classificationDTO.setCommissionId(1);
 
         var classification = new DocumentAssessmentClassification();
+        classification.setDocument(new Dataset());
         classification.setId(1);
-        when(documentAssessmentClassificationRepository.findById(1))
-            .thenReturn(java.util.Optional.of(classification));
+        when(documentClassificationJPAService.findOne(1)).thenReturn(classification);
         when(entityAssessmentClassificationRepository.findById(1)).thenReturn(
             Optional.of(new DocumentAssessmentClassification()));
 
@@ -219,7 +229,7 @@ public class DocumentAssessmentClassificationServiceTest {
         classificationDTO.setDocumentId(1);
         classificationDTO.setCommissionId(1);
 
-        when(entityAssessmentClassificationRepository.findById(1)).thenReturn(Optional.empty());
+        when(documentClassificationJPAService.findOne(1)).thenThrow(NotFoundException.class);
 
         // When & Then
         assertThrows(NotFoundException.class, () ->

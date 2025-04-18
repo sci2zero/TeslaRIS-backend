@@ -14,9 +14,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.assessment.dto.CommissionRelationDTO;
-import rs.teslaris.core.assessment.dto.ReorderCommissionRelationDTO;
-import rs.teslaris.core.assessment.model.ResultCalculationMethod;
+import rs.teslaris.assessment.dto.CommissionRelationDTO;
+import rs.teslaris.assessment.dto.ReorderCommissionRelationDTO;
+import rs.teslaris.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.integration.BaseTest;
 
 @SpringBootTest

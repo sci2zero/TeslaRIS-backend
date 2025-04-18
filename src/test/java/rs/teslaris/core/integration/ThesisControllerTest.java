@@ -4,7 +4,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.MethodOrderer;
@@ -40,12 +39,11 @@ public class ThesisControllerTest extends BaseTest {
         thesisDTO.setDescription(dummyMC);
         thesisDTO.setKeywords(dummyMC);
         thesisDTO.setDocumentDate("2004-11-06");
-        thesisDTO.setLanguageTagIds(new ArrayList<>());
         thesisDTO.setThesisType(ThesisType.PHD);
         thesisDTO.setOrganisationUnitId(1);
 
         var contribution =
-            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false);
+            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false);
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);
@@ -95,6 +93,75 @@ public class ThesisControllerTest extends BaseTest {
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testPutThesisOnPublicReviewFailsForEmptyAttachmentList() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/put-on-public-review/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    @Order(1)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testRemoveFromPublicReviewFailsWhenNotOnPublicReview() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/remove-from-public-review/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    @Order(2)
+    @WithMockUser(username = "test.library@test.com", password = "library")
+    public void testArchiveThesis() throws Exception {
+        String jwtToken = authenticateLibrarianAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/archive/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(3)
+    @WithMockUser(username = "test.head_of_library@test.com", password = "head_of_library")
+    public void testUnarchiveThesis() throws Exception {
+        String jwtToken = authenticateHeadOfLibraryAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/unarchive/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(Integer.MAX_VALUE)
+    @WithMockUser(username = "test.head_of_library@test.com", password = "head_of_library")
+    public void testGetThesisLibraryFormat() throws Exception {
+        String jwtToken = authenticateLibrarianAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/thesis/library-formats/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 
     @Test

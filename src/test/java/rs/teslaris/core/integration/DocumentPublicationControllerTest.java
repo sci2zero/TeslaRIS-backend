@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -33,6 +35,13 @@ public class DocumentPublicationControllerTest extends BaseTest {
     }
 
     @Test
+    public void testReadDocumentPublication() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                "http://localhost:8081/api/document/{documentId}", 13)
+            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
     public void testFindNonAffiliatedPublications() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
@@ -54,5 +63,31 @@ public class DocumentPublicationControllerTest extends BaseTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testGetResearchOutputs() throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/document/research-output/{documentId}", 10)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testGetSearchFields(Boolean onlyExportFields) throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/document/fields?export={export}", onlyExportFields)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 }

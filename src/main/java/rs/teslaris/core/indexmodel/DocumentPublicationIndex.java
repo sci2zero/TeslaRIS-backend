@@ -2,6 +2,7 @@ package rs.teslaris.core.indexmodel;
 
 
 import jakarta.persistence.Id;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -76,11 +77,17 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "board_member_ids", store = true)
     private List<Integer> boardMemberIds = new ArrayList<>();
 
+    @Field(type = FieldType.Integer, name = "board_president_id", store = true)
+    private Integer boardPresidentId;
+
     @Field(type = FieldType.Text, name = "reviewer_names", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String reviewerNames = "";
 
     @Field(type = FieldType.Text, name = "board_member_names", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String boardMemberNames = "";
+
+    @Field(type = FieldType.Text, name = "board_president_name", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String boardPresidentName = "";
 
     @Field(type = FieldType.Integer, name = "advisor_ids", store = true)
     private List<Integer> advisorIds = new ArrayList<>();
@@ -132,4 +139,22 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
+
+    @Field(type = FieldType.Integer, name = "assessed_by", store = true)
+    private List<Integer> assessedBy = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "research_outputs", store = true)
+    private List<Integer> researchOutputIds = new ArrayList<>();
+
+    @Field(type = FieldType.Date, name = "topic_acceptance_date", store = true)
+    private LocalDate topicAcceptanceDate;
+
+    @Field(type = FieldType.Date, name = "thesis_defence_date", store = true)
+    private LocalDate thesisDefenceDate;
+
+    @Field(type = FieldType.Date, name = "public_review_start_dates", store = true)
+    private List<LocalDate> publicReviewStartDates = new ArrayList<>();
+
+    @Field(type = FieldType.Boolean, name = "is_open_access", store = true)
+    private Boolean isOpenAccess;
 }

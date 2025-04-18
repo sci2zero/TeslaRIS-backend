@@ -1,6 +1,7 @@
 package rs.teslaris.core.util.search;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,10 @@ public class ExpressionTransformer {
     private final Map<String, Integer> priorities = Map.of("AND", 2, "OR", 1, "NOT", 3);
 
     public Query parseAdvancedQuery(List<String> expression) {
+        if (expression.isEmpty()) {
+            return MatchAllQuery.of(ma -> ma)._toQuery();
+        }
+
         return buildQueryFromPostFixExpression(transformToPostFixNotation(expression));
     }
 

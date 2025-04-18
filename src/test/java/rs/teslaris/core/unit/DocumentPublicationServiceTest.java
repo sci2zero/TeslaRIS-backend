@@ -2,12 +2,15 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,8 +20,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +35,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -44,8 +54,10 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
+import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @SpringBootTest
@@ -75,13 +87,41 @@ public class DocumentPublicationServiceTest {
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    @Mock
+    private CommissionRepository commissionRepository;
+
+    @Mock
+    private SearchFieldsLoader searchFieldsLoader;
+
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;
 
+    static Stream<Arguments> shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery() {
+        return Stream.of(
+            Arguments.of(null, null),
+            Arguments.of(1, null),
+            Arguments.of(null, 1),
+            Arguments.of(1, 1)
+        );
+    }
 
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(documentPublicationService, "documentApprovedByDefault", true);
+    }
+
+    @Test
+    public void shouldReadDocumentPublicationWhenItExists() {
+        // given
+        var expected = new MonographPublication();
+        expected.setId(1);
+        when(documentRepository.findById(1)).thenReturn(Optional.of(expected));
+
+        // when
+        var result = documentPublicationService.readDocumentPublication(1);
+
+        // then
+        assertEquals(expected.getId(), result.getId());
     }
 
     @Test
@@ -236,8 +276,10 @@ public class DocumentPublicationServiceTest {
         verify(documentRepository, times(1)).save(document);
     }
 
-    @Test
-    public void shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @MethodSource("shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery")
+    public void shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery(Integer institutionId,
+                                                                           Integer commissionId) {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -249,7 +291,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.SIMPLE);
+                pageable, SearchRequestType.SIMPLE, institutionId, commissionId, null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -268,7 +310,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.ADVANCED);
+                pageable, SearchRequestType.ADVANCED, null, null, new ArrayList<>());
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -342,16 +384,17 @@ public class DocumentPublicationServiceTest {
         var authorId = 123;
         var pageable = PageRequest.of(0, 10);
         var expectedPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
-        when(documentPublicationIndexRepository.findByAuthorIds(anyInt(),
+        when(documentPublicationIndexRepository.findByAuthorIdsAndDatabaseIdNotIn(anyInt(), any(),
             any(Pageable.class))).thenReturn(expectedPage);
 
         // when
         var resultPage =
-            documentPublicationService.findResearcherPublications(authorId, pageable);
+            documentPublicationService.findResearcherPublications(authorId, List.of(), pageable);
 
         // then
         assertEquals(expectedPage, resultPage);
-        verify(documentPublicationIndexRepository).findByAuthorIds(authorId, pageable);
+        verify(documentPublicationIndexRepository).findByAuthorIdsAndDatabaseIdNotIn(authorId,
+            List.of(), pageable);
     }
 
     @Test
@@ -615,5 +658,114 @@ public class DocumentPublicationServiceTest {
         verify(documentRepository, atMostOnce()).existsByDoi(identifier, documentPublicationId);
         verify(documentRepository, atMostOnce()).existsByScopusId(identifier,
             documentPublicationId);
+    }
+
+    @Test
+    void shouldUpdateAssessedByWhenReindexDocumentVolatileInformation() {
+        // Given
+        var documentId = 1;
+        var documentIndex = mock(DocumentPublicationIndex.class);
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(documentIndex));
+        var commissions = List.of(1, 2);
+        when(commissionRepository.findCommissionsThatAssessedDocument(documentId)).thenReturn(
+            commissions);
+
+        // When
+        documentPublicationService.reindexDocumentVolatileInformation(documentId);
+
+        // Then
+        verify(documentIndex).setAssessedBy(commissions);
+    }
+
+    @Test
+    void shouldReturnResearchOutputIdsWhenDocumentExists() {
+        // given
+        var documentId = 1;
+        var expectedResearchOutputIds = List.of(101, 102, 103);
+        var documentIndex = new DocumentPublicationIndex();
+        documentIndex.setResearchOutputIds(expectedResearchOutputIds);
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(documentIndex));
+
+        // when
+        var result = documentPublicationService.getResearchOutputIdsForDocument(documentId);
+
+        // then
+        assertEquals(expectedResearchOutputIds, result);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenFetchingOutputsAndDocumentDoesNotExist() {
+        // given
+        var documentId = 999;
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // when / then
+        var exception = assertThrows(NotFoundException.class,
+            () -> documentPublicationService.getResearchOutputIdsForDocument(documentId));
+
+        assertEquals("Document with ID " + documentId + " does not exist.", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnDocumentCountsBelongingToInstitution() {
+        // given
+        var institutionId = 1;
+        when(documentPublicationIndexRepository.countAssessable()).thenReturn(200L);
+        when(documentPublicationIndexRepository.countAssessableByOrganisationUnitIds(institutionId))
+            .thenReturn(80L);
+
+        // when
+        var result =
+            documentPublicationService.getDocumentCountsBelongingToInstitution(institutionId);
+
+        // then
+        assertEquals(200L, result.a);
+        assertEquals(80L, result.b);
+    }
+
+    @Test
+    void shouldReturnAssessedDocumentCountsForCommission() {
+        // given
+        var institutionId = 1;
+        var commissionId = 2;
+        when(documentPublicationIndexRepository.countByAssessedBy(commissionId)).thenReturn(60L);
+        when(documentPublicationIndexRepository.countByOrganisationUnitIdsAndAssessedBy(
+            institutionId, commissionId))
+            .thenReturn(25L);
+
+        // when
+        var result =
+            documentPublicationService.getAssessedDocumentCountsForCommission(institutionId,
+                commissionId);
+
+        // then
+        assertEquals(60L, result.a);
+        assertEquals(25L, result.b);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldReturnSearchFields(Boolean onlyExportFields) {
+        // Given
+        var expectedFields = List.of(
+            new Triple<>("field1", List.of(new MultilingualContentDTO()), "Type1"),
+            new Triple<>("field2", List.of(new MultilingualContentDTO()), "Type2")
+        );
+
+        when(searchFieldsLoader.getSearchFields(any(), anyBoolean())).thenReturn(expectedFields);
+
+        // When
+        var result = documentPublicationService.getSearchFields(onlyExportFields);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedFields.size(), result.size());
     }
 }
