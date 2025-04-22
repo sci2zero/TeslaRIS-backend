@@ -107,6 +107,4 @@ public class JwtFilter extends OncePerRequestFilter {
             log.error(ignored.getMessage());
         }
     }
-
-
 }

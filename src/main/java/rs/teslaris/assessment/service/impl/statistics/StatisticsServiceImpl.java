@@ -47,6 +47,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.util.SessionUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -123,6 +124,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private void save(StatisticsIndex index) {
         index.setTimestamp(LocalDateTime.now());
+        index.setSessionId(SessionUtil.getJSessionId());
 
         updateTotalCount(index);
 

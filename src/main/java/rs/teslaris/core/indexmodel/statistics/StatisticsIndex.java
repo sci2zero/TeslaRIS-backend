@@ -34,4 +34,7 @@ public class StatisticsIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "type")
     private String type;
+
+    @Field(type = FieldType.Keyword, store = true, name = "session_id")
+    private String sessionId;
 }

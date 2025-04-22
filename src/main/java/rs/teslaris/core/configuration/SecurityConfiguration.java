@@ -244,6 +244,9 @@ public class SecurityConfiguration {
                     "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
                 .permitAll()
 
+                // COOKIES
+                .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

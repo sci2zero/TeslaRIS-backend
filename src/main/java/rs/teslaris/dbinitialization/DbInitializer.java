@@ -368,6 +368,11 @@ public class DbInitializer implements ApplicationRunner {
 
         // COUNTRIES
         csvDataLoader.loadData("countries.csv", this::processCountryLine, ',');
+        var yugoslavia = new Country();
+        yugoslavia.setCode("YU");
+        yugoslavia.setName(Set.of(new MultiLingualContent(serbianTag, "Jugoslavija", 1),
+            new MultiLingualContent(englishTag, "Yugoslavia", 2)));
+        countryRepository.save(yugoslavia);
 
         // RESEARCH AREAS
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

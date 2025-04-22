@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.CSVExportRequest;
 import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -127,15 +128,18 @@ public class CSVExportServiceImpl implements CSVExportService {
 
         var rowsData = new ArrayList<List<String>>();
         var tableHeaders = CSVExportHelper.getTableHeaders(request, configurationFile);
+        var allowedDocumentTypes = new ArrayList<DocumentPublicationType>();
         if (request instanceof DocumentCSVExportRequest) {
             CSVExportHelper.addCitationColumns(tableHeaders, (DocumentCSVExportRequest) request);
+            allowedDocumentTypes.addAll(((DocumentCSVExportRequest) request).getAllowedTypes());
         }
         rowsData.add(tableHeaders);
 
         if (request.getExportMaxPossibleAmount()) {
             returnBulkDataFromDefinedEndpoint(request.getEndpointType(),
                 request.getEndpointTokenParameters(),
-                PageRequest.of(request.getBulkExportOffset(), maximumExportAmount), repository)
+                PageRequest.of(request.getBulkExportOffset(), maximumExportAmount), repository,
+                allowedDocumentTypes)
                 .forEach(entity -> {
                     var rowData =
                         CSVExportHelper.constructRowData(entity, request.getColumns(), fieldsConfig,
@@ -164,7 +168,7 @@ public class CSVExportServiceImpl implements CSVExportService {
         ExportableEndpointType endpointType,
         List<String> endpointTokenParameters,
         Pageable pageable,
-        R repository
+        R repository, ArrayList<DocumentPublicationType> allowedDocumentTypes
     ) {
         if (endpointType == null) {
             return repository.findAll(pageable);
@@ -173,10 +177,14 @@ public class CSVExportServiceImpl implements CSVExportService {
         return switch (endpointType) {
             case PERSON_SEARCH -> (Page<T>) personService.findPeopleByNameAndEmployment(
                 endpointTokenParameters, pageable, false, null);
-            case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH, THESIS_ADVANCED_SEARCH ->
+            case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
-                    SearchRequestType.SIMPLE, null, null, null);
+                    SearchRequestType.SIMPLE, null, null, allowedDocumentTypes);
+            case DOCUMENT_ADVANCED_SEARCH, THESIS_ADVANCED_SEARCH ->
+                (Page<T>) documentPublicationService.searchDocumentPublications(
+                    endpointTokenParameters, pageable,
+                    SearchRequestType.ADVANCED, null, null, allowedDocumentTypes);
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     endpointTokenParameters, pageable,
