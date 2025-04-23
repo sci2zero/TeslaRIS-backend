@@ -1,21 +1,20 @@
 package rs.teslaris.core.util;
 
-import jakarta.annotation.Nullable;
+import java.util.Objects;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 public class SessionUtil {
 
-    @Nullable
     public static String getJSessionId() {
         var attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attrs == null) {
-            return null;
+        if (Objects.isNull(attrs)) {
+            return "Anonymous";
         }
 
         var request = attrs.getRequest();
-        if (request.getCookies() == null) {
-            return null;
+        if (Objects.isNull(request.getCookies())) {
+            return "Anonymous";
         }
 
         for (var cookie : request.getCookies()) {
@@ -24,6 +23,6 @@ public class SessionUtil {
             }
         }
 
-        return null;
+        return "Anonymous";
     }
 }

@@ -164,6 +164,13 @@ public class RegistryBookController {
         registryBookService.promoteAll(promotionId);
     }
 
+    @PatchMapping("/preview-promote-all/{promotionId}")
+    @PromotionEditAndUsageCheck
+    public List<List<String>> previewPromoteAllFromPromotion(@PathVariable Integer promotionId,
+                                                             @RequestParam String lang) {
+        return registryBookService.previewPromotedEntries(promotionId, lang);
+    }
+
     @GetMapping("/addresses/{promotionId}")
     @PromotionEditAndUsageCheck
     public List<String> getAddressList(@PathVariable Integer promotionId) {
@@ -196,13 +203,17 @@ public class RegistryBookController {
                                                              LocalDate from,
                                                              @RequestParam(required = false)
                                                              LocalDate to,
+                                                             @RequestParam(required = false, defaultValue = "")
+                                                             String authorName,
+                                                             @RequestParam(required = false, defaultValue = "")
+                                                             String authorTitle,
                                                              Pageable pageable,
                                                              @RequestHeader("Authorization")
                                                              String bearerToken) {
         return registryBookService.getRegistryBookForInstitutionAndPeriod(
             tokenUtil.extractUserIdFromToken(bearerToken), institutionId,
             Objects.requireNonNullElse(from, LocalDate.of(1000, 1, 1)),
-            Objects.requireNonNullElse(to, LocalDate.now()), pageable);
+            Objects.requireNonNullElse(to, LocalDate.now()), authorName, authorTitle, pageable);
     }
 
     @PatchMapping("/allow-single-update/{registryBookEntryId}")

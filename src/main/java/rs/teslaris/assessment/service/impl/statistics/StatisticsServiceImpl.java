@@ -89,6 +89,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setPersonId(personId);
         saveView(statisticsEntry);
+        log.info("STATISTICS - VIEW for Person with ID {} by {}.", personId,
+            SessionUtil.getJSessionId());
     }
 
     @Override
@@ -96,6 +98,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveView(statisticsEntry);
+        log.info("STATISTICS - VIEW for Document with ID {} by {}.", documentId,
+            SessionUtil.getJSessionId());
     }
 
     @Override
@@ -103,6 +107,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setOrganisationUnitId(organisationUnitId);
         saveView(statisticsEntry);
+        log.info("STATISTICS - VIEW for OrganisationUnit with ID {} by {}.", organisationUnitId,
+            SessionUtil.getJSessionId());
     }
 
     @Override
@@ -110,6 +116,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveDownload(statisticsEntry);
+        log.info("STATISTICS - DOWNLOAD for Document with ID {} by {}.", documentId,
+            SessionUtil.getJSessionId());
     }
 
     private void saveView(StatisticsIndex index) {

@@ -43,6 +43,8 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
 
     void promoteAll(Integer promotionId);
 
+    List<List<String>> previewPromotedEntries(Integer promotionId, String lang);
+
     Integer hasThesisRegistryBookEntry(Integer thesisId);
 
     List<String> getPromoteesList(Integer promotionId);
@@ -52,6 +54,8 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     Page<RegistryBookEntryDTO> getRegistryBookForInstitutionAndPeriod(Integer userId,
                                                                       Integer institutionId,
                                                                       LocalDate from, LocalDate to,
+                                                                      String authorName,
+                                                                      String authorTitle,
                                                                       Pageable pageable);
 
     List<InstitutionCountsReportDTO> institutionCountsReport(Integer userId,

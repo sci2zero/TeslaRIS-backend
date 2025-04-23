@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -16,9 +17,11 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -73,6 +76,7 @@ import rs.teslaris.thesislibrary.model.RegistryBookPersonalInformation;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
 import rs.teslaris.thesislibrary.service.impl.RegistryBookServiceImpl;
 import rs.teslaris.thesislibrary.service.interfaces.PromotionService;
+import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
 @SpringBootTest
 class RegistryBookServiceTest {
@@ -486,6 +490,53 @@ class RegistryBookServiceTest {
         assertNull(entry1.getAttendanceIdentifier());
         assertNull(entry2.getAttendanceIdentifier());
         assertTrue(promotion.getFinished());
+    }
+
+    @Test
+    void shouldPreviewPromotedEntriesWithCorrectMetadata() {
+        // Given
+        var promotionId = 1;
+        var institution = new OrganisationUnit();
+        institution.setId(1);
+        var promotion = new Promotion();
+        promotion.setId(promotionId);
+        promotion.setInstitution(institution);
+        promotion.setPromotionDate(LocalDate.of(2024, 4, 4));
+
+        var dissertation = new DissertationInformation();
+        dissertation.setDiplomaNumber("123123");
+        dissertation.setDiplomaIssueDate(LocalDate.of(2024, 3, 14));
+
+        var entry1 = new RegistryBookEntry();
+        entry1.setDissertationInformation(dissertation);
+        var entry2 = new RegistryBookEntry();
+        entry2.setDissertationInformation(dissertation);
+
+        var entries = List.of(entry1, entry2);
+
+        when(promotionService.findOne(promotionId)).thenReturn(promotion);
+        when(registryBookEntryRepository.getLastRegistryBookNumber(1)).thenReturn(5);
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any()))
+            .thenReturn(new PageImpl<>(entries));
+
+        var groupedRows = new TreeMap<String, List<List<String>>>();
+        groupedRows.put("2023/2024", List.of(List.of("Row1"), List.of("Row2")));
+
+        mockStatic(RegistryBookGenerationUtil.class);
+        doAnswer(invocation -> {
+            Map<String, List<List<String>>> map = invocation.getArgument(0);
+            map.putAll(groupedRows);
+            return null;
+        }).when(RegistryBookGenerationUtil.class);
+        RegistryBookGenerationUtil.constructRowsForChunk(any(), any(), any());
+
+        // When
+        List<List<String>> result = registryBookService.previewPromotedEntries(promotionId, "sr");
+
+        // Then
+        assertEquals(2, result.size());
+        assertEquals("Row1", result.get(0).getFirst());
+        assertEquals("Row2", result.get(1).getFirst());
     }
 
     @Test

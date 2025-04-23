@@ -44,6 +44,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -124,6 +125,16 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         documentFile.setResourceType(documentFileDTO.getResourceType());
         documentFile.setLicense(documentFileDTO.getLicense());
+
+        if (documentFile.getLicense().equals(License.OPEN_ACCESS)) {
+            if (documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) &&
+                Objects.isNull(documentFileDTO.getCcLicense())) {
+                throw new MissingDataException(
+                    "You have to provide CC licence for open access documents.");
+            }
+            documentFile.setCcLicense(documentFileDTO.getCcLicense());
+        }
+
         documentFile.setTimestamp(LocalDateTime.now());
     }
 

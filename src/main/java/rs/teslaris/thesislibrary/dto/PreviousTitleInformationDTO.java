@@ -18,7 +18,6 @@ public class PreviousTitleInformationDTO {
     @NotBlank(message = "You have to provide previous title's institution.")
     private String institutionName;
 
-    @NotNull(message = "you have to provide previous graduation date.")
     private LocalDate graduationDate;
 
     @NotBlank(message = "You have to provide previous title's institution place.")

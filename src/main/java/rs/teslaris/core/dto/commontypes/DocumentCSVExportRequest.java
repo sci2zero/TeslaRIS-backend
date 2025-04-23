@@ -25,4 +25,8 @@ public class DocumentCSVExportRequest extends CSVExportRequest {
     private Boolean vancouver;
 
     private List<DocumentPublicationType> allowedTypes = new ArrayList<>();
+
+    private Integer institutionId;
+
+    private Integer commissionId;
 }

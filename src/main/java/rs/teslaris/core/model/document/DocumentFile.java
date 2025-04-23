@@ -51,6 +51,9 @@ public class DocumentFile extends BaseEntity {
     @Column(name = "license")
     private License license;
 
+    @Column(name = "cc_license")
+    private CCLicense ccLicense;
+
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
 

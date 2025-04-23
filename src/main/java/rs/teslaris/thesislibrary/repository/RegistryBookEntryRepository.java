@@ -41,15 +41,41 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
         "rbe.promotion.promotionDate <= :to")
     List<RegistryBookEntry> getRegistryBookEntriesForPeriod(LocalDate from, LocalDate to);
 
-    @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE " +
-        "rbe.registryBookInstitution.id = :institutionId AND " +
-        "rbe.promotion.finished = true AND " +
-        "rbe.promotion.promotionDate >= :from AND " +
-        "rbe.promotion.promotionDate <= :to")
+    @Query("""
+        SELECT rbe FROM RegistryBookEntry rbe
+        WHERE rbe.registryBookInstitution.id = :institutionId
+          AND rbe.promotion.finished = true
+          AND rbe.promotion.promotionDate BETWEEN :from AND :to
+          AND (
+            (
+                LOWER(CONCAT(rbe.personalInformation.authorName.firstname, ' ', rbe.personalInformation.authorName.lastname)) LIKE LOWER(CONCAT('%', :authorNameLat, '%')) AND
+                LOWER(rbe.dissertationInformation.acquiredTitle) LIKE LOWER(CONCAT('%', :authorTitleLat, '%'))
+            )
+            OR
+            (
+                LOWER(CONCAT(rbe.personalInformation.authorName.firstname, ' ', rbe.personalInformation.authorName.lastname)) LIKE LOWER(CONCAT('%', :authorNameCyr, '%')) AND
+                LOWER(rbe.dissertationInformation.acquiredTitle) LIKE LOWER(CONCAT('%', :authorTitleCyr, '%'))
+            )
+            OR
+            (
+                LOWER(CONCAT(rbe.personalInformation.authorName.firstname, ' ', rbe.personalInformation.authorName.lastname)) LIKE LOWER(CONCAT('%', :authorNameCyr, '%')) AND
+                LOWER(rbe.dissertationInformation.acquiredTitle) LIKE LOWER(CONCAT('%', :authorTitleLat, '%'))
+            )
+            OR
+            (
+                LOWER(CONCAT(rbe.personalInformation.authorName.firstname, ' ', rbe.personalInformation.authorName.lastname)) LIKE LOWER(CONCAT('%', :authorNameLat, '%')) AND
+                LOWER(rbe.dissertationInformation.acquiredTitle) LIKE LOWER(CONCAT('%', :authorTitleCyr, '%'))
+            )
+          )
+        """)
     Page<RegistryBookEntry> getRegistryBookEntriesForInstitutionAndPeriod(
         Integer institutionId,
         LocalDate from,
         LocalDate to,
+        String authorNameLat,
+        String authorTitleLat,
+        String authorNameCyr,
+        String authorTitleCyr,
         Pageable pageable);
 
     @Query("SELECT COUNT(rbe) FROM RegistryBookEntry rbe WHERE " +

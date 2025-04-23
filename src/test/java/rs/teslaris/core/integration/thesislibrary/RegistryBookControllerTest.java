@@ -31,6 +31,7 @@ public class RegistryBookControllerTest extends BaseTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+
     private RegistryBookEntryDTO getTestPayload() {
         var dto = new RegistryBookEntryDTO();
 
@@ -246,6 +247,21 @@ public class RegistryBookControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(6)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testPreviewPromoteAll() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/registry-book/preview-promote-all/{promotionId}?lang=sr",
+                        1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 
     @Test

@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.document.CCLicense;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 
@@ -31,4 +32,6 @@ public class DocumentFileDTO {
 
     @NotNull(message = "You must provide a valid license.")
     private License license;
+
+    private CCLicense ccLicense;
 }

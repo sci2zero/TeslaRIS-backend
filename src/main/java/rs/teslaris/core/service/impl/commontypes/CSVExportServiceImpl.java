@@ -28,6 +28,7 @@ import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
@@ -128,18 +129,15 @@ public class CSVExportServiceImpl implements CSVExportService {
 
         var rowsData = new ArrayList<List<String>>();
         var tableHeaders = CSVExportHelper.getTableHeaders(request, configurationFile);
-        var allowedDocumentTypes = new ArrayList<DocumentPublicationType>();
-        if (request instanceof DocumentCSVExportRequest) {
-            CSVExportHelper.addCitationColumns(tableHeaders, (DocumentCSVExportRequest) request);
-            allowedDocumentTypes.addAll(((DocumentCSVExportRequest) request).getAllowedTypes());
-        }
-        rowsData.add(tableHeaders);
+
+        var documentSpecificFilters =
+            handleDocumentSpecificFieldsAndFilters(request, tableHeaders, rowsData);
 
         if (request.getExportMaxPossibleAmount()) {
             returnBulkDataFromDefinedEndpoint(request.getEndpointType(),
                 request.getEndpointTokenParameters(),
                 PageRequest.of(request.getBulkExportOffset(), maximumExportAmount), repository,
-                allowedDocumentTypes)
+                documentSpecificFilters)
                 .forEach(entity -> {
                     var rowData =
                         CSVExportHelper.constructRowData(entity, request.getColumns(), fieldsConfig,
@@ -163,12 +161,29 @@ public class CSVExportServiceImpl implements CSVExportService {
         return CSVExportHelper.createExportFile(rowsData, request.getExportFileType());
     }
 
+    private Triple<ArrayList<DocumentPublicationType>, Integer, Integer> handleDocumentSpecificFieldsAndFilters(
+        CSVExportRequest request, List<String> tableHeaders, ArrayList<List<String>> rowsData) {
+        var allowedDocumentTypes = new ArrayList<DocumentPublicationType>();
+        Integer institutionId = null, commissionId = null;
+
+        if (request instanceof DocumentCSVExportRequest) {
+            CSVExportHelper.addCitationColumns(tableHeaders, (DocumentCSVExportRequest) request);
+            allowedDocumentTypes.addAll(((DocumentCSVExportRequest) request).getAllowedTypes());
+            institutionId = ((DocumentCSVExportRequest) request).getInstitutionId();
+            commissionId = ((DocumentCSVExportRequest) request).getCommissionId();
+        }
+        rowsData.add(tableHeaders);
+
+        return new Triple<>(allowedDocumentTypes, institutionId, commissionId);
+    }
+
     @SuppressWarnings("unchecked")
     private <T, R extends ElasticsearchRepository<T, ?>> Page<T> returnBulkDataFromDefinedEndpoint(
         ExportableEndpointType endpointType,
         List<String> endpointTokenParameters,
         Pageable pageable,
-        R repository, ArrayList<DocumentPublicationType> allowedDocumentTypes
+        R repository,
+        Triple<ArrayList<DocumentPublicationType>, Integer, Integer> documentSpecificFilters
     ) {
         if (endpointType == null) {
             return repository.findAll(pageable);
@@ -180,11 +195,13 @@ public class CSVExportServiceImpl implements CSVExportService {
             case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
-                    SearchRequestType.SIMPLE, null, null, allowedDocumentTypes);
+                    SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
+                    documentSpecificFilters.a);
             case DOCUMENT_ADVANCED_SEARCH, THESIS_ADVANCED_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
-                    SearchRequestType.ADVANCED, null, null, allowedDocumentTypes);
+                    SearchRequestType.ADVANCED, documentSpecificFilters.b,
+                    documentSpecificFilters.c, documentSpecificFilters.a);
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     endpointTokenParameters, pageable,

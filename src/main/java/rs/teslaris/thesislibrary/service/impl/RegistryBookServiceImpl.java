@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -63,10 +64,10 @@ import rs.teslaris.thesislibrary.model.RegistryBookPersonalInformation;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
 import rs.teslaris.thesislibrary.service.interfaces.PromotionService;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
+import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     implements RegistryBookService {
 
@@ -101,11 +102,13 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public RegistryBookEntryDTO readRegistryBookEntry(Integer registryBookEntryId) {
         return RegistryBookEntryConverter.toDTO(findOne(registryBookEntryId));
     }
 
     @Override
+    @Transactional
     public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Integer userId,
                                                                         Pageable pageable) {
         var userEmploymentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
@@ -120,6 +123,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
                                                                          Pageable pageable) {
         return registryBookEntryRepository.getBookEntriesForPromotion(promotionId, pageable)
@@ -127,6 +131,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO dto, Integer thesisId) {
         var newEntry = new RegistryBookEntry();
         var existingEntryId = registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId);
@@ -147,6 +152,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public RegistryBookEntry migrateRegistryBookEntry(RegistryBookEntryDTO dto, Integer thesisId) {
         var newEntry = new RegistryBookEntry();
 
@@ -172,6 +178,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public void updateRegistryBookEntry(Integer registryBookEntryId,
                                         RegistryBookEntryDTO dto) {
         var entry = findOne(registryBookEntryId);
@@ -189,6 +196,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public void deleteRegistryBookEntry(Integer registryBookEntryId) {
         var entry = findOne(registryBookEntryId);
 
@@ -289,6 +297,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public PhdThesisPrePopulatedDataDTO getPrePopulatedPHDThesisInformation(Integer thesisId) {
         var phdThesis = thesisService.getThesisById(thesisId);
 
@@ -313,6 +322,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public void addToPromotion(Integer registryBookEntryId, Integer promotionId) {
         var entry = findOne(registryBookEntryId);
 
@@ -328,6 +338,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public void removeFromPromotion(Integer registryBookEntryId) {
         var entry = findOne(registryBookEntryId);
 
@@ -339,6 +350,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public void removeFromPromotion(String attendanceIdentifier) {
         var entry = registryBookEntryRepository.findByAttendanceIdentifier(attendanceIdentifier);
 
@@ -371,6 +383,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public boolean isAttendanceNotCancelled(String attendanceIdentifier) {
         var entry = registryBookEntryRepository.findByAttendanceIdentifier(attendanceIdentifier);
         return entry.isPresent();
@@ -430,40 +443,64 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public void promoteAll(Integer promotionId) {
         var promotion = promotionService.findOne(promotionId);
-        var finalPromotionSchoolYear = getPromotionSchoolYear(promotion);
-        AtomicInteger registryBookNumber = new AtomicInteger(
-            Objects.requireNonNullElse(registryBookEntryRepository.getLastRegistryBookNumber(
-                promotion.getInstitution().getId()), 0) + 1);
+        var entriesToPromote = registryBookEntryRepository
+            .getBookEntriesForPromotion(promotionId, Pageable.unpaged()).getContent();
 
-        var entriesToPromote =
-            registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged());
         if (entriesToPromote.isEmpty()) {
             throw new PromotionException("Can't promote empty promotion.");
         }
 
-        var countInPromotion = new AtomicInteger(1);
-        entriesToPromote
-            .forEach(registryBookEntry -> {
-                if (Objects.requireNonNullElse(
-                        registryBookEntry.getDissertationInformation().getDiplomaNumber(), "")
-                    .isBlank() || Objects.isNull(
-                    registryBookEntry.getDissertationInformation().getDiplomaIssueDate())) {
-                    throw new RegistryBookException("missingDiplomaMetadataMessage");
-                }
-
-                registryBookEntry.setPromotionSchoolYear(finalPromotionSchoolYear);
-                registryBookEntry.setRegistryBookNumber(registryBookNumber.getAndIncrement());
-                registryBookEntry.setPromotionOrdinalNumber(countInPromotion.getAndIncrement());
-                registryBookEntry.setAttendanceIdentifier(null);
-                registryBookEntry.setRegistryBookInstitution(promotion.getInstitution());
-
-                registryBookEntryRepository.save(registryBookEntry);
-            });
+        var updatedEntries = prepareEntriesForPromotion(promotion, entriesToPromote);
+        updatedEntries.forEach(registryBookEntryRepository::save);
 
         promotion.setFinished(true);
         promotionService.save(promotion);
+    }
+
+    @Override
+    public List<List<String>> previewPromotedEntries(Integer promotionId, String lang) {
+        var promotion = promotionService.findOne(promotionId);
+        var entriesToPromote = registryBookEntryRepository
+            .getBookEntriesForPromotion(promotionId, Pageable.unpaged()).getContent();
+
+        if (entriesToPromote.isEmpty()) {
+            throw new PromotionException("Can't promote empty promotion.");
+        }
+
+        var updatedEntries = prepareEntriesForPromotion(promotion, entriesToPromote);
+        var groupedRows = new TreeMap<String, List<List<String>>>();
+        RegistryBookGenerationUtil.constructRowsForChunk(groupedRows, updatedEntries, lang);
+
+        return groupedRows.get(getPromotionSchoolYear(promotion));
+    }
+
+    private List<RegistryBookEntry> prepareEntriesForPromotion(Promotion promotion,
+                                                               List<RegistryBookEntry> entriesToPromote) {
+        var finalPromotionSchoolYear = getPromotionSchoolYear(promotion);
+        var registryBookNumber = new AtomicInteger(
+            Objects.requireNonNullElse(
+                registryBookEntryRepository.getLastRegistryBookNumber(
+                    promotion.getInstitution().getId()),
+                0) + 1);
+        var countInPromotion = new AtomicInteger(1);
+
+        for (RegistryBookEntry registryBookEntry : entriesToPromote) {
+            var dissertation = registryBookEntry.getDissertationInformation();
+            if (Objects.requireNonNullElse(dissertation.getDiplomaNumber(), "").isBlank()
+                || dissertation.getDiplomaIssueDate() == null) {
+                throw new RegistryBookException("missingDiplomaMetadataMessage");
+            }
+
+            registryBookEntry.setPromotionSchoolYear(finalPromotionSchoolYear);
+            registryBookEntry.setRegistryBookNumber(registryBookNumber.getAndIncrement());
+            registryBookEntry.setPromotionOrdinalNumber(countInPromotion.getAndIncrement());
+            registryBookEntry.setAttendanceIdentifier(null);
+            registryBookEntry.setRegistryBookInstitution(promotion.getInstitution());
+        }
+        return entriesToPromote;
     }
 
     @Override
@@ -472,6 +509,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public List<String> getPromoteesList(Integer promotionId) {
         var promotees = new ArrayList<String>();
         registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
@@ -487,6 +525,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public List<String> getAddressesList(Integer promotionId) {
         var addresses = new ArrayList<String>();
         registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
@@ -507,10 +546,13 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public Page<RegistryBookEntryDTO> getRegistryBookForInstitutionAndPeriod(Integer userId,
                                                                              Integer institutionId,
                                                                              LocalDate from,
                                                                              LocalDate to,
+                                                                             String authorName,
+                                                                             String authorTitle,
                                                                              Pageable pageable) {
         var userEmploymentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
         if (Objects.nonNull(userEmploymentInstitutionId) && userEmploymentInstitutionId > 0 &&
@@ -521,7 +563,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         }
 
         return registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
-            institutionId, from, to, pageable).map(RegistryBookEntryConverter::toDTO);
+                institutionId, from, to, authorName, authorTitle,
+                SerbianTransliteration.toCyrillic(authorName),
+                SerbianTransliteration.toCyrillic(authorTitle), pageable)
+            .map(RegistryBookEntryConverter::toDTO);
     }
 
     public List<InstitutionCountsReportDTO> institutionCountsReport(
@@ -541,6 +586,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public void allowSingleUpdate(Integer registryBookEntryId) {
         var entry = findOne(registryBookEntryId);
 
@@ -553,6 +599,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional
     public boolean canEdit(Integer registryBookEntryId) {
         var entry = findOne(registryBookEntryId);
         return Objects.isNull(entry.getPromotion()) || !entry.getPromotion().getFinished() ||

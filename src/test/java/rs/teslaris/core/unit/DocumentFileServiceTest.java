@@ -31,14 +31,17 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.CCLicense;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.service.impl.document.DocumentFileServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -103,6 +106,9 @@ public class DocumentFileServiceTest {
         // given
         var dto = new DocumentFileDTO();
         var doc = new DocumentFile();
+        dto.setLicense(License.OPEN_ACCESS);
+        dto.setCcLicense(CCLicense.BY_NC);
+        dto.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
         doc.setApproveStatus(ApproveStatus.APPROVED);
         doc.setFilename("filename.txt");
         dto.setFile(
@@ -119,12 +125,33 @@ public class DocumentFileServiceTest {
     }
 
     @Test
+    public void shouldThrowExceptionWhenCCLicenseIsNotProvided() {
+        // given
+        var dto = new DocumentFileDTO();
+        var doc = new DocumentFile();
+        dto.setLicense(License.OPEN_ACCESS);
+        dto.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+        doc.setApproveStatus(ApproveStatus.APPROVED);
+        doc.setFilename("filename.txt");
+        dto.setFile(
+            new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
+
+        when(fileService.store(any(), eq("UUID"))).thenReturn("UUID.pdf");
+        when(documentFileRepository.save(any())).thenReturn(doc);
+
+        // when & then
+        assertThrows(MissingDataException.class,
+            () -> documentFileService.saveNewDocument(dto, true));
+    }
+
+    @Test
     public void shouldEditDocumentWhenValidDataIsProvided() {
         // given
         var doc = new DocumentFile();
         doc.setFilename("filename.txt");
         var dto = new DocumentFileDTO();
         dto.setId(1);
+        dto.setLicense(License.ALL_RIGHTS_RESERVED);
         dto.setFile(
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
         var docIndex = new DocumentFileIndex();
