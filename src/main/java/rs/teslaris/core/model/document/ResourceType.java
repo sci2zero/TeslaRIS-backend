@@ -5,5 +5,6 @@ public enum ResourceType {
     OFFICIAL_PUBLICATION,
     SUPPLEMENT,
     PROOF,
-    IMAGE
+    IMAGE,
+    STATEMENT
 }

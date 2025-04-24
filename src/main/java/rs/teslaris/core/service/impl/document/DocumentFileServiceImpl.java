@@ -127,7 +127,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         documentFile.setLicense(documentFileDTO.getLicense());
 
         if (documentFile.getLicense().equals(License.OPEN_ACCESS)) {
-            if (documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) &&
+            if ((documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) ||
+                documentFile.getResourceType().equals(ResourceType.PREPRINT)) &&
                 Objects.isNull(documentFileDTO.getCcLicense())) {
                 throw new MissingDataException(
                     "You have to provide CC licence for open access documents.");

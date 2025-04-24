@@ -61,21 +61,22 @@ public class AssessmentDataInitializer {
                 ApplicableEntityType.ORGANISATION_UNIT));
         totalViews.setContentType(IndicatorContentType.NUMBER);
 
-        var dailyViews = new Indicator();
-        dailyViews.setCode("viewsDay");
-        dailyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Today's views", 1),
-            new MultiLingualContent(serbianTag, "Pregleda danas", 2)));
-        dailyViews.setDescription(
+        var yearlyViews = new Indicator();
+        yearlyViews.setCode("viewsYear");
+        yearlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "This year's views", 1),
+            new MultiLingualContent(serbianTag, "Pregleda ove godine", 2)));
+        yearlyViews.setDescription(
             Set.of(
-                new MultiLingualContent(englishTag, "Total number of views in the last 24h.",
+                new MultiLingualContent(englishTag, "Total number of views in the last year.",
                     1),
-                new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih 24h.",
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj pregleda u poslednjih godinu dana.",
                     2)));
-        dailyViews.setAccessLevel(AccessLevel.OPEN);
-        dailyViews.getApplicableTypes().addAll(
+        yearlyViews.setAccessLevel(AccessLevel.OPEN);
+        yearlyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
-        dailyViews.setContentType(IndicatorContentType.NUMBER);
+        yearlyViews.setContentType(IndicatorContentType.NUMBER);
 
         var weeklyViews = new Indicator();
         weeklyViews.setCode("viewsWeek");
@@ -125,21 +126,23 @@ public class AssessmentDataInitializer {
                 ApplicableEntityType.ORGANISATION_UNIT));
         totalDownloads.setContentType(IndicatorContentType.NUMBER);
 
-        var dailyDownloads = new Indicator();
-        dailyDownloads.setCode("downloadsDay");
-        dailyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Today's downloads", 1),
-            new MultiLingualContent(serbianTag, "Preuzimanja danas", 2)));
-        dailyDownloads.setDescription(
+        var yearlyDownloads = new Indicator();
+        yearlyDownloads.setCode("downloadsYear");
+        yearlyDownloads.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "This year's downloads", 1),
+                new MultiLingualContent(serbianTag, "Preuzimanja ove godine", 2)));
+        yearlyDownloads.setDescription(
             Set.of(
-                new MultiLingualContent(englishTag, "Total number of downloads in the last 24h.",
+                new MultiLingualContent(englishTag, "Total number of downloads in the last year.",
                     1),
-                new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja u poslednjih 24h.",
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj preuzimanja u poslednjih godinu dana.",
                     2)));
-        dailyDownloads.setAccessLevel(AccessLevel.OPEN);
-        dailyDownloads.getApplicableTypes().addAll(
+        yearlyDownloads.setAccessLevel(AccessLevel.OPEN);
+        yearlyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
                 ApplicableEntityType.ORGANISATION_UNIT));
-        dailyDownloads.setContentType(IndicatorContentType.NUMBER);
+        yearlyDownloads.setContentType(IndicatorContentType.NUMBER);
 
         var weeklyDownloads = new Indicator();
         weeklyDownloads.setCode("downloadsWeek");
@@ -710,8 +713,8 @@ public class AssessmentDataInitializer {
         authorCount.setContentType(IndicatorContentType.NUMBER);
 
         indicatorRepository.saveAll(
-            List.of(totalViews, dailyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
-                dailyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
+            List.of(totalViews, yearlyViews, weeklyViews, monthlyViews, totalDownloads, fiveYearJIF,
+                yearlyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
                 hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile,
                 numParticipants, organizedByScientificInstitution, slavistiCategory,

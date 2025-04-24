@@ -104,7 +104,7 @@ public class IndicatorControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.delete(
                         "http://localhost:8081/api/assessment/indicator/{indicatorId}",
-                        2)
+                        3)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

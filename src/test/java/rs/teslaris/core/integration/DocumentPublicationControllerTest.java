@@ -71,7 +71,7 @@ public class DocumentPublicationControllerTest extends BaseTest {
         String jwtToken = authenticateResearcherAndGetToken();
 
         mockMvc.perform(MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/document/research-output/{documentId}", 10)
+                    "http://localhost:8081/api/document/research-output/{documentId}", 18)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
