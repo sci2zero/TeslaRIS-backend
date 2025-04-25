@@ -27,7 +27,8 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
-import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.thesislibrary.model.RegistryBookReport;
 import rs.teslaris.thesislibrary.repository.RegistryBookReportRepository;
 import rs.teslaris.thesislibrary.service.impl.RegistryBookReportServiceImpl;
@@ -147,7 +148,7 @@ public class RegistryBookReportServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> registryBookReportService.serveReportFile(fileName, userId))
-            .isInstanceOf(RegistryBookException.class)
+            .isInstanceOf(LoadingException.class)
             .hasMessageContaining("Unauthorised");
     }
 
@@ -162,7 +163,7 @@ public class RegistryBookReportServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> registryBookReportService.serveReportFile(fileName, userId))
-            .isInstanceOf(RegistryBookException.class)
+            .isInstanceOf(StorageException.class)
             .hasMessageContaining("No report with given filename.");
     }
 

@@ -1,4 +1,4 @@
-package rs.teslaris.thesislibrary.model;
+package rs.teslaris.core.model.document;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,14 +19,14 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "registry_book_report")
+@Table(name = "document_file_backup")
 @SQLRestriction("deleted=false")
-public class RegistryBookReport extends BaseEntity {
+public class DocumentFileBackup extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "institution_id", nullable = false)
     private OrganisationUnit institution;
 
-    @Column(name = "report_file_name")
-    private String reportFileName;
+    @Column(name = "backup_file_name")
+    private String backupFileName;
 }

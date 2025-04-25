@@ -40,7 +40,9 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.ResourceMultipartFile;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
+import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 import rs.teslaris.thesislibrary.model.RegistryBookReport;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
@@ -70,6 +72,10 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
     @Override
     public String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
                                            String lang, Integer userId) {
+        if (from.isAfter(to)) {
+            throw new RegistryBookException("'From' date cannot be later than 'to' date.");
+        }
+
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();
         taskManagerService.scheduleTask(
             "Registry_Book-" + institutionId +
@@ -148,13 +154,13 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
     public GetObjectResponse serveReportFile(String reportFileName, Integer userId)
         throws IOException {
         var report = registryBookReportRepository.findByReportFileName(reportFileName)
-            .orElseThrow(() -> new RegistryBookException("No report with given filename."));
+            .orElseThrow(() -> new StorageException("No report with given filename."));
         var userInstitution = userRepository.findOrganisationUnitIdForUser(userId);
 
         if (Objects.nonNull(userInstitution) && userInstitution > 0 &&
             !organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitution)
                 .contains(report.getInstitution().getId())) {
-            throw new RegistryBookException("Unauthorised to view report.");
+            throw new LoadingException("Unauthorised to view report.");
         }
 
         return fileService.loadAsResource(reportFileName);
