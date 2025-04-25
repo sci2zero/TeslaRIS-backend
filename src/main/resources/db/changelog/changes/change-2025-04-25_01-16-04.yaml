@@ -1190,3 +1190,12 @@ databaseChangeLog:
         tableName: person_document_contributions
         columnName: board_president
         columnDataType: BOOLEAN
+
+- changeSet:
+    id: 1745543786734-202
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: boolean
+        columnName: board_president
+        tableName: person_document_contributions
