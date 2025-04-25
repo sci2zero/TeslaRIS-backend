@@ -21,6 +21,8 @@
 
     <properties>
         <java.version>21</java.version>
+        <maven.build.timestamp.format>yyyy-MM-dd_HH-mm-ss</maven.build.timestamp.format>
+		<currentDate>${maven.build.timestamp}</currentDate>
     </properties>
 
     <dependencies>
@@ -248,7 +250,7 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-            <version>4.30.0</version>
+            <version>4.31.1</version>
         </dependency>
         <dependency>
             <groupId>de.undercouch</groupId>
@@ -270,6 +272,26 @@
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.3</version>
         </dependency>
+
+        
+        <dependency>
+            <groupId>org.liquibase.ext</groupId>
+            <artifactId>liquibase-hibernate6</artifactId>
+            <version>4.28.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>8.0.0.Final</version>
+        </dependency>
+
     </dependencies>
 
     <reporting>
@@ -283,38 +305,6 @@
                     <failOnViolation>false</failOnViolation>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.liquibase</groupId>
-                <artifactId>liquibase-maven-plugin</artifactId>
-                <version>4.27.0</version>
-                <configuration>
-                    <driver>org.postgresql.Driver</driver>
-                    <url>jdbc:postgresql://localhost:5432/TeslaRISDB</url>
-                    <username>root</username>
-                    <password>postgres</password>
-                    <outputChangeLogFile>src/main/resources/configuration/liquibase-changelog.xml</outputChangeLogFile>
-                </configuration>
-            </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.liquibase</groupId>-->
-<!--                <artifactId>liquibase-maven-plugin</artifactId>-->
-<!--                <version>4.30.0</version>-->
-<!--                <configuration>-->
-<!--                    <changeLogFile>src/main/resources/configuration/liquibase/master.xml</changeLogFile>-->
-<!--                    <diffChangeLogFile>src/main/resources/configuration/liquibase/changelog/${maven.build.timestamp}_changelog.xml</diffChangeLogFile>-->
-<!--                    <driver>org.postgresql.Driver</driver>-->
-<!--                    <url>jdbc:postgresql://localhost:5432/TeslaRISDB</url>-->
-<!--                    <defaultSchemaName />-->
-<!--                    <username>TeslaRISDB</username>-->
-<!--                    <password />-->
-<!--                    <referenceUrl>hibernate:spring:com.car.app.domain?dialect=org.hibernate.dialect.PostgreSQLDialect-->
-<!--                        &amp;hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy-->
-<!--                        &amp;hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy-->
-<!--                    </referenceUrl>-->
-<!--                    <verbose>true</verbose>-->
-<!--                    <logging>debug</logging>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
         </plugins>
     </reporting>
 
@@ -377,6 +367,48 @@
                     <executable>true</executable>
                 </configuration>
             </plugin>
+            <plugin>
+				<groupId>org.liquibase</groupId>
+				<artifactId>liquibase-maven-plugin</artifactId>
+				<version>4.31.1</version>
+                <configuration>
+                    <changeLogFile>src/main/resources/db/changelog/db.changelog-master.yaml</changeLogFile>
+                    <outputChangeLogFile>src/main/resources/db/changelog/db.changelog-initial.yaml</outputChangeLogFile>
+                    <diffChangeLogFile>src/main/resources/db/changelog/changes/change-${currentDate}.yaml</diffChangeLogFile>
+                    <driver>org.postgresql.Driver</driver>
+                    <url>jdbc:postgresql://localhost:5432/TeslaRISDB_prod</url>
+                    <defaultSchemaName />
+                    <username>postgres</username>
+                    <password>root</password>
+                    
+                    <referenceUrl>jdbc:postgresql://localhost:5432/TeslaRISDB</referenceUrl>
+                    <referenceUsername>postgres</referenceUsername>
+                    <referencePassword>root</referencePassword>
+               
+                    <!-- <referenceUrl>hibernate:spring:rs.teslaris.demo.model?dialect=org.hibernate.dialect.PostgreSQLDialect</referenceUrl> -->
+					<!-- <referenceDriver>liquibase.ext.hibernate.database.connection.HibernateDriver</referenceDriver> -->
+
+					<verbose>true</verbose>
+				</configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-databind</artifactId>
+                        <version>2.15.4</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.liquibase</groupId>
+                        <artifactId>liquibase-core</artifactId>
+                        <version>4.31.1</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-databind</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                </dependencies>
+			</plugin>
         </plugins>
     </build>
 
