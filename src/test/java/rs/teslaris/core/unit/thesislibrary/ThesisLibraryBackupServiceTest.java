@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import rs.teslaris.core.model.document.DocumentFileBackup;
+import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -66,7 +68,7 @@ public class ThesisLibraryBackupServiceTest {
         var from = LocalDate.of(2023, 1, 1);
         var to = LocalDate.of(2023, 12, 31);
         var types = List.of(ThesisType.MASTER);
-        var fileSections = List.of(FileSection.FILE_ITEMS);
+        var fileSections = new ArrayList<FileSection>(List.of(DocumentFileSection.FILE_ITEMS));
         var defended = true;
         var putOnReview = false;
         var userId = 10;

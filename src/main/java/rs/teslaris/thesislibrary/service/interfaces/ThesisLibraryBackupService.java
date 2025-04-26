@@ -14,11 +14,11 @@ public interface ThesisLibraryBackupService {
     String scheduleBackupGeneration(Integer institutionId,
                                     LocalDate from, LocalDate to,
                                     List<ThesisType> types,
-                                    List<FileSection> fileSections,
+                                    List<FileSection> documentFileSections,
                                     Boolean defended,
                                     Boolean putOnReview, Integer userId, String language);
 
-    public List<String> listAvailableBackups(Integer userId);
+    List<String> listAvailableBackups(Integer userId);
 
     GetObjectResponse serveAndDeleteBackupFile(String backupFileName, Integer userId)
         throws IOException;

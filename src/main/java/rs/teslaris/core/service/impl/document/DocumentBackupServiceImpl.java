@@ -1,9 +1,11 @@
-package rs.teslaris.thesislibrary.service.impl;
+package rs.teslaris.core.service.impl.document;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.json.JsonData;
 import io.minio.GetObjectResponse;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -15,37 +17,44 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileBackup;
 import rs.teslaris.core.model.document.DocumentFileSection;
-import rs.teslaris.core.model.document.FileSection;
-import rs.teslaris.core.model.document.Thesis;
-import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.DocumentFileBackupRepository;
-import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.BackupZipBuilder;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
-import rs.teslaris.thesislibrary.model.ThesisFileSection;
-import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
-import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
+import rs.teslaris.core.util.search.StringUtil;
+
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupService {
+public class DocumentBackupServiceImpl implements DocumentBackupService {
 
     private final FileService fileService;
 
-    private final ThesisRepository thesisRepository;
+    private final ElasticsearchOperations elasticsearchOperations;
+
+    private final DocumentRepository documentRepository;
 
     private final OrganisationUnitService organisationUnitService;
 
@@ -57,70 +66,67 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
     private final MessageSource messageSource;
 
-    private final Map<FileSection, Function<Thesis, Set<DocumentFile>>> sectionAccessors = Map.of(
-        DocumentFileSection.FILE_ITEMS, Thesis::getFileItems,
-        DocumentFileSection.PROOFS, Thesis::getProofs,
-        ThesisFileSection.PRELIMINARY_FILES, Thesis::getPreliminaryFiles,
-        ThesisFileSection.PRELIMINARY_SUPPLEMENTS, Thesis::getPreliminarySupplements,
-        ThesisFileSection.COMMISSION_REPORTS, Thesis::getCommissionReports
-    );
+    private final Map<DocumentFileSection, Function<Document, Set<DocumentFile>>> sectionAccessors =
+        Map.of(
+            DocumentFileSection.FILE_ITEMS, Document::getFileItems,
+            DocumentFileSection.PROOFS, Document::getProofs
+        );
 
 
     @Override
     public String scheduleBackupGeneration(Integer institutionId,
-                                           LocalDate from, LocalDate to,
-                                           List<ThesisType> types,
-                                           List<FileSection> thesisFileSections,
-                                           Boolean defended,
-                                           Boolean putOnReview, Integer userId, String language) {
-        if (!defended && !putOnReview) {
-            throw new BackupException("You must select at least one of: defended or putOnReview.");
-        }
-
-        if (from.isAfter(to)) {
+                                           Integer from, Integer to,
+                                           List<DocumentPublicationType> types,
+                                           List<DocumentFileSection> documentFileSections,
+                                           Integer userId, String language) {
+        if (from > to) {
             throw new BackupException("'From' date cannot be later than 'to' date.");
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();
         taskManagerService.scheduleTask(
-            "Library_Backup-" + institutionId +
+            "Document_Backup-" + institutionId +
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
-                thesisFileSections, defended, putOnReview, language),
+                documentFileSections, language),
             userId);
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
 
     private void generateBackupForPeriodAndInstitution(Integer institutionId,
-                                                       LocalDate from, LocalDate to,
-                                                       List<ThesisType> types,
-                                                       List<FileSection> thesisFileSections,
-                                                       Boolean defended,
-                                                       Boolean putOnReview, String language) {
-        int pageNumber = 0;
+                                                       Integer from, Integer to,
+                                                       List<DocumentPublicationType> types,
+                                                       List<DocumentFileSection> documentFileSections,
+                                                       String language) {
         int chunkSize = 10;
-        boolean hasNextPage = true;
 
         BackupZipBuilder zipBuilder = null;
         try {
-            zipBuilder = new BackupZipBuilder("thesis-backup");
+            zipBuilder = new BackupZipBuilder("document-backup");
 
-            while (hasNextPage) {
-                List<Thesis> chunk = thesisRepository
-                    .findThesesForBackup(from, to, types, institutionId, defended, putOnReview,
-                        PageRequest.of(pageNumber, chunkSize)).getContent();
+            for (var documentType : types) {
+                int pageNumber = 0;
+                boolean hasNextPage = true;
 
-                for (var thesis : chunk) {
-                    processThesis(thesis, thesisFileSections, zipBuilder, language);
+                var documentIdsForType =
+                    getDocumentDatabaseIdsForBackup(from, to, List.of(institutionId),
+                        documentType.name());
+                while (hasNextPage) {
+                    List<Document> chunk = fetchProcessableChunk(documentIdsForType,
+                        PageRequest.of(pageNumber, chunkSize));
+
+                    for (var document : chunk) {
+                        processDocument(document, documentFileSections, zipBuilder, language);
+                    }
+
+                    pageNumber++;
+                    hasNextPage = chunk.size() == chunkSize;
                 }
-
-                pageNumber++;
-                hasNextPage = chunk.size() == chunkSize;
             }
 
             var institution = organisationUnitService.findOne(institutionId);
-            var serverFilename = generateBackupFileName(from, to, institution);
+            var serverFilename = generateBackupFileName(from, to, institution, language);
             serverFilename = fileService.store(zipBuilder.convertToMultipartFile(
                     zipBuilder.buildZipAndGetResource().getContentAsByteArray(), serverFilename),
                 serverFilename.split("\\.")[0]);
@@ -138,33 +144,62 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         }
     }
 
-    private void processThesis(Thesis thesis, List<FileSection> thesisFileSections,
-                               BackupZipBuilder zipBuilder, String language)
+    public List<Integer> getDocumentDatabaseIdsForBackup(Integer startYear, Integer endYear,
+                                                         List<Integer> organisationUnitIds,
+                                                         String type) {
+        var query = NativeQuery.builder()
+            .withQuery(q -> q.bool(b -> b
+                .must(m -> m.terms(t -> t.field("organisation_unit_ids").terms(tf -> tf.value(
+                    organisationUnitIds.stream()
+                        .map(FieldValue::of)
+                        .toList()
+                ))))
+                .must(m -> m.range(r -> r.field("year")
+                    .gte(JsonData.of(startYear))
+                    .lte(JsonData.of(endYear))))
+                .must(m -> m.term(t -> t.field("type").value(type)))
+            ))
+            .withSourceFilter(new FetchSourceFilter(new String[] {"databaseId"}, null))
+            .build();
+
+        var hits = elasticsearchOperations.search(query, DocumentPublicationIndex.class);
+
+        return hits.getSearchHits().stream()
+            .map(hit -> hit.getContent().getDatabaseId())
+            .toList();
+    }
+
+    private List<Document> fetchProcessableChunk(List<Integer> documentIds, Pageable pageable) {
+        return documentRepository.findDocumentByIdIn(documentIds, pageable);
+    }
+
+    private void processDocument(Document document, List<DocumentFileSection> documentFileSections,
+                                 BackupZipBuilder zipBuilder, String language)
         throws IOException {
-        var author = thesis.getContributors().stream()
+        var author = document.getContributors().stream()
             .filter(contributor -> contributor.getContributionType()
                 .equals(DocumentContributionType.AUTHOR))
-            .findFirst();
+            .min(Comparator.comparing(PersonContribution::getOrderNumber));
 
         if (author.isEmpty()) {
-            log.warn("Author is missing for Thesis with ID {}", thesis.getId());
+            log.warn("Author is missing for Document with ID {}", document.getId());
             return;
         }
 
-        var thesisDir = zipBuilder.createSubDir("theses/" +
+        var documentDir = zipBuilder.createSubDir("documents/" +
             author.get().getAffiliationStatement().getDisplayPersonName().toString()
                 .replace(" ", "_")
-            + "_" + thesis.getId());
+            + "_" + document.getId());
 
-        for (var section : thesisFileSections) {
-            var fileItems = sectionAccessors.get(section).apply(thesis);
+        for (var section : documentFileSections) {
+            var fileItems = sectionAccessors.get(section).apply(document);
             if (Objects.isNull(fileItems) || fileItems.isEmpty()) {
                 continue;
             }
 
             var sectionPaths = getSectionPaths(language);
             var sectionDir =
-                zipBuilder.createSubDir(thesisDir.resolve(sectionPaths.get(section)).toString());
+                zipBuilder.createSubDir(documentDir.resolve(sectionPaths.get(section)).toString());
             for (var fileItem : fileItems) {
                 try (var file = fileService.loadAsResource(fileItem.getServerFilename())) {
                     zipBuilder.copyFile(file, sectionDir.resolve(fileItem.getFilename()));
@@ -175,7 +210,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         }
     }
 
-    public Map<FileSection, String> getSectionPaths(String language) {
+    public Map<DocumentFileSection, String> getSectionPaths(String language) {
         return Map.of(
             DocumentFileSection.FILE_ITEMS, messageSource.getMessage(
                 DocumentFileSection.FILE_ITEMS.getInternationalizationMessageName(),
@@ -183,21 +218,6 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                 Locale.forLanguageTag(language)),
             DocumentFileSection.PROOFS, messageSource.getMessage(
                 DocumentFileSection.PROOFS.getInternationalizationMessageName(), new Object[] {},
-                Locale.forLanguageTag(language)),
-            ThesisFileSection.PRELIMINARY_FILES,
-            messageSource.getMessage(
-                ThesisFileSection.PRELIMINARY_FILES.getInternationalizationMessageName(),
-                new Object[] {},
-                Locale.forLanguageTag(language)),
-            ThesisFileSection.PRELIMINARY_SUPPLEMENTS,
-            messageSource.getMessage(
-                ThesisFileSection.PRELIMINARY_SUPPLEMENTS.getInternationalizationMessageName(),
-                new Object[] {},
-                Locale.forLanguageTag(language)),
-            ThesisFileSection.COMMISSION_REPORTS,
-            messageSource.getMessage(
-                ThesisFileSection.COMMISSION_REPORTS.getInternationalizationMessageName(),
-                new Object[] {},
                 Locale.forLanguageTag(language))
         );
     }
@@ -241,10 +261,10 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         return resource;
     }
 
-    private String generateBackupFileName(LocalDate from, LocalDate to,
-                                          OrganisationUnit institution) {
-        return "THESIS_BACKUP_" +
-            RegistryBookGenerationUtil.getTransliteratedContent(institution.getName())
+    private String generateBackupFileName(Integer from, Integer to,
+                                          OrganisationUnit institution, String lang) {
+        return "DOCUMENT_BACKUP_" +
+            StringUtil.getStringContent(institution.getName(), lang)
                 .replace(" ", "_") + "_" + from + "_" + to + "_" + UUID.randomUUID() + ".zip";
     }
 }
