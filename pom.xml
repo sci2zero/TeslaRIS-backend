@@ -21,6 +21,13 @@
 
     <properties>
         <java.version>21</java.version>
+        <maven.build.timestamp.format>yyyy-MM-dd_HH-mm-ss</maven.build.timestamp.format>
+		<currentDate>${maven.build.timestamp}</currentDate>
+        
+        <appGitRepoUrl>https://github.com/sci2zero/TeslaRIS-backend</appGitRepoUrl>
+        <appGitTag></appGitTag>
+        <appGitCommitHash></appGitCommitHash>
+        <appVersion>1.0.0</appVersion>
     </properties>
 
     <dependencies>
@@ -319,6 +326,15 @@
     </reporting>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                  <include>application.properties</include>
+                </includes>
+                <filtering>true</filtering>
+              </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.asciidoctor</groupId>

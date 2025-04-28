@@ -237,6 +237,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
 
+                // HEALTH CHECK
+                .requestMatchers(HttpMethod.GET, "/api/health-check/version").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );
