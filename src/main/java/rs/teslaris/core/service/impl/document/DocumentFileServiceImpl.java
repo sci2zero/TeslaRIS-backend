@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.io.FilenameUtils;
@@ -365,17 +365,15 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {
-        String documentContent;
-        try (var pdfFile = multipartPdfFile.getInputStream()) {
-            var pdDocument = PDDocument.load(pdfFile);
+        try (var inputStream = multipartPdfFile.getInputStream();
+             var pdDocument = Loader.loadPDF(inputStream.readAllBytes())) {
             var textStripper = new PDFTextStripper();
-            documentContent = textStripper.getText(pdDocument);
-            pdDocument.close();
+            return textStripper.getText(pdDocument);
         } catch (IOException e) {
             throw new LoadingException("Error while trying to load PDF file content.");
         }
-        return documentContent;
     }
+
 
     private String extractDocumentTitle(MultipartFile multipartPdfFile) {
         var originalFilename = Objects.requireNonNull(multipartPdfFile.getOriginalFilename());
