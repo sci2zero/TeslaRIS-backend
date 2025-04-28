@@ -171,6 +171,7 @@ public class DbInitializer implements ApplicationRunner {
         var createJournal = new Privilege("CREATE_JOURNAL");
         var generateThesisLibraryBackup = new Privilege("GENERATE_THESIS_LIBRARY_BACKUP");
         var generateOutputBackup = new Privilege("GENERATE_OUTPUT_BACKUP");
+        var performHealthCheck = new Privilege("PERFORM_HEALTH_CHECK");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -198,7 +199,7 @@ public class DbInitializer implements ApplicationRunner {
                 performThesisSearch, addToPromotion, removeFromPromotion, addToRegistryBook,
                 removeFromRegistryBook, updateRegistryBook, managePromotions, performMigration,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
-                generateThesisLibraryBackup, generateOutputBackup));
+                generateThesisLibraryBackup, generateOutputBackup, performHealthCheck));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -225,7 +226,8 @@ public class DbInitializer implements ApplicationRunner {
                 unarchiveThesis, performThesisReport, performThesisSearch, addToPromotion,
                 removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
-                performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup
+                performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
+                performHealthCheck
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

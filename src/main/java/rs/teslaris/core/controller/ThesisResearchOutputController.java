@@ -15,7 +15,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.ThesisResearchOutputService;
 
 @RestController
-@RequestMapping("/api/thesis-research-output")
+@RequestMapping("/api/thesis/research-output")
 @RequiredArgsConstructor
 public class ThesisResearchOutputController {
 

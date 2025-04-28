@@ -23,7 +23,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/thesis-research-output/{documentId}", 18)
+                        "http://localhost:8081/api/thesis/research-output/{documentId}", 14)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
@@ -36,7 +36,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(
-                        "http://localhost:8081/api/thesis-research-output/add/{documentId}/{researchOutputId}",
+                        "http://localhost:8081/api/thesis/research-output/add/{documentId}/{researchOutputId}",
                         10, 13)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
@@ -51,7 +51,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(
-                        "http://localhost:8081/api/thesis-research-output/remove/{documentId}/{researchOutputId}",
+                        "http://localhost:8081/api/thesis/research-output/remove/{documentId}/{researchOutputId}",
                         10, 13)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
