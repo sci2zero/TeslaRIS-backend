@@ -73,7 +73,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
     public String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
                                            String lang, Integer userId) {
         if (from.isAfter(to)) {
-            throw new RegistryBookException("'From' date cannot be later than 'to' date.");
+            throw new RegistryBookException("dateRangeIssueMessage");
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();

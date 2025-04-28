@@ -238,6 +238,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
 
                 // THESIS LIBRARY
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/search/fields").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/simple").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
                 .requestMatchers(HttpMethod.PATCH,
                     "/api/registry-book/cancel-attendance/{attendanceId}").permitAll()
                 .requestMatchers(HttpMethod.GET,

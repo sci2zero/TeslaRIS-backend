@@ -80,7 +80,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                            List<DocumentFileSection> documentFileSections,
                                            Integer userId, String language) {
         if (from > to) {
-            throw new BackupException("'From' date cannot be later than 'to' date.");
+            throw new BackupException("dateRangeIssueMessage");
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();

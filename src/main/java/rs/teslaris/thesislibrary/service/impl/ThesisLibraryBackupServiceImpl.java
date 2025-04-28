@@ -78,7 +78,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         }
 
         if (from.isAfter(to)) {
-            throw new BackupException("'From' date cannot be later than 'to' date.");
+            throw new BackupException("dateRangeIssueMessage");
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();

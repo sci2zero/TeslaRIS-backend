@@ -68,6 +68,10 @@ public class TaskManagerServiceImpl implements TaskManagerService {
                     notificationService.createNotification(
                         NotificationFactory.contructScheduledReportGenerationCompletedNotification(
                             notificationValues, userService.findOne(userId), taskSucceeded));
+                } else if (taskId.contains("Backup")) {
+                    notificationService.createNotification(
+                        NotificationFactory.contructScheduledBackupGenerationCompletedNotification(
+                            notificationValues, userService.findOne(userId), taskSucceeded));
                 } else {
                     notificationService.createNotification(
                         NotificationFactory.contructScheduledTaskCompletedNotification(

@@ -33,10 +33,7 @@ public class ThesisLibrarySearchControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testPerformSimpleSearch() throws Exception {
-        String jwtToken = authenticateLibrarianAndGetToken();
-
         var request = getTestPayload(false);
 
         String requestBody = objectMapper.writeValueAsString(request);
@@ -44,15 +41,12 @@ public class ThesisLibrarySearchControllerTest extends BaseTest {
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis-library/search/simple")
                     .content(requestBody)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                    .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testPerformAdvancedSearch() throws Exception {
-        String jwtToken = authenticateLibrarianAndGetToken();
 
         var request = getTestPayload(true);
 
@@ -61,8 +55,7 @@ public class ThesisLibrarySearchControllerTest extends BaseTest {
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis-library/search/advanced")
                     .content(requestBody)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                    .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 

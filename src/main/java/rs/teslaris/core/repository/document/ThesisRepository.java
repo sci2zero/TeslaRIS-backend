@@ -56,21 +56,26 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
                                                                List<Integer> institutionIds);
 
     @Query("SELECT DISTINCT t FROM Thesis t " +
-        "JOIN FETCH t.contributors " +
-        "JOIN FETCH t.fileItems " +
-        "JOIN FETCH t.proofs " +
-        "JOIN FETCH t.preliminaryFiles " +
-        "JOIN FETCH t.preliminarySupplements " +
-        "JOIN FETCH t.commissionReports " +
-        "LEFT JOIN t.publicReviewStartDates d WHERE " +
-        "t.organisationUnit.id = :institutionId AND " +
-        "t.thesisType in :types AND " +
+        "LEFT JOIN FETCH t.contributors " +
+        "LEFT JOIN FETCH t.fileItems " +
+        "LEFT JOIN FETCH t.proofs " +
+        "LEFT JOIN FETCH t.preliminaryFiles " +
+        "LEFT JOIN FETCH t.preliminarySupplements " +
+        "LEFT JOIN FETCH t.commissionReports " +
+        "LEFT JOIN t.publicReviewStartDates d " +
+        "WHERE t.organisationUnit.id = :institutionId " +
+        "AND t.thesisType in :types " +
+        "AND (" +
         "(:defended IS NULL OR " +
-        " (:defended = TRUE AND t.thesisDefenceDate BETWEEN :startDate AND :endDate) OR " +
-        " (:defended = FALSE AND (t.thesisDefenceDate < :startDate OR t.thesisDefenceDate > :endDate OR t.thesisDefenceDate IS NULL))) AND " +
+        "(:defended = TRUE AND t.thesisDefenceDate BETWEEN :startDate AND :endDate) OR " +
+        "(:defended = FALSE AND (t.thesisDefenceDate < :startDate OR t.thesisDefenceDate > :endDate OR t.thesisDefenceDate IS NULL))" +
+        ") " +
+        "OR " +
         "(:putOnReview IS NULL OR " +
-        " (:putOnReview = TRUE AND d BETWEEN :startDate AND :endDate) OR " +
-        " (:putOnReview = FALSE AND (d < :startDate OR d > :endDate OR d IS NULL)))")
+        "(:putOnReview = TRUE AND d BETWEEN :startDate AND :endDate) OR " +
+        "(:putOnReview = FALSE AND (d < :startDate OR d > :endDate OR d IS NULL))" +
+        ")" +
+        ")")
     Page<Thesis> findThesesForBackup(LocalDate startDate,
                                      LocalDate endDate,
                                      List<ThesisType> types,

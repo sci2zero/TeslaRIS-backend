@@ -5,7 +5,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,21 +26,18 @@ public class ThesisLibrarySearchController {
 
 
     @GetMapping("/fields")
-    @PreAuthorize("hasAuthority('PERFORM_THESIS_SEARCH')")
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         @RequestParam("export") Boolean onlyExportFields) {
         return thesisSearchService.getSearchFields(onlyExportFields);
     }
 
     @PostMapping("/simple")
-    @PreAuthorize("hasAuthority('PERFORM_THESIS_SEARCH')")
     public Page<DocumentPublicationIndex> performSimpleSearch(
         @RequestBody @Valid ThesisSearchRequestDTO searchRequest, Pageable pageable) {
         return thesisSearchService.performSimpleThesisSearch(searchRequest, pageable);
     }
 
     @PostMapping("/advanced")
-    @PreAuthorize("hasAuthority('PERFORM_THESIS_SEARCH')")
     public Page<DocumentPublicationIndex> performAdvancedSearch(
         @RequestBody @Valid ThesisSearchRequestDTO searchRequest, Pageable pageable) {
         return thesisSearchService.performAdvancedThesisSearch(searchRequest, pageable);
