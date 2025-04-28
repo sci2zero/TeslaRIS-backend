@@ -23,7 +23,7 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/thesis/research-output/{documentId}", 14)
+                        "http://localhost:8081/api/thesis/research-output/{documentId}", 18)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
