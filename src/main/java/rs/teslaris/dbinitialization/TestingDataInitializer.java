@@ -375,7 +375,7 @@ public class TestingDataInitializer {
                     new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
                     License.CREATIVE_COMMONS, CCLicense.BY_NC, ApproveStatus.APPROVED, true,
                     LocalDateTime.now(),
-                    false))));
+                    false, false))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -392,7 +392,7 @@ public class TestingDataInitializer {
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
                 License.OPEN_ACCESS, CCLicense.BY_NC, ApproveStatus.APPROVED, true,
-                LocalDateTime.now(), false)),
+                LocalDateTime.now(), false, false)),
             LocalDate.of(2023, 4, 17)));
         personRepository.save(person1);
 
@@ -710,7 +710,7 @@ public class TestingDataInitializer {
         documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
             new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
             License.OPEN_ACCESS, CCLicense.BY_SA, ApproveStatus.APPROVED, true, LocalDateTime.now(),
-            false));
+            false, false));
         documentIndicatorRepository.save(documentIndicator1);
 
         var eventIndicator1 = new EventIndicator();

@@ -59,14 +59,21 @@ public class FileController {
         @CookieValue("jwt-security-fingerprint") String fingerprintCookie) throws IOException {
 
         var file = fileService.loadAsResource(filename);
-        var license = documentFileService.getDocumentAccessLevel(filename);
+        var licenseResponse = documentFileService.getDocumentAccessLevel(filename);
+        var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
 
-        if (!isOpenAccess(license) && !isAuthorizedUser(bearerToken, fingerprintCookie)) {
+        if (!isOpenAccess(licenseResponse.a) && !authenticatedUser) {
             return ErrorResponseUtil.buildUnavailableResponse(request,
                 "loginToViewDocumentMessage");
         }
 
-        if (license.equals(License.COMMISSION_ONLY) && !isCommissionUser(bearerToken)) {
+        if (isOpenAccess(licenseResponse.a) && !authenticatedUser && !licenseResponse.b) {
+            return ErrorResponseUtil.buildUnavailableResponse(request,
+                "loginToViewCCDocumentMessage");
+        }
+
+        if (licenseResponse.a.equals(License.COMMISSION_ONLY) &&
+            (!authenticatedUser || !isCommissionUser(bearerToken))) {
             return ErrorResponseUtil.buildUnauthorisedResponse(request,
                 "unauthorisedToViewDocumentMessage");
         }
@@ -112,7 +119,7 @@ public class FileController {
         return license.equals(License.OPEN_ACCESS) || license.equals(License.PUBLIC_DOMAIN);
     }
 
-    private boolean isAuthorizedUser(String bearerToken, String fingerprintCookie) {
+    private boolean isAuthenticatedUser(String bearerToken, String fingerprintCookie) {
         if (Objects.isNull(bearerToken)) {
             return false;
         }

@@ -42,6 +42,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -92,8 +93,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
-    public License getDocumentAccessLevel(String serverFilename) {
-        return documentFileRepository.getReferenceByServerFilename(serverFilename).getLicense();
+    public Pair<License, Boolean> getDocumentAccessLevel(String serverFilename) {
+        var documentFile = documentFileRepository.getReferenceByServerFilename(serverFilename);
+        return new Pair<>(documentFile.getLicense(), documentFile.getIsThesisDocument());
     }
 
     @Override
@@ -154,12 +156,29 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    public DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
+                                                   Boolean isThesisDocument) {
+        var newDocumentFile = new DocumentFile();
+
+        setCommonFields(newDocumentFile, documentFile);
+        newDocumentFile.setIsThesisDocument(isThesisDocument);
+
+        if (!index) {
+            documentFile.setResourceType(
+                ResourceType.PROOF); // Save every non-indexed (proof) as its own type
+        }
+
+        return saveDocument(documentFile, newDocumentFile, index);
+    }
+
+    @Override
     public DocumentFile saveNewPreliminaryDocument(DocumentFileDTO documentFile) {
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
         newDocumentFile.setCanEdit(false);
         newDocumentFile.setLatest(true);
+        newDocumentFile.setIsThesisDocument(true);
 
         return saveDocument(documentFile, newDocumentFile, false);
     }

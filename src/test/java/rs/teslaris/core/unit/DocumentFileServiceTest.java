@@ -279,6 +279,6 @@ public class DocumentFileServiceTest {
         var actual = documentFileService.getDocumentAccessLevel("serverFilename");
 
         // then
-        assertEquals(license, actual);
+        assertEquals(license, actual.a);
     }
 }

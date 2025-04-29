@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.service.interfaces.commontypes.ReCaptchaService;
+import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.thesislibrary.annotation.PromotionEditAndUsageCheck;
 import rs.teslaris.thesislibrary.annotation.RegistryBookEntryEditCheck;
@@ -39,6 +41,8 @@ public class RegistryBookController {
     private final RegistryBookService registryBookService;
 
     private final JwtUtil tokenUtil;
+
+    private final ReCaptchaService reCaptchaService;
 
 
     @GetMapping("/can-edit/{registryBookEntryId}")
@@ -153,7 +157,11 @@ public class RegistryBookController {
 
     @PatchMapping("/cancel-attendance/{attendanceId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancelAttendance(@PathVariable String attendanceId) {
+    public void cancelAttendance(@PathVariable String attendanceId, @RequestParam String token) {
+        if (!reCaptchaService.isCaptchaValid(token)) {
+            throw new CaptchaException("Invalid captcha solution.");
+        }
+
         registryBookService.removeFromPromotion(attendanceId);
     }
 

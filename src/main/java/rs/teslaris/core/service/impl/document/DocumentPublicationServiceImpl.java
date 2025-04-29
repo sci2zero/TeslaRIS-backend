@@ -177,7 +177,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
                                                    Boolean isProof) {
         var document = findOne(documentId);
-        var documentFile = documentFileService.saveNewDocument(file, !isProof);
+        var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof,
+            document instanceof Thesis);
         if (isProof) {
             document.getProofs().add(documentFile);
         } else {

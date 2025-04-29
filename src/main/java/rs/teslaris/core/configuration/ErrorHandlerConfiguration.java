@@ -22,6 +22,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
+import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
@@ -397,6 +398,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleInvalidFileSectionException(HttpServletRequest request,
                                                   InvalidFileSectionException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(CaptchaException.class)
+    @ResponseBody
+    ErrorObject handleCaptchaException(HttpServletRequest request,
+                                       CaptchaException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

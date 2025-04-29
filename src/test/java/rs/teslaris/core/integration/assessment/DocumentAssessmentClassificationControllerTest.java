@@ -33,7 +33,7 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testAssessImaginaryJournalPublication() throws Exception {
+    public void testAssessImaginaryJournalPublicationWrongCaptcha() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         var requestPayload =
@@ -46,12 +46,12 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
                 .content(requestBody)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-        ).andExpect(status().isOk());
+        ).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testAssessImaginaryProceedingsPublication() throws Exception {
+    public void testAssessImaginaryProceedingsPublicationWrongCaptcha() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         var requestPayload =
@@ -64,6 +64,6 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
                 .content(requestBody)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-        ).andExpect(status().isOk());
+        ).andExpect(status().isBadRequest());
     }
 }

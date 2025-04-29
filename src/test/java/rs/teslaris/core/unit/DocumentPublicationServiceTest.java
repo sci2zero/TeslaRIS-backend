@@ -202,7 +202,8 @@ public class DocumentPublicationServiceTest {
         var documentFile = new DocumentFile();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
-        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
+        when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class), eq(false),
+            eq(false))).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -225,8 +226,8 @@ public class DocumentPublicationServiceTest {
         documentFile.setId(1);
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
-        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class),
-            eq(!isProof))).thenReturn(
+        when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class),
+            eq(!isProof), anyBoolean())).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
