@@ -26,8 +26,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -898,8 +901,9 @@ public class UserServiceTest {
         verify(passwordResetTokenRepository, times(1)).delete(resetRequest);
     }
 
-    @Test
-    public void shouldFindUserAccountWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class)
+    public void shouldFindUserAccountWhenSearchingWithSimpleQuery(UserRole allowedRole) {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -910,7 +914,7 @@ public class UserServiceTest {
 
         // when
         var result =
-            userService.searchUserAccounts(new ArrayList<>(tokens), pageable);
+            userService.searchUserAccounts(new ArrayList<>(tokens), List.of(allowedRole), pageable);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -1015,5 +1019,153 @@ public class UserServiceTest {
         // Then
         verify(userRepository, times(1)).getIdsOfUsersWhoAllowedAccountTakeover();
         assertEquals(3, result.size());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingAdminUser() {
+        // Given
+        var user = new User();
+        user.setId(1);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.ADMIN.name());
+        }});
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+        // When / Then
+        assertThrows(RuntimeException.class, () -> userService.deleteUserAccount(1));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingCommissionUserWithIndicators() {
+        // Given
+        var user = new User();
+        user.setId(2);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+        when(userRepository.findById(2)).thenReturn(Optional.of(user));
+        when(userRepository.hasUserAssignedIndicators(2)).thenReturn(true);
+
+        // When / Then
+        assertThrows(RuntimeException.class, () -> userService.deleteUserAccount(2));
+    }
+
+    @Test
+    void shouldDeleteUser() {
+        // Given
+        var user = new User();
+        user.setId(3);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.INSTITUTIONAL_LIBRARIAN.name());
+        }});
+        when(userRepository.findById(3)).thenReturn(Optional.of(user));
+
+        // When
+        userService.deleteUserAccount(3);
+
+        // Then
+        verify(userRepository).deleteAllNotificationsForUser(3);
+        verify(userRepository).deleteAllAccountActivationsForUser(3);
+        verify(userRepository).deleteAllPasswordResetsForUser(3);
+        verify(userRepository).deleteRefreshTokenForUser(3);
+        verify(userRepository).delete(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenMigratingNonCommissionUsers() {
+        // Given
+        var user1 = new User();
+        user1.setId(4);
+        user1.setAuthority(new Authority() {{
+            setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name());
+        }});
+
+        var user2 = new User();
+        user2.setId(5);
+        user2.setAuthority(new Authority() {{
+            setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name());
+        }});
+
+        when(userRepository.findById(4)).thenReturn(Optional.of(user1));
+        when(userRepository.findById(5)).thenReturn(Optional.of(user2));
+
+        // When / Then
+        assertThrows(RuntimeException.class,
+            () -> userService.migrateCommissionAccountData(4, 5));
+    }
+
+    @Test
+    void shouldMigrateCommissionUserAccountData() {
+        // Given
+        var user1 = new User();
+        user1.setId(6);
+        user1.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+
+        var user2 = new User();
+        user2.setId(7);
+        user2.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+
+        when(userRepository.findById(6)).thenReturn(Optional.of(user1));
+        when(userRepository.findById(7)).thenReturn(Optional.of(user2));
+
+        // When
+        userService.migrateCommissionAccountData(6, 7);
+
+        // Then
+        verify(userRepository).migrateEntityIndicatorsToAnotherUser(6, 7);
+    }
+
+    @Test
+    void shouldReturnTrueWhenResettingEmployeePassword() {
+        // Given
+        var user = new User();
+        user.setId(8);
+        user.setEmail("employee@example.com");
+        user.setPreferredNotificationLanguage(new Language() {{
+            setLanguageCode("SR");
+        }});
+        when(userRepository.findById(8)).thenReturn(Optional.of(user));
+        when(messageSource.getMessage(eq("adminPasswordReset.mailSubject"), any(), any()))
+            .thenReturn("Reset Password");
+        when(messageSource.getMessage(eq("adminPasswordReset.mailBodyEmployee"), any(), any()))
+            .thenReturn("New password");
+
+        var emailFuture = CompletableFuture.completedFuture(true);
+        when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
+        when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
+
+        // When
+        var result = userService.generateNewPasswordForUser(8);
+
+        // Then
+        assertTrue(result);
+        verify(passwordEncoder).encode(anyString());
+    }
+
+    @Test
+    void shouldReturnFalseWhenEmailFailsToSend() {
+        // Given
+        var user = new User();
+        user.setId(9);
+        user.setEmail("employee@example.com");
+        user.setPreferredNotificationLanguage(new Language() {{
+            setLanguageCode("SR");
+        }});
+        when(userRepository.findById(9)).thenReturn(Optional.of(user));
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("msg");
+
+        var emailFuture = CompletableFuture.completedFuture(false);
+        when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
+
+        // When
+        var result = userService.generateNewPasswordForUser(9);
+
+        // Then
+        assertFalse(result);
+        verify(passwordEncoder, never()).encode(any());
     }
 }

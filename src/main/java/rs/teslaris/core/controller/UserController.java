@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -65,9 +66,10 @@ public class UserController {
     public Page<UserAccountIndex> searchUserAccounts(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "allowedRole", required = false) List<UserRole> allowedRoles,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
-        return userService.searchUserAccounts(tokens, pageable);
+        return userService.searchUserAccounts(tokens, allowedRoles, pageable);
     }
 
     @PostMapping("/authenticate")
@@ -228,6 +230,27 @@ public class UserController {
     @GetMapping("/person/{personId}")
     public UserResponseDTO getUserFromPerson(@PathVariable("personId") Integer personId) {
         return userService.getUserFromPerson(personId);
+    }
+
+    @PatchMapping("/reset-user-password/{employeeId}")
+    @PreAuthorize("hasAuthority('GENERATE_NEW_EMPLOYEE_PASSWORD')")
+    public boolean resetPasswordForUser(@PathVariable Integer employeeId) {
+        return userService.generateNewPasswordForUser(employeeId);
+    }
+
+    @DeleteMapping("/{userId}")
+    @PreAuthorize("hasAuthority('DELETE_USER_ACCOUNT')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUserAccount(@PathVariable Integer userId) {
+        userService.deleteUserAccount(userId);
+    }
+
+    @DeleteMapping("/migrate/{oldUserId}/{newUserId}")
+    @PreAuthorize("hasAuthority('DELETE_USER_ACCOUNT')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void migrateCommissionAccountData(@PathVariable Integer oldUserId,
+                                             @PathVariable Integer newUserId) {
+        userService.migrateCommissionAccountData(newUserId, oldUserId);
     }
 
     private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {

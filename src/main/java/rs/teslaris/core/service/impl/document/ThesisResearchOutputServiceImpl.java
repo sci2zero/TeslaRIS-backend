@@ -45,7 +45,7 @@ public class ThesisResearchOutputServiceImpl implements ThesisResearchOutputServ
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId);
 
         if (thesis.isEmpty()) {
-            throw new NotFoundException("Thesis with ID " + thesisId + "does not exist.");
+            throw new NotFoundException("Thesis with ID " + thesisId + " does not exist.");
         }
 
         return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdIn(

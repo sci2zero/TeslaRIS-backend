@@ -1,5 +1,6 @@
 package rs.teslaris.core.util.email;
 
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +31,7 @@ public class EmailUtil {
         maxAttempts = 2,
         backoff = @Backoff(delay = 5000)
     )
-    public void sendSimpleEmail(String to, String subject, String text) {
+    public CompletableFuture<Boolean> sendSimpleEmail(String to, String subject, String text) {
         var message = new SimpleMailMessage();
         message.setFrom(emailAddress);
         message.setTo(to);
@@ -38,8 +39,10 @@ public class EmailUtil {
         message.setText(text);
         try {
             mailSender.send(message);
+            return CompletableFuture.completedFuture(true);
         } catch (MailException e) {
             log.error("Email to user " + to + " cannot be sent, reason: " + e.getMessage());
+            return CompletableFuture.completedFuture(false);
         }
     }
 

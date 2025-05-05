@@ -42,6 +42,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceCon
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
@@ -407,5 +408,13 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleCaptchaException(HttpServletRequest request,
                                        CaptchaException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ReferenceConstraintException.class)
+    @ResponseBody
+    ErrorObject handleReferenceConstraintException(HttpServletRequest request,
+                                                   ReferenceConstraintException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

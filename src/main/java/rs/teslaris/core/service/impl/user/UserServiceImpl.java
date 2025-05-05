@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.user;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import com.google.common.cache.Cache;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
@@ -14,6 +16,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -71,10 +74,12 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.PasswordUtil;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -134,8 +139,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    public Page<UserAccountIndex> searchUserAccounts(List<String> tokens, Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens),
+    public Page<UserAccountIndex> searchUserAccounts(List<String> tokens,
+                                                     List<UserRole> allowedRoles,
+                                                     Pageable pageable) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, allowedRoles),
             pageable, UserAccountIndex.class, "user_account");
     }
 
@@ -641,6 +648,93 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         return userRepository.findAllCommissionUsers();
     }
 
+    @Override
+    @Transactional
+    public void deleteUserAccount(Integer userId) {
+        var userToDelete = findOne(userId);
+
+        if (userToDelete.getAuthority().getName().equals(UserRole.ADMIN.name())) {
+            throw new CantEditException("You can't delete an admin user.");
+        }
+
+        if (userRepository.hasUserAssignedIndicators(userId)) {
+            throw new ReferenceConstraintException("userHasAssignedIndicatorsMessage");
+        }
+
+        userRepository.deleteAllNotificationsForUser(userId);
+        userRepository.deleteAllAccountActivationsForUser(userId);
+        userRepository.deleteAllPasswordResetsForUser(userId);
+        userRepository.deleteRefreshTokenForUser(userId);
+
+        userToDelete.setPerson(null);
+        userRepository.delete(userToDelete);
+        userAccountIndexRepository.findByDatabaseId(userId)
+            .ifPresent(userAccountIndexRepository::delete);
+    }
+
+    @Override
+    @Transactional
+    public void migrateCommissionAccountData(Integer userToUpdateId,
+                                             Integer userToDeleteId) {
+        if (Objects.equals(userToUpdateId, userToDeleteId)) {
+            throw new ReferenceConstraintException("Can't migrate data to same user.");
+        }
+
+        var userToUpdate = findOne(userToUpdateId);
+        var userToDelete = findOne(userToDeleteId);
+
+        if ((!userToUpdate.getAuthority().getName().equals(UserRole.COMMISSION.name()) &&
+            !userToUpdate.getAuthority().getName().equals(UserRole.RESEARCHER.name())) ||
+            !userToUpdate.getAuthority().getName().equals(userToDelete.getAuthority().getName())) {
+            throw new ReferenceConstraintException(
+                "Only applicable for commission and researcher users.");
+        }
+
+        userRepository.migrateEntityIndicatorsToAnotherUser(userToUpdateId, userToDeleteId);
+    }
+
+    @Override
+    @Transactional
+    public boolean generateNewPasswordForUser(Integer userId) {
+        var savedUser = findOne(userId);
+
+        SecureRandom random;
+        try {
+            random = SecureRandom.getInstance("SHA1PRNG");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e); // should never happen
+        }
+
+        var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
+
+        var language = savedUser.getPreferredNotificationLanguage().getLanguageCode().toLowerCase();
+
+        var subject = messageSource.getMessage(
+            "adminPasswordReset.mailSubject",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        var message = messageSource.getMessage(
+            "adminPasswordReset.mailBodyEmployee",
+            new Object[] {new String(generatedPassword)},
+            Locale.forLanguageTag(language)
+        );
+
+        var emailIsSent = emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);
+        try {
+            if (emailIsSent.get()) {
+                savedUser.setPassword(passwordEncoder.encode(new String(generatedPassword)));
+                return true;
+            }
+        } catch (InterruptedException | ExecutionException ignored) {
+            // handled in the code block below
+        }
+
+        Arrays.fill(generatedPassword, '\0');
+        return false;
+    }
+
     @Transactional(propagation = Propagation.MANDATORY)
     private String createAndSaveRefreshTokenForUser(User user) {
         var refreshTokenValue = UUID.randomUUID().toString();
@@ -690,7 +784,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         index.setOrganisationUnitNameSortableOther(index.getOrganisationUnitNameOther());
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens) {
+    private Query buildSimpleSearchQuery(List<String> tokens, List<UserRole> allowedRoles) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
                 if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
@@ -706,6 +800,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                             }
                             return m;
                         }));
+                }
+
+                if (Objects.nonNull(allowedRoles) && !allowedRoles.isEmpty()) {
+                    b.must(TermsQuery.of(t -> t
+                        .field("user_role")
+                        .terms(v -> v.value(allowedRoles.stream()
+                            .map(String::valueOf)
+                            .map(FieldValue::of)
+                            .toList()))
+                    )._toQuery());
                 }
 
                 b.should(sb -> sb.wildcard(

@@ -175,7 +175,7 @@ public class TestingDataInitializer {
                                                  Authority institutionalLibrarianAuthority,
                                                  Authority headOfLibraryAuthority,
                                                  Authority promotionRegistryAdminAuthority,
-                                                 Commission commission5) {
+                                                 Commission commission5, Commission commission6) {
         var country = new Country("SRB", new HashSet<>());
         countryRepository.save(country);
 
@@ -746,10 +746,18 @@ public class TestingDataInitializer {
         var commissionUser =
             new User("commission@commission.com", passwordEncoder.encode("commission"),
                 "note note note",
-                "PMF", "", false, false, serbianLanguage, serbianLanguage, commissionAuthority,
+                "FTN", "", false, false, serbianLanguage, serbianLanguage, commissionAuthority,
                 null,
                 dummyOU, commission5, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser);
+
+        var commissionUser2 =
+            new User("commission2@commission.com", passwordEncoder.encode("commission2"),
+                "note note note",
+                "PMF", "", false, false, serbianLanguage, serbianLanguage, commissionAuthority,
+                null,
+                dummyOU2, commission6, UserNotificationPeriod.WEEKLY);
+        userRepository.save(commissionUser2);
 
         var assessmentResearchArea = new AssessmentResearchArea();
         assessmentResearchArea.setPerson(person1);

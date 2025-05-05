@@ -25,6 +25,7 @@ import rs.teslaris.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.util.Pair;
 
 @Component
 @RequiredArgsConstructor
@@ -1091,7 +1092,8 @@ public class AssessmentDataInitializer {
                 m34, m61, m62, m63, m64, m69));
     }
 
-    public Commission initializeCommissions(LanguageTag englishTag, LanguageTag serbianTag) {
+    public Pair<Commission, Commission> initializeCommissions(LanguageTag englishTag,
+                                                              LanguageTag serbianTag) {
         var commission1 = new Commission();
         commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Web Of Science", 1),
             new MultiLingualContent(serbianTag, "Web Of Science", 2)));
@@ -1207,7 +1209,7 @@ public class AssessmentDataInitializer {
 
         commissionRelationRepository.saveAll(List.of(commissionRelation1, commissionRelation2));
 
-        return commission5;
+        return new Pair<>(commission5, commission6);
     }
 
     public void initializeRulebooks(LanguageTag englishTag, LanguageTag serbianTag) {

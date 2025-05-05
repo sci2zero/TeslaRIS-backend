@@ -3,6 +3,7 @@ package rs.teslaris.core.repository.user;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.assessment.model.Commission;
@@ -58,4 +59,27 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u from User u where u.authority.name = 'ADMIN'")
     List<User> findAllSystemAdmins();
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.user.id = :userId")
+    void deleteAllNotificationsForUser(Integer userId);
+
+    @Modifying
+    @Query("DELETE FROM UserAccountActivation uaa WHERE uaa.user.id = :userId")
+    void deleteAllAccountActivationsForUser(Integer userId);
+
+    @Modifying
+    @Query("DELETE FROM PasswordResetToken prt WHERE prt.user.id = :userId")
+    void deleteAllPasswordResetsForUser(Integer userId);
+
+    @Modifying
+    @Query("DELETE FROM RefreshToken rt WHERE rt.user.id = :userId")
+    void deleteRefreshTokenForUser(Integer userId);
+
+    @Query("SELECT COUNT(ei) > 0 FROM EntityIndicator ei WHERE ei.user.id = :userId")
+    boolean hasUserAssignedIndicators(Integer userId);
+
+    @Modifying
+    @Query("UPDATE EntityIndicator ei SET ei.user = (SELECT u FROM User u WHERE u.id = :newUserId) WHERE ei.user.id = :oldUserId")
+    void migrateEntityIndicatorsToAnotherUser(Integer newUserId, Integer oldUserId);
 }
