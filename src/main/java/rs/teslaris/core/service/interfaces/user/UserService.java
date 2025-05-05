@@ -27,7 +27,8 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface UserService extends UserDetailsService, JPAService<User> {
 
-    Page<UserAccountIndex> searchUserAccounts(List<String> tokens, List<UserRole> allowedRoles, Pageable pageable);
+    Page<UserAccountIndex> searchUserAccounts(List<String> tokens, List<UserRole> allowedRoles,
+                                              Pageable pageable);
 
     User loadUserById(Integer userId);
 
@@ -85,7 +86,7 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     void deleteUserAccount(Integer userId);
 
-    void migrateCommissionAccountData(Integer userToUpdateId, Integer userToDeleteId);
+    void migrateUserAccountData(Integer userToUpdateId, Integer userToDeleteId);
 
     boolean generateNewPasswordForUser(Integer userId);
 }

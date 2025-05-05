@@ -674,7 +674,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Override
     @Transactional
-    public void migrateCommissionAccountData(Integer userToUpdateId,
+    public void migrateUserAccountData(Integer userToUpdateId,
                                              Integer userToDeleteId) {
         if (Objects.equals(userToUpdateId, userToDeleteId)) {
             throw new ReferenceConstraintException("Can't migrate data to same user.");

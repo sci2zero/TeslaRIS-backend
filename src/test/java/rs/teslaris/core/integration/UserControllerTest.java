@@ -89,7 +89,7 @@ public class UserControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testMigrateCommissionAccountDataAndDeleteUser() throws Exception {
+    public void testMigrateUserAccountDataAndDeleteUser() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(MockMvcRequestBuilders.delete(

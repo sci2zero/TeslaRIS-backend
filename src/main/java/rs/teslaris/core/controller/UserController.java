@@ -248,9 +248,9 @@ public class UserController {
     @DeleteMapping("/migrate/{oldUserId}/{newUserId}")
     @PreAuthorize("hasAuthority('DELETE_USER_ACCOUNT')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void migrateCommissionAccountData(@PathVariable Integer oldUserId,
+    public void migrateUserAccountData(@PathVariable Integer oldUserId,
                                              @PathVariable Integer newUserId) {
-        userService.migrateCommissionAccountData(newUserId, oldUserId);
+        userService.migrateUserAccountData(newUserId, oldUserId);
     }
 
     private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {

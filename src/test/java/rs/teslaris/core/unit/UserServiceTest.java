@@ -1091,7 +1091,7 @@ public class UserServiceTest {
 
         // When / Then
         assertThrows(RuntimeException.class,
-            () -> userService.migrateCommissionAccountData(4, 5));
+            () -> userService.migrateUserAccountData(4, 5));
     }
 
     @Test
@@ -1113,7 +1113,7 @@ public class UserServiceTest {
         when(userRepository.findById(7)).thenReturn(Optional.of(user2));
 
         // When
-        userService.migrateCommissionAccountData(6, 7);
+        userService.migrateUserAccountData(6, 7);
 
         // Then
         verify(userRepository).migrateEntityIndicatorsToAnotherUser(6, 7);
