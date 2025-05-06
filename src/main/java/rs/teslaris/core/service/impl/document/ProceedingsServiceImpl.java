@@ -94,7 +94,14 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     @Override
     public ProceedingsResponseDTO readProceedingsById(Integer proceedingsId) {
-        var proceedings = findProceedingsById(proceedingsId);
+        Proceedings proceedings;
+        try {
+            proceedings = findProceedingsById(proceedingsId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(proceedingsId);
+            throw e;
+        }
+
         if (!proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }

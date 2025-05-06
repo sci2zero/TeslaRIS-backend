@@ -12,14 +12,14 @@ import rs.teslaris.assessment.model.DocumentAssessmentClassification;
 public interface DocumentAssessmentClassificationRepository
     extends JpaRepository<DocumentAssessmentClassification, Integer> {
 
-    @Query("select eac from DocumentAssessmentClassification eac where " +
-        "eac.document.id = :documentId order by eac.timestamp desc")
+    @Query("SELECT eac FROM DocumentAssessmentClassification eac WHERE " +
+        "eac.document.id = :documentId ORDER BY eac.timestamp DESC")
     List<DocumentAssessmentClassification> findAssessmentClassificationsForDocument(
         Integer documentId);
 
-    @Query("select eac from DocumentAssessmentClassification eac " +
-        "join fetch eac.assessmentClassification where " +
-        "eac.document.id = :documentId and eac.commission.id = :commissionId")
+    @Query("SELECT eac FROM DocumentAssessmentClassification eac " +
+        "JOIN FETCH eac.assessmentClassification WHERE " +
+        "eac.document.id = :documentId AND eac.commission.id = :commissionId")
     List<DocumentAssessmentClassification> findAssessmentClassificationsForDocumentAndCommission(
         Integer documentId, Integer commissionId);
 

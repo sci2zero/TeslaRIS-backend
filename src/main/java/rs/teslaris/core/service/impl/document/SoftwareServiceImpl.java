@@ -59,7 +59,14 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
     @Override
     public SoftwareDTO readSoftwareById(Integer softwareId) {
-        var software = softwareJPAService.findOne(softwareId);
+        Software software;
+        try {
+            software = softwareJPAService.findOne(softwareId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(softwareId);
+            throw e;
+        }
+
         if (!software.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }

@@ -69,7 +69,13 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
     @Override
     public MonographPublicationDTO readMonographPublicationById(Integer monographPublicationId) {
-        var monographPublication = monographPublicationJPAService.findOne(monographPublicationId);
+        MonographPublication monographPublication;
+        try {
+            monographPublication = monographPublicationJPAService.findOne(monographPublicationId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(monographPublicationId);
+            throw e;
+        }
 
         if (monographPublication.getApproveStatus().equals(ApproveStatus.DECLINED)) {
             throw new NotFoundException(

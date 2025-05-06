@@ -9,6 +9,8 @@ import rs.teslaris.core.model.document.DocumentFile;
 public interface DocumentFileRepository extends JpaRepository<DocumentFile, Integer> {
     DocumentFile getReferenceByServerFilename(String serverFilename);
 
-    @Query("select d.id from Document d join d.fileItems df where df.serverFilename = :filename")
+    @Query("SELECT d.id FROM Document d " +
+        "JOIN d.fileItems df " +
+        "WHERE df.serverFilename = :filename")
     Integer getDocumentIdByFilename(String filename);
 }

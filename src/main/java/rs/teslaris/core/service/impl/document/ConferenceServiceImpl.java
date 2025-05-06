@@ -101,7 +101,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     @Override
     public ConferenceDTO readConference(Integer conferenceId) {
-        return ConferenceConverter.toDTO(findConferenceById(conferenceId));
+        Conference conference;
+        try {
+            conference = findConferenceById(conferenceId);
+        } catch (NotFoundException e) {
+            eventIndexRepository.findByDatabaseId(conferenceId)
+                .ifPresent(eventIndexRepository::delete);
+            throw e;
+        }
+
+        return ConferenceConverter.toDTO(conference);
     }
 
     @Override

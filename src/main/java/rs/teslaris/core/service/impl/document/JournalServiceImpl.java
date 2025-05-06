@@ -40,6 +40,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -92,7 +93,16 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public JournalResponseDTO readJournal(Integer journalId) {
-        return PublicationSeriesConverter.toDTO(journalJPAService.findOne(journalId));
+        Journal journal;
+        try {
+            journal = journalJPAService.findOne(journalId);
+        } catch (NotFoundException e) {
+            journalIndexRepository.findJournalIndexByDatabaseId(journalId)
+                .ifPresent(journalIndexRepository::delete);
+            throw e;
+        }
+
+        return PublicationSeriesConverter.toDTO(journal);
     }
 
     @Override

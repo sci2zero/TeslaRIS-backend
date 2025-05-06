@@ -234,6 +234,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "User did not allow taking control of his account.");
         }
 
+        tokenUtil.revokeToken(user.getId());
         user.setCanTakeRole(false);
         userRepository.save(user);
 
@@ -269,6 +270,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             index.get().setActive(!userToDeactivate.getLocked());
             userAccountIndexRepository.save(index.get());
         }
+
+        tokenUtil.revokeToken(userId);
     }
 
     @Override
@@ -526,6 +529,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             .orElse(new UserAccountIndex());
         indexUser(userToUpdate, index);
 
+        tokenUtil.revokeToken(userToUpdate.getId());
         var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
         return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
             refreshTokenValue);
@@ -544,6 +548,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         try {
             var user = (User) loadUserByUsername(userEmail);
+            tokenUtil.revokeToken(user.getId());
             var resetToken = UUID.randomUUID().toString();
             var language = user.getPreferredNotificationLanguage().getLanguageCode().toLowerCase();
 
@@ -661,6 +666,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             throw new ReferenceConstraintException("userHasAssignedIndicatorsMessage");
         }
 
+        tokenUtil.revokeToken(userId);
         userRepository.deleteAllNotificationsForUser(userId);
         userRepository.deleteAllAccountActivationsForUser(userId);
         userRepository.deleteAllPasswordResetsForUser(userId);
@@ -675,7 +681,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     @Transactional
     public void migrateUserAccountData(Integer userToUpdateId,
-                                             Integer userToDeleteId) {
+                                       Integer userToDeleteId) {
         if (Objects.equals(userToUpdateId, userToDeleteId)) {
             throw new ReferenceConstraintException("Can't migrate data to same user.");
         }
@@ -697,6 +703,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public boolean generateNewPasswordForUser(Integer userId) {
         var savedUser = findOne(userId);
+        tokenUtil.revokeToken(userId);
 
         SecureRandom random;
         try {
@@ -733,6 +740,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         Arrays.fill(generatedPassword, '\0');
         return false;
+    }
+
+    @Override
+    public void logout(String jti) {
+        tokenUtil.revokeToken(jti);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -860,5 +872,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
             .forEach(passwordResetTokenRepository::delete);
+    }
+
+    @Scheduled(cron = "0 * * * * *") // every 15 minutes
+    public void cleanupExpiredTokens() {
+        tokenUtil.cleanupExpiredTokens();
     }
 }

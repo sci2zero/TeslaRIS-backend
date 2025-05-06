@@ -13,11 +13,12 @@ import rs.teslaris.core.model.document.Journal;
 @Repository
 public interface JournalRepository extends JpaRepository<Journal, Integer> {
 
-    @Query("select count(p) > 0 from JournalPublication p join p.journal j where j.id = :journalId")
+    @Query("SELECT COUNT(p) > 0 FROM JournalPublication p " +
+        "JOIN p.journal j WHERE j.id = :journalId")
     boolean hasPublication(Integer journalId);
 
     @Modifying
-    @Query("update JournalPublication jp set jp.deleted = true where jp.journal.id = :journalId")
+    @Query("UPDATE JournalPublication jp SET jp.deleted = true WHERE jp.journal.id = :journalId")
     void deleteAllPublicationsInJournal(Integer journalId);
 
     Optional<Journal> findJournalByOldId(Integer oldId);

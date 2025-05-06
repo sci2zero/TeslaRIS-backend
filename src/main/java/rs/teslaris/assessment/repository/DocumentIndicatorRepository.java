@@ -11,10 +11,12 @@ import rs.teslaris.core.model.commontypes.AccessLevel;
 @Repository
 public interface DocumentIndicatorRepository extends JpaRepository<DocumentIndicator, Integer> {
 
-    @Query("select di from DocumentIndicator di where di.document.id = :documentId and di.indicator.accessLevel <= :accessLevel")
+    @Query("SELECT di FROM DocumentIndicator di " +
+        "WHERE di.document.id = :documentId AND di.indicator.accessLevel <= :accessLevel")
     List<DocumentIndicator> findIndicatorsForDocumentAndIndicatorAccessLevel(Integer documentId,
                                                                              AccessLevel accessLevel);
 
-    @Query("select di from DocumentIndicator di where di.indicator.code = :code and di.document.id = :documentId")
+    @Query("SELECT di FROM DocumentIndicator di " +
+        "WHERE di.indicator.code = :code AND di.document.id = :documentId")
     Optional<DocumentIndicator> findIndicatorForCodeAndDocumentId(String code, Integer documentId);
 }

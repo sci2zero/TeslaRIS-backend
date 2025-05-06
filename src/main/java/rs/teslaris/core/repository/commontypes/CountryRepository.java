@@ -17,7 +17,7 @@ public interface CountryRepository extends JpaRepository<Country, Integer> {
     @Query("UPDATE Person p SET p.personalInfo.postalAddress.country = null WHERE p.personalInfo.postalAddress.country.id = :countryId")
     void unsetCountryForPersons(Integer countryId);
 
-    @Query("select c from Country c join c.name n where LOWER(n.content) = LOWER(:name)")
+    @Query("SELECT c FROM Country c JOIN c.name n WHERE LOWER(n.content) = LOWER(:name)")
     Optional<Country> findCountryByName(String name, Limit limit);
 
     @Query(value =

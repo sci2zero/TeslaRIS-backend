@@ -249,8 +249,14 @@ public class UserController {
     @PreAuthorize("hasAuthority('DELETE_USER_ACCOUNT')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void migrateUserAccountData(@PathVariable Integer oldUserId,
-                                             @PathVariable Integer newUserId) {
+                                       @PathVariable Integer newUserId) {
         userService.migrateUserAccountData(newUserId, oldUserId);
+    }
+
+    @PatchMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logoutUser(@RequestHeader("Authorization") String bearerToken) {
+        userService.logout(tokenUtil.extractJtiFromToken(bearerToken));
     }
 
     private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {

@@ -174,9 +174,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Transactional
     public PersonResponseDTO readPersonWithBasicInfo(Integer id) {
-        var person = personRepository.findApprovedPersonById(id)
-            .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
-        return PersonConverter.toDTO(person);
+        var person = personRepository.findApprovedPersonById(id);
+
+        if (person.isEmpty()) {
+            personIndexRepository.findByDatabaseId(id).ifPresent(personIndexRepository::delete);
+            throw new NotFoundException("Person with given ID does not exist.");
+        }
+
+        return PersonConverter.toDTO(person.get());
     }
 
     @Override

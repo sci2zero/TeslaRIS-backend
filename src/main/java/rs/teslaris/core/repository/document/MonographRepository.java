@@ -23,10 +23,13 @@ public interface MonographRepository extends JpaRepository<Monograph, Integer> {
         "m.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Monograph> findAllModifiedInLast24Hours(Pageable pageable);
 
-    @Query("select count(p) > 0 from MonographPublication p join p.monograph m where m.id = :monographId")
+    @Query("SELECT COUNT(p) > 0 FROM MonographPublication p " +
+        "JOIN p.monograph m " +
+        "WHERE m.id = :monographId")
     boolean hasPublication(Integer monographId);
 
     @Modifying
-    @Query("update MonographPublication mp set mp.deleted = true where mp.monograph.id = :monographId")
+    @Query("UPDATE MonographPublication mp SET mp.deleted = true " +
+        "WHERE mp.monograph.id = :monographId")
     void deleteAllPublicationsInMonograph(Integer monographId);
 }

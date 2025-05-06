@@ -9,6 +9,7 @@ import rs.teslaris.core.model.person.DeclinedDocumentClaim;
 public interface DeclinedDocumentClaimRepository
     extends JpaRepository<DeclinedDocumentClaim, Integer> {
 
-    @Query("select count(ddc) = 0 from DeclinedDocumentClaim ddc where ddc.person.id = :personId and ddc.document.id = :documentId")
+    @Query("SELECT COUNT(ddc) = 0 FROM DeclinedDocumentClaim ddc " +
+        "WHERE ddc.person.id = :personId AND ddc.document.id = :documentId")
     boolean canBeClaimedByPerson(Integer personId, Integer documentId);
 }

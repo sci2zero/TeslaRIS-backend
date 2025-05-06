@@ -21,16 +21,16 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
     @Query("SELECT ra FROM ResearchArea ra WHERE ra.superResearchArea IS NULL")
     List<ResearchArea> getTopLevelResearchAreas();
 
-    @Query("select count(ra) > 0 from ResearchArea ra join ra.superResearchArea ras where ra.superResearchArea.id = :researchAreaId")
+    @Query("SELECT COUNT(ra) > 0 FROM ResearchArea ra JOIN ra.superResearchArea ras WHERE ra.superResearchArea.id = :researchAreaId")
     boolean isSuperArea(Integer researchAreaId);
 
-    @Query("select count(p) > 0 from Person p join p.researchAreas ra where ra.id = :researchAreaId")
+    @Query("SELECT COUNT(p) > 0 FROM Person p JOIN p.researchAreas ra WHERE ra.id = :researchAreaId")
     boolean isResearchedBySomeone(Integer researchAreaId);
 
-    @Query("select count(m) > 0 from Monograph m join m.researchArea where m.researchArea.id = :researchAreaId")
+    @Query("SELECT COUNT(m) > 0 FROM Monograph m JOIN m.researchArea WHERE m.researchArea.id = :researchAreaId")
     boolean isResearchedInMonograph(Integer researchAreaId);
 
-    @Query("select count(t) > 0 from Thesis t join t.researchArea where t.researchArea.id = :researchAreaId")
+    @Query("SELECT COUNT(t) > 0 FROM Thesis t join t.researchArea WHERE t.researchArea.id = :researchAreaId")
     boolean isResearchedInThesis(Integer researchAreaId);
 
     @Query(value =

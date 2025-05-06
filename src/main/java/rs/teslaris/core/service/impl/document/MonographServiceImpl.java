@@ -97,7 +97,13 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     @Override
     public MonographDTO readMonographById(Integer monographId) {
-        var monograph = monographJPAService.findOne(monographId);
+        Monograph monograph;
+        try {
+            monograph = monographJPAService.findOne(monographId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(monographId);
+            throw e;
+        }
 
         if (monograph.getApproveStatus().equals(ApproveStatus.DECLINED)) {
             throw new NotFoundException("Monograph with ID " + monographId + " does not exist.");

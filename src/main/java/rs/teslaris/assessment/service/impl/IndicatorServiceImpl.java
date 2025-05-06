@@ -15,6 +15,7 @@ import rs.teslaris.assessment.model.ApplicableEntityType;
 import rs.teslaris.assessment.model.Indicator;
 import rs.teslaris.assessment.repository.IndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -49,7 +50,11 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
             applicableEntityTypes.add(ApplicableEntityType.ALL);
         }
 
+        var statisticIndicators =
+            IndicatorMappingConfigurationLoader.fetchAllStatisticsIndicatorCodes();
+
         return indicatorRepository.getIndicatorsApplicableToEntity(applicableEntityTypes).stream()
+            .filter(indicator -> !statisticIndicators.contains(indicator.getCode()))
             .map(IndicatorConverter::toDTO).collect(Collectors.toList());
     }
 

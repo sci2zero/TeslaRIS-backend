@@ -31,6 +31,7 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -88,7 +89,16 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
     @Override
     public BookSeriesResponseDTO readBookSeries(Integer bookSeriesId) {
-        return PublicationSeriesConverter.toDTO(bookSeriesJPAService.findOne(bookSeriesId));
+        BookSeries bookSeries;
+        try {
+            bookSeries = bookSeriesJPAService.findOne(bookSeriesId);
+        } catch (NotFoundException e) {
+            bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)
+                .ifPresent(bookSeriesIndexRepository::delete);
+            throw e;
+        }
+
+        return PublicationSeriesConverter.toDTO(bookSeries);
     }
 
     @Override

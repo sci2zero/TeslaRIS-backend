@@ -70,7 +70,14 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     @Override
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
-        var publication = (JournalPublication) findOne(publicationId);
+        JournalPublication publication;
+        try {
+            publication = (JournalPublication) findOne(publicationId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(publicationId);
+            throw e;
+        }
+
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }

@@ -11,15 +11,16 @@ import rs.teslaris.core.model.document.Event;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Integer> {
 
-    @Query("select count(p) > 0 from Proceedings p join p.event e where e.id = :eventId")
+    @Query("SELECT COUNT(p) > 0 FROM Proceedings p JOIN p.event e WHERE e.id = :eventId")
     boolean hasProceedings(Integer eventId);
 
     @Modifying
-    @Query("update ProceedingsPublication pp set pp.deleted = true where pp.proceedings.event.id = :eventId")
+    @Query("UPDATE ProceedingsPublication pp SET pp.deleted = true " +
+        "WHERE pp.proceedings.event.id = :eventId")
     void deleteAllPublicationsInEvent(Integer eventId);
 
     @Modifying
-    @Query("update Proceedings p set p.deleted = true where p.event.id = :eventId")
+    @Query("UPDATE Proceedings p SET p.deleted = true WHERE p.event.id = :eventId")
     void deleteAllProceedingsInEvent(Integer eventId);
 
     Optional<Event> findEventByOldId(Integer oldId);

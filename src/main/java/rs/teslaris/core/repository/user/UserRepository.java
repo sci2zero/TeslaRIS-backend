@@ -51,13 +51,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT ou FROM User u JOIN u.organisationUnit ou WHERE u.commission.id = :commissionId")
     Optional<OrganisationUnit> findOUForCommission(Integer commissionId);
 
-    @Query("SELECT u from User u where u.authority.name = 'COMMISSION'")
+    @Query("SELECT u FROM User u WHERE u.authority.name = 'COMMISSION'")
     List<User> findAllCommissionUsers();
 
-    @Query("SELECT u from User u where u.authority.name = 'PROMOTION_REGISTRY_ADMINISTRATOR'")
+    @Query("SELECT u FROM User u WHERE u.authority.name = 'PROMOTION_REGISTRY_ADMINISTRATOR'")
     List<User> findAllRegistryAdmins();
 
-    @Query("SELECT u from User u where u.authority.name = 'ADMIN'")
+    @Query("SELECT u FROM User u WHERE u.authority.name = 'ADMIN'")
     List<User> findAllSystemAdmins();
 
     @Modifying

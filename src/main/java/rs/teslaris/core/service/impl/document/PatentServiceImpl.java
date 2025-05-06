@@ -60,7 +60,14 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     public PatentDTO readPatentById(Integer patentId) {
-        var patent = patentJPAService.findOne(patentId);
+        Patent patent;
+        try {
+            patent = patentJPAService.findOne(patentId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(patentId);
+            throw e;
+        }
+
         if (!patent.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }

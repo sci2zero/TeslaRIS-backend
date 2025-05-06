@@ -59,7 +59,14 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
     @Override
     public DatasetDTO readDatasetById(Integer datasetId) {
-        var dataset = datasetJPAService.findOne(datasetId);
+        Dataset dataset;
+        try {
+            dataset = datasetJPAService.findOne(datasetId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(datasetId);
+            throw e;
+        }
+
         if (!dataset.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }

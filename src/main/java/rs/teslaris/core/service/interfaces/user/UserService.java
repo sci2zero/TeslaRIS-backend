@@ -89,4 +89,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     void migrateUserAccountData(Integer userToUpdateId, Integer userToDeleteId);
 
     boolean generateNewPasswordForUser(Integer userId);
+
+    void logout(String jti);
 }

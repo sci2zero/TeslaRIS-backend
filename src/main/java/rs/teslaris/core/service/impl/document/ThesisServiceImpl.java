@@ -115,7 +115,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     public ThesisResponseDTO readThesisById(Integer thesisId) {
-        var thesis = thesisJPAService.findOne(thesisId);
+        Thesis thesis;
+        try {
+            thesis = thesisJPAService.findOne(thesisId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(thesisId);
+            throw e;
+        }
+
         if (!thesis.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }

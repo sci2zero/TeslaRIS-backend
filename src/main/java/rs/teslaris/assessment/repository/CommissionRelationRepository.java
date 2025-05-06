@@ -9,6 +9,8 @@ import rs.teslaris.assessment.model.CommissionRelation;
 @Repository
 public interface CommissionRelationRepository extends JpaRepository<CommissionRelation, Integer> {
 
-    @Query("SELECT cr FROM CommissionRelation cr JOIN FETCH cr.targetCommissions WHERE cr.sourceCommission.id = :sourceCommissionId")
+    @Query("SELECT cr FROM CommissionRelation cr " +
+        "JOIN FETCH cr.targetCommissions " +
+        "WHERE cr.sourceCommission.id = :sourceCommissionId")
     List<CommissionRelation> getRelationsForSourceCommission(Integer sourceCommissionId);
 }

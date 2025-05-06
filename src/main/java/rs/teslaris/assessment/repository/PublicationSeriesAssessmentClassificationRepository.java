@@ -36,7 +36,8 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
         Integer publicationSeriesId, String category, Integer classificationYear,
         Integer commissionId);
 
-    @Query("SELECT psac FROM PublicationSeriesAssessmentClassification psac WHERE psac.publicationSeries.id = :publicationSeriesId")
+    @Query("SELECT psac FROM PublicationSeriesAssessmentClassification psac " +
+        "WHERE psac.publicationSeries.id = :publicationSeriesId")
     Page<PublicationSeriesAssessmentClassification> findClassificationsForPublicationSeries(
         Integer publicationSeriesId, Pageable pageable);
 }

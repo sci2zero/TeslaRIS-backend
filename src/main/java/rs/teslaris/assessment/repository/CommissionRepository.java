@@ -12,7 +12,8 @@ import rs.teslaris.assessment.model.Commission;
 @Repository
 public interface CommissionRepository extends JpaRepository<Commission, Integer> {
 
-    @Query("select count(eac) > 0 from EntityAssessmentClassification eac where eac.commission.id = :commissionId")
+    @Query("SELECT COUNT(eac) > 0 FROM EntityAssessmentClassification eac " +
+        "WHERE eac.commission.id = :commissionId")
     boolean isInUse(Integer commissionId);
 
     @Query(value =

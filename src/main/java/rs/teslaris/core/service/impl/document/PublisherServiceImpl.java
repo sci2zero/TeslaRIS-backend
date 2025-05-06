@@ -32,6 +32,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -65,7 +66,16 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
     @Override
     public PublisherDTO readPublisherById(Integer publisherId) {
-        return PublisherConverter.toDTO(findOne(publisherId));
+        Publisher publisher;
+        try {
+            publisher = findOne(publisherId);
+        } catch (NotFoundException e) {
+            publisherIndexRepository.findByDatabaseId(publisherId)
+                .ifPresent(publisherIndexRepository::delete);
+            throw e;
+        }
+
+        return PublisherConverter.toDTO(publisher);
     }
 
     @Override

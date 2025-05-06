@@ -77,7 +77,14 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Override
     public ProceedingsPublicationDTO readProceedingsPublicationById(Integer publicationId) {
-        var publication = proceedingPublicationJPAService.findOne(publicationId);
+        ProceedingsPublication publication;
+        try {
+            publication = proceedingPublicationJPAService.findOne(publicationId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(publicationId);
+            throw e;
+        }
+
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }

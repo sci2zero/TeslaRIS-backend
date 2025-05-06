@@ -14,6 +14,7 @@ public interface ThesisResearchOutputRepository
     Optional<ThesisResearchOutput> findByThesisIdAndResearchOutputId(Integer thesisId,
                                                                      Integer researchOutputId);
 
-    @Query("SELECT tro.researchOutput.id FROM ThesisResearchOutput tro where tro.thesis.id = :thesisId")
+    @Query("SELECT tro.researchOutput.id FROM ThesisResearchOutput tro " +
+        "WHERE tro.thesis.id = :thesisId")
     List<Integer> findResearchOutputIdsForThesis(Integer thesisId);
 }

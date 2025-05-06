@@ -6,6 +6,7 @@ import jakarta.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -58,6 +59,12 @@ public class IndicatorMappingConfigurationLoader {
             case DOWNLOAD ->
                 indicatorMappingConfiguration.offsets.downloads.keySet().stream().toList();
         };
+    }
+
+    public static List<String> fetchAllStatisticsIndicatorCodes() {
+        var indicatorCodes = new HashSet<String>();
+        indicatorMappingConfiguration.mappings.values().forEach(indicatorCodes::addAll);
+        return indicatorCodes.stream().toList();
     }
 
     public static PublicationSeriesIndicatorMapping fetchPublicationSeriesCSVIndicatorMapping(

@@ -6,10 +6,10 @@ import rs.teslaris.assessment.model.EntityIndicator;
 
 public interface EntityIndicatorRepository extends JpaRepository<EntityIndicator, Integer> {
 
-    @Query("select ei from EntityIndicator ei where ei.user.id = :userId")
+    @Query("SELECT ei FROM EntityIndicator ei WHERE ei.user.id = :userId")
     EntityIndicator findByUserId(Integer userId);
 
-    @Query("select count(ei) > 0 from EntityIndicator ei where " +
-        "ei.id = :entityIndicatorId and ei.user.id = :userId")
+    @Query("SELECT COUNT(ei) > 0 FROM EntityIndicator ei WHERE " +
+        "ei.id = :entityIndicatorId AND ei.user.id = :userId")
     boolean isUserTheOwnerOfEntityIndicator(Integer userId, Integer entityIndicatorId);
 }

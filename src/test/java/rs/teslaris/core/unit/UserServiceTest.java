@@ -14,6 +14,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.cache.Cache;
@@ -1167,5 +1168,18 @@ public class UserServiceTest {
         // Then
         assertFalse(result);
         verify(passwordEncoder, never()).encode(any());
+    }
+
+    @Test
+    void shouldPerformLogout() {
+        // Given
+        var jti = "sample-jti-123";
+
+        // When
+        userService.logout(jti);
+
+        // Then
+        verify(tokenUtil).revokeToken(jti);
+        verifyNoMoreInteractions(tokenUtil);
     }
 }

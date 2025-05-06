@@ -844,4 +844,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             }
         });
     }
+
+    protected void clearIndexWhenFailedRead(Integer documentId) {
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(documentPublicationIndexRepository::delete);
+    }
 }

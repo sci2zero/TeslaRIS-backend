@@ -9,20 +9,28 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.Function;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.model.user.JwtToken;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.user.JwtTokenRepository;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtUtil {
 
     public static final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS512;
     private final SecureRandom secureRandom = new SecureRandom();
+
+    private final JwtTokenRepository jwtTokenRepository;
 
     @Value("${jwt.token.validity}")
     public Long tokenValidity;
@@ -40,6 +48,14 @@ public class JwtUtil {
         }
 
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractJtiFromToken(String token) {
+        if (token.startsWith("Bearer")) {
+            token = parseJWTFromHeader(token);
+        }
+
+        return extractClaim(token, Claims::getId);
     }
 
     public Integer extractUserIdFromToken(String token) {
@@ -98,34 +114,46 @@ public class JwtUtil {
         String jwtSecurityHash = this.generateJWTSecurityFingerprintHash(fingerprint);
         var user = (User) authentication.getPrincipal();
 
-        return Jwts.builder()
-            .setHeaderParam("typ", "JWT")
-            .setIssuer(appName)
-            .setSubject(authentication.getName())
-            .claim("jwt-security-fingerprint", jwtSecurityHash)
-            .claim("role", user.getAuthority().getName())
-            .claim("userId", user.getId())
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + tokenValidity))
-            .signWith(signatureAlgorithm, signingKey)
-            .compact();
+        return performGeneration(authentication.getName(), jwtSecurityHash, user);
     }
 
     public String generateToken(UserDetails userDetails, String fingerprint) {
         String jwtSecurityHash = this.generateJWTSecurityFingerprintHash(fingerprint);
         var user = (User) userDetails;
 
-        return Jwts.builder()
+        return performGeneration(user.getEmail(), jwtSecurityHash, user);
+    }
+
+    private String performGeneration(String email, String jwtSecurityHash, User user) {
+        String jti = UUID.randomUUID().toString();
+        var now = new Date(System.currentTimeMillis());
+        var expiration = new Date(System.currentTimeMillis() + tokenValidity);
+        var userRole = user.getAuthority().getName();
+
+        var jwt = Jwts.builder()
             .setHeaderParam("typ", "JWT")
+            .setId(jti)
             .setIssuer(appName)
-            .setSubject(user.getEmail())
+            .setSubject(email)
             .claim("jwt-security-fingerprint", jwtSecurityHash)
-            .claim("role", user.getAuthority().getName())
+            .claim("role", userRole)
             .claim("userId", user.getId())
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + tokenValidity))
+            .setIssuedAt(now)
+            .setExpiration(expiration)
             .signWith(signatureAlgorithm, signingKey)
             .compact();
+
+
+        // Allow parrallel sessions for sysadmins and commissions, otherwise don't
+        if (!userRole.equals(UserRole.ADMIN.name()) &&
+            !userRole.equals(UserRole.COMMISSION.name())) {
+            jwtTokenRepository.deleteForUser(user.getId());
+        }
+
+        jwtTokenRepository.save(
+            new JwtToken(jti, user, now.toInstant(), expiration.toInstant(), false));
+
+        return jwt;
     }
 
     public String generateJWTSecurityFingerprint() {
@@ -164,6 +192,13 @@ public class JwtUtil {
         String jwtSecurityHash = this.generateJWTSecurityFingerprintHash(cookieValue);
         String jwtSecurity = this.extractJWTSecurity(token);
 
+        final String jti = extractJtiFromToken(token);
+        var tokenOpt = jwtTokenRepository.findByJti(jti);
+
+        if (tokenOpt.isEmpty() || tokenOpt.get().isRevoked()) {
+            return false;
+        }
+
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token)) &&
             jwtSecurity.equals(jwtSecurityHash);
     }
@@ -171,5 +206,23 @@ public class JwtUtil {
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsernameFromToken(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    public void revokeToken(Integer userId) {
+        jwtTokenRepository.findByUserIdAndRevokedFalse(userId).forEach(token -> {
+            token.setRevoked(true);
+            jwtTokenRepository.save(token);
+        });
+    }
+
+    public void revokeToken(String jti) {
+        jwtTokenRepository.findByJti(jti).ifPresent(token -> {
+            token.setRevoked(true);
+            jwtTokenRepository.save(token);
+        });
+    }
+
+    public void cleanupExpiredTokens() {
+        jwtTokenRepository.deleteRevokedAndExpiredTokens();
     }
 }
