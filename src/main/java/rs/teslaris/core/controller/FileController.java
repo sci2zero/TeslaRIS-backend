@@ -2,13 +2,16 @@ package rs.teslaris.core.controller;
 
 import io.minio.GetObjectResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.apache.tika.Tika;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -35,6 +38,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("/api/file")
 @RequiredArgsConstructor
+@Slf4j
 public class FileController {
 
     private final FileService fileService;
@@ -55,6 +59,7 @@ public class FileController {
     public ResponseEntity<Object> serveFile(
         HttpServletRequest request,
         @PathVariable String filename,
+        @RequestParam(value = "inline", defaultValue = "false") Boolean inline,
         @RequestHeader(value = "Authorization", required = false) String bearerToken,
         @CookieValue("jwt-security-fingerprint") String fingerprintCookie) throws IOException {
 
@@ -80,9 +85,10 @@ public class FileController {
 
         recordDownloadIfApplicable(filename);
 
+        byte[] fileBytes = file.readAllBytes();
         return ResponseEntity.ok()
-            .headers(getFileHeaders(file))
-            .body(new InputStreamResource(file));
+            .headers(getFileHeaders(file, inline, fileBytes))
+            .body(fileBytes);
     }
 
     @GetMapping("/image/{personId}")
@@ -151,10 +157,27 @@ public class FileController {
         }
     }
 
-    private HttpHeaders getFileHeaders(GetObjectResponse file) {
+    private HttpHeaders getFileHeaders(GetObjectResponse file, Boolean inline, byte[] fileBytes) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"));
-        headers.set(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"));
+
+        var contentDisposition = file.headers().get("Content-Disposition");
+        if (Objects.nonNull(contentDisposition) && inline) {
+            contentDisposition = contentDisposition.replace("attachment", "inline");
+            var tika = new Tika();
+            try {
+                String detectedType = tika.detect(new ByteArrayInputStream(fileBytes));
+                headers.set(HttpHeaders.CONTENT_TYPE, detectedType);
+            } catch (IOException e) {
+                log.error(
+                    "FileController - failed to detect MIME type for: {} - Proceeding with default octet-stream.",
+                    contentDisposition);
+                headers.set(HttpHeaders.CONTENT_TYPE, "application/octet-stream");
+            }
+        } else {
+            headers.set(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"));
+        }
+
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, contentDisposition);
         return headers;
     }
 }

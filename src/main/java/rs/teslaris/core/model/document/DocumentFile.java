@@ -25,7 +25,8 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @AllArgsConstructor
 @Entity
 @Table(name = "document_files", indexes = {
-    @Index(name = "idx_doc_files_server_filename", columnList = "server_filename")
+    @Index(name = "idx_doc_files_server_filename", columnList = "server_filename"),
+    @Index(name = "idx_doc_files_old_id", columnList = "cris_uns_id")
 })
 @SQLRestriction("deleted=false")
 public class DocumentFile extends BaseEntity {
@@ -68,4 +69,7 @@ public class DocumentFile extends BaseEntity {
 
     @Column(name = "thesis_document")
     private Boolean isThesisDocument = false;
+
+    @Column(name = "legacy_filename")
+    private String legacyFilename;
 }

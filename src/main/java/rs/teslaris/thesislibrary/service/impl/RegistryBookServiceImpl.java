@@ -162,12 +162,27 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         setCommonFields(newEntry, dto, false);
 
         if (Objects.nonNull(dto.getPromotionId())) {
-            newEntry.setPromotionSchoolYear(dto.getPromotionSchoolYear());
-            newEntry.setRegistryBookNumber(dto.getRegistryBookNumber());
-            newEntry.setPromotionOrdinalNumber(dto.getPromotionOrdinalNumber());
-            newEntry.setPromotion(promotionService.findOne(dto.getPromotionId()));
+            var promotion = promotionService.findOne(dto.getPromotionId());
+            newEntry.setPromotion(promotion);
             newEntry.setRegistryBookInstitution(
                 organisationUnitService.findOne(dto.getPromotionInstitutionId()));
+
+            if (promotion.getFinished()) {
+                newEntry.setRegistryBookNumber(dto.getRegistryBookNumber());
+                newEntry.setPromotionOrdinalNumber(dto.getPromotionOrdinalNumber());
+
+                if (Objects.nonNull(dto.getPromotionSchoolYear()) &&
+                    !dto.getPromotionSchoolYear().isBlank()) {
+                    newEntry.setPromotionSchoolYear(dto.getPromotionSchoolYear());
+                } else {
+                    var promotionYear = promotion.getPromotionDate().getYear();
+                    if (promotion.getPromotionDate().isAfter(LocalDate.of(promotionYear, 10, 1))) {
+                        newEntry.setPromotionSchoolYear(promotionYear + "/" + (promotionYear + 1));
+                    } else {
+                        newEntry.setPromotionSchoolYear((promotionYear - 1) + "/" + promotionYear);
+                    }
+                }
+            }
         }
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
@@ -514,9 +529,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var promotees = new ArrayList<String>();
         registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
             .forEach(entry -> {
-                String sb = entry.getPersonalInformation().getAuthorName().toString() + ", " +
+                String sb = entry.getPersonalInformation().getAuthorName().toString() + ",\n" +
                     entry.getDissertationInformation().getAcquiredTitle() +
-                    " (email: " +
+                    "\n(email: " +
                     entry.getContactInformation().getContact().getContactEmail() + ")\n";
                 promotees.add(sb);
             });

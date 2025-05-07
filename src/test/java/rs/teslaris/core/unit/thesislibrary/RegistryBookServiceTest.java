@@ -639,7 +639,7 @@ class RegistryBookServiceTest {
 
         // Then
         assertEquals(1, result.size());
-        assertTrue(result.get(0).contains("John Doe, PhD in Cybersecurity"));
+        assertTrue(result.get(0).contains("John Doe,\nPhD in Cybersecurity"));
         assertTrue(result.get(0).contains("john.doe@example.com"));
     }
 

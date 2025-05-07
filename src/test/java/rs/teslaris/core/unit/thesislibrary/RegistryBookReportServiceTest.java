@@ -183,7 +183,7 @@ public class RegistryBookReportServiceTest {
         // When
         String result =
             registryBookReportService.scheduleReportGeneration(from, to, institutionId, lang,
-                userId);
+                userId, "", "");
 
         // Then
         var taskCaptor = ArgumentCaptor.forClass(Runnable.class);

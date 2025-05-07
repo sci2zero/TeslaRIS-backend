@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.document;
 
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -13,4 +14,6 @@ public interface DocumentFileRepository extends JpaRepository<DocumentFile, Inte
         "JOIN d.fileItems df " +
         "WHERE df.serverFilename = :filename")
     Integer getDocumentIdByFilename(String filename);
+
+    Optional<DocumentFile> findDocumentFileByLegacyFilename(String legacyFilename);
 }

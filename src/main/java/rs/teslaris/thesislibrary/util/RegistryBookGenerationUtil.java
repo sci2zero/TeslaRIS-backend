@@ -5,6 +5,7 @@ import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import org.springframework.context.MessageSource;
@@ -71,7 +72,9 @@ public class RegistryBookGenerationUtil {
     }
 
     private static void addPreviousTitleInfo(List<String> rowData, PreviousTitleInformation info) {
-        rowData.add(info.getAcademicTitle().getValue() + "\n" + info.getSchoolYear());
+        rowData.add(
+            (Objects.nonNull(info.getAcademicTitle()) ? info.getAcademicTitle().getValue() : "") +
+                "\n" + info.getSchoolYear());
     }
 
     private static void addDissertationInstitution(List<String> rowData,
@@ -101,8 +104,10 @@ public class RegistryBookGenerationUtil {
                 .append("\n").append(info.getGrade()).append("\n");
         }
 
-        defenceInfo.append(getTableLabel("reporting.registry-book.defended", lang))
-            .append("\n").append(info.getDefenceDate().format(DATE_FORMATTER));
+        if (Objects.nonNull(info.getDefenceDate())) {
+            defenceInfo.append(getTableLabel("reporting.registry-book.defended", lang))
+                .append("\n").append(info.getDefenceDate().format(DATE_FORMATTER));
+        }
 
         rowData.add(defenceInfo.toString());
     }
@@ -110,19 +115,28 @@ public class RegistryBookGenerationUtil {
     private static void setAuthorBirthInformation(ArrayList<String> rowData,
                                                   RegistryBookPersonalInformation personalInformation,
                                                   String lang) {
-        var birthInformation = getTableLabel("reporting.registry-book.date", lang) + "\n" +
-            personalInformation.getLocalBirthDate().format(DATE_FORMATTER) + "\n" +
+        var birthInformation = "";
+
+        if (Objects.nonNull(personalInformation.getLocalBirthDate())) {
+            birthInformation += getTableLabel("reporting.registry-book.date", lang) + "\n" +
+                personalInformation.getLocalBirthDate().format(DATE_FORMATTER) + "\n";
+        }
+
+        birthInformation +=
             getTableLabel("reporting.registry-book.place", lang) + "\n" +
-            personalInformation.getPlaceOfBrith() + "\n" +
-            getTableLabel("reporting.registry-book.municipality", lang) +
-            "\n" +
-            personalInformation.getMunicipalityOfBrith() +
-            "\n" +
-            getTableLabel("reporting.registry-book.country", lang) +
-            "\n" +
-            getTransliteratedContent(
-                personalInformation.getCountryOfBirth().getName()) +
-            "\n";
+                personalInformation.getPlaceOfBrith() + "\n" +
+                getTableLabel("reporting.registry-book.municipality", lang) +
+                "\n" +
+                personalInformation.getMunicipalityOfBrith() + "\n";
+
+        if (Objects.nonNull(personalInformation.getCountryOfBirth())) {
+            birthInformation +=
+                getTableLabel("reporting.registry-book.country", lang) +
+                    "\n" +
+                    getTransliteratedContent(
+                        personalInformation.getCountryOfBirth().getName()) +
+                    "\n";
+        }
 
         rowData.add(birthInformation);
     }
@@ -163,10 +177,14 @@ public class RegistryBookGenerationUtil {
         if (!dissertationInformation.getDiplomaNumber().isBlank()) {
             diplomaInformation.append(getTableLabel("reporting.registry-book.diploma-number", lang))
                 .append("\n");
-            diplomaInformation.append(dissertationInformation.getDiplomaNumber()).append("\n")
-                .append(getTableLabel("reporting.registry-book.date", lang)).append("\n")
-                .append(dissertationInformation.getDiplomaIssueDate().format(DATE_FORMATTER))
-                .append("\n");
+            diplomaInformation.append(dissertationInformation.getDiplomaNumber()).append("\n");
+
+            if (Objects.nonNull(dissertationInformation.getDiplomaIssueDate())) {
+                diplomaInformation
+                    .append(getTableLabel("reporting.registry-book.date", lang)).append("\n")
+                    .append(dissertationInformation.getDiplomaIssueDate().format(DATE_FORMATTER))
+                    .append("\n");
+            }
         }
 
         if (!dissertationInformation.getDiplomaSupplementsNumber().isBlank()) {
@@ -174,11 +192,16 @@ public class RegistryBookGenerationUtil {
                     getTableLabel("reporting.registry-book.supplements-number", lang))
                 .append("\n");
             diplomaInformation.append(dissertationInformation.getDiplomaSupplementsNumber())
-                .append("\n")
-                .append(getTableLabel("reporting.registry-book.date", lang)).append("\n")
-                .append(
-                    dissertationInformation.getDiplomaSupplementsIssueDate().format(DATE_FORMATTER))
                 .append("\n");
+
+            if (Objects.nonNull(dissertationInformation.getDiplomaSupplementsIssueDate())) {
+                diplomaInformation
+                    .append(getTableLabel("reporting.registry-book.date", lang))
+                    .append("\n")
+                    .append(dissertationInformation.getDiplomaSupplementsIssueDate()
+                        .format(DATE_FORMATTER))
+                    .append("\n");
+            }
         }
 
         rowData.add(diplomaInformation.toString());

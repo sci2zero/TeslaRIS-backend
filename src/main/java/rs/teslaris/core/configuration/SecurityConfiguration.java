@@ -250,6 +250,12 @@ public class SecurityConfiguration {
                 // COOKIES
                 .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()
 
+                // LEGACY NAVIGATION
+                .requestMatchers(HttpMethod.GET,
+                    "/api/legacy-navigation/entity-landing-page/{oldId}").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/legacy-navigation/document-file/{oldServerFilename}").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

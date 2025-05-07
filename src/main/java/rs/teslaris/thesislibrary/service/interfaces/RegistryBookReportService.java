@@ -10,7 +10,8 @@ import org.springframework.stereotype.Service;
 public interface RegistryBookReportService {
 
     String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
-                                    String lang, Integer userId);
+                                    String lang, Integer userId, String authorName,
+                                    String authorTitle);
 
     List<String> listAvailableReports(Integer userId);
 
