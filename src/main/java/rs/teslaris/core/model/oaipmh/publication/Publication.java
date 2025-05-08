@@ -120,4 +120,14 @@ public class Publication implements PublicationConvertable {
     private List<Integer> importUserId;
 
     private Boolean loaded;
+
+    // Additional Migration fields - not part of the OAI-PMH specification
+
+    @XmlElementWrapper(name = "Advisors")
+    @XmlElement(name = "Advisor")
+    private List<PersonAttributes> advisors;
+
+    @XmlElementWrapper(name = "BoardMembers")
+    @XmlElement(name = "BoardMember")
+    private List<PersonAttributes> boardMembers;
 }

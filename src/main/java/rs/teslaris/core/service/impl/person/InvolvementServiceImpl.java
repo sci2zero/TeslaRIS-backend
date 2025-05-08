@@ -289,19 +289,22 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
-        var organisationUnit =
-            organisationUnitService.findOrganisationUnitById(
-                commonFields.getOrganisationUnitId());
-
-        var affiliationStatements = multilingualContentService.getMultilingualContent(
-            commonFields.getAffiliationStatement());
+        if (Objects.nonNull(commonFields.getOrganisationUnitId()) &&
+            commonFields.getOrganisationUnitId() > 0) {
+            var organisationUnit =
+                organisationUnitService.findOrganisationUnitById(
+                    commonFields.getOrganisationUnitId());
+            involvement.setOrganisationUnit(organisationUnit);
+        } else {
+            var affiliationStatements = multilingualContentService.getMultilingualContent(
+                commonFields.getAffiliationStatement());
+            involvement.setAffiliationStatement(affiliationStatements);
+        }
 
         involvement.setDateFrom(commonFields.getDateFrom());
         involvement.setDateTo(commonFields.getDateTo());
         involvement.setApproveStatus(ApproveStatus.APPROVED);
         involvement.setInvolvementType(commonFields.getInvolvementType());
-        involvement.setAffiliationStatement(affiliationStatements);
-        involvement.setOrganisationUnit(organisationUnit);
     }
 
     private void clearCommonCollections(Involvement involvement) {

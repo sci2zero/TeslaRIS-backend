@@ -185,7 +185,7 @@ public class TestingDataInitializer {
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666"), new HashSet<>());
         var person1 = new Person();
-        person1.setOldId(1);
+        person1.setOldId(3);
         person1.setName(
             new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         person1.setApproveStatus(ApproveStatus.APPROVED);

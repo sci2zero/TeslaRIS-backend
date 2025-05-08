@@ -119,6 +119,10 @@ public abstract class DocumentConverter {
             DocumentContributionType.AUTHOR, contributions);
         personContributionConverter.addContributors(record.getEditors(),
             DocumentContributionType.EDITOR, contributions);
+        personContributionConverter.addContributors(record.getAdvisors(),
+            DocumentContributionType.ADVISOR, contributions);
+        personContributionConverter.addContributors(record.getBoardMembers(),
+            DocumentContributionType.BOARD_MEMBER, contributions);
 
         dto.setContributions(contributions);
     }

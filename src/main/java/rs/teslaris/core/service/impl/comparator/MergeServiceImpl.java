@@ -822,6 +822,7 @@ public class MergeServiceImpl implements MergeService {
         person.getInvolvements().forEach(involvement -> {
             if ((involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                Objects.nonNull(involvement.getOrganisationUnit()) &&
                 involvement.getOrganisationUnit().getId().equals(sourceOUId)) {
                 involvement.setOrganisationUnit(organisationUnitService.findOne(targetOUId));
             }

@@ -16,7 +16,7 @@ public class NavigationBackwardCompatibilityControllerTest extends BaseTest {
     public void testGetBackwardCompatibleId() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/legacy-navigation/entity-landing-page/{oldId}?source=testSource&language=testLanguage",
-                    1)
+                    3)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.entityType", equalTo("PERSON")));

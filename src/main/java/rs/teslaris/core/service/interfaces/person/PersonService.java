@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
@@ -56,6 +57,8 @@ public interface PersonService extends JPAService<Person> {
     boolean isPersonEmployedInOrganisationUnit(Integer personId, Integer organisationUnitId);
 
     Person createPersonWithBasicInfo(BasicPersonDTO personDTO, Boolean index);
+
+    Person importPersonWithBasicInfo(ImportPersonDTO personDTO, Boolean index);
 
     void setPersonBiography(List<MultilingualContentDTO> biography, Integer personId);
 

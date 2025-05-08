@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -26,13 +27,16 @@ import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.importer.model.converter.load.event.EventConverter;
 import rs.teslaris.importer.model.converter.load.institution.OrganisationUnitConverter;
 import rs.teslaris.importer.model.converter.load.person.PersonConverter;
+import rs.teslaris.importer.model.converter.load.publication.DissertationConverter;
 import rs.teslaris.importer.model.converter.load.publication.JournalConverter;
 import rs.teslaris.importer.model.converter.load.publication.JournalPublicationConverter;
 import rs.teslaris.importer.model.converter.load.publication.PatentConverter;
@@ -48,6 +52,7 @@ import rs.teslaris.importer.utility.RecordConverter;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
     private final MongoTemplate mongoTemplate;
@@ -89,6 +94,10 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     private final SoftwareService softwareService;
 
     private final ProductConverter productConverter;
+
+    private final DissertationConverter dissertationConverter;
+
+    private final ThesisService thesisService;
 
 
     @Override
@@ -274,7 +283,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     break;
                 case PERSONS:
                     hasNextPage = loadBatch(Person.class, personConverter,
-                        personService::createPersonWithBasicInfo, query, performIndex, batchSize);
+                        personService::importPersonWithBasicInfo, query, performIndex, batchSize);
                     break;
                 case EVENTS:
                     hasNextPage = loadBatch(Event.class, eventConverter,
@@ -357,12 +366,19 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             Objects.nonNull(savedPerson)) {
                             return;
                         }
-                        person.getAffiliation().getOrgUnits().forEach(((affiliation) -> {
-                            var creationDTO =
-                                personConverter.toPersonEmployment(affiliation);
-                            creationDTO.ifPresent(employmentDTO -> involvementService.addEmployment(
-                                savedPerson.getId(), employmentDTO));
-                        }));
+                        if (Objects.nonNull(person.getAffiliation().getOrgUnits())) {
+                            FunctionalUtil.forEachWithCounter(person.getAffiliation().getOrgUnits(),
+                                (i, affiliation) -> {
+                                    var creationDTO =
+                                        personConverter.toPersonEmployment(person, affiliation, i);
+                                    creationDTO.ifPresent(
+                                        employmentDTO -> involvementService.addEmployment(
+                                            savedPerson.getId(), employmentDTO));
+                                });
+                        } else {
+                            log.info("Migrated PERSON '{}' nas no present affiliations.",
+                                person.getPersonName().toString());
+                        }
                     });
                     page++;
                     hasNextPage = personBatch.size() == batchSize;
@@ -371,7 +387,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     var criteria = new Criteria().orOperator(
                         Criteria.where("type").regex("c_2df8fbb1$"),
                         Criteria.where("type").regex("c_5794$"),
-                        Criteria.where("type").regex("c_c94f$")
+                        Criteria.where("type").regex("c_c94f$"),
+                        Criteria.where("type").regex("c_db06$")
                     );
                     var publicationBatch =
                         mongoTemplate.find(query.addCriteria(criteria), Publication.class);
@@ -398,6 +415,12 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 proceedingsPublicationService.createProceedingsPublication(
                                     creationDTO,
                                     performIndex);
+                            }
+                        } else if (record.getType()
+                            .endsWith("c_db06")) { // COAR type: dissertation (thesis)
+                            var creationDTO = dissertationConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                thesisService.createThesis(creationDTO, performIndex);
                             }
                         }
                     });

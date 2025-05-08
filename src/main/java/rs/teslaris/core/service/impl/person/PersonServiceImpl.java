@@ -32,6 +32,7 @@ import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonIdentifierable;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
@@ -211,6 +212,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var person = findOne(personId);
 
         for (var personInvolvement : person.getInvolvements()) {
+            if (Objects.isNull(personInvolvement.getOrganisationUnit())) {
+                continue;
+            }
+
             var personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
 
             if (personInvolvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
@@ -230,45 +235,98 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Transactional
     public Person createPersonWithBasicInfo(BasicPersonDTO personDTO, Boolean index) {
-        var defaultApproveStatus =
-            approvedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED;
+        var status = approvedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED;
+        var person = buildBasePerson(personDTO, status, false);
 
+        var saved = this.save(person);
+        person.setId(saved.getId());
+
+        if (status == ApproveStatus.APPROVED && index) {
+            indexPerson(saved, saved.getId());
+        }
+
+        return person;
+    }
+
+    @Override
+    @Transactional
+    public Person importPersonWithBasicInfo(ImportPersonDTO personDTO, Boolean index) {
+        var status = approvedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED;
+        var person = buildBasePerson(personDTO, status, true);
+
+        var saved = this.save(person);
+        person.setId(saved.getId());
+
+        if (status == ApproveStatus.APPROVED && index) {
+            indexPerson(saved, saved.getId());
+        }
+
+        return person;
+    }
+
+    private Person buildBasePerson(BasicPersonDTO personDTO, ApproveStatus status,
+                                   boolean isImport) {
         var personNameDTO = personDTO.getPersonName();
-        var personName = new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
-            personNameDTO.getLastname(), personDTO.getLocalBirthDate(), null);
+        var personName = new PersonName(
+            personNameDTO.getFirstname(),
+            personNameDTO.getOtherName(),
+            personNameDTO.getLastname(),
+            personDTO.getLocalBirthDate(),
+            null
+        );
 
-        var personalContact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
-        var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
-            new PostalAddress(null, new HashSet<>(), new HashSet<>()), personalContact,
-            new HashSet<>());
+        var contact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
 
-        var newPerson = new Person();
-        newPerson.setName(personName);
-        newPerson.setPersonalInfo(personalInfo);
+        PostalAddress address;
+        if (isImport) {
+            address = new PostalAddress(
+                null,
+                multilingualContentService.getMultilingualContent(
+                    ((ImportPersonDTO) personDTO).getAddressLine()),
+                multilingualContentService.getMultilingualContent(
+                    ((ImportPersonDTO) personDTO).getAddressCity())
+            );
+        } else {
+            address = new PostalAddress(null, new HashSet<>(), new HashSet<>());
+        }
 
-        setAllPersonIdentifiers(newPerson, personDTO);
-        newPerson.setOldId(personDTO.getOldId());
+        var personalInfo = new PersonalInfo(
+            personDTO.getLocalBirthDate(),
+            isImport ? ((ImportPersonDTO) personDTO).getPlaceOfBirth() : null,
+            personDTO.getSex(),
+            address,
+            contact,
+            new HashSet<>()
+        );
+
+        var person = new Person();
+        person.setName(personName);
+        person.setPersonalInfo(personalInfo);
+        person.setOldId(personDTO.getOldId());
+        person.setApproveStatus(status);
+
+        if (isImport) {
+            var importDTO = (ImportPersonDTO) personDTO;
+            person.setBiography(
+                multilingualContentService.getMultilingualContent(importDTO.getBiography()));
+            person.setKeyword(
+                multilingualContentService.getMultilingualContent(importDTO.getKeywords()));
+        }
+
+        setAllPersonIdentifiers(person, personDTO);
 
         if (Objects.nonNull(personDTO.getOrganisationUnitId())) {
-            var employmentInstitution =
+            var institution =
                 organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
-            var currentEmployment =
-                new Employment(null, null, defaultApproveStatus, new HashSet<>(),
-                    InvolvementType.EMPLOYED_AT, new HashSet<>(), null, employmentInstitution,
-                    personDTO.getEmploymentPosition(), new HashSet<>());
-            newPerson.addInvolvement(currentEmployment);
+            var employment = new Employment(
+                null, null, status, new HashSet<>(),
+                InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                institution, personDTO.getEmploymentPosition(), new HashSet<>()
+            );
+            person.addInvolvement(employment);
         }
 
-        newPerson.setApproveStatus(defaultApproveStatus);
-
-        var savedPerson = this.save(newPerson);
-        newPerson.setId(savedPerson.getId());
-
-        if (savedPerson.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
-            indexPerson(savedPerson, savedPerson.getId());
-        }
-
-        return newPerson;
+        return person;
     }
 
     @Override
@@ -775,20 +833,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var employmentInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.isNull(i.getDateTo()))
+                Objects.isNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
             .map(Involvement::getOrganisationUnit).toList();
 
         var employmentOrCandidateInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
                 i.getInvolvementType().equals(InvolvementType.CANDIDATE)) &&
-                Objects.isNull(i.getDateTo()))
+                Objects.isNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
             .map(inv -> inv.getOrganisationUnit().getId()).toList();
 
         personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.nonNull(i.getDateTo()))
+                Objects.nonNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
             .map(involvement -> involvement.getOrganisationUnit().getId()).toList());
 
         personIndex.setEmploymentInstitutionsId(

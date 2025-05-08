@@ -70,6 +70,9 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
     @Value("${ssl.trust-store-password}")
     private String trustStorePassword;
 
+    @Value("${proxy.enabled}")
+    private Boolean proxyEnabled;
+
     @Value("${proxy.host:}")
     private String proxyHost;
 
@@ -249,7 +252,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
             .setConnectionManager(connectionManager)
             .build();
 
-        if (!proxyHost.isEmpty()) {
+        if (proxyEnabled) {
             httpClient = HttpClients.custom()
                 .setConnectionManager(connectionManager)
                 .setProxy(new HttpHost(proxyHost, proxyPort))

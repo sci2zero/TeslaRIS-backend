@@ -47,6 +47,7 @@ import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -281,6 +282,70 @@ public class PersonServiceTest {
         assertEquals(EmploymentPosition.ASSISTANT_PROFESSOR,
             ((Employment) currentEmployment).getEmploymentPosition());
     }
+
+    @Test
+    void shouldImportPersonWithBasicInfoWhenInfoIsValid() {
+        // given
+        var personDTO = new ImportPersonDTO();
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname("Jane");
+        personNameDTO.setLastname("Smith");
+        personDTO.setPersonName(personNameDTO);
+        personDTO.setContactEmail("jane.smith@example.com");
+        personDTO.setSex(Sex.FEMALE);
+        personDTO.setLocalBirthDate(LocalDate.of(1990, 3, 10));
+        personDTO.setPhoneNumber("+1-444-444-4444");
+        personDTO.setPlaceOfBirth("New York");
+        personDTO.setAddressLine(new ArrayList<>());
+        personDTO.setAddressCity(new ArrayList<>());
+        personDTO.setBiography(new ArrayList<>());
+        personDTO.setKeywords(new ArrayList<>());
+        personDTO.setApvnt("23456");
+        personDTO.setECrisId("78901");
+        personDTO.setENaukaId("rp78901");
+        personDTO.setOrcid("0000-0002-1825-0000");
+        personDTO.setScopusAuthorId("11111111111");
+        personDTO.setOrganisationUnitId(2);
+        personDTO.setEmploymentPosition(EmploymentPosition.RESEARCH_ASSOCIATE);
+
+        var personalInfo = new PersonalInfo();
+        personalInfo.setLocalBirthDate(personDTO.getLocalBirthDate());
+
+        var person = new Person();
+        person.setName(new PersonName());
+        person.setPersonalInfo(personalInfo);
+        person.setApproveStatus(ApproveStatus.APPROVED);
+
+        // when
+        var employmentInstitution = new OrganisationUnit();
+        when(organisationUnitService.findOrganisationUnitById(2)).thenReturn(employmentInstitution);
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
+        when(personRepository.save(any(Person.class))).thenReturn(person);
+
+        // then
+        var result = personService.importPersonWithBasicInfo(personDTO, true);
+        assertNotNull(result);
+        assertEquals("Jane", result.getName().getFirstname());
+        assertEquals("Smith", result.getName().getLastname());
+        assertEquals("jane.smith@example.com",
+            result.getPersonalInfo().getContact().getContactEmail());
+        assertEquals(Sex.FEMALE, result.getPersonalInfo().getSex());
+        assertEquals(LocalDate.of(1990, 3, 10), result.getPersonalInfo().getLocalBirthDate());
+        assertEquals("+1-444-444-4444", result.getPersonalInfo().getContact().getPhoneNumber());
+        assertEquals("23456", result.getApvnt());
+        assertEquals("78901", result.getECrisId());
+        assertEquals("rp78901", result.getENaukaId());
+        assertEquals("0000-0002-1825-0000", result.getOrcid());
+        assertEquals("11111111111", result.getScopusAuthorId());
+        assertEquals(ApproveStatus.APPROVED, result.getApproveStatus());
+        assertEquals(1, result.getInvolvements().size());
+        var currentEmployment = result.getInvolvements().iterator().next();
+        assertEquals(ApproveStatus.APPROVED, currentEmployment.getApproveStatus());
+        assertEquals(InvolvementType.EMPLOYED_AT, currentEmployment.getInvolvementType());
+        assertEquals(EmploymentPosition.RESEARCH_ASSOCIATE,
+            ((Employment) currentEmployment).getEmploymentPosition());
+    }
+
 
     @Test
     public void shouldSetPersonBiographyWithAnyData() {
