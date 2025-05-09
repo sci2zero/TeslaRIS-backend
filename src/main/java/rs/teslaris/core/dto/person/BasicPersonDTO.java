@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.Sex;
 
@@ -48,4 +50,6 @@ public class BasicPersonDTO implements PersonIdentifierable {
     private Integer organisationUnitId;
 
     private EmploymentPosition employmentPosition;
+
+    private List<MultilingualContentDTO> displayTitle;
 }

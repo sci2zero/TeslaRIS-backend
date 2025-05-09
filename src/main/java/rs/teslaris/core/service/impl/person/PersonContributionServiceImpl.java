@@ -42,6 +42,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
@@ -74,6 +75,10 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         documentDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonDocumentContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
+
+            if ((document instanceof Thesis) && Objects.isNull(contributionDTO.getPersonId())) {
+                throw new ReferenceConstraintException("Thesis can have an external contributor.");
+            }
 
             if (contributionDTO.getContributionType()
                 .equals(DocumentContributionType.BOARD_MEMBER) && !(document instanceof Thesis)) {

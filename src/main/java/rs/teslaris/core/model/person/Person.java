@@ -101,6 +101,10 @@ public class Person extends BaseEntity {
     @Column(name = "institution_id")
     private Set<Integer> employmentInstitutionsIdHierarchy = new HashSet<>();
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    private Set<String> accountingIds = new HashSet<>();
+
+
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {
             involvements = new HashSet<>();

@@ -57,7 +57,9 @@ public class PersonConverter {
                         person.getPersonalInfo().getContact().getPhoneNumber() : null),
                 person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
-                person.getScopusAuthorId(), person.getPersonalInfo().getUris()), biography,
+                person.getScopusAuthorId(), person.getPersonalInfo().getUris(),
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    person.getPersonalInfo().getDisplayTitle())), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
             expertisesOrSkills, prizes, Objects.nonNull(person.getProfilePhoto()) ?
             person.getProfilePhoto().getProfileImageServerName() : null);
@@ -215,7 +217,9 @@ public class PersonConverter {
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
-                person.getScopusAuthorId(), person.getPersonalInfo().getUris()), biography,
+                person.getScopusAuthorId(), person.getPersonalInfo().getUris(),
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    person.getPersonalInfo().getDisplayTitle())), biography,
             keyword, person.getApproveStatus(), userDTO);
     }
 

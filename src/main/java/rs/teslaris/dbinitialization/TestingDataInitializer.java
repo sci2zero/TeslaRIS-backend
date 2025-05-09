@@ -183,7 +183,7 @@ public class TestingDataInitializer {
             new HashSet<>());
         var personalInfo =
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
-                new Contact("john@ftn.uns.ac.com", "021555666"), new HashSet<>());
+                new Contact("john@ftn.uns.ac.com", "021555666"), new HashSet<>(), new HashSet<>());
         var person1 = new Person();
         person1.setOldId(3);
         person1.setName(
@@ -288,7 +288,7 @@ public class TestingDataInitializer {
             new HashSet<>());
         var personalInfo2 =
             new PersonalInfo(LocalDate.of(2000, 1, 31), "Germany", Sex.MALE, postalAddress2,
-                new Contact("joakim@email.com", "021555769"), new HashSet<>());
+                new Contact("joakim@email.com", "021555769"), new HashSet<>(), new HashSet<>());
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
         person2.setName(
@@ -466,7 +466,7 @@ public class TestingDataInitializer {
             new HashSet<>());
         var personalInfo3 =
             new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress3,
-                new Contact("test@email.com", "021555769"), new HashSet<>());
+                new Contact("test@email.com", "021555769"), new HashSet<>(), new HashSet<>());
         person3.setApproveStatus(ApproveStatus.APPROVED);
         person3.setPersonalInfo(personalInfo3);
         person3.setName(
@@ -498,7 +498,7 @@ public class TestingDataInitializer {
             new HashSet<>());
         var personalInfo4 =
             new PersonalInfo(LocalDate.of(1976, 6, 24), "Serbia", Sex.FEMALE, postalAddress4,
-                new Contact("test1@email.com", "021555769"), new HashSet<>());
+                new Contact("test1@email.com", "021555769"), new HashSet<>(), new HashSet<>());
         person4.setApproveStatus(ApproveStatus.APPROVED);
         person4.setPersonalInfo(personalInfo4);
         person4.setName(

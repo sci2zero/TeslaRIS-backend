@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.model.oaipmh.person.Person;
 import rs.teslaris.core.model.person.EmploymentPosition;
@@ -41,7 +42,15 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
         var personName = new PersonNameDTO();
         personName.setFirstname(person.getPersonName().getFirstNames());
         personName.setLastname(person.getPersonName().getFamilyNames());
-        // TODO: Are other names supported?
+        if (Objects.nonNull(person.getPersonName().getMiddleNames()) &&
+            !person.getPersonName().getMiddleNames().isBlank()) {
+            personName.setOtherName(person.getPersonName().getMiddleNames());
+        }
+        if (person.getPersonName().getFirstNames().equals("Goran") &&
+            person.getPersonName().getFamilyNames().equals("Štrbac")) {
+            System.out.println("AAAAAA");
+        }
+        // TODO: Are other name variations supported?
 
         if (Objects.nonNull(person.getGender())) {
             dto.setSex(person.getGender().trim().equalsIgnoreCase("f") ? Sex.FEMALE : Sex.MALE);
@@ -64,6 +73,8 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
             Objects.requireNonNullElse(person.getCountryOfBirth(), "").trim()));
 
         if (Objects.nonNull(person.getCv()) && !person.getCv().isEmpty()) {
+            person.getCv().forEach(
+                cv -> cv.setValue(cv.getValue().replace("&nbsp;", " ").replace("\u00A0", " ")));
             dto.setBiography(multilingualContentConverter.toDTO(person.getCv()));
         }
 
@@ -89,8 +100,43 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
         return dto;
     }
 
-    public Optional<EmploymentDTO> toPersonEmployment(Person person, OrgUnit affiliation,
-                                                      Integer affiliationIndex) {
+    public ArrayList<EmploymentDTO> toPersonEmployment(Person person, OrgUnit affiliation) {
+        var organisationUnit = organisationUnitService.findOrganisationUnitByOldId(
+            OAIPMHParseUtility.parseBISISID(affiliation.getOldId()));
+        var employmentsToCreate = new ArrayList<EmploymentDTO>();
+
+        if (Objects.nonNull(person.getPositions()) && !person.getPositions().isEmpty()) {
+            person.getPositions().forEach(position -> {
+                var dto = createBaseEmployment(organisationUnit, person);
+                var positionName = position.getName().toLowerCase();
+                var employmentPosition = getEmploymentPositionFromName(positionName);
+                if (Objects.nonNull(employmentPosition)) {
+                    dto.setEmploymentPosition(employmentPosition);
+                }
+
+                if (Objects.nonNull(position.getStartDate())) {
+                    var startDate = position.getStartDate().toInstant().atZone(ZoneId.systemDefault())
+                        .toLocalDate();
+                    if (startDate.isBefore(LocalDate.now())) {
+                        dto.setDateFrom(startDate);
+                    }
+                }
+
+                if (Objects.nonNull(position.getEndDate())) {
+                    dto.setDateTo(
+                        position.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+                }
+
+                employmentsToCreate.add(dto);
+            });
+        } else {
+            employmentsToCreate.add(createBaseEmployment(organisationUnit, person));
+        }
+
+        return employmentsToCreate;
+    }
+
+    private EmploymentDTO createBaseEmployment(OrganisationUnit organisationUnit, Person person) {
         var dto = new EmploymentDTO();
         dto.setInvolvementType(InvolvementType.EMPLOYED_AT);
 
@@ -98,39 +144,14 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
         dto.setProofs(new ArrayList<>());
         dto.setAffiliationStatement(new ArrayList<>());
 
-        var organisationUnit = organisationUnitService.findOrganisationUnitByOldId(
-            OAIPMHParseUtility.parseBISISID(affiliation.getOldId()));
-
         if (Objects.isNull(organisationUnit)) {
-            return Optional.empty();
+            dto.setAffiliationStatement(
+                multilingualContentConverter.toDTO(person.getAffiliation().getDisplayName()));
+        } else {
+            dto.setOrganisationUnitId(organisationUnit.getId());
         }
 
-        dto.setOrganisationUnitId(organisationUnit.getId());
-
-        if (Objects.nonNull(person.getPositions()) &&
-            person.getPositions().size() >= (affiliationIndex + 1)) {
-            var position = person.getPositions().get(affiliationIndex);
-            var positionName = position.getName().toLowerCase();
-            var employmentPosition = getEmploymentPositionFromName(positionName);
-            if (Objects.nonNull(employmentPosition)) {
-                dto.setEmploymentPosition(employmentPosition);
-            }
-
-            if (Objects.nonNull(position.getStartDate())) {
-                var startDate = position.getStartDate().toInstant().atZone(ZoneId.systemDefault())
-                    .toLocalDate();
-                if (startDate.isBefore(LocalDate.now())) {
-                    dto.setDateFrom(startDate);
-                }
-            }
-
-            if (Objects.nonNull(position.getEndDate())) {
-                dto.setDateTo(
-                    position.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-            }
-        }
-
-        return Optional.of(dto);
+        return dto;
     }
 
     @Nullable

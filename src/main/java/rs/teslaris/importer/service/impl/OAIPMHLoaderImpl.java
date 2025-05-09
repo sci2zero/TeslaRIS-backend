@@ -370,8 +370,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             FunctionalUtil.forEachWithCounter(person.getAffiliation().getOrgUnits(),
                                 (i, affiliation) -> {
                                     var creationDTO =
-                                        personConverter.toPersonEmployment(person, affiliation, i);
-                                    creationDTO.ifPresent(
+                                        personConverter.toPersonEmployment(person, affiliation);
+                                    creationDTO.forEach(
                                         employmentDTO -> involvementService.addEmployment(
                                             savedPerson.getId(), employmentDTO));
                                 });

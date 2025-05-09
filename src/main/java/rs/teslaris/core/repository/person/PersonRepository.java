@@ -67,4 +67,10 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "i.personInvolved.id = :personId AND " +
         "(i.involvementType = 4 OR i.involvementType = 5)")
     List<Integer> findInstitutionIdsForPerson(Integer personId);
+
+    @Query("SELECT p FROM Person p " +
+        "JOIN p.accountingIds aid " +
+        "WHERE aid = :id AND p.approveStatus = 1")
+    Optional<Person> findApprovedPersonByAccountingId(String id);
+
 }

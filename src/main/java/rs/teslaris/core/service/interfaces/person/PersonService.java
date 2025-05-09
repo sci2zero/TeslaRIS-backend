@@ -105,4 +105,6 @@ public interface PersonService extends JPAService<Person> {
 
     List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields);
+
+    Person findPersonByAccountingId(String accountingId);
 }

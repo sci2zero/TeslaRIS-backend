@@ -296,7 +296,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personDTO.getSex(),
             address,
             contact,
-            new HashSet<>()
+            new HashSet<>(),
+            multilingualContentService.getMultilingualContent(personDTO.getDisplayTitle())
         );
 
         var person = new Person();
@@ -430,6 +431,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personalInfoToUpdate.setLocalBirthDate(personalInfo.getLocalBirthDate());
         personalInfoToUpdate.setSex(personalInfo.getSex());
         IdentifierUtil.setUris(personalInfoToUpdate.getUris(), personalInfo.getUris());
+        personalInfoToUpdate.setDisplayTitle(
+            multilingualContentService.getMultilingualContent(personalInfo.getDisplayTitle()));
 
         var countryId = personalInfo.getPostalAddress().getCountryId();
 
@@ -1077,5 +1080,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         Boolean onlyExportFields) {
         return searchFieldsLoader.getSearchFields("personSearchFieldConfiguration.json",
             onlyExportFields);
+    }
+
+    @Override
+    public Person findPersonByAccountingId(String accountingId) {
+        return personRepository.findApprovedPersonByAccountingId(accountingId).orElseThrow(
+            () -> new NotFoundException(
+                "Person with accounting ID " + accountingId + " does not exist"));
     }
 }

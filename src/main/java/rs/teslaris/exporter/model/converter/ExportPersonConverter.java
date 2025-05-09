@@ -107,7 +107,7 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
 
         openairePerson.setPersonName(new PersonName(exportPerson.getName().getLastName(),
-            exportPerson.getName().getFirstName()));
+            exportPerson.getName().getFirstName(), null));
 
         openairePerson.setElectronicAddresses(new ArrayList<>());
         exportPerson.getElectronicAddresses().forEach(elAddress -> {

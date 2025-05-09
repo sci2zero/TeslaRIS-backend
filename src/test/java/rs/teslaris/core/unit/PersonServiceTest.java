@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -1070,5 +1071,36 @@ public class PersonServiceTest {
     private MultipartFile createMockMultipartFile() {
         return new MockMultipartFile("file", "test.txt", "text/plain",
             "Test file content".getBytes());
+    }
+
+    @Test
+    void shouldReturnPersonByAccountingId() {
+        // Given
+        var accountingId = "ACC123";
+        var expectedPerson = new Person();
+        expectedPerson.setAccountingIds(Set.of(accountingId));
+
+        when(personRepository.findApprovedPersonByAccountingId(accountingId))
+            .thenReturn(Optional.of(expectedPerson));
+
+        // When
+        Person actualPerson = personService.findPersonByAccountingId(accountingId);
+
+        // Then
+        assertEquals(expectedPerson, actualPerson);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenAccountingIdIsNotFound() {
+        // Given
+        var accountingId = "MISSING_ID";
+        when(personRepository.findApprovedPersonByAccountingId(accountingId))
+            .thenReturn(Optional.empty());
+
+        // When / Then
+        var ex = assertThrows(NotFoundException.class, () ->
+            personService.findPersonByAccountingId(accountingId)
+        );
+        assertEquals("Person with accounting ID MISSING_ID does not exist", ex.getMessage());
     }
 }
