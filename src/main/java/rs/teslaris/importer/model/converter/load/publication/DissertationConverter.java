@@ -56,6 +56,8 @@ public class DissertationConverter extends DocumentConverter
                 dto.setExternalOrganisationUnitName(
                     multilingualContentConverter.toDTO(affiliation.getDisplayName()));
             }
+        } else {
+            System.out.println("AAAAAAAA");
         }
 
         return dto;

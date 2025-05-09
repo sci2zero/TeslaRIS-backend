@@ -864,5 +864,17 @@ public class TestingDataInitializer {
 
         thesis3.setContributors(Set.of(thesisContribution2));
         thesisRepository.save(thesis3);
+
+        var thesis4 = new Thesis();
+        thesis4.setApproveStatus(ApproveStatus.APPROVED);
+        thesis4.setThesisType(ThesisType.PHD);
+        thesis4.setDocumentDate("2024");
+        thesis4.setOrganisationUnit(dummyOU);
+        thesis4.setTitle(
+            Set.of(
+                new MultiLingualContent(serbianTag, "Jos neka test disertacija", 1)));
+        thesis4.setLanguage(serbianLanguage);
+        thesis4.setThesisDefenceDate(LocalDate.of(2025, 3, 31));
+        thesisRepository.save(thesis4);
     }
 }
