@@ -4,6 +4,7 @@ import com.google.common.base.Functions;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -467,8 +468,11 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getDescription().stream()
             .min(Comparator.comparingInt(ExportMultilingualContent::getPriority))
-            .map(mc -> new MultilingualContent(mc.getLanguageTag(), mc.getContent())).ifPresent(
-                openairePublication::set_abstract);
+            .map(mc -> List.of(new MultilingualContent(mc.getLanguageTag(), mc.getContent())))
+            .ifPresent(openairePublication::set_abstract);
+
+        openairePublication.set_abstract(
+            ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getDescription()));
 
         openairePublication.setKeywords(new ArrayList<>());
         exportDocument.getKeywords().forEach(mc -> {

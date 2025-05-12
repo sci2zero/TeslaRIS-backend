@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -94,6 +93,10 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
             dto.setAddressCity(multilingualContentConverter.toDTO(person.getPlace()));
         }
 
+        if (Objects.nonNull(person.getTitle()) && !person.getTitle().isBlank()) {
+            dto.setDisplayTitle(multilingualContentConverter.toDTO(person.getTitle()));
+        }
+
         // TODO: How to set research areas from serbian names?
         // TODO: What to do with year of birth?
 
@@ -115,8 +118,9 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
                 }
 
                 if (Objects.nonNull(position.getStartDate())) {
-                    var startDate = position.getStartDate().toInstant().atZone(ZoneId.systemDefault())
-                        .toLocalDate();
+                    var startDate =
+                        position.getStartDate().toInstant().atZone(ZoneId.systemDefault())
+                            .toLocalDate();
                     if (startDate.isBefore(LocalDate.now())) {
                         dto.setDateFrom(startDate);
                     }
@@ -124,7 +128,8 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
 
                 if (Objects.nonNull(position.getEndDate())) {
                     dto.setDateTo(
-                        position.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+                        position.getEndDate().toInstant().atZone(ZoneId.systemDefault())
+                            .toLocalDate());
                 }
 
                 employmentsToCreate.add(dto);

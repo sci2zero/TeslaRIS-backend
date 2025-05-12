@@ -64,9 +64,11 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
     private final NotificationRepository notificationRepository;
 
-
     @Value("${contribution.approved_by_default}")
     private Boolean contributionApprovedByDefault;
+
+    @Value("${contribution.allow-external-thesis-associates}")
+    private Boolean allowExternalThesisAssociates;
 
 
     @Override
@@ -76,8 +78,10 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             var contribution = new PersonDocumentContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
 
-            if ((document instanceof Thesis) && Objects.isNull(contributionDTO.getPersonId())) {
-                throw new ReferenceConstraintException("Thesis can have an external contributor.");
+            if (!allowExternalThesisAssociates && (document instanceof Thesis) &&
+                Objects.isNull(contributionDTO.getPersonId())) {
+                throw new ReferenceConstraintException(
+                    "Thesis can't have an external contributor.");
             }
 
             if (contributionDTO.getContributionType()
@@ -184,8 +188,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         }
 
         contribution.setAffiliationStatement(new AffiliationStatement(
-            multilingualContentService.getMultilingualContent(
-                contributionDTO.getDisplayAffiliationStatement()), personName,
+            new HashSet<>(), personName,
             new PostalAddress(contributor.getPersonalInfo().getPostalAddress().getCountry(),
                 multilingualContentService.deepCopy(
                     contributor.getPersonalInfo().getPostalAddress().getStreetAndNumber()),
@@ -230,16 +233,14 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
     private void setPersonContributionCommonFields(PersonContribution contribution,
                                                    PersonContributionDTO contributionDTO) {
+        var affiliationStatement = new AffiliationStatement();
+
         if (Objects.nonNull(contributionDTO.getPersonId())) {
             var contributor = personService.findOne(contributionDTO.getPersonId());
             contribution.setPerson(contributor);
             setAffiliationStatement(contribution, contributionDTO, contributor);
         } else {
-            var affiliationStatement = new AffiliationStatement();
             affiliationStatement.setDisplayPersonName(getPersonName(contributionDTO, null));
-            affiliationStatement.setDisplayAffiliationStatement(
-                multilingualContentService.getMultilingualContent(
-                    contributionDTO.getDisplayAffiliationStatement()));
             contribution.setAffiliationStatement(affiliationStatement);
         }
 
@@ -252,6 +253,10 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                 var organisationUnit = organisationUnitService.findOne(institutionId);
                 contribution.getInstitutions().add(organisationUnit);
             });
+        } else {
+            contribution.getAffiliationStatement().setDisplayAffiliationStatement(
+                multilingualContentService.getMultilingualContent(
+                    contributionDTO.getDisplayAffiliationStatement()));
         }
 
         contribution.setOrderNumber(contributionDTO.getOrderNumber());

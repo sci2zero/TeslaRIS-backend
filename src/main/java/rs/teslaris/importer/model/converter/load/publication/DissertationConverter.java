@@ -46,18 +46,16 @@ public class DissertationConverter extends DocumentConverter
         dto.setWritingLanguageTagId(
             languageTagService.findLanguageTagByValue(record.getLanguage()).getId());
 
-        var affiliation = record.getAuthors().getFirst().getAffiliation();
-        if (Objects.nonNull(affiliation)) {
-            if (Objects.nonNull(affiliation.getOrgUnit()) &&
-                Objects.nonNull(affiliation.getOrgUnit().getId())) {
+        var publisher = record.getPublishers().getFirst();
+        if (Objects.nonNull(publisher)) {
+            if (Objects.nonNull(publisher.getOrgUnit()) &&
+                Objects.nonNull(publisher.getOrgUnit().getOldId())) {
                 dto.setOrganisationUnitId(organisationUnitService.findOrganisationUnitByOldId(
-                    OAIPMHParseUtility.parseBISISID(affiliation.getOrgUnit().getOldId())).getId());
+                    OAIPMHParseUtility.parseBISISID(publisher.getOrgUnit().getOldId())).getId());
             } else {
                 dto.setExternalOrganisationUnitName(
-                    multilingualContentConverter.toDTO(affiliation.getDisplayName()));
+                    multilingualContentConverter.toDTO(publisher.getDisplayName()));
             }
-        } else {
-            System.out.println("AAAAAAAA");
         }
 
         return dto;

@@ -5,7 +5,6 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import java.util.Date;
@@ -99,17 +98,11 @@ public class Publication implements PublicationConvertable {
     @XmlElement(name = "Publisher")
     private List<Publisher> publishers;
 
-    @XmlElements({
-        @XmlElement(name = "Keyword", type = MultilingualContent.class),
-        @XmlElement(name = "Keyword", type = String.class)
-    })
-    private List<Object> keywords;
+    @XmlElement(name = "Keyword")
+    private List<MultilingualContent> keywords;
 
-    @XmlElements({
-        @XmlElement(name = "Abstract", type = MultilingualContent.class),
-        @XmlElement(name = "Abstract", type = String.class)
-    })
-    private Object _abstract;
+    @XmlElement(name = "Abstract")
+    private List<MultilingualContent> _abstract;
 
     @XmlElement(name = "PartOf")
     private PartOf partOf;

@@ -42,7 +42,7 @@ public class RegistryBookEntryDTO {
 
     private Integer thesisId;
 
-    private Integer promotionOrdinalNumber;
+    private Integer schoolYearOrdinalNumber;
 
     private Integer promotionId;
 

@@ -55,7 +55,7 @@ public class RegistryBookGenerationUtil {
 
     private static void addBookNumbers(List<String> rowData, RegistryBookEntry entry) {
         rowData.add(
-            entry.getRegistryBookNumber() + "\n---------\n" + entry.getPromotionOrdinalNumber());
+            entry.getRegistryBookNumber() + "\n---------\n" + entry.getSchoolYearOrdinalNumber());
     }
 
     private static void addAuthorInfo(ArrayList<String> rowData,

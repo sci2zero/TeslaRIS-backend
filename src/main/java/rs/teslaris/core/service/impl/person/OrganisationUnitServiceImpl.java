@@ -449,6 +449,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             onlyExportFields);
     }
 
+    @Override
+    public OrganisationUnit findOrganisationUnitByAccountingId(String accountingId) {
+        return organisationUnitRepository.findApprovedOrganisationUnitByAccountingId(accountingId)
+            .orElseThrow(
+                () -> new NotFoundException(
+                    "Organisation unit with accounting ID " + accountingId + " does not exist"));
+    }
+
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                        OrganisationUnitIndex index) {
         index.setDatabaseId(organisationUnit.getId());

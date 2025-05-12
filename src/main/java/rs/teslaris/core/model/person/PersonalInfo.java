@@ -41,6 +41,6 @@ public class PersonalInfo {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> uris = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> displayTitle = new HashSet<>();
 }

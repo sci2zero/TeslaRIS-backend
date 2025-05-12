@@ -4,13 +4,16 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.importer.dto.DocumentLoadDTO;
 import rs.teslaris.importer.dto.OrganisationUnitLoadDTO;
@@ -50,7 +53,8 @@ public abstract class DocumentConverter {
 
         dto.setUris(new HashSet<>());
         urls.forEach(url -> {
-            if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId")) {
+            if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId") ||
+                url.startsWith("https://www.cris.uns.ac.rs/DownloadFileServlet")) {
                 return;
             }
 
@@ -68,16 +72,21 @@ public abstract class DocumentConverter {
         }
 
         if (Objects.nonNull(record.getKeywords())) {
-            var keywordBuilder = new StringBuilder();
-            record.getKeywords().stream()
-                .map(Object::toString)
-                .forEach(keyword -> {
-                    if (!keywordBuilder.isEmpty()) {
-                        keywordBuilder.append(", ");
-                    }
-                    keywordBuilder.append(keyword);
-                });
-            dto.setKeywords(multilingualContentConverter.toDTO(keywordBuilder.toString()));
+            Map<String, List<String>> keywordsByLang = record.getKeywords().stream()
+                .filter(k -> Objects.nonNull(k.getLang()) && Objects.nonNull(k.getValue()))
+                .collect(Collectors.groupingBy(
+                    MultilingualContent::getLang,
+                    Collectors.mapping(MultilingualContent::getValue, Collectors.toList())
+                ));
+
+            var combinedKeywords = keywordsByLang.entrySet().stream()
+                .map(entry -> new MultilingualContent(
+                    entry.getKey(),
+                    String.join("\n", entry.getValue())
+                ))
+                .toList();
+
+            dto.setKeywords(multilingualContentConverter.toDTO(combinedKeywords));
         } else {
             dto.setKeywords(new ArrayList<>());
         }
@@ -87,9 +96,10 @@ public abstract class DocumentConverter {
         dto.setDoi(Objects.nonNull(record.getDoi()) ? record.getDoi().replace("|", "") : null);
         dto.setScopusId(record.getScpNumber());
 
-        if (Objects.nonNull(record.get_abstract())) {
-            dto.setDescription(
-                multilingualContentConverter.toDTO(record.get_abstract().toString()));
+        if (Objects.nonNull(record.get_abstract()) && !record.get_abstract().isEmpty()) {
+            record.get_abstract()
+                .forEach(abs -> abs.setValue(abs.getValue().replace("<br />", " ")));
+            dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
         } else {
             dto.setDescription(new ArrayList<>());
         }

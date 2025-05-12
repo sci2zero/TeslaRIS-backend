@@ -26,6 +26,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
+import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -36,6 +37,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.EmploymentRepository;
@@ -435,5 +437,127 @@ public class InvolvementServiceTest {
         // Then
         assertThat(result).isNull();
         verify(employmentRepository).findByPersonInvolvedId(personId);
+    }
+
+    @Test
+    void shouldCreateNewEmploymentWhenNoneExists() {
+        // Given
+        var request = new EmploymentMigrationDTO(
+            101, // personOldId
+            202, // chairOldId
+            EmploymentPosition.ASSOCIATE_PROFESSOR,
+            LocalDate.of(2020, 1, 1),
+            "acc123",
+            "chairAcc456"
+        );
+
+        var person = new Person();
+        person.setId(1);
+        person.setAccountingIds(new HashSet<>());
+        when(personService.findPersonByOldId(101)).thenReturn(person);
+
+        var unit = new OrganisationUnit();
+        unit.setId(2);
+        unit.setAccountingIds(new HashSet<>());
+        when(organisationUnitService.findOrganisationUnitByOldId(202)).thenReturn(unit);
+
+        when(employmentRepository.save(any(Employment.class))).thenAnswer(
+            inv -> inv.getArgument(0));
+
+        // When
+        var result = involvementService.migrateEmployment(request);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(LocalDate.of(2020, 1, 1), result.getDateFrom());
+        assertEquals(EmploymentPosition.ASSOCIATE_PROFESSOR, result.getEmploymentPosition());
+        assertEquals(InvolvementType.EMPLOYED_AT, result.getInvolvementType());
+
+        verify(personService).save(person);
+        verify(organisationUnitService).save(unit);
+        verify(employmentRepository).save(any(Employment.class));
+        verify(personService).indexPerson(person, person.getId());
+        verify(userService).updateResearcherCurrentOrganisationUnitIfBound(person.getId());
+    }
+
+    @Test
+    void shouldUpdateExistingEmploymentWhenMatchingOneExists() {
+        // Given
+        var request = new EmploymentMigrationDTO(
+            null, null,
+            EmploymentPosition.TEACHING_ASSISTANT,
+            LocalDate.of(2021, 5, 15),
+            "acc123",
+            "chairAcc456"
+        );
+
+        var unit = new OrganisationUnit();
+        unit.setId(2);
+        when(organisationUnitService.findOrganisationUnitByAccountingId("chairAcc456")).thenReturn(
+            unit);
+
+        var employment = new Employment();
+        employment.setEmploymentPosition(EmploymentPosition.TEACHING_ASSISTANT);
+        employment.setOrganisationUnit(unit);
+        employment.setInvolvementType(InvolvementType.EMPLOYED_AT);
+
+        var person = new Person();
+        person.setId(1);
+        person.setAccountingIds(new HashSet<>());
+        person.setInvolvements(Set.of(employment));
+        when(personService.findPersonByAccountingId("acc123")).thenReturn(person);
+
+        when(involvementRepository.save(any(Employment.class))).thenAnswer(
+            inv -> inv.getArgument(0));
+
+        // When
+        var result = involvementService.migrateEmployment(request);
+
+        // Then
+        assertEquals(LocalDate.of(2021, 5, 15), result.getDateFrom());
+        verify(involvementRepository).save(employment);
+        verify(personService).save(person);
+        verify(userService).updateResearcherCurrentOrganisationUnitIfBound(person.getId());
+    }
+
+    @Test
+    void shouldCloseOtherOpenEmployments() {
+        // Given
+        var request = new EmploymentMigrationDTO(
+            null, null,
+            EmploymentPosition.TEACHING_ASSISTANT,
+            LocalDate.of(2022, 6, 1),
+            "acc1",
+            "accChair"
+        );
+
+        var unit = new OrganisationUnit();
+        unit.setId(33);
+        when(organisationUnitService.findOrganisationUnitByAccountingId("accChair")).thenReturn(
+            unit);
+
+        var person = new Person();
+        person.setId(10);
+        person.setAccountingIds(new HashSet<>());
+
+        var oldEmployment = new Employment();
+        oldEmployment.setEmploymentPosition(EmploymentPosition.ASSISTANT_PROFESSOR);
+        oldEmployment.setInvolvementType(InvolvementType.EMPLOYED_AT);
+        oldEmployment.setOrganisationUnit(unit);
+        oldEmployment.setDateFrom(LocalDate.of(2020, 1, 1));
+        oldEmployment.setDateTo(null);
+
+        person.setInvolvements(new HashSet<>(List.of(oldEmployment)));
+        when(personService.findPersonByAccountingId("acc1")).thenReturn(person);
+        when(employmentRepository.save(any(Employment.class))).thenAnswer(
+            inv -> inv.getArgument(0));
+
+        // When
+        var result = involvementService.migrateEmployment(request);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(LocalDate.of(2022, 6, 1), oldEmployment.getDateTo());
+        verify(personService).save(person);
     }
 }

@@ -6,5 +6,6 @@ public enum ResourceType {
     SUPPLEMENT,
     PROOF,
     IMAGE,
-    STATEMENT
+    STATEMENT,
+    ADVISOR_CONFLICT_OF_INTEREST
 }

@@ -14,6 +14,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.document.PersonalTitle;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -61,13 +62,29 @@ public class PersonContributionConverter {
         contribution.setContributionDescription(new ArrayList<>());
         contribution.setDisplayAffiliationStatement(new ArrayList<>());
 
-        var person = personService.findPersonByOldId(
-            OAIPMHParseUtility.parseBISISID(contributor.getPerson().getOldId()));
-        if (Objects.isNull(person)) {
-            log.warn("No saved person with id: . Proceeding with unmanaged contribution." +
-                contributor.getPerson().getOldId());
-        } else {
-            contribution.setPersonId(person.getId());
+        Person person = null;
+
+        if (Objects.nonNull(contributor.getPerson())) {
+            person = personService.findPersonByOldId(
+                OAIPMHParseUtility.parseBISISID(contributor.getPerson().getOldId()));
+            if (Objects.isNull(person)) {
+                log.warn("No saved person with id: . Proceeding with unmanaged contribution." +
+                    contributor.getPerson().getOldId());
+            } else {
+                contribution.setPersonId(person.getId());
+            }
+
+            if (Objects.nonNull(contributor.getPerson().getTitle())) {
+                contribution.setPersonalTitle(
+                    deducePersonalTitleFromName(contributor.getPerson().getTitle()));
+            }
+
+            if (Objects.nonNull(contributor.getPerson().getPositions()) &&
+                !contributor.getPerson().getPositions().isEmpty()) {
+                var employmentTitleName =
+                    contributor.getPerson().getPositions().stream().findFirst().get().getName();
+                contribution.setEmploymentTitle(getEmploymentTitleFromName(employmentTitleName));
+            }
         }
 
         contribution.setInstitutionIds(new ArrayList<>());
@@ -90,18 +107,6 @@ public class PersonContributionConverter {
         if (Objects.nonNull(contributor.getDisplayName())) {
             contribution.setPersonName(
                 new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null));
-        }
-
-        if (Objects.nonNull(contributor.getPerson().getTitle())) {
-            contribution.setPersonalTitle(
-                deducePersonalTitleFromName(contributor.getPerson().getTitle()));
-        }
-
-        if (Objects.nonNull(contributor.getPerson().getPositions()) &&
-            !contributor.getPerson().getPositions().isEmpty()) {
-            var employmentTitleName =
-                contributor.getPerson().getPositions().stream().findFirst().get().getName();
-            contribution.setEmploymentTitle(getEmploymentTitleFromName(employmentTitleName));
         }
 
         contribution.setOrderNumber(orderNumber + 1);

@@ -1,12 +1,10 @@
 package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.document.PersonalTitle;

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -51,5 +52,5 @@ public class BasicPersonDTO implements PersonIdentifierable {
 
     private EmploymentPosition employmentPosition;
 
-    private List<MultilingualContentDTO> displayTitle;
+    private List<MultilingualContentDTO> displayTitle = new ArrayList<>();
 }

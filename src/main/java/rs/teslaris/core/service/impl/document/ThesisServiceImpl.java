@@ -445,9 +445,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             index.setPublisherId(thesis.getPublisher().getId());
         }
 
-        if (!index.getOrganisationUnitIds().contains(thesis.getOrganisationUnit().getId())) {
-            index.getOrganisationUnitIds().add(thesis.getOrganisationUnit().getId());
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
+            if (!index.getOrganisationUnitIds().contains(thesis.getOrganisationUnit().getId())) {
+                index.getOrganisationUnitIds().add(thesis.getOrganisationUnit().getId());
+            }
         }
+
         index.setResearchOutputIds(
             thesisResearchOutputRepository.findResearchOutputIdsForThesis(thesis.getId()));
         index.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());

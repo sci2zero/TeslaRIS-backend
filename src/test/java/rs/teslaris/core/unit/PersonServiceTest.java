@@ -1084,7 +1084,7 @@ public class PersonServiceTest {
             .thenReturn(Optional.of(expectedPerson));
 
         // When
-        Person actualPerson = personService.findPersonByAccountingId(accountingId);
+        var actualPerson = personService.findPersonByAccountingId(accountingId);
 
         // Then
         assertEquals(expectedPerson, actualPerson);

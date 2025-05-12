@@ -65,4 +65,7 @@ public class OrganisationUnit extends BaseEntity {
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> uris = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    private Set<String> accountingIds = new HashSet<>();
 }

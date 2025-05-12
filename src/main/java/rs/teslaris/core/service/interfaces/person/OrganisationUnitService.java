@@ -94,4 +94,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields);
+
+    OrganisationUnit findOrganisationUnitByAccountingId(String accountingId);
 }

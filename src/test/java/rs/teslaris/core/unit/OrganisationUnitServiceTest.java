@@ -897,4 +897,37 @@ public class OrganisationUnitServiceTest {
         assertNotNull(result);
         assertEquals(expectedFields.size(), result.size());
     }
+
+    @Test
+    void shouldReturnOUByAccountingId() {
+        // Given
+        var accountingId = "ACC123";
+        var expectedOU = new OrganisationUnit();
+        expectedOU.setAccountingIds(Set.of(accountingId));
+
+        when(organisationUnitRepository.findApprovedOrganisationUnitByAccountingId(accountingId))
+            .thenReturn(Optional.of(expectedOU));
+
+        // When
+        var actualOU =
+            organisationUnitService.findOrganisationUnitByAccountingId(accountingId);
+
+        // Then
+        assertEquals(expectedOU, actualOU);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenAccountingIdIsNotFound() {
+        // Given
+        var accountingId = "MISSING_ID";
+        when(organisationUnitRepository.findApprovedOrganisationUnitByAccountingId(accountingId))
+            .thenReturn(Optional.empty());
+
+        // When / Then
+        var ex = assertThrows(NotFoundException.class, () ->
+            organisationUnitService.findOrganisationUnitByAccountingId(accountingId)
+        );
+        assertEquals("Organisation unit with accounting ID MISSING_ID does not exist",
+            ex.getMessage());
+    }
 }
