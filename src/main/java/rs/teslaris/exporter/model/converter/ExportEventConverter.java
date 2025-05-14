@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -118,10 +119,11 @@ public class ExportEventConverter extends ExportConverterBase {
             openaireEvent::setCountry
         );
 
+        // TODO: Is specification explicitly asking for one?
         exportEvent.getDescription().stream()
             .min(Comparator.comparingInt(ExportMultilingualContent::getPriority))
-            .map(mc -> new MultilingualContent(mc.getLanguageTag(), mc.getContent())).ifPresent(
-                openaireEvent::setDescription);
+            .map(mc -> List.of(new MultilingualContent(mc.getLanguageTag(), mc.getContent())))
+            .ifPresent(openaireEvent::setDescription);
 
         openaireEvent.setKeywords(new ArrayList<>());
         exportEvent.getKeywords().forEach(mc -> {

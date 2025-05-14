@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -43,75 +44,100 @@ public class PersonContributionConverter {
         for (int i = 0; i < contributors.size(); i++) {
             var contributor = contributors.get(i);
             var contribution = createContribution(contributor, contributionType, i);
-            if (Objects.nonNull(contribution)) {
-                contribution.setIsMainContributor(i == 0);
-                contribution.setIsCorrespondingContributor(false);
-                contribution.setIsBoardPresident(false);
-                contributions.add(contribution);
-            }
+            contribution.setIsMainContributor(i == 0);
+            contribution.setIsCorrespondingContributor(false);
+            contribution.setIsBoardPresident(false);
+            contributions.add(contribution);
         }
     }
 
-    @Nullable
+    @NotNull
     private <T extends PersonAttributes> PersonDocumentContributionDTO createContribution(
         T contributor,
         DocumentContributionType contributionType,
         int orderNumber) {
+
+        var contribution = initializeContribution(contributionType);
+
+        var person = resolvePerson(contributor, contribution);
+
+        setInstitutionInfo(contributor, person, contribution);
+        setPersonNameIfPresent(contributor, contribution);
+
+        contribution.setOrderNumber(orderNumber + 1);
+
+        return contribution;
+    }
+
+    private PersonDocumentContributionDTO initializeContribution(
+        DocumentContributionType contributionType) {
         var contribution = new PersonDocumentContributionDTO();
         contribution.setContributionType(contributionType);
         contribution.setContributionDescription(new ArrayList<>());
         contribution.setDisplayAffiliationStatement(new ArrayList<>());
+        contribution.setInstitutionIds(new ArrayList<>());
+        return contribution;
+    }
 
-        Person person = null;
-
-        if (Objects.nonNull(contributor.getPerson())) {
-            person = personService.findPersonByOldId(
-                OAIPMHParseUtility.parseBISISID(contributor.getPerson().getOldId()));
-            if (Objects.isNull(person)) {
-                log.warn("No saved person with id: . Proceeding with unmanaged contribution." +
-                    contributor.getPerson().getOldId());
-            } else {
-                contribution.setPersonId(person.getId());
-            }
-
-            if (Objects.nonNull(contributor.getPerson().getTitle())) {
-                contribution.setPersonalTitle(
-                    deducePersonalTitleFromName(contributor.getPerson().getTitle()));
-            }
-
-            if (Objects.nonNull(contributor.getPerson().getPositions()) &&
-                !contributor.getPerson().getPositions().isEmpty()) {
-                var employmentTitleName =
-                    contributor.getPerson().getPositions().stream().findFirst().get().getName();
-                contribution.setEmploymentTitle(getEmploymentTitleFromName(employmentTitleName));
-            }
+    @Nullable
+    private <T extends PersonAttributes> Person resolvePerson(T contributor,
+                                                              PersonDocumentContributionDTO contribution) {
+        if (Objects.isNull(contributor.getPerson())) {
+            return null;
         }
 
-        contribution.setInstitutionIds(new ArrayList<>());
-        if (Objects.nonNull(contributor.getAffiliation())) {
-            if (Objects.nonNull(contributor.getAffiliation().getOrgUnit()) &&
-                Objects.nonNull(contributor.getAffiliation().getOrgUnit().getOldId())) {
-                contribution.getInstitutionIds().add(
-                    organisationUnitService.findOrganisationUnitByOldId(
-                        OAIPMHParseUtility.parseBISISID(
-                            contributor.getAffiliation().getOrgUnit().getOldId())).getId());
+        var contributorPerson = contributor.getPerson();
+        var person = personService.findPersonByOldId(
+            OAIPMHParseUtility.parseBISISID(contributorPerson.getOldId()));
+
+        if (Objects.isNull(person)) {
+            log.warn("No saved person with id: {}. Proceeding with unmanaged contribution.",
+                contributorPerson.getOldId());
+        } else {
+            contribution.setPersonId(person.getId());
+        }
+
+        if (Objects.nonNull(contributorPerson.getTitle())) {
+            contribution.setPersonalTitle(
+                deducePersonalTitleFromName(contributorPerson.getTitle()));
+        }
+
+        if (Objects.nonNull(contributorPerson.getPositions()) &&
+            !contributorPerson.getPositions().isEmpty()) {
+            var titleName = contributorPerson.getPositions().getFirst().getName();
+            contribution.setEmploymentTitle(getEmploymentTitleFromName(titleName));
+        }
+
+        return person;
+    }
+
+    private <T extends PersonAttributes> void setInstitutionInfo(
+        T contributor, Person person, PersonDocumentContributionDTO contribution) {
+
+        var affiliation = contributor.getAffiliation();
+        if (Objects.nonNull(affiliation) && Objects.nonNull(affiliation.getOrgUnit())) {
+            var oldId = affiliation.getOrgUnit().getOldId();
+            if (Objects.nonNull(oldId)) {
+                var institutionId = organisationUnitService.findOrganisationUnitByOldId(
+                    OAIPMHParseUtility.parseBISISID(oldId)).getId();
+                contribution.getInstitutionIds().add(institutionId);
             } else {
-                contribution.setDisplayAffiliationStatement(multilingualContentConverter.toDTO(
-                    contributor.getAffiliation().getDisplayName()));
+                contribution.setDisplayAffiliationStatement(
+                    multilingualContentConverter.toDTO(affiliation.getDisplayName()));
             }
         } else if (Objects.nonNull(person)) {
-            contribution.getInstitutionIds()
-                .addAll(personService.findInstitutionIdsForPerson(person.getId()));
+            contribution.getInstitutionIds().addAll(
+                personService.findInstitutionIdsForPerson(person.getId()));
         }
+    }
+
+    private <T extends PersonAttributes> void setPersonNameIfPresent(
+        T contributor, PersonDocumentContributionDTO contribution) {
 
         if (Objects.nonNull(contributor.getDisplayName())) {
             contribution.setPersonName(
                 new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null));
         }
-
-        contribution.setOrderNumber(orderNumber + 1);
-
-        return contribution;
     }
 
     @Nullable

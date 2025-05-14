@@ -4,16 +4,13 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
-import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.importer.dto.DocumentLoadDTO;
 import rs.teslaris.importer.dto.OrganisationUnitLoadDTO;
@@ -22,6 +19,7 @@ import rs.teslaris.importer.dto.PersonLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
+import rs.teslaris.importer.utility.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor
@@ -72,21 +70,8 @@ public abstract class DocumentConverter {
         }
 
         if (Objects.nonNull(record.getKeywords())) {
-            Map<String, List<String>> keywordsByLang = record.getKeywords().stream()
-                .filter(k -> Objects.nonNull(k.getLang()) && Objects.nonNull(k.getValue()))
-                .collect(Collectors.groupingBy(
-                    MultilingualContent::getLang,
-                    Collectors.mapping(MultilingualContent::getValue, Collectors.toList())
-                ));
-
-            var combinedKeywords = keywordsByLang.entrySet().stream()
-                .map(entry -> new MultilingualContent(
-                    entry.getKey(),
-                    String.join("\n", entry.getValue())
-                ))
-                .toList();
-
-            dto.setKeywords(multilingualContentConverter.toDTO(combinedKeywords));
+            dto.setKeywords(multilingualContentConverter.toDTO(
+                OAIPMHParseUtility.groupParsedMultilingualKeywords(record.getKeywords())));
         } else {
             dto.setKeywords(new ArrayList<>());
         }
