@@ -168,19 +168,31 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     private Person resolvePerson(EmploymentMigrationDTO request) {
-        Person person = Objects.nonNull(request.personOldId())
+        var person = Objects.nonNull(request.personOldId())
             ? personService.findPersonByOldId(request.personOldId())
             : personService.findPersonByAccountingId(request.personAccountingId());
+
+        if (Objects.isNull(person)) {
+            throw new NotFoundException(
+                "Unable to find person (oldId: " + request.personOldId() + " | accountingId: " +
+                    request.personAccountingId() + ") when migrating employment.");
+        }
 
         person.getAccountingIds().add(request.personAccountingId());
         return person;
     }
 
     private OrganisationUnit resolveOrganisationUnit(EmploymentMigrationDTO request) {
-        OrganisationUnit unit = Objects.nonNull(request.chairOldId())
+        var unit = Objects.nonNull(request.chairOldId())
             ? organisationUnitService.findOrganisationUnitByOldId(request.chairOldId())
             :
             organisationUnitService.findOrganisationUnitByAccountingId(request.chairAccountingId());
+
+        if (Objects.isNull(unit)) {
+            throw new NotFoundException(
+                "Unable to find OU (oldId: " + request.chairOldId() + " | accountingId: " +
+                    request.chairAccountingId() + ") when migrating employment.");
+        }
 
         unit.getAccountingIds().add(request.chairAccountingId());
         organisationUnitService.save(unit);

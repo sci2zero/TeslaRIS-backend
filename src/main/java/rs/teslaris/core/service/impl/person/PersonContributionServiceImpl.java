@@ -248,7 +248,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contributionDTO.getContributionDescription()));
 
         contribution.setInstitutions(new HashSet<>());
-        if (Objects.nonNull(contributionDTO.getInstitutionIds())) {
+        if (Objects.nonNull(contributionDTO.getInstitutionIds()) &&
+            !contributionDTO.getInstitutionIds().isEmpty()) {
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
                 var organisationUnit = organisationUnitService.findOne(institutionId);
                 contribution.getInstitutions().add(organisationUnit);

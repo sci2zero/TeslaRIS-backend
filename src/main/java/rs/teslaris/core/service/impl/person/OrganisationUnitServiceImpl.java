@@ -508,6 +508,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 OrganisationUnit::getName,
                 OrganisationUnitIndex::setSuperOUNameSr,
                 OrganisationUnitIndex::setSuperOUNameOther);
+
+            indexMultilingualContent(index,
+                organisationUnitsRelation.getTargetOrganisationUnit(),
+                OrganisationUnit::getName,
+                OrganisationUnitIndex::setSuperOUNameSrSortable,
+                OrganisationUnitIndex::setSuperOUNameOtherSortable);
+
             index.setSuperOUId(belongsToRelation.get().getTargetOrganisationUnit().getId());
         });
     }

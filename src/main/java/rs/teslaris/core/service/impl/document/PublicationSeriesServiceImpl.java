@@ -2,12 +2,14 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -111,5 +113,19 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     public boolean isIdentifierInUse(String identifier, Integer publicationSeriesId) {
         return publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId) ||
             publicationSeriesRepository.existsByPrintISSN(identifier, publicationSeriesId);
+    }
+
+    @Override
+    public void reorderPublicationSeriesContributions(Integer publicationSeriesId,
+                                                      Integer contributionId,
+                                                      Integer oldContributionOrderNumber,
+                                                      Integer newContributionOrderNumber) {
+        var publicationSeries = findOne(publicationSeriesId);
+        var contributions = publicationSeries.getContributions().stream()
+            .map(contribution -> (PersonContribution) contribution).collect(
+                Collectors.toSet());
+
+        personContributionService.reorderContributions(contributions, contributionId,
+            oldContributionOrderNumber, newContributionOrderNumber);
     }
 }
