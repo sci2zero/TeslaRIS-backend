@@ -3,6 +3,7 @@ package rs.teslaris.core.configuration;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import org.apache.tika.language.detect.LanguageDetector;
@@ -25,6 +26,10 @@ public class BeanConfiguration {
 
     @Value("${frontend.application.address}")
     private String frontendUrl;
+
+    @Value("${internationalization.message.location}")
+    private String messageSourceBasePackage;
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -76,7 +81,13 @@ public class BeanConfiguration {
     @Bean
     public MessageSource messageSource() {
         var messageSource = new ReloadableResourceBundleMessageSource();
-        messageSource.setBasename("classpath:internationalization/messages");
+
+        if (Objects.nonNull(messageSourceBasePackage) && !messageSourceBasePackage.isBlank()) {
+            messageSource.setBasename("file:" + messageSourceBasePackage);
+        } else {
+            messageSource.setBasename("classpath:internationalization/messages");
+        }
+
         messageSource.setCacheSeconds(60 * 5);
         messageSource.setDefaultEncoding("UTF-8");
         messageSource.setFallbackToSystemLocale(true);
