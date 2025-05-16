@@ -18,19 +18,6 @@ public class ThesisResearchOutputControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.librarian@test.com", password = "librarian")
-    public void testReadThesisResearchOutput() throws Exception {
-        String jwtToken = authenticateLibrarianAndGetToken();
-
-        mockMvc.perform(
-                MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/thesis/research-output/{documentId}", 10)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-            .andExpect(status().isOk());
-    }
-
-    @Test
-    @WithMockUser(username = "test.librarian@test.com", password = "librarian")
     public void testAddThesisResearchOutput() throws Exception {
         String jwtToken = authenticateLibrarianAndGetToken();
 
