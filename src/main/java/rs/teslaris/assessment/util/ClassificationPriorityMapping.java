@@ -108,11 +108,16 @@ public class ClassificationPriorityMapping {
         return Optional.of(documentCode);
     }
 
+    @Nullable
     public static String getImaginaryDocClassificationCodeBasedOnCode(
         String classificationCode, PublicationType publicationType) {
 
         var documentCode =
             assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
+
+        if (Objects.isNull(documentCode)) {
+            return null;
+        }
 
         if (publicationType instanceof JournalPublicationType) {
             if (documentCode.equals("M24") ||
