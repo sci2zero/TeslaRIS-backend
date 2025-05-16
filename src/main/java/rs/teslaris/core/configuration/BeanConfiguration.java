@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +24,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Configuration
+@Slf4j
 public class BeanConfiguration {
 
     @Value("${frontend.application.address}")
@@ -29,6 +32,9 @@ public class BeanConfiguration {
 
     @Value("${internationalization.message.location}")
     private String messageSourceBasePackage;
+
+    @Value("${client.localization.languages}")
+    private String[] clientLocalizationLanguages;
 
 
     @Bean
@@ -82,16 +88,35 @@ public class BeanConfiguration {
     public MessageSource messageSource() {
         var messageSource = new ReloadableResourceBundleMessageSource();
 
-        if (Objects.nonNull(messageSourceBasePackage) && !messageSourceBasePackage.isBlank()) {
-            messageSource.setBasename("file:" + messageSourceBasePackage);
-        } else {
-            messageSource.setBasename("classpath:internationalization/messages");
-        }
-
+        String baseName = resolveValidMessageSourceBaseName();
+        messageSource.setBasename(baseName);
         messageSource.setCacheSeconds(60 * 5);
         messageSource.setDefaultEncoding("UTF-8");
         messageSource.setFallbackToSystemLocale(true);
+
         return messageSource;
+    }
+
+    private String resolveValidMessageSourceBaseName() {
+        var fallback = "classpath:internationalization/messages";
+
+        if (Objects.isNull(messageSourceBasePackage) || messageSourceBasePackage.isBlank()) {
+            log.warn("No messageSourceBasePackage path configured. Falling back to classpath.");
+            return fallback;
+        }
+
+        for (String lang : clientLocalizationLanguages) {
+            var path = messageSourceBasePackage + "_" + lang + ".properties";
+            if (!new FileSystemResource(path).exists()) {
+                log.warn(
+                    "Missing resource bundle for language '{}': '{}'. Falling back to classpath.",
+                    lang, path);
+                return fallback;
+            }
+        }
+
+        log.info("Using messageSourceBasePackage at '{}'.", messageSourceBasePackage);
+        return "file:" + messageSourceBasePackage;
     }
 
     @Bean(name = "taskExecutor")
