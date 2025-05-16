@@ -1,5 +1,9 @@
 package rs.teslaris.core.util.email;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.MessageFormat;
+import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +29,10 @@ public class EmailUtil {
     @Value("${mail.universal-editor.address}")
     private String universalEditorAddress;
 
+    @Value("${mail.system-admin.address}")
+    private String systemAdminAddress;
+
+
     @Async("taskExecutor")
     @Retryable(
         retryFor = {MailException.class},
@@ -43,6 +51,36 @@ public class EmailUtil {
         } catch (MailException e) {
             log.error("Email to user " + to + " cannot be sent, reason: " + e.getMessage());
             return CompletableFuture.completedFuture(false);
+        }
+    }
+
+    @Async("taskExecutor")
+    @Retryable(
+        retryFor = {MailException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 5000)
+    )
+    public void sendUnhandledExceptionEmail(String exceptionId,
+                                            String requestPath,
+                                            Exception ex) {
+        var message = new SimpleMailMessage();
+        message.setFrom(emailAddress);
+        message.setTo(systemAdminAddress);
+        message.setSubject("TeslaRIS - Unhandled Exception Occurred (" + exceptionId + ")");
+
+        var stackTraceWriter = new StringWriter();
+        var stackTracePrinter = new PrintWriter(stackTraceWriter);
+        ex.printStackTrace(stackTracePrinter);
+
+        message.setText(MessageFormat.format(
+            "Unhandled error (ID:{0}) occurred at: {2}.\nMessage: {1}\nRequest path: {3}\n\nFull stack trace:\n{4}",
+            exceptionId, ex.getMessage(), LocalDateTime.now(), requestPath,
+            stackTraceWriter.toString()));
+
+        try {
+            mailSender.send(message);
+        } catch (MailException e) {
+            log.error("(CRITICAL) Unhandled error email cannot be sent, reason: " + e.getMessage());
         }
     }
 

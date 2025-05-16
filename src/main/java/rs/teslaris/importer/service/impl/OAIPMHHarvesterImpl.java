@@ -50,6 +50,7 @@ import rs.teslaris.core.model.oaipmh.person.Person;
 import rs.teslaris.core.model.oaipmh.product.Product;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
+import rs.teslaris.core.util.exceptionhandling.exception.NetworkException;
 import rs.teslaris.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.importer.utility.DataSet;
 import rs.teslaris.importer.utility.HarvestProgressReport;
@@ -126,10 +127,11 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                 }
             } catch (Exception e) {
                 if (restartCount == MAX_RESTART_NUMBER) {
-                    log.error(
+                    var message =
                         "Harvest did not complete because host (" + source.getStringValue() +
-                            ") keeps crashing. Manual restart required.");
-                    return;
+                            ") keeps crashing. Manual restart required.";
+                    log.error(message);
+                    throw new NetworkException(message);
                 }
 
                 restartCount += 1;

@@ -8,14 +8,19 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.StaleStateException;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.SchedulingException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
@@ -33,6 +38,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstra
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NetworkException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
@@ -54,8 +60,13 @@ import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
 
-@ControllerAdvice
+@RestControllerAdvice
+@Slf4j
+@RequiredArgsConstructor
 public class ErrorHandlerConfiguration {
+
+    private final EmailUtil emailUtil;
+
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(BindException.class)
@@ -416,5 +427,31 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleReferenceConstraintException(HttpServletRequest request,
                                                    ReferenceConstraintException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(NetworkException.class)
+    @ResponseBody
+    ErrorObject handleNetworkException(HttpServletRequest request, NetworkException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseBody
+    ErrorObject handleBadCredentialsException(HttpServletRequest request,
+                                              BadCredentialsException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    public ErrorObject handleAllUncaughtExceptions(HttpServletRequest request, Exception ex) {
+        var exceptionId = UUID.randomUUID().toString();
+        log.error("Unhandled exception (ID:{}) occurred: {}, Request path: {}", exceptionId,
+            ex.getMessage(), request.getRequestURI());
+        emailUtil.sendUnhandledExceptionEmail(exceptionId, request.getRequestURI(), ex);
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

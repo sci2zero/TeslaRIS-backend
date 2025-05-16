@@ -45,10 +45,6 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
             !person.getPersonName().getMiddleNames().isBlank()) {
             personName.setOtherName(person.getPersonName().getMiddleNames());
         }
-        if (person.getPersonName().getFirstNames().equals("Goran") &&
-            person.getPersonName().getFamilyNames().equals("Štrbac")) {
-            System.out.println("AAAAAA");
-        }
         // TODO: Are other name variations supported?
 
         if (Objects.nonNull(person.getGender())) {

@@ -1,7 +1,11 @@
 package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -965,49 +969,60 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
                                               Integer institutionId) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.6);
+        return BoolQuery.of(q -> {
+            var mustClauses = new ArrayList<Query>();
 
-        return BoolQuery.of(q -> q
-            .must(mb -> mb.bool(b -> {
-                    tokens.forEach(
-                        token -> {
-                            if (!strict) {
-                                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
-                                    b.must(mp ->
-                                        mp.bool(m -> {
-                                            {
-                                                m.should(sb -> sb.matchPhrase(
-                                                    mq -> mq.field("employments_sr")
-                                                        .query(token.replace("\\\"", ""))));
-                                                m.should(sb -> sb.matchPhrase(
-                                                    mq -> mq.field("employments_other")
-                                                        .query(token.replace("\\\"", ""))));
-                                            }
-                                            return m;
-                                        }));
-                                }
+            for (String token : tokens) {
+                var cleanedToken = token.replace("\\\"", "");
 
-                                b.should(sb -> sb.wildcard(
-                                    m -> m.field("name").value(token + "*").caseInsensitive(true)));
+                var perTokenShould = new ArrayList<Query>();
 
-                                b.should(
-                                    sb -> sb.match(m -> m.field("employments_other").query(token)));
-                                b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
-                                b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
-                            }
+                if (!strict) {
+                    if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                        perTokenShould.add(MatchPhraseQuery.of(
+                            mq -> mq.field("employments_sr").query(cleanedToken))._toQuery());
+                        perTokenShould.add(MatchPhraseQuery.of(
+                            mq -> mq.field("employments_other").query(cleanedToken))._toQuery());
+                    } else {
+                        if (token.endsWith(".")) {
+                            var wildcard = token.replace(".", "") + "?";
+                            perTokenShould.add(WildcardQuery.of(
+                                    m -> m.field("name").value(wildcard).caseInsensitive(true))
+                                ._toQuery());
+                        } else if (token.endsWith("\\*")) {
+                            var wildcard = token.replace("\\*", "") + "*";
+                            perTokenShould.add(
+                                WildcardQuery.of(
+                                        m -> m.field("name").value(wildcard).caseInsensitive(true))
+                                    ._toQuery());
+                        } else {
+                            perTokenShould.add(WildcardQuery.of(
+                                    m -> m.field("name").value(token + "*").caseInsensitive(true))
+                                ._toQuery());
+                        }
 
-                            b.should(sb -> sb.match(m -> m.field("name").query(token)));
-                        });
-
-                    if (Objects.nonNull(institutionId) && institutionId > 0) {
-                        b.must(sb -> sb.term(
-                            m -> m.field("employment_institutions_id_hierarchy").value(institutionId)));
+                        perTokenShould.add(
+                            MatchQuery.of(m -> m.field("employments_other").query(token))
+                                ._toQuery());
+                        perTokenShould.add(
+                            MatchQuery.of(m -> m.field("employments_sr").query(token))._toQuery());
+                        perTokenShould.add(
+                            MatchQuery.of(m -> m.field("keywords").query(token))._toQuery());
                     }
-
-                    return b.minimumShouldMatch(Integer.toString(minShouldMatch));
                 }
-            ))
-        )._toQuery();
+
+                perTokenShould.add(MatchQuery.of(m -> m.field("name").query(token))._toQuery());
+                mustClauses.add(BoolQuery.of(b -> b.should(perTokenShould))._toQuery());
+            }
+
+            if (Objects.nonNull(institutionId) && institutionId > 0) {
+                mustClauses.add(TermQuery.of(
+                        t -> t.field("employment_institutions_id_hierarchy").value(institutionId))
+                    ._toQuery());
+            }
+
+            return q.must(mustClauses);
+        })._toQuery();
     }
 
     private void setAllPersonIdentifiers(Person person, PersonIdentifierable personDTO) {
