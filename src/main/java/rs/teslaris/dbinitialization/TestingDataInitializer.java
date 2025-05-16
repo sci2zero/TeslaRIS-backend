@@ -55,7 +55,9 @@ import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
@@ -876,5 +878,42 @@ public class TestingDataInitializer {
         thesis4.setLanguage(serbianLanguage);
         thesis4.setThesisDefenceDate(LocalDate.of(2025, 3, 31));
         thesisRepository.save(thesis4);
+
+        var yetAnotherJournal = new Journal();
+        yetAnotherJournal.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Yet another journal", 1)));
+        yetAnotherJournal.setNameAbbreviation(
+            Set.of(new MultiLingualContent(englishTag, "ABBBR1", 1)));
+
+        var publicationSeriesContribution = new PersonPublicationSeriesContribution();
+        publicationSeriesContribution.setPerson(person1);
+        publicationSeriesContribution.setContributionType(
+            PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER);
+        publicationSeriesContribution.setDateFrom(LocalDate.of(2020, 1, 12));
+        publicationSeriesContribution.setOrderNumber(1);
+        publicationSeriesContribution.setPublicationSeries(yetAnotherJournal);
+        publicationSeriesContribution.setApproveStatus(ApproveStatus.APPROVED);
+        publicationSeriesContribution.setInstitutions(Set.of(dummyOU));
+        publicationSeriesContribution.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), person1.getName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        yetAnotherJournal.addContribution(publicationSeriesContribution);
+
+        var publicationSeriesContribution2 = new PersonPublicationSeriesContribution();
+        publicationSeriesContribution2.setPerson(person2);
+        publicationSeriesContribution2.setContributionType(
+            PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER);
+        publicationSeriesContribution2.setDateFrom(LocalDate.of(2020, 3, 23));
+        publicationSeriesContribution2.setOrderNumber(2);
+        publicationSeriesContribution2.setPublicationSeries(yetAnotherJournal);
+        publicationSeriesContribution2.setApproveStatus(ApproveStatus.APPROVED);
+        publicationSeriesContribution2.setInstitutions(Set.of(dummyOU));
+        publicationSeriesContribution2.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), person1.getName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        yetAnotherJournal.addContribution(publicationSeriesContribution2);
+        journalRepository.save(yetAnotherJournal);
     }
 }
