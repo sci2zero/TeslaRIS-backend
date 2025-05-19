@@ -3,13 +3,13 @@ package rs.teslaris.assessment.util;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.util.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
@@ -18,23 +18,27 @@ public class ClassificationMappingConfigurationLoader {
     private static ClassificationMappingConfigurationLoader.ClassificationMappingConfiguration
         classificationMappingConfiguration = null;
 
+    private static String externalOverrideConfiguration;
+
+
+    public ClassificationMappingConfigurationLoader(
+        @Value("${assessment.classifications.mapping}") String externalOverrideConfiguration) {
+        ClassificationMappingConfigurationLoader.externalOverrideConfiguration =
+            externalOverrideConfiguration;
+        reloadConfiguration();
+    }
+
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
     private static void reloadConfiguration() {
         try {
-            loadConfiguration();
+            classificationMappingConfiguration = ConfigurationLoaderUtil.loadConfiguration(
+                ClassificationMappingConfigurationLoader.ClassificationMappingConfiguration.class,
+                "src/main/resources/assessment/classificationMappingConfiguration.json",
+                externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
                 "Failed to reload classification mapping configuration: " + e.getMessage());
         }
-    }
-
-    private static synchronized void loadConfiguration() throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        classificationMappingConfiguration = objectMapper.readValue(
-            new FileInputStream(
-                "src/main/resources/assessment/classificationMappingConfiguration.json"),
-            ClassificationMappingConfigurationLoader.ClassificationMappingConfiguration.class
-        );
     }
 
     public static ClassificationMappingConfigurationLoader.ClassificationMapping fetchClassificationMappingConfiguration(
