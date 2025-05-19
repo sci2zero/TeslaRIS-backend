@@ -449,8 +449,9 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     public ErrorObject handleAllUncaughtExceptions(HttpServletRequest request, Exception ex) {
         var exceptionId = UUID.randomUUID().toString();
-        log.error("Unhandled exception (ID:{}) occurred: {}, Request path: {}", exceptionId,
-            ex.getMessage(), request.getRequestURI());
+        log.error("Unhandled exception (ID:{}) occurred: {}, Request path: {}\nStack trace:",
+            exceptionId,
+            ex.getMessage(), request.getRequestURI(), ex);
         emailUtil.sendUnhandledExceptionEmail(exceptionId, request.getRequestURI(), ex);
         return new ErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }

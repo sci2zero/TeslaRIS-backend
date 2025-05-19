@@ -1,5 +1,6 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
+import jakarta.annotation.Nullable;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,7 @@ public class DissertationConverter extends DocumentConverter
     }
 
     @Override
+    @Nullable
     public ThesisDTO toDTO(Publication record) {
         var dto = new ThesisDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
@@ -50,8 +52,17 @@ public class DissertationConverter extends DocumentConverter
         if (Objects.nonNull(publisher)) {
             if (Objects.nonNull(publisher.getOrgUnit()) &&
                 Objects.nonNull(publisher.getOrgUnit().getOldId())) {
-                dto.setOrganisationUnitId(organisationUnitService.findOrganisationUnitByOldId(
-                    OAIPMHParseUtility.parseBISISID(publisher.getOrgUnit().getOldId())).getId());
+                var organisationUnit = organisationUnitService.findOrganisationUnitByOldId(
+                    OAIPMHParseUtility.parseBISISID(publisher.getOrgUnit().getOldId()));
+
+                if (Objects.isNull(organisationUnit)) {
+                    log.error(
+                        "Unable to migrate thesis with ID {}. Because OU with ID {} does not exist.",
+                        record.getOldId(), publisher.getOrgUnit().getOldId());
+                    return null;
+                }
+
+                dto.setOrganisationUnitId(organisationUnit.getId());
             } else {
                 dto.setExternalOrganisationUnitName(
                     multilingualContentConverter.toDTO(publisher.getDisplayName()));

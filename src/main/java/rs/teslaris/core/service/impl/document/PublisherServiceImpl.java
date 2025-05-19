@@ -253,22 +253,44 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
                             }
                             return m;
                         }));
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_other").value(wildcard)))
+                    ));
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_other").value(wildcard)))
+                    ));
+                } else {
+                    var wildcard = token + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_other").value(wildcard)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("name_sr").query(wildcard)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("name_other").query(wildcard)))
+                    ));
                 }
 
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("name_sr").query(token)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("name_other").value("*" + token + "*").caseInsensitive(true)));
+                    m -> m.field("place_sr").query(token).boost(0.7f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("place_sr").query(token)));
+                    m -> m.field("place_other").query(token).boost(0.7f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("place_other").query(token)));
+                    m -> m.field("state_sr").query(token).boost(0.5f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("state_sr").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("state_other").query(token)));
+                    m -> m.field("state_other").query(token).boost(0.5f)));
             });
             return b;
         })))._toQuery();

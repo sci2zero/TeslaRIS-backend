@@ -377,18 +377,45 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                             }
                             return m;
                         }));
-                }
+                } else if (token.contains("\\-") &&
+                    issnPattern.matcher(token.replace("\\-", "-")).matches()) {
+                    String normalizedToken = token.replace("\\-", "-");
 
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("title_sr").value("*" + token + "*").caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("title_sr").query(token)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("title_other").value("*" + token + "*").caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("e_issn").query(token.replace("\\-", "-"))));
-                b.should(sb -> sb.match(
-                    m -> m.field("print_issn").query(token.replace("\\-", "-"))));
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("e_issn").value(normalizedToken)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("print_issn").value(normalizedToken)))
+                    ));
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard)))
+                    ));
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard)))
+                    ));
+                } else {
+                    var wildcard = token + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_sr").query(wildcard)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_other").query(wildcard)))
+                    ));
+                }
             });
             return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();

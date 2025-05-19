@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
@@ -39,6 +40,9 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     protected final EmailUtil emailUtil;
 
     protected final IndexBulkUpdateService indexBulkUpdateService;
+
+    protected final Pattern issnPattern =
+        Pattern.compile("^(\\d{4}-\\d{4}|\\d{4}-\\d{3}[\\dX]?)$", Pattern.CASE_INSENSITIVE);
 
 
     @Override

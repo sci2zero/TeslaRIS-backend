@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -95,6 +96,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final CommissionRepository commissionRepository;
 
     private final SearchFieldsLoader searchFieldsLoader;
+
+    private final Pattern doiPattern =
+        Pattern.compile("\"^10\\\\.\\\\d{4,9}\\\\/[-,._;()/:A-Z0-9]+$\"", Pattern.CASE_INSENSITIVE);
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -750,22 +754,56 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                             mq -> mq.field("title_sr").query(token.replace("\\\"", ""))))
                         .should(sb -> sb.matchPhrase(
                             mq -> mq.field("title_other").query(token.replace("\\\"", ""))))
+                        .should(sb -> sb.matchPhrase(
+                            mq -> mq.field("author_names").query(token.replace("\\\"", ""))))
+                    ));
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    eq.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("author_names").value(wildcard).caseInsensitive(true)))
+                    ));
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    eq.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("author_names").value(wildcard).caseInsensitive(true)))
+                    ));
+                } else {
+                    var wildcard = token + "*";
+                    eq.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_sr").query(wildcard)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_other").query(wildcard)))
+                        .should(sb -> sb.match(mq -> mq.field("author_names").query(token)))
+                        .should(
+                            sb -> sb.wildcard(mq -> mq.field("author_names").value(token + "*")
+                                .caseInsensitive(true)))
                     ));
                 }
 
-                eq.should(sb -> sb.wildcard(
-                        m -> m.field("title_sr").value(token + "*").caseInsensitive(true)))
-                    .should(sb -> sb.match(m -> m.field("title_sr").query(token)))
-                    .should(sb -> sb.wildcard(
-                        m -> m.field("title_other").value(token + "*").caseInsensitive(true)))
-                    .should(sb -> sb.match(m -> m.field("description_sr").query(token)))
-                    .should(sb -> sb.match(m -> m.field("description_other").query(token)))
-                    .should(sb -> sb.wildcard(m -> m.field("keywords_sr").value("*" + token + "*")))
+                eq
+                    .should(sb -> sb.match(m -> m.field("description_sr").query(token).boost(0.7f)))
                     .should(
-                        sb -> sb.wildcard(m -> m.field("keywords_other").value("*" + token + "*")))
-                    .should(sb -> sb.match(m -> m.field("full_text_sr").query(token)))
-                    .should(sb -> sb.match(m -> m.field("full_text_other").query(token)))
-                    .should(sb -> sb.match(m -> m.field("author_names").query(token)))
+                        sb -> sb.match(m -> m.field("description_other").query(token).boost(0.7f)))
+                    .should(sb -> sb.term(m -> m.field("keywords_sr").value(token)))
+                    .should(sb -> sb.term(m -> m.field("keywords_other").value(token)))
+                    .should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
+                    .should(
+                        sb -> sb.match(m -> m.field("full_text_other").query(token).boost(0.7f)))
                     .should(sb -> sb.match(m -> m.field("editor_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("reviewer_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("advisor_names").query(token)))

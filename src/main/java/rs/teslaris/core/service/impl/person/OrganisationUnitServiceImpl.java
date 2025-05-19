@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
@@ -193,7 +194,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
                                          Integer topLevelInstitutionId) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        StringUtil.removeEnglishStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
 
@@ -214,50 +215,50 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                         mq -> mq.field("name_sr").query(cleanedToken))._toQuery());
                     perTokenShould.add(MatchPhraseQuery.of(
                         mq -> mq.field("name_other").query(cleanedToken))._toQuery());
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
+                        ._toQuery());
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_other").value(wildcard).caseInsensitive(true))
+                        ._toQuery());
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
+                        ._toQuery());
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_other").value(wildcard).caseInsensitive(true))
+                        ._toQuery());
                 } else {
-                    if (token.endsWith(".")) {
-                        var wildcard = token.replace(".", "") + "?";
-                        perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
-                            ._toQuery());
-                        perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("name_other").value(wildcard).caseInsensitive(true))
-                            ._toQuery());
-                    } else if (token.endsWith("\\*")) {
-                        var wildcard = token.replace("\\*", "") + "*";
-                        perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
-                            ._toQuery());
-                        perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("name_other").value(wildcard).caseInsensitive(true))
-                            ._toQuery());
-                    } else {
-                        perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("name_sr").value(token + "*").caseInsensitive(true))
-                            ._toQuery());
-                        perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("name_other").value(token + "*").caseInsensitive(true))
-                            ._toQuery());
-                        perTokenShould.add(MatchQuery.of(
-                            m -> m.field("name_sr").query(token))._toQuery());
-                        perTokenShould.add(MatchQuery.of(
-                            m -> m.field("name_other").query(token))._toQuery());
-                    }
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_sr").value(token + "*").caseInsensitive(true))
+                        ._toQuery());
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_other").value(token + "*").caseInsensitive(true))
+                        ._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("name_sr").query(token))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("name_other").query(token))._toQuery());
+                    perTokenShould.add(TermQuery.of(
+                        m -> m.field("keywords_sr").value(token).boost(0.7f))._toQuery());
+                    perTokenShould.add(TermQuery.of(
+                        m -> m.field("keywords_other").value(token).boost(0.7f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("research_areas_sr").query(token).boost(0.5f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                            m -> m.field("research_areas_other").query(token).boost(0.5f))
+                        ._toQuery());
                 }
+
                 b.must(m -> m.bool(bb -> bb.should(perTokenShould)));
 
                 b.should(sb -> sb.match(
-                    m -> m.field("super_ou_name_sr").query(token)));
+                    m -> m.field("super_ou_name_sr").query(token).boost(0.3f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("super_ou_name_other").query(token)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("keywords_sr").value("*" + token + "*").caseInsensitive(true)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("keywords_other").value("*" + token + "*").caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("research_areas_sr").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("research_areas_other").query(token)));
+                    m -> m.field("super_ou_name_other").query(token).boost(0.3f)));
             });
 
             return b;

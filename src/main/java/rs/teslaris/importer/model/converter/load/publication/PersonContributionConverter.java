@@ -118,9 +118,15 @@ public class PersonContributionConverter {
         if (Objects.nonNull(affiliation) && Objects.nonNull(affiliation.getOrgUnit())) {
             var oldId = affiliation.getOrgUnit().getOldId();
             if (Objects.nonNull(oldId)) {
-                var institutionId = organisationUnitService.findOrganisationUnitByOldId(
-                    OAIPMHParseUtility.parseBISISID(oldId)).getId();
-                contribution.getInstitutionIds().add(institutionId);
+                var institution = organisationUnitService.findOrganisationUnitByOldId(
+                    OAIPMHParseUtility.parseBISISID(oldId));
+
+                if (Objects.nonNull(institution)) {
+                    contribution.getInstitutionIds().add(institution.getId());
+                } else {
+                    contribution.setDisplayAffiliationStatement(
+                        multilingualContentConverter.toDTO(affiliation.getDisplayName()));
+                }
             } else {
                 contribution.setDisplayAffiliationStatement(
                     multilingualContentConverter.toDTO(affiliation.getDisplayName()));

@@ -2,13 +2,17 @@ package rs.teslaris.core.service.impl.user;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import com.google.common.cache.Cache;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -797,48 +801,64 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, List<UserRole> allowedRoles) {
-        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            tokens.forEach(token -> {
+        return BoolQuery.of(q -> {
+            var mustClauses = new ArrayList<Query>();
+
+            for (String token : tokens) {
+                var cleanedToken = token.replace("\\\"", "");
+                var perTokenShould = new ArrayList<Query>();
+
                 if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
-                    b.must(mp ->
-                        mp.bool(m -> {
-                            {
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("org_unit_name_sr")
-                                        .query(token.replace("\\\"", ""))));
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("org_unit_name_other")
-                                        .query(token.replace("\\\"", ""))));
-                            }
-                            return m;
-                        }));
+                    perTokenShould.add(MatchPhraseQuery.of(
+                            mq -> mq.field("org_unit_name_sr").query(cleanedToken))
+                        ._toQuery());
+                    perTokenShould.add(MatchPhraseQuery.of(
+                            mq -> mq.field("org_unit_name_other").query(cleanedToken))
+                        ._toQuery());
+                } else {
+                    if (token.endsWith(".")) {
+                        var wildcard = token.replace(".", "") + "?";
+                        perTokenShould.add(WildcardQuery.of(
+                                m -> m.field("full_name").value(wildcard).caseInsensitive(true))
+                            ._toQuery());
+                    } else if (token.endsWith("\\*")) {
+                        var wildcard = token.replace("\\*", "") + "*";
+                        perTokenShould.add(WildcardQuery.of(
+                                m -> m.field("full_name").value(wildcard).caseInsensitive(true))
+                            ._toQuery());
+                    } else {
+                        perTokenShould.add(WildcardQuery.of(
+                                m -> m.field("full_name").value(token + "*").caseInsensitive(true))
+                            ._toQuery());
+                    }
+
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("email").query(token).boost(0.7f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("org_unit_name_sr").query(token).boost(0.5f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("org_unit_name_other").query(token).boost(0.5f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("user_role").query(token))._toQuery());
                 }
 
-                if (Objects.nonNull(allowedRoles) && !allowedRoles.isEmpty()) {
-                    b.must(TermsQuery.of(t -> t
-                        .field("user_role")
-                        .terms(v -> v.value(allowedRoles.stream()
+                mustClauses.add(BoolQuery.of(b -> b.should(perTokenShould))._toQuery());
+            }
+
+            // Add allowedRoles as a filter
+            if (Objects.nonNull(allowedRoles) && !allowedRoles.isEmpty()) {
+                mustClauses.add(TermsQuery.of(t -> t
+                    .field("user_role")
+                    .terms(v -> v.value(
+                        allowedRoles.stream()
                             .map(String::valueOf)
                             .map(FieldValue::of)
                             .toList()))
-                    )._toQuery());
-                }
+                )._toQuery());
+            }
 
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("full_name").value(token).caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("full_name").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("email").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("org_unit_name_sr").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("org_unit_name_other").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("user_role").query(token)));
-            });
-            return b;
-        })))._toQuery();
+            return q.must(mustClauses);
+        })._toQuery();
     }
 
     @Scheduled(cron = "0 */10 * ? * *") // every ten minutes

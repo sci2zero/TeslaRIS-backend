@@ -3,12 +3,28 @@ package rs.teslaris.core.util.search;
 import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
+@Component
 public class StringUtil {
+
+    private static List<String> stopwords;
+
+    @Autowired
+    public StringUtil() throws IOException {
+        StringUtil.stopwords =
+            Files.readAllLines(
+                Paths.get("src/main/resources/configuration/notable_stopwords.txt")
+            );
+    }
 
     public static void removeTrailingDelimiters(StringBuilder contentSr,
                                                 StringBuilder contentOther) {
@@ -107,5 +123,9 @@ public class StringUtil {
             }
         }
         return true;
+    }
+
+    public static void removeEnglishStopwords(List<String> tokens) {
+        tokens.removeAll(stopwords);
     }
 }

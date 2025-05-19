@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.tika.Tika;
@@ -115,6 +116,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final FileService fileService;
 
     private final SearchFieldsLoader searchFieldsLoader;
+
+    private final Pattern orcidRegexPattern =
+        Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
 
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
@@ -984,7 +988,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         perTokenShould.add(MatchPhraseQuery.of(
                             mq -> mq.field("employments_other").query(cleanedToken))._toQuery());
                     } else {
-                        if (token.endsWith(".")) {
+                        if (token.contains("\\-") &&
+                            orcidRegexPattern.matcher(token.replace("\\-", "-")).matches()) {
+                            perTokenShould.add(
+                                TermQuery.of(m -> m.field("orcid").value(token.replace("\\-", "-")))
+                                    ._toQuery());
+                        } else if (token.endsWith(".")) {
                             var wildcard = token.replace(".", "") + "?";
                             perTokenShould.add(WildcardQuery.of(
                                     m -> m.field("name").value(wildcard).caseInsensitive(true))
@@ -1002,12 +1011,15 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         }
 
                         perTokenShould.add(
-                            MatchQuery.of(m -> m.field("employments_other").query(token))
+                            MatchQuery.of(
+                                    m -> m.field("employments_other").query(token).boost(0.5f))
                                 ._toQuery());
                         perTokenShould.add(
-                            MatchQuery.of(m -> m.field("employments_sr").query(token))._toQuery());
+                            MatchQuery.of(m -> m.field("employments_sr").query(token).boost(0.5f))
+                                ._toQuery());
                         perTokenShould.add(
-                            MatchQuery.of(m -> m.field("keywords").query(token))._toQuery());
+                            MatchQuery.of(m -> m.field("keywords").query(token).boost(0.7f))
+                                ._toQuery());
                     }
                 }
 

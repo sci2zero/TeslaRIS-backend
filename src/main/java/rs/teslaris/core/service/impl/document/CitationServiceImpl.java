@@ -39,8 +39,12 @@ public class CitationServiceImpl implements CitationService {
         var itemBuilder = new CSLItemDataBuilder()
             .id("citationId")
             .type(deduceCSLType(index.getType()))
-            .title(index.getTitleSr())
-            .issued(index.getYear());
+            .title(index.getTitleSr());
+
+        if (index.getYear() > 0) {
+            itemBuilder
+                .issued(index.getYear());
+        }
 
         addAuthors(itemBuilder, index.getAuthorNames());
         populatePublicationDetails(itemBuilder, index, languageCode);

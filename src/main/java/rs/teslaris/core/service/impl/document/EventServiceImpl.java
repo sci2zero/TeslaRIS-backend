@@ -314,34 +314,53 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                     }
                                     return m;
                                 }));
+                        } else if (token.endsWith(".")) {
+                            var wildcard = token.replace(".", "") + "?";
+                            eq.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_sr").value(wildcard)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_other").value(wildcard)))
+                            ));
+                        } else if (token.endsWith("\\*")) {
+                            var wildcard = token.replace("\\*", "") + "*";
+                            eq.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_sr").value(wildcard)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_other").value(wildcard)))
+                            ));
+                        } else {
+                            var wildcard = token + "*";
+                            eq.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_sr").value(wildcard)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_other").value(wildcard)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("name_sr").query(wildcard)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("name_other").query(wildcard)))
+                            ));
                         }
 
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("name_sr").value("*" + token + "*")
-                                .caseInsensitive(true)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("name_sr").query(token)));
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("name_other").value("*" + token + "*")
-                                .caseInsensitive(true)));
+                            m -> m.field("description_sr").query(token).boost(0.7f)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("name_other").query(token)));
+                            m -> m.field("description_other").query(token).boost(0.7f)));
+                        eq.should(sb -> sb.term(
+                            m -> m.field("keywords_sr").value(token)));
+                        eq.should(sb -> sb.term(
+                            m -> m.field("keywords_other").value(token)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("description_sr").query(token)));
+                            m -> m.field("state_sr").query(token).boost(0.7f)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("description_other").query(token)));
+                            m -> m.field("state_other").query(token).boost(0.7f)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("keywords_sr").query(token)));
+                            m -> m.field("place_sr").query(token).boost(0.5f)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("keywords_other").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("state_sr").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("state_other").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("place_sr").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("place_other").query(token)));
+                            m -> m.field("place_other").query(token).boost(0.5f)));
+
                         eq.should(sb -> sb.wildcard(
                             m -> m.field("date_from_to").value("*" + token + "*")));
                     });
