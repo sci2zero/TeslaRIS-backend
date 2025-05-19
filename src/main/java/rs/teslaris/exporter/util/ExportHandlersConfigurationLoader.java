@@ -1,15 +1,15 @@
 package rs.teslaris.exporter.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.util.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
@@ -17,22 +17,27 @@ public class ExportHandlersConfigurationLoader {
 
     private static ExportHandlersConfiguration exportHandlersConfiguration = null;
 
+    private static String externalOverrideConfiguration;
+
+
+    public ExportHandlersConfigurationLoader(
+        @Value("${export.handler.configuration}") String externalOverrideConfiguration) {
+        ExportHandlersConfigurationLoader.externalOverrideConfiguration =
+            externalOverrideConfiguration;
+        reloadConfiguration();
+    }
+
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
     private static void reloadConfiguration() {
         try {
-            loadConfiguration();
+            exportHandlersConfiguration = ConfigurationLoaderUtil.loadConfiguration(
+                ExportHandlersConfiguration.class,
+                "src/main/resources/export/exportHandlersConfiguration.json",
+                externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
                 "Failed to reload export handler configuration: " + e.getMessage());
         }
-    }
-
-    private static synchronized void loadConfiguration() throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        exportHandlersConfiguration = objectMapper.readValue(
-            new FileInputStream("src/main/resources/export/exportHandlersConfiguration.json"),
-            ExportHandlersConfiguration.class
-        );
     }
 
     public static Optional<Handler> getHandlerByIdentifier(String identifier) {
