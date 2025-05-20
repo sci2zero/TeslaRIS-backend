@@ -1,4 +1,4 @@
-package rs.teslaris.assessment.model;
+package rs.teslaris.core.model.institution;
 
 public enum ResultCalculationMethod {
     BEST_VALUE,

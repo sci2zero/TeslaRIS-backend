@@ -51,7 +51,7 @@ import rs.teslaris.core.model.oaipmh.patent.PatentConvertable;
 import rs.teslaris.core.model.oaipmh.person.PersonConvertable;
 import rs.teslaris.core.model.oaipmh.product.ProductConvertable;
 import rs.teslaris.core.model.oaipmh.publication.PublicationConvertable;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;

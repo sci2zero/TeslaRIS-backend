@@ -1,4 +1,4 @@
-package rs.teslaris.assessment.model;
+package rs.teslaris.core.model.institution;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

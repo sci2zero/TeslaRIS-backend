@@ -10,13 +10,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,15 +38,19 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
@@ -54,15 +62,16 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -70,6 +79,8 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.ImageUtil;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
@@ -112,6 +123,9 @@ public class OrganisationUnitServiceTest {
 
     @Mock
     private SearchFieldsLoader searchFieldsLoader;
+
+    @Mock
+    private FileService fileService;
 
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
@@ -929,5 +943,131 @@ public class OrganisationUnitServiceTest {
         );
         assertEquals("Organisation unit with accounting ID MISSING_ID does not exist",
             ex.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionForInvalidMimeType() {
+        // given
+        var organisationUnitId = 1;
+        var mockFile = createMockMultipartFile();
+
+        try (MockedStatic<ImageUtil> mockedStatic = mockStatic(ImageUtil.class)) {
+            mockedStatic.when(() -> ImageUtil.isMIMETypeInvalid(mockFile, true)).thenReturn(true);
+
+            // when / then
+            assertThrows(IllegalArgumentException.class, () ->
+                organisationUnitService.setOrganisationUnitLogo(
+                    organisationUnitId,
+                    new ProfilePhotoOrLogoDTO(1, 2, 3, 4, "#ffffff", mockFile)
+                )
+            );
+
+            verifyNoInteractions(fileService);
+        }
+    }
+
+    @Test
+    void shouldDeleteOldFileWhenReplacingLogo() throws IOException {
+        // given
+        var organisationUnitId = 1;
+        var mockFile = createMockMultipartFile();
+        var existingLogo = new ProfilePhotoOrLogo();
+        existingLogo.setImageServerName("oldFile.jpg");
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setLogo(existingLogo);
+
+        try (MockedStatic<ImageUtil> mockedStatic = mockStatic(ImageUtil.class)) {
+            mockedStatic.when(
+                () -> ImageUtil.isMIMETypeInvalid(mockFile, true)).thenReturn(false);
+
+            when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+                organisationUnitId)).thenReturn(
+                Optional.of(organisationUnit));
+            when(fileService.store(any(), anyString())).thenReturn("newFile.jpg");
+
+            // when
+            organisationUnitService.setOrganisationUnitLogo(organisationUnitId,
+                new ProfilePhotoOrLogoDTO(1, 2, 3, 4, "#ffffff", mockFile));
+
+            // then
+            verify(fileService).delete("oldFile.jpg");
+            verify(fileService).store(eq(mockFile), anyString());
+            verify(organisationUnitRepository).save(organisationUnit);
+            assertEquals("newFile.jpg", organisationUnit.getLogo().getImageServerName());
+        }
+    }
+
+    @Test
+    void shouldSetLogoWhenNoneExists() throws IOException {
+        // given
+        var organisationUnitId = 1;
+        var mockFile = createMockMultipartFile();
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setLogo(null);
+
+        try (MockedStatic<ImageUtil> mockedStatic = mockStatic(ImageUtil.class)) {
+            mockedStatic.when(() -> ImageUtil.isMIMETypeInvalid(mockFile, true)).thenReturn(false);
+
+            when(organisationUnitRepository
+                .findByIdWithLangDataAndResearchArea(organisationUnitId)).thenReturn(
+                Optional.of(organisationUnit));
+            when(fileService.store(any(), anyString())).thenReturn("file123.jpg");
+
+            // when
+            organisationUnitService.setOrganisationUnitLogo(organisationUnitId,
+                new ProfilePhotoOrLogoDTO(10, 20, 30, 40, "#123456", mockFile));
+
+            // then
+            verify(fileService).store(eq(mockFile), anyString());
+            verify(organisationUnitRepository).save(organisationUnit);
+
+            var logo = organisationUnit.getLogo();
+            assertNotNull(logo);
+            assertEquals(20, logo.getTopOffset());
+            assertEquals(10, logo.getLeftOffset());
+            assertEquals(40, logo.getHeight());
+            assertEquals(30, logo.getWidth());
+            assertEquals("#123456", logo.getBackgroundHex());
+            assertEquals("file123.jpg", logo.getImageServerName());
+        }
+    }
+
+    @Test
+    void shouldRemoveLogoAndResetFields() {
+        // given
+        var organisationUnitId = 1;
+        var logo = new ProfilePhotoOrLogo();
+        logo.setImageServerName("logo.jpg");
+        logo.setTopOffset(1);
+        logo.setLeftOffset(2);
+        logo.setHeight(3);
+        logo.setWidth(4);
+        logo.setBackgroundHex("#fff");
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setLogo(logo);
+
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            organisationUnitId)).thenReturn(Optional.of(organisationUnit));
+
+        // when
+        organisationUnitService.removeOrganisationUnitLogo(organisationUnitId);
+
+        // then
+        verify(fileService).delete("logo.jpg");
+        verify(organisationUnitRepository).save(organisationUnit);
+
+        assertNull(logo.getImageServerName());
+        assertNull(logo.getTopOffset());
+        assertNull(logo.getLeftOffset());
+        assertNull(logo.getHeight());
+        assertNull(logo.getWidth());
+        assertNull(logo.getBackgroundHex());
+    }
+
+    private MultipartFile createMockMultipartFile() {
+        return new MockMultipartFile("file", "test.jpg", "image/jpeg", new byte[] {1, 2, 3});
     }
 }

@@ -64,7 +64,7 @@ public class PersonConverter {
                     person.getPersonalInfo().getDisplayTitle())), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
             expertisesOrSkills, prizes, Objects.nonNull(person.getProfilePhoto()) ?
-            person.getProfilePhoto().getProfileImageServerName() : null);
+            person.getProfilePhoto().getImageServerName() : null);
 
         filterSensitiveData(personResponse);
 

@@ -29,7 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -48,6 +48,7 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -72,6 +73,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Primary
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     implements DocumentPublicationService {
 

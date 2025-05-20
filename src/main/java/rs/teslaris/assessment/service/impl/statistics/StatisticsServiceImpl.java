@@ -15,6 +15,7 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.janino.ExpressionEvaluator;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,17 +45,19 @@ import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.SessionUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class StatisticsServiceImpl implements StatisticsService {
+public class StatisticsServiceImpl implements StatisticsService, DocumentDownloadTracker {
 
     private final StatisticsIndexRepository statisticsIndexRepository;
 

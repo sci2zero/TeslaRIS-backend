@@ -1,4 +1,4 @@
-package rs.teslaris.core.repository.person;
+package rs.teslaris.core.repository.institution;
 
 import java.util.List;
 import java.util.Optional;

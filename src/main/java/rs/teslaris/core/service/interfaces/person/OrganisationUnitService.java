@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.person;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -96,4 +98,9 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
         Boolean onlyExportFields);
 
     OrganisationUnit findOrganisationUnitByAccountingId(String accountingId);
+
+    String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
+        throws IOException;
+
+    void removeOrganisationUnitLogo(Integer organisationUnitId);
 }

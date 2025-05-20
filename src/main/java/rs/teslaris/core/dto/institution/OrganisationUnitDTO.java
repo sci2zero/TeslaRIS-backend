@@ -35,4 +35,10 @@ public class OrganisationUnitDTO {
     private ContactDTO contact;
 
     private Set<String> uris;
+
+    // Only for responses
+
+    private String logoServerFilename;
+
+    private String logoBackgroundHex;
 }

@@ -53,22 +53,6 @@ public class MergeController {
         mergeService.switchAllPublicationsToOtherJournal(sourceJournalId, targetJournalId);
     }
 
-    @PatchMapping("/journal-indicator/source/{sourceJournalId}/target/{targetJournalId}")
-    @PreAuthorize("hasAuthority('MERGE_JOURNAL_PUBLICATIONS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllIndicatorsToOtherJournal(@PathVariable Integer sourceJournalId,
-                                                  @PathVariable Integer targetJournalId) {
-        mergeService.switchAllIndicatorsToOtherJournal(sourceJournalId, targetJournalId);
-    }
-
-    @PatchMapping("/journal-classification/source/{sourceJournalId}/target/{targetJournalId}")
-    @PreAuthorize("hasAuthority('MERGE_JOURNAL_PUBLICATIONS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllClassificationsToOtherJournal(@PathVariable Integer sourceJournalId,
-                                                       @PathVariable Integer targetJournalId) {
-        mergeService.switchAllClassificationsToOtherJournal(sourceJournalId, targetJournalId);
-    }
-
     @PatchMapping("/publisher/{targetPublisherId}/publication/{publicationId}")
     @PreAuthorize("hasAuthority('MERGE_PUBLISHER_PUBLICATIONS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -161,22 +145,6 @@ public class MergeController {
     public void switchAllProceedingsToOtherConference(@PathVariable Integer sourceConferenceId,
                                                       @PathVariable Integer targetConferenceId) {
         mergeService.switchAllProceedingsToOtherConference(sourceConferenceId, targetConferenceId);
-    }
-
-    @PatchMapping("/conference-indicator/source/{sourceConferenceId}/target/{targetConferenceId}")
-    @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllIndicatorsToOtherEvent(@PathVariable Integer sourceConferenceId,
-                                                @PathVariable Integer targetConferenceId) {
-        mergeService.switchAllIndicatorsToOtherEvent(sourceConferenceId, targetConferenceId);
-    }
-
-    @PatchMapping("/conference-classification/source/{sourceConferenceId}/target/{targetConferenceId}")
-    @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllClassificationsToOtherEvent(@PathVariable Integer sourceConferenceId,
-                                                     @PathVariable Integer targetConferenceId) {
-        mergeService.switchAllClassificationsToOtherEvent(sourceConferenceId, targetConferenceId);
     }
 
     @PatchMapping("/proceedings/{targetProceedingsId}/publication/{publicationId}")

@@ -9,11 +9,13 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -32,6 +34,7 @@ import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitGraphRelationDTO;
@@ -44,13 +47,14 @@ import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -58,8 +62,10 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.ImageUtil;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
@@ -100,6 +106,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final InvolvementRepository involvementRepository;
 
     private final SearchFieldsLoader searchFieldsLoader;
+
+    private final FileService fileService;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -482,6 +490,58 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             .orElseThrow(
                 () -> new NotFoundException(
                     "Organisation unit with accounting ID " + accountingId + " does not exist"));
+    }
+
+    @Override
+    public String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
+        throws IOException {
+        if (ImageUtil.isMIMETypeInvalid(logoDTO.getFile(), true)) {
+            throw new IllegalArgumentException("mimeTypeValidationFailed");
+        }
+
+        var organisationUnit = findOne(organisationUnitId);
+
+        if (Objects.nonNull(organisationUnit.getLogo()) &&
+            Objects.nonNull(organisationUnit.getLogo().getImageServerName()) &&
+            !logoDTO.getFile().isEmpty()) {
+            fileService.delete(organisationUnit.getLogo().getImageServerName());
+        } else if (Objects.isNull(organisationUnit.getLogo())) {
+            organisationUnit.setLogo(new ProfilePhotoOrLogo());
+        }
+
+        organisationUnit.getLogo().setTopOffset(logoDTO.getTop());
+        organisationUnit.getLogo().setLeftOffset(logoDTO.getLeft());
+        organisationUnit.getLogo().setHeight(logoDTO.getHeight());
+        organisationUnit.getLogo().setWidth(logoDTO.getWidth());
+        organisationUnit.getLogo().setBackgroundHex(logoDTO.getBackgroundHex().trim());
+
+        var serverFilename = organisationUnit.getLogo().getImageServerName();
+        if (!logoDTO.getFile().isEmpty()) {
+            serverFilename =
+                fileService.store(logoDTO.getFile(), UUID.randomUUID().toString());
+            organisationUnit.getLogo().setImageServerName(serverFilename);
+        }
+
+        save(organisationUnit);
+        return serverFilename;
+    }
+
+    @Override
+    public void removeOrganisationUnitLogo(Integer organisationUnitId) {
+        var organisationUnit = findOne(organisationUnitId);
+
+        if (Objects.nonNull(organisationUnit.getLogo()) &&
+            Objects.nonNull(organisationUnit.getLogo().getImageServerName())) {
+            fileService.delete(organisationUnit.getLogo().getImageServerName());
+            organisationUnit.getLogo().setImageServerName(null);
+            organisationUnit.getLogo().setTopOffset(null);
+            organisationUnit.getLogo().setLeftOffset(null);
+            organisationUnit.getLogo().setHeight(null);
+            organisationUnit.getLogo().setWidth(null);
+            organisationUnit.getLogo().setBackgroundHex(null);
+        }
+
+        save(organisationUnit);
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,

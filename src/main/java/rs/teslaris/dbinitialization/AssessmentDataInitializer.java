@@ -11,20 +11,20 @@ import rs.teslaris.assessment.model.ApplicableEntityType;
 import rs.teslaris.assessment.model.AssessmentClassification;
 import rs.teslaris.assessment.model.AssessmentMeasure;
 import rs.teslaris.assessment.model.AssessmentRulebook;
-import rs.teslaris.assessment.model.Commission;
-import rs.teslaris.assessment.model.CommissionRelation;
 import rs.teslaris.assessment.model.Indicator;
 import rs.teslaris.assessment.model.IndicatorContentType;
-import rs.teslaris.assessment.model.ResultCalculationMethod;
 import rs.teslaris.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.AssessmentMeasureRepository;
 import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.assessment.repository.CommissionRelationRepository;
-import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.assessment.repository.IndicatorRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.Commission;
+import rs.teslaris.core.model.institution.CommissionRelation;
+import rs.teslaris.core.model.institution.ResultCalculationMethod;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.util.Pair;
 
 @Component

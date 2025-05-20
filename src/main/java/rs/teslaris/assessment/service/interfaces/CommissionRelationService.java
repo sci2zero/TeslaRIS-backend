@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.CommissionRelationDTO;
 import rs.teslaris.assessment.dto.CommissionRelationResponseDTO;
 import rs.teslaris.assessment.dto.ReorderCommissionRelationDTO;
-import rs.teslaris.assessment.model.CommissionRelation;
+import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service

@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.person.Person;
 
 @Getter

@@ -23,6 +23,7 @@ import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 
 @Getter
 @Setter
@@ -68,4 +69,7 @@ public class OrganisationUnit extends BaseEntity {
 
     @ElementCollection(fetch = FetchType.LAZY)
     private Set<String> accountingIds = new HashSet<>();
+
+    @Embedded
+    private ProfilePhotoOrLogo logo;
 }

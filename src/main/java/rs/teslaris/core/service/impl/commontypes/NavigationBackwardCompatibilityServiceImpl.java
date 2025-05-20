@@ -18,7 +18,7 @@ import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NavigationBackwardCompatibilityService;
 import rs.teslaris.core.util.Pair;

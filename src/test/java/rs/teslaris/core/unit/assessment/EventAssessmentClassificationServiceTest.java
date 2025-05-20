@@ -14,15 +14,15 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.assessment.dto.EventAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.AssessmentClassification;
-import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.assessment.model.EventAssessmentClassification;
-import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.assessment.repository.EventAssessmentClassificationRepository;
 import rs.teslaris.assessment.service.impl.EventAssessmentClassificationServiceImpl;
 import rs.teslaris.assessment.service.impl.cruddelegate.EventAssessmentClassificationJPAServiceImpl;
 import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.institution.Commission;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 

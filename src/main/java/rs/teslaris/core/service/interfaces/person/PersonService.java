@@ -14,7 +14,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
-import rs.teslaris.core.dto.person.ProfilePhotoDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.model.person.Involvement;
@@ -96,7 +96,7 @@ public interface PersonService extends JPAService<Person> {
 
     void switchToUnmanagedEntity(Integer personId);
 
-    String setPersonProfileImage(Integer personId, ProfilePhotoDTO profilePhotoDTO)
+    String setPersonProfileImage(Integer personId, ProfilePhotoOrLogoDTO profilePhotoDTO)
         throws IOException;
 
     void removePersonProfileImage(Integer personId);

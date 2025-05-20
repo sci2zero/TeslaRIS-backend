@@ -4,7 +4,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import rs.teslaris.assessment.model.CommissionRelation;
+import rs.teslaris.core.model.institution.CommissionRelation;
 
 @Repository
 public interface CommissionRelationRepository extends JpaRepository<CommissionRelation, Integer> {

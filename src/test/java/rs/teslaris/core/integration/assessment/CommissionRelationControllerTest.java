@@ -16,8 +16,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.assessment.dto.CommissionRelationDTO;
 import rs.teslaris.assessment.dto.ReorderCommissionRelationDTO;
-import rs.teslaris.assessment.model.ResultCalculationMethod;
 import rs.teslaris.core.integration.BaseTest;
+import rs.teslaris.core.model.institution.ResultCalculationMethod;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

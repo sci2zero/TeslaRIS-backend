@@ -44,8 +44,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.assessment.model.Commission;
-import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
@@ -58,6 +56,7 @@ import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -70,6 +69,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
@@ -141,7 +141,7 @@ public class UserServiceTest {
     private MessageSource messageSource;
 
     @Mock
-    private CommissionService commissionService;
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -444,7 +444,7 @@ public class UserServiceTest {
                 "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
-        when(commissionService.findOne(1)).thenReturn(new Commission());
+        when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
 
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,

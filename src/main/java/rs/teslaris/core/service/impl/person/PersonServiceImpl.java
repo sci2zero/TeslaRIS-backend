@@ -23,7 +23,6 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,7 +31,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -43,7 +41,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
-import rs.teslaris.core.dto.person.ProfilePhotoDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -61,7 +59,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
-import rs.teslaris.core.model.person.ProfilePhoto;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -76,6 +74,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.ImageUtil;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
@@ -123,30 +122,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
 
-
-    private static boolean validateImageMIMEType(MultipartFile multipartFile) throws IOException {
-        if (multipartFile.isEmpty()) {
-            return true;
-        }
-
-        var validMimeTypes = List.of("image/jpeg", "image/png");
-
-        String contentType = multipartFile.getContentType();
-        if (!validMimeTypes.contains(contentType)) {
-            return false;
-        }
-
-        String originalFilename = multipartFile.getOriginalFilename();
-        if (originalFilename == null ||
-            !(originalFilename.endsWith(".jpg") || originalFilename.endsWith(".jpeg") ||
-                originalFilename.endsWith(".png"))) {
-            return false;
-        }
-
-        var tika = new Tika();
-        String detectedType = tika.detect(multipartFile.getInputStream());
-        return validMimeTypes.contains(detectedType);
-    }
 
     @Override
     protected JpaRepository<Person, Integer> getEntityRepository() {
@@ -548,9 +523,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var person = findOne(personId);
 
         if (Objects.nonNull(person.getProfilePhoto()) &&
-            Objects.nonNull(person.getProfilePhoto().getProfileImageServerName())) {
-            fileService.delete(person.getProfilePhoto().getProfileImageServerName());
-            person.getProfilePhoto().setProfileImageServerName(null);
+            Objects.nonNull(person.getProfilePhoto().getImageServerName())) {
+            fileService.delete(person.getProfilePhoto().getImageServerName());
+            person.getProfilePhoto().setImageServerName(null);
             person.getProfilePhoto().setTopOffset(null);
             person.getProfilePhoto().setLeftOffset(null);
             person.getProfilePhoto().setHeight(null);
@@ -561,20 +536,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public String setPersonProfileImage(Integer personId, ProfilePhotoDTO profilePhotoDTO)
+    public String setPersonProfileImage(Integer personId, ProfilePhotoOrLogoDTO profilePhotoDTO)
         throws IOException {
-        if (!validateImageMIMEType(profilePhotoDTO.getFile())) {
+        if (ImageUtil.isMIMETypeInvalid(profilePhotoDTO.getFile(), false)) {
             throw new IllegalArgumentException("mimeTypeValidationFailed");
         }
 
         var person = findOne(personId);
 
         if (Objects.nonNull(person.getProfilePhoto()) &&
-            Objects.nonNull(person.getProfilePhoto().getProfileImageServerName()) &&
+            Objects.nonNull(person.getProfilePhoto().getImageServerName()) &&
             !profilePhotoDTO.getFile().isEmpty()) {
-            fileService.delete(person.getProfilePhoto().getProfileImageServerName());
+            fileService.delete(person.getProfilePhoto().getImageServerName());
         } else if (Objects.isNull(person.getProfilePhoto())) {
-            person.setProfilePhoto(new ProfilePhoto());
+            person.setProfilePhoto(new ProfilePhotoOrLogo());
         }
 
         person.getProfilePhoto().setTopOffset(profilePhotoDTO.getTop());
@@ -582,11 +557,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         person.getProfilePhoto().setHeight(profilePhotoDTO.getHeight());
         person.getProfilePhoto().setWidth(profilePhotoDTO.getWidth());
 
-        var serverFilename = person.getProfilePhoto().getProfileImageServerName();
+        var serverFilename = person.getProfilePhoto().getImageServerName();
         if (!profilePhotoDTO.getFile().isEmpty()) {
             serverFilename =
                 fileService.store(profilePhotoDTO.getFile(), UUID.randomUUID().toString());
-            person.getProfilePhoto().setProfileImageServerName(serverFilename);
+            person.getProfilePhoto().setImageServerName(serverFilename);
         }
 
         save(person);
