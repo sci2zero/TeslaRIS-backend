@@ -411,9 +411,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard)))
                         .should(sb -> sb.match(
-                            mq -> mq.field("title_sr").query(wildcard)))
+                            mq -> mq.field("title_sr").query(token)))
                         .should(sb -> sb.match(
-                            mq -> mq.field("title_other").query(wildcard)))
+                            mq -> mq.field("title_other").query(token)))
                     ));
                 }
             });

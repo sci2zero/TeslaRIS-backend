@@ -35,7 +35,8 @@ public class TracingAspect {
 
         MDC.put("session", trackingCookieValue); // enrich log context
 
-        log.info("TRACING - {} - CLASS: {} - CALLED: {} - ARGS: {}", trackingCookieValue, className,
+        log.debug("TRACING - {} - CLASS: {} - CALLED: {} - ARGS: {}", trackingCookieValue,
+            className,
             method, args);
 
         long start = System.currentTimeMillis();
@@ -43,18 +44,17 @@ public class TracingAspect {
             var result = joinPoint.proceed();
             long duration = System.currentTimeMillis() - start;
 
-            log.info(
+            log.debug(
                 "TRACING - {} - CLASS: {} - RETURNED: {} - RETURN TYPE: {} - TOOK: {} ms - RESULT: {}",
                 trackingCookieValue, className, method, returnType, duration, result);
             return result;
         } catch (Throwable t) {
             long duration = System.currentTimeMillis() - start;
-            log.warn("TRACING - {} - CLASS: {} - EXCEPTION IN: {} - ARGS: {} - TOOK: {} ms",
+            log.debug("TRACING - {} - CLASS: {} - EXCEPTION IN: {} - ARGS: {} - TOOK: {} ms",
                 trackingCookieValue, className, method, args, duration, t);
             throw t;
         } finally {
             MDC.remove("session"); // Clean up to avoid context leak
         }
     }
-
 }

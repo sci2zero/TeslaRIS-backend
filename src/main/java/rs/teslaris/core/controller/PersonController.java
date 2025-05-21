@@ -26,12 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
-import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -237,8 +237,9 @@ public class PersonController {
     @PreAuthorize("hasAuthority('EDIT_PERSON_INFORMATION')")
     @ResponseStatus(HttpStatus.OK)
     @PersonEditCheck
-    public String updatePersonProfileImage(@ModelAttribute @Valid ProfilePhotoOrLogoDTO profilePhotoDTO,
-                                           @PathVariable Integer personId) throws IOException {
+    public String updatePersonProfileImage(
+        @ModelAttribute @Valid ProfilePhotoOrLogoDTO profilePhotoDTO,
+        @PathVariable Integer personId) throws IOException {
         return personService.setPersonProfileImage(personId, profilePhotoDTO);
     }
 
