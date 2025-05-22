@@ -44,9 +44,10 @@ public class MonographController {
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
         @RequestParam("tokens")
-        @NotNull(message = "You have to provide a valid search input.") List<String> tokens) {
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "onlyBooks", required = false) Boolean onlyBooks) {
         StringUtil.sanitizeTokens(tokens);
-        return monographService.searchMonographs(tokens);
+        return monographService.searchMonographs(tokens, onlyBooks);
     }
 
     @PostMapping

@@ -104,6 +104,7 @@ public class SoftwareServiceTest {
     public void shouldCreateSoftware() {
         // Given
         var dto = new SoftwareDTO();
+        dto.setDocumentDate("2020-03-02");
         var software = new Software();
         software.setId(1);
         software.setInternalNumber("123");

@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
+import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
@@ -105,6 +106,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     "You have to provide start and end dates for a non-serial event.");
             }
 
+            if (eventDTO.getDateTo().isBefore(eventDTO.getDateFrom())) {
+                throw new ValidationException("End date cannot be before start date.");
+            }
             event.setDateFrom(eventDTO.getDateFrom());
             event.setDateTo(eventDTO.getDateTo());
         }

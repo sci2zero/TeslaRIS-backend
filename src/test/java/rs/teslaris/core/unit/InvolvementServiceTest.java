@@ -345,19 +345,50 @@ public class InvolvementServiceTest {
     public void shouldGetEmploymentsWhenValidPersonProvided() {
         // given
         var personId = 1;
-        var employment1 = new Employment();
-        employment1.setOrganisationUnit(new OrganisationUnit());
-        var employment2 = new Employment();
-        employment2.setOrganisationUnit(new OrganisationUnit());
 
-        when(employmentRepository.findByPersonInvolvedId(personId)).thenReturn(
-            List.of(employment1, employment2));
+        var organisationUnit1 = new OrganisationUnit();
+        organisationUnit1.setId(100);
+        organisationUnit1.setName(new HashSet<>());
+
+        var organisationUnit2 = new OrganisationUnit();
+        organisationUnit2.setId(200);
+        organisationUnit2.setName(new HashSet<>());
+
+        var employment1 = new Employment();
+        employment1.setOrganisationUnit(organisationUnit1);
+
+        var employment2 = new Employment();
+        employment2.setOrganisationUnit(organisationUnit2);
+
+        when(employmentRepository.findByPersonInvolvedId(personId))
+            .thenReturn(List.of(employment1, employment2));
+        when(organisationUnitService.getSuperOUsHierarchyRecursive(100))
+            .thenReturn(List.of(1001, 1002));
+        when(organisationUnitService.getSuperOUsHierarchyRecursive(200))
+            .thenReturn(List.of(2001));
+
+        var superOu1 = new OrganisationUnit();
+        superOu1.setId(1001);
+        superOu1.setName(new HashSet<>());
+        var superOu2 = new OrganisationUnit();
+        superOu2.setId(1002);
+        superOu2.setName(new HashSet<>());
+        var superOu3 = new OrganisationUnit();
+        superOu3.setId(2001);
+        superOu3.setName(new HashSet<>());
+
+        when(organisationUnitService.findOne(1001)).thenReturn(superOu1);
+        when(organisationUnitService.findOne(1002)).thenReturn(superOu2);
+        when(organisationUnitService.findOne(2001)).thenReturn(superOu3);
 
         // when
-        var result = involvementService.getEmploymentsForPerson(personId);
+        var result = involvementService.getDirectAndIndirectEmploymentsForPerson(personId);
 
         // then
-        assertEquals(2, result.size());
+        assertEquals(5, result.size());
+        assertTrue(result.stream().anyMatch(dto -> dto.getOrganisationUnitId().equals(1001)));
+        assertTrue(result.stream().anyMatch(dto -> dto.getOrganisationUnitId().equals(2001)));
+        assertTrue(result.stream().anyMatch(dto -> dto.getOrganisationUnitId().equals(100)));
     }
 
     @Test

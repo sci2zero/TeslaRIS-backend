@@ -104,6 +104,7 @@ public class PatentServiceTest {
     public void shouldCreatePatent() {
         // Given
         var dto = new PatentDTO();
+        dto.setDocumentDate("2023-07-09");
         var patent = new Patent();
         patent.setId(1);
         patent.setNumber("123");

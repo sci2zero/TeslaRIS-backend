@@ -60,6 +60,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
@@ -792,7 +793,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                             mq -> mq.field("title_other").query(wildcard)))
                         .should(sb -> sb.match(mq -> mq.field("author_names").query(token)))
                         .should(
-                            sb -> sb.wildcard(mq -> mq.field("author_names").value(token + "*")
+                            sb -> sb.wildcard(mq -> mq.field("author_names").value(wildcard)
                                 .caseInsensitive(true)))
                     ));
                 }
@@ -888,5 +889,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     protected void clearIndexWhenFailedRead(Integer documentId) {
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
             .ifPresent(documentPublicationIndexRepository::delete);
+    }
+
+    protected void checkForDocumentDate(DocumentDTO documentDTO) {
+        if (Objects.isNull(documentDTO.getDocumentDate()) ||
+            documentDTO.getDocumentDate().isBlank()) {
+            throw new MissingDataException("this document requires a specified document date");
+        }
     }
 }

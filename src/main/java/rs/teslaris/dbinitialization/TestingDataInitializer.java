@@ -430,7 +430,7 @@ public class TestingDataInitializer {
         monograph1.setApproveStatus(ApproveStatus.APPROVED);
         monograph1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 1", 1)));
-        monograph1.setMonographType(MonographType.BIBLIOGRAPHY);
+        monograph1.setMonographType(MonographType.BOOK);
         var monographContribution = new PersonDocumentContribution();
         monographContribution.setPerson(person2);
         monographContribution.setContributionType(DocumentContributionType.AUTHOR);

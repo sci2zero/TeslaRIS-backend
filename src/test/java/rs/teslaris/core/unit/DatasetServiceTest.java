@@ -104,6 +104,7 @@ public class DatasetServiceTest {
     public void shouldCreateDataset() {
         // Given
         var dto = new DatasetDTO();
+        dto.setDocumentDate("2020-11-07");
         var dataset = new Dataset();
         dataset.setId(1);
         dataset.setInternalNumber("123");

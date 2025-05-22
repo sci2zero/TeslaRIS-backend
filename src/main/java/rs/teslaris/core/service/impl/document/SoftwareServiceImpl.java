@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.SoftwareConverter;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -28,6 +29,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
+@Traceable
 public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implements SoftwareService {
 
     private final SoftwareJPAServiceImpl softwareJPAService;
@@ -78,6 +80,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     public Software createSoftware(SoftwareDTO softwareDTO, Boolean index) {
         var newSoftware = new Software();
 
+        checkForDocumentDate(softwareDTO);
         setCommonFields(newSoftware, softwareDTO);
 
         newSoftware.setInternalNumber(softwareDTO.getInternalNumber());
@@ -104,6 +107,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     public void editSoftware(Integer softwareId, SoftwareDTO softwareDTO) {
         var softwareToUpdate = softwareJPAService.findOne(softwareId);
 
+        checkForDocumentDate(softwareDTO);
         clearCommonFields(softwareToUpdate);
         setCommonFields(softwareToUpdate, softwareDTO);
 

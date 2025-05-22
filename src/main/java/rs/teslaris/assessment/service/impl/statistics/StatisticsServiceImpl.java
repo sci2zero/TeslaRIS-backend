@@ -49,8 +49,8 @@ import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.util.FunctionalUtil;
-import rs.teslaris.core.util.SessionUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Primary
@@ -92,8 +92,13 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setPersonId(personId);
         saveView(statisticsEntry);
-        log.info("STATISTICS - VIEW for Person with ID {} by {}.", personId,
-            SessionUtil.getJSessionId());
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: PERSON_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            personId
+        );
     }
 
     @Override
@@ -101,8 +106,13 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveView(statisticsEntry);
-        log.info("STATISTICS - VIEW for Document with ID {} by {}.", documentId,
-            SessionUtil.getJSessionId());
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: DOCUMENT_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            documentId
+        );
     }
 
     @Override
@@ -110,8 +120,13 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setOrganisationUnitId(organisationUnitId);
         saveView(statisticsEntry);
-        log.info("STATISTICS - VIEW for OrganisationUnit with ID {} by {}.", organisationUnitId,
-            SessionUtil.getJSessionId());
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: ORGANISATION_UNIT_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            organisationUnitId
+        );
     }
 
     @Override
@@ -119,8 +134,13 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveDownload(statisticsEntry);
-        log.info("STATISTICS - DOWNLOAD for Document with ID {} by {}.", documentId,
-            SessionUtil.getJSessionId());
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: DOCUMENT_DOWNLOAD - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            documentId
+        );
     }
 
     private void saveView(StatisticsIndex index) {
@@ -135,7 +155,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
 
     private void save(StatisticsIndex index) {
         index.setTimestamp(LocalDateTime.now());
-        index.setSessionId(SessionUtil.getJSessionId());
+        index.setSessionId(SessionTrackingUtil.getJSessionId());
 
         updateTotalCount(index);
 

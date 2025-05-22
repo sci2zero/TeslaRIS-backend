@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -324,8 +326,9 @@ public class MographServiceTest {
             any(DocumentPublicationIndex.class));
     }
 
-    @Test
-    public void shouldFindMonographsWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void shouldFindMonographsWhenSearchingWithSimpleQuery(boolean onlyBooks) {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
 
@@ -335,7 +338,7 @@ public class MographServiceTest {
 
         // when
         var result =
-            monographService.searchMonographs(new ArrayList<>(tokens));
+            monographService.searchMonographs(new ArrayList<>(tokens), onlyBooks);
 
         // then
         assertEquals(result.getTotalElements(), 2L);

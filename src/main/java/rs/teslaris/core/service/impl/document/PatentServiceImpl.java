@@ -79,6 +79,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     public Patent createPatent(PatentDTO patentDTO, Boolean index) {
         var newPatent = new Patent();
 
+        checkForDocumentDate(patentDTO);
         setCommonFields(newPatent, patentDTO);
 
         newPatent.setNumber(patentDTO.getNumber());
@@ -104,6 +105,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     public void editPatent(Integer patentId, PatentDTO patentDTO) {
         var patentToUpdate = patentJPAService.findOne(patentId);
 
+        checkForDocumentDate(patentDTO);
         clearCommonFields(patentToUpdate);
         setCommonFields(patentToUpdate, patentDTO);
 

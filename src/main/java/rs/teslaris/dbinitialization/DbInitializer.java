@@ -94,8 +94,10 @@ public class DbInitializer implements ApplicationRunner {
         var editEmploymentInstitution = new Privilege("EDIT_EMPLOYMENT_INSTITUTION");
         var editOURelations = new Privilege("EDIT_OU_RELATIONS");
         var editPublishers = new Privilege("EDIT_PUBLISHERS");
+        var createPublisher = new Privilege("CREATE_PUBLISHER");
         var editPublicationSeries = new Privilege("EDIT_PUBLICATION_SERIES");
         var editConferences = new Privilege("EDIT_CONFERENCES");
+        var createConference = new Privilege("CREATE_CONFERENCE");
         var editEventRelations = new Privilege("EDIT_EVENT_RELATIONS");
         var mergeJournalPublications = new Privilege("MERGE_JOURNAL_PUBLICATIONS");
         var mergePersonPublications = new Privilege("MERGE_PERSON_PUBLICATIONS");
@@ -201,7 +203,7 @@ public class DbInitializer implements ApplicationRunner {
                 removeFromRegistryBook, updateRegistryBook, managePromotions, performMigration,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 generateThesisLibraryBackup, generateOutputBackup, performHealthCheck,
-                generateNewEmployeePassword));
+                generateNewEmployeePassword, createConference, createPublisher));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -229,21 +231,23 @@ public class DbInitializer implements ApplicationRunner {
                 removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
-                performHealthCheck, deleteUserAccount
+                performHealthCheck, deleteUserAccount, createConference, createPublisher
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
-                createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
+                editDocumentFiles, editDocumentIndicators, claimDocument, createConference,
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
-                unbindYourselfFromPublication, editEntityIndicators, createJournal)));
+                unbindYourselfFromPublication, editEntityIndicators, createJournal,
+                createPublisher)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
                 List.of(
                     updateProfile, allowAccountTakeover, manageThesisAttachments,
                     putThesisOnPublicReview, createUserBasic, editPersonalInfo, createJournal,
-                    editDocumentFiles, editEmploymentInstitution, generateOutputBackup)));
+                    editDocumentFiles, editEmploymentInstitution, generateOutputBackup,
+                    createConference)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

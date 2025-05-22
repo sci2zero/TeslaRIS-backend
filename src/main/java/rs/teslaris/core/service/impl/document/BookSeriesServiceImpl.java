@@ -210,10 +210,10 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             bookSeries.getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
-        index.setTitleSr(srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+        index.setTitleSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOther(
-            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(bookSeries.getEISSN());
         index.setPrintISSN(bookSeries.getPrintISSN());
@@ -251,25 +251,25 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                     var wildcard = token.replace(".", "") + "?";
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard)))
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard)))
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
                     ));
                 } else if (token.endsWith("\\*")) {
                     var wildcard = token.replace("\\*", "") + "*";
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard)))
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard)))
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
                     ));
                 } else {
                     var wildcard = token + "*";
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard)))
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard)))
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.match(
                             mq -> mq.field("title_sr").query(token)))
                         .should(sb -> sb.match(

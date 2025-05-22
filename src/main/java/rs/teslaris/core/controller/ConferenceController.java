@@ -113,9 +113,17 @@ public class ConferenceController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_CONFERENCES')")
+    @PreAuthorize("hasAnyAuthority('CREATE_CONFERENCE', 'EDIT_CONFERENCES')")
     @Idempotent
-    public ConferenceDTO createConference(@RequestBody @Valid ConferenceDTO conferenceDTO) {
+    public ConferenceDTO createConference(@RequestBody @Valid ConferenceDTO conferenceDTO,
+                                          @RequestHeader(value = "Authorization", required = false)
+                                          String bearerToken) {
+        if (!tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.ADMIN.name()) &&
+            !tokenUtil.extractUserRoleFromToken(bearerToken)
+                .equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
+            conferenceDTO.setSerialEvent(false); // no one besides these roles can add serial events
+        }
+
         var newConference = conferenceService.createConference(conferenceDTO, true);
         conferenceDTO.setId(newConference.getId());
         return conferenceDTO;

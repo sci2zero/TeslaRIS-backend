@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 
 @RestController
 @RequestMapping("/api/statistics")
+@Traceable
 public class StatisticsController {
 
     private final Bucket bucket;

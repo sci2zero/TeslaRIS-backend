@@ -30,7 +30,7 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     EmploymentDTO migrateEmployment(EmploymentMigrationDTO employmentMigrationRequest);
 
-    List<EmploymentDTO> getEmploymentsForPerson(Integer personId);
+    List<EmploymentDTO> getDirectAndIndirectEmploymentsForPerson(Integer personId);
 
     DocumentFileResponseDTO addInvolvementProof(DocumentFileDTO proof, Integer involvementId);
 

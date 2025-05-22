@@ -58,7 +58,7 @@ public class InvolvementController {
 
     @GetMapping("/employments/{personId}")
     public List<EmploymentDTO> getEmploymentsForPerson(@PathVariable Integer personId) {
-        return involvementService.getEmploymentsForPerson(personId);
+        return involvementService.getDirectAndIndirectEmploymentsForPerson(personId);
     }
 
     @PostMapping("/education/{personId}")

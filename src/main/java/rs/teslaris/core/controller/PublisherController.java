@@ -61,7 +61,7 @@ public class PublisherController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
+    @PreAuthorize("hasAnyAuthority('CREATE_PUBLISHER', 'EDIT_PUBLISHERS')")
     @Idempotent
     public PublisherDTO createPublisher(@RequestBody @Valid PublisherDTO publisherDTO) {
         var newPublisher = publisherService.createPublisher(publisherDTO, true);

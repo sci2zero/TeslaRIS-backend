@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.person;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -120,10 +122,30 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     @Override
-    public List<EmploymentDTO> getEmploymentsForPerson(Integer personId) {
-        return employmentRepository.findByPersonInvolvedId(personId).stream()
-            .map(InvolvementConverter::toDTO).collect(
-                Collectors.toList());
+    public List<EmploymentDTO> getDirectAndIndirectEmploymentsForPerson(Integer personId) {
+        var directAndIndirectEmployments = new ArrayList<EmploymentDTO>();
+
+        employmentRepository.findByPersonInvolvedId(personId).forEach(employment -> {
+            if (Objects.isNull(employment.getOrganisationUnit())) {
+                return;
+            }
+
+            directAndIndirectEmployments.add(InvolvementConverter.toDTO(employment));
+
+            var employmentOU = employment.getOrganisationUnit();
+            organisationUnitService.getSuperOUsHierarchyRecursive(employmentOU.getId())
+                .forEach(indirectSuperEmployment -> {
+                    directAndIndirectEmployments.add(new EmploymentDTO() {{
+                        setOrganisationUnitId(indirectSuperEmployment);
+                        setOrganisationUnitName(
+                            MultilingualContentConverter.getMultilingualContentDTO(
+                                organisationUnitService.findOne(indirectSuperEmployment)
+                                    .getName()));
+                    }});
+                });
+        });
+
+        return directAndIndirectEmployments;
     }
 
     @Override

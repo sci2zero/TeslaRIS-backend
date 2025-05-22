@@ -78,6 +78,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     public Dataset createDataset(DatasetDTO datasetDTO, Boolean index) {
         var newDataset = new Dataset();
 
+        checkForDocumentDate(datasetDTO);
         setCommonFields(newDataset, datasetDTO);
 
         newDataset.setInternalNumber(datasetDTO.getInternalNumber());
@@ -104,6 +105,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     public void editDataset(Integer datasetId, DatasetDTO datasetDTO) {
         var datasetToUpdate = datasetJPAService.findOne(datasetId);
 
+        checkForDocumentDate(datasetDTO);
         clearCommonFields(datasetToUpdate);
         setCommonFields(datasetToUpdate, datasetDTO);
 

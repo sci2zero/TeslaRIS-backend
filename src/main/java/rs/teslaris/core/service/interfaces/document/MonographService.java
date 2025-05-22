@@ -12,7 +12,7 @@ public interface MonographService {
 
     Monograph findMonographById(Integer monographId);
 
-    Page<DocumentPublicationIndex> searchMonographs(List<String> tokens);
+    Page<DocumentPublicationIndex> searchMonographs(List<String> tokens, boolean onlyBooks);
 
     MonographDTO readMonographById(Integer monographId);
 
