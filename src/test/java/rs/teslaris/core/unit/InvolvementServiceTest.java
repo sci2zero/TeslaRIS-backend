@@ -311,9 +311,11 @@ public class InvolvementServiceTest {
     public void shouldAddInvolvementProofWhenInvolvementExists() {
         // given
         var involvement = new Involvement();
+        involvement.setPersonInvolved(new Person());
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
-        when(documentFileService.saveNewDocument(any(), eq(false))).thenReturn(new DocumentFile());
+        when(documentFileService.saveNewPersonalDocument(any(), eq(false),
+            eq(involvement.getPersonInvolved()))).thenReturn(new DocumentFile());
 
         // when
         involvementService.addInvolvementProof(new DocumentFileDTO(), 1);

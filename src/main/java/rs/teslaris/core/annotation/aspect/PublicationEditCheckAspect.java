@@ -15,6 +15,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
@@ -120,7 +121,8 @@ public class PublicationEditCheckAspect {
             case RESEARCHER:
                 if (!contributors.contains(personId) &&
                     annotation.value().equalsIgnoreCase("CREATE") &&
-                    !(joinPoint.getArgs()[0] instanceof ProceedingsDTO)) {
+                    !((joinPoint.getArgs()[0] instanceof ProceedingsDTO) ||
+                        (joinPoint.getArgs()[0] instanceof MonographDTO))) {
                     throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
                 }
                 break;

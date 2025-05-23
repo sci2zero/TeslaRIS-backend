@@ -377,13 +377,13 @@ public class TestingDataInitializer {
                     new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
                     License.CREATIVE_COMMONS, CCLicense.BY_NC, ApproveStatus.APPROVED, true,
                     LocalDateTime.now(),
-                    false, false, null))));
+                    false, false, null, null, person1)), person1));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
                 "Contributing to VIVO, Vitro and TeslaRIS current research information systems.",
                 1)),
-            new HashSet<>()));
+            new HashSet<>(), person1));
         person1.getPrizes().add(new Prize(
             Set.of(
                 new MultiLingualContent(englishTag, "Serbian Cybersecurity Challenge - 1st place",
@@ -394,8 +394,8 @@ public class TestingDataInitializer {
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
                 License.OPEN_ACCESS, CCLicense.BY_NC, ApproveStatus.APPROVED, true,
-                LocalDateTime.now(), false, false, null)),
-            LocalDate.of(2023, 4, 17)));
+                LocalDateTime.now(), false, false, null, null, person1)),
+            LocalDate.of(2023, 4, 17), person1));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
@@ -452,7 +452,7 @@ public class TestingDataInitializer {
         monograph2.setApproveStatus(ApproveStatus.APPROVED);
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
-        monograph2.setMonographType(MonographType.RESEARCH_MONOGRAPH);
+        monograph2.setMonographType(MonographType.BOOK);
         monograph2.setDocumentDate("2024");
         monographRepository.save(monograph2);
 
@@ -712,7 +712,7 @@ public class TestingDataInitializer {
         documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
             new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
             License.OPEN_ACCESS, CCLicense.BY_SA, ApproveStatus.APPROVED, true, LocalDateTime.now(),
-            false, false, "123.pdf"));
+            false, false, "123.pdf", null, null));
         documentIndicatorRepository.save(documentIndicator1);
 
         var eventIndicator1 = new EventIndicator();

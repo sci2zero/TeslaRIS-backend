@@ -46,6 +46,7 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         var person = personService.findOne(personId);
 
         setCommonFields(newPrize, dto);
+        newPrize.setPerson(person);
         var savedPrize = prizeRepository.save(newPrize);
 
         person.addPrize(savedPrize);
@@ -85,7 +86,8 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
     @Override
     public DocumentFileResponseDTO addProof(Integer prizeId, DocumentFileDTO proof) {
         var prize = findOne(prizeId);
-        var documentFile = documentFileService.saveNewDocument(proof, false);
+        var documentFile =
+            documentFileService.saveNewPersonalDocument(proof, false, prize.getPerson());
         prize.getProofs().add(documentFile);
         save(prize);
 

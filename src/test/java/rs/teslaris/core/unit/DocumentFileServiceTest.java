@@ -268,7 +268,7 @@ public class DocumentFileServiceTest {
 
     @ParameterizedTest
     @EnumSource(License.class)
-    public void shouldReturnDocumentFileAccessLevelForAllLicenseTypes(License license) {
+    public void shouldReturnDocumentFileByServerFileName(License license) {
         // given
         var documentFile = new DocumentFile();
         documentFile.setLicense(license);
@@ -276,9 +276,9 @@ public class DocumentFileServiceTest {
         when(documentFileRepository.getReferenceByServerFilename(any())).thenReturn(documentFile);
 
         // when
-        var actual = documentFileService.getDocumentAccessLevel("serverFilename");
+        var actual = documentFileService.getDocumentByServerFilename("serverFilename");
 
         // then
-        assertEquals(license, actual.a);
+        assertEquals(license, actual.getLicense());
     }
 }

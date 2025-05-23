@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
@@ -40,4 +41,7 @@ public class Prize extends BaseEntity {
 
     @Column(name = "date")
     private LocalDate date;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Person person;
 }

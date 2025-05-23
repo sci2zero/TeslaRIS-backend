@@ -267,7 +267,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public DocumentFileResponseDTO addInvolvementProof(DocumentFileDTO proof,
                                                        Integer involvementId) {
         var involvement = findOne(involvementId);
-        var documentFile = documentFileService.saveNewDocument(proof, false);
+        var documentFile = documentFileService.saveNewPersonalDocument(proof, false,
+            involvement.getPersonInvolved());
         involvement.getProofs().add(documentFile);
         involvementRepository.save(involvement);
 

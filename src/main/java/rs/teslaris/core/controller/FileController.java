@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +30,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -71,31 +75,118 @@ public class FileController {
         @CookieValue("jwt-security-fingerprint") String fingerprintCookie) throws IOException {
 
         var file = fileService.loadAsResource(filename);
-        var licenseResponse = documentFileService.getDocumentAccessLevel(filename);
+        var documentFile = documentFileService.getDocumentByServerFilename(filename);
+        var license = documentFile.getLicense();
+        var isThesisDocument = documentFile.getIsThesisDocument();
         var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
+        var isOpenAccess = isOpenAccess(license);
 
-        if (!isOpenAccess(licenseResponse.a) && !authenticatedUser) {
+        if (!isOpenAccess && !authenticatedUser) {
             return ErrorResponseUtil.buildUnavailableResponse(request,
                 "loginToViewDocumentMessage");
         }
 
-        if (isOpenAccess(licenseResponse.a) && !authenticatedUser && !licenseResponse.b) {
+        if (isOpenAccess && !authenticatedUser && !isThesisDocument) {
             return ErrorResponseUtil.buildUnavailableResponse(request,
                 "loginToViewCCDocumentMessage");
         }
 
-        if (licenseResponse.a.equals(License.COMMISSION_ONLY) &&
+        if (license.equals(License.COMMISSION_ONLY) &&
             (!authenticatedUser || !isCommissionUser(bearerToken))) {
-            return ErrorResponseUtil.buildUnauthorisedResponse(request,
-                "unauthorisedToViewDocumentMessage");
+            return handleUnauthorisedUser(request);
         }
 
-        recordDownloadIfApplicable(filename);
+        if (!isOpenAccess) {
+            var role = UserRole.valueOf(tokenUtil.extractUserRoleFromToken(bearerToken));
+            var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+
+            if (Objects.nonNull(documentFile.getPerson())) {
+                var personId = documentFile.getPerson().getId();
+                switch (role) {
+                    case ADMIN:
+                        break;
+                    case RESEARCHER:
+                        if (!userService.isUserAResearcher(userId, personId)) {
+                            return handleUnauthorisedUser(request);
+                        }
+                        break;
+                    case INSTITUTIONAL_EDITOR:
+                        if (!personService.isPersonEmployedInOrganisationUnit(personId,
+                            userService.getUserOrganisationUnitId(userId))) {
+                            return handleUnauthorisedUser(request);
+                        }
+                        break;
+                    default:
+                        return handleUnauthorisedUser(request);
+                }
+            } else if (Objects.nonNull(documentFile.getDocument())) {
+                var document = documentFile.getDocument();
+                var contributors = document.getContributors().stream()
+                    .filter(contribution -> Objects.nonNull(contribution.getPerson()))
+                    .map(contribution -> contribution.getPerson().getId())
+                    .collect(Collectors.toSet());
+
+                switch (role) {
+                    case ADMIN:
+                        break;
+                    case RESEARCHER:
+                        var personId = userService.getPersonIdForUser(userId);
+                        if (!contributors.contains(personId)) {
+                            return handleUnauthorisedUser(request);
+                        }
+                        break;
+                    case INSTITUTIONAL_EDITOR:
+                        if (noResearchersFromUserInstitution(contributors, userId) &&
+                            isDocumentNotAThesis(userId, document)) {
+                            return handleUnauthorisedUser(request);
+                        }
+                        break;
+                    case INSTITUTIONAL_LIBRARIAN:
+                        if (isDocumentNotAThesis(userId, document)) {
+                            return handleUnauthorisedUser(request);
+                        }
+                        break;
+                    case HEAD_OF_LIBRARY:
+                        if (noResearchersFromUserInstitution(contributors, userId)) {
+                            return handleUnauthorisedUser(request);
+                        }
+                        break;
+                    default:
+                        return handleUnauthorisedUser(request);
+                }
+            }
+        }
+
+        recordDownloadIfApplicable(filename, documentFile.getResourceType());
 
         byte[] fileBytes = file.readAllBytes();
         return ResponseEntity.ok()
             .headers(getFileHeaders(file, inline, fileBytes))
             .body(fileBytes);
+    }
+
+    private ResponseEntity<Object> handleUnauthorisedUser(HttpServletRequest request) {
+        return ErrorResponseUtil.buildUnauthorisedResponse(request,
+            "unauthorisedToViewDocumentMessage");
+    }
+
+    private boolean isDocumentNotAThesis(Integer userId, Document document) {
+        var userInstitutionId = userService.getUserOrganisationUnitId(userId);
+        var institutionSubUnitIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitutionId);
+
+        return !(document instanceof Thesis) ||
+            !institutionSubUnitIds.contains(((Thesis) document).getOrganisationUnit().getId());
+    }
+
+    private boolean noResearchersFromUserInstitution(Set<Integer> contributors,
+                                                     Integer userId) {
+        return contributors.stream()
+            .filter(contributorId -> contributorId > 0) // filter out external affiliates
+            .noneMatch(
+                contributorId -> personService.isPersonEmployedInOrganisationUnit(
+                    contributorId,
+                    userService.getUserOrganisationUnitId(userId)));
     }
 
     @GetMapping("/image/{personId}")
@@ -207,8 +298,7 @@ public class FileController {
         return role.equals(UserRole.ADMIN.name()) || role.equals(UserRole.COMMISSION.name());
     }
 
-    private void recordDownloadIfApplicable(String filename) {
-        var resourceType = documentFileService.getDocumentResourceType(filename);
+    private void recordDownloadIfApplicable(String filename, ResourceType resourceType) {
         if (resourceType.equals(ResourceType.OFFICIAL_PUBLICATION) ||
             resourceType.equals(ResourceType.PREPRINT)) {
             var documentId = documentFileService.findDocumentIdForFilename(filename);

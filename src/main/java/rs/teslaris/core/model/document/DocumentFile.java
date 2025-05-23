@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.person.Person;
 
 @Getter
 @Setter
@@ -72,4 +74,10 @@ public class DocumentFile extends BaseEntity {
 
     @Column(name = "legacy_filename")
     private String legacyFilename;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Document document; // in case of document file/proof/thesis supplement
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Person person; // in case of personal document e.g. prize, involvement
 }

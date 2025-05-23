@@ -48,6 +48,7 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
         var newExpertiseOrSkill = new ExpertiseOrSkill();
 
         setCommonFields(newExpertiseOrSkill, dto);
+        newExpertiseOrSkill.setPerson(person);
         var savedExpertiseOrSkill = expertiseOrSkillRepository.save(newExpertiseOrSkill);
 
         person.getExpertisesAndSkills().add(newExpertiseOrSkill);
@@ -89,7 +90,8 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
     public DocumentFileResponseDTO addProof(Integer expertiseOrSkillId,
                                             DocumentFileDTO proof) {
         var expertiseOrSkill = findOne(expertiseOrSkillId);
-        var documentFile = documentFileService.saveNewDocument(proof, false);
+        var documentFile =
+            documentFileService.saveNewPersonalDocument(proof, false, expertiseOrSkill.getPerson());
         expertiseOrSkill.getProofs().add(documentFile);
         save(expertiseOrSkill);
 

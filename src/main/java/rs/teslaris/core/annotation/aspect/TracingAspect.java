@@ -86,13 +86,14 @@ public class TracingAspect {
     private void populateMDC(boolean isRestController) {
         if (isRestController) {
             String clientIp = extractClientIp();
-            MDC.put(TraceMDCKeys.CLIENT_IP, clientIp != null ? clientIp : "N/A");
+            MDC.put(TraceMDCKeys.CLIENT_IP, Objects.nonNull(clientIp) ? clientIp : "N/A");
 
             String trackingCookieValue = SessionTrackingUtil.getJSessionId();
             MDC.put(TraceMDCKeys.SESSION, trackingCookieValue);
         } else {
-            if (MDC.get(TraceMDCKeys.SESSION) == null) {
+            if (Objects.isNull(MDC.get(TraceMDCKeys.SESSION))) {
                 MDC.put(TraceMDCKeys.SESSION, "Server-side");
+                MDC.put(TraceMDCKeys.CLIENT_IP, "N/A");
             }
         }
     }
@@ -110,7 +111,7 @@ public class TracingAspect {
             var request = servletRequestAttributes.getRequest();
             String ip = request.getHeader("X-Forwarded-For");
 
-            if (ip == null || ip.isBlank()) {
+            if (Objects.isNull(ip) || ip.isBlank()) {
                 ip = request.getRemoteAddr();
             } else {
                 // If multiple IPs (e.g., X-Forwarded-For: client, proxy1, proxy2)

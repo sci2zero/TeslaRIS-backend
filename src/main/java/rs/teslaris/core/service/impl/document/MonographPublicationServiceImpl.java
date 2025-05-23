@@ -15,6 +15,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographPublicationJPAServiceImpl;
@@ -185,8 +186,14 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         monographPublication.setNumberOfPages(monographPublicationDTO.getNumberOfPages());
         monographPublication.setArticleNumber(monographPublicationDTO.getArticleNumber());
 
-        monographPublication.setMonograph(
-            monographService.findMonographById(monographPublicationDTO.getMonographId()));
+        var monograph =
+            monographService.findMonographById(monographPublicationDTO.getMonographId());
+
+        if (!monograph.getMonographType().equals(MonographType.BOOK)) {
+            throw new NotFoundException("Book monograph with given ID does not exist.");
+        }
+
+        monographPublication.setMonograph(monograph);
     }
 
     @Override
