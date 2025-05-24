@@ -3,12 +3,15 @@ package rs.teslaris.core.service.impl.document;
 import jakarta.xml.bind.JAXBException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +55,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @Service
@@ -456,6 +460,31 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         index.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());
         index.setThesisDefenceDate(thesis.getThesisDefenceDate());
         index.setPublicReviewStartDates(thesis.getPublicReviewStartDates().stream().toList());
+
+        index.setWordcloudTokensSr(
+            Stream.of(
+                    index.getTitleSr().split("\\s+"),
+                    index.getDescriptionSr().split("\\s+"),
+                    index.getKeywordsSr().split("\\s+")
+                ).flatMap(Arrays::stream)
+                .filter(token -> !token.isBlank())
+                .distinct()
+                .collect(Collectors.toList())
+        );
+
+        index.setWordcloudTokensOther(
+            Stream.of(
+                    index.getTitleOther().split("\\s+"),
+                    index.getDescriptionOther().split("\\s+"),
+                    index.getKeywordsOther().split("\\s+")
+                ).flatMap(Arrays::stream)
+                .filter(token -> !token.isBlank())
+                .distinct()
+                .collect(Collectors.toList())
+        );
+
+        StringUtil.removeNotableStopwords(index.getWordcloudTokensSr());
+        StringUtil.removeNotableStopwords(index.getWordcloudTokensOther());
 
         documentPublicationIndexRepository.save(index);
     }

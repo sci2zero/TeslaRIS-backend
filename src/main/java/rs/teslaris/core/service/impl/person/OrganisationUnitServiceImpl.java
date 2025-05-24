@@ -202,7 +202,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
                                          Integer topLevelInstitutionId) {
-        StringUtil.removeEnglishStopwords(tokens);
+        StringUtil.removeNotableStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
 

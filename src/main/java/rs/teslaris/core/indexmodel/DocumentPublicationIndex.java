@@ -157,4 +157,10 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "is_open_access", store = true)
     private Boolean isOpenAccess;
+
+    @Field(type = FieldType.Keyword, name = "wordcloud_tokens_sr", normalizer = "serbian_normalizer")
+    private List<String> wordcloudTokensSr = new ArrayList<>();
+
+    @Field(type = FieldType.Keyword, name = "wordcloud_tokens_other", normalizer = "english_normalizer")
+    private List<String> wordcloudTokensOther = new ArrayList<>();
 }

@@ -8,12 +8,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Component
+@Slf4j
 public class StringUtil {
 
     private static List<String> stopwords;
@@ -24,6 +26,7 @@ public class StringUtil {
             Files.readAllLines(
                 Paths.get("src/main/resources/configuration/notable_stopwords.txt")
             );
+        log.info("Loaded notable stop words for manual pre-processing.");
     }
 
     public static void removeTrailingDelimiters(StringBuilder contentSr,
@@ -125,7 +128,7 @@ public class StringUtil {
         return true;
     }
 
-    public static void removeEnglishStopwords(List<String> tokens) {
+    public static void removeNotableStopwords(List<String> tokens) {
         tokens.removeAll(stopwords);
     }
 }
