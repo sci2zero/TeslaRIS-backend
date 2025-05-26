@@ -16,6 +16,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.PublisherConverter;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements PublisherService {
 
     private final PublisherRepository publisherRepository;

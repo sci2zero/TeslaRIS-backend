@@ -4,11 +4,19 @@ import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,7 +26,10 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Slf4j
 public class StringUtil {
 
+    private static final Pattern CLEAN_PATTERN = Pattern.compile("[\\p{Punct}\\d]+");
     private static List<String> stopwords;
+    private static Analyzer analyzer;
+
 
     @Autowired
     public StringUtil() throws IOException {
@@ -27,6 +38,13 @@ public class StringUtil {
                 Paths.get("src/main/resources/configuration/notable_stopwords.txt")
             );
         log.info("Loaded notable stop words for manual pre-processing.");
+
+        StringUtil.analyzer = new Analyzer() {
+            @Override
+            protected TokenStreamComponents createComponents(String fieldName) {
+                return new TokenStreamComponents(new WhitespaceTokenizer());
+            }
+        };
     }
 
     public static void removeTrailingDelimiters(StringBuilder contentSr,
@@ -130,5 +148,35 @@ public class StringUtil {
 
     public static void removeNotableStopwords(List<String> tokens) {
         tokens.removeAll(stopwords);
+    }
+
+    public static List<String> extractKeywords(String... texts) {
+        List<String> keywords = new ArrayList<>();
+        for (String text : texts) {
+            if (Objects.isNull(text) || text.isBlank()) {
+                continue;
+            }
+            keywords.addAll(tokenize(text));
+        }
+        return new ArrayList<>(keywords);
+    }
+
+    private static List<String> tokenize(String text) {
+        List<String> tokens = new ArrayList<>();
+        try (var tokenStream = analyzer.tokenStream("field", new StringReader(text))) {
+            var attr = tokenStream.addAttribute(CharTermAttribute.class);
+            tokenStream.reset();
+            while (tokenStream.incrementToken()) {
+                String rawToken = attr.toString().toLowerCase(Locale.ROOT);
+                String cleaned = CLEAN_PATTERN.matcher(rawToken).replaceAll("");
+                if (!cleaned.isBlank() && !stopwords.contains(cleaned)) {
+                    tokens.add(cleaned);
+                }
+            }
+            tokenStream.end();
+        } catch (IOException e) {
+            throw new RuntimeException("Error during tokenization", e); // should never happen
+        }
+        return tokens;
     }
 }

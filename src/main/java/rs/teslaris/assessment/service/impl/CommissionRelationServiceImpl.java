@@ -15,12 +15,14 @@ import rs.teslaris.assessment.dto.ReorderCommissionRelationDTO;
 import rs.teslaris.assessment.repository.CommissionRelationRepository;
 import rs.teslaris.assessment.service.interfaces.CommissionRelationService;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class CommissionRelationServiceImpl extends JPAServiceImpl<CommissionRelation>
     implements CommissionRelationService {
 

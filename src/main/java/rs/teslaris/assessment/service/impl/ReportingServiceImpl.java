@@ -21,6 +21,7 @@ import rs.teslaris.assessment.service.interfaces.PersonAssessmentClassificationS
 import rs.teslaris.assessment.service.interfaces.ReportingService;
 import rs.teslaris.assessment.util.AssessmentReportGenerator;
 import rs.teslaris.assessment.util.ReportTemplateEngine;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -32,6 +33,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class ReportingServiceImpl implements ReportingService {
 
     private final PersonAssessmentClassificationService personAssessmentClassificationService;

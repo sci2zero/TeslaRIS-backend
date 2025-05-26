@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -36,6 +37,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/conference")
 @RequiredArgsConstructor
+@Traceable
 public class ConferenceController {
 
     private final ConferenceService conferenceService;

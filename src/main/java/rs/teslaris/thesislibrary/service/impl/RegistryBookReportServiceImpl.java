@@ -35,6 +35,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -55,6 +56,7 @@ import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
+@Traceable
 public class RegistryBookReportServiceImpl implements RegistryBookReportService {
 
     private final RegistryBookEntryRepository registryBookEntryRepository;

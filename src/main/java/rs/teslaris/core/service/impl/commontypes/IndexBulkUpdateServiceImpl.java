@@ -7,11 +7,13 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Traceable
 public class IndexBulkUpdateServiceImpl implements IndexBulkUpdateService {
 
     private final ElasticsearchClient elasticsearchClient;

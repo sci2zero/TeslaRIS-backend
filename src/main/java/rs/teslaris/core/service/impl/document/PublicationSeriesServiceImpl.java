@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
@@ -26,6 +27,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 @Primary
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeries> implements
     PublicationSeriesService {
 

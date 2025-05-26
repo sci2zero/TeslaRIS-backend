@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
@@ -47,6 +48,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Traceable
 public class UserController {
 
     private final AuthenticationManager authenticationManager;

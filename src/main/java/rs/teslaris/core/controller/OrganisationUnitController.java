@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.OrgUnitEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
@@ -40,6 +41,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/organisation-unit")
 @RequiredArgsConstructor
+@Traceable
 public class OrganisationUnitController {
 
     private final OrganisationUnitService organisationUnitService;

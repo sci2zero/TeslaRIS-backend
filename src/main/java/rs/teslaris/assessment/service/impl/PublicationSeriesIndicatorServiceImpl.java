@@ -39,6 +39,7 @@ import rs.teslaris.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.PublicationSeriesIndicatorService;
 import rs.teslaris.assessment.util.EntityIndicatorType;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -54,6 +55,7 @@ import rs.teslaris.core.util.seeding.CsvDataLoader;
 @Service
 @Slf4j
 @Transactional
+@Traceable
 public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements PublicationSeriesIndicatorService {
 

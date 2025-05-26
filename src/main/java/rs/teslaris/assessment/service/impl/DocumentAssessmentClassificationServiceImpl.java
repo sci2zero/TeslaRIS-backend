@@ -46,6 +46,7 @@ import rs.teslaris.assessment.service.interfaces.DocumentAssessmentClassificatio
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -78,6 +79,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @Service
 @Transactional
 @Slf4j
+@Traceable
 public class DocumentAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl implements
     DocumentAssessmentClassificationService {

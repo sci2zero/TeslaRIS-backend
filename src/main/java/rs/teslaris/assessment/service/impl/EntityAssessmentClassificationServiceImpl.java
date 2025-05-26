@@ -14,6 +14,7 @@ import rs.teslaris.assessment.repository.EntityAssessmentClassificationRepositor
 import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.EntityAssessmentClassificationService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -22,6 +23,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 @Primary
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class EntityAssessmentClassificationServiceImpl
     extends JPAServiceImpl<EntityAssessmentClassification> implements
     EntityAssessmentClassificationService {

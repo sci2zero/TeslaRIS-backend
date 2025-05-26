@@ -2,11 +2,13 @@ package rs.teslaris.core.service.impl.document;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Slf4j
+@Traceable
 public class NoOpDownloadTracker implements DocumentDownloadTracker {
 
     @Override

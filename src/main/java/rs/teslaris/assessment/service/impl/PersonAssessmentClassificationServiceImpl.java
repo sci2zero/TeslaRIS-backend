@@ -38,6 +38,7 @@ import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.PersonAssessmentClassificationService;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -60,6 +61,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @Transactional
 @Slf4j
+@Traceable
 public class PersonAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl implements
     PersonAssessmentClassificationService {

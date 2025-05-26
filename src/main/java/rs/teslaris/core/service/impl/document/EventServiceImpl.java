@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
@@ -54,6 +55,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Primary
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class EventServiceImpl extends JPAServiceImpl<Event> implements EventService {
 
     protected final EventIndexRepository eventIndexRepository;

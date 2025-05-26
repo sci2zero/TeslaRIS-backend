@@ -19,10 +19,12 @@ import rs.teslaris.assessment.dto.ReorderCommissionRelationDTO;
 import rs.teslaris.assessment.service.interfaces.CommissionRelationService;
 import rs.teslaris.core.annotation.CommissionEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment/commission-relation")
 @RequiredArgsConstructor
+@Traceable
 public class CommissionRelationController {
 
     private final CommissionRelationService commissionRelationService;

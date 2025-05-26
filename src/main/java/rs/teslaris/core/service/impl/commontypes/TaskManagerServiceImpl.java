@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.SchedulingException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -26,6 +27,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Traceable
 public class TaskManagerServiceImpl implements TaskManagerService {
 
     private static final ConcurrentHashMap<String, ScheduledTask> tasks =

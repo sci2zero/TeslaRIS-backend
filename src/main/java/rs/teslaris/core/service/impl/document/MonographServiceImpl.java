@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -40,6 +41,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
+@Traceable
 public class MonographServiceImpl extends DocumentPublicationServiceImpl implements
     MonographService {
 

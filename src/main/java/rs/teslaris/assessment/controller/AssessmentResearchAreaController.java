@@ -18,11 +18,13 @@ import rs.teslaris.assessment.service.interfaces.AssessmentResearchAreaService;
 import rs.teslaris.core.annotation.CommissionEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.PersonIndex;
 
 @RestController
 @RequestMapping("/api/assessment/research-area")
 @RequiredArgsConstructor
+@Traceable
 public class AssessmentResearchAreaController {
 
     private final AssessmentResearchAreaService assessmentResearchAreaService;

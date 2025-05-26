@@ -22,10 +22,12 @@ import rs.teslaris.assessment.dto.IndicatorResponseDTO;
 import rs.teslaris.assessment.model.ApplicableEntityType;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("api/assessment/indicator")
 @RequiredArgsConstructor
+@Traceable
 public class IndicatorController {
 
     private final IndicatorService indicatorService;

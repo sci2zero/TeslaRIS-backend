@@ -27,6 +27,7 @@ import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.oaipmh.common.Description;
 import rs.teslaris.core.model.oaipmh.common.GetRecord;
 import rs.teslaris.core.model.oaipmh.common.Header;
@@ -69,6 +70,7 @@ import rs.teslaris.importer.utility.OAIPMHParseUtility;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class OutboundExportServiceImpl implements OutboundExportService {
 
     private final MongoTemplate mongoTemplate;

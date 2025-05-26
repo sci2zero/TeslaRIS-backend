@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Monograph;
@@ -27,6 +28,7 @@ import rs.teslaris.core.util.Pair;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
+@Traceable
 public class NavigationBackwardCompatibilityServiceImpl implements
     NavigationBackwardCompatibilityService {
 

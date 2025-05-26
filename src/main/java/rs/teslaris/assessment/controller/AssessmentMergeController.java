@@ -9,10 +9,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.service.interfaces.AssessmentMergeService;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment-merge")
 @RequiredArgsConstructor
+@Traceable
 public class AssessmentMergeController {
 
     private final AssessmentMergeService assessmentMergeService;

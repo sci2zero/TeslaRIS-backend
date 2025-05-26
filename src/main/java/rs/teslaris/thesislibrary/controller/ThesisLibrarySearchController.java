@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.util.Pair;
@@ -24,6 +25,7 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 @RestController
 @RequestMapping("/api/thesis-library/search")
 @RequiredArgsConstructor
+@Traceable
 public class ThesisLibrarySearchController {
 
     private final ThesisSearchService thesisSearchService;

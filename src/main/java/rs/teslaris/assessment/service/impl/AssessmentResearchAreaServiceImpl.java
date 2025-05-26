@@ -14,6 +14,7 @@ import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.service.interfaces.AssessmentResearchAreaService;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -24,6 +25,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<AssessmentResearchArea>
     implements AssessmentResearchAreaService {
 

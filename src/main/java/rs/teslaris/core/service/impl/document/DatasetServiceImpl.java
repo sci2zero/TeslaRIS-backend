@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DatasetConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -28,6 +29,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
+@Traceable
 public class DatasetServiceImpl extends DocumentPublicationServiceImpl implements DatasetService {
 
     private final DatasetJPAServiceImpl datasetJPAService;

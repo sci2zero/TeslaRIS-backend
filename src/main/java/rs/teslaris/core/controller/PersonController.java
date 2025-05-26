@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -45,6 +46,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/person")
 @RequiredArgsConstructor
+@Traceable
 public class PersonController {
 
     private final PersonService personService;

@@ -12,12 +12,14 @@ import rs.teslaris.assessment.repository.EventIndicatorRepository;
 import rs.teslaris.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.AssessmentMergeService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class AssessmentMergeServiceImpl implements AssessmentMergeService {
 
     private final JournalService journalService;

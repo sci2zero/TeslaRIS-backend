@@ -107,6 +107,7 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/for-publisher/{publisherId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/document/wordcloud/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/document/for-organisation-unit/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/book-series/publications/{bookSeriesId}")
@@ -240,6 +241,8 @@ public class SecurityConfiguration {
                 // THESIS LIBRARY
                 .requestMatchers(HttpMethod.GET, "/api/thesis-library/search/fields").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/simple").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/thesis-library/search/wordcloud/{queryType}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
                 .requestMatchers(HttpMethod.PATCH,
                     "/api/registry-book/cancel-attendance/{attendanceId}").permitAll()

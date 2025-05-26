@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.indexmodel.PublisherIndex;
@@ -28,6 +29,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/publisher")
 @RequiredArgsConstructor
+@Traceable
 public class PublisherController {
 
     private final PublisherService publisherService;

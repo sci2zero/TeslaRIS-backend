@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
+@Traceable
 public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsService {
 

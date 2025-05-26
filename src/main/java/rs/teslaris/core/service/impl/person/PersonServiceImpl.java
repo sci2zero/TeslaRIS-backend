@@ -31,6 +31,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -86,6 +87,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonService {
 
     private final PersonRepository personRepository;

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
@@ -45,6 +46,7 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Transactional
+@Traceable
 public class JournalServiceImpl extends PublicationSeriesServiceImpl implements JournalService {
 
     private final JournalJPAServiceImpl journalJPAService;

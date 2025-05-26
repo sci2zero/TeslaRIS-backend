@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -32,6 +33,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Traceable
 public class ReindexServiceImpl implements ReindexService {
 
     private final UserService userService;

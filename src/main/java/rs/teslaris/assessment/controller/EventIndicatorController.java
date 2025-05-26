@@ -20,11 +20,13 @@ import rs.teslaris.assessment.dto.EntityIndicatorResponseDTO;
 import rs.teslaris.assessment.dto.EventIndicatorDTO;
 import rs.teslaris.assessment.service.interfaces.EventIndicatorService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/event-indicator")
 @RequiredArgsConstructor
+@Traceable
 public class EventIndicatorController {
 
     private final EventIndicatorService eventIndicatorService;

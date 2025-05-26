@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
@@ -24,6 +25,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/document-file")
 @RequiredArgsConstructor
+@Traceable
 public class DocumentFileController {
 
     private final DocumentFileService documentFileService;

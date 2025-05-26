@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -56,6 +57,7 @@ import rs.teslaris.importer.utility.ProgressReportUtility;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class CommonLoaderImpl implements CommonLoader {
 
     private static final Object institutionLock = new Object();

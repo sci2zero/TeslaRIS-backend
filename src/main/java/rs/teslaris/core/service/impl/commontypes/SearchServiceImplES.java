@@ -1,7 +1,6 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import java.io.IOException;
@@ -15,11 +14,13 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.Pair;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class SearchServiceImplES<T> implements SearchService<T> {
 
     private final ElasticsearchOperations elasticsearchTemplate;
@@ -67,16 +68,12 @@ public class SearchServiceImplES<T> implements SearchService<T> {
             return wordCloud;
         }
 
-        List<StringTermsBucket> buckets = response.aggregations()
+        response.aggregations()
             .get("wordcloud")
             .sterms()
-            .buckets().array();
-
-        for (StringTermsBucket bucket : buckets) {
-            System.out.println("There are " + bucket.docCount() +
-                " occurrences of " + bucket.key().stringValue());
-            wordCloud.add(new Pair<>(bucket.key().stringValue(), bucket.docCount()));
-        }
+            .buckets().array().forEach(bucket -> {
+                wordCloud.add(new Pair<>(bucket.key().stringValue(), bucket.docCount()));
+            });
 
         return wordCloud;
     }

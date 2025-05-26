@@ -7,12 +7,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 
 @RestController
 @RequestMapping("/api/publication-series")
 @RequiredArgsConstructor
+@Traceable
 public class PublicationSeriesController {
 
     private final PublicationSeriesService publicationSeriesService;

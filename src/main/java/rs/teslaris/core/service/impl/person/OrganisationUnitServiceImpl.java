@@ -29,6 +29,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
@@ -78,6 +79,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
     implements OrganisationUnitService {
 

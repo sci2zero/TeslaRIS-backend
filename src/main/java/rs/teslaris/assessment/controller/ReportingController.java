@@ -22,11 +22,13 @@ import rs.teslaris.assessment.dto.ReportDTO;
 import rs.teslaris.assessment.model.ReportType;
 import rs.teslaris.assessment.service.interfaces.ReportingService;
 import rs.teslaris.core.annotation.ReportGenerationCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/report")
 @RequiredArgsConstructor
+@Traceable
 public class ReportingController {
 
     private final ReportingService reportingService;

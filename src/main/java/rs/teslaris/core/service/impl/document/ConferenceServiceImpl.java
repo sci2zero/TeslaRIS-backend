@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @Transactional
+@Traceable
 public class ConferenceServiceImpl extends EventServiceImpl implements ConferenceService {
 
     private final ConferenceJPAServiceImpl conferenceJPAService;

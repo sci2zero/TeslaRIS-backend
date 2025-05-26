@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Journal;
@@ -55,6 +56,7 @@ import rs.teslaris.exporter.service.interfaces.CommonExportService;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class CommonExportServiceImpl implements CommonExportService {
 
     private final MongoTemplate mongoTemplate;

@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -268,6 +269,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         if (Objects.nonNull(document.getEvent())) {
             index.setEventId(document.getEvent().getId());
         }
+
+        var aaa = StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
+            index.getKeywordsSr());
+        index.setWordcloudTokensSr(
+            StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
+                index.getKeywordsSr()));
+        index.setWordcloudTokensOther(
+            StringUtil.extractKeywords(index.getTitleOther(), index.getDescriptionOther(),
+                index.getKeywordsOther()));
     }
 
     private void setContributors(Document document, DocumentPublicationIndex index) {
@@ -537,6 +547,27 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         Boolean onlyExportFields) {
         return searchFieldsLoader.getSearchFields("documentSearchFieldConfiguration.json",
             onlyExportFields);
+    }
+
+    @Override
+    public List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
+                                                                  boolean foreignLanguage) {
+        var document =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+                .orElseThrow(() -> new NotFoundException(
+                    "Document with ID " + documentId + " does not exist."));
+        var terms =
+            foreignLanguage ? document.getWordcloudTokensOther() : document.getWordcloudTokensSr();
+
+        Map<String, Long> result = terms.parallelStream().
+            collect(Collectors.toConcurrentMap(
+                w -> w, w -> 1L, Long::sum));
+
+        return result.entrySet().stream()
+            .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+            .limit(30)
+            .map(entry -> new Pair<>(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
     }
 
     protected void clearCommonFields(Document publication) {
@@ -893,7 +924,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     protected void checkForDocumentDate(DocumentDTO documentDTO) {
         if (Objects.isNull(documentDTO.getDocumentDate()) ||
             documentDTO.getDocumentDate().isBlank()) {
-            throw new MissingDataException("this document requires a specified document date");
+            throw new MissingDataException("This document requires a specified document date.");
         }
     }
 }

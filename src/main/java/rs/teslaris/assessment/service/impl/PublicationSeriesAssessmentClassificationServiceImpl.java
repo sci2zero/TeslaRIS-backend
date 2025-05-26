@@ -35,6 +35,7 @@ import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.institution.Commission;
@@ -50,6 +51,7 @@ import rs.teslaris.core.util.seeding.CsvDataLoader;
 @Service
 @Transactional
 @Slf4j
+@Traceable
 public class PublicationSeriesAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl
     implements PublicationSeriesAssessmentClassificationService {

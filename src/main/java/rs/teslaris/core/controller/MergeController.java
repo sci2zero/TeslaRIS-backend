@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.deduplication.MergedBookSeriesDTO;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
@@ -32,6 +33,7 @@ import rs.teslaris.core.service.interfaces.merge.MergeService;
 @RestController
 @RequestMapping("/api/merge")
 @RequiredArgsConstructor
+@Traceable
 public class MergeController {
 
     private final MergeService mergeService;

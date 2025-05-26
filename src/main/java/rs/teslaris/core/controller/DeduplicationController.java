@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.deduplication.DeduplicationSuggestion;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
@@ -23,11 +24,13 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RequestMapping("/api/deduplication")
 @RequiredArgsConstructor
 @Slf4j
+@Traceable
 public class DeduplicationController {
 
     private final DeduplicationService deduplicationService;
 
     private final JwtUtil tokenUtil;
+
 
     @GetMapping("/{resultSet}")
     @PreAuthorize("hasAuthority('PERFORM_DEDUPLICATION')")

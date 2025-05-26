@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -37,6 +38,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 @RestController
 @RequestMapping("api/involvement")
 @RequiredArgsConstructor
+@Traceable
 public class InvolvementController {
 
     private final InvolvementService involvementService;

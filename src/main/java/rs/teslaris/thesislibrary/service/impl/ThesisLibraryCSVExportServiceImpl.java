@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ExportableEndpointType;
@@ -21,6 +22,7 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class ThesisLibraryCSVExportServiceImpl implements ThesisLibraryCSVExportService {
 
     private final ThesisSearchService thesisSearchService;

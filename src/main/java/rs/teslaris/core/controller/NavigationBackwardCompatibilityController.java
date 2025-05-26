@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.DocumentFileNavigationDTO;
 import rs.teslaris.core.dto.commontypes.EntityNavigationDTO;
 import rs.teslaris.core.service.interfaces.commontypes.NavigationBackwardCompatibilityService;
@@ -13,6 +14,7 @@ import rs.teslaris.core.service.interfaces.commontypes.NavigationBackwardCompati
 @RestController
 @RequestMapping("/api/legacy-navigation")
 @RequiredArgsConstructor
+@Traceable
 public class NavigationBackwardCompatibilityController {
 
     private final NavigationBackwardCompatibilityService navigationBackwardCompatibilityService;

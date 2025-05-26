@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
@@ -36,6 +37,7 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Transactional
+@Traceable
 public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     implements BookSeriesService {
 

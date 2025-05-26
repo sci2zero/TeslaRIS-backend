@@ -22,6 +22,7 @@ import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Document;
@@ -48,6 +49,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Traceable
 public class DocumentBackupServiceImpl implements DocumentBackupService {
 
     private final FileService fileService;

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -29,6 +30,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("api/journal-publication")
 @RequiredArgsConstructor
+@Traceable
 public class JournalPublicationController {
 
     private final JournalPublicationService journalPublicationService;

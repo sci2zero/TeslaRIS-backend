@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.LanguageTagDTO;
 import rs.teslaris.core.dto.commontypes.LanguageTagResponseDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -16,6 +17,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag>
     implements LanguageTagService {
 

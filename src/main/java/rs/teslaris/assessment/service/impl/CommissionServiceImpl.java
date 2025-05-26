@@ -19,6 +19,7 @@ import rs.teslaris.assessment.ruleengine.JournalClassificationRuleEngine;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -33,6 +34,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements CommissionService {
 
     private final CommissionRepository commissionRepository;

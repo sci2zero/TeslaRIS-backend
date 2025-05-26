@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
@@ -44,6 +45,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Traceable
 public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     implements InvolvementService {
 

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.CSVExportRequest;
 import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
@@ -19,6 +20,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
 @RestController
 @RequestMapping("/api/csv-export")
 @RequiredArgsConstructor
+@Traceable
 public class CSVExportController {
 
     private final CSVExportService csvExportService;

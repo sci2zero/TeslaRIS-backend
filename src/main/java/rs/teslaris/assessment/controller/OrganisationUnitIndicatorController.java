@@ -9,10 +9,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.service.interfaces.OrganisationUnitIndicatorService;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment/organisation-unit-indicator")
 @RequiredArgsConstructor
+@Traceable
 public class OrganisationUnitIndicatorController {
 
     private final OrganisationUnitIndicatorService organisationUnitIndicatorService;

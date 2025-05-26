@@ -25,6 +25,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -57,6 +58,7 @@ import rs.teslaris.core.util.search.SearchRequestType;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     implements DocumentFileService {
 

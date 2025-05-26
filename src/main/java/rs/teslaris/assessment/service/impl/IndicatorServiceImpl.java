@@ -16,6 +16,7 @@ import rs.teslaris.assessment.model.Indicator;
 import rs.teslaris.assessment.repository.IndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -24,6 +25,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConst
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     implements IndicatorService {
 

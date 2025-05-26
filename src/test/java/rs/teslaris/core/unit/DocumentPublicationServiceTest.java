@@ -769,4 +769,64 @@ public class DocumentPublicationServiceTest {
         assertNotNull(result);
         assertEquals(expectedFields.size(), result.size());
     }
+
+    @Test
+    public void shouldReturnSortedWordFrequenciesForDocumentInSerbian() {
+        // given
+        Integer documentId = 123;
+        DocumentPublicationIndex mockDoc = mock(DocumentPublicationIndex.class);
+        List<String> terms = List.of("abc", "def", "abc", "xyz", "xyz", "xyz");
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(mockDoc));
+        when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
+
+        // when
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId, false);
+
+        // then
+        assertEquals(3, result.size());
+        assertEquals("xyz", result.get(0).a);
+        assertEquals(3L, result.get(0).b);
+        assertEquals("abc", result.get(1).a);
+        assertEquals(2L, result.get(1).b);
+        assertEquals("def", result.get(2).a);
+        assertEquals(1L, result.get(2).b);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionForMissingDocument() {
+        // given
+        Integer documentId = 999;
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(NotFoundException.class, () -> {
+            documentPublicationService.getWordCloudForSingleDocument(documentId, false);
+        });
+    }
+
+    @Test
+    public void shouldUseForeignLanguageTokensWhenRequested() {
+        // given
+        Integer documentId = 456;
+        DocumentPublicationIndex mockDoc = mock(DocumentPublicationIndex.class);
+        List<String> foreignTerms = List.of("uno", "dos", "uno", "tres");
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(mockDoc));
+        when(mockDoc.getWordcloudTokensOther()).thenReturn(foreignTerms);
+
+        // when
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId, true);
+
+        // then
+        assertEquals(3, result.size());
+        assertEquals("uno", result.getFirst().a);
+        assertEquals(2L, result.getFirst().b);
+    }
 }

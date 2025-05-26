@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.MonographPublicationConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -33,6 +34,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
+@Traceable
 public class MonographPublicationServiceImpl extends DocumentPublicationServiceImpl implements
     MonographPublicationService {
 

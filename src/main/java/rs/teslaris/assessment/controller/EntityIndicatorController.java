@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.annotation.EntityIndicatorEditCheck;
 import rs.teslaris.assessment.service.interfaces.EntityIndicatorService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -28,10 +29,13 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/entity-indicator")
+@Traceable
 public class EntityIndicatorController {
 
     private static UserService userService;
+
     private static JwtUtil tokenUtil;
+
     private final EntityIndicatorService entityIndicatorService;
 
 

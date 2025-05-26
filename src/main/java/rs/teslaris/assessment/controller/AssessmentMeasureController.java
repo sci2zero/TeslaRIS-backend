@@ -20,10 +20,12 @@ import rs.teslaris.assessment.converter.AssessmentMeasureConverter;
 import rs.teslaris.assessment.dto.AssessmentMeasureDTO;
 import rs.teslaris.assessment.service.interfaces.AssessmentMeasureService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("api/assessment/assessment-measure")
 @RequiredArgsConstructor
+@Traceable
 public class AssessmentMeasureController {
 
     private final AssessmentMeasureService assessmentMeasureService;

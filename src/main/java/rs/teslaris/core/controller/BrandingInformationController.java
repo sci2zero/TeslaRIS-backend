@@ -9,12 +9,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.BrandingInformationDTO;
 import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 
 @RestController
 @RequestMapping("/api/branding")
 @RequiredArgsConstructor
+@Traceable
 public class BrandingInformationController {
 
     private final BrandingInformationService brandingInformationService;

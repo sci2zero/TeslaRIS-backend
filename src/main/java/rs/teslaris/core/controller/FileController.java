@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
@@ -48,6 +49,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RequestMapping("/api/file")
 @RequiredArgsConstructor
 @Slf4j
+@Traceable
 public class FileController {
 
     private final FileService fileService;

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.DocumentClaimingService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -17,6 +18,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("/api/document-claim")
 @RequiredArgsConstructor
+@Traceable
 public class DocumentClaimingController {
 
     private final DocumentClaimingService documentClaimingService;

@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.ApiKeyRequest;
 import rs.teslaris.core.dto.commontypes.ApiKeyResponse;
@@ -36,6 +37,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.InvalidApiKeyException;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
+@Traceable
 public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyService {
 
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();

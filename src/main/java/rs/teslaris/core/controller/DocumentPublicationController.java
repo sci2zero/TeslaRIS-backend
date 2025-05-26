@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -248,5 +249,13 @@ public class DocumentPublicationController {
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         @RequestParam("export") Boolean onlyExportFields) {
         return documentPublicationService.getSearchFields(onlyExportFields);
+    }
+
+    @GetMapping("/wordcloud/{documentId}")
+    public List<Pair<String, Long>> getWordCloudForSingleDocument(@PathVariable Integer documentId,
+                                                                  @RequestParam
+                                                                  boolean foreignLanguage) {
+        return documentPublicationService.getWordCloudForSingleDocument(documentId,
+            foreignLanguage);
     }
 }

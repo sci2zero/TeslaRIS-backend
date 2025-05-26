@@ -112,4 +112,16 @@ public class DocumentPublicationControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
     }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void testGetWordCloudForSingleDocument(Boolean foreignLanguage) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/document/wordcloud/{documentId}?foreignLanguage={foreignLanguage}",
+                        1,
+                        foreignLanguage)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
 }

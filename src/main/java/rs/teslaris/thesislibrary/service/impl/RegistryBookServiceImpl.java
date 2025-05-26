@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
@@ -68,6 +69,7 @@ import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     implements RegistryBookService {
 

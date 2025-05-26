@@ -11,10 +11,12 @@ import rs.teslaris.assessment.repository.OrganisationUnitAssessmentClassificatio
 import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.OrganisationUnitAssessmentClassificationService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
 @Service
+@Traceable
 public class OrganisationUnitAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl implements
     OrganisationUnitAssessmentClassificationService {

@@ -39,6 +39,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -91,6 +92,7 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class UserServiceImpl extends JPAServiceImpl<User> implements UserService {
 
     private final MessageSource messageSource;

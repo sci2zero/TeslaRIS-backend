@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -72,6 +73,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstrai
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class MergeServiceImpl implements MergeService {
 
     private final JournalService journalService;

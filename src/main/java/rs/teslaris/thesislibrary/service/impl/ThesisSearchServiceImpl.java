@@ -12,6 +12,7 @@ import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -26,6 +27,7 @@ import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
 @Service
+@Traceable
 public class ThesisSearchServiceImpl implements ThesisSearchService {
 
     private final SearchFieldsLoader searchFieldsLoader;

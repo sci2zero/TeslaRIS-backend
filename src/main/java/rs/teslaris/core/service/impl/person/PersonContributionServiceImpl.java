@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -50,6 +51,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribution>
     implements PersonContributionService {
 
@@ -257,7 +259,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
                 var allowedInstitutionIds = new HashSet<Integer>();
                 contribution.getPerson().getInvolvements().stream().filter(involvement ->
-                        involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) &&
+                        (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                            involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
                             Objects.nonNull(involvement.getOrganisationUnit()))
                     .forEach(involvement -> {
                         var involvementInstitutionId = involvement.getOrganisationUnit().getId();
