@@ -74,6 +74,10 @@ public class TracingAspect {
                 tracingContextId, trackingCookieValue,
                 clientIp, targetClass.getSimpleName(),
                 method, args, duration, t);
+
+            // tracingContextId is passed to ControllerAdvice
+            // there, it is cleaned up in creation wrapper method
+            MDC.put(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID, tracingContextId);
             throw t;
         } finally {
             // Cleanup to prevent context memory leak

@@ -8,6 +8,8 @@ public class TraceMDCKeys {
 
     public static final String TRACING_CONTEXT_ID = "tracingContextId";
 
+    public static final String UNHANDLED_TRACING_CONTEXT_ID = "unhandledTracingContextId";
+
 
     private TraceMDCKeys() {
     }

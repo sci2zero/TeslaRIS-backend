@@ -61,6 +61,7 @@ public class EmailUtil {
         backoff = @Backoff(delay = 5000)
     )
     public void sendUnhandledExceptionEmail(String exceptionId,
+                                            String tracingContextId,
                                             String requestPath,
                                             Exception ex) {
         var message = new SimpleMailMessage();
@@ -73,9 +74,9 @@ public class EmailUtil {
         ex.printStackTrace(stackTracePrinter);
 
         message.setText(MessageFormat.format(
-            "Unhandled error (ID:{0}) occurred at: {2}.\nMessage: {1}\nRequest path: {3}\n\nFull stack trace:\n{4}",
+            "Unhandled error (ID:{0}) occurred at: {2}.\nMessage: {1}\nRequest path: {3}\nTracing context id: {5}\n\nFull stack trace:\n{4}",
             exceptionId, ex.getMessage(), LocalDateTime.now(), requestPath,
-            stackTraceWriter.toString()));
+            stackTraceWriter.toString(), tracingContextId));
 
         try {
             mailSender.send(message);
