@@ -250,7 +250,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredReferenceLanguage());
+        assertEquals(language, savedUser.getPreferredReferenceCataloguingLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -302,7 +302,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredNotificationLanguage());
+        assertEquals(language, savedUser.getPreferredUILanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -354,7 +354,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredNotificationLanguage());
+        assertEquals(language, savedUser.getPreferredUILanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -409,7 +409,7 @@ public class UserServiceTest {
         assertEquals("regadmin@example.com", savedUser.getEmail());
         assertEquals("Promotion", savedUser.getFirstname());
         assertEquals("Admin", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredReferenceLanguage());
+        assertEquals(language, savedUser.getPreferredReferenceCataloguingLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -463,7 +463,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredNotificationLanguage());
+        assertEquals(language, savedUser.getPreferredUILanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -556,7 +556,7 @@ public class UserServiceTest {
         requestDTO.setOldPassword("oldPassword");
         requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
-        requestDTO.setPreferredLanguageId(1);
+        requestDTO.setPreferredUILanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.WEEKLY);
 
@@ -568,8 +568,8 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setLocked(false);
         user.setCanTakeRole(false);
-        user.setPreferredNotificationLanguage(new Language());
-        user.setPreferredReferenceLanguage(new Language());
+        user.setPreferredUILanguage(new Language());
+        user.setPreferredReferenceCataloguingLanguage(new Language());
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
@@ -599,7 +599,7 @@ public class UserServiceTest {
         assertEquals("Jane", user.getFirstname());
         assertEquals("Doe", user.getLastName());
         assertFalse(user.getCanTakeRole());
-        assertEquals(preferredLanguage, user.getPreferredNotificationLanguage());
+        assertEquals(preferredLanguage, user.getPreferredUILanguage());
         assertEquals(person, user.getPerson());
         assertNotEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
@@ -614,8 +614,8 @@ public class UserServiceTest {
         requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
         requestDTO.setLastName("SMITH");
-        requestDTO.setPreferredLanguageId(1);
-        requestDTO.setPreferredReferenceLanguageId(1);
+        requestDTO.setPreferredUILanguageId(1);
+        requestDTO.setPreferredReferenceCataloguingLanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.DAILY);
 
@@ -627,8 +627,8 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setCanTakeRole(false);
         user.setLocked(false);
-        user.setPreferredNotificationLanguage(new Language());
-        user.setPreferredReferenceLanguage(new Language());
+        user.setPreferredUILanguage(new Language());
+        user.setPreferredReferenceCataloguingLanguage(new Language());
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
@@ -658,7 +658,7 @@ public class UserServiceTest {
         assertEquals("JOHN", user.getFirstname());
         assertEquals("SMITH", user.getLastName());
         assertFalse(user.getCanTakeRole());
-        assertEquals(preferredLanguage, user.getPreferredReferenceLanguage());
+        assertEquals(preferredLanguage, user.getPreferredReferenceCataloguingLanguage());
         assertEquals(person, user.getPerson());
         assertEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
@@ -690,7 +690,7 @@ public class UserServiceTest {
         user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setPassword("currentPassword");
         var preferredLanguage = new Language();
-        requestDTO.setPreferredLanguageId(1);
+        requestDTO.setPreferredUILanguageId(1);
         var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
 
@@ -856,7 +856,7 @@ public class UserServiceTest {
 
         var user = new User();
         user.setEmail("test@example.com");
-        user.setPreferredNotificationLanguage(
+        user.setPreferredUILanguage(
             new Language(LanguageAbbreviations.SERBIAN, new HashSet<>()));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
@@ -952,8 +952,8 @@ public class UserServiceTest {
         // Given
         var personId = 1;
         var user = new User();
-        user.setPreferredNotificationLanguage(new Language());
-        user.setPreferredReferenceLanguage(new Language());
+        user.setPreferredUILanguage(new Language());
+        user.setPreferredReferenceCataloguingLanguage(new Language());
 
         when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(user));
 

@@ -38,9 +38,9 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
-import rs.teslaris.core.model.document.CCLicense;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -373,9 +373,8 @@ public class TestingDataInitializer {
             Set.of(
                 new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate.pdf", "1111.pdf",
                     new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
-                    License.CREATIVE_COMMONS, CCLicense.BY_NC, ApproveStatus.APPROVED, true,
-                    LocalDateTime.now(),
-                    false, false))));
+                    AccessRights.SUBSCRIPTION_BASED_ACCESS, License.BY_NC, ApproveStatus.APPROVED,
+                    true, LocalDateTime.now(), false, false))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -391,7 +390,7 @@ public class TestingDataInitializer {
                 1)),
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-                License.OPEN_ACCESS, CCLicense.BY_NC, ApproveStatus.APPROVED, true,
+                AccessRights.OPEN_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
                 LocalDateTime.now(), false, false)),
             LocalDate.of(2023, 4, 17)));
         personRepository.save(person1);
@@ -709,7 +708,8 @@ public class TestingDataInitializer {
 
         documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
             new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-            License.OPEN_ACCESS, CCLicense.BY_SA, ApproveStatus.APPROVED, true, LocalDateTime.now(),
+            AccessRights.OPEN_ACCESS, License.BY_SA, ApproveStatus.APPROVED, true,
+            LocalDateTime.now(),
             false, false));
         documentIndicatorRepository.save(documentIndicator1);
 

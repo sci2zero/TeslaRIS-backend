@@ -46,7 +46,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
                                                 ThesisType type, List<Integer> institutionIds);
 
     @Query("SELECT COUNT(DISTINCT t) FROM Thesis t JOIN t.fileItems fi " +
-        "WHERE fi.license = 3 AND " +
+        "WHERE fi.accessRights = 2 AND " +
         "t.thesisDefenceDate >= :startDate AND " +
         "t.thesisDefenceDate <= :endDate AND " +
         "t.thesisType = :type AND " +

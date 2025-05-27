@@ -10,10 +10,10 @@ import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublication;
-import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
@@ -351,7 +351,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setOpenAccess(false);
         document.getFileItems().forEach(file -> {
             commonExportDocument.getFileFormats().add(file.getMimeType());
-            if (file.getLicense().equals(License.OPEN_ACCESS)) {
+            if (file.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
                 commonExportDocument.setOpenAccess(true);
             }
         });

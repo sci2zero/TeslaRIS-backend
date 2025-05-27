@@ -32,8 +32,8 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentFile;
-import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -93,9 +93,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
-    public Pair<License, Boolean> getDocumentAccessLevel(String serverFilename) {
+    public Pair<AccessRights, Boolean> getDocumentAccessLevel(String serverFilename) {
         var documentFile = documentFileRepository.getReferenceByServerFilename(serverFilename);
-        return new Pair<>(documentFile.getLicense(), documentFile.getIsThesisDocument());
+        return new Pair<>(documentFile.getAccessRights(), documentFile.getIsThesisDocument());
     }
 
     @Override
@@ -126,16 +126,16 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         }
 
         documentFile.setResourceType(documentFileDTO.getResourceType());
-        documentFile.setLicense(documentFileDTO.getLicense());
+        documentFile.setAccessRights(documentFileDTO.getAccessRights());
 
-        if (documentFile.getLicense().equals(License.OPEN_ACCESS)) {
+        if (documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
             if ((documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) ||
                 documentFile.getResourceType().equals(ResourceType.PREPRINT)) &&
-                Objects.isNull(documentFileDTO.getCcLicense())) {
+                Objects.isNull(documentFileDTO.getLicense())) {
                 throw new MissingDataException(
                     "You have to provide CC licence for open access documents.");
             }
-            documentFile.setCcLicense(documentFileDTO.getCcLicense());
+            documentFile.setLicense(documentFileDTO.getLicense());
         }
 
         documentFile.setTimestamp(LocalDateTime.now());

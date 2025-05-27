@@ -48,11 +48,11 @@ public class DocumentFile extends BaseEntity {
     @Column(name = "resource_type", nullable = false)
     private ResourceType resourceType;
 
-    @Column(name = "license")
-    private License license;
+    @Column(name = "access_rights")
+    private AccessRights accessRights;
 
     @Column(name = "cc_license")
-    private CCLicense ccLicense;
+    private License license;
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;

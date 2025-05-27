@@ -11,6 +11,6 @@ public class DocumentFileConverter {
             documentFile.getServerFilename(),
             MultilingualContentConverter.getMultilingualContentDTO(
                 documentFile.getDescription()), documentFile.getResourceType(),
-            documentFile.getLicense(), documentFile.getCcLicense(), documentFile.getFileSize());
+            documentFile.getAccessRights(), documentFile.getLicense(), documentFile.getFileSize());
     }
 }
