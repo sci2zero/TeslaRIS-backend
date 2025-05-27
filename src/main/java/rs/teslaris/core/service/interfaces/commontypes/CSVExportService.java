@@ -3,12 +3,12 @@ package rs.teslaris.core.service.interfaces.commontypes;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.CSVExportRequest;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
+import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
 
 @Service
 public interface CSVExportService {
 
-    InputStreamResource exportDocumentsToCSV(DocumentCSVExportRequest request);
+    InputStreamResource exportDocumentsToCSV(DocumentCSVExportRequestDTO request);
 
     InputStreamResource exportPersonsToCSV(CSVExportRequest request);
 

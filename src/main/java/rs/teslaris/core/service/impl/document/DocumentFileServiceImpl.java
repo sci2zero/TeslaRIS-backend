@@ -95,7 +95,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Override
     public Pair<AccessRights, Boolean> getDocumentAccessLevel(String serverFilename) {
         var documentFile = documentFileRepository.getReferenceByServerFilename(serverFilename);
-        return new Pair<>(documentFile.getAccessRights(), documentFile.getIsThesisDocument());
+        return new Pair<>(documentFile.getAccessRights(), documentFile.getIsVerifiedData());
     }
 
     @Override
@@ -157,11 +157,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
-                                                   Boolean isThesisDocument) {
+                                                   Boolean isVerifiedData) {
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
-        newDocumentFile.setIsThesisDocument(isThesisDocument);
+        newDocumentFile.setIsVerifiedData(isVerifiedData);
 
         if (!index) {
             documentFile.setResourceType(
@@ -178,7 +178,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         setCommonFields(newDocumentFile, documentFile);
         newDocumentFile.setCanEdit(false);
         newDocumentFile.setLatest(true);
-        newDocumentFile.setIsThesisDocument(true);
+        newDocumentFile.setIsVerifiedData(true);
 
         return saveDocument(documentFile, newDocumentFile, false);
     }

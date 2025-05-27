@@ -22,7 +22,7 @@ import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
+import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -84,7 +84,8 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                            Integer from, Integer to,
                                            List<DocumentPublicationType> types,
                                            List<DocumentFileSection> documentFileSections,
-                                           Integer userId, String language) {
+                                           Integer userId, String language,
+                                           ExportFileType metadataFormat) {
         if (from > to) {
             throw new BackupException("dateRangeIssueMessage");
         }
@@ -95,7 +96,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
-                documentFileSections, language),
+                documentFileSections, language, metadataFormat),
             userId);
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
@@ -104,7 +105,8 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                                        Integer from, Integer to,
                                                        List<DocumentPublicationType> types,
                                                        List<DocumentFileSection> documentFileSections,
-                                                       String language) {
+                                                       String language,
+                                                       ExportFileType metadataFormat) {
         int chunkSize = 10;
 
         BackupZipBuilder zipBuilder = null;
@@ -133,7 +135,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                 }
             }
 
-            createMetadataCSV(processedDocumentIds, language, types, zipBuilder);
+            createMetadataCSV(processedDocumentIds, language, types, zipBuilder, metadataFormat);
 
             var institution = organisationUnitService.findOne(institutionId);
             var serverFilename = generateBackupFileName(from, to, institution, language);
@@ -156,12 +158,12 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
 
     private void createMetadataCSV(List<Integer> exportEntityIds, String language,
                                    List<DocumentPublicationType> types,
-                                   BackupZipBuilder zipBuilder) {
-        var exportRequest = new DocumentCSVExportRequest();
+                                   BackupZipBuilder zipBuilder, ExportFileType metadataFormat) {
+        var exportRequest = new DocumentCSVExportRequestDTO();
         exportRequest.setExportMaxPossibleAmount(false);
         exportRequest.setExportEntityIds(exportEntityIds);
         exportRequest.setExportLanguage(language);
-        exportRequest.setExportFileType(ExportFileType.CSV);
+        exportRequest.setExportFileType(metadataFormat);
         exportRequest.setColumns(
             List.of("title_sr", "title_other", "year", "description_sr", "description_other",
                 "keywords_sr", "keywords_other", "author_names", "editor_names",

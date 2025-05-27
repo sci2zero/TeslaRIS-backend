@@ -373,7 +373,7 @@ public class TestingDataInitializer {
             Set.of(
                 new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate.pdf", "1111.pdf",
                     new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
-                    AccessRights.SUBSCRIPTION_BASED_ACCESS, License.BY_NC, ApproveStatus.APPROVED,
+                    AccessRights.RESTRICTED_ACCESS, License.BY_NC, ApproveStatus.APPROVED,
                     true, LocalDateTime.now(), false, false))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),

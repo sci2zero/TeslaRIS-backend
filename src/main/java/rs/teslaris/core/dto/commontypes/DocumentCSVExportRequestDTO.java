@@ -12,7 +12,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentCSVExportRequest extends CSVExportRequest {
+public class DocumentCSVExportRequestDTO extends CSVExportRequest {
 
     private Boolean apa;
 

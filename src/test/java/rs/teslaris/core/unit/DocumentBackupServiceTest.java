@@ -15,11 +15,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentFileBackup;
 import rs.teslaris.core.model.document.DocumentFileSection;
@@ -64,8 +67,9 @@ class DocumentBackupServiceTest {
     @InjectMocks
     private DocumentBackupServiceImpl documentBackupService;
 
-    @Test
-    void shouldScheduleBackupWithCorrectFormatAndReturnTime() {
+    @ParameterizedTest
+    @EnumSource(ExportFileType.class)
+    void shouldScheduleBackupWithCorrectFormatAndReturnTime(ExportFileType metadataFormat) {
         // Given
         var institutionId = 1;
         var from = 2020;
@@ -80,7 +84,7 @@ class DocumentBackupServiceTest {
 
         // When
         var result = documentBackupService.scheduleBackupGeneration(
-            institutionId, from, to, types, fileSections, userId, language
+            institutionId, from, to, types, fileSections, userId, language, metadataFormat
         );
 
         // Then
@@ -187,8 +191,9 @@ class DocumentBackupServiceTest {
             () -> documentBackupService.serveAndDeleteBackupFile(backupFileName, userId));
     }
 
-    @Test
-    void shouldThrowWhenScheduleBackupWithInvalidDates() {
+    @ParameterizedTest
+    @EnumSource(ExportFileType.class)
+    void shouldThrowWhenScheduleBackupWithInvalidDates(ExportFileType metadataFormat) {
         // Given
         var institutionId = 1;
         var from = 2025;
@@ -198,10 +203,10 @@ class DocumentBackupServiceTest {
         var userId = 5;
         var language = "en";
 
-        // When / Then
+        // When & Then
         assertThrows(BackupException.class,
             () -> documentBackupService.scheduleBackupGeneration(
-                institutionId, from, to, types, fileSections, userId, language
+                institutionId, from, to, types, fileSections, userId, language, metadataFormat
             ));
     }
 }

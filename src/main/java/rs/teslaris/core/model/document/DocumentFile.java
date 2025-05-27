@@ -66,6 +66,6 @@ public class DocumentFile extends BaseEntity {
     @Column(name = "latest")
     private Boolean latest = false;
 
-    @Column(name = "thesis_document")
-    private Boolean isThesisDocument = false;
+    @Column(name = "verified_data")
+    private Boolean isVerifiedData = false;
 }

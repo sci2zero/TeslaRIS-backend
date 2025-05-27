@@ -19,7 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
+import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -39,13 +39,13 @@ class CSVExportServiceTest {
     private CSVExportServiceImpl csvExportService;
 
 
-    private DocumentCSVExportRequest request;
+    private DocumentCSVExportRequestDTO request;
     private DocumentPublicationIndex mockDocument;
 
 
     @BeforeEach
     void setUp() {
-        request = new DocumentCSVExportRequest();
+        request = new DocumentCSVExportRequestDTO();
         request.setColumns(List.of("title", "author"));
         request.setExportLanguage("en");
         request.setExportMaxPossibleAmount(false);

@@ -19,7 +19,7 @@ public class DocumentBackupControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                        "http://localhost:8081/api/document/backup/schedule-generation?from=2022&to=2023&institutionId=1&types=SOFTWARE&sections=FILE_ITEMS&lang=sr")
+                        "http://localhost:8081/api/document/backup/schedule-generation?from=2022&to=2023&institutionId=1&types=SOFTWARE&sections=FILE_ITEMS&lang=sr&metadataFormat=CSV")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isAccepted());
