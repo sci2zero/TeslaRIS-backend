@@ -250,6 +250,9 @@ public class SecurityConfiguration {
                 // COOKIES
                 .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()
 
+                // HEALTH CHECK
+                .requestMatchers(HttpMethod.GET, "/api/health-check/version").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

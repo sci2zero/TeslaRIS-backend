@@ -1,9 +1,7 @@
 package rs.teslaris.assessment.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.assessment.model.AssessmentClassification;
@@ -24,6 +23,7 @@ import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.util.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
@@ -34,35 +34,34 @@ public class ClassificationPriorityMapping {
 
     private static JournalPublicationRepository journalPublicationRepository;
 
+    private static String externalOverrideConfiguration;
+
     private static AssessmentConfig assessmentConfig;
+
 
     @Autowired
     public ClassificationPriorityMapping(
         ProceedingsPublicationRepository proceedingsPublicationRepository,
-        JournalPublicationRepository journalPublicationRepository) {
+        JournalPublicationRepository journalPublicationRepository,
+        @Value("${assessment.classifications.priority-mapping}")
+        String externalOverrideConfiguration) {
         ClassificationPriorityMapping.proceedingsPublicationRepository =
             proceedingsPublicationRepository;
         ClassificationPriorityMapping.journalPublicationRepository = journalPublicationRepository;
+        ClassificationPriorityMapping.externalOverrideConfiguration = externalOverrideConfiguration;
         reloadConfiguration();
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
     private static void reloadConfiguration() {
         try {
-            loadConfiguration();
+            assessmentConfig = ConfigurationLoaderUtil.loadConfiguration(AssessmentConfig.class,
+                "src/main/resources/assessment/assessmentConfiguration.json",
+                externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
                 "Failed to reload indicator mapping configuration: " + e.getMessage());
         }
-    }
-
-    private static synchronized void loadConfiguration() throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        assessmentConfig = objectMapper.readValue(
-            new FileInputStream(
-                "src/main/resources/assessment/assessmentConfiguration.json"),
-            AssessmentConfig.class
-        );
     }
 
     public static Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> getClassificationBasedOnCriteria(
@@ -108,11 +107,16 @@ public class ClassificationPriorityMapping {
         return Optional.of(documentCode);
     }
 
+    @Nullable
     public static String getImaginaryDocClassificationCodeBasedOnCode(
         String classificationCode, PublicationType publicationType) {
 
         var documentCode =
             assessmentConfig.classificationToAssessmentMapping.get(classificationCode);
+
+        if (Objects.isNull(documentCode)) {
+            return null;
+        }
 
         if (publicationType instanceof JournalPublicationType) {
             if (documentCode.equals("M24") ||

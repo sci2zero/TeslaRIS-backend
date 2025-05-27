@@ -1,8 +1,6 @@
 package rs.teslaris.assessment.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -13,11 +11,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.util.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
@@ -26,30 +26,31 @@ public class AssessmentRulesConfigurationLoader {
     private static AssessmentRulesConfigurationLoader.AssessmentRulesConfiguration
         assessmentRulesConfiguration = null;
 
+    private static String externalOverrideConfiguration;
+
     private static LanguageTagService languageTagService;
 
     @Autowired
-    public AssessmentRulesConfigurationLoader(LanguageTagService languageTagService) {
+    public AssessmentRulesConfigurationLoader(LanguageTagService languageTagService,
+                                              @Value("${assessment.rules.configuration}")
+                                              String externalOverrideConfiguration) {
         AssessmentRulesConfigurationLoader.languageTagService = languageTagService;
+        AssessmentRulesConfigurationLoader.externalOverrideConfiguration =
+            externalOverrideConfiguration;
+        reloadConfiguration();
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
     private static void reloadConfiguration() {
         try {
-            loadConfiguration();
+            assessmentRulesConfiguration = ConfigurationLoaderUtil.loadConfiguration(
+                AssessmentRulesConfigurationLoader.AssessmentRulesConfiguration.class,
+                "src/main/resources/assessment/assessmentRules.json",
+                externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
                 "Failed to reload classification mapping configuration: " + e.getMessage());
         }
-    }
-
-    private static synchronized void loadConfiguration() throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        assessmentRulesConfiguration = objectMapper.readValue(
-            new FileInputStream(
-                "src/main/resources/assessment/assessmentRules.json"),
-            AssessmentRulesConfigurationLoader.AssessmentRulesConfiguration.class
-        );
     }
 
     public static Set<MultiLingualContent> getRuleDescription(String ruleGroupCode,
