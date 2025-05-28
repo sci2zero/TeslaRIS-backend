@@ -51,11 +51,11 @@ public class DocumentFile extends BaseEntity {
     @Column(name = "resource_type", nullable = false)
     private ResourceType resourceType;
 
-    @Column(name = "license")
-    private License license;
+    @Column(name = "access_rights")
+    private AccessRights accessRights;
 
     @Column(name = "cc_license")
-    private CCLicense ccLicense;
+    private License license;
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
@@ -69,8 +69,8 @@ public class DocumentFile extends BaseEntity {
     @Column(name = "latest")
     private Boolean latest = false;
 
-    @Column(name = "thesis_document")
-    private Boolean isThesisDocument = false;
+    @Column(name = "verified_data")
+    private Boolean isVerifiedData = false;
 
     @Column(name = "legacy_filename")
     private String legacyFilename;

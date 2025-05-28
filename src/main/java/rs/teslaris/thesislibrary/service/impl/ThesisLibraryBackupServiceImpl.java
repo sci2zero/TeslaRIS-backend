@@ -17,6 +17,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileBackup;
@@ -28,6 +29,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.DocumentFileBackupRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -35,6 +37,7 @@ import rs.teslaris.core.util.BackupZipBuilder;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.thesislibrary.dto.ThesisCSVExportRequestDTO;
 import rs.teslaris.thesislibrary.model.ThesisFileSection;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
@@ -59,6 +62,9 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
     private final MessageSource messageSource;
 
+    private final CSVExportService csvExportService;
+
+
     private final Map<FileSection, Function<Thesis, Set<DocumentFile>>> sectionAccessors = Map.of(
         DocumentFileSection.FILE_ITEMS, Thesis::getFileItems,
         DocumentFileSection.PROOFS, Thesis::getProofs,
@@ -73,8 +79,9 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                                            LocalDate from, LocalDate to,
                                            List<ThesisType> types,
                                            List<FileSection> thesisFileSections,
-                                           Boolean defended,
-                                           Boolean putOnReview, Integer userId, String language) {
+                                           Boolean defended, Boolean putOnReview,
+                                           Integer userId, String language,
+                                           ExportFileType metadataFormat) {
         if (!defended && !putOnReview) {
             throw new BackupException("You must select at least one of: defended or putOnReview.");
         }
@@ -89,7 +96,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
-                thesisFileSections, defended, putOnReview, language),
+                thesisFileSections, defended, putOnReview, language, metadataFormat),
             userId);
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
@@ -98,8 +105,9 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                                                        LocalDate from, LocalDate to,
                                                        List<ThesisType> types,
                                                        List<FileSection> thesisFileSections,
-                                                       Boolean defended,
-                                                       Boolean putOnReview, String language) {
+                                                       Boolean defended, Boolean putOnReview,
+                                                       String language,
+                                                       ExportFileType metadataFormat) {
         int pageNumber = 0;
         int chunkSize = 10;
         boolean hasNextPage = true;
@@ -108,6 +116,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         try {
             zipBuilder = new BackupZipBuilder("thesis-backup");
 
+            var processedThesisIds = new ArrayList<Integer>();
             while (hasNextPage) {
                 List<Thesis> chunk = thesisRepository
                     .findThesesForBackup(from, to, types, institutionId, defended, putOnReview,
@@ -115,11 +124,14 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
                 for (var thesis : chunk) {
                     processThesis(thesis, thesisFileSections, zipBuilder, language);
+                    processedThesisIds.add(thesis.getId());
                 }
 
                 pageNumber++;
                 hasNextPage = chunk.size() == chunkSize;
             }
+
+            createMetadataCSV(processedThesisIds, language, zipBuilder, metadataFormat);
 
             var institution = organisationUnitService.findOne(institutionId);
             var serverFilename = generateBackupFileName(from, to, institution);
@@ -137,6 +149,33 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             if (Objects.nonNull(zipBuilder)) {
                 zipBuilder.cleanup();
             }
+        }
+    }
+
+    private void createMetadataCSV(List<Integer> exportEntityIds, String language,
+                                   BackupZipBuilder zipBuilder, ExportFileType metadataFormat) {
+        var exportRequest = new ThesisCSVExportRequestDTO();
+        exportRequest.setExportMaxPossibleAmount(false);
+        exportRequest.setExportEntityIds(exportEntityIds);
+        exportRequest.setExportLanguage(language);
+        exportRequest.setExportFileType(metadataFormat);
+        exportRequest.setColumns(
+            List.of("title_sr", "title_other", "year", "description_sr", "description_other",
+                "keywords_sr", "keywords_other", "author_names", "editor_names",
+                "board_member_names", "board_president_name", "advisor_names", "reviewer_names",
+                "type", "publication_type", "doi", "scopus_id", "is_open_access", "event_id",
+                "journal_id"));
+        exportRequest.setApa(true);
+        exportRequest.setMla(true);
+        exportRequest.setChicago(true);
+        exportRequest.setHarvard(true);
+        exportRequest.setVancouver(true);
+
+        var metadataFile = csvExportService.exportDocumentsToCSV(exportRequest);
+        try {
+            zipBuilder.copyFileToRoot(metadataFile.getInputStream(), "metadata.csv");
+        } catch (IOException e) {
+            throw new RuntimeException(e); // should never happen
         }
     }
 
@@ -177,7 +216,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         }
     }
 
-    public Map<FileSection, String> getSectionPaths(String language) {
+    private Map<FileSection, String> getSectionPaths(String language) {
         return Map.of(
             DocumentFileSection.FILE_ITEMS, messageSource.getMessage(
                 DocumentFileSection.FILE_ITEMS.getInternationalizationMessageName(),

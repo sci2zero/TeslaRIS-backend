@@ -15,10 +15,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.model.document.DocumentFileBackup;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
@@ -61,8 +64,9 @@ public class ThesisLibraryBackupServiceTest {
     private ThesisLibraryBackupServiceImpl thesisLibraryBackupService;
 
 
-    @Test
-    void shouldScheduleBackupWithCorrectFormatAndReturnTime() {
+    @ParameterizedTest
+    @EnumSource(ExportFileType.class)
+    void shouldScheduleBackupWithCorrectFormatAndReturnTime(ExportFileType metadataFormat) {
         // Given
         var institutionId = 1;
         var from = LocalDate.of(2023, 1, 1);
@@ -79,7 +83,7 @@ public class ThesisLibraryBackupServiceTest {
         // When
         var result =
             thesisLibraryBackupService.scheduleBackupGeneration(institutionId, from, to, types,
-                fileSections, defended, putOnReview, userId, "sr");
+                fileSections, defended, putOnReview, userId, "sr", metadataFormat);
 
         // Then
         assertEquals(result, "13:45h");

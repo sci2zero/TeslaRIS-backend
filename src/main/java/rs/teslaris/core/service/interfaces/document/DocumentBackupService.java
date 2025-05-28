@@ -4,6 +4,7 @@ import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentFileSection;
 
@@ -14,7 +15,7 @@ public interface DocumentBackupService {
                                     Integer from, Integer to,
                                     List<DocumentPublicationType> types,
                                     List<DocumentFileSection> documentFileSections,
-                                    Integer userId, String language);
+                                    Integer userId, String language, ExportFileType metadataFormat);
 
     List<String> listAvailableBackups(Integer userId);
 

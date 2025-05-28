@@ -31,8 +31,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
-import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
@@ -78,10 +78,10 @@ public class FileController {
 
         var file = fileService.loadAsResource(filename);
         var documentFile = documentFileService.getDocumentByServerFilename(filename);
-        var license = documentFile.getLicense();
-        var isThesisDocument = documentFile.getIsThesisDocument();
+        var accessRights = documentFile.getAccessRights();
+        var isThesisDocument = documentFile.getIsVerifiedData();
         var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
-        var isOpenAccess = isOpenAccess(license);
+        var isOpenAccess = isOpenAccess(accessRights);
 
         if (!isOpenAccess && !authenticatedUser) {
             return ErrorResponseUtil.buildUnavailableResponse(request,
@@ -93,7 +93,7 @@ public class FileController {
                 "loginToViewCCDocumentMessage");
         }
 
-        if (license.equals(License.COMMISSION_ONLY) &&
+        if (accessRights.equals(AccessRights.COMMISSION_ONLY) &&
             (!authenticatedUser || !isCommissionUser(bearerToken))) {
             return handleUnauthorisedUser(request);
         }
@@ -275,8 +275,8 @@ public class FileController {
                 new ByteArrayResource(outputStream.toByteArray()));
     }
 
-    private boolean isOpenAccess(License license) {
-        return license.equals(License.OPEN_ACCESS) || license.equals(License.PUBLIC_DOMAIN);
+    private boolean isOpenAccess(AccessRights accessRights) {
+        return accessRights.equals(AccessRights.OPEN_ACCESS);
     }
 
     private boolean isAuthenticatedUser(String bearerToken, String fingerprintCookie) {

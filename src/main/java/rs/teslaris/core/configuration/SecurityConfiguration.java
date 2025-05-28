@@ -259,6 +259,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,
                     "/api/legacy-navigation/document-file/{oldServerFilename}").permitAll()
 
+                // HEALTH CHECK
+                .requestMatchers(HttpMethod.GET, "/api/health-check/version").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

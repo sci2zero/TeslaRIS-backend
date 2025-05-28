@@ -20,7 +20,7 @@ public class ThesisLibraryBackupControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                        "http://localhost:8081/api/thesis-library/backup/schedule-generation?from=2022-03-03&to=2023-04-04&institutionId=1&types=PHD&sections=FILE_ITEMS&defended=true&putOnReview=true&lang=sr")
+                        "http://localhost:8081/api/thesis-library/backup/schedule-generation?from=2022-03-03&to=2023-04-04&institutionId=1&types=PHD&sections=FILE_ITEMS&defended=true&putOnReview=true&lang=sr&metadataFormat=CSV")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isAccepted());

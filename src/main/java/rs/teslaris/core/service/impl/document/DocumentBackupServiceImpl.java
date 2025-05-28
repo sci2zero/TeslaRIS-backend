@@ -23,6 +23,8 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Document;
@@ -35,6 +37,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.DocumentFileBackupRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -68,6 +71,9 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
 
     private final MessageSource messageSource;
 
+    private final CSVExportService csvExportService;
+
+
     private final Map<DocumentFileSection, Function<Document, Set<DocumentFile>>> sectionAccessors =
         Map.of(
             DocumentFileSection.FILE_ITEMS, Document::getFileItems,
@@ -80,7 +86,8 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                            Integer from, Integer to,
                                            List<DocumentPublicationType> types,
                                            List<DocumentFileSection> documentFileSections,
-                                           Integer userId, String language) {
+                                           Integer userId, String language,
+                                           ExportFileType metadataFormat) {
         if (from > to) {
             throw new BackupException("dateRangeIssueMessage");
         }
@@ -91,7 +98,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
-                documentFileSections, language),
+                documentFileSections, language, metadataFormat),
             userId);
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
@@ -100,13 +107,15 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                                        Integer from, Integer to,
                                                        List<DocumentPublicationType> types,
                                                        List<DocumentFileSection> documentFileSections,
-                                                       String language) {
+                                                       String language,
+                                                       ExportFileType metadataFormat) {
         int chunkSize = 10;
 
         BackupZipBuilder zipBuilder = null;
         try {
             zipBuilder = new BackupZipBuilder("document-backup");
 
+            var processedDocumentIds = new ArrayList<Integer>();
             for (var documentType : types) {
                 int pageNumber = 0;
                 boolean hasNextPage = true;
@@ -120,12 +129,15 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
 
                     for (var document : chunk) {
                         processDocument(document, documentFileSections, zipBuilder, language);
+                        processedDocumentIds.add(document.getId());
                     }
 
                     pageNumber++;
                     hasNextPage = chunk.size() == chunkSize;
                 }
             }
+
+            createMetadataCSV(processedDocumentIds, language, types, zipBuilder, metadataFormat);
 
             var institution = organisationUnitService.findOne(institutionId);
             var serverFilename = generateBackupFileName(from, to, institution, language);
@@ -146,9 +158,38 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
         }
     }
 
-    public List<Integer> getDocumentDatabaseIdsForBackup(Integer startYear, Integer endYear,
-                                                         List<Integer> organisationUnitIds,
-                                                         String type) {
+    private void createMetadataCSV(List<Integer> exportEntityIds, String language,
+                                   List<DocumentPublicationType> types,
+                                   BackupZipBuilder zipBuilder, ExportFileType metadataFormat) {
+        var exportRequest = new DocumentCSVExportRequestDTO();
+        exportRequest.setExportMaxPossibleAmount(false);
+        exportRequest.setExportEntityIds(exportEntityIds);
+        exportRequest.setExportLanguage(language);
+        exportRequest.setExportFileType(metadataFormat);
+        exportRequest.setColumns(
+            List.of("title_sr", "title_other", "year", "description_sr", "description_other",
+                "keywords_sr", "keywords_other", "author_names", "editor_names",
+                "board_member_names", "board_president_name", "advisor_names", "reviewer_names",
+                "type", "publication_type", "doi", "scopus_id", "is_open_access", "event_id",
+                "journal_id"));
+        exportRequest.setApa(true);
+        exportRequest.setMla(true);
+        exportRequest.setChicago(true);
+        exportRequest.setHarvard(true);
+        exportRequest.setVancouver(true);
+        exportRequest.setAllowedTypes(types);
+
+        var metadataFile = csvExportService.exportDocumentsToCSV(exportRequest);
+        try {
+            zipBuilder.copyFileToRoot(metadataFile.getInputStream(), "metadata.csv");
+        } catch (IOException e) {
+            throw new RuntimeException(e); // should never happen
+        }
+    }
+
+    private List<Integer> getDocumentDatabaseIdsForBackup(Integer startYear, Integer endYear,
+                                                          List<Integer> organisationUnitIds,
+                                                          String type) {
         var query = NativeQuery.builder()
             .withQuery(q -> q.bool(b -> b
                 .must(m -> m.terms(t -> t.field("organisation_unit_ids").terms(tf -> tf.value(

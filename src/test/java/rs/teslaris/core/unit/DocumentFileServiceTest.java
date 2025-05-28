@@ -31,7 +31,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.document.CCLicense;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
@@ -106,8 +106,8 @@ public class DocumentFileServiceTest {
         // given
         var dto = new DocumentFileDTO();
         var doc = new DocumentFile();
-        dto.setLicense(License.OPEN_ACCESS);
-        dto.setCcLicense(CCLicense.BY_NC);
+        dto.setAccessRights(AccessRights.OPEN_ACCESS);
+        dto.setLicense(License.BY_NC);
         dto.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
         doc.setApproveStatus(ApproveStatus.APPROVED);
         doc.setFilename("filename.txt");
@@ -129,7 +129,7 @@ public class DocumentFileServiceTest {
         // given
         var dto = new DocumentFileDTO();
         var doc = new DocumentFile();
-        dto.setLicense(License.OPEN_ACCESS);
+        dto.setAccessRights(AccessRights.OPEN_ACCESS);
         dto.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
         doc.setApproveStatus(ApproveStatus.APPROVED);
         doc.setFilename("filename.txt");
@@ -151,7 +151,7 @@ public class DocumentFileServiceTest {
         doc.setFilename("filename.txt");
         var dto = new DocumentFileDTO();
         dto.setId(1);
-        dto.setLicense(License.ALL_RIGHTS_RESERVED);
+        dto.setAccessRights(AccessRights.ALL_RIGHTS_RESERVED);
         dto.setFile(
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
         var docIndex = new DocumentFileIndex();
@@ -267,11 +267,11 @@ public class DocumentFileServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(License.class)
-    public void shouldReturnDocumentFileByServerFileName(License license) {
+    @EnumSource(AccessRights.class)
+    public void shouldReturnDocumentFileAccessLevelForAllLicenseTypes(AccessRights accessRights) {
         // given
         var documentFile = new DocumentFile();
-        documentFile.setLicense(license);
+        documentFile.setAccessRights(accessRights);
 
         when(documentFileRepository.getReferenceByServerFilename(any())).thenReturn(documentFile);
 
@@ -279,6 +279,6 @@ public class DocumentFileServiceTest {
         var actual = documentFileService.getDocumentByServerFilename("serverFilename");
 
         // then
-        assertEquals(license, actual.getLicense());
+        assertEquals(accessRights, actual.getAccessRights());
     }
 }

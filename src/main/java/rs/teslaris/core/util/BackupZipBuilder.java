@@ -39,6 +39,11 @@ public class BackupZipBuilder {
         Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
     }
 
+    public void copyFileToRoot(InputStream inputStream, String fileName) throws IOException {
+        Path targetPath = rootDir.resolve(fileName);
+        Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
     public InputStreamResource buildZipAndGetResource() {
         try (var zipOut = new ZipOutputStream(Files.newOutputStream(zipFile))) {
             Files.walk(rootDir)

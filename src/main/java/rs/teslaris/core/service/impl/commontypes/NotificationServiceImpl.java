@@ -185,7 +185,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     private Locale getLocale(List<Notification> notifications) {
         var language =
-            notifications.getFirst().getUser().getPreferredNotificationLanguage().getLanguageCode()
+            notifications.getFirst().getUser().getPreferredUILanguage().getLanguageCode()
                 .toLowerCase();
         return Locale.forLanguageTag(language);
     }

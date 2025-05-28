@@ -38,6 +38,15 @@ public class HealthCheckController {
     @Value("${app.version}")
     private String appVersion;
 
+    @Value("${app.git.tag:}")
+    private String appGitTag;
+
+    @Value("${app.git.commit.hash:}")
+    private String appGitCommitHash;
+
+    @Value("${app.git.repo.url:}")
+    private String appGitRepoUrl;
+
     @GetMapping
     @PreAuthorize("hasAuthority('PERFORM_HEALTH_CHECK')")
     public ResponseEntity<Map<String, Object>> performHealthCheck() {
@@ -96,5 +105,15 @@ public class HealthCheckController {
         } catch (Exception e) {
             return Map.of("status", "DOWN", "error", e.getMessage());
         }
+    }
+
+    @GetMapping("/version")
+    public ResponseEntity<Map<String, Object>> getVersion() {
+        Map<String, Object> status = new LinkedHashMap<>();
+        status.put("appVersion", appVersion);
+        status.put("appGitRepoUrl", appGitRepoUrl);
+        status.put("appGitTag", appGitTag);
+        status.put("appGitCommitHash", appGitCommitHash);
+        return new ResponseEntity<>(status, HttpStatus.OK);
     }
 }

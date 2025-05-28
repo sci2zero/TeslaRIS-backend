@@ -138,6 +138,7 @@ public class JwtUtil {
             .claim("jwt-security-fingerprint", jwtSecurityHash)
             .claim("role", userRole)
             .claim("userId", user.getId())
+            .claim("uiLang", user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             .setIssuedAt(now)
             .setExpiration(expiration)
             .signWith(signatureAlgorithm, signingKey)

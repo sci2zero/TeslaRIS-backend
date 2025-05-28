@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.CSVExportRequest;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
+import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
@@ -75,7 +75,7 @@ public class CSVExportServiceImpl implements CSVExportService {
     }
 
     @Override
-    public InputStreamResource exportDocumentsToCSV(DocumentCSVExportRequest request) {
+    public InputStreamResource exportDocumentsToCSV(DocumentCSVExportRequestDTO request) {
         String documentFieldsConfigurationFile = "documentSearchFieldConfiguration.json";
         return exportData(
             request,
@@ -83,7 +83,7 @@ public class CSVExportServiceImpl implements CSVExportService {
             documentFieldsConfigurationFile,
             DocumentPublicationIndexRepository::findDocumentPublicationIndexByDatabaseId,
             (rowData, entity, req) -> CSVExportHelper.addCitationData(rowData, entity,
-                (DocumentCSVExportRequest) req, citationService),
+                (DocumentCSVExportRequestDTO) req, citationService),
             documentFieldsConfigurationFile
         );
     }
@@ -168,11 +168,11 @@ public class CSVExportServiceImpl implements CSVExportService {
         var allowedDocumentTypes = new ArrayList<DocumentPublicationType>();
         Integer institutionId = null, commissionId = null;
 
-        if (request instanceof DocumentCSVExportRequest) {
-            CSVExportHelper.addCitationColumns(tableHeaders, (DocumentCSVExportRequest) request);
-            allowedDocumentTypes.addAll(((DocumentCSVExportRequest) request).getAllowedTypes());
-            institutionId = ((DocumentCSVExportRequest) request).getInstitutionId();
-            commissionId = ((DocumentCSVExportRequest) request).getCommissionId();
+        if (request instanceof DocumentCSVExportRequestDTO) {
+            CSVExportHelper.addCitationColumns(tableHeaders, (DocumentCSVExportRequestDTO) request);
+            allowedDocumentTypes.addAll(((DocumentCSVExportRequestDTO) request).getAllowedTypes());
+            institutionId = ((DocumentCSVExportRequestDTO) request).getInstitutionId();
+            commissionId = ((DocumentCSVExportRequestDTO) request).getCommissionId();
         }
         rowsData.add(tableHeaders);
 

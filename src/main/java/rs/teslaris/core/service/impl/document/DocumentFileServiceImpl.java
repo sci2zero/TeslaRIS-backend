@@ -33,9 +33,9 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
-import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
@@ -123,16 +123,16 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         }
 
         documentFile.setResourceType(documentFileDTO.getResourceType());
-        documentFile.setLicense(documentFileDTO.getLicense());
+        documentFile.setAccessRights(documentFileDTO.getAccessRights());
 
-        if (documentFile.getLicense().equals(License.OPEN_ACCESS)) {
+        if (documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
             if ((documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) ||
                 documentFile.getResourceType().equals(ResourceType.PREPRINT)) &&
-                Objects.isNull(documentFileDTO.getCcLicense())) {
+                Objects.isNull(documentFileDTO.getLicense())) {
                 throw new MissingDataException(
                     "You have to provide CC licence for open access documents.");
             }
-            documentFile.setCcLicense(documentFileDTO.getCcLicense());
+            documentFile.setLicense(documentFileDTO.getLicense());
         }
 
         documentFile.setTimestamp(LocalDateTime.now());
@@ -158,7 +158,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
-        newDocumentFile.setIsThesisDocument(document instanceof Thesis);
+        newDocumentFile.setIsVerifiedData(document instanceof Thesis);
         newDocumentFile.setDocument(document);
 
         if (!index) {
@@ -175,7 +175,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
-        newDocumentFile.setIsThesisDocument(false);
+        newDocumentFile.setIsVerifiedData(false);
         newDocumentFile.setPerson(person);
 
         if (!index) {
@@ -193,7 +193,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         setCommonFields(newDocumentFile, documentFile);
         newDocumentFile.setCanEdit(false);
         newDocumentFile.setLatest(true);
-        newDocumentFile.setIsThesisDocument(true);
+        newDocumentFile.setIsVerifiedData(true);
 
         return saveDocument(documentFile, newDocumentFile, false);
     }
