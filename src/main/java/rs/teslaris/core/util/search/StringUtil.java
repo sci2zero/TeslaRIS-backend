@@ -8,9 +8,12 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
@@ -178,5 +181,32 @@ public class StringUtil {
             throw new RuntimeException("Error during tokenization", e); // should never happen
         }
         return tokens;
+    }
+
+    public static Optional<Integer> romanToInt(String s) {
+        s = s.toUpperCase();
+        Map<Character, Integer> map = new HashMap<>();
+        map.put('I', 1);
+        map.put('V', 5);
+        map.put('X', 10);
+        map.put('L', 50);
+        map.put('C', 100);
+        map.put('D', 500);
+        map.put('M', 1000);
+
+        try {
+            int result = map.get(s.charAt(s.length() - 1));
+            for (int i = s.length() - 2; i >= 0; i--) {
+                if (map.get(s.charAt(i)) < map.get(s.charAt(i + 1))) {
+                    result -= map.get(s.charAt(i));
+                } else {
+                    result += map.get(s.charAt(i));
+
+                }
+            }
+            return Optional.of(result);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 }

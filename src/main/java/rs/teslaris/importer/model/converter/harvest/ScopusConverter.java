@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -22,7 +23,9 @@ public class ScopusConverter {
         var document = new DocumentImport();
 
         deducePublicationType(entry, document, scopusImportUtility);
-        if (Objects.isNull(document.getPublicationType())) {
+        if (Objects.isNull(document.getPublicationType()) || (
+            document.getPublicationType().equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION) &&
+                Objects.isNull(document.getEvent()))) {
             return Optional.empty();
         }
 
@@ -49,7 +52,19 @@ public class ScopusConverter {
             document.setStartPage(pages[0]);
             if (pages.length > 1) {
                 document.setEndPage(pages[1]);
-                document.setNumberOfPages(Integer.parseInt(pages[1]) - Integer.parseInt(pages[0]));
+                try {
+                    document.setNumberOfPages(
+                        Integer.parseInt(pages[1]) - Integer.parseInt(pages[0]));
+                } catch (NumberFormatException ignored) {
+                    // Can't parse page numbers, probably encountered roman numerals etc.
+
+                    var parseStartPage = StringUtil.romanToInt(pages[0]);
+                    var parsedEndPage = StringUtil.romanToInt(pages[1]);
+
+                    if (parseStartPage.isPresent() && parsedEndPage.isPresent()) {
+                        document.setNumberOfPages(parsedEndPage.get() - parseStartPage.get());
+                    }
+                }
             }
         }
 
@@ -82,9 +97,16 @@ public class ScopusConverter {
     protected static void setCommonFields(ScopusImportUtility.Entry entry,
                                           DocumentImport document) {
         entry.links().forEach(link -> {
+            if (link.href().contains("api.") || link.href().contains("citedby")) {
+                return;
+            }
+
             document.getUris().add(link.href());
         });
-        document.getUris().add(entry.url());
+
+        if (entry.url().contains(".api")) {
+            document.getUris().add(entry.url());
+        }
 
         document.setDocumentDate(entry.coverDate());
 
@@ -159,6 +181,10 @@ public class ScopusConverter {
                     .sourceRecord();
 
             var conference = new Event();
+            if (Objects.isNull(sourceRecord.additionalSrcinfo())) {
+                return;
+            }
+
             conference.getName().add(new MultilingualContent("EN",
                 sourceRecord.additionalSrcinfo()
                     .conferenceinfo().confevent().confname(), 1));

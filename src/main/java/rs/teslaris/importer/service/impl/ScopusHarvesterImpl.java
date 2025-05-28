@@ -4,6 +4,7 @@ import ai.djl.translate.TranslateException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
@@ -33,6 +35,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
     private final UserService userService;
 
     private final PersonService personService;
+
+    private final OrganisationUnitService organisationUnitService;
 
     private final ScopusImportUtility scopusImportUtility;
 
@@ -56,8 +60,41 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         var person = personService.readPersonWithBasicInfo(personId);
         var scopusId = person.getPersonalInfo().getScopusAuthorId();
 
-        var yearlyResults = scopusImportUtility.getDocumentsByAuthor(scopusId, startYear, endYear);
+        var yearlyResults =
+            scopusImportUtility.getDocumentsByIdentifier(scopusId, true, startYear, endYear);
 
+        performDocumentHarvest(yearlyResults, userId, newEntriesCount);
+
+        return newEntriesCount;
+    }
+
+    @Override
+    public HashMap<Integer, Integer> harvestDocumentsForInstitutionalEmployee(Integer userId,
+                                                                              Integer institutionId,
+                                                                              Integer startYear,
+                                                                              Integer endYear,
+                                                                              HashMap<Integer, Integer> newEntriesCount) {
+        var organisationUnitId = Objects.nonNull(institutionId) ? institutionId :
+            userService.getUserOrganisationUnitId(userId);
+        var institution = organisationUnitService.findOne(organisationUnitId);
+
+        if (Objects.isNull(institution.getScopusAfid())) {
+            throw new ScopusIdMissingException("You have not set your institution Scopus AFID.");
+        }
+
+        var scopusAfid = institution.getScopusAfid();
+
+        var yearlyResults =
+            scopusImportUtility.getDocumentsByIdentifier(scopusAfid, false, startYear, endYear);
+
+        performDocumentHarvest(yearlyResults, userId, newEntriesCount);
+
+        return newEntriesCount;
+    }
+
+    private void performDocumentHarvest(
+        List<ScopusImportUtility.ScopusSearchResponse> yearlyResults, Integer userId,
+        HashMap<Integer, Integer> newEntriesCount) {
         yearlyResults.forEach(
             yearlyResult -> yearlyResult.searchResults().entries().forEach(entry -> {
                 if (Objects.isNull(entry.title())) {
@@ -124,7 +161,5 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
                 mongoTemplate.save(documentImport, "documentImports");
             }));
-
-        return newEntriesCount;
     }
 }

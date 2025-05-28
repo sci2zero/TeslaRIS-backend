@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
@@ -58,6 +59,7 @@ import rs.teslaris.importer.utility.ProgressReportUtility;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Transactional
 public class CommonLoaderImpl implements CommonLoader {
 
     private static final Object institutionLock = new Object();
@@ -232,7 +234,13 @@ public class CommonLoaderImpl implements CommonLoader {
 
                 var savedPerson = createLoadedPerson(contribution.getPerson());
 
+                var pastContributionInstitutionIdentifiers = new HashSet<String>();
                 contribution.getInstitutions().forEach(institution -> {
+                    if (pastContributionInstitutionIdentifiers.contains(
+                        institution.getScopusAfid())) {
+                        return;
+                    }
+
                     var institutionIndex =
                         organisationUnitService.findOrganisationUnitByScopusAfid(
                             institution.getScopusAfid());
@@ -245,6 +253,8 @@ public class CommonLoaderImpl implements CommonLoader {
                                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
                                 employmentInstitution, null, new HashSet<>());
                         savedPerson.addInvolvement(currentEmployment);
+
+                        pastContributionInstitutionIdentifiers.add(institution.getScopusAfid());
                     }
                 });
 

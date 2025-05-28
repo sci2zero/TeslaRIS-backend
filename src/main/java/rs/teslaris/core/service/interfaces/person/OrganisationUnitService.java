@@ -103,4 +103,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
         throws IOException;
 
     void removeOrganisationUnitLogo(Integer organisationUnitId);
+
+    boolean canOUEmployeeScanDataSources(Integer organisationUnitId);
 }
