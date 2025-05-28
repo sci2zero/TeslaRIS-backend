@@ -9,10 +9,11 @@ import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentFile;
-import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
@@ -20,13 +21,16 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
 
     DocumentFile findDocumentFileById(Integer id);
 
-    License getDocumentAccessLevel(String serverFilename);
+    Pair<AccessRights, Boolean> getDocumentAccessLevel(String serverFilename);
 
     ResourceType getDocumentResourceType(String serverFilename);
 
     DocumentFileIndex findDocumentFileIndexByDatabaseId(Integer databaseId);
 
     DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index);
+
+    DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
+                                            Boolean isThesisDocument);
 
     DocumentFile saveNewPreliminaryDocument(DocumentFileDTO documentFile);
 

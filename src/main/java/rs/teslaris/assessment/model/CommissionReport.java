@@ -23,7 +23,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 public class CommissionReport extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "source_commission", nullable = false)
+    @JoinColumn(name = "source_commission_id", nullable = false)
     private Commission commission;
 
     @Column(name = "report_file_name")

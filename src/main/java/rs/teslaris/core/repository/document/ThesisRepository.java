@@ -46,7 +46,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
                                                 ThesisType type, List<Integer> institutionIds);
 
     @Query("SELECT COUNT(DISTINCT t) FROM Thesis t JOIN t.fileItems fi " +
-        "WHERE fi.license = 3 AND " +
+        "WHERE fi.accessRights = 2 AND " +
         "t.thesisDefenceDate >= :startDate AND " +
         "t.thesisDefenceDate <= :endDate AND " +
         "t.thesisType = :type AND " +
@@ -54,4 +54,34 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
     Integer countPubliclyAvailableDefendedThesesThesesInPeriod(LocalDate startDate,
                                                                LocalDate endDate, ThesisType type,
                                                                List<Integer> institutionIds);
+
+    @Query("SELECT DISTINCT t FROM Thesis t " +
+        "LEFT JOIN FETCH t.contributors " +
+        "LEFT JOIN FETCH t.fileItems " +
+        "LEFT JOIN FETCH t.proofs " +
+        "LEFT JOIN FETCH t.preliminaryFiles " +
+        "LEFT JOIN FETCH t.preliminarySupplements " +
+        "LEFT JOIN FETCH t.commissionReports " +
+        "LEFT JOIN t.publicReviewStartDates d " +
+        "WHERE t.organisationUnit.id = :institutionId " +
+        "AND t.thesisType in :types " +
+        "AND (" +
+        "(:defended IS NULL OR " +
+        "(:defended = TRUE AND t.thesisDefenceDate BETWEEN :startDate AND :endDate) OR " +
+        "(:defended = FALSE AND (t.thesisDefenceDate < :startDate OR t.thesisDefenceDate > :endDate OR t.thesisDefenceDate IS NULL))" +
+        ") " +
+        "OR " +
+        "(:putOnReview IS NULL OR " +
+        "(:putOnReview = TRUE AND d BETWEEN :startDate AND :endDate) OR " +
+        "(:putOnReview = FALSE AND (d < :startDate OR d > :endDate OR d IS NULL))" +
+        ")" +
+        ")")
+    Page<Thesis> findThesesForBackup(LocalDate startDate,
+                                     LocalDate endDate,
+                                     List<ThesisType> types,
+                                     Integer institutionId,
+                                     Boolean defended,
+                                     Boolean putOnReview,
+                                     Pageable pageable);
+
 }

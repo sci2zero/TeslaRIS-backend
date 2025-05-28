@@ -2,7 +2,6 @@ package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -104,9 +103,19 @@ public class DocumentPublicationController {
     public Page<DocumentPublicationIndex> advancedSearch(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(required = false) Integer institutionId,
+        @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
+        @RequestParam(value = "allowedTypes", required = false)
+        List<DocumentPublicationType> allowedTypes,
+        @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
+        var isCommission = !bearerToken.isEmpty() &&
+            tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name());
+
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
-            SearchRequestType.ADVANCED, null, null, new ArrayList<>());
+            SearchRequestType.ADVANCED, institutionId, (isCommission && unclassified) ?
+                userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
+                null, allowedTypes);
     }
 
     @GetMapping("/deduplication-search")

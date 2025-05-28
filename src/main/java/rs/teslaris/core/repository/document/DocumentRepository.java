@@ -3,6 +3,7 @@ package rs.teslaris.core.repository.document;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -13,6 +14,13 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     Optional<Document> findDocumentByOldId(Integer oldId);
 
+    @Query("SELECT d FROM Document d " +
+        "JOIN FETCH d.contributors " +
+        "LEFT JOIN FETCH d.fileItems " +
+        "LEFT JOIN FETCH d.proofs " +
+        "WHERE d.id in :ids")
+    List<Document> findDocumentByIdIn(List<Integer> ids, Pageable pageable);
+
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Document d WHERE d.doi = :doi AND d.id <> :id")
     boolean existsByDoi(String doi, Integer id);
@@ -21,10 +29,10 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         "FROM Document d WHERE d.scopusId = :scopusId AND d.id <> :id")
     boolean existsByScopusId(String scopusId, Integer id);
 
-    @Query("select d from Document d " +
-        "join PersonDocumentContribution dc on d.id = dc.document.id " +
-        "left join fetch d.contributors " +
-        "where dc.person.id = :authorId")
+    @Query("SELECT d FROM Document d " +
+        "JOIN PersonDocumentContribution dc ON d.id = dc.document.id " +
+        "LEFT JOIN FETCH d.contributors " +
+        "WHERE dc.person.id = :authorId")
     List<Document> getDocumentsForAuthorId(Integer authorId);
 
     @Query("SELECT DISTINCT inst.id " +
@@ -46,6 +54,6 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     Set<Integer> findInstitutionIdsByMonographIdAndAuthorContribution(Integer monographId);
 
     @Query("SELECT COUNT(d) > 0 FROM Document d LEFT JOIN d.fileItems fi WHERE " +
-        "d.id = :documentId AND fi.resourceType = 1 AND fi.license = 3")
+        "d.id = :documentId AND fi.resourceType = 1 AND fi.accessRights = 2")
     boolean isDocumentPubliclyAvailable(Integer documentId);
 }

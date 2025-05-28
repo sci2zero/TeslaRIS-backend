@@ -1,6 +1,5 @@
 package rs.teslaris.importer.model.common;
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,10 +18,10 @@ public class Person {
     @Field("apvnt")
     private String apvnt;
 
-    @Column(name = "e_cris_id")
+    @Field("e_cris_id")
     private String eCrisId;
 
-    @Column(name = "e_nauka_id")
+    @Field("e_nauka_id")
     private String eNaukaId;
 
     @Field("orcid")

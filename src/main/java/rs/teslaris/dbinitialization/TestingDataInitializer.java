@@ -2,6 +2,7 @@ package rs.teslaris.dbinitialization;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +38,7 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
@@ -95,6 +97,8 @@ import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.thesislibrary.model.Promotion;
+import rs.teslaris.thesislibrary.repository.PromotionRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -158,6 +162,8 @@ public class TestingDataInitializer {
 
     private final AssessmentResearchAreaRepository assessmentResearchAreaRepository;
 
+    private final PromotionRepository promotionRepository;
+
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
                                                  LanguageTag englishTag, Language germanLanguage,
@@ -168,6 +174,7 @@ public class TestingDataInitializer {
                                                  Authority institutionalEditorAuthority,
                                                  Authority institutionalLibrarianAuthority,
                                                  Authority headOfLibraryAuthority,
+                                                 Authority promotionRegistryAdminAuthority,
                                                  Commission commission5) {
         var country = new Country("SRB", new HashSet<>());
         countryRepository.save(country);
@@ -189,7 +196,8 @@ public class TestingDataInitializer {
 
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
-                "Dragan", "Ivanovic", false, false, serbianLanguage, researcherAuthority, person1,
+                "Dragan", "Ivanovic", false, false, serbianLanguage, serbianLanguage,
+                researcherAuthority, person1,
                 null, null, UserNotificationPeriod.DAILY);
         userRepository.save(researcherUser);
 
@@ -365,8 +373,8 @@ public class TestingDataInitializer {
             Set.of(
                 new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate.pdf", "1111.pdf",
                     new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
-                    License.CREATIVE_COMMONS, ApproveStatus.APPROVED, true, LocalDateTime.now(),
-                    false))));
+                    AccessRights.RESTRICTED_ACCESS, License.BY_NC, ApproveStatus.APPROVED,
+                    true, LocalDateTime.now(), false, false))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -382,7 +390,8 @@ public class TestingDataInitializer {
                 1)),
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-                License.OPEN_ACCESS, ApproveStatus.APPROVED, true, LocalDateTime.now(), false)),
+                AccessRights.OPEN_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
+                LocalDateTime.now(), false, false)),
             LocalDate.of(2023, 4, 17)));
         personRepository.save(person1);
 
@@ -446,7 +455,8 @@ public class TestingDataInitializer {
 
         var researcherUser2 =
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
-                "Schöpfel", "Joachim", false, false, germanLanguage, researcherAuthority, person2,
+                "Schöpfel", "Joachim", false, false, germanLanguage, germanLanguage,
+                researcherAuthority, person2,
                 null, null, UserNotificationPeriod.WEEKLY);
         userRepository.save(researcherUser2);
 
@@ -698,7 +708,9 @@ public class TestingDataInitializer {
 
         documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
             new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
-            License.OPEN_ACCESS, ApproveStatus.APPROVED, true, LocalDateTime.now(), false));
+            AccessRights.OPEN_ACCESS, License.BY_SA, ApproveStatus.APPROVED, true,
+            LocalDateTime.now(),
+            false, false));
         documentIndicatorRepository.save(documentIndicator1);
 
         var eventIndicator1 = new EventIndicator();
@@ -734,7 +746,8 @@ public class TestingDataInitializer {
         var commissionUser =
             new User("commission@commission.com", passwordEncoder.encode("commission"),
                 "note note note",
-                "PMF", "", false, false, serbianLanguage, commissionAuthority, null,
+                "PMF", "", false, false, serbianLanguage, serbianLanguage, commissionAuthority,
+                null,
                 dummyOU, commission5, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser);
 
@@ -746,32 +759,45 @@ public class TestingDataInitializer {
         var viceDeanUser =
             new User("vicedean@vicedean.com", passwordEncoder.encode("vicedean"),
                 "note note note",
-                "Nikola", "Nikolic", false, false, serbianLanguage, viceDeanForScienceAuthority,
+                "Nikola", "Nikolic", false, false, serbianLanguage, serbianLanguage,
+                viceDeanForScienceAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
 
         var institutionalEditorUser =
             new User("editor@editor.com", passwordEncoder.encode("editor"), "note note note",
-                "Nikola", "Markovic", false, false, serbianLanguage, institutionalEditorAuthority,
+                "Nikola", "Markovic", false, false, serbianLanguage, serbianLanguage,
+                institutionalEditorAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
 
         var institutionalLibrarianUser =
             new User("librarian@librarian.com", passwordEncoder.encode("librarian"),
                 "note note note",
-                "Mirka", "Maric", false, false, serbianLanguage, institutionalLibrarianAuthority,
+                "Mirka", "Maric", false, false, serbianLanguage, serbianLanguage,
+                institutionalLibrarianAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
 
         var headOfLibraryUser =
             new User("head_of_library@library.com", passwordEncoder.encode("head_of_library"),
                 "note note note",
-                "Djordje", "Perovic", false, false, serbianLanguage, headOfLibraryAuthority,
+                "Djordje", "Perovic", false, false, serbianLanguage, serbianLanguage,
+                headOfLibraryAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
+
+        var promotionRegistryAdminUser =
+            new User("promotion@registry.com", passwordEncoder.encode("promotion_registry"),
+                "note note note",
+                "Davor", "Kontić", false, false, serbianLanguage, serbianLanguage,
+                promotionRegistryAdminAuthority,
+                null,
+                dummyOU, null, UserNotificationPeriod.DAILY);
+
         userRepository.saveAll(
             List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
-                headOfLibraryUser));
+                headOfLibraryUser, promotionRegistryAdminUser));
 
         var software2 = new Software();
         software2.setTitle(Set.of(new MultiLingualContent(englishTag,
@@ -797,5 +823,38 @@ public class TestingDataInitializer {
 
         software2.addDocumentContribution(softwareContribution3);
         softwareRepository.save(software2);
+
+        var promotion1 = new Promotion();
+        promotion1.setPromotionDate(LocalDate.of(2023, 5, 1));
+        promotion1.setPromotionTime(LocalTime.NOON);
+        promotion1.setPlaceOrVenue("Some place");
+        promotion1.setInstitution(dummyOU);
+        promotionRepository.save(promotion1);
+
+        var thesis3 = new Thesis();
+        thesis3.setApproveStatus(ApproveStatus.APPROVED);
+        thesis3.setThesisType(ThesisType.PHD);
+        thesis3.setDocumentDate("2022");
+        thesis3.setOrganisationUnit(dummyOU);
+        thesis3.setTitle(
+            Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija 2", 1)));
+        thesis3.setLanguage(serbianLanguage);
+        thesis3.setThesisDefenceDate(LocalDate.of(2024, 3, 31));
+
+        var thesisContribution2 = new PersonDocumentContribution();
+        thesisContribution2.setPerson(person1);
+        thesisContribution2.setContributionType(DocumentContributionType.AUTHOR);
+        thesisContribution2.setIsMainContributor(true);
+        thesisContribution2.setIsCorrespondingContributor(true);
+        thesisContribution2.setOrderNumber(1);
+        thesisContribution2.setDocument(thesis3);
+        thesisContribution2.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution2.setInstitutions(Set.of(dummyOU));
+        thesisContribution2.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), person1.getName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        thesis3.setContributors(Set.of(thesisContribution2));
+        thesisRepository.save(thesis3);
     }
 }

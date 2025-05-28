@@ -1,7 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
 import io.minio.GetObjectResponse;
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -64,9 +63,16 @@ public class FileServiceFileSystemImpl implements FileService {
 
     @Override
     public void delete(String serverFilename) {
-        var file = new File(Paths.get(rootLocation, serverFilename).toUri());
+        var rootPath = Paths.get(rootLocation).toAbsolutePath().normalize();
+        var targetPath = rootPath.resolve(serverFilename).normalize();
+
+        if (!targetPath.startsWith(rootPath)) {
+            throw new StorageException("Invalid path: " + serverFilename);
+        }
+
+        var file = targetPath.toFile();
         if (!file.delete()) {
-            throw new StorageException("Failed to delete " + serverFilename + " .");
+            throw new StorageException("Failed to delete " + serverFilename + ".");
         }
     }
 

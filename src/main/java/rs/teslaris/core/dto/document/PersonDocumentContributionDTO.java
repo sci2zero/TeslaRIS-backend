@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.EmploymentTitle;
+import rs.teslaris.core.model.document.PersonalTitle;
 
 @Getter
 @Setter
@@ -24,4 +26,8 @@ public class PersonDocumentContributionDTO extends PersonContributionDTO {
 
     @NotNull(message = "You have to specify weather the contributor is board president.")
     private Boolean isBoardPresident;
+
+    private EmploymentTitle employmentTitle;
+
+    private PersonalTitle personalTitle;
 }

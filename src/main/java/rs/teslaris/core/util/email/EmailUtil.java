@@ -3,6 +3,7 @@ package rs.teslaris.core.util.email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.retry.annotation.Backoff;
@@ -25,7 +26,7 @@ public class EmailUtil {
 
     @Async("taskExecutor")
     @Retryable(
-        retryFor = {Exception.class},
+        retryFor = {MailException.class},
         maxAttempts = 2,
         backoff = @Backoff(delay = 5000)
     )
@@ -37,7 +38,7 @@ public class EmailUtil {
         message.setText(text);
         try {
             mailSender.send(message);
-        } catch (Exception e) {
+        } catch (MailException e) {
             log.error("Email to user " + to + " cannot be sent, reason: " + e.getMessage());
         }
     }

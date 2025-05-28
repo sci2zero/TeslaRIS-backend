@@ -25,5 +25,7 @@ public class NotificationConfiguration {
             List.of(NotificationAction.PERFORM_EVENT_CLASSIFICATION));
         allowedActions.put(NotificationType.NEW_PUBLICATIONS_TO_ASSESS,
             List.of(NotificationAction.PERFORM_DOCUMENT_ASSESSMENT));
+        allowedActions.put(NotificationType.PROMOTION_NOTIFICATION,
+            List.of(NotificationAction.GO_TO_PROMOTIONS_PAGE));
     }
 }

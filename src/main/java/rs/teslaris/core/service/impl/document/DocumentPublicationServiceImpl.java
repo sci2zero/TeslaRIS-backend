@@ -177,7 +177,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
                                                    Boolean isProof) {
         var document = findOne(documentId);
-        var documentFile = documentFileService.saveNewDocument(file, !isProof);
+        var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof,
+            document instanceof Thesis);
         if (isProof) {
             document.getProofs().add(documentFile);
         } else {
@@ -577,7 +578,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         return searchService.runQuery(
-            expressionTransformer.parseAdvancedQuery(tokens), pageable,
+            buildAdvancedSearchQuery(tokens, institutionId, commissionId, allowedTypes), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -720,81 +721,88 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         })))._toQuery();
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
+    private Query buildSimpleMetadataQuery(Integer institutionId,
+                                           Integer commissionId,
+                                           List<DocumentPublicationType> allowedTypes) {
+        return BoolQuery.of(b -> {
+            if (institutionId != null && institutionId > 0) {
+                b.must(q -> q.term(t -> t.field("organisation_unit_ids").value(institutionId)));
+            }
+
+            if (commissionId != null && commissionId > 0) {
+                b.mustNot(q -> q.term(t -> t.field("assessed_by").value(commissionId)));
+            }
+
+            if (allowedTypes != null && !allowedTypes.isEmpty()) {
+                b.must(createTypeTermsQuery(allowedTypes));
+            }
+
+            return b;
+        })._toQuery();
+    }
+
+    private Query buildSimpleTokenQuery(List<String> tokens, int minShouldMatch) {
+        return BoolQuery.of(eq -> {
+            tokens.forEach(token -> {
+                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                    eq.must(mp -> mp.bool(m -> m
+                        .should(sb -> sb.matchPhrase(
+                            mq -> mq.field("title_sr").query(token.replace("\\\"", ""))))
+                        .should(sb -> sb.matchPhrase(
+                            mq -> mq.field("title_other").query(token.replace("\\\"", ""))))
+                    ));
+                }
+
+                eq.should(sb -> sb.wildcard(
+                        m -> m.field("title_sr").value(token + "*").caseInsensitive(true)))
+                    .should(sb -> sb.match(m -> m.field("title_sr").query(token)))
+                    .should(sb -> sb.wildcard(
+                        m -> m.field("title_other").value(token + "*").caseInsensitive(true)))
+                    .should(sb -> sb.match(m -> m.field("description_sr").query(token)))
+                    .should(sb -> sb.match(m -> m.field("description_other").query(token)))
+                    .should(sb -> sb.wildcard(m -> m.field("keywords_sr").value("*" + token + "*")))
+                    .should(
+                        sb -> sb.wildcard(m -> m.field("keywords_other").value("*" + token + "*")))
+                    .should(sb -> sb.match(m -> m.field("full_text_sr").query(token)))
+                    .should(sb -> sb.match(m -> m.field("full_text_other").query(token)))
+                    .should(sb -> sb.match(m -> m.field("author_names").query(token)))
+                    .should(sb -> sb.match(m -> m.field("editor_names").query(token)))
+                    .should(sb -> sb.match(m -> m.field("reviewer_names").query(token)))
+                    .should(sb -> sb.match(m -> m.field("advisor_names").query(token)))
+                    .should(sb -> sb.match(m -> m.field("type").query(token)))
+                    .should(sb -> sb.match(m -> m.field("doi").query(token)));
+            });
+
+            return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+        })._toQuery();
+    }
+
+    private Query buildSimpleSearchQuery(List<String> tokens,
+                                         Integer institutionId,
                                          Integer commissionId,
                                          List<DocumentPublicationType> allowedTypes) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+
+        int minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(bq -> {
-                bq.bool(eq -> {
-                    if (Objects.nonNull(institutionId) && institutionId > 0) {
-                        b.must(sb -> sb.term(
-                            m -> m.field("organisation_unit_ids").value(institutionId)));
-                    }
-
-                    if (Objects.nonNull(commissionId) && commissionId > 0) {
-                        b.mustNot(sb -> sb.term(
-                            m -> m.field("assessed_by").value(commissionId)));
-                    }
-
-                    if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
-                        b.must(createTypeTermsQuery(allowedTypes));
-                    }
-
-                    tokens.forEach(token -> {
-                        if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
-                            b.must(mp ->
-                                mp.bool(m -> {
-                                    {
-                                        m.should(sb -> sb.matchPhrase(
-                                            mq -> mq.field("title_sr")
-                                                .query(token.replace("\\\"", ""))));
-                                        m.should(sb -> sb.matchPhrase(
-                                            mq -> mq.field("title_other")
-                                                .query(token.replace("\\\"", ""))));
-                                    }
-                                    return m;
-                                }));
-                        }
-
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("title_sr").value(token + "*").caseInsensitive(true)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("title_sr").query(token)));
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("title_other").value(token + "*").caseInsensitive(true)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("description_sr").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("description_other").query(token)));
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("keywords_sr").value("*" + token + "*")));
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("keywords_other").value("*" + token + "*")));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("full_text_sr").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("full_text_other").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("author_names").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("editor_names").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("reviewer_names").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("advisor_names").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("type").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("doi").query(token)));
-                    });
-                    return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
-                });
-                return bq;
-            });
+            b.must(buildSimpleMetadataQuery(institutionId, commissionId, allowedTypes));
+            b.must(buildSimpleTokenQuery(tokens, minShouldMatch));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
+            return b;
+        })))._toQuery();
+    }
+
+    public Query buildAdvancedSearchQuery(List<String> tokens,
+                                          Integer institutionId,
+                                          Integer commissionId,
+                                          List<DocumentPublicationType> allowedTypes) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.must(buildSimpleMetadataQuery(institutionId, commissionId, allowedTypes));
+            b.must(expressionTransformer.parseAdvancedQuery(tokens));
+            b.mustNot(sb -> sb.match(
+                m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
+
             return b;
         })))._toQuery();
     }

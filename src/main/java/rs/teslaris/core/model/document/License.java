@@ -1,11 +1,11 @@
 package rs.teslaris.core.model.document;
 
 public enum License {
-    ALL_RIGHTS_RESERVED,
-    CREATIVE_COMMONS,
-    EMBARGOED_ACCESS,
-    OPEN_ACCESS,
-    PUBLIC_DOMAIN,
-    SUBSCRIPTION_BASED_ACCESS,
-    COMMISSION_ONLY
+    BY,
+    BY_SA,
+    BY_NC,
+    BY_NC_SA,
+    BY_ND,
+    BY_NC_ND,
+    CC0
 }

@@ -4,7 +4,9 @@ import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
 import java.util.List;
+import java.util.Set;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 public class StringUtil {
 
@@ -73,5 +75,17 @@ public class StringUtil {
         }
 
         return issn.substring(0, 4) + "-" + issn.substring(4, 8);
+    }
+
+    public static String getStringContent(Set<MultiLingualContent> multilingualContent,
+                                          String lang) {
+        MultiLingualContent fallback = null;
+        for (var content : multilingualContent) {
+            if (lang.equalsIgnoreCase(content.getLanguage().getLanguageTag())) {
+                return content.getContent();
+            }
+            fallback = content;
+        }
+        return fallback != null ? fallback.getContent() : "";
     }
 }

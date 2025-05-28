@@ -47,6 +47,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.person.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.util.SessionUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -88,6 +89,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setPersonId(personId);
         saveView(statisticsEntry);
+        log.info("STATISTICS - VIEW for Person with ID {} by {}.", personId,
+            SessionUtil.getJSessionId());
     }
 
     @Override
@@ -95,6 +98,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveView(statisticsEntry);
+        log.info("STATISTICS - VIEW for Document with ID {} by {}.", documentId,
+            SessionUtil.getJSessionId());
     }
 
     @Override
@@ -102,6 +107,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setOrganisationUnitId(organisationUnitId);
         saveView(statisticsEntry);
+        log.info("STATISTICS - VIEW for OrganisationUnit with ID {} by {}.", organisationUnitId,
+            SessionUtil.getJSessionId());
     }
 
     @Override
@@ -109,6 +116,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveDownload(statisticsEntry);
+        log.info("STATISTICS - DOWNLOAD for Document with ID {} by {}.", documentId,
+            SessionUtil.getJSessionId());
     }
 
     private void saveView(StatisticsIndex index) {
@@ -123,6 +132,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private void save(StatisticsIndex index) {
         index.setTimestamp(LocalDateTime.now());
+        index.setSessionId(SessionUtil.getJSessionId());
 
         updateTotalCount(index);
 
@@ -252,14 +262,13 @@ public class StatisticsServiceImpl implements StatisticsService {
                 documentPublicationIndexRepository,
                 documentRepository,
                 (start, document) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndDocumentId(
-                    start, LocalDateTime.now(), statisticsType.name(),
-                    document.getDatabaseId()),
+                    start, LocalDateTime.now(), statisticsType.name(), document.getDatabaseId()),
                 DocumentPublicationIndex::getDatabaseId,
                 documentIndicatorRepository::findIndicatorForCodeAndDocumentId,
                 id -> new DocumentIndicator(),
-                (entityIndicator, document) -> entityIndicator.setDocument(
-                    documentRepository.findById(document.getDatabaseId()).orElseThrow()),
-                documentIndicatorRepository
+                DocumentIndicator::setDocument,
+                documentIndicatorRepository,
+                "Document"
             );
         });
 
@@ -274,9 +283,9 @@ public class StatisticsServiceImpl implements StatisticsService {
                 PersonIndex::getDatabaseId,
                 personIndicatorRepository::findIndicatorForCodeAndPersonId,
                 id -> new PersonIndicator(),
-                (entityIndicator, person) -> entityIndicator.setPerson(
-                    personRepository.findById(person.getDatabaseId()).orElseThrow()),
-                personIndicatorRepository
+                PersonIndicator::setPerson,
+                personIndicatorRepository,
+                "Person"
             );
         });
 
@@ -291,9 +300,9 @@ public class StatisticsServiceImpl implements StatisticsService {
                 OrganisationUnitIndex::getDatabaseId,
                 organisationUnitIndicatorRepository::findIndicatorForCodeAndOrganisationUnitId,
                 id -> new OrganisationUnitIndicator(),
-                (entityIndicator, ou) -> entityIndicator.setOrganisationUnit(
-                    organisationUnitRepository.findById(ou.getDatabaseId()).orElseThrow()),
-                organisationUnitIndicatorRepository
+                OrganisationUnitIndicator::setOrganisationUnit,
+                organisationUnitIndicatorRepository,
+                "OrganisationUnit"
             );
         });
 
@@ -316,8 +325,9 @@ public class StatisticsServiceImpl implements StatisticsService {
         Function<T, Integer> getEntityId,
         BiFunction<String, Integer, Optional<I>> findIndicatorByEntityId,
         Function<Integer, I> createNewIndicator,
-        BiConsumer<I, T> setEntity,
-        JpaRepository<I, Integer> entityIndicatorRepository) {
+        BiConsumer<I, D> setEntity,
+        JpaRepository<I, Integer> entityIndicatorRepository,
+        String entityTypeName) {
 
         int pageNumber = 0;
         int chunkSize = 50;
@@ -327,30 +337,35 @@ public class StatisticsServiceImpl implements StatisticsService {
             List<T> chunk =
                 indexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach(entity -> {
-                Integer entityId = getEntityId.apply(entity);
+            chunk.forEach(indexEntity -> {
+                Integer entityId = getEntityId.apply(indexEntity);
 
-                FunctionalUtil.forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
-                    Integer statisticsCount = countFunction.apply(startPeriods.get(i), entity);
+                entityRepository.findById(entityId).ifPresentOrElse(dbEntity -> {
+                    FunctionalUtil.forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
+                        Integer statisticsCount =
+                            countFunction.apply(startPeriods.get(i), indexEntity);
 
-                    updateIndicator(entityId,
-                        indicatorCode,
-                        entityRepository::findById,
-                        findIndicatorByEntityId,
-                        id -> {
-                            I indicator = createNewIndicator.apply(id);
-                            setEntity.accept(indicator, entity);
-                            return indicator;
-                        },
-                        entityIndicator -> {
-                            entityIndicator.setNumericValue(Double.valueOf(statisticsCount));
-                            entityIndicator.setTimestamp(LocalDateTime.now());
-                            entityIndicator.setFromDate(startPeriods.get(i).toLocalDate());
-                            entityIndicator.setToDate(LocalDate.now());
-                            entityIndicatorRepository.save(entityIndicator);
-                        });
+                        updateIndicator(entityId,
+                            indicatorCode,
+                            ignored -> Optional.of(dbEntity), // avoid second DB call
+                            findIndicatorByEntityId,
+                            id -> {
+                                I indicator = createNewIndicator.apply(id);
+                                setEntity.accept(indicator, dbEntity);
+                                return indicator;
+                            },
+                            entityIndicator -> {
+                                entityIndicator.setNumericValue(Double.valueOf(statisticsCount));
+                                entityIndicator.setTimestamp(LocalDateTime.now());
+                                entityIndicator.setFromDate(startPeriods.get(i).toLocalDate());
+                                entityIndicator.setToDate(LocalDate.now());
+                                entityIndicatorRepository.save(entityIndicator);
+                            });
+                    });
+                }, () -> {
+                    log.warn("{} with DB ID {} not found. Skipping indicator updates.",
+                        entityTypeName, entityId);
                 });
-
             });
 
             pageNumber++;

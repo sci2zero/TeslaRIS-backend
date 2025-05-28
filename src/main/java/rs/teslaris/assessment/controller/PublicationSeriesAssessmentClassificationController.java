@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.assessment.annotation.EntityClassificationEditCheck;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.EntityClassificationSource;
 import rs.teslaris.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
-import rs.teslaris.core.annotation.EntityClassificationEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -85,6 +85,7 @@ public class PublicationSeriesAssessmentClassificationController {
     @PostMapping("/schedule-classification")
     @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void schedulePublicationSeriesAssessmentClassificationComputation(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("commissionId") Integer commissionId,
@@ -99,6 +100,7 @@ public class PublicationSeriesAssessmentClassificationController {
     @PostMapping("/schedule-classification-load")
     @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void schedulePublicationSeriesAssessmentClassificationLoad(
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("source") EntityClassificationSource source,

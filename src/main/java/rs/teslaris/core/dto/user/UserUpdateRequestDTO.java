@@ -28,9 +28,13 @@ public class UserUpdateRequestDTO {
 
     private String lastName;
 
-    @NotNull(message = "You must provide a preferred language ID.")
-    @Positive(message = "Preferred languageID must be a positive number.")
-    private Integer preferredLanguageId;
+    @NotNull(message = "You must provide a preferred UI language ID.")
+    @Positive(message = "Preferred UI language ID must be a positive number.")
+    private Integer preferredUILanguageId;
+
+    @NotNull(message = "You must provide a preferred reference cataloguing language ID.")
+    @Positive(message = "Preferred reference cataloguing language ID must be a positive number.")
+    private Integer preferredReferenceCataloguingLanguageId;
 
     private Integer organisationalUnitId;
 

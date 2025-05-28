@@ -18,14 +18,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
+import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidApiKeyException;
+import rs.teslaris.core.util.exceptionhandling.exception.InvalidFileSectionException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -36,8 +39,10 @@ import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferen
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
+import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
@@ -362,5 +367,45 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleThesisException(HttpServletRequest request,
                                       ThesisException ex) {
         return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(PromotionException.class)
+    @ResponseBody
+    ErrorObject handlePromotionException(HttpServletRequest request,
+                                         PromotionException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(RegistryBookException.class)
+    @ResponseBody
+    ErrorObject handleRegistryBookException(HttpServletRequest request,
+                                            RegistryBookException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(BackupException.class)
+    @ResponseBody
+    ErrorObject handleBackupException(HttpServletRequest request,
+                                      BackupException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidFileSectionException.class)
+    @ResponseBody
+    ErrorObject handleInvalidFileSectionException(HttpServletRequest request,
+                                                  InvalidFileSectionException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(CaptchaException.class)
+    @ResponseBody
+    ErrorObject handleCaptchaException(HttpServletRequest request,
+                                       CaptchaException ex) {
+        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

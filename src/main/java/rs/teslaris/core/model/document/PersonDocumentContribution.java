@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
@@ -13,6 +14,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Getter
 @Setter
 @Entity
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "person_document_contributions")
 @SQLRestriction("deleted=false")
 public class PersonDocumentContribution extends PersonContribution {
@@ -32,4 +34,10 @@ public class PersonDocumentContribution extends PersonContribution {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
+
+    @Column(name = "employment_title")
+    private EmploymentTitle employmentTitle;
+
+    @Column(name = "personal_title")
+    private PersonalTitle personalTitle;
 }

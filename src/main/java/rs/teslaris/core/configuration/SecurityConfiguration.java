@@ -237,6 +237,19 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
 
+                // THESIS LIBRARY
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/search/fields").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/simple").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
+                .requestMatchers(HttpMethod.PATCH,
+                    "/api/registry-book/cancel-attendance/{attendanceId}").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
+                .permitAll()
+
+                // COOKIES
+                .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()
+
                 // HEALTH CHECK
                 .requestMatchers(HttpMethod.GET, "/api/health-check/version").permitAll()
 

@@ -17,8 +17,10 @@ import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.repository.person.EmploymentRepository;
@@ -258,6 +260,32 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         employment.get().setDateTo(LocalDate.now());
         employmentRepository.save(employment.get());
         personService.indexPerson(employment.get().getPersonInvolved(), personId);
+    }
+
+    @Override
+    public EmploymentTitle getCurrentEmploymentTitle(Integer personId) {
+        return employmentRepository.findByPersonInvolvedId(personId).stream()
+            .filter(employment -> employment.getDateTo() == null)
+            .map(Employment::getEmploymentPosition)
+            .map(this::mapToEmploymentTitle)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    }
+
+    private EmploymentTitle mapToEmploymentTitle(EmploymentPosition position) {
+        return switch (position) {
+            case FULL_PROFESSOR -> EmploymentTitle.FULL_PROFESSOR;
+            case ASSISTANT_PROFESSOR -> EmploymentTitle.ASSISTANT_PROFESSOR;
+            case ASSOCIATE_PROFESSOR -> EmploymentTitle.ASSOCIATE_PROFESSOR;
+            case SCIENTIFIC_COLLABORATOR -> EmploymentTitle.SCIENTIFIC_COLLABORATOR;
+            case SENIOR_SCIENTIFIC_COLLABORATOR -> EmploymentTitle.SENIOR_SCIENTIFIC_COLLABORATOR;
+            case SCIENTIFIC_ADVISOR -> EmploymentTitle.SCIENTIFIC_ADVISOR;
+            case PROFESSOR_EMERITUS -> EmploymentTitle.PROFESSOR_EMERITUS;
+            case RETIRED_PROFESSOR -> EmploymentTitle.RETIRED_PROFESSOR;
+            case PROFESSOR_ENGINEER_HABILITATED -> EmploymentTitle.PROFESSOR_ENGINEER_HABILITATED;
+            default -> null;
+        };
     }
 
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {

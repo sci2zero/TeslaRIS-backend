@@ -1,4 +1,4 @@
-package rs.teslaris.core.annotation;
+package rs.teslaris.assessment.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

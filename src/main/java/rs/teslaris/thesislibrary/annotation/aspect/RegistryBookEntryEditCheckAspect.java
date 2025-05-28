@@ -1,4 +1,4 @@
-package rs.teslaris.core.annotation.aspect;
+package rs.teslaris.thesislibrary.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Objects;
@@ -9,52 +9,53 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import rs.teslaris.assessment.service.interfaces.EntityAssessmentClassificationService;
+import rs.teslaris.core.annotation.aspect.AspectUtil;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
 
 @Aspect
 @Component
 @RequiredArgsConstructor
-public class EntityAssessmentClassificationCheckAspect {
-
-    private final UserService userService;
-
-    private final EntityAssessmentClassificationService entityAssessmentClassificationService;
+public class RegistryBookEntryEditCheckAspect {
 
     private final JwtUtil tokenUtil;
 
+    private final UserService userService;
 
-    @Around("@annotation(rs.teslaris.core.annotation.EntityClassificationEditCheck)")
-    public Object checkEntityAssessmentClassificationEdit(ProceedingJoinPoint joinPoint)
-        throws Throwable {
+    private final OrganisationUnitService organisationUnitService;
+
+    private final RegistryBookService registryBookService;
+
+
+    @Around("@annotation(rs.teslaris.thesislibrary.annotation.RegistryBookEntryEditCheck)")
+    public Object checkRegistryBookEntryEdit(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
             RequestContextHolder.getRequestAttributes())).getRequest();
 
         var tokenValue = AspectUtil.extractToken(request);
         var attributeMap = AspectUtil.getUriVariables(request);
 
-        var entityAssessmentClassificationId =
-            Integer.parseInt(attributeMap.get("entityAssessmentClassificationId"));
+        var registryBookEntryId = Integer.parseInt(attributeMap.get("registryBookEntryId"));
         var role = tokenUtil.extractUserRoleFromToken(tokenValue);
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
-
-        var user = userService.findOne(userId);
-        var classification =
-            entityAssessmentClassificationService.findOne(entityAssessmentClassificationId);
 
         switch (UserRole.valueOf(role)) {
             case ADMIN:
                 break;
-            case COMMISSION:
-                if (!classification.getCommission().getId().equals(user.getCommission().getId())) {
-                    throw new CantEditException("unauthorizedClassificationEditAttemptMessage");
+            case PROMOTION_REGISTRY_ADMINISTRATOR:
+                if (!organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                        userService.getUserOrganisationUnitId(userId))
+                    .contains(registryBookService.findOne(registryBookEntryId)
+                        .getDissertationInformation().getOrganisationUnit().getId())) {
+                    throw new CantEditException("Unauthorised to edit or use this promotion.");
                 }
                 break;
             default:
-                throw new CantEditException("unauthorizedClassificationEditAttemptMessage");
+                throw new CantEditException("Unauthorised role.");
         }
 
         return joinPoint.proceed();

@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,6 +30,7 @@ import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
@@ -398,4 +400,40 @@ public class InvolvementServiceTest {
         verify(personService, never()).indexPerson(any(), anyInt());
     }
 
+    @Test
+    void shouldReturnEmploymentTitleWhenCurrentEmploymentExists() {
+        // Given
+        Integer personId = 42;
+        Employment currentEmployment = new Employment();
+        currentEmployment.setDateTo(null);
+        currentEmployment.setEmploymentPosition(EmploymentPosition.FULL_PROFESSOR);
+
+        when(employmentRepository.findByPersonInvolvedId(personId))
+            .thenReturn(List.of(currentEmployment));
+
+        // When
+        var result = involvementService.getCurrentEmploymentTitle(personId);
+
+        // Then
+        assertThat(result).isEqualTo(EmploymentTitle.FULL_PROFESSOR);
+        verify(employmentRepository).findByPersonInvolvedId(personId);
+    }
+
+    @Test
+    void shouldReturnNullWhenNoCurrentEmploymentExists() {
+        // Given
+        Integer personId = 99;
+        Employment oldEmployment = new Employment();
+        oldEmployment.setDateTo(LocalDate.now()); // Already ended
+
+        when(employmentRepository.findByPersonInvolvedId(personId))
+            .thenReturn(List.of(oldEmployment));
+
+        // When
+        var result = involvementService.getCurrentEmploymentTitle(personId);
+
+        // Then
+        assertThat(result).isNull();
+        verify(employmentRepository).findByPersonInvolvedId(personId);
+    }
 }

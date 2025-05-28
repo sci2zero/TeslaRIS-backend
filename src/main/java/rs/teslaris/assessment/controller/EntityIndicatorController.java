@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.assessment.annotation.EntityIndicatorEditCheck;
 import rs.teslaris.assessment.service.interfaces.EntityIndicatorService;
-import rs.teslaris.core.annotation.EntityIndicatorEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -65,7 +65,8 @@ public class EntityIndicatorController {
             case ADMIN -> documentServiceFunction.apply(AccessLevel.ADMIN_ONLY);
             case RESEARCHER, INSTITUTIONAL_EDITOR,
                 COMMISSION, VICE_DEAN_FOR_SCIENCE,
-                INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY ->
+                INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY,
+                PROMOTION_REGISTRY_ADMINISTRATOR ->
                 documentServiceFunction.apply(AccessLevel.CLOSED);
         };
     }

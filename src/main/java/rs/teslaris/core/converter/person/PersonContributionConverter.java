@@ -29,6 +29,8 @@ public class PersonContributionConverter {
                 contribution.setIsMainContributor(c.getIsMainContributor());
                 contribution.setIsCorrespondingContributor(c.getIsCorrespondingContributor());
                 contribution.setIsBoardPresident(c.getIsBoardPresident());
+                contribution.setPersonalTitle(c.getPersonalTitle());
+                contribution.setEmploymentTitle(c.getEmploymentTitle());
 
                 contributionDTOs.add(contribution);
             });

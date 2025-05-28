@@ -130,7 +130,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(), null, null,
+            newUser.getPreferredUILanguage().getLanguageCode(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageCode(), null, null,
             newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
     }
 
@@ -148,6 +149,7 @@ public class UserController {
             case "vice-dean-for-science" -> UserRole.VICE_DEAN_FOR_SCIENCE;
             case "institution-librarian" -> UserRole.INSTITUTIONAL_LIBRARIAN;
             case "head-of-library" -> UserRole.HEAD_OF_LIBRARY;
+            case "promotion-registry-administrator" -> UserRole.PROMOTION_REGISTRY_ADMINISTRATOR;
             default -> throw new IllegalArgumentException("Invalid employee role: " + role);
         };
 
@@ -159,7 +161,8 @@ public class UserController {
                                                       EmployeeRegistrationRequestDTO registrationRequest) {
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(),
+            newUser.getPreferredUILanguage().getLanguageCode(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageCode(),
             registrationRequest.getOrganisationUnitId(), null, null, null,
             newUser.getUserNotificationPeriod());
     }
@@ -175,7 +178,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredLanguage().getLanguageCode(),
+            newUser.getPreferredUILanguage().getLanguageCode(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageCode(),
             registrationRequest.getOrganisationUnitId(), registrationRequest.getCommissionId(),
             null, null,
             newUser.getUserNotificationPeriod());

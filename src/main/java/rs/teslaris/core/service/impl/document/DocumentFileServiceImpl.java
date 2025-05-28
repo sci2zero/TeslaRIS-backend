@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.io.FilenameUtils;
@@ -32,8 +32,8 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentFile;
-import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -42,8 +42,10 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -91,8 +93,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
-    public License getDocumentAccessLevel(String serverFilename) {
-        return documentFileRepository.getReferenceByServerFilename(serverFilename).getLicense();
+    public Pair<AccessRights, Boolean> getDocumentAccessLevel(String serverFilename) {
+        var documentFile = documentFileRepository.getReferenceByServerFilename(serverFilename);
+        return new Pair<>(documentFile.getAccessRights(), documentFile.getIsVerifiedData());
     }
 
     @Override
@@ -123,7 +126,18 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         }
 
         documentFile.setResourceType(documentFileDTO.getResourceType());
-        documentFile.setLicense(documentFileDTO.getLicense());
+        documentFile.setAccessRights(documentFileDTO.getAccessRights());
+
+        if (documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
+            if ((documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) ||
+                documentFile.getResourceType().equals(ResourceType.PREPRINT)) &&
+                Objects.isNull(documentFileDTO.getLicense())) {
+                throw new MissingDataException(
+                    "You have to provide CC licence for open access documents.");
+            }
+            documentFile.setLicense(documentFileDTO.getLicense());
+        }
+
         documentFile.setTimestamp(LocalDateTime.now());
     }
 
@@ -142,12 +156,29 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    public DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
+                                                   Boolean isVerifiedData) {
+        var newDocumentFile = new DocumentFile();
+
+        setCommonFields(newDocumentFile, documentFile);
+        newDocumentFile.setIsVerifiedData(isVerifiedData);
+
+        if (!index) {
+            documentFile.setResourceType(
+                ResourceType.PROOF); // Save every non-indexed (proof) as its own type
+        }
+
+        return saveDocument(documentFile, newDocumentFile, index);
+    }
+
+    @Override
     public DocumentFile saveNewPreliminaryDocument(DocumentFileDTO documentFile) {
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
         newDocumentFile.setCanEdit(false);
         newDocumentFile.setLatest(true);
+        newDocumentFile.setIsVerifiedData(true);
 
         return saveDocument(documentFile, newDocumentFile, false);
     }
@@ -353,17 +384,15 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {
-        String documentContent;
-        try (var pdfFile = multipartPdfFile.getInputStream()) {
-            var pdDocument = PDDocument.load(pdfFile);
+        try (var inputStream = multipartPdfFile.getInputStream();
+             var pdDocument = Loader.loadPDF(inputStream.readAllBytes())) {
             var textStripper = new PDFTextStripper();
-            documentContent = textStripper.getText(pdDocument);
-            pdDocument.close();
+            return textStripper.getText(pdDocument);
         } catch (IOException e) {
             throw new LoadingException("Error while trying to load PDF file content.");
         }
-        return documentContent;
     }
+
 
     private String extractDocumentTitle(MultipartFile multipartPdfFile) {
         var originalFilename = Objects.requireNonNull(multipartPdfFile.getOriginalFilename());

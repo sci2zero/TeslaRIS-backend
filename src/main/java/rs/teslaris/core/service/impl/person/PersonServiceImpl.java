@@ -833,11 +833,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         StringUtil.removeTrailingDelimiters(employmentsSr, employmentsOther);
         personIndex.setEmploymentsSr(
             !employmentsSr.isEmpty() ? employmentsSr.toString() : employmentsOther.toString());
-        personIndex.setEmploymentsSrSortable(personIndex.getEmploymentsSr());
+        personIndex.setEmploymentsSrSortable(
+            !personIndex.getEmploymentsSr().isEmpty() ? personIndex.getEmploymentsSr() : null);
         personIndex.setEmploymentsOther(
             !employmentsOther.isEmpty() ? employmentsOther.toString() :
                 employmentsSr.toString());
-        personIndex.setEmploymentsOtherSortable(personIndex.getEmploymentsOther());
+        personIndex.setEmploymentsOtherSortable(
+            !personIndex.getEmploymentsOther().isEmpty() ? personIndex.getEmploymentsOther() :
+                null);
         setPersonIndexKeywords(personIndex, savedPerson);
     }
 

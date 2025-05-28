@@ -16,7 +16,7 @@ import rs.teslaris.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
-import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
@@ -49,7 +49,7 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
     public DocumentFileResponseDTO addEntityIndicatorProof(DocumentFileDTO proof,
                                                            Integer entityIndicatorId) {
         var entityIndicator = findOne(entityIndicatorId);
-        proof.setLicense(License.COMMISSION_ONLY);
+        proof.setAccessRights(AccessRights.COMMISSION_ONLY);
         var documentFile = documentFileService.saveNewDocument(proof, false);
         entityIndicator.getProofs().add(documentFile);
 
@@ -60,7 +60,7 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
 
     @Override
     public DocumentFileResponseDTO updateEntityIndicatorProof(DocumentFileDTO updatedProof) {
-        updatedProof.setLicense(License.COMMISSION_ONLY);
+        updatedProof.setAccessRights(AccessRights.COMMISSION_ONLY);
         return documentFileService.editDocumentFile(updatedProof, false);
     }
 
