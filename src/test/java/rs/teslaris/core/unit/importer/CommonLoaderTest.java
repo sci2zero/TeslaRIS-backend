@@ -1,4 +1,4 @@
-package rs.teslaris.core.unit;
+package rs.teslaris.core.unit.importer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,6 +17,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -124,7 +125,7 @@ public class CommonLoaderTest {
             new JournalPublicationLoadDTO());
 
         // When
-        var result = commonLoader.loadRecordsWizard(userId);
+        var result = commonLoader.loadRecordsWizard(userId, null);
 
         // Then
         assertNotNull(result);
@@ -152,22 +153,27 @@ public class CommonLoaderTest {
             new ProceedingsPublicationLoadDTO());
 
         // When
-        var result = commonLoader.loadRecordsWizard(userId);
+        var result = commonLoader.loadRecordsWizard(userId, null);
 
         // Then
         assertNotNull(result);
     }
 
-    @Test
-    void shouldNotLoadRecordsWizard_whenNoRecordFound() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldNotLoadRecordsWizard_whenNoRecordFound(Boolean importByUser) {
         // Given
-        var userId = 1;
+        var identifier = 1;
 
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, identifier,
             mongoTemplate)).thenReturn(null);
 
         var expectedQuery = new Query();
-        expectedQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        if (importByUser) {
+            expectedQuery.addCriteria(Criteria.where("import_users_id").in(identifier));
+        } else {
+            expectedQuery.addCriteria(Criteria.where("import_institutions_id").in(identifier));
+        }
         expectedQuery.addCriteria(Criteria.where("is_loaded").is(false));
         expectedQuery.addCriteria(Criteria.where("identifier").gte(""));
         expectedQuery.limit(1);
@@ -176,7 +182,12 @@ public class CommonLoaderTest {
             "documentImports")).thenReturn(null);
 
         // When
-        var result = commonLoader.loadRecordsWizard(userId);
+        Object result;
+        if (importByUser) {
+            result = commonLoader.loadRecordsWizard(identifier, null);
+        } else {
+            result = commonLoader.loadRecordsWizard(null, identifier);
+        }
 
         // Then
         assertNull(result);
@@ -203,11 +214,12 @@ public class CommonLoaderTest {
         var updateOperation = new Update();
         updateOperation.set("loaded", true);
 
-        doReturn(new Object()).when(mongoTemplate).findAndModify(eq(query), eq(updateOperation),
-            any(FindAndModifyOptions.class), eq(entityClass));
+        doReturn(new DocumentImport()).when(mongoTemplate)
+            .findAndModify(eq(query), eq(updateOperation),
+                any(FindAndModifyOptions.class), eq(entityClass));
 
         // When
-        commonLoader.markRecordAsLoaded(userId);
+        commonLoader.markRecordAsLoaded(userId, null);
     }
 
     @Test
@@ -237,7 +249,7 @@ public class CommonLoaderTest {
 
         // When
         assertThrows(RecordAlreadyLoadedException.class,
-            () -> commonLoader.markRecordAsLoaded(userId));
+            () -> commonLoader.markRecordAsLoaded(userId, null));
 
         // Then (RecordAlreadyLoadedException should be thrown)
     }
@@ -264,7 +276,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(nextRecord);
 
         // When
-        commonLoader.skipRecord(userId);
+        commonLoader.skipRecord(userId, null);
 
         // Then
         assertEquals(nextRecordId, progressReport.getLastLoadedId());
@@ -291,7 +303,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(null);
 
         // When
-        commonLoader.skipRecord(userId);
+        commonLoader.skipRecord(userId, null);
 
         // Then
         assertEquals("", progressReport.getLastLoadedId());
@@ -313,7 +325,7 @@ public class CommonLoaderTest {
             (long) expectedCount);
 
         // When
-        var result = commonLoader.countRemainingDocumentsForLoading(userId);
+        var result = commonLoader.countRemainingDocumentsForLoading(userId, null);
 
         // Then
         assertEquals(expectedCount, result);
@@ -353,7 +365,7 @@ public class CommonLoaderTest {
             createdInstitution);
 
         // When
-        OrganisationUnitDTO result = commonLoader.createInstitution(scopusAfid, userId);
+        OrganisationUnitDTO result = commonLoader.createInstitution(scopusAfid, userId, null);
 
         // Then
         assertEquals(createdInstitution, result);
@@ -380,7 +392,7 @@ public class CommonLoaderTest {
 
         // When & Then
         assertThrows(NotFoundException.class,
-            () -> commonLoader.createInstitution(scopusAfid, userId));
+            () -> commonLoader.createInstitution(scopusAfid, userId, null));
     }
 
     @Test
@@ -408,7 +420,7 @@ public class CommonLoaderTest {
 
         // When & Then
         assertThrows(NotFoundException.class,
-            () -> commonLoader.createInstitution(scopusAfid, userId));
+            () -> commonLoader.createInstitution(scopusAfid, userId, null));
     }
 
     @Test
@@ -451,7 +463,7 @@ public class CommonLoaderTest {
             createdPerson);
 
         // When
-        PersonResponseDTO result = commonLoader.createPerson(scopusAuthorId, userId);
+        PersonResponseDTO result = commonLoader.createPerson(scopusAuthorId, userId, null);
 
         // Then
         assertNotNull(result);
@@ -478,7 +490,7 @@ public class CommonLoaderTest {
 
         // When & Then
         assertThrows(NotFoundException.class,
-            () -> commonLoader.createPerson(scopusAuthorId, userId));
+            () -> commonLoader.createPerson(scopusAuthorId, userId, null));
     }
 
     @Test
@@ -506,7 +518,7 @@ public class CommonLoaderTest {
 
         // When & Then
         assertThrows(NotFoundException.class,
-            () -> commonLoader.createPerson(scopusAuthorId, userId));
+            () -> commonLoader.createPerson(scopusAuthorId, userId, null));
     }
 
     @Test
@@ -538,7 +550,7 @@ public class CommonLoaderTest {
             currentlyLoadedEntity);
 
         // When
-        var result = commonLoader.createJournal(eIssn, printIssn, userId);
+        var result = commonLoader.createJournal(eIssn, printIssn, userId, null);
 
         // Then
         assertEquals(createdJournal.getId(), result.getId());
@@ -566,7 +578,7 @@ public class CommonLoaderTest {
 
         // When & Then
         assertThrows(NotFoundException.class,
-            () -> commonLoader.createJournal(eIssn, printIssn, userId));
+            () -> commonLoader.createJournal(eIssn, printIssn, userId, null));
     }
 
     @Test
@@ -594,7 +606,8 @@ public class CommonLoaderTest {
 
         // When & Then
         assertThrows(
-            NotFoundException.class, () -> commonLoader.createJournal(eIssn, printIssn, userId));
+            NotFoundException.class,
+            () -> commonLoader.createJournal(eIssn, printIssn, userId, null));
     }
 
     @Test
@@ -630,7 +643,7 @@ public class CommonLoaderTest {
             anyString())).thenReturn(new Journal());
 
         // When
-        var result = commonLoader.createProceedings(userId);
+        var result = commonLoader.createProceedings(userId, null);
 
         // Then
         assertEquals(createdProceedings.getId(), result.getId());
@@ -667,7 +680,7 @@ public class CommonLoaderTest {
             currentlyLoadedEntity);
 
         // When
-        var result = commonLoader.createProceedings(userId);
+        var result = commonLoader.createProceedings(userId, null);
 
         // Then
         assertEquals(createdProceedings.getId(), result.getId());
@@ -693,6 +706,6 @@ public class CommonLoaderTest {
 
         // When & Then
         assertThrows(NotFoundException.class,
-            () -> commonLoader.createProceedings(userId));
+            () -> commonLoader.createProceedings(userId, null));
     }
 }

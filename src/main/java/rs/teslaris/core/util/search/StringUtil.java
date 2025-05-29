@@ -29,8 +29,10 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Slf4j
 public class StringUtil {
 
-    private static final Pattern CLEAN_PATTERN = Pattern.compile("[\\p{Punct}\\d]+");
+    private static final Pattern CLEAN_PATTERN = Pattern.compile("(\\b\\d+\\b)|[\\p{Punct}]+");
+
     private static List<String> stopwords;
+
     private static Analyzer analyzer;
 
 

@@ -189,10 +189,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                                Pageable pageable,
                                                                SearchRequestType type,
                                                                Integer personId,
-                                                               Integer topLevelInstitutionId) {
+                                                               Integer topLevelInstitutionId,
+                                                               Boolean onlyReturnOnesWhichCanHarvest) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
-                buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId),
+                buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId,
+                    onlyReturnOnesWhichCanHarvest),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -203,12 +205,17 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
-                                         Integer topLevelInstitutionId) {
+                                         Integer topLevelInstitutionId,
+                                         Boolean onlyReturnOnesWhichCanHarvest) {
         StringUtil.removeNotableStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
 
             addInstitutionFilter(b, personId, topLevelInstitutionId);
+
+            if (Objects.nonNull(onlyReturnOnesWhichCanHarvest) && onlyReturnOnesWhichCanHarvest) {
+                b.must(mbb -> mbb.exists(e -> e.field("scopus_afid")));
+            }
 
             tokens.forEach(token -> {
                 if (StringUtil.isInteger(token, 10)) {

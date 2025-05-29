@@ -33,6 +33,9 @@ public class DocumentImport {
     @Field("import_users_id")
     private Set<Integer> importUsersId = new HashSet<>();
 
+    @Field("import_institutions_id")
+    private Set<Integer> importInstitutionsId = new HashSet<>();
+
     @Field("is_loaded")
     private Boolean loaded = false;
 

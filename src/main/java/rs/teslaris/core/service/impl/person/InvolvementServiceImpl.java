@@ -151,6 +151,21 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     @Override
+    public List<Integer> getDirectEmploymentInstitutionIdsForPerson(Integer personId) {
+        var employmentInstitutionIds = new ArrayList<Integer>();
+
+        employmentRepository.findByPersonInvolvedId(personId).forEach(employment -> {
+            if (Objects.isNull(employment.getOrganisationUnit())) {
+                return;
+            }
+
+            employmentInstitutionIds.add(employment.getOrganisationUnit().getId());
+        });
+
+        return employmentInstitutionIds;
+    }
+
+    @Override
     public Employment addEmployment(Integer personId, EmploymentDTO employment) {
         var personInvolved = personService.findOne(personId);
 

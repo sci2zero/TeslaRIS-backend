@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -40,6 +41,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
     private final ScopusImportUtility scopusImportUtility;
 
+    private final InvolvementService involvementService;
+
     private final MongoTemplate mongoTemplate;
 
 
@@ -58,12 +61,14 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         }
 
         var person = personService.readPersonWithBasicInfo(personId);
+        var employmentInstitutionIds =
+            involvementService.getDirectEmploymentInstitutionIdsForPerson(personId);
         var scopusId = person.getPersonalInfo().getScopusAuthorId();
 
         var yearlyResults =
             scopusImportUtility.getDocumentsByIdentifier(scopusId, true, startYear, endYear);
 
-        performDocumentHarvest(yearlyResults, userId, newEntriesCount);
+        performDocumentHarvest(yearlyResults, userId, newEntriesCount, employmentInstitutionIds);
 
         return newEntriesCount;
     }
@@ -77,6 +82,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         var organisationUnitId = Objects.nonNull(institutionId) ? institutionId :
             userService.getUserOrganisationUnitId(userId);
         var institution = organisationUnitService.findOne(organisationUnitId);
+        var allInstitutionsThatCanImport =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
         if (Objects.isNull(institution.getScopusAfid())) {
             throw new ScopusIdMissingException("You have not set your institution Scopus AFID.");
@@ -87,14 +94,15 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         var yearlyResults =
             scopusImportUtility.getDocumentsByIdentifier(scopusAfid, false, startYear, endYear);
 
-        performDocumentHarvest(yearlyResults, userId, newEntriesCount);
+        performDocumentHarvest(yearlyResults, userId, newEntriesCount,
+            allInstitutionsThatCanImport);
 
         return newEntriesCount;
     }
 
     private void performDocumentHarvest(
         List<ScopusImportUtility.ScopusSearchResponse> yearlyResults, Integer userId,
-        HashMap<Integer, Integer> newEntriesCount) {
+        HashMap<Integer, Integer> newEntriesCount, List<Integer> institutionIds) {
         yearlyResults.forEach(
             yearlyResult -> yearlyResult.searchResults().entries().forEach(entry -> {
                 if (Objects.isNull(entry.title())) {
@@ -145,6 +153,7 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 }
 
                 documentImport.getImportUsersId().add(userId);
+                documentImport.getImportInstitutionsId().addAll(institutionIds);
 
                 documentImport.getContributions().forEach(personDocumentContribution -> {
                     var contributorUserOptional = personService.findUserByScopusAuthorId(

@@ -9,21 +9,22 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 @Service
 public interface CommonLoader {
 
-    <R> R loadRecordsWizard(Integer userId);
+    <R> R loadRecordsWizard(Integer userId, Integer institutionId);
 
-    <R> R loadSkippedRecordsWizard(Integer userId);
+    <R> R loadSkippedRecordsWizard(Integer userId, Integer institutionId);
 
-    void skipRecord(Integer userId);
+    void skipRecord(Integer userId, Integer institutionId);
 
-    void markRecordAsLoaded(Integer userId);
+    void markRecordAsLoaded(Integer userId, Integer institutionId);
 
-    Integer countRemainingDocumentsForLoading(Integer userId);
+    Integer countRemainingDocumentsForLoading(Integer userId, Integer institutionId);
 
-    OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId);
+    OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId, Integer institutionId);
 
-    PersonResponseDTO createPerson(String scopusAuthorId, Integer userId);
+    PersonResponseDTO createPerson(String scopusAuthorId, Integer userId, Integer institutionId);
 
-    PublicationSeriesDTO createJournal(String eIssn, String printIssn, Integer userId);
+    PublicationSeriesDTO createJournal(String eIssn, String printIssn, Integer userId,
+                                       Integer institutionId);
 
-    ProceedingsDTO createProceedings(Integer userId);
+    ProceedingsDTO createProceedings(Integer userId, Integer institutionId);
 }

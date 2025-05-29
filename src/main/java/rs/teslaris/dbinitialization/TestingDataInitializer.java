@@ -230,6 +230,7 @@ public class TestingDataInitializer {
         dummyOU2.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU2.setLocation(new GeoLocation(19.8502021, 45.2454147, "NOWHERE"));
         dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
+        dummyOU2.setScopusAfid("60068802");
         organisationUnitRepository.save(dummyOU2);
 
         var conferenceEvent1 = new Conference();
@@ -806,9 +807,16 @@ public class TestingDataInitializer {
                 null,
                 dummyOU, null, UserNotificationPeriod.DAILY);
 
+        var institutionalEditorUser2 =
+            new User("editor2@editor.com", passwordEncoder.encode("editor2"), "note note note",
+                "Marko", "Nikolic", false, false, serbianLanguage, serbianLanguage,
+                institutionalEditorAuthority,
+                null,
+                dummyOU2, null, UserNotificationPeriod.WEEKLY);
+
         userRepository.saveAll(
             List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
-                headOfLibraryUser, promotionRegistryAdminUser));
+                headOfLibraryUser, promotionRegistryAdminUser, institutionalEditorUser2));
 
         var software2 = new Software();
         software2.setTitle(Set.of(new MultiLingualContent(englishTag,

@@ -32,6 +32,8 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     List<EmploymentDTO> getDirectAndIndirectEmploymentsForPerson(Integer personId);
 
+    List<Integer> getDirectEmploymentInstitutionIdsForPerson(Integer personId);
+
     DocumentFileResponseDTO addInvolvementProof(DocumentFileDTO proof, Integer involvementId);
 
     void deleteProof(Integer proofId, Integer involvementId);

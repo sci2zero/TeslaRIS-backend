@@ -133,10 +133,10 @@ public class OrganisationUnitServiceTest {
 
     private static Stream<Arguments> argumentSources() {
         return Stream.of(
-            Arguments.of(null, null),
-            Arguments.of(null, 2),
-            Arguments.of(1, null),
-            Arguments.of(1, 2)
+            Arguments.of(null, null, null),
+            Arguments.of(null, 2, true),
+            Arguments.of(1, null, false),
+            Arguments.of(1, 2, true)
         );
     }
 
@@ -584,7 +584,8 @@ public class OrganisationUnitServiceTest {
     @ParameterizedTest
     @MethodSource("argumentSources")
     public void shouldFindOrganisationUnitWhenSearchingWithSimpleQuery(Integer personId,
-                                                                       Integer topLevelInstitutionId) {
+                                                                       Integer topLevelInstitutionId,
+                                                                       Boolean onlyReturnOnesWhichCanHarvest) {
         // Given
         var tokens = Arrays.asList("Fakultet tehnickih nauka", "FTN");
         var pageable = PageRequest.of(0, 10);
@@ -597,7 +598,8 @@ public class OrganisationUnitServiceTest {
         // When
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
-                SearchRequestType.SIMPLE, personId, topLevelInstitutionId);
+                SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
+                onlyReturnOnesWhichCanHarvest);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
