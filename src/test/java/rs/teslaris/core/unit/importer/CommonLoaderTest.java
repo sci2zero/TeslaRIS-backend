@@ -106,7 +106,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var expectedQuery = new Query();
@@ -136,7 +136,7 @@ public class CommonLoaderTest {
         // Given
         var userId = 1;
 
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(null);
 
         var expectedQuery = new Query();
@@ -166,6 +166,7 @@ public class CommonLoaderTest {
         var identifier = 1;
 
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, identifier,
+            identifier,
             mongoTemplate)).thenReturn(null);
 
         var expectedQuery = new Query();
@@ -201,7 +202,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var entityClass = DataSet.getClassForValue(DataSet.DOCUMENT_IMPORTS.getStringValue());
@@ -230,7 +231,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var entityClass = DataSet.getClassForValue(DataSet.DOCUMENT_IMPORTS.getStringValue());
@@ -263,7 +264,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -281,7 +282,8 @@ public class CommonLoaderTest {
         // Then
         assertEquals(nextRecordId, progressReport.getLastLoadedId());
         verify(mongoTemplate).save(progressReport);
-        ProgressReportUtility.deleteProgressReport(DataSet.DOCUMENT_IMPORTS, userId, mongoTemplate);
+        ProgressReportUtility.deleteProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate);
     }
 
     @Test
@@ -292,7 +294,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -308,7 +310,8 @@ public class CommonLoaderTest {
         // Then
         assertEquals("", progressReport.getLastLoadedId());
         verify(mongoTemplate).save(progressReport);
-        ProgressReportUtility.deleteProgressReport(DataSet.DOCUMENT_IMPORTS, userId, mongoTemplate);
+        ProgressReportUtility.deleteProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate);
     }
 
     @Test
@@ -347,7 +350,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -380,7 +383,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -407,7 +410,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -440,7 +443,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -478,7 +481,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -505,7 +508,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -534,7 +537,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -566,7 +569,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -593,7 +596,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -621,7 +624,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -660,7 +663,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
@@ -694,7 +697,7 @@ public class CommonLoaderTest {
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedId(lastLoadedId);
-        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();

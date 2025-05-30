@@ -38,16 +38,20 @@ public class CommonLoadController {
 
     @PatchMapping("/skip")
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
-    public void skipRecord(@RequestHeader("Authorization") String bearerToken) {
+    public void skipRecord(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken) {
         loader.skipRecord(tokenUtil.extractUserIdFromToken(bearerToken),
-            getOrganisationUnitIdFromToken(bearerToken));
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
     @PatchMapping("/mark-as-loaded")
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
-    public void markRecordAsLoaded(@RequestHeader("Authorization") String bearerToken) {
+    public void markRecordAsLoaded(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken) {
         loader.markRecordAsLoaded(tokenUtil.extractUserIdFromToken(bearerToken),
-            getOrganisationUnitIdFromToken(bearerToken));
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
     @GetMapping("/load-wizard/count-remaining")
@@ -63,15 +67,17 @@ public class CommonLoadController {
     @GetMapping("/load-wizard")
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
     @SuppressWarnings("unchecked")
-    public <R> R loadUsingWizard(@RequestHeader("Authorization") String bearerToken) {
+    public <R> R loadUsingWizard(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken) {
         var returnDto =
             loader.loadRecordsWizard(tokenUtil.extractUserIdFromToken(bearerToken),
-                getOrganisationUnitIdFromToken(bearerToken));
+                getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
 
         if (Objects.isNull(returnDto)) {
             return loader.loadSkippedRecordsWizard(
                 tokenUtil.extractUserIdFromToken(bearerToken),
-                getOrganisationUnitIdFromToken(bearerToken));
+                getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
         }
 
         return (R) returnDto;
@@ -80,65 +86,62 @@ public class CommonLoadController {
     @PostMapping("/institution/{scopusAfid}")
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
     @Idempotent
-    public OrganisationUnitDTO createInstitution(@RequestHeader("Authorization") String bearerToken,
-                                                 @PathVariable String scopusAfid) {
+    public OrganisationUnitDTO createInstitution(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable String scopusAfid) {
         return loader.createInstitution(scopusAfid,
             tokenUtil.extractUserIdFromToken(bearerToken),
-            getOrganisationUnitIdFromToken(bearerToken));
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
     @PostMapping("/person/{scopusAuthorId}")
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
     @Idempotent
-    public PersonResponseDTO createPerson(@RequestHeader("Authorization") String bearerToken,
-                                          @PathVariable String scopusAuthorId) {
+    public PersonResponseDTO createPerson(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable String scopusAuthorId) {
         return loader.createPerson(scopusAuthorId, tokenUtil.extractUserIdFromToken(bearerToken),
-            getOrganisationUnitIdFromToken(bearerToken));
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
     @PostMapping("/journal")
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
     @Idempotent
-    public PublicationSeriesDTO createJournal(@RequestHeader("Authorization") String bearerToken,
-                                              @RequestParam String eIssn,
-                                              @RequestParam String printIssn) {
+    public PublicationSeriesDTO createJournal(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken,
+        @RequestParam String eIssn,
+        @RequestParam String printIssn) {
         return loader.createJournal(eIssn, printIssn,
             tokenUtil.extractUserIdFromToken(bearerToken),
-            getOrganisationUnitIdFromToken(bearerToken));
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
     @PostMapping("/proceedings")
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
     @Idempotent
     public ProceedingsDTO createProceedings(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
         @RequestHeader("Authorization") String bearerToken) {
         return loader.createProceedings(
             tokenUtil.extractUserIdFromToken(bearerToken),
-            getOrganisationUnitIdFromToken(bearerToken));
-    }
-
-    @Nullable
-    private Integer getOrganisationUnitIdFromToken(String bearerToken) {
-        var role = tokenUtil.extractUserRoleFromToken(bearerToken);
-
-        if (role.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
-            var userId = tokenUtil.extractUserIdFromToken(bearerToken);
-            return userService.getUserOrganisationUnitId(userId);
-        }
-
-        return null;
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
     @Nullable
     private Integer getOrganisationUnitIdFromToken(String bearerToken,
                                                    Integer providedInstitutionId) {
-        var institutionId = getOrganisationUnitIdFromToken(bearerToken);
-
         var role = tokenUtil.extractUserRoleFromToken(bearerToken);
-        if (Objects.isNull(institutionId) && role.equals(UserRole.ADMIN.name())) {
+
+        if (role.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
+            var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+            return userService.getUserOrganisationUnitId(userId);
+        } else if (role.equals(UserRole.ADMIN.name())) {
             return providedInstitutionId;
         }
 
-        return institutionId;
+        return null;
     }
 }

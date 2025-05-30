@@ -121,7 +121,7 @@ public class CommonLoaderImpl implements CommonLoader {
         query.addCriteria(Criteria.where("is_loaded").is(false));
 
         var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
                 mongoTemplate);
         if (progressReport != null) {
             query.addCriteria(Criteria.where("identifier").gte(progressReport.getLastLoadedId()));
@@ -130,12 +130,13 @@ public class CommonLoaderImpl implements CommonLoader {
         }
         query.limit(1);
 
-        return findAndConvertEntity(query, userId);
+        return findAndConvertEntity(query, userId, institutionId);
     }
 
     @Override
     public <R> R loadSkippedRecordsWizard(Integer userId, Integer institutionId) {
-        ProgressReportUtility.resetProgressReport(DataSet.DOCUMENT_IMPORTS, userId, mongoTemplate);
+        ProgressReportUtility.resetProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
+            mongoTemplate);
         return loadRecordsWizard(userId, institutionId);
     }
 
@@ -144,7 +145,8 @@ public class CommonLoaderImpl implements CommonLoader {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                    mongoTemplate), new LoadProgressReport("1", userId, DataSet.DOCUMENT_IMPORTS));
+                    institutionId, mongoTemplate),
+                new LoadProgressReport("1", userId, institutionId, DataSet.DOCUMENT_IMPORTS));
         Query nextRecordQuery = new Query();
         if (Objects.nonNull(institutionId)) {
             nextRecordQuery.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
@@ -168,7 +170,8 @@ public class CommonLoaderImpl implements CommonLoader {
             progressReport.setLastLoadedId("");
         }
 
-        ProgressReportUtility.deleteProgressReport(DataSet.DOCUMENT_IMPORTS, userId, mongoTemplate);
+        ProgressReportUtility.deleteProgressReport(
+            DataSet.DOCUMENT_IMPORTS, userId, institutionId, mongoTemplate);
         mongoTemplate.save(progressReport);
     }
 
@@ -177,7 +180,9 @@ public class CommonLoaderImpl implements CommonLoader {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                    mongoTemplate), new LoadProgressReport("1", userId, DataSet.DOCUMENT_IMPORTS));
+                    institutionId,
+                    mongoTemplate),
+                new LoadProgressReport("1", userId, institutionId, DataSet.DOCUMENT_IMPORTS));
 
         Query query = new Query();
         query.addCriteria(Criteria.where("identifier").is(progressReport.getLastLoadedId()));
@@ -366,7 +371,7 @@ public class CommonLoaderImpl implements CommonLoader {
         query.addCriteria(Criteria.where("is_loaded").is(false));
 
         var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
                 mongoTemplate);
         if (progressReport != null) {
             query.addCriteria(Criteria.where("identifier").gte(progressReport.getLastLoadedId()));
@@ -610,7 +615,7 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     @Nullable
-    private <R> R findAndConvertEntity(Query query, Integer userId) {
+    private <R> R findAndConvertEntity(Query query, Integer userId, Integer institutionId) {
         var entity = mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
 
         if (Objects.nonNull(entity)) {
@@ -624,7 +629,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
             try {
                 ProgressReportUtility.updateProgressReport(DataSet.DOCUMENT_IMPORTS,
-                    (String) getIdMethod.invoke(entity), userId, mongoTemplate);
+                    (String) getIdMethod.invoke(entity), userId, institutionId, mongoTemplate);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 return null;
             }

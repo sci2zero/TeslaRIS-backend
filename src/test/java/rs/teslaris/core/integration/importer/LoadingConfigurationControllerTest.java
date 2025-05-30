@@ -41,11 +41,11 @@ public class LoadingConfigurationControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post(
+                MockMvcRequestBuilders.patch(
                         "http://localhost:8081/api/loading-configuration?institutionId={institutionId}", 1)
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
 }

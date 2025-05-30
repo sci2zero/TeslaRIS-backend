@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -15,6 +16,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -103,6 +105,10 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
     private void performDocumentHarvest(
         List<ScopusImportUtility.ScopusSearchResponse> yearlyResults, Integer userId,
         HashMap<Integer, Integer> newEntriesCount, List<Integer> institutionIds) {
+        var adminUserIds =
+            userService.findAllSystemAdminUsers().stream().map(BaseEntity::getId)
+                .collect(Collectors.toSet());
+
         yearlyResults.forEach(
             yearlyResult -> yearlyResult.searchResults().entries().forEach(entry -> {
                 if (Objects.isNull(entry.title())) {
@@ -153,6 +159,7 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 }
 
                 documentImport.getImportUsersId().add(userId);
+                documentImport.getImportUsersId().addAll(adminUserIds);
                 documentImport.getImportInstitutionsId().addAll(institutionIds);
 
                 documentImport.getContributions().forEach(personDocumentContribution -> {

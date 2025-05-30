@@ -17,5 +17,7 @@ public class LoadProgressReport {
 
     private Integer userId;
 
+    private Integer institutionId;
+
     private DataSet dataset;
 }

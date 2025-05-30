@@ -108,7 +108,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
         query.addCriteria(Criteria.where("loaded").is(false));
 
         var progressReport =
-            ProgressReportUtility.getProgressReport(requestDataSet, userId, mongoTemplate);
+            ProgressReportUtility.getProgressReport(requestDataSet, userId, null, mongoTemplate);
         if (progressReport != null) {
             query.addCriteria(Criteria.where("oldId").gte(progressReport.getLastLoadedId()));
         } else {
@@ -163,7 +163,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
     @Override
     public <R> R loadSkippedRecordsWizard(DataSet requestDataSet, Integer userId) {
-        ProgressReportUtility.resetProgressReport(requestDataSet, userId, mongoTemplate);
+        ProgressReportUtility.resetProgressReport(requestDataSet, userId, null, mongoTemplate);
         return loadRecordsWizard(requestDataSet, userId);
     }
 
@@ -172,7 +172,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
         var entityClass = DataSet.getClassForValue(requestDataSet.getStringValue());
 
         var progressReport =
-            ProgressReportUtility.getProgressReport(requestDataSet, userId, mongoTemplate);
+            ProgressReportUtility.getProgressReport(requestDataSet, userId, null, mongoTemplate);
         Query nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("importUserId").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("loaded").is(false));
@@ -191,14 +191,14 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
             progressReport.setLastLoadedId("");
         }
 
-        ProgressReportUtility.deleteProgressReport(requestDataSet, userId, mongoTemplate);
+        ProgressReportUtility.deleteProgressReport(requestDataSet, userId, null, mongoTemplate);
         mongoTemplate.save(progressReport);
     }
 
     @Override
     public void markRecordAsLoaded(DataSet requestDataSet, Integer userId) {
         var progressReport =
-            ProgressReportUtility.getProgressReport(requestDataSet, userId, mongoTemplate);
+            ProgressReportUtility.getProgressReport(requestDataSet, userId, null, mongoTemplate);
         Query query = new Query();
         query.addCriteria(Criteria.where("oldId").is(progressReport.getLastLoadedId()));
         query.addCriteria(Criteria.where("importUserId").in(userId));
@@ -255,7 +255,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
             }
             try {
                 ProgressReportUtility.updateProgressReport(requestDataSet,
-                    (String) getIdMethod.invoke(entity), userId, mongoTemplate);
+                    (String) getIdMethod.invoke(entity), userId, null, mongoTemplate);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 return null;
             }

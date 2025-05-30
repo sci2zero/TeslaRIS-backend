@@ -18,6 +18,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.importer.LoadingConfigurationRepository;
 import rs.teslaris.importer.dto.LoadingConfigurationDTO;
 import rs.teslaris.importer.model.configuration.LoadingConfiguration;
@@ -37,6 +38,9 @@ public class LoadingConfigurationServiceTest {
 
     @Mock
     private InvolvementService involvementService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private LoadingConfigurationServiceImpl loadingConfigurationService;
@@ -103,7 +107,7 @@ public class LoadingConfigurationServiceTest {
             .thenReturn(Optional.of(config));
 
         // When
-        var result = loadingConfigurationService.getLoadingConfigurationForUser(userId);
+        var result = loadingConfigurationService.getLoadingConfigurationForResearcherUser(userId);
 
         // Then
         assertNotNull(result);
@@ -133,7 +137,7 @@ public class LoadingConfigurationServiceTest {
             .thenReturn(Optional.of(config));
 
         // When
-        var result = loadingConfigurationService.getLoadingConfigurationForUser(userId);
+        var result = loadingConfigurationService.getLoadingConfigurationForResearcherUser(userId);
 
         // Then
         assertNotNull(result);
@@ -157,7 +161,67 @@ public class LoadingConfigurationServiceTest {
             .thenReturn(List.of());
 
         // When
-        var result = loadingConfigurationService.getLoadingConfigurationForUser(userId);
+        var result = loadingConfigurationService.getLoadingConfigurationForResearcherUser(userId);
+
+        // Then
+        assertTrue(result.getSmartLoadingByDefault());
+        assertTrue(result.getLoadedEntitiesAreUnmanaged());
+    }
+
+    @Test
+    public void shouldGetLoadingConfigurationForEmployeeUser() {
+        // Given
+        var userId = 123;
+        var institutionId = 456;
+        when(userService.getUserOrganisationUnitId(userId)).thenReturn(institutionId);
+
+        var configuration = new LoadingConfiguration();
+        configuration.setSmartLoadingByDefault(true);
+        configuration.setLoadedEntitiesAreUnmanaged(false);
+        when(loadingConfigurationRepository.getLoadingConfigurationForInstitution(institutionId))
+            .thenReturn(Optional.of(configuration));
+
+        // When
+        var result =
+            loadingConfigurationService.getLoadingConfigurationForEmployeeUser(userId);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.getSmartLoadingByDefault());
+        assertFalse(result.getLoadedEntitiesAreUnmanaged());
+    }
+
+    @Test
+    public void shouldGetLoadingConfigurationForAdminUser() {
+        // Given
+        var institutionId = 789;
+
+        var configuration = new LoadingConfiguration();
+        configuration.setSmartLoadingByDefault(false);
+        configuration.setLoadedEntitiesAreUnmanaged(true);
+        when(loadingConfigurationRepository.getLoadingConfigurationForInstitution(institutionId))
+            .thenReturn(Optional.of(configuration));
+
+        // When
+        var result =
+            loadingConfigurationService.getLoadingConfigurationForAdminUser(institutionId);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.getSmartLoadingByDefault());
+        assertTrue(result.getLoadedEntitiesAreUnmanaged());
+    }
+
+    @Test
+    public void shouldReturnDefaultConfigurationIfNotFoundForAdminSpecifiedInstitution() {
+        // Given
+        var institutionId = 101;
+        when(loadingConfigurationRepository.getLoadingConfigurationForInstitution(institutionId))
+            .thenReturn(Optional.empty());
+
+        // When
+        var result =
+            loadingConfigurationService.getLoadingConfigurationForAdminUser(institutionId);
 
         // Then
         assertTrue(result.getSmartLoadingByDefault());

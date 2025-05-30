@@ -10,6 +10,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.importer.LoadingConfigurationRepository;
 import rs.teslaris.importer.dto.LoadingConfigurationDTO;
 import rs.teslaris.importer.model.configuration.LoadingConfiguration;
@@ -27,6 +28,8 @@ public class LoadingConfigurationServiceImpl extends JPAServiceImpl<LoadingConfi
     private final OrganisationUnitService organisationUnitService;
 
     private final PersonService personService;
+
+    private final UserService userService;
 
     private final InvolvementService involvementService;
 
@@ -51,7 +54,7 @@ public class LoadingConfigurationServiceImpl extends JPAServiceImpl<LoadingConfi
     }
 
     @Override
-    public LoadingConfigurationDTO getLoadingConfigurationForUser(Integer userId) {
+    public LoadingConfigurationDTO getLoadingConfigurationForResearcherUser(Integer userId) {
         var personId = personService.getPersonIdForUserId(userId);
         var institutionIds =
             involvementService.getDirectEmploymentInstitutionIdsForPerson(personId);
@@ -66,6 +69,18 @@ public class LoadingConfigurationServiceImpl extends JPAServiceImpl<LoadingConfi
         }
 
         return new LoadingConfigurationDTO(true, true);
+    }
+
+    @Override
+    public LoadingConfigurationDTO getLoadingConfigurationForEmployeeUser(Integer userId) {
+        var institutionId = userService.getUserOrganisationUnitId(userId);
+
+        return provideLoadingConfigurationForInstitution(institutionId);
+    }
+
+    @Override
+    public LoadingConfigurationDTO getLoadingConfigurationForAdminUser(Integer institutionId) {
+        return provideLoadingConfigurationForInstitution(institutionId);
     }
 
     private Optional<LoadingConfiguration> findConfigurationForInstitutionOrSuper(
@@ -85,6 +100,18 @@ public class LoadingConfigurationServiceImpl extends JPAServiceImpl<LoadingConfi
         }
 
         return Optional.empty();
+    }
+
+    private LoadingConfigurationDTO provideLoadingConfigurationForInstitution(
+        Integer institutionId) {
+        var config = findConfigurationForInstitutionOrSuper(institutionId);
+        if (config.isPresent()) {
+            var c = config.get();
+            return new LoadingConfigurationDTO(c.getSmartLoadingByDefault(),
+                c.getLoadedEntitiesAreUnmanaged());
+        }
+
+        return new LoadingConfigurationDTO(true, true);
     }
 
     @Override
