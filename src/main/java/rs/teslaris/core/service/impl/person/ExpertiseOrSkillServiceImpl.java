@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -24,6 +25,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill>
     implements ExpertiseOrSkillService {
 
@@ -48,6 +50,7 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
         var newExpertiseOrSkill = new ExpertiseOrSkill();
 
         setCommonFields(newExpertiseOrSkill, dto);
+        newExpertiseOrSkill.setPerson(person);
         var savedExpertiseOrSkill = expertiseOrSkillRepository.save(newExpertiseOrSkill);
 
         person.getExpertisesAndSkills().add(newExpertiseOrSkill);
@@ -89,7 +92,8 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
     public DocumentFileResponseDTO addProof(Integer expertiseOrSkillId,
                                             DocumentFileDTO proof) {
         var expertiseOrSkill = findOne(expertiseOrSkillId);
-        var documentFile = documentFileService.saveNewDocument(proof, false);
+        var documentFile =
+            documentFileService.saveNewPersonalDocument(proof, false, expertiseOrSkill.getPerson());
         expertiseOrSkill.getProofs().add(documentFile);
         save(expertiseOrSkill);
 

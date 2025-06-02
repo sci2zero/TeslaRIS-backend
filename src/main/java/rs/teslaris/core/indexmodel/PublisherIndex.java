@@ -24,37 +24,37 @@ public class PublisherIndex {
     @Field(type = FieldType.Text, store = true, name = "name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String nameSr;
 
-    @Field(type = FieldType.Keyword, store = true, name = "name_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "name_sr_sortable")
     private String nameSrSortable;
 
     @Field(type = FieldType.Text, store = true, name = "name_other", analyzer = "english", searchAnalyzer = "english")
     private String nameOther;
 
-    @Field(type = FieldType.Keyword, store = true, name = "name_other_sortable")
+    @Field(type = FieldType.Keyword, name = "name_other_sortable")
     private String nameOtherSortable;
 
     @Field(type = FieldType.Text, store = true, name = "place_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String placeSr;
 
-    @Field(type = FieldType.Keyword, store = true, name = "place_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "place_sr_sortable")
     private String placeSrSortable;
 
     @Field(type = FieldType.Text, store = true, name = "place_other", analyzer = "english", searchAnalyzer = "english")
     private String placeOther;
 
-    @Field(type = FieldType.Keyword, store = true, name = "place_other_sortable")
+    @Field(type = FieldType.Keyword, name = "place_other_sortable")
     private String placeOtherSortable;
 
     @Field(type = FieldType.Text, store = true, name = "state_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String stateSr;
 
-    @Field(type = FieldType.Keyword, store = true, name = "state_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "state_sr_sortable")
     private String stateSrSortable;
 
     @Field(type = FieldType.Text, store = true, name = "state_other", analyzer = "english", searchAnalyzer = "english")
     private String stateOther;
 
-    @Field(type = FieldType.Keyword, store = true, name = "state_other_sortable")
+    @Field(type = FieldType.Keyword, name = "state_other_sortable")
     private String stateOtherSortable;
 
     @Field(type = FieldType.Integer, store = true, name = "databaseId")

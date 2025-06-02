@@ -2,7 +2,7 @@ package rs.teslaris.importer.utility;
 
 public enum OAIPMHSource {
 
-    CRIS_UNS("https://cris.uns.ac.rs/OAIHandlerTeslaRIS");
+    CRIS_UNS("https://cris.uns.ac.rs/OAIHandlerTeslaRISAll");
 
     private final String value;
 

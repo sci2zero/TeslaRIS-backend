@@ -8,10 +8,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.service.interfaces.OrganisationUnitAssessmentClassificationService;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment/organisation-unit-assessment-classification")
 @RequiredArgsConstructor
+@Traceable
 public class OrganisationUnitAssessmentClassificationController {
 
     private final OrganisationUnitAssessmentClassificationService

@@ -10,10 +10,12 @@ import rs.teslaris.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.assessment.repository.OrganisationUnitIndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.OrganisationUnitIndicatorService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 
 @Service
+@Traceable
 public class OrganisationUnitIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements OrganisationUnitIndicatorService {
 

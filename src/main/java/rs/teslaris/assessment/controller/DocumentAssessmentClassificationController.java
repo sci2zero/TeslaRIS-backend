@@ -28,6 +28,7 @@ import rs.teslaris.assessment.service.interfaces.DocumentAssessmentClassificatio
 import rs.teslaris.core.annotation.ApiKeyValidation;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.ApiKeyType;
 import rs.teslaris.core.model.user.UserRole;
@@ -41,6 +42,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("/api/assessment/document-assessment-classification")
 @RequiredArgsConstructor
+@Traceable
 public class DocumentAssessmentClassificationController {
 
     private final DocumentAssessmentClassificationService documentAssessmentClassificationService;

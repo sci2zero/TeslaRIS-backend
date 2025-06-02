@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.SoftwareConverter;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -14,6 +14,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.SoftwareJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -28,6 +29,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
+@Traceable
 public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implements SoftwareService {
 
     private final SoftwareJPAServiceImpl softwareJPAService;
@@ -59,7 +61,14 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
     @Override
     public SoftwareDTO readSoftwareById(Integer softwareId) {
-        var software = softwareJPAService.findOne(softwareId);
+        Software software;
+        try {
+            software = softwareJPAService.findOne(softwareId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(softwareId);
+            throw e;
+        }
+
         if (!software.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -71,6 +80,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     public Software createSoftware(SoftwareDTO softwareDTO, Boolean index) {
         var newSoftware = new Software();
 
+        checkForDocumentDate(softwareDTO);
         setCommonFields(newSoftware, softwareDTO);
 
         newSoftware.setInternalNumber(softwareDTO.getInternalNumber());
@@ -97,6 +107,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     public void editSoftware(Integer softwareId, SoftwareDTO softwareDTO) {
         var softwareToUpdate = softwareJPAService.findOne(softwareId);
 
+        checkForDocumentDate(softwareDTO);
         clearCommonFields(softwareToUpdate);
         setCommonFields(softwareToUpdate, softwareDTO);
 

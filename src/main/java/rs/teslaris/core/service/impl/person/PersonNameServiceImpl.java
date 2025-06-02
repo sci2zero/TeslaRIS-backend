@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.person.PersonNameRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -13,6 +14,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class PersonNameServiceImpl extends JPAServiceImpl<PersonName> implements PersonNameService {
 
     private final PersonNameRepository personNameRepository;

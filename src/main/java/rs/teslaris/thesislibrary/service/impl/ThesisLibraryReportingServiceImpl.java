@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.util.LocalizationUtil;
 import rs.teslaris.assessment.util.ReportTemplateEngine;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -40,6 +41,7 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingServic
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Traceable
 public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReportingService {
 
     private final ThesisRepository thesisRepository;

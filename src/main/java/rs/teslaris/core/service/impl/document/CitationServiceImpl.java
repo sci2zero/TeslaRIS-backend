@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -25,6 +26,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Component
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class CitationServiceImpl implements CitationService {
 
     public final JournalPublicationRepository journalPublicationRepository;
@@ -39,8 +41,12 @@ public class CitationServiceImpl implements CitationService {
         var itemBuilder = new CSLItemDataBuilder()
             .id("citationId")
             .type(deduceCSLType(index.getType()))
-            .title(index.getTitleSr())
-            .issued(index.getYear());
+            .title(index.getTitleSr());
+
+        if (index.getYear() > 0) {
+            itemBuilder
+                .issued(index.getYear());
+        }
 
         addAuthors(itemBuilder, index.getAuthorNames());
         populatePublicationDetails(itemBuilder, index, languageCode);

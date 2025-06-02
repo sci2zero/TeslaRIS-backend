@@ -113,11 +113,13 @@ public class PrizeServiceTest {
         var proof = new DocumentFileDTO();
         var prize = new Prize();
         prize.setId(1);
+        prize.setPerson(new Person());
         var documentFile = new DocumentFile();
         documentFile.setId(1);
 
         when(prizeRepository.findById(1)).thenReturn(Optional.of(prize));
-        when(documentFileService.saveNewDocument(proof, false)).thenReturn(documentFile);
+        when(documentFileService.saveNewPersonalDocument(proof, false,
+            prize.getPerson())).thenReturn(documentFile);
 
         // When
         var responseDTO = prizeService.addProof(1, proof);

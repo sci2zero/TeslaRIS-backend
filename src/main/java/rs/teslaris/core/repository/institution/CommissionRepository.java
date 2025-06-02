@@ -1,4 +1,4 @@
-package rs.teslaris.assessment.repository;
+package rs.teslaris.core.repository.institution;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,12 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import rs.teslaris.assessment.model.Commission;
+import rs.teslaris.core.model.institution.Commission;
 
 @Repository
 public interface CommissionRepository extends JpaRepository<Commission, Integer> {
 
-    @Query("select count(eac) > 0 from EntityAssessmentClassification eac where eac.commission.id = :commissionId")
+    @Query("SELECT COUNT(eac) > 0 FROM EntityAssessmentClassification eac " +
+        "WHERE eac.commission.id = :commissionId")
     boolean isInUse(Integer commissionId);
 
     @Query(value =

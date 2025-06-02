@@ -11,6 +11,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
 public class OrganisationUnitConverter {
+
     public static OrganisationUnitDTO toDTO(OrganisationUnit organisationUnit) {
         var dto = new OrganisationUnitDTO();
         dto.setId(organisationUnit.getId());
@@ -31,6 +32,11 @@ public class OrganisationUnitConverter {
         dto.setContact(ContactConverter.toDTO(organisationUnit.getContact()));
         dto.setScopusAfid(organisationUnit.getScopusAfid());
         dto.setUris(organisationUnit.getUris());
+
+        if (Objects.nonNull(organisationUnit.getLogo())) {
+            dto.setLogoServerFilename(organisationUnit.getLogo().getImageServerName());
+            dto.setLogoBackgroundHex(organisationUnit.getLogo().getBackgroundHex());
+        }
 
         filterSensitiveData(dto);
 

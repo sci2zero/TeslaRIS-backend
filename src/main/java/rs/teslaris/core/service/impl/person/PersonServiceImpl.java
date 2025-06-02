@@ -1,7 +1,11 @@
 package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -16,9 +20,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,17 +31,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonIdentifierable;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
-import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -46,6 +51,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
@@ -55,7 +61,6 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
-import rs.teslaris.core.model.person.ProfilePhoto;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -70,6 +75,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.ImageUtil;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
@@ -81,6 +87,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonService {
 
     private final PersonRepository personRepository;
@@ -111,33 +118,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final SearchFieldsLoader searchFieldsLoader;
 
+    private final Pattern orcidRegexPattern =
+        Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
+
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
 
-
-    private static boolean validateImageMIMEType(MultipartFile multipartFile) throws IOException {
-        if (multipartFile.isEmpty()) {
-            return true;
-        }
-
-        var validMimeTypes = List.of("image/jpeg", "image/png");
-
-        String contentType = multipartFile.getContentType();
-        if (!validMimeTypes.contains(contentType)) {
-            return false;
-        }
-
-        String originalFilename = multipartFile.getOriginalFilename();
-        if (originalFilename == null ||
-            !(originalFilename.endsWith(".jpg") || originalFilename.endsWith(".jpeg") ||
-                originalFilename.endsWith(".png"))) {
-            return false;
-        }
-
-        var tika = new Tika();
-        String detectedType = tika.detect(multipartFile.getInputStream());
-        return validMimeTypes.contains(detectedType);
-    }
 
     @Override
     protected JpaRepository<Person, Integer> getEntityRepository() {
@@ -174,9 +160,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Transactional
     public PersonResponseDTO readPersonWithBasicInfo(Integer id) {
-        var person = personRepository.findApprovedPersonById(id)
-            .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
-        return PersonConverter.toDTO(person);
+        var person = personRepository.findApprovedPersonById(id);
+
+        if (person.isEmpty()) {
+            personIndexRepository.findByDatabaseId(id).ifPresent(personIndexRepository::delete);
+            throw new NotFoundException("Person with given ID does not exist.");
+        }
+
+        return PersonConverter.toDTO(person.get());
     }
 
     @Override
@@ -206,6 +197,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var person = findOne(personId);
 
         for (var personInvolvement : person.getInvolvements()) {
+            if (Objects.isNull(personInvolvement.getOrganisationUnit())) {
+                continue;
+            }
+
             var personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
 
             if (personInvolvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
@@ -225,45 +220,99 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Transactional
     public Person createPersonWithBasicInfo(BasicPersonDTO personDTO, Boolean index) {
-        var defaultApproveStatus =
-            approvedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED;
+        var status = approvedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED;
+        var person = buildBasePerson(personDTO, status, false);
 
+        var saved = this.save(person);
+        person.setId(saved.getId());
+
+        if (status == ApproveStatus.APPROVED && index) {
+            indexPerson(saved, saved.getId());
+        }
+
+        return person;
+    }
+
+    @Override
+    @Transactional
+    public Person importPersonWithBasicInfo(ImportPersonDTO personDTO, Boolean index) {
+        var status = approvedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED;
+        var person = buildBasePerson(personDTO, status, true);
+
+        var saved = this.save(person);
+        person.setId(saved.getId());
+
+        if (status == ApproveStatus.APPROVED && index) {
+            indexPerson(saved, saved.getId());
+        }
+
+        return person;
+    }
+
+    private Person buildBasePerson(BasicPersonDTO personDTO, ApproveStatus status,
+                                   boolean isImport) {
         var personNameDTO = personDTO.getPersonName();
-        var personName = new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
-            personNameDTO.getLastname(), personDTO.getLocalBirthDate(), null);
+        var personName = new PersonName(
+            personNameDTO.getFirstname(),
+            personNameDTO.getOtherName(),
+            personNameDTO.getLastname(),
+            personDTO.getLocalBirthDate(),
+            null
+        );
 
-        var personalContact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
-        var personalInfo = new PersonalInfo(personDTO.getLocalBirthDate(), null, personDTO.getSex(),
-            new PostalAddress(null, new HashSet<>(), new HashSet<>()), personalContact,
-            new HashSet<>());
+        var contact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
 
-        var newPerson = new Person();
-        newPerson.setName(personName);
-        newPerson.setPersonalInfo(personalInfo);
+        PostalAddress address;
+        if (isImport) {
+            address = new PostalAddress(
+                null,
+                multilingualContentService.getMultilingualContent(
+                    ((ImportPersonDTO) personDTO).getAddressLine()),
+                multilingualContentService.getMultilingualContent(
+                    ((ImportPersonDTO) personDTO).getAddressCity())
+            );
+        } else {
+            address = new PostalAddress(null, new HashSet<>(), new HashSet<>());
+        }
 
-        setAllPersonIdentifiers(newPerson, personDTO);
-        newPerson.setOldId(personDTO.getOldId());
+        var personalInfo = new PersonalInfo(
+            personDTO.getLocalBirthDate(),
+            isImport ? ((ImportPersonDTO) personDTO).getPlaceOfBirth() : null,
+            personDTO.getSex(),
+            address,
+            contact,
+            new HashSet<>(),
+            multilingualContentService.getMultilingualContent(personDTO.getDisplayTitle())
+        );
+
+        var person = new Person();
+        person.setName(personName);
+        person.setPersonalInfo(personalInfo);
+        person.setOldId(personDTO.getOldId());
+        person.setApproveStatus(status);
+
+        if (isImport) {
+            var importDTO = (ImportPersonDTO) personDTO;
+            person.setBiography(
+                multilingualContentService.getMultilingualContent(importDTO.getBiography()));
+            person.setKeyword(
+                multilingualContentService.getMultilingualContent(importDTO.getKeywords()));
+        }
+
+        setAllPersonIdentifiers(person, personDTO);
 
         if (Objects.nonNull(personDTO.getOrganisationUnitId())) {
-            var employmentInstitution =
+            var institution =
                 organisationUnitService.findOrganisationUnitById(personDTO.getOrganisationUnitId());
-            var currentEmployment =
-                new Employment(null, null, defaultApproveStatus, new HashSet<>(),
-                    InvolvementType.EMPLOYED_AT, new HashSet<>(), null, employmentInstitution,
-                    personDTO.getEmploymentPosition(), new HashSet<>());
-            newPerson.addInvolvement(currentEmployment);
+            var employment = new Employment(
+                null, null, status, new HashSet<>(),
+                InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                institution, personDTO.getEmploymentPosition(), new HashSet<>()
+            );
+            person.addInvolvement(employment);
         }
 
-        newPerson.setApproveStatus(defaultApproveStatus);
-
-        var savedPerson = this.save(newPerson);
-        newPerson.setId(savedPerson.getId());
-
-        if (savedPerson.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
-            indexPerson(savedPerson, savedPerson.getId());
-        }
-
-        return newPerson;
+        return person;
     }
 
     @Override
@@ -367,6 +416,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personalInfoToUpdate.setLocalBirthDate(personalInfo.getLocalBirthDate());
         personalInfoToUpdate.setSex(personalInfo.getSex());
         IdentifierUtil.setUris(personalInfoToUpdate.getUris(), personalInfo.getUris());
+        personalInfoToUpdate.setDisplayTitle(
+            multilingualContentService.getMultilingualContent(personalInfo.getDisplayTitle()));
 
         var countryId = personalInfo.getPostalAddress().getCountryId();
 
@@ -474,9 +525,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var person = findOne(personId);
 
         if (Objects.nonNull(person.getProfilePhoto()) &&
-            Objects.nonNull(person.getProfilePhoto().getProfileImageServerName())) {
-            fileService.delete(person.getProfilePhoto().getProfileImageServerName());
-            person.getProfilePhoto().setProfileImageServerName(null);
+            Objects.nonNull(person.getProfilePhoto().getImageServerName())) {
+            fileService.delete(person.getProfilePhoto().getImageServerName());
+            person.getProfilePhoto().setImageServerName(null);
             person.getProfilePhoto().setTopOffset(null);
             person.getProfilePhoto().setLeftOffset(null);
             person.getProfilePhoto().setHeight(null);
@@ -487,20 +538,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public String setPersonProfileImage(Integer personId, ProfilePhotoDTO profilePhotoDTO)
+    public String setPersonProfileImage(Integer personId, ProfilePhotoOrLogoDTO profilePhotoDTO)
         throws IOException {
-        if (!validateImageMIMEType(profilePhotoDTO.getFile())) {
+        if (ImageUtil.isMIMETypeInvalid(profilePhotoDTO.getFile(), false)) {
             throw new IllegalArgumentException("mimeTypeValidationFailed");
         }
 
         var person = findOne(personId);
 
         if (Objects.nonNull(person.getProfilePhoto()) &&
-            Objects.nonNull(person.getProfilePhoto().getProfileImageServerName()) &&
+            Objects.nonNull(person.getProfilePhoto().getImageServerName()) &&
             !profilePhotoDTO.getFile().isEmpty()) {
-            fileService.delete(person.getProfilePhoto().getProfileImageServerName());
+            fileService.delete(person.getProfilePhoto().getImageServerName());
         } else if (Objects.isNull(person.getProfilePhoto())) {
-            person.setProfilePhoto(new ProfilePhoto());
+            person.setProfilePhoto(new ProfilePhotoOrLogo());
         }
 
         person.getProfilePhoto().setTopOffset(profilePhotoDTO.getTop());
@@ -508,11 +559,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         person.getProfilePhoto().setHeight(profilePhotoDTO.getHeight());
         person.getProfilePhoto().setWidth(profilePhotoDTO.getWidth());
 
-        var serverFilename = person.getProfilePhoto().getProfileImageServerName();
+        var serverFilename = person.getProfilePhoto().getImageServerName();
         if (!profilePhotoDTO.getFile().isEmpty()) {
             serverFilename =
                 fileService.store(profilePhotoDTO.getFile(), UUID.randomUUID().toString());
-            person.getProfilePhoto().setProfileImageServerName(serverFilename);
+            person.getProfilePhoto().setImageServerName(serverFilename);
         }
 
         save(person);
@@ -770,20 +821,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var employmentInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.isNull(i.getDateTo()))
+                Objects.isNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
             .map(Involvement::getOrganisationUnit).toList();
 
         var employmentOrCandidateInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
                 i.getInvolvementType().equals(InvolvementType.CANDIDATE)) &&
-                Objects.isNull(i.getDateTo()))
+                Objects.isNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
             .map(inv -> inv.getOrganisationUnit().getId()).toList();
 
         personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.nonNull(i.getDateTo()))
+                Objects.nonNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
             .map(involvement -> involvement.getOrganisationUnit().getId()).toList());
 
         personIndex.setEmploymentInstitutionsId(
@@ -899,49 +950,68 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
                                               Integer institutionId) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.6);
+        return BoolQuery.of(q -> {
+            var mustClauses = new ArrayList<Query>();
 
-        return BoolQuery.of(q -> q
-            .must(mb -> mb.bool(b -> {
-                    tokens.forEach(
-                        token -> {
-                            if (!strict) {
-                                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
-                                    b.must(mp ->
-                                        mp.bool(m -> {
-                                            {
-                                                m.should(sb -> sb.matchPhrase(
-                                                    mq -> mq.field("employments_sr")
-                                                        .query(token.replace("\\\"", ""))));
-                                                m.should(sb -> sb.matchPhrase(
-                                                    mq -> mq.field("employments_other")
-                                                        .query(token.replace("\\\"", ""))));
-                                            }
-                                            return m;
-                                        }));
-                                }
+            for (String token : tokens) {
+                var cleanedToken = token.replace("\\\"", "");
 
-                                b.should(sb -> sb.wildcard(
-                                    m -> m.field("name").value(token + "*").caseInsensitive(true)));
+                var perTokenShould = new ArrayList<Query>();
 
-                                b.should(
-                                    sb -> sb.match(m -> m.field("employments_other").query(token)));
-                                b.should(sb -> sb.match(m -> m.field("employments_sr").query(token)));
-                                b.should(sb -> sb.match(m -> m.field("keywords").query(token)));
-                            }
+                if (!strict) {
+                    if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                        perTokenShould.add(MatchPhraseQuery.of(
+                            mq -> mq.field("employments_sr").query(cleanedToken))._toQuery());
+                        perTokenShould.add(MatchPhraseQuery.of(
+                            mq -> mq.field("employments_other").query(cleanedToken))._toQuery());
+                    } else {
+                        if (token.contains("\\-") &&
+                            orcidRegexPattern.matcher(token.replace("\\-", "-")).matches()) {
+                            perTokenShould.add(
+                                TermQuery.of(m -> m.field("orcid").value(token.replace("\\-", "-")))
+                                    ._toQuery());
+                        } else if (token.endsWith(".")) {
+                            var wildcard = token.replace(".", "") + "?";
+                            perTokenShould.add(WildcardQuery.of(
+                                    m -> m.field("name").value(wildcard).caseInsensitive(true))
+                                ._toQuery());
+                        } else if (token.endsWith("\\*")) {
+                            var wildcard = token.replace("\\*", "") + "*";
+                            perTokenShould.add(
+                                WildcardQuery.of(
+                                        m -> m.field("name").value(wildcard).caseInsensitive(true))
+                                    ._toQuery());
+                        } else {
+                            perTokenShould.add(WildcardQuery.of(
+                                    m -> m.field("name").value(token + "*").caseInsensitive(true))
+                                ._toQuery());
+                        }
 
-                            b.should(sb -> sb.match(m -> m.field("name").query(token)));
-                        });
-
-                    if (Objects.nonNull(institutionId) && institutionId > 0) {
-                        b.must(sb -> sb.term(
-                            m -> m.field("employment_institutions_id_hierarchy").value(institutionId)));
+                        perTokenShould.add(
+                            MatchQuery.of(
+                                    m -> m.field("employments_other").query(token).boost(0.5f))
+                                ._toQuery());
+                        perTokenShould.add(
+                            MatchQuery.of(m -> m.field("employments_sr").query(token).boost(0.5f))
+                                ._toQuery());
+                        perTokenShould.add(
+                            MatchQuery.of(m -> m.field("keywords").query(token).boost(0.7f))
+                                ._toQuery());
                     }
-
-                    return b.minimumShouldMatch(Integer.toString(minShouldMatch));
                 }
-            ))
-        )._toQuery();
+
+                perTokenShould.add(MatchQuery.of(m -> m.field("name").query(token))._toQuery());
+                mustClauses.add(BoolQuery.of(b -> b.should(perTokenShould))._toQuery());
+            }
+
+            if (Objects.nonNull(institutionId) && institutionId > 0) {
+                mustClauses.add(TermQuery.of(
+                        t -> t.field("employment_institutions_id_hierarchy").value(institutionId))
+                    ._toQuery());
+            }
+
+            return q.must(mustClauses);
+        })._toQuery();
     }
 
     private void setAllPersonIdentifiers(Person person, PersonIdentifierable personDTO) {
@@ -1014,5 +1084,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         Boolean onlyExportFields) {
         return searchFieldsLoader.getSearchFields("personSearchFieldConfiguration.json",
             onlyExportFields);
+    }
+
+    @Override
+    public Person findPersonByAccountingId(String accountingId) {
+        return personRepository.findApprovedPersonByAccountingId(accountingId).orElseThrow(
+            () -> new NotFoundException(
+                "Person with accounting ID " + accountingId + " does not exist"));
     }
 }

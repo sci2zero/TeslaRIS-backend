@@ -29,12 +29,9 @@ import rs.teslaris.assessment.dto.DocumentAssessmentClassificationDTO;
 import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.ImaginaryPublicationAssessmentResponseDTO;
 import rs.teslaris.assessment.model.AssessmentClassification;
-import rs.teslaris.assessment.model.Commission;
-import rs.teslaris.assessment.model.CommissionRelation;
 import rs.teslaris.assessment.model.DocumentAssessmentClassification;
 import rs.teslaris.assessment.model.DocumentIndicator;
 import rs.teslaris.assessment.model.EntityAssessmentClassification;
-import rs.teslaris.assessment.model.ResultCalculationMethod;
 import rs.teslaris.assessment.repository.DocumentAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.EventAssessmentClassificationRepository;
@@ -49,6 +46,7 @@ import rs.teslaris.assessment.service.interfaces.DocumentAssessmentClassificatio
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -61,8 +59,11 @@ import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.institution.Commission;
+import rs.teslaris.core.model.institution.CommissionRelation;
+import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -78,6 +79,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @Service
 @Transactional
 @Slf4j
+@Traceable
 public class DocumentAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl implements
     DocumentAssessmentClassificationService {

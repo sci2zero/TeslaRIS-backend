@@ -2,6 +2,7 @@ package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,8 +23,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.OrgUnitEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -37,6 +41,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/organisation-unit")
 @RequiredArgsConstructor
+@Traceable
 public class OrganisationUnitController {
 
     private final OrganisationUnitService organisationUnitService;
@@ -174,5 +179,24 @@ public class OrganisationUnitController {
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         @RequestParam("export") Boolean onlyExportFields) {
         return organisationUnitService.getSearchFields(onlyExportFields);
+    }
+
+    @PatchMapping("/logo/{organisationUnitId}")
+    @PreAuthorize("hasAnyAuthority('EDIT_ORGANISATION_UNITS', 'EDIT_EMPLOYMENT_INSTITUTION')")
+    @ResponseStatus(HttpStatus.OK)
+    @OrgUnitEditCheck
+    public String updateOrganisationUnitLogo(@ModelAttribute
+                                             @Valid ProfilePhotoOrLogoDTO logoDTO,
+                                             @PathVariable Integer organisationUnitId)
+        throws IOException {
+        return organisationUnitService.setOrganisationUnitLogo(organisationUnitId, logoDTO);
+    }
+
+    @DeleteMapping("/logo/{organisationUnitId}")
+    @PreAuthorize("hasAnyAuthority('EDIT_ORGANISATION_UNITS', 'EDIT_EMPLOYMENT_INSTITUTION')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @OrgUnitEditCheck
+    public void removeOrganisationUnitLogo(@PathVariable Integer organisationUnitId) {
+        organisationUnitService.removeOrganisationUnitLogo(organisationUnitId);
     }
 }

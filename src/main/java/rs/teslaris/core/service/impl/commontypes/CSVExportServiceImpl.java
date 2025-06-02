@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.CSVExportRequest;
 import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -34,6 +35,7 @@ import rs.teslaris.core.util.search.SearchRequestType;
 @Service
 @Slf4j
 @Transactional
+@Traceable
 public class CSVExportServiceImpl implements CSVExportService {
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;

@@ -31,6 +31,10 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
         "rbe.registryBookInstitution.id = :institutionId")
     Integer getLastRegistryBookNumber(Integer institutionId);
 
+    @Query("SELECT MAX(rbe.schoolYearOrdinalNumber) FROM RegistryBookEntry rbe WHERE " +
+        "rbe.promotionSchoolYear = :schoolYear")
+    Integer getLastRegistrySchoolYearNumber(String schoolYear);
+
     Optional<RegistryBookEntry> findByAttendanceIdentifier(String attendanceIdentifier);
 
     @Query("SELECT rbe.id FROM RegistryBookEntry rbe WHERE rbe.thesis.id = :thesisId")

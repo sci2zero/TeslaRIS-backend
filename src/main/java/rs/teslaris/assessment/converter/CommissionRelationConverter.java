@@ -3,8 +3,8 @@ package rs.teslaris.assessment.converter;
 import java.util.ArrayList;
 import rs.teslaris.assessment.dto.CommissionRelationResponseDTO;
 import rs.teslaris.assessment.dto.SimpleCommissionResponseDTO;
-import rs.teslaris.assessment.model.CommissionRelation;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.model.institution.CommissionRelation;
 
 public class CommissionRelationConverter {
 

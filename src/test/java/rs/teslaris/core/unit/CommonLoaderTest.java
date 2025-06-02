@@ -447,7 +447,7 @@ public class CommonLoaderTest {
         personalInfo.setPostalAddress(new PostalAddress());
         personalInfo.setContact(new Contact());
         createdPerson.setPersonalInfo(personalInfo);
-        when(personService.createPersonWithBasicInfo(any(), any())).thenReturn(
+        when(personService.importPersonWithBasicInfo(any(), any())).thenReturn(
             createdPerson);
 
         // When

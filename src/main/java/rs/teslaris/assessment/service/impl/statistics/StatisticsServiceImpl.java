@@ -15,6 +15,7 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.janino.ExpressionEvaluator;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,38 +24,55 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.DocumentIndicator;
 import rs.teslaris.assessment.model.EntityIndicator;
+import rs.teslaris.assessment.model.EventIndicator;
 import rs.teslaris.assessment.model.OrganisationUnitIndicator;
 import rs.teslaris.assessment.model.PersonIndicator;
+import rs.teslaris.assessment.model.PublicationSeriesIndicator;
 import rs.teslaris.assessment.repository.DocumentIndicatorRepository;
+import rs.teslaris.assessment.repository.EventIndicatorRepository;
 import rs.teslaris.assessment.repository.OrganisationUnitIndicatorRepository;
 import rs.teslaris.assessment.repository.PersonIndicatorRepository;
+import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
+import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.indexrepository.statistics.StatisticsIndexRepository;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.Event;
+import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitRepository;
+import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.repository.document.PublicationSeriesRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.util.FunctionalUtil;
-import rs.teslaris.core.util.SessionUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class StatisticsServiceImpl implements StatisticsService {
+public class StatisticsServiceImpl implements StatisticsService, DocumentDownloadTracker {
 
     private final StatisticsIndexRepository statisticsIndexRepository;
 
@@ -78,6 +96,22 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
+    private final PublicationSeriesRepository publicationSeriesRepository;
+
+    private final PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository;
+
+    private final EventRepository eventRepository;
+
+    private final EventIndicatorRepository eventIndicatorRepository;
+
+    private final JournalIndexRepository journalIndexRepository;
+
+    private final EventIndexRepository eventIndexRepository;
+
+    private final BookSeriesRepository bookSeriesRepository;
+
+    private final BookSeriesIndexRepository bookSeriesIndexRepository;
+
 
     @Override
     public List<String> fetchStatisticsTypeIndicators(StatisticsType statisticsType) {
@@ -85,12 +119,45 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
+    public void savePublicationSeriesView(Integer publicationSeriesId) {
+        var statisticsEntry = new StatisticsIndex();
+        statisticsEntry.setPublicationSeriesId(publicationSeriesId);
+        saveView(statisticsEntry);
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: PUBLICATION_SERIES_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            publicationSeriesId
+        );
+    }
+
+    @Override
+    public void saveEventView(Integer eventId) {
+        var statisticsEntry = new StatisticsIndex();
+        statisticsEntry.setEventId(eventId);
+        saveView(statisticsEntry);
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: EVENT_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            eventId
+        );
+    }
+
+    @Override
     public void savePersonView(Integer personId) {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setPersonId(personId);
         saveView(statisticsEntry);
-        log.info("STATISTICS - VIEW for Person with ID {} by {}.", personId,
-            SessionUtil.getJSessionId());
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: PERSON_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            personId
+        );
     }
 
     @Override
@@ -98,8 +165,13 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveView(statisticsEntry);
-        log.info("STATISTICS - VIEW for Document with ID {} by {}.", documentId,
-            SessionUtil.getJSessionId());
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: DOCUMENT_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            documentId
+        );
     }
 
     @Override
@@ -107,8 +179,13 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setOrganisationUnitId(organisationUnitId);
         saveView(statisticsEntry);
-        log.info("STATISTICS - VIEW for OrganisationUnit with ID {} by {}.", organisationUnitId,
-            SessionUtil.getJSessionId());
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: ORGANISATION_UNIT_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            organisationUnitId
+        );
     }
 
     @Override
@@ -116,8 +193,13 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveDownload(statisticsEntry);
-        log.info("STATISTICS - DOWNLOAD for Document with ID {} by {}.", documentId,
-            SessionUtil.getJSessionId());
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: DOCUMENT_DOWNLOAD - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            documentId
+        );
     }
 
     private void saveView(StatisticsIndex index) {
@@ -132,7 +214,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private void save(StatisticsIndex index) {
         index.setTimestamp(LocalDateTime.now());
-        index.setSessionId(SessionUtil.getJSessionId());
+        index.setSessionId(SessionTrackingUtil.getJSessionId());
 
         updateTotalCount(index);
 
@@ -183,6 +265,28 @@ public class StatisticsServiceImpl implements StatisticsService {
                     entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
                     entityIndicator.setTimestamp(LocalDateTime.now());
                     organisationUnitIndicatorRepository.save(entityIndicator);
+                });
+        } else if (Objects.nonNull(index.getPublicationSeriesId())) {
+            updateIndicator(index.getPublicationSeriesId(),
+                indicator.getCode(),
+                publicationSeriesRepository::findById,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                (id) -> new PublicationSeriesIndicator(),
+                entityIndicator -> {
+                    entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
+                    entityIndicator.setTimestamp(LocalDateTime.now());
+                    publicationSeriesIndicatorRepository.save(entityIndicator);
+                });
+        } else if (Objects.nonNull(index.getEventId())) {
+            updateIndicator(index.getEventId(),
+                indicator.getCode(),
+                eventRepository::findById,
+                eventIndicatorRepository::findIndicatorsForCodeAndEvent,
+                (id) -> new EventIndicator(),
+                entityIndicator -> {
+                    entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
+                    entityIndicator.setTimestamp(LocalDateTime.now());
+                    eventIndicatorRepository.save(entityIndicator);
                 });
         }
     }
@@ -306,7 +410,60 @@ public class StatisticsServiceImpl implements StatisticsService {
             );
         });
 
-        var allTasks = CompletableFuture.allOf(documentTask, personTask, organisationTask);
+        var journalsTask = CompletableFuture.runAsync(() -> {
+            updateEntityStatisticInPeriod(
+                startPeriods,
+                indicatorCodes,
+                journalIndexRepository,
+                publicationSeriesRepository,
+                (start, journal) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndPublicationSeriesId(
+                    start, LocalDateTime.now(), statisticsType.name(), journal.getDatabaseId()),
+                JournalIndex::getDatabaseId,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                id -> new PublicationSeriesIndicator(),
+                PublicationSeriesIndicator::setPublicationSeries,
+                publicationSeriesIndicatorRepository,
+                "Journal"
+            );
+        });
+
+        var bookSeriesTask = CompletableFuture.runAsync(() -> {
+            updateEntityStatisticInPeriod(
+                startPeriods,
+                indicatorCodes,
+                bookSeriesIndexRepository,
+                bookSeriesRepository,
+                (start, bookSeries) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndPublicationSeriesId(
+                    start, LocalDateTime.now(), statisticsType.name(), bookSeries.getDatabaseId()),
+                BookSeriesIndex::getDatabaseId,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                id -> new PublicationSeriesIndicator(),
+                PublicationSeriesIndicator::setPublicationSeries,
+                publicationSeriesIndicatorRepository,
+                "BookSeries"
+            );
+        });
+
+        var eventsTask = CompletableFuture.runAsync(() -> {
+            updateEntityStatisticInPeriod(
+                startPeriods,
+                indicatorCodes,
+                eventIndexRepository,
+                eventRepository,
+                (start, event) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndEventId(
+                    start, LocalDateTime.now(), statisticsType.name(), event.getDatabaseId()),
+                EventIndex::getDatabaseId,
+                eventIndicatorRepository::findIndicatorsForCodeAndEvent,
+                id -> new EventIndicator(),
+                EventIndicator::setEvent,
+                eventIndicatorRepository,
+                "Event"
+            );
+        });
+
+        var allTasks =
+            CompletableFuture.allOf(documentTask, personTask, organisationTask, journalsTask,
+                eventsTask, bookSeriesTask);
 
         try {
             allTasks.get();
@@ -344,6 +501,12 @@ public class StatisticsServiceImpl implements StatisticsService {
                     FunctionalUtil.forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
                         Integer statisticsCount =
                             countFunction.apply(startPeriods.get(i), indexEntity);
+
+                        var exclusions = IndicatorMappingConfigurationLoader.getExclusionsForClass(
+                            dbEntity.getClass().getName());
+                        if (exclusions.contains(indicatorCode)) {
+                            return;
+                        }
 
                         updateIndicator(entityId,
                             indicatorCode,
@@ -384,6 +547,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         R indicatorEntity;
         if (optionalIndicator.isEmpty()) {
             indicatorEntity = createIndicator.apply(id);
+
             if (indicatorEntity instanceof DocumentIndicator) {
                 ((DocumentIndicator) indicatorEntity).setDocument(
                     (Document) findEntityById.apply(id).orElseThrow());
@@ -393,7 +557,14 @@ public class StatisticsServiceImpl implements StatisticsService {
             } else if (indicatorEntity instanceof OrganisationUnitIndicator) {
                 ((OrganisationUnitIndicator) indicatorEntity).setOrganisationUnit(
                     (OrganisationUnit) findEntityById.apply(id).orElseThrow());
+            } else if (indicatorEntity instanceof PublicationSeriesIndicator) {
+                ((PublicationSeriesIndicator) indicatorEntity).setPublicationSeries(
+                    (PublicationSeries) findEntityById.apply(id).orElseThrow());
+            } else if (indicatorEntity instanceof EventIndicator) {
+                ((EventIndicator) indicatorEntity).setEvent(
+                    (Event) findEntityById.apply(id).orElseThrow());
             }
+
             ((EntityIndicator) indicatorEntity).setIndicator(
                 indicatorService.getIndicatorByCode(indicatorCode));
             ((EntityIndicator) indicatorEntity).setNumericValue(0.0);

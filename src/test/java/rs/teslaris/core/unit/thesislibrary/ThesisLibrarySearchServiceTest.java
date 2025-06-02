@@ -25,9 +25,11 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.impl.ThesisSearchServiceImpl;
 
@@ -109,5 +111,19 @@ public class ThesisLibrarySearchServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(expectedFields.size(), result.size());
+    }
+
+    @Test
+    void shouldCallRunWordCloudSearchWhenPerformingSimpleThesisSearch() {
+        List<Pair<String, Long>> expectedResult = List.of(new Pair<>("ai", 42L));
+        when(searchService.runWordCloudSearch(any(), any(), eq(false)))
+            .thenReturn(expectedResult);
+
+        var result =
+            thesisSearchService.performWordCloudSearch(searchRequest, SearchRequestType.SIMPLE,
+                false);
+
+        assertNotNull(result);
+        verify(searchService).runWordCloudSearch(any(), any(), anyBoolean());
     }
 }

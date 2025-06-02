@@ -50,8 +50,8 @@ public class RegistryBookEntry extends BaseEntity {
     @Column(name = "registry_book_number")
     private Integer registryBookNumber;
 
-    @Column(name = "promotion_ordinal_number")
-    private Integer promotionOrdinalNumber;
+    @Column(name = "school_year_ordinal_number")
+    private Integer schoolYearOrdinalNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registry_book_institution_id")

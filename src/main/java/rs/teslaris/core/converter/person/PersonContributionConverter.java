@@ -88,7 +88,11 @@ public class PersonContributionConverter {
 
         contributionDTO.setInstitutionIds(new ArrayList<>());
         contribution.getInstitutions()
-            .forEach(i -> contributionDTO.getInstitutionIds().add(i.getId()));
+            .forEach(i -> {
+                contributionDTO.getInstitutionIds().add(i.getId());
+                contributionDTO.getDisplayInstitutionNames()
+                    .add(MultilingualContentConverter.getMultilingualContentDTO(i.getName()));
+            });
 
         contributionDTO.setPersonName(PersonNameConverter.toDTO(
             contribution.getAffiliationStatement().getDisplayPersonName()));

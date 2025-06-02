@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.ResearcherAssessmentResponseDTO;
 import rs.teslaris.assessment.service.interfaces.PersonAssessmentClassificationService;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment/person-assessment-classification")
 @RequiredArgsConstructor
+@Traceable
 public class PersonAssessmentClassificationController {
 
     private final PersonAssessmentClassificationService personAssessmentClassificationService;

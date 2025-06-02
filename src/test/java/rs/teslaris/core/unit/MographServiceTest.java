@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,7 +32,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -39,6 +40,7 @@ import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.MonographServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -324,8 +326,9 @@ public class MographServiceTest {
             any(DocumentPublicationIndex.class));
     }
 
-    @Test
-    public void shouldFindMonographsWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void shouldFindMonographsWhenSearchingWithSimpleQuery(boolean onlyBooks) {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
 
@@ -335,7 +338,7 @@ public class MographServiceTest {
 
         // when
         var result =
-            monographService.searchMonographs(new ArrayList<>(tokens));
+            monographService.searchMonographs(new ArrayList<>(tokens), onlyBooks);
 
         // then
         assertEquals(result.getTotalElements(), 2L);

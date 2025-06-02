@@ -35,7 +35,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
@@ -48,6 +47,7 @@ import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -203,7 +203,7 @@ public class DocumentPublicationServiceTest {
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class), eq(false),
-            eq(false))).thenReturn(
+            eq(document))).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -227,7 +227,7 @@ public class DocumentPublicationServiceTest {
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class),
-            eq(!isProof), anyBoolean())).thenReturn(
+            eq(!isProof), eq(document))).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -768,5 +768,65 @@ public class DocumentPublicationServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(expectedFields.size(), result.size());
+    }
+
+    @Test
+    public void shouldReturnSortedWordFrequenciesForDocumentInSerbian() {
+        // given
+        Integer documentId = 123;
+        DocumentPublicationIndex mockDoc = mock(DocumentPublicationIndex.class);
+        List<String> terms = List.of("abc", "def", "abc", "xyz", "xyz", "xyz");
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(mockDoc));
+        when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
+
+        // when
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId, false);
+
+        // then
+        assertEquals(3, result.size());
+        assertEquals("xyz", result.get(0).a);
+        assertEquals(3L, result.get(0).b);
+        assertEquals("abc", result.get(1).a);
+        assertEquals(2L, result.get(1).b);
+        assertEquals("def", result.get(2).a);
+        assertEquals(1L, result.get(2).b);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionForMissingDocument() {
+        // given
+        Integer documentId = 999;
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(NotFoundException.class, () -> {
+            documentPublicationService.getWordCloudForSingleDocument(documentId, false);
+        });
+    }
+
+    @Test
+    public void shouldUseForeignLanguageTokensWhenRequested() {
+        // given
+        Integer documentId = 456;
+        DocumentPublicationIndex mockDoc = mock(DocumentPublicationIndex.class);
+        List<String> foreignTerms = List.of("uno", "dos", "uno", "tres");
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(mockDoc));
+        when(mockDoc.getWordcloudTokensOther()).thenReturn(foreignTerms);
+
+        // when
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId, true);
+
+        // then
+        assertEquals(3, result.size());
+        assertEquals("uno", result.getFirst().a);
+        assertEquals(2L, result.getFirst().b);
     }
 }

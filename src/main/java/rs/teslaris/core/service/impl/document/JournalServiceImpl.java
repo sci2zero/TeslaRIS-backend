@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
@@ -40,10 +41,12 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Transactional
+@Traceable
 public class JournalServiceImpl extends PublicationSeriesServiceImpl implements JournalService {
 
     private final JournalJPAServiceImpl journalJPAService;
@@ -92,7 +95,16 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public JournalResponseDTO readJournal(Integer journalId) {
-        return PublicationSeriesConverter.toDTO(journalJPAService.findOne(journalId));
+        Journal journal;
+        try {
+            journal = journalJPAService.findOne(journalId);
+        } catch (NotFoundException e) {
+            journalIndexRepository.findJournalIndexByDatabaseId(journalId)
+                .ifPresent(journalIndexRepository::delete);
+            throw e;
+        }
+
+        return PublicationSeriesConverter.toDTO(journal);
     }
 
     @Override
@@ -367,18 +379,45 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                             }
                             return m;
                         }));
-                }
+                } else if (token.contains("\\-") &&
+                    issnPattern.matcher(token.replace("\\-", "-")).matches()) {
+                    String normalizedToken = token.replace("\\-", "-");
 
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("title_sr").value("*" + token + "*").caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("title_sr").query(token)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("title_other").value("*" + token + "*").caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("e_issn").query(token.replace("\\-", "-"))));
-                b.should(sb -> sb.match(
-                    m -> m.field("print_issn").query(token.replace("\\-", "-"))));
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("e_issn").value(normalizedToken)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("print_issn").value(normalizedToken)))
+                    ));
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                    ));
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                    ));
+                } else {
+                    var wildcard = token + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_sr").query(token)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_other").query(token)))
+                    ));
+                }
             });
             return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();

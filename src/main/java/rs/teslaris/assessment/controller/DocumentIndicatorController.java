@@ -21,11 +21,13 @@ import rs.teslaris.assessment.dto.EntityIndicatorResponseDTO;
 import rs.teslaris.assessment.service.interfaces.DocumentIndicatorService;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/document-indicator")
 @RequiredArgsConstructor
+@Traceable
 public class DocumentIndicatorController {
 
     private final DocumentIndicatorService documentIndicatorService;

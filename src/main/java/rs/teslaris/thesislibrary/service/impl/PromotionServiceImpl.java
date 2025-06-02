@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -21,6 +22,7 @@ import rs.teslaris.thesislibrary.service.interfaces.PromotionService;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements PromotionService {
 
     private final PromotionRepository promotionRepository;

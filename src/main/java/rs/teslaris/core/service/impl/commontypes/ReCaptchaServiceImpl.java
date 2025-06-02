@@ -15,9 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.commontypes.ReCaptchaService;
 
 @Service
+@Traceable
 public class ReCaptchaServiceImpl implements ReCaptchaService {
 
     private static final String VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";

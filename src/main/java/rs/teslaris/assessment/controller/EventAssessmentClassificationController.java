@@ -20,6 +20,7 @@ import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.EventAssessmentClassificationDTO;
 import rs.teslaris.assessment.service.interfaces.EventAssessmentClassificationService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -27,6 +28,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("/api/assessment/event-assessment-classification")
 @RequiredArgsConstructor
+@Traceable
 public class EventAssessmentClassificationController {
 
     private final EventAssessmentClassificationService eventAssessmentClassificationService;

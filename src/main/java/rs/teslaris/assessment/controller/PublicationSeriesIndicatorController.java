@@ -19,11 +19,13 @@ import rs.teslaris.assessment.dto.IFTableResponseDTO;
 import rs.teslaris.assessment.model.EntityIndicatorSource;
 import rs.teslaris.assessment.service.interfaces.PublicationSeriesIndicatorService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/publication-series-indicator")
 @RequiredArgsConstructor
+@Traceable
 public class PublicationSeriesIndicatorController {
 
     private final PublicationSeriesIndicatorService publicationSeriesIndicatorService;

@@ -24,13 +24,13 @@ public class OrganisationUnitIndex {
     @Field(type = FieldType.Text, store = true, name = "name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String nameSr;
 
-    @Field(type = FieldType.Keyword, store = true, name = "name_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "name_sr_sortable")
     private String nameSrSortable;
 
     @Field(type = FieldType.Text, store = true, name = "name_other", analyzer = "english", searchAnalyzer = "english")
     private String nameOther;
 
-    @Field(type = FieldType.Keyword, store = true, name = "name_other_sortable")
+    @Field(type = FieldType.Keyword, name = "name_other_sortable")
     private String nameOtherSortable;
 
     @Field(type = FieldType.Keyword, store = true, name = "keywords_sr")
@@ -42,13 +42,13 @@ public class OrganisationUnitIndex {
     @Field(type = FieldType.Text, store = true, name = "research_areas_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String researchAreasSr;
 
-    @Field(type = FieldType.Keyword, store = true, name = "research_areas_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "research_areas_sr_sortable")
     private String researchAreasSrSortable;
 
     @Field(type = FieldType.Text, store = true, name = "research_areas_other", analyzer = "english", searchAnalyzer = "english")
     private String researchAreasOther;
 
-    @Field(type = FieldType.Keyword, store = true, name = "research_areas_other_sortable")
+    @Field(type = FieldType.Keyword, name = "research_areas_other_sortable")
     private String researchAreasOtherSortable;
 
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
@@ -60,13 +60,13 @@ public class OrganisationUnitIndex {
     @Field(type = FieldType.Text, store = true, name = "super_ou_name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String superOUNameSr;
 
-    @Field(type = FieldType.Keyword, store = true, name = "super_ou_name_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "super_ou_name_sr_sortable")
     private String superOUNameSrSortable;
 
     @Field(type = FieldType.Text, store = true, name = "super_ou_name_other", analyzer = "english", searchAnalyzer = "english")
     private String superOUNameOther;
 
-    @Field(type = FieldType.Keyword, store = true, name = "super_ou_name_other_sortable")
+    @Field(type = FieldType.Keyword, name = "super_ou_name_other_sortable")
     private String superOUNameOtherSortable;
 
     @Field(type = FieldType.Keyword, store = true, name = "scopus_afid")

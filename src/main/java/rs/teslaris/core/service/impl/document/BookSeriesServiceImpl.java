@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
@@ -31,10 +32,12 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Transactional
+@Traceable
 public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     implements BookSeriesService {
 
@@ -88,7 +91,16 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
     @Override
     public BookSeriesResponseDTO readBookSeries(Integer bookSeriesId) {
-        return PublicationSeriesConverter.toDTO(bookSeriesJPAService.findOne(bookSeriesId));
+        BookSeries bookSeries;
+        try {
+            bookSeries = bookSeriesJPAService.findOne(bookSeriesId);
+        } catch (NotFoundException e) {
+            bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)
+                .ifPresent(bookSeriesIndexRepository::delete);
+            throw e;
+        }
+
+        return PublicationSeriesConverter.toDTO(bookSeries);
     }
 
     @Override
@@ -200,10 +212,10 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             bookSeries.getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
-        index.setTitleSr(srContent.length() > 0 ? srContent.toString() : otherContent.toString());
+        index.setTitleSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOther(
-            otherContent.length() > 0 ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(bookSeries.getEISSN());
         index.setPrintISSN(bookSeries.getPrintISSN());
@@ -227,18 +239,45 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                             }
                             return m;
                         }));
-                }
+                } else if (token.contains("\\-") &&
+                    issnPattern.matcher(token.replace("\\-", "-")).matches()) {
+                    String normalizedToken = token.replace("\\-", "-");
 
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("title_sr").value("*" + token + "*").caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("title_sr").query(token)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("title_other").value("*" + token + "*").caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("e_issn").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("print_issn").query(token)));
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("e_issn").value(normalizedToken)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("print_issn").value(normalizedToken)))
+                    ));
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                    ));
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                    ));
+                } else {
+                    var wildcard = token + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_sr").query(token)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_other").query(token)))
+                    ));
+                }
             });
             return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();

@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
@@ -26,6 +27,7 @@ import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class ScopusHarvesterImpl implements ScopusHarvester {
 
     private final UserService userService;

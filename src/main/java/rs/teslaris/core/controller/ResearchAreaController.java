@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaNodeDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaResponseDTO;
@@ -27,6 +28,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 @RestController
 @RequestMapping("/api/research-area")
 @RequiredArgsConstructor
+@Traceable
 public class ResearchAreaController {
 
     private final ResearchAreaService researchAreaService;

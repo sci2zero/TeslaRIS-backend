@@ -11,7 +11,6 @@ import lombok.Getter;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.AssessmentClassification;
-import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.assessment.model.EntityIndicatorSource;
 import rs.teslaris.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.assessment.model.PublicationSeriesIndicator;
@@ -22,6 +21,7 @@ import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.util.Pair;
 

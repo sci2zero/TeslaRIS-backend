@@ -15,7 +15,7 @@ public interface ConferenceRepository extends JpaRepository<Conference, Integer>
         "c.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Conference> findAllModifiedInLast24Hours(Pageable pageable);
 
-    @Query("select c from Conference c where c.confId = :confId")
+    @Query("SELECT c FROM Conference c WHERE c.confId = :confId")
     Optional<Conference> findConferenceByConfId(String confId);
 
     Optional<Conference> findConferenceByOldId(Integer oldId);

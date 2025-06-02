@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.CommissionDTO;
 import rs.teslaris.assessment.dto.CommissionResponseDTO;
-import rs.teslaris.assessment.model.Commission;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service

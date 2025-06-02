@@ -8,7 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.MonographPublicationConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -16,7 +16,9 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -32,6 +34,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
+@Traceable
 public class MonographPublicationServiceImpl extends DocumentPublicationServiceImpl implements
     MonographPublicationService {
 
@@ -69,7 +72,13 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
     @Override
     public MonographPublicationDTO readMonographPublicationById(Integer monographPublicationId) {
-        var monographPublication = monographPublicationJPAService.findOne(monographPublicationId);
+        MonographPublication monographPublication;
+        try {
+            monographPublication = monographPublicationJPAService.findOne(monographPublicationId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(monographPublicationId);
+            throw e;
+        }
 
         if (monographPublication.getApproveStatus().equals(ApproveStatus.DECLINED)) {
             throw new NotFoundException(
@@ -179,8 +188,14 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         monographPublication.setNumberOfPages(monographPublicationDTO.getNumberOfPages());
         monographPublication.setArticleNumber(monographPublicationDTO.getArticleNumber());
 
-        monographPublication.setMonograph(
-            monographService.findMonographById(monographPublicationDTO.getMonographId()));
+        var monograph =
+            monographService.findMonographById(monographPublicationDTO.getMonographId());
+
+        if (!monograph.getMonographType().equals(MonographType.BOOK)) {
+            throw new NotFoundException("Book monograph with given ID does not exist.");
+        }
+
+        monographPublication.setMonograph(monograph);
     }
 
     @Override

@@ -1,12 +1,18 @@
 package rs.teslaris.core.service.impl.user;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import com.google.common.cache.Cache;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -14,6 +20,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -32,8 +39,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.model.Commission;
-import rs.teslaris.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -49,6 +55,7 @@ import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.PasswordResetToken;
@@ -57,6 +64,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
@@ -71,10 +79,12 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.PasswordUtil;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -82,6 +92,7 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class UserServiceImpl extends JPAServiceImpl<User> implements UserService {
 
     private final MessageSource messageSource;
@@ -116,7 +127,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final Cache<String, Byte> passwordResetRequestCacheStore;
 
-    private final CommissionService commissionService;
+    private final CommissionRepository commissionRepository;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -134,8 +145,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    public Page<UserAccountIndex> searchUserAccounts(List<String> tokens, Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens),
+    public Page<UserAccountIndex> searchUserAccounts(List<String> tokens,
+                                                     List<UserRole> allowedRoles,
+                                                     Pageable pageable) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, allowedRoles),
             pageable, UserAccountIndex.class, "user_account");
     }
 
@@ -227,6 +240,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "User did not allow taking control of his account.");
         }
 
+        tokenUtil.revokeToken(user.getId());
         user.setCanTakeRole(false);
         userRepository.save(user);
 
@@ -262,6 +276,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             index.get().setActive(!userToDeactivate.getLocked());
             userAccountIndexRepository.save(index.get());
         }
+
+        tokenUtil.revokeToken(userId);
     }
 
     @Override
@@ -392,7 +408,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
         var organisationUnit = organisationUnitService.findOne(organisationUnitId);
-        var commission = (commissionId != null) ? commissionService.findOne(commissionId) : null;
+        var commission =
+            (Objects.nonNull(commissionId)) ? commissionRepository.findById(commissionId)
+                .orElseThrow(() -> new NotFoundException(
+                    "Commission with ID " + commissionId + " does not exist.")) : null;
 
         var random = SecureRandom.getInstance("SHA1PRNG");
         var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
@@ -519,6 +538,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             .orElse(new UserAccountIndex());
         indexUser(userToUpdate, index);
 
+        tokenUtil.revokeToken(userToUpdate.getId());
         var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
         return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
             refreshTokenValue);
@@ -537,6 +557,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         try {
             var user = (User) loadUserByUsername(userEmail);
+            tokenUtil.revokeToken(user.getId());
             var resetToken = UUID.randomUUID().toString();
             var language = user.getPreferredUILanguage().getLanguageCode().toLowerCase();
 
@@ -641,6 +662,100 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         return userRepository.findAllCommissionUsers();
     }
 
+    @Override
+    @Transactional
+    public void deleteUserAccount(Integer userId) {
+        var userToDelete = findOne(userId);
+
+        if (userToDelete.getAuthority().getName().equals(UserRole.ADMIN.name())) {
+            throw new CantEditException("You can't delete an admin user.");
+        }
+
+        if (userRepository.hasUserAssignedIndicators(userId)) {
+            throw new ReferenceConstraintException("userHasAssignedIndicatorsMessage");
+        }
+
+        tokenUtil.revokeToken(userId);
+        userRepository.deleteAllNotificationsForUser(userId);
+        userRepository.deleteAllAccountActivationsForUser(userId);
+        userRepository.deleteAllPasswordResetsForUser(userId);
+        userRepository.deleteRefreshTokenForUser(userId);
+
+        userToDelete.setPerson(null);
+        userRepository.delete(userToDelete);
+        userAccountIndexRepository.findByDatabaseId(userId)
+            .ifPresent(userAccountIndexRepository::delete);
+    }
+
+    @Override
+    @Transactional
+    public void migrateUserAccountData(Integer userToUpdateId,
+                                       Integer userToDeleteId) {
+        if (Objects.equals(userToUpdateId, userToDeleteId)) {
+            throw new ReferenceConstraintException("Can't migrate data to same user.");
+        }
+
+        var userToUpdate = findOne(userToUpdateId);
+        var userToDelete = findOne(userToDeleteId);
+
+        if ((!userToUpdate.getAuthority().getName().equals(UserRole.COMMISSION.name()) &&
+            !userToUpdate.getAuthority().getName().equals(UserRole.RESEARCHER.name())) ||
+            !userToUpdate.getAuthority().getName().equals(userToDelete.getAuthority().getName())) {
+            throw new ReferenceConstraintException(
+                "Only applicable for commission and researcher users.");
+        }
+
+        userRepository.migrateEntityIndicatorsToAnotherUser(userToUpdateId, userToDeleteId);
+    }
+
+    @Override
+    @Transactional
+    public boolean generateNewPasswordForUser(Integer userId) {
+        var savedUser = findOne(userId);
+        tokenUtil.revokeToken(userId);
+
+        SecureRandom random;
+        try {
+            random = SecureRandom.getInstance("SHA1PRNG");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e); // should never happen
+        }
+
+        var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
+
+        var language = savedUser.getPreferredUILanguage().getLanguageCode().toLowerCase();
+
+        var subject = messageSource.getMessage(
+            "adminPasswordReset.mailSubject",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        var message = messageSource.getMessage(
+            "adminPasswordReset.mailBodyEmployee",
+            new Object[] {new String(generatedPassword)},
+            Locale.forLanguageTag(language)
+        );
+
+        var emailIsSent = emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);
+        try {
+            if (emailIsSent.get()) {
+                savedUser.setPassword(passwordEncoder.encode(new String(generatedPassword)));
+                return true;
+            }
+        } catch (InterruptedException | ExecutionException ignored) {
+            // handled in the code block below
+        }
+
+        Arrays.fill(generatedPassword, '\0');
+        return false;
+    }
+
+    @Override
+    public void logout(String jti) {
+        tokenUtil.revokeToken(jti);
+    }
+
     @Transactional(propagation = Propagation.MANDATORY)
     private String createAndSaveRefreshTokenForUser(User user) {
         var refreshTokenValue = UUID.randomUUID().toString();
@@ -690,39 +805,65 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         index.setOrganisationUnitNameSortableOther(index.getOrganisationUnitNameOther());
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens) {
-        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            tokens.forEach(token -> {
+    private Query buildSimpleSearchQuery(List<String> tokens, List<UserRole> allowedRoles) {
+        return BoolQuery.of(q -> {
+            var mustClauses = new ArrayList<Query>();
+
+            for (String token : tokens) {
+                var cleanedToken = token.replace("\\\"", "");
+                var perTokenShould = new ArrayList<Query>();
+
                 if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
-                    b.must(mp ->
-                        mp.bool(m -> {
-                            {
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("org_unit_name_sr")
-                                        .query(token.replace("\\\"", ""))));
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("org_unit_name_other")
-                                        .query(token.replace("\\\"", ""))));
-                            }
-                            return m;
-                        }));
+                    perTokenShould.add(MatchPhraseQuery.of(
+                            mq -> mq.field("org_unit_name_sr").query(cleanedToken))
+                        ._toQuery());
+                    perTokenShould.add(MatchPhraseQuery.of(
+                            mq -> mq.field("org_unit_name_other").query(cleanedToken))
+                        ._toQuery());
+                } else {
+                    if (token.endsWith(".")) {
+                        var wildcard = token.replace(".", "") + "?";
+                        perTokenShould.add(WildcardQuery.of(
+                                m -> m.field("full_name").value(wildcard).caseInsensitive(true))
+                            ._toQuery());
+                    } else if (token.endsWith("\\*")) {
+                        var wildcard = token.replace("\\*", "") + "*";
+                        perTokenShould.add(WildcardQuery.of(
+                                m -> m.field("full_name").value(wildcard).caseInsensitive(true))
+                            ._toQuery());
+                    } else {
+                        perTokenShould.add(WildcardQuery.of(
+                                m -> m.field("full_name").value(token + "*").caseInsensitive(true))
+                            ._toQuery());
+                    }
+
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("email").query(token).boost(0.7f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("org_unit_name_sr").query(token).boost(0.5f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("org_unit_name_other").query(token).boost(0.5f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("user_role").query(token))._toQuery());
                 }
 
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("full_name").value(token).caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("full_name").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("email").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("org_unit_name_sr").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("org_unit_name_other").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("user_role").query(token)));
-            });
-            return b;
-        })))._toQuery();
+                mustClauses.add(BoolQuery.of(b -> b.should(perTokenShould))._toQuery());
+            }
+
+            // Add allowedRoles as a filter
+            if (Objects.nonNull(allowedRoles) && !allowedRoles.isEmpty()) {
+                mustClauses.add(TermsQuery.of(t -> t
+                    .field("user_role")
+                    .terms(v -> v.value(
+                        allowedRoles.stream()
+                            .map(String::valueOf)
+                            .map(FieldValue::of)
+                            .toList()))
+                )._toQuery());
+            }
+
+            return q.must(mustClauses);
+        })._toQuery();
     }
 
     @Scheduled(cron = "0 */10 * ? * *") // every ten minutes
@@ -756,5 +897,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
             .forEach(passwordResetTokenRepository::delete);
+    }
+
+    @Scheduled(cron = "0 * * * * *") // every 15 minutes
+    public void cleanupExpiredTokens() {
+        tokenUtil.cleanupExpiredTokens();
     }
 }

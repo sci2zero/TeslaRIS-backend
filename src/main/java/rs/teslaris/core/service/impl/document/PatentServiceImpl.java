@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.PatentConverter;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -15,6 +15,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -30,6 +31,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
+@Traceable
 public class PatentServiceImpl extends DocumentPublicationServiceImpl implements PatentService {
 
     private final PatentJPAServiceImpl patentJPAService;
@@ -60,7 +62,14 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     public PatentDTO readPatentById(Integer patentId) {
-        var patent = patentJPAService.findOne(patentId);
+        Patent patent;
+        try {
+            patent = patentJPAService.findOne(patentId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(patentId);
+            throw e;
+        }
+
         if (!patent.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -72,6 +81,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     public Patent createPatent(PatentDTO patentDTO, Boolean index) {
         var newPatent = new Patent();
 
+        checkForDocumentDate(patentDTO);
         setCommonFields(newPatent, patentDTO);
 
         newPatent.setNumber(patentDTO.getNumber());
@@ -97,6 +107,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     public void editPatent(Integer patentId, PatentDTO patentDTO) {
         var patentToUpdate = patentJPAService.findOne(patentId);
 
+        checkForDocumentDate(patentDTO);
         clearCommonFields(patentToUpdate);
         setCommonFields(patentToUpdate, patentDTO);
 

@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -44,6 +45,7 @@ import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Traceable
 public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupService {
 
     private final FileService fileService;

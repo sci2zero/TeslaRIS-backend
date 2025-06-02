@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
@@ -68,6 +69,7 @@ import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     implements RegistryBookService {
 
@@ -157,24 +159,60 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var newEntry = new RegistryBookEntry();
 
         var thesis = thesisService.getThesisById(thesisId);
-        newEntry.setThesis(thesisService.getThesisById(thesisId));
+        newEntry.setThesis(thesis);
 
         setCommonFields(newEntry, dto, false);
-
-        if (Objects.nonNull(dto.getPromotionId())) {
-            newEntry.setPromotionSchoolYear(dto.getPromotionSchoolYear());
-            newEntry.setRegistryBookNumber(dto.getRegistryBookNumber());
-            newEntry.setPromotionOrdinalNumber(dto.getPromotionOrdinalNumber());
-            newEntry.setPromotion(promotionService.findOne(dto.getPromotionId()));
-            newEntry.setRegistryBookInstitution(
-                organisationUnitService.findOne(dto.getPromotionInstitutionId()));
-        }
+        handlePromotionInfo(dto, newEntry);
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
-            newEntry.getDissertationInformation().setOrganisationUnit(thesis.getOrganisationUnit());
+            newEntry.getDissertationInformation()
+                .setOrganisationUnit(thesis.getOrganisationUnit());
         }
 
         return save(newEntry);
+    }
+
+    private void handlePromotionInfo(RegistryBookEntryDTO dto, RegistryBookEntry newEntry) {
+        if (Objects.isNull(dto.getPromotionId())) {
+            return;
+        }
+
+        var promotion = promotionService.findOne(dto.getPromotionId());
+        newEntry.setPromotion(promotion);
+        newEntry.setRegistryBookInstitution(
+            organisationUnitService.findOne(dto.getPromotionInstitutionId())
+        );
+
+        if (!promotion.getFinished()) {
+            return;
+        }
+
+        newEntry.setRegistryBookNumber(dto.getRegistryBookNumber());
+        newEntry.setPromotionSchoolYear(resolvePromotionSchoolYear(dto, promotion));
+        newEntry.setSchoolYearOrdinalNumber(resolveOrdinalNumber(dto, newEntry));
+    }
+
+    private String resolvePromotionSchoolYear(RegistryBookEntryDTO dto, Promotion promotion) {
+        if (Objects.nonNull(dto.getPromotionSchoolYear()) &&
+            !dto.getPromotionSchoolYear().isBlank()) {
+            return dto.getPromotionSchoolYear();
+        }
+
+        int promotionYear = promotion.getPromotionDate().getYear();
+        return promotion.getPromotionDate().isAfter(LocalDate.of(promotionYear, 10, 1))
+            ? promotionYear + "/" + (promotionYear + 1)
+            : (promotionYear - 1) + "/" + promotionYear;
+    }
+
+    private Integer resolveOrdinalNumber(RegistryBookEntryDTO dto, RegistryBookEntry newEntry) {
+        if (Objects.nonNull(dto.getSchoolYearOrdinalNumber())) {
+            return dto.getSchoolYearOrdinalNumber();
+        }
+
+        Integer lastOrdinal = registryBookEntryRepository
+            .getLastRegistrySchoolYearNumber(newEntry.getPromotionSchoolYear());
+
+        return (Objects.nonNull(lastOrdinal) ? lastOrdinal : 0) + 1;
     }
 
     @Override
@@ -485,7 +523,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                 registryBookEntryRepository.getLastRegistryBookNumber(
                     promotion.getInstitution().getId()),
                 0) + 1);
-        var countInPromotion = new AtomicInteger(1);
+        var countInPromotion = new AtomicInteger(
+            Objects.requireNonNullElse(
+                registryBookEntryRepository.getLastRegistrySchoolYearNumber(
+                    finalPromotionSchoolYear), 0) + 1);
 
         for (RegistryBookEntry registryBookEntry : entriesToPromote) {
             var dissertation = registryBookEntry.getDissertationInformation();
@@ -496,7 +537,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
             registryBookEntry.setPromotionSchoolYear(finalPromotionSchoolYear);
             registryBookEntry.setRegistryBookNumber(registryBookNumber.getAndIncrement());
-            registryBookEntry.setPromotionOrdinalNumber(countInPromotion.getAndIncrement());
+            registryBookEntry.setSchoolYearOrdinalNumber(countInPromotion.getAndIncrement());
             registryBookEntry.setAttendanceIdentifier(null);
             registryBookEntry.setRegistryBookInstitution(promotion.getInstitution());
         }
@@ -514,9 +555,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var promotees = new ArrayList<String>();
         registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
             .forEach(entry -> {
-                String sb = entry.getPersonalInformation().getAuthorName().toString() + ", " +
+                String sb = entry.getPersonalInformation().getAuthorName().toString() + ",\n" +
                     entry.getDissertationInformation().getAcquiredTitle() +
-                    " (email: " +
+                    "\n(email: " +
                     entry.getContactInformation().getContact().getContactEmail() + ")\n";
                 promotees.add(sb);
             });

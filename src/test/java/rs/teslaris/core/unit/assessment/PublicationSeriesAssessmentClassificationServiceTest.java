@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.AssessmentClassification;
-import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
@@ -28,6 +27,7 @@ import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;

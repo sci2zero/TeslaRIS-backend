@@ -15,6 +15,7 @@ import rs.teslaris.assessment.dto.AssessmentRulebookResponseDTO;
 import rs.teslaris.assessment.model.AssessmentRulebook;
 import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.assessment.service.interfaces.AssessmentRulebookService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -26,6 +27,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class AssessmentRulebookServiceImpl extends JPAServiceImpl<AssessmentRulebook> implements
     AssessmentRulebookService {
 

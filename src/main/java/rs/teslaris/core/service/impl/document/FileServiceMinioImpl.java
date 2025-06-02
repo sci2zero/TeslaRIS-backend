@@ -13,12 +13,14 @@ import org.apache.tika.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class FileServiceMinioImpl implements FileService {
 
     private final MinioClient minioClient;

@@ -19,6 +19,7 @@ import rs.teslaris.importer.dto.PersonLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
+import rs.teslaris.importer.utility.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor
@@ -50,7 +51,8 @@ public abstract class DocumentConverter {
 
         dto.setUris(new HashSet<>());
         urls.forEach(url -> {
-            if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId")) {
+            if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId") ||
+                url.startsWith("https://www.cris.uns.ac.rs/DownloadFileServlet")) {
                 return;
             }
 
@@ -68,16 +70,8 @@ public abstract class DocumentConverter {
         }
 
         if (Objects.nonNull(record.getKeywords())) {
-            var keywordBuilder = new StringBuilder();
-            record.getKeywords().stream()
-                .map(Object::toString)
-                .forEach(keyword -> {
-                    if (!keywordBuilder.isEmpty()) {
-                        keywordBuilder.append(", ");
-                    }
-                    keywordBuilder.append(keyword);
-                });
-            dto.setKeywords(multilingualContentConverter.toDTO(keywordBuilder.toString()));
+            dto.setKeywords(multilingualContentConverter.toDTO(
+                OAIPMHParseUtility.groupParsedMultilingualKeywords(record.getKeywords())));
         } else {
             dto.setKeywords(new ArrayList<>());
         }
@@ -87,9 +81,10 @@ public abstract class DocumentConverter {
         dto.setDoi(Objects.nonNull(record.getDoi()) ? record.getDoi().replace("|", "") : null);
         dto.setScopusId(record.getScpNumber());
 
-        if (Objects.nonNull(record.get_abstract())) {
-            dto.setDescription(
-                multilingualContentConverter.toDTO(record.get_abstract().toString()));
+        if (Objects.nonNull(record.get_abstract()) && !record.get_abstract().isEmpty()) {
+            record.get_abstract()
+                .forEach(abs -> abs.setValue(abs.getValue().replace("<br />", " ")));
+            dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
         } else {
             dto.setDescription(new ArrayList<>());
         }
@@ -119,6 +114,10 @@ public abstract class DocumentConverter {
             DocumentContributionType.AUTHOR, contributions);
         personContributionConverter.addContributors(record.getEditors(),
             DocumentContributionType.EDITOR, contributions);
+        personContributionConverter.addContributors(record.getAdvisors(),
+            DocumentContributionType.ADVISOR, contributions);
+        personContributionConverter.addContributors(record.getBoardMembers(),
+            DocumentContributionType.BOARD_MEMBER, contributions);
 
         dto.setContributions(contributions);
     }

@@ -10,8 +10,8 @@ import rs.teslaris.assessment.model.OrganisationUnitAssessmentClassification;
 public interface OrganisationUnitAssessmentClassificationRepository extends
     JpaRepository<OrganisationUnitAssessmentClassification, Integer> {
 
-    @Query("select eac from OrganisationUnitAssessmentClassification eac where " +
-        "eac.organisationUnit.id = :organisationUnitId order by eac.timestamp desc")
+    @Query("SELECT eac FROM OrganisationUnitAssessmentClassification eac WHERE " +
+        "eac.organisationUnit.id = :organisationUnitId ORDER BY eac.timestamp DESC")
     List<OrganisationUnitAssessmentClassification> findAssessmentClassificationsForOrganisationUnit(
         Integer organisationUnitId);
 }

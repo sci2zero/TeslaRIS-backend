@@ -23,6 +23,7 @@ import rs.teslaris.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.EntityClassificationSource;
 import rs.teslaris.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -30,6 +31,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("/api/assessment/publication-series-assessment-classification")
 @RequiredArgsConstructor
+@Traceable
 public class PublicationSeriesAssessmentClassificationController {
 
     private final PublicationSeriesAssessmentClassificationService

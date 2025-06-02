@@ -25,6 +25,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
@@ -33,8 +34,11 @@ import rs.teslaris.core.indexrepository.DocumentFileIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AccessRights;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.ResourceType;
+import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -42,7 +46,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -55,6 +58,7 @@ import rs.teslaris.core.util.search.SearchRequestType;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     implements DocumentFileService {
 
@@ -93,15 +97,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
-    public Pair<AccessRights, Boolean> getDocumentAccessLevel(String serverFilename) {
-        var documentFile = documentFileRepository.getReferenceByServerFilename(serverFilename);
-        return new Pair<>(documentFile.getAccessRights(), documentFile.getIsVerifiedData());
-    }
-
-    @Override
-    public ResourceType getDocumentResourceType(String serverFilename) {
-        return documentFileRepository.getReferenceByServerFilename(serverFilename)
-            .getResourceType();
+    public DocumentFile getDocumentByServerFilename(String serverFilename) {
+        return documentFileRepository.getReferenceByServerFilename(serverFilename);
     }
 
     @Override
@@ -157,11 +154,29 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
-                                                   Boolean isVerifiedData) {
+                                                   Document document) {
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
-        newDocumentFile.setIsVerifiedData(isVerifiedData);
+        newDocumentFile.setIsVerifiedData(document instanceof Thesis);
+        newDocumentFile.setDocument(document);
+
+        if (!index) {
+            documentFile.setResourceType(
+                ResourceType.PROOF); // Save every non-indexed (proof) as its own type
+        }
+
+        return saveDocument(documentFile, newDocumentFile, index);
+    }
+
+    @Override
+    public DocumentFile saveNewPersonalDocument(DocumentFileDTO documentFile, Boolean index,
+                                                Person person) {
+        var newDocumentFile = new DocumentFile();
+
+        setCommonFields(newDocumentFile, documentFile);
+        newDocumentFile.setIsVerifiedData(false);
+        newDocumentFile.setPerson(person);
 
         if (!index) {
             documentFile.setResourceType(

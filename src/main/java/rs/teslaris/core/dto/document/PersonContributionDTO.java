@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,4 +40,7 @@ public class PersonContributionDTO {
     private PostalAddressDTO postalAddress;
 
     private ContactDTO contact;
+
+    // only for responses
+    private List<List<MultilingualContentDTO>> displayInstitutionNames = new ArrayList<>();
 }

@@ -14,6 +14,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.cache.Cache;
@@ -26,8 +27,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,8 +44,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.assessment.model.Commission;
-import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
@@ -54,6 +56,7 @@ import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -66,6 +69,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
@@ -137,7 +141,7 @@ public class UserServiceTest {
     private MessageSource messageSource;
 
     @Mock
-    private CommissionService commissionService;
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -440,7 +444,7 @@ public class UserServiceTest {
                 "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
-        when(commissionService.findOne(1)).thenReturn(new Commission());
+        when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
 
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
@@ -898,8 +902,9 @@ public class UserServiceTest {
         verify(passwordResetTokenRepository, times(1)).delete(resetRequest);
     }
 
-    @Test
-    public void shouldFindUserAccountWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class)
+    public void shouldFindUserAccountWhenSearchingWithSimpleQuery(UserRole allowedRole) {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -910,7 +915,7 @@ public class UserServiceTest {
 
         // when
         var result =
-            userService.searchUserAccounts(new ArrayList<>(tokens), pageable);
+            userService.searchUserAccounts(new ArrayList<>(tokens), List.of(allowedRole), pageable);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -1015,5 +1020,166 @@ public class UserServiceTest {
         // Then
         verify(userRepository, times(1)).getIdsOfUsersWhoAllowedAccountTakeover();
         assertEquals(3, result.size());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingAdminUser() {
+        // Given
+        var user = new User();
+        user.setId(1);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.ADMIN.name());
+        }});
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+        // When / Then
+        assertThrows(RuntimeException.class, () -> userService.deleteUserAccount(1));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingCommissionUserWithIndicators() {
+        // Given
+        var user = new User();
+        user.setId(2);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+        when(userRepository.findById(2)).thenReturn(Optional.of(user));
+        when(userRepository.hasUserAssignedIndicators(2)).thenReturn(true);
+
+        // When / Then
+        assertThrows(RuntimeException.class, () -> userService.deleteUserAccount(2));
+    }
+
+    @Test
+    void shouldDeleteUser() {
+        // Given
+        var user = new User();
+        user.setId(3);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.INSTITUTIONAL_LIBRARIAN.name());
+        }});
+        when(userRepository.findById(3)).thenReturn(Optional.of(user));
+
+        // When
+        userService.deleteUserAccount(3);
+
+        // Then
+        verify(userRepository).deleteAllNotificationsForUser(3);
+        verify(userRepository).deleteAllAccountActivationsForUser(3);
+        verify(userRepository).deleteAllPasswordResetsForUser(3);
+        verify(userRepository).deleteRefreshTokenForUser(3);
+        verify(userRepository).delete(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenMigratingNonCommissionUsers() {
+        // Given
+        var user1 = new User();
+        user1.setId(4);
+        user1.setAuthority(new Authority() {{
+            setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name());
+        }});
+
+        var user2 = new User();
+        user2.setId(5);
+        user2.setAuthority(new Authority() {{
+            setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name());
+        }});
+
+        when(userRepository.findById(4)).thenReturn(Optional.of(user1));
+        when(userRepository.findById(5)).thenReturn(Optional.of(user2));
+
+        // When / Then
+        assertThrows(RuntimeException.class,
+            () -> userService.migrateUserAccountData(4, 5));
+    }
+
+    @Test
+    void shouldMigrateCommissionUserAccountData() {
+        // Given
+        var user1 = new User();
+        user1.setId(6);
+        user1.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+
+        var user2 = new User();
+        user2.setId(7);
+        user2.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+
+        when(userRepository.findById(6)).thenReturn(Optional.of(user1));
+        when(userRepository.findById(7)).thenReturn(Optional.of(user2));
+
+        // When
+        userService.migrateUserAccountData(6, 7);
+
+        // Then
+        verify(userRepository).migrateEntityIndicatorsToAnotherUser(6, 7);
+    }
+
+    @Test
+    void shouldReturnTrueWhenResettingEmployeePassword() {
+        // Given
+        var user = new User();
+        user.setId(8);
+        user.setEmail("employee@example.com");
+        user.setPreferredUILanguage(new Language() {{
+            setLanguageCode("SR");
+        }});
+        when(userRepository.findById(8)).thenReturn(Optional.of(user));
+        when(messageSource.getMessage(eq("adminPasswordReset.mailSubject"), any(), any()))
+            .thenReturn("Reset Password");
+        when(messageSource.getMessage(eq("adminPasswordReset.mailBodyEmployee"), any(), any()))
+            .thenReturn("New password");
+
+        var emailFuture = CompletableFuture.completedFuture(true);
+        when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
+        when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
+
+        // When
+        var result = userService.generateNewPasswordForUser(8);
+
+        // Then
+        assertTrue(result);
+        verify(passwordEncoder).encode(anyString());
+    }
+
+    @Test
+    void shouldReturnFalseWhenEmailFailsToSend() {
+        // Given
+        var user = new User();
+        user.setId(9);
+        user.setEmail("employee@example.com");
+        user.setPreferredUILanguage(new Language() {{
+            setLanguageCode("SR");
+        }});
+        when(userRepository.findById(9)).thenReturn(Optional.of(user));
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("msg");
+
+        var emailFuture = CompletableFuture.completedFuture(false);
+        when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
+
+        // When
+        var result = userService.generateNewPasswordForUser(9);
+
+        // Then
+        assertFalse(result);
+        verify(passwordEncoder, never()).encode(any());
+    }
+
+    @Test
+    void shouldPerformLogout() {
+        // Given
+        var jti = "sample-jti-123";
+
+        // When
+        userService.logout(jti);
+
+        // Then
+        verify(tokenUtil).revokeToken(jti);
+        verifyNoMoreInteractions(tokenUtil);
     }
 }

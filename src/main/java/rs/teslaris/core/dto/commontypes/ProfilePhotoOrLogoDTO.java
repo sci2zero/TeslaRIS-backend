@@ -1,4 +1,4 @@
-package rs.teslaris.core.dto.person;
+package rs.teslaris.core.dto.commontypes;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProfilePhotoDTO {
+public class ProfilePhotoOrLogoDTO {
 
     @NotNull(message = "You must provide a valid left offset.")
     private Integer left;
@@ -24,6 +24,8 @@ public class ProfilePhotoDTO {
 
     @NotNull(message = "You must provide a valid box height.")
     private Integer height;
+
+    private String backgroundHex;
 
     @NotNull(message = "You must provide a valid image file.")
     private MultipartFile file;

@@ -27,6 +27,7 @@ import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.oaipmh.common.Description;
 import rs.teslaris.core.model.oaipmh.common.GetRecord;
 import rs.teslaris.core.model.oaipmh.common.Header;
@@ -51,7 +52,7 @@ import rs.teslaris.core.model.oaipmh.patent.PatentConvertable;
 import rs.teslaris.core.model.oaipmh.person.PersonConvertable;
 import rs.teslaris.core.model.oaipmh.product.ProductConvertable;
 import rs.teslaris.core.model.oaipmh.publication.PublicationConvertable;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -69,6 +70,7 @@ import rs.teslaris.importer.utility.OAIPMHParseUtility;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class OutboundExportServiceImpl implements OutboundExportService {
 
     private final MongoTemplate mongoTemplate;

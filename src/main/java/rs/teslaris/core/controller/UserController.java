@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
@@ -46,6 +48,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Traceable
 public class UserController {
 
     private final AuthenticationManager authenticationManager;
@@ -65,9 +68,10 @@ public class UserController {
     public Page<UserAccountIndex> searchUserAccounts(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "allowedRole", required = false) List<UserRole> allowedRoles,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
-        return userService.searchUserAccounts(tokens, pageable);
+        return userService.searchUserAccounts(tokens, allowedRoles, pageable);
     }
 
     @PostMapping("/authenticate")
@@ -228,6 +232,33 @@ public class UserController {
     @GetMapping("/person/{personId}")
     public UserResponseDTO getUserFromPerson(@PathVariable("personId") Integer personId) {
         return userService.getUserFromPerson(personId);
+    }
+
+    @PatchMapping("/reset-user-password/{employeeId}")
+    @PreAuthorize("hasAuthority('GENERATE_NEW_EMPLOYEE_PASSWORD')")
+    public boolean resetPasswordForUser(@PathVariable Integer employeeId) {
+        return userService.generateNewPasswordForUser(employeeId);
+    }
+
+    @DeleteMapping("/{userId}")
+    @PreAuthorize("hasAuthority('DELETE_USER_ACCOUNT')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUserAccount(@PathVariable Integer userId) {
+        userService.deleteUserAccount(userId);
+    }
+
+    @DeleteMapping("/migrate/{oldUserId}/{newUserId}")
+    @PreAuthorize("hasAuthority('DELETE_USER_ACCOUNT')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void migrateUserAccountData(@PathVariable Integer oldUserId,
+                                       @PathVariable Integer newUserId) {
+        userService.migrateUserAccountData(newUserId, oldUserId);
+    }
+
+    @PatchMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logoutUser(@RequestHeader("Authorization") String bearerToken) {
+        userService.logout(tokenUtil.extractJtiFromToken(bearerToken));
     }
 
     private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {

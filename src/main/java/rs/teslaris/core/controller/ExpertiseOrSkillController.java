@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillDTO;
@@ -28,6 +29,7 @@ import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 @RestController
 @RequestMapping("/api/expertise-or-skill")
 @RequiredArgsConstructor
+@Traceable
 public class ExpertiseOrSkillController {
 
     private final ExpertiseOrSkillService expertiseOrSkillService;

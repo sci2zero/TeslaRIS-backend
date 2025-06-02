@@ -1,8 +1,8 @@
 package rs.teslaris.assessment.converter;
 
 import rs.teslaris.assessment.dto.CommissionResponseDTO;
-import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.model.institution.Commission;
 
 public class CommissionConverter {
 

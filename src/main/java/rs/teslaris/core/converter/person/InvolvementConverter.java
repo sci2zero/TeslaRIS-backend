@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.person;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -77,9 +78,15 @@ public class InvolvementConverter {
                 Collectors.toList()));
         dto.setInvolvementType(involvement.getInvolvementType());
         dto.setAffiliationStatement(affiliationStatements);
-        dto.setOrganisationUnitId(involvement.getOrganisationUnit().getId());
-        dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
-            involvement.getOrganisationUnit().getName()));
+
+        if (Objects.nonNull(involvement.getOrganisationUnit())) {
+            dto.setOrganisationUnitId(involvement.getOrganisationUnit().getId());
+            dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
+                involvement.getOrganisationUnit().getName()));
+        } else {
+            dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
+                involvement.getAffiliationStatement()));
+        }
     }
 
     public static <R extends InvolvementDTO, T extends Involvement> R toDTO(T cast) {

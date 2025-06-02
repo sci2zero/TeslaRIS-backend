@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -23,8 +24,8 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
-import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -56,6 +57,7 @@ import rs.teslaris.importer.utility.ProgressReportUtility;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class CommonLoaderImpl implements CommonLoader {
 
     private static final Object institutionLock = new Object();
@@ -89,8 +91,8 @@ public class CommonLoaderImpl implements CommonLoader {
     private final PersonService personService;
 
     @NotNull
-    private static BasicPersonDTO getBasicPersonDTO(Person person) {
-        var basicPersonDTO = new BasicPersonDTO();
+    private static ImportPersonDTO getBasicPersonDTO(Person person) {
+        var basicPersonDTO = new ImportPersonDTO();
 
         var personNameDTO = new PersonNameDTO();
         personNameDTO.setFirstname(person.getName().getFirstName());
@@ -471,7 +473,7 @@ public class CommonLoaderImpl implements CommonLoader {
                 return potentialMatch;
             }
 
-            return personService.createPersonWithBasicInfo(basicPersonDTO, true);
+            return personService.importPersonWithBasicInfo(basicPersonDTO, true);
         }
     }
 

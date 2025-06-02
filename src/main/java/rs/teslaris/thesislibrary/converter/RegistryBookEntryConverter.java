@@ -22,7 +22,7 @@ public class RegistryBookEntryConverter {
             dto.setPromoted(registryBookEntry.getPromotion().getFinished());
         }
         dto.setRegistryBookNumber(registryBookEntry.getRegistryBookNumber());
-        dto.setPromotionOrdinalNumber(registryBookEntry.getPromotionOrdinalNumber());
+        dto.setSchoolYearOrdinalNumber(registryBookEntry.getSchoolYearOrdinalNumber());
         dto.setPromotionSchoolYear(registryBookEntry.getPromotionSchoolYear());
         dto.setThesisId(registryBookEntry.getThesis().getId());
 

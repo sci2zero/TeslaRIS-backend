@@ -13,6 +13,7 @@ public interface PersonDocumentContributionRepository
     extends JpaRepository<PersonDocumentContribution, Integer> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select pdc from PersonDocumentContribution pdc where pdc.document.id = :documentId and pdc.person is null")
+    @Query("SELECT pdc FROM PersonDocumentContribution pdc " +
+        "WHERE pdc.document.id = :documentId AND pdc.person IS null")
     List<PersonDocumentContribution> findUnmanagedContributionsForDocument(Integer documentId);
 }

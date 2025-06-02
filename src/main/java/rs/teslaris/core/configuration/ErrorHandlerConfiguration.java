@@ -8,14 +8,20 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.StaleStateException;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.SchedulingException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
@@ -33,6 +39,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstra
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NetworkException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
@@ -42,6 +49,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceCon
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
@@ -52,9 +60,15 @@ import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
+import rs.teslaris.core.util.tracing.TraceMDCKeys;
 
-@ControllerAdvice
+@RestControllerAdvice
+@Slf4j
+@RequiredArgsConstructor
 public class ErrorHandlerConfiguration {
+
+    private final EmailUtil emailUtil;
+
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(BindException.class)
@@ -68,14 +82,14 @@ public class ErrorHandlerConfiguration {
         ex.getBindingResult().getGlobalErrors()
             .forEach(e -> errors.put(e.getObjectName(), e.getDefaultMessage()));
 
-        return new ErrorObject(request, ex.getLocalizedMessage(), HttpStatus.BAD_REQUEST, errors);
+        return buildErrorObject(request, ex.getLocalizedMessage(), HttpStatus.BAD_REQUEST, errors);
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(StorageException.class)
     @ResponseBody
     ErrorObject handleStorageException(HttpServletRequest request, StorageException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -83,14 +97,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleConstraintViolationException(HttpServletRequest request,
                                                    ConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(IdempotencyException.class)
     @ResponseBody
     ErrorObject handleIdempotencyException(HttpServletRequest request, IdempotencyException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -98,14 +112,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleIllegalArgumentException(HttpServletRequest request,
                                                IllegalArgumentException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NotFoundException.class)
     @ResponseBody
     ErrorObject handleNotFoundException(HttpServletRequest request, NotFoundException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.NOT_FOUND);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -113,7 +127,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleEntityNotFoundException(HttpServletRequest request,
                                               EntityNotFoundException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.NOT_FOUND);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
@@ -121,7 +135,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleNonExistingRefreshTokenException(HttpServletRequest request,
                                                        NonExistingRefreshTokenException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -129,7 +143,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleTakeOfRoleNotPermittedException(HttpServletRequest request,
                                                       TakeOfRoleNotPermittedException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -137,7 +151,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleWrongPasswordProvidedException(HttpServletRequest request,
                                                      PasswordException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -145,7 +159,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleResearchAreaInUseException(HttpServletRequest request,
                                                  ResearchAreaReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -153,7 +167,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handlePublisherInUseException(HttpServletRequest request,
                                               PublisherReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -161,28 +175,28 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleJournalInUseException(HttpServletRequest request,
                                             JournalReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(SelfRelationException.class)
     @ResponseBody
     ErrorObject handleSelfRelationException(HttpServletRequest request, SelfRelationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(MalformedJwtException.class)
     @ResponseBody
     ErrorObject handleMalformedJwtException(HttpServletRequest request, MalformedJwtException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(ExpiredJwtException.class)
     @ResponseBody
     ErrorObject handleExpiredJwtException(HttpServletRequest request, ExpiredJwtException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
@@ -190,14 +204,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleCantConstructRestTemplateException(HttpServletRequest request,
                                                          CantConstructRestTemplateException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(LoadingException.class)
     @ResponseBody
     ErrorObject handleLoadingException(HttpServletRequest request, LoadingException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -205,14 +219,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleUserAlreadyExistsException(HttpServletRequest request,
                                                  UserAlreadyExistsException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(StaleStateException.class)
     @ResponseBody
     ErrorObject handleStaleStateException(HttpServletRequest request, StaleStateException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -220,7 +234,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleUserIsNotResearcherException(HttpServletRequest request,
                                                    UserIsNotResearcherException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -228,7 +242,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleRecordAlreadyLoadedException(HttpServletRequest request,
                                                    RecordAlreadyLoadedException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -236,14 +250,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleProceedingsReferenceConstraintViolationException(HttpServletRequest request,
                                                                        ProceedingsReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MissingDataException.class)
     @ResponseBody
     ErrorObject handleMissingDataException(HttpServletRequest request, MissingDataException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -251,7 +265,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleConferenceReferenceConstraintViolationException(HttpServletRequest request,
                                                                       ConferenceReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -259,7 +273,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleIdentifierException(HttpServletRequest request,
                                           IdentifierException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -267,7 +281,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handlePersonReferenceConstraintViolationException(HttpServletRequest request,
                                                                   PersonReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -276,7 +290,7 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleOrganisationUnitReferenceConstraintViolationException(
         HttpServletRequest request,
         OrganisationUnitReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -284,7 +298,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleTypeNotAllowedException(HttpServletRequest request,
                                               TypeNotAllowedException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -293,7 +307,7 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleAssessmentClassificationReferenceConstraintViolationException(
         HttpServletRequest request,
         AssessmentClassificationReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -302,7 +316,7 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleIndicatorReferenceConstraintViolationException(
         HttpServletRequest request,
         IndicatorReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -310,7 +324,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleMonographReferenceConstraintViolationException(HttpServletRequest request,
                                                                      MonographReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -318,7 +332,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleBookSeriesReferenceConstraintViolationException(HttpServletRequest request,
                                                                       BookSeriesReferenceConstraintViolationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
@@ -326,7 +340,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleScopusIdMissingException(HttpServletRequest request,
                                                ScopusIdMissingException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
@@ -334,7 +348,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleCantEditException(HttpServletRequest request,
                                         CantEditException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.FORBIDDEN);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -342,7 +356,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleSchedulingException(HttpServletRequest request,
                                           SchedulingException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -350,7 +364,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleValidationException(HttpServletRequest request,
                                           ValidationException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
@@ -358,7 +372,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleInvalidApiKeyException(HttpServletRequest request,
                                              InvalidApiKeyException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -366,7 +380,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleThesisException(HttpServletRequest request,
                                       ThesisException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -374,7 +388,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handlePromotionException(HttpServletRequest request,
                                          PromotionException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -382,7 +396,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleRegistryBookException(HttpServletRequest request,
                                             RegistryBookException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -390,7 +404,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleBackupException(HttpServletRequest request,
                                       BackupException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -398,7 +412,7 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleInvalidFileSectionException(HttpServletRequest request,
                                                   InvalidFileSectionException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -406,6 +420,62 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleCaptchaException(HttpServletRequest request,
                                        CaptchaException ex) {
-        return new ErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ReferenceConstraintException.class)
+    @ResponseBody
+    ErrorObject handleReferenceConstraintException(HttpServletRequest request,
+                                                   ReferenceConstraintException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(NetworkException.class)
+    @ResponseBody
+    ErrorObject handleNetworkException(HttpServletRequest request, NetworkException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseBody
+    ErrorObject handleBadCredentialsException(HttpServletRequest request,
+                                              BadCredentialsException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    public ErrorObject handleAllUncaughtExceptions(HttpServletRequest request, Exception ex) {
+        var exceptionId = UUID.randomUUID().toString();
+        log.error("Unhandled exception (ID:{}) occurred: {}, Request path: {}\nStack trace:",
+            exceptionId,
+            ex.getMessage(), request.getRequestURI(), ex);
+
+        var tracingContextId = MDC.get(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID);
+        emailUtil.sendUnhandledExceptionEmail(exceptionId, tracingContextId,
+            request.getRequestURI(), ex);
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private ErrorObject buildErrorObject(HttpServletRequest request, String message,
+                                         HttpStatus status) {
+        try {
+            return new ErrorObject(request, message, status);
+        } finally {
+            MDC.remove(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID);
+        }
+    }
+
+    private ErrorObject buildErrorObject(HttpServletRequest request, String message,
+                                         HttpStatus status, Map<String, String> errors) {
+        try {
+            return new ErrorObject(request, message, status, errors);
+        } finally {
+            MDC.remove(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID);
+        }
     }
 }

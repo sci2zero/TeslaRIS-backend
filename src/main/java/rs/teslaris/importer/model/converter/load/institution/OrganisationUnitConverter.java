@@ -1,6 +1,7 @@
 package rs.teslaris.importer.model.converter.load.institution;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -34,14 +35,38 @@ public class OrganisationUnitConverter
         dto.setName(multilingualContentConverter.toDTO(organisationUnit.getName()));
 
         dto.setNameAbbreviation("");
+        if (Objects.nonNull(organisationUnit.getAcronym()) &&
+            !organisationUnit.getAcronym().isEmpty()) {
+            dto.setNameAbbreviation(organisationUnit.getAcronym().getFirst().getValue());
+        }
 
-        dto.setKeyword(new ArrayList<>());
+        if (Objects.nonNull(organisationUnit.getKeywords()) &&
+            !organisationUnit.getKeywords().isEmpty()) {
+            dto.setKeyword(multilingualContentConverter.toDTO(organisationUnit.getKeywords()));
+        } else {
+            dto.setKeyword(new ArrayList<>());
+        }
+
+        // TODO: How to set research areas from serbian names?
         dto.setResearchAreasId(new ArrayList<>());
 
         dto.setLocation(new GeoLocationDTO());
+
+        if (Objects.nonNull(organisationUnit.getPlace()) &&
+            !organisationUnit.getPlace().isBlank()) {
+            dto.getLocation().setAddress(organisationUnit.getPlace());
+        }
+
+        dto.setUris(new HashSet<>());
+        if (Objects.nonNull(organisationUnit.getIdentifier()) &&
+            !organisationUnit.getIdentifier().isBlank()) {
+            dto.getUris().add(organisationUnit.getIdentifier());
+        }
+
         dto.setContact(new ContactDTO());
 
-        if (Objects.nonNull(organisationUnit.getPartOf())) {
+        if (Objects.nonNull(organisationUnit.getPartOf()) &&
+            Objects.nonNull(organisationUnit.getPartOf().getOrgUnit())) {
             dto.setSuperOrganisationUnitId(
                 OAIPMHParseUtility.parseBISISID(
                     organisationUnit.getPartOf().getOrgUnit().getOldId()));
@@ -52,7 +77,8 @@ public class OrganisationUnitConverter
     }
 
     public Optional<OrganisationUnitsRelationDTO> toRelationDTO(OrgUnit sourceOU) {
-        if (Objects.isNull(sourceOU.getPartOf())) {
+        if (Objects.isNull(sourceOU.getPartOf()) ||
+            Objects.isNull(sourceOU.getPartOf().getOrgUnit())) {
             return Optional.empty();
         }
 

@@ -48,6 +48,17 @@
         "type": "icu_transform",
         "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC"
       }
+    },
+    "normalizer": {
+      "serbian_normalizer": {
+        "type": "custom",
+        "char_filter": ["serbian_char_filter"],
+        "filter": ["lowercase", "icu_folding"]
+      },
+      "english_normalizer": {
+        "type": "custom",
+        "filter": ["lowercase", "asciifolding"]
+      }
     }
   }
 }

@@ -35,6 +35,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -43,6 +44,7 @@ import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 import rs.teslaris.thesislibrary.model.RegistryBookReport;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
@@ -54,6 +56,7 @@ import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
+@Traceable
 public class RegistryBookReportServiceImpl implements RegistryBookReportService {
 
     private final RegistryBookEntryRepository registryBookEntryRepository;
@@ -71,7 +74,8 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
 
     @Override
     public String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
-                                           String lang, Integer userId) {
+                                           String lang, Integer userId, String authorName,
+                                           String authorTitle) {
         if (from.isAfter(to)) {
             throw new RegistryBookException("dateRangeIssueMessage");
         }
@@ -81,15 +85,15 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
             "Registry_Book-" + institutionId +
                 "-" + from + "_" + to + "_" + lang +
                 "-" + UUID.randomUUID(), reportGenerationTime,
-            () -> generateReport(from, to, institutionId, lang),
+            () -> generateReport(from, to, authorName, authorTitle, institutionId, lang),
             userId);
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
 
-    private void generateReport(LocalDate from, LocalDate to, Integer institutionId,
-                                String lang) {
+    private void generateReport(LocalDate from, LocalDate to, String authorName,
+                                String authorTitle, Integer institutionId, String lang) {
         Map<String, List<List<String>>> groupedReportTableRows =
-            loadGroupedRegistryBookRows(from, to, institutionId, lang);
+            loadGroupedRegistryBookRows(from, to, authorName, authorTitle, institutionId, lang);
 
         try (var out = new ByteArrayOutputStream()) {
             var document = new Document(PageSize.A1, 36, 36, 54, 36);
@@ -184,6 +188,8 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
 
     private Map<String, List<List<String>>> loadGroupedRegistryBookRows(LocalDate from,
                                                                         LocalDate to,
+                                                                        String authorName,
+                                                                        String authorTitle,
                                                                         Integer institutionId,
                                                                         String lang) {
         int pageNumber = 0;
@@ -192,10 +198,13 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
         var groupedRows = new TreeMap<String, List<List<String>>>();
 
         while (hasNextPage) {
-            List<RegistryBookEntry> chunk = registryBookEntryRepository
-                .getRegistryBookCountForInstitutionAndPeriod(institutionId, from, to,
-                    PageRequest.of(pageNumber, chunkSize))
-                .getContent();
+            List<RegistryBookEntry> chunk =
+                registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
+                        institutionId, from, to, authorName, authorTitle,
+                        SerbianTransliteration.toCyrillic(authorName),
+                        SerbianTransliteration.toCyrillic(authorTitle),
+                        PageRequest.of(pageNumber, chunkSize))
+                    .getContent();
 
             RegistryBookGenerationUtil.constructRowsForChunk(groupedRows, chunk, lang);
 

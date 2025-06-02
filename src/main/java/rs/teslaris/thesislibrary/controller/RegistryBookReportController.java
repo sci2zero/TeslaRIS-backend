@@ -20,12 +20,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookReportService;
 
 @RestController
 @RequestMapping("/api/registry-book/report")
 @RequiredArgsConstructor
+@Traceable
 public class RegistryBookReportController {
 
     private final RegistryBookReportService registryBookReportService;
@@ -38,6 +40,10 @@ public class RegistryBookReportController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public String generateReport(@RequestParam(required = false) LocalDate from,
                                  @RequestParam(required = false) LocalDate to,
+                                 @RequestParam(required = false, defaultValue = "")
+                                 String authorName,
+                                 @RequestParam(required = false, defaultValue = "")
+                                 String authorTitle,
                                  @RequestParam Integer institutionId,
                                  @RequestParam String lang,
                                  @RequestHeader(value = "Authorization")
@@ -45,7 +51,7 @@ public class RegistryBookReportController {
         return registryBookReportService.scheduleReportGeneration(
             Objects.nonNull(from) ? from : LocalDate.of(1000, 1, 1),
             Objects.nonNull(to) ? to : LocalDate.now(), institutionId, lang,
-            tokenUtil.extractUserIdFromToken(bearerToken));
+            tokenUtil.extractUserIdFromToken(bearerToken), authorName, authorTitle);
     }
 
     @GetMapping("/list-reports")

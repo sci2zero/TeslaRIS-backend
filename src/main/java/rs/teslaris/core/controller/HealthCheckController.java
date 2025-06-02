@@ -17,10 +17,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/health-check")
 @RequiredArgsConstructor
+@Traceable
 public class HealthCheckController {
 
     private final EntityManager entityManager;

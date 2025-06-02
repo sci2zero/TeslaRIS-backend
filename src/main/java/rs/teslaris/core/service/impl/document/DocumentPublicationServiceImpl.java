@@ -14,9 +14,11 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -47,6 +49,7 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -58,6 +61,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
@@ -71,6 +75,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Primary
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     implements DocumentPublicationService {
 
@@ -95,6 +100,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final CommissionRepository commissionRepository;
 
     private final SearchFieldsLoader searchFieldsLoader;
+
+    private final Pattern doiPattern =
+        Pattern.compile("\"^10\\\\.\\\\d{4,9}\\\\/[-,._;()/:A-Z0-9]+$\"", Pattern.CASE_INSENSITIVE);
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -177,8 +185,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
                                                    Boolean isProof) {
         var document = findOne(documentId);
-        var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof,
-            document instanceof Thesis);
+        var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof, document);
         if (isProof) {
             document.getProofs().add(documentFile);
         } else {
@@ -262,6 +269,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         if (Objects.nonNull(document.getEvent())) {
             index.setEventId(document.getEvent().getId());
         }
+
+        var aaa = StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
+            index.getKeywordsSr());
+        index.setWordcloudTokensSr(
+            StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
+                index.getKeywordsSr()));
+        index.setWordcloudTokensOther(
+            StringUtil.extractKeywords(index.getTitleOther(), index.getDescriptionOther(),
+                index.getKeywordsOther()));
     }
 
     private void setContributors(Document document, DocumentPublicationIndex index) {
@@ -533,6 +549,27 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             onlyExportFields);
     }
 
+    @Override
+    public List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
+                                                                  boolean foreignLanguage) {
+        var document =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+                .orElseThrow(() -> new NotFoundException(
+                    "Document with ID " + documentId + " does not exist."));
+        var terms =
+            foreignLanguage ? document.getWordcloudTokensOther() : document.getWordcloudTokensSr();
+
+        Map<String, Long> result = terms.parallelStream().
+            collect(Collectors.toConcurrentMap(
+                w -> w, w -> 1L, Long::sum));
+
+        return result.entrySet().stream()
+            .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+            .limit(30)
+            .map(entry -> new Pair<>(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
+    }
+
     protected void clearCommonFields(Document publication) {
         publication.getTitle().clear();
         publication.getSubTitle().clear();
@@ -750,22 +787,56 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                             mq -> mq.field("title_sr").query(token.replace("\\\"", ""))))
                         .should(sb -> sb.matchPhrase(
                             mq -> mq.field("title_other").query(token.replace("\\\"", ""))))
+                        .should(sb -> sb.matchPhrase(
+                            mq -> mq.field("author_names").query(token.replace("\\\"", ""))))
+                    ));
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    eq.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("author_names").value(wildcard).caseInsensitive(true)))
+                    ));
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    eq.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("author_names").value(wildcard).caseInsensitive(true)))
+                    ));
+                } else {
+                    var wildcard = token + "*";
+                    eq.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_sr").query(wildcard)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("title_other").query(wildcard)))
+                        .should(sb -> sb.match(mq -> mq.field("author_names").query(token)))
+                        .should(
+                            sb -> sb.wildcard(mq -> mq.field("author_names").value(wildcard)
+                                .caseInsensitive(true)))
                     ));
                 }
 
-                eq.should(sb -> sb.wildcard(
-                        m -> m.field("title_sr").value(token + "*").caseInsensitive(true)))
-                    .should(sb -> sb.match(m -> m.field("title_sr").query(token)))
-                    .should(sb -> sb.wildcard(
-                        m -> m.field("title_other").value(token + "*").caseInsensitive(true)))
-                    .should(sb -> sb.match(m -> m.field("description_sr").query(token)))
-                    .should(sb -> sb.match(m -> m.field("description_other").query(token)))
-                    .should(sb -> sb.wildcard(m -> m.field("keywords_sr").value("*" + token + "*")))
+                eq
+                    .should(sb -> sb.match(m -> m.field("description_sr").query(token).boost(0.7f)))
                     .should(
-                        sb -> sb.wildcard(m -> m.field("keywords_other").value("*" + token + "*")))
-                    .should(sb -> sb.match(m -> m.field("full_text_sr").query(token)))
-                    .should(sb -> sb.match(m -> m.field("full_text_other").query(token)))
-                    .should(sb -> sb.match(m -> m.field("author_names").query(token)))
+                        sb -> sb.match(m -> m.field("description_other").query(token).boost(0.7f)))
+                    .should(sb -> sb.term(m -> m.field("keywords_sr").value(token)))
+                    .should(sb -> sb.term(m -> m.field("keywords_other").value(token)))
+                    .should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
+                    .should(
+                        sb -> sb.match(m -> m.field("full_text_other").query(token).boost(0.7f)))
                     .should(sb -> sb.match(m -> m.field("editor_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("reviewer_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("advisor_names").query(token)))
@@ -843,5 +914,17 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         userOptional.get()));
             }
         });
+    }
+
+    protected void clearIndexWhenFailedRead(Integer documentId) {
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(documentPublicationIndexRepository::delete);
+    }
+
+    protected void checkForDocumentDate(DocumentDTO documentDTO) {
+        if (Objects.isNull(documentDTO.getDocumentDate()) ||
+            documentDTO.getDocumentDate().isBlank()) {
+            throw new MissingDataException("This document requires a specified document date.");
+        }
     }
 }

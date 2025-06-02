@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
 import rs.teslaris.core.dto.commontypes.LanguageTagDTO;
@@ -28,6 +29,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 @RestController
 @RequestMapping("/api/language")
 @RequiredArgsConstructor
+@Traceable
 public class LanguageController {
 
     private final LanguageService languageService;

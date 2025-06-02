@@ -20,6 +20,7 @@ import rs.teslaris.assessment.ruleengine.AssessmentPointsScalingRuleEngine;
 import rs.teslaris.assessment.service.interfaces.AssessmentMeasureService;
 import rs.teslaris.assessment.service.interfaces.AssessmentRulebookService;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -27,6 +28,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class AssessmentMeasureServiceImpl extends JPAServiceImpl<AssessmentMeasure> implements
     AssessmentMeasureService {
 

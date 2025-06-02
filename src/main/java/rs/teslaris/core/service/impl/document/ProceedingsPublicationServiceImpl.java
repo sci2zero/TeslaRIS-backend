@@ -9,7 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -21,6 +21,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -37,6 +38,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
+@Traceable
 public class ProceedingsPublicationServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsPublicationService {
 
@@ -77,7 +79,14 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Override
     public ProceedingsPublicationDTO readProceedingsPublicationById(Integer publicationId) {
-        var publication = proceedingPublicationJPAService.findOne(publicationId);
+        ProceedingsPublication publication;
+        try {
+            publication = proceedingPublicationJPAService.findOne(publicationId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(publicationId);
+            throw e;
+        }
+
         if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }

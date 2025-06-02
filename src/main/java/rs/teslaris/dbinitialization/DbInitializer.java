@@ -94,8 +94,10 @@ public class DbInitializer implements ApplicationRunner {
         var editEmploymentInstitution = new Privilege("EDIT_EMPLOYMENT_INSTITUTION");
         var editOURelations = new Privilege("EDIT_OU_RELATIONS");
         var editPublishers = new Privilege("EDIT_PUBLISHERS");
+        var createPublisher = new Privilege("CREATE_PUBLISHER");
         var editPublicationSeries = new Privilege("EDIT_PUBLICATION_SERIES");
         var editConferences = new Privilege("EDIT_CONFERENCES");
+        var createConference = new Privilege("CREATE_CONFERENCE");
         var editEventRelations = new Privilege("EDIT_EVENT_RELATIONS");
         var mergeJournalPublications = new Privilege("MERGE_JOURNAL_PUBLICATIONS");
         var mergePersonPublications = new Privilege("MERGE_PERSON_PUBLICATIONS");
@@ -171,6 +173,8 @@ public class DbInitializer implements ApplicationRunner {
         var generateThesisLibraryBackup = new Privilege("GENERATE_THESIS_LIBRARY_BACKUP");
         var generateOutputBackup = new Privilege("GENERATE_OUTPUT_BACKUP");
         var performHealthCheck = new Privilege("PERFORM_HEALTH_CHECK");
+        var deleteUserAccount = new Privilege("DELETE_USER_ACCOUNT");
+        var generateNewEmployeePassword = new Privilege("GENERATE_NEW_EMPLOYEE_PASSWORD");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -195,10 +199,11 @@ public class DbInitializer implements ApplicationRunner {
                 updateBrandingInformation, manageApiKeys, manageThesisAttachments, createJournal,
                 editEmploymentInstitution, archiveThesis, unarchiveThesis, performThesisReport,
                 putThesisOnPublicReview, deleteThesisAttachments, removeThesisFromPublicReview,
-                addToPromotion, removeFromPromotion, addToRegistryBook,
+                addToPromotion, removeFromPromotion, addToRegistryBook, deleteUserAccount,
                 removeFromRegistryBook, updateRegistryBook, managePromotions, performMigration,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
-                generateThesisLibraryBackup, generateOutputBackup, performHealthCheck));
+                generateThesisLibraryBackup, generateOutputBackup, performHealthCheck,
+                generateNewEmployeePassword, createConference, createPublisher));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -222,25 +227,27 @@ public class DbInitializer implements ApplicationRunner {
                 downloadReports, listAssessmentClassifications, updateBrandingInformation,
                 manageApiKeys, manageThesisAttachments, putThesisOnPublicReview, managePromotions,
                 deleteThesisAttachments, removeThesisFromPublicReview, archiveThesis,
-                unarchiveThesis, performThesisReport, addToPromotion,
+                unarchiveThesis, performThesisReport, addToPromotion, generateNewEmployeePassword,
                 removeFromPromotion, addToRegistryBook, updateRegistryBook, removeFromRegistryBook,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
-                performHealthCheck
+                performHealthCheck, deleteUserAccount, createConference, createPublisher
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
-                createUserBasic, editDocumentFiles, editDocumentIndicators, claimDocument,
+                editDocumentFiles, editDocumentIndicators, claimDocument, createConference,
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
-                unbindYourselfFromPublication, editEntityIndicators, createJournal)));
+                unbindYourselfFromPublication, editEntityIndicators, createJournal,
+                createPublisher)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
                 List.of(
                     updateProfile, allowAccountTakeover, manageThesisAttachments,
                     putThesisOnPublicReview, createUserBasic, editPersonalInfo, createJournal,
-                    editDocumentFiles, editEmploymentInstitution, generateOutputBackup)));
+                    editDocumentFiles, editEmploymentInstitution, generateOutputBackup,
+                    createConference)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -388,7 +395,7 @@ public class DbInitializer implements ApplicationRunner {
         ///////////////////// ASSESSMENT DATA /////////////////////
         assessmentDataInitializer.initializeIndicators(englishTag, serbianTag);
         assessmentDataInitializer.initializeAssessmentClassifications(englishTag, serbianTag);
-        var commission5 = assessmentDataInitializer.initializeCommissions(englishTag, serbianTag);
+        var commissions = assessmentDataInitializer.initializeCommissions(englishTag, serbianTag);
         assessmentDataInitializer.initializeRulebooks(englishTag, serbianTag);
 
         ///////////////////// TESTING DATA /////////////////////
@@ -399,7 +406,7 @@ public class DbInitializer implements ApplicationRunner {
                 germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
                 viceDeanForScienceAuthority, institutionalEditorAuthority,
                 institutionalLibrarianAuthority, headOfLibraryAuthority,
-                promotionRegistryAdministratorAuthority, commission5);
+                promotionRegistryAdministratorAuthority, commissions.a, commissions.b);
         }
     }
 

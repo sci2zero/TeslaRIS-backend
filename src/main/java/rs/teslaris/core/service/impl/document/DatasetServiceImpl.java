@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DatasetConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -14,6 +14,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.DatasetJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -28,6 +29,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
+@Traceable
 public class DatasetServiceImpl extends DocumentPublicationServiceImpl implements DatasetService {
 
     private final DatasetJPAServiceImpl datasetJPAService;
@@ -59,7 +61,14 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
     @Override
     public DatasetDTO readDatasetById(Integer datasetId) {
-        var dataset = datasetJPAService.findOne(datasetId);
+        Dataset dataset;
+        try {
+            dataset = datasetJPAService.findOne(datasetId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(datasetId);
+            throw e;
+        }
+
         if (!dataset.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -71,6 +80,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     public Dataset createDataset(DatasetDTO datasetDTO, Boolean index) {
         var newDataset = new Dataset();
 
+        checkForDocumentDate(datasetDTO);
         setCommonFields(newDataset, datasetDTO);
 
         newDataset.setInternalNumber(datasetDTO.getInternalNumber());
@@ -97,6 +107,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     public void editDataset(Integer datasetId, DatasetDTO datasetDTO) {
         var datasetToUpdate = datasetJPAService.findOne(datasetId);
 
+        checkForDocumentDate(datasetDTO);
         clearCommonFields(datasetToUpdate);
         setCommonFields(datasetToUpdate, datasetDTO);
 

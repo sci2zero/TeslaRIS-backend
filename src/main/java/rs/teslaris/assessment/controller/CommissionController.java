@@ -22,10 +22,12 @@ import rs.teslaris.assessment.dto.CommissionResponseDTO;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.annotation.CommissionEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment/commission")
 @RequiredArgsConstructor
+@Traceable
 public class CommissionController {
 
     private final CommissionService commissionService;

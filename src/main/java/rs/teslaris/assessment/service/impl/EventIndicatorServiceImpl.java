@@ -14,6 +14,7 @@ import rs.teslaris.assessment.repository.EventIndicatorRepository;
 import rs.teslaris.assessment.service.impl.cruddelegate.EventIndicatorJPAServiceImpl;
 import rs.teslaris.assessment.service.interfaces.EventIndicatorService;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -21,6 +22,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service
 @Transactional
+@Traceable
 public class EventIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements EventIndicatorService {
 

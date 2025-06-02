@@ -1,11 +1,13 @@
 package rs.teslaris.core.service.interfaces.person;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
@@ -94,4 +96,11 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields);
+
+    OrganisationUnit findOrganisationUnitByAccountingId(String accountingId);
+
+    String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
+        throws IOException;
+
+    void removeOrganisationUnitLogo(Integer organisationUnitId);
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.deduplication.MergedBookSeriesDTO;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
@@ -32,6 +33,7 @@ import rs.teslaris.core.service.interfaces.merge.MergeService;
 @RestController
 @RequestMapping("/api/merge")
 @RequiredArgsConstructor
+@Traceable
 public class MergeController {
 
     private final MergeService mergeService;
@@ -51,22 +53,6 @@ public class MergeController {
     public void switchAllPublicationsToOtherJournal(@PathVariable Integer sourceJournalId,
                                                     @PathVariable Integer targetJournalId) {
         mergeService.switchAllPublicationsToOtherJournal(sourceJournalId, targetJournalId);
-    }
-
-    @PatchMapping("/journal-indicator/source/{sourceJournalId}/target/{targetJournalId}")
-    @PreAuthorize("hasAuthority('MERGE_JOURNAL_PUBLICATIONS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllIndicatorsToOtherJournal(@PathVariable Integer sourceJournalId,
-                                                  @PathVariable Integer targetJournalId) {
-        mergeService.switchAllIndicatorsToOtherJournal(sourceJournalId, targetJournalId);
-    }
-
-    @PatchMapping("/journal-classification/source/{sourceJournalId}/target/{targetJournalId}")
-    @PreAuthorize("hasAuthority('MERGE_JOURNAL_PUBLICATIONS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllClassificationsToOtherJournal(@PathVariable Integer sourceJournalId,
-                                                       @PathVariable Integer targetJournalId) {
-        mergeService.switchAllClassificationsToOtherJournal(sourceJournalId, targetJournalId);
     }
 
     @PatchMapping("/publisher/{targetPublisherId}/publication/{publicationId}")
@@ -161,22 +147,6 @@ public class MergeController {
     public void switchAllProceedingsToOtherConference(@PathVariable Integer sourceConferenceId,
                                                       @PathVariable Integer targetConferenceId) {
         mergeService.switchAllProceedingsToOtherConference(sourceConferenceId, targetConferenceId);
-    }
-
-    @PatchMapping("/conference-indicator/source/{sourceConferenceId}/target/{targetConferenceId}")
-    @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllIndicatorsToOtherEvent(@PathVariable Integer sourceConferenceId,
-                                                @PathVariable Integer targetConferenceId) {
-        mergeService.switchAllIndicatorsToOtherEvent(sourceConferenceId, targetConferenceId);
-    }
-
-    @PatchMapping("/conference-classification/source/{sourceConferenceId}/target/{targetConferenceId}")
-    @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllClassificationsToOtherEvent(@PathVariable Integer sourceConferenceId,
-                                                     @PathVariable Integer targetConferenceId) {
-        mergeService.switchAllClassificationsToOtherEvent(sourceConferenceId, targetConferenceId);
     }
 
     @PatchMapping("/proceedings/{targetProceedingsId}/publication/{publicationId}")

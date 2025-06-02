@@ -21,6 +21,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.Contact;
 
@@ -65,4 +66,10 @@ public class OrganisationUnit extends BaseEntity {
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> uris = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    private Set<String> accountingIds = new HashSet<>();
+
+    @Embedded
+    private ProfilePhotoOrLogo logo;
 }

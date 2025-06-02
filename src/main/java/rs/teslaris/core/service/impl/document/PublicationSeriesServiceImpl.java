@@ -2,12 +2,16 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -23,6 +27,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 @Primary
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeries> implements
     PublicationSeriesService {
 
@@ -37,6 +42,9 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     protected final EmailUtil emailUtil;
 
     protected final IndexBulkUpdateService indexBulkUpdateService;
+
+    protected final Pattern issnPattern =
+        Pattern.compile("^(\\d{4}-\\d{4}|\\d{4}-\\d{3}[\\dX]?)$", Pattern.CASE_INSENSITIVE);
 
 
     @Override
@@ -111,5 +119,19 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     public boolean isIdentifierInUse(String identifier, Integer publicationSeriesId) {
         return publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId) ||
             publicationSeriesRepository.existsByPrintISSN(identifier, publicationSeriesId);
+    }
+
+    @Override
+    public void reorderPublicationSeriesContributions(Integer publicationSeriesId,
+                                                      Integer contributionId,
+                                                      Integer oldContributionOrderNumber,
+                                                      Integer newContributionOrderNumber) {
+        var publicationSeries = findOne(publicationSeriesId);
+        var contributions = publicationSeries.getContributions().stream()
+            .map(contribution -> (PersonContribution) contribution).collect(
+                Collectors.toSet());
+
+        personContributionService.reorderContributions(contributions, contributionId,
+            oldContributionOrderNumber, newContributionOrderNumber);
     }
 }

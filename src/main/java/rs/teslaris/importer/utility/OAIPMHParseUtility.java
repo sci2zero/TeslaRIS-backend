@@ -2,13 +2,16 @@ package rs.teslaris.importer.utility;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.exporter.util.ResumptionTokenStash;
 
 @Component
@@ -66,6 +69,23 @@ public class OAIPMHParseUtility {
                     break;
             }
         });
+    }
+
+    public static List<MultilingualContent> groupParsedMultilingualKeywords(
+        List<MultilingualContent> keywords) {
+        Map<String, List<String>> keywordsByLang = keywords.stream()
+            .filter(k -> Objects.nonNull(k.getLang()) && Objects.nonNull(k.getValue()))
+            .collect(Collectors.groupingBy(
+                MultilingualContent::getLang,
+                Collectors.mapping(MultilingualContent::getValue, Collectors.toList())
+            ));
+
+        return keywordsByLang.entrySet().stream()
+            .map(entry -> new MultilingualContent(
+                entry.getKey(),
+                String.join("\n", entry.getValue())
+            ))
+            .toList();
     }
 
     public record ResumptionTokenData(String from, String until, String set, int page,

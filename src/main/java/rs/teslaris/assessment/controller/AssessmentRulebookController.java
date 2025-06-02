@@ -24,12 +24,14 @@ import rs.teslaris.assessment.dto.AssessmentRulebookDTO;
 import rs.teslaris.assessment.dto.AssessmentRulebookResponseDTO;
 import rs.teslaris.assessment.service.interfaces.AssessmentRulebookService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 
 @RestController
 @RequestMapping("/api/assessment/assessment-rulebook")
 @RequiredArgsConstructor
+@Traceable
 public class AssessmentRulebookController {
 
     private final AssessmentRulebookService assessmentRulebookService;

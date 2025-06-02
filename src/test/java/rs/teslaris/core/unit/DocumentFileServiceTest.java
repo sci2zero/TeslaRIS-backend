@@ -276,9 +276,9 @@ public class DocumentFileServiceTest {
         when(documentFileRepository.getReferenceByServerFilename(any())).thenReturn(documentFile);
 
         // when
-        var actual = documentFileService.getDocumentAccessLevel("serverFilename");
+        var actual = documentFileService.getDocumentByServerFilename("serverFilename");
 
         // then
-        assertEquals(accessRights, actual.a);
+        assertEquals(accessRights, actual.getAccessRights());
     }
 }

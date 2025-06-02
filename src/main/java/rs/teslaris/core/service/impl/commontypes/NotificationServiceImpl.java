@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
@@ -32,6 +33,7 @@ import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotifi
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     implements NotificationService {
 

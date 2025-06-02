@@ -8,12 +8,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
-import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.model.person.Involvement;
@@ -57,6 +58,8 @@ public interface PersonService extends JPAService<Person> {
 
     Person createPersonWithBasicInfo(BasicPersonDTO personDTO, Boolean index);
 
+    Person importPersonWithBasicInfo(ImportPersonDTO personDTO, Boolean index);
+
     void setPersonBiography(List<MultilingualContentDTO> biography, Integer personId);
 
     void setPersonKeyword(List<MultilingualContentDTO> keyword, Integer personId);
@@ -93,7 +96,7 @@ public interface PersonService extends JPAService<Person> {
 
     void switchToUnmanagedEntity(Integer personId);
 
-    String setPersonProfileImage(Integer personId, ProfilePhotoDTO profilePhotoDTO)
+    String setPersonProfileImage(Integer personId, ProfilePhotoOrLogoDTO profilePhotoDTO)
         throws IOException;
 
     void removePersonProfileImage(Integer personId);
@@ -102,4 +105,6 @@ public interface PersonService extends JPAService<Person> {
 
     List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields);
+
+    Person findPersonByAccountingId(String accountingId);
 }

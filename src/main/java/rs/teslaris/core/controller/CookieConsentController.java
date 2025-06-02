@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.configuration.TrackingCookieConfiguration;
 
 @RestController
 @RequestMapping("/api/cookie")
 @RequiredArgsConstructor
+@Traceable
 public class CookieConsentController {
 
     public final TrackingCookieConfiguration trackingCookieConfiguration;

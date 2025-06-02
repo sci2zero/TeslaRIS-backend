@@ -9,6 +9,6 @@ import rs.teslaris.core.model.person.Employment;
 @Repository
 public interface EmploymentRepository extends JpaRepository<Employment, Integer> {
 
-    @Query("select e from Employment e where e.personInvolved.id = :personId")
+    @Query("SELECT e FROM Employment e WHERE e.personInvolved.id = :personId")
     List<Employment> findByPersonInvolvedId(Integer personId);
 }

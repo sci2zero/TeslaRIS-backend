@@ -53,7 +53,8 @@ public class ExportPersonConverter extends ExportConverterBase {
 
         person.getInvolvements().forEach(involvement -> {
             if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) {
+                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY) &&
+                    Objects.nonNull(involvement.getOrganisationUnit())) {
                 commonExportPerson.getEmploymentInstitutions().add(
                     ExportOrganisationUnitConverter.toCommonExportModel(
                         involvement.getOrganisationUnit(), false));
@@ -73,7 +74,8 @@ public class ExportPersonConverter extends ExportConverterBase {
         var relations = new HashSet<Integer>();
         person.getInvolvements().forEach(involvement -> {
             if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) {
+                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY) &&
+                    Objects.nonNull(involvement.getOrganisationUnit())) {
                 if (onlyActive && Objects.nonNull(involvement.getDateTo()) &&
                     involvement.getDateTo().isBefore(LocalDate.now())) {
                     return;
@@ -105,7 +107,7 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
 
         openairePerson.setPersonName(new PersonName(exportPerson.getName().getLastName(),
-            exportPerson.getName().getFirstName()));
+            exportPerson.getName().getFirstName(), null));
 
         openairePerson.setElectronicAddresses(new ArrayList<>());
         exportPerson.getElectronicAddresses().forEach(elAddress -> {
@@ -113,7 +115,7 @@ public class ExportPersonConverter extends ExportConverterBase {
         });
 
         if (!exportPerson.getEmploymentInstitutions().isEmpty()) {
-            openairePerson.setAffiliation(new Affiliation(new ArrayList<>()));
+            openairePerson.setAffiliation(new Affiliation(new ArrayList<>(), null));
             exportPerson.getEmploymentInstitutions().forEach(employmentInstitution -> {
                 openairePerson.getAffiliation().getOrgUnits()
                     .add(ExportOrganisationUnitConverter.toOpenaireModel(employmentInstitution));

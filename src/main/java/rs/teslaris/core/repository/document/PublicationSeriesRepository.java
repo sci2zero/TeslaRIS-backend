@@ -10,11 +10,13 @@ import rs.teslaris.core.model.document.PublicationSeries;
 @Repository
 public interface PublicationSeriesRepository extends JpaRepository<PublicationSeries, Integer> {
 
-    @Query("select count(p) > 0 from Proceedings p join p.publicationSeries bs where bs.id = :publicationSeriesId")
+    @Query("SELECT COUNT(p) > 0 FROM Proceedings p " +
+        "JOIN p.publicationSeries bs " +
+        "WHERE bs.id = :publicationSeriesId")
     boolean hasProceedings(Integer publicationSeriesId);
 
     @Modifying
-    @Query("update Proceedings p set p.publicationSeries = null where p.publicationSeries.id = :publicationSeriesId")
+    @Query("UPDATE Proceedings p SET p.publicationSeries = null WHERE p.publicationSeries.id = :publicationSeriesId")
     void unbindProceedings(Integer publicationSeriesId);
 
 

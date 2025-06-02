@@ -6,6 +6,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
+import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.person.Education;
@@ -27,7 +28,9 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     Employment addEmployment(Integer personId, EmploymentDTO employment);
 
-    List<EmploymentDTO> getEmploymentsForPerson(Integer personId);
+    EmploymentDTO migrateEmployment(EmploymentMigrationDTO employmentMigrationRequest);
+
+    List<EmploymentDTO> getDirectAndIndirectEmploymentsForPerson(Integer personId);
 
     DocumentFileResponseDTO addInvolvementProof(DocumentFileDTO proof, Integer involvementId);
 

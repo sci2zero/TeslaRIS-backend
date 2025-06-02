@@ -26,4 +26,9 @@ public class PersonName {
 
     @XmlElement(name = "FirstNames")
     private String firstNames;
+
+    // Additional Migration field - not part of the OAI-PMH specification
+
+    @XmlElement(name = "MiddleNames")
+    private String middleNames;
 }

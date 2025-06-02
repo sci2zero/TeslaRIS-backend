@@ -29,7 +29,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -45,6 +44,7 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.SoftwareServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.SoftwareJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -104,6 +104,7 @@ public class SoftwareServiceTest {
     public void shouldCreateSoftware() {
         // Given
         var dto = new SoftwareDTO();
+        dto.setDocumentDate("2020-03-02");
         var software = new Software();
         software.setId(1);
         software.setInternalNumber("123");

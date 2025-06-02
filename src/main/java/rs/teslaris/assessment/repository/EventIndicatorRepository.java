@@ -15,13 +15,18 @@ import rs.teslaris.core.model.commontypes.AccessLevel;
 @Repository
 public interface EventIndicatorRepository extends JpaRepository<EventIndicator, Integer> {
 
-    @Query("select ei from EventIndicator ei " +
-        "where ei.event.id = :eventId and ei.indicator.accessLevel <= :accessLevel")
+    @Query("SELECT ei FROM EventIndicator ei " +
+        "WHERE ei.event.id = :eventId AND ei.indicator.accessLevel <= :accessLevel")
     List<EventIndicator> findIndicatorsForEventAndIndicatorAccessLevel(Integer eventId,
                                                                        AccessLevel accessLevel);
 
     @Query("SELECT ei FROM EventIndicator ei WHERE ei.event.id = :eventId")
     Page<EventIndicator> findIndicatorsForEvent(Integer eventId, Pageable pageable);
+
+    @Query("SELECT ei FROM EventIndicator ei WHERE " +
+        "ei.event.id = :eventId AND " +
+        "ei.indicator.code = :code")
+    Optional<EventIndicator> findIndicatorsForCodeAndEvent(String code, Integer eventId);
 
     @Query("SELECT ei " +
         "FROM EventIndicator ei " +
