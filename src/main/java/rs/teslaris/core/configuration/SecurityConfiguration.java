@@ -213,6 +213,11 @@ public class SecurityConfiguration {
                     "/api/statistics/organisation-unit/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/statistics/document/{documentId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/statistics/publication-series/{publicationSeriesId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/statistics/event/{eventId}")
+                .permitAll()
 
                 // BRANDING INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()

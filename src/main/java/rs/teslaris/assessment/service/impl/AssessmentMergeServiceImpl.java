@@ -7,14 +7,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.repository.DocumentIndicatorRepository;
 import rs.teslaris.assessment.repository.EventAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.EventIndicatorRepository;
+import rs.teslaris.assessment.repository.OrganisationUnitIndicatorRepository;
+import rs.teslaris.assessment.repository.PersonIndicatorRepository;
 import rs.teslaris.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.AssessmentMergeService;
+import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +32,8 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 public class AssessmentMergeServiceImpl implements AssessmentMergeService {
 
     private final JournalService journalService;
+
+    private final BookSeriesService bookSeriesService;
 
     private final ConferenceService conferenceService;
 
@@ -35,20 +46,38 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
     private final PublicationSeriesAssessmentClassificationRepository
         publicationSeriesAssessmentClassificationRepository;
 
+    private final PersonService personService;
+
+    private final PersonIndicatorRepository personIndicatorRepository;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final OrganisationUnitIndicatorRepository organisationUnitIndicatorRepository;
+
+    private final DocumentPublicationService documentPublicationService;
+
+    private final DocumentIndicatorRepository documentIndicatorRepository;
+
 
     @Override
     public void switchAllIndicatorsToOtherJournal(Integer sourceId, Integer targetId) {
         processChunks(
             sourceId,
             (srcId, journalIndicator) -> {
-                var existingIndicatorValue =
-                    publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
-                        targetId, journalIndicator.getSource(), journalIndicator.getFromDate(),
-                        journalIndicator.getCategoryIdentifier(),
+                var isStatisticIndicator =
+                    IndicatorMappingConfigurationLoader.isStatisticIndicatorCode(
                         journalIndicator.getIndicator().getCode());
-                existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
 
-                journalIndicator.setPublicationSeries(journalService.findJournalById(targetId));
+                if (!isStatisticIndicator) {
+                    var existingIndicatorValue =
+                        publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                            targetId, journalIndicator.getSource(), journalIndicator.getFromDate(),
+                            journalIndicator.getCategoryIdentifier(),
+                            journalIndicator.getIndicator().getCode());
+
+                    existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
+                    journalIndicator.setPublicationSeries(journalService.findJournalById(targetId));
+                }
             },
             pageRequest -> publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeries(
                 sourceId, pageRequest).getContent()
@@ -81,13 +110,19 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
         processChunks(
             sourceId,
             (srcId, eventIndicator) -> {
-                var existingIndicatorValue =
-                    eventIndicatorRepository.existsByEventIdAndSourceAndYear(
-                        targetId, eventIndicator.getSource(), eventIndicator.getFromDate(),
+                var isStatisticIndicator =
+                    IndicatorMappingConfigurationLoader.isStatisticIndicatorCode(
                         eventIndicator.getIndicator().getCode());
-                existingIndicatorValue.ifPresent(eventIndicatorRepository::delete);
 
-                eventIndicator.setEvent(conferenceService.findConferenceById(targetId));
+                if (!isStatisticIndicator) {
+                    var existingIndicatorValue =
+                        eventIndicatorRepository.existsByEventIdAndSourceAndYear(
+                            targetId, eventIndicator.getSource(), eventIndicator.getFromDate(),
+                            eventIndicator.getIndicator().getCode());
+                    existingIndicatorValue.ifPresent(eventIndicatorRepository::delete);
+
+                    eventIndicator.setEvent(conferenceService.findConferenceById(targetId));
+                }
             },
             pageRequest -> eventIndicatorRepository.findIndicatorsForEvent(sourceId, pageRequest)
                 .getContent()
@@ -109,6 +144,103 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                 eventClassification.setEvent(conferenceService.findConferenceById(targetId));
             },
             pageRequest -> eventAssessmentClassificationRepository.findAssessmentClassificationsForEvent(
+                sourceId, pageRequest).getContent()
+        );
+    }
+
+    @Override
+    public void switchAllIndicatorsToOtherPerson(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, personIndicator) -> {
+                var isStatisticIndicator =
+                    IndicatorMappingConfigurationLoader.isStatisticIndicatorCode(
+                        personIndicator.getIndicator().getCode());
+
+                if (!isStatisticIndicator) {
+                    var existingIndicatorValue =
+                        personIndicatorRepository.findIndicatorForCodeAndPersonId(
+                            personIndicator.getIndicator().getCode(), targetId);
+                    existingIndicatorValue.ifPresent(personIndicatorRepository::delete);
+
+                    personIndicator.setPerson(personService.findOne(targetId));
+                }
+            },
+            pageRequest -> personIndicatorRepository.findIndicatorsForPersonAndIndicatorAccessLevel(
+                sourceId, AccessLevel.ADMIN_ONLY)
+        );
+    }
+
+    @Override
+    public void switchAllIndicatorsToOtherOrganisationUnit(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, organisationUnitIndicator) -> {
+                var isStatisticIndicator =
+                    IndicatorMappingConfigurationLoader.isStatisticIndicatorCode(
+                        organisationUnitIndicator.getIndicator().getCode());
+
+                if (!isStatisticIndicator) {
+                    var existingIndicatorValue =
+                        organisationUnitIndicatorRepository.findIndicatorForCodeAndOrganisationUnitId(
+                            organisationUnitIndicator.getIndicator().getCode(), targetId);
+                    existingIndicatorValue.ifPresent(organisationUnitIndicatorRepository::delete);
+
+                    organisationUnitIndicator.setOrganisationUnit(
+                        organisationUnitService.findOne(targetId));
+                }
+            },
+            pageRequest -> organisationUnitIndicatorRepository.findIndicatorsForOrganisationUnitAndIndicatorAccessLevel(
+                sourceId, AccessLevel.ADMIN_ONLY)
+        );
+    }
+
+    @Override
+    public void switchAllIndicatorsToOtherDocument(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, documentIndicator) -> {
+                var isStatisticIndicator =
+                    IndicatorMappingConfigurationLoader.isStatisticIndicatorCode(
+                        documentIndicator.getIndicator().getCode());
+
+                if (!isStatisticIndicator) {
+                    var existingIndicatorValue =
+                        documentIndicatorRepository.findIndicatorForCodeAndDocumentId(
+                            documentIndicator.getIndicator().getCode(), targetId);
+                    existingIndicatorValue.ifPresent(documentIndicatorRepository::delete);
+
+                    documentIndicator.setDocument(documentPublicationService.findOne(targetId));
+                }
+            },
+            pageRequest -> documentIndicatorRepository.findIndicatorsForDocumentAndIndicatorAccessLevel(
+                sourceId, AccessLevel.ADMIN_ONLY)
+        );
+    }
+
+    @Override
+    public void switchAllIndicatorsToOtherBookSeries(Integer sourceId, Integer targetId) {
+        processChunks(
+            sourceId,
+            (srcId, bookSeriesIndicator) -> {
+                var isStatisticIndicator =
+                    IndicatorMappingConfigurationLoader.isStatisticIndicatorCode(
+                        bookSeriesIndicator.getIndicator().getCode());
+
+                if (!isStatisticIndicator) {
+                    var existingIndicatorValue =
+                        publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                            targetId, bookSeriesIndicator.getSource(),
+                            bookSeriesIndicator.getFromDate(),
+                            bookSeriesIndicator.getCategoryIdentifier(),
+                            bookSeriesIndicator.getIndicator().getCode());
+
+                    existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
+                    bookSeriesIndicator.setPublicationSeries(
+                        bookSeriesService.findBookSeriesById(targetId));
+                }
+            },
+            pageRequest -> publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeries(
                 sourceId, pageRequest).getContent()
         );
     }

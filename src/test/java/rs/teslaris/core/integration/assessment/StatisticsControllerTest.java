@@ -55,4 +55,31 @@ public class StatisticsControllerTest extends BaseTest {
                 .header("Idempotency-Key", "MOCK_KEY_DOCUMENT_STATISTICS")
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated());
     }
+
+    @Test
+    public void testRegisterJournalView() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.post(
+                    "http://localhost:8081/api/statistics/publication-series/{journalId}", 1)
+                .header("Idempotency-Key", "MOCK_KEY_JOURNAL_STATISTICS")
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated());
+    }
+
+    @Test
+    public void testRegisterBookSeriesView() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.post(
+                    "http://localhost:8081/api/statistics/publication-series/{bookSeriesId}", 3)
+                .header("Idempotency-Key", "MOCK_KEY_BOOK_SERIES_STATISTICS")
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated());
+    }
+
+    @Test
+    public void testRegisterEventView() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.post(
+                    "http://localhost:8081/api/statistics/event/{eventId}", 1)
+                .header("Idempotency-Key", "MOCK_KEY_EVENT_STATISTICS")
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated());
+    }
 }

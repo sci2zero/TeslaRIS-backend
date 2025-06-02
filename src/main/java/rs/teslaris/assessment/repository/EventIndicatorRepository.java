@@ -23,6 +23,11 @@ public interface EventIndicatorRepository extends JpaRepository<EventIndicator, 
     @Query("SELECT ei FROM EventIndicator ei WHERE ei.event.id = :eventId")
     Page<EventIndicator> findIndicatorsForEvent(Integer eventId, Pageable pageable);
 
+    @Query("SELECT ei FROM EventIndicator ei WHERE " +
+        "ei.event.id = :eventId AND " +
+        "ei.indicator.code = :code")
+    Optional<EventIndicator> findIndicatorsForCodeAndEvent(String code, Integer eventId);
+
     @Query("SELECT ei " +
         "FROM EventIndicator ei " +
         "WHERE ei.event.id = :eventId " +

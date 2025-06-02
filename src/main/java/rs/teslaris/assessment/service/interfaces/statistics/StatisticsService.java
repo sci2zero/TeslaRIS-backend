@@ -9,6 +9,10 @@ public interface StatisticsService {
 
     List<String> fetchStatisticsTypeIndicators(StatisticsType statisticsType);
 
+    void savePublicationSeriesView(Integer publicationSeriesId);
+
+    void saveEventView(Integer eventId);
+
     void savePersonView(Integer personId);
 
     void saveDocumentView(Integer documentId);

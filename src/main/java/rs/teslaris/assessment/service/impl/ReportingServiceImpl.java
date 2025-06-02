@@ -230,8 +230,8 @@ public class ReportingServiceImpl implements ReportingService {
     private int getStartYear(ReportType reportType, int assessmentYear) {
         return switch (reportType) {
             case TABLE_67, TABLE_67_POSITIONS -> assessmentYear - 9;
-            case TABLE_63, TABLE_TOP_LEVEL_INSTITUTION, TABLE_TOP_LEVEL_INSTITUTION_SUMMARY, TABLE_TOP_LEVEL_INSTITUTION_COLORED ->
-                assessmentYear;
+            case TABLE_63, TABLE_TOP_LEVEL_INSTITUTION, TABLE_TOP_LEVEL_INSTITUTION_SUMMARY,
+                 TABLE_TOP_LEVEL_INSTITUTION_COLORED -> assessmentYear;
             case TABLE_64 -> assessmentYear - 2;
         };
     }

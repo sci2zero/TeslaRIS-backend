@@ -37,6 +37,15 @@ public class AssessmentMergeController {
             targetJournalId);
     }
 
+    @PatchMapping("/book-series-indicator/source/{sourceBookSeriesId}/target/{targetBookSeriesId}")
+    @PreAuthorize("hasAuthority('MERGE_BOOK_SERIES_PUBLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllIndicatorsToOtherBookSeries(@PathVariable Integer sourceBookSeriesId,
+                                                     @PathVariable Integer targetBookSeriesId) {
+        assessmentMergeService.switchAllIndicatorsToOtherBookSeries(sourceBookSeriesId,
+            targetBookSeriesId);
+    }
+
     @PatchMapping("/conference-indicator/source/{sourceConferenceId}/target/{targetConferenceId}")
     @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -53,5 +62,33 @@ public class AssessmentMergeController {
                                                      @PathVariable Integer targetConferenceId) {
         assessmentMergeService.switchAllClassificationsToOtherEvent(sourceConferenceId,
             targetConferenceId);
+    }
+
+    @PatchMapping("/person-indicator/source/{sourcePersonId}/target/{targetPersonId}")
+    @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllIndicatorsToOtherPerson(@PathVariable Integer sourcePersonId,
+                                                 @PathVariable Integer targetPersonId) {
+        assessmentMergeService.switchAllIndicatorsToOtherPerson(sourcePersonId,
+            targetPersonId);
+    }
+
+    @PatchMapping("/organisation-unit-indicator/source/{sourceOrganisationUnitId}/target/{targetOrganisationUnitId}")
+    @PreAuthorize("hasAuthority('MERGE_OU_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllIndicatorsToOtherOrganisationUnit(
+        @PathVariable Integer sourceOrganisationUnitId,
+        @PathVariable Integer targetOrganisationUnitId) {
+        assessmentMergeService.switchAllIndicatorsToOtherOrganisationUnit(sourceOrganisationUnitId,
+            targetOrganisationUnitId);
+    }
+
+    @PatchMapping("/document-indicator/source/{sourceDocumentId}/target/{targetDocumentId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllIndicatorsToOtherDocument(@PathVariable Integer sourceDocumentId,
+                                                   @PathVariable Integer targetDocumentId) {
+        assessmentMergeService.switchAllIndicatorsToOtherDocument(sourceDocumentId,
+            targetDocumentId);
     }
 }

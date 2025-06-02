@@ -68,9 +68,9 @@ public class EntityIndicatorController {
         return switch (UserRole.valueOf(role)) {
             case ADMIN -> documentServiceFunction.apply(AccessLevel.ADMIN_ONLY);
             case RESEARCHER, INSTITUTIONAL_EDITOR,
-                COMMISSION, VICE_DEAN_FOR_SCIENCE,
-                INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY,
-                PROMOTION_REGISTRY_ADMINISTRATOR ->
+                 COMMISSION, VICE_DEAN_FOR_SCIENCE,
+                 INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY,
+                 PROMOTION_REGISTRY_ADMINISTRATOR ->
                 documentServiceFunction.apply(AccessLevel.CLOSED);
         };
     }

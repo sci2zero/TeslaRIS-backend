@@ -59,7 +59,8 @@ public class AssessmentDataInitializer {
         totalViews.setAccessLevel(AccessLevel.OPEN);
         totalViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
-                ApplicableEntityType.ORGANISATION_UNIT));
+                ApplicableEntityType.ORGANISATION_UNIT, ApplicableEntityType.PUBLICATION_SERIES,
+                ApplicableEntityType.EVENT));
         totalViews.setContentType(IndicatorContentType.NUMBER);
 
         var yearlyViews = new Indicator();

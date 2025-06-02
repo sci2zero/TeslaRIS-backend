@@ -103,4 +103,32 @@ public class StatisticsIndexServiceTest {
             statistics.getDocumentId().equals(documentId)
         ));
     }
+
+    @Test
+    void shouldSavePublicationSeriesView() {
+        // Given
+        var publicationSeriesId = 456;
+
+        // When
+        statisticsIndexService.savePublicationSeriesView(publicationSeriesId);
+
+        // Then
+        verify(statisticsIndexRepository, times(1)).save(argThat(statistics ->
+            publicationSeriesId == statistics.getPublicationSeriesId()
+        ));
+    }
+
+    @Test
+    void shouldSaveEventView() {
+        // Given
+        var eventId = 789;
+
+        // When
+        statisticsIndexService.saveEventView(eventId);
+
+        // Then
+        verify(statisticsIndexRepository, times(1)).save(argThat(statistics ->
+            eventId == statistics.getEventId()
+        ));
+    }
 }
