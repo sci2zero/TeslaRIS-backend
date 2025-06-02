@@ -52,6 +52,7 @@ import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.converter.load.publication.JournalPublicationConverter;
 import rs.teslaris.importer.model.converter.load.publication.ProceedingsPublicationConverter;
 import rs.teslaris.importer.service.interfaces.CommonLoader;
+import rs.teslaris.importer.service.interfaces.LoadingConfigurationService;
 import rs.teslaris.importer.utility.DataSet;
 import rs.teslaris.importer.utility.LoadProgressReport;
 import rs.teslaris.importer.utility.ProgressReportUtility;
@@ -92,23 +93,8 @@ public class CommonLoaderImpl implements CommonLoader {
 
     private final PersonService personService;
 
-    @NotNull
-    private static ImportPersonDTO getBasicPersonDTO(Person person) {
-        var basicPersonDTO = new ImportPersonDTO();
+    private final LoadingConfigurationService loadingConfigurationService;
 
-        var personNameDTO = new PersonNameDTO();
-        personNameDTO.setFirstname(person.getName().getFirstName());
-        personNameDTO.setOtherName(person.getName().getMiddleName());
-        personNameDTO.setLastname(person.getName().getLastName());
-        basicPersonDTO.setPersonName(personNameDTO);
-
-        basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
-        basicPersonDTO.setECrisId(person.getECrisId());
-        basicPersonDTO.setENaukaId(person.getENaukaId());
-        basicPersonDTO.setOrcid(person.getOrcid());
-        basicPersonDTO.setApvnt(person.getApvnt());
-        return basicPersonDTO;
-    }
 
     @Override
     public <R> R loadRecordsWizard(Integer userId, Integer institutionId) {
@@ -225,6 +211,7 @@ public class CommonLoaderImpl implements CommonLoader {
     @Override
     public OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId,
                                                  Integer institutionId) {
+        var isUnmanagedLoading = isLoadedAsUnmanagedEntity(userId, institutionId);
         var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
 
         if (Objects.isNull(currentlyLoadedEntity)) {
@@ -235,6 +222,13 @@ public class CommonLoaderImpl implements CommonLoader {
             for (var institution : contribution.getInstitutions()) {
                 if (institution.getScopusAfid().equals(scopusAfid) && Objects.isNull(
                     organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid))) {
+
+                    if (isUnmanagedLoading) {
+                        return new OrganisationUnitDTO() {{
+                            setName(new ArrayList<>());
+                            setMultilingualContent(getName(), institution.getName());
+                        }};
+                    }
 
                     return createLoadedInstitution(institution);
                 }
@@ -247,6 +241,7 @@ public class CommonLoaderImpl implements CommonLoader {
     @Override
     public PersonResponseDTO createPerson(String scopusAuthorId, Integer userId,
                                           Integer institutionId) {
+        var isUnmanagedLoading = isLoadedAsUnmanagedEntity(userId, institutionId);
         var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
 
         if (Objects.isNull(currentlyLoadedEntity)) {
@@ -256,6 +251,15 @@ public class CommonLoaderImpl implements CommonLoader {
         for (var contribution : currentlyLoadedEntity.getContributions()) {
             if (contribution.getPerson().getScopusAuthorId().equals(scopusAuthorId) &&
                 Objects.isNull(personService.findPersonByScopusAuthorId(scopusAuthorId))) {
+
+                if (isUnmanagedLoading) {
+                    return new PersonResponseDTO() {{
+                        setPersonName(new PersonNameDTO(null,
+                            contribution.getPerson().getName().getFirstName(),
+                            contribution.getPerson().getName().getMiddleName(),
+                            contribution.getPerson().getName().getLastName(), null, null));
+                    }};
+                }
 
                 var savedPerson = createLoadedPerson(contribution.getPerson());
 
@@ -298,6 +302,10 @@ public class CommonLoaderImpl implements CommonLoader {
             var scopusAuthorId = contribution.getPerson().getScopusAuthorId();
 
             var savedPersonIndex = personService.findPersonByScopusAuthorId(scopusAuthorId);
+            if (Objects.isNull(savedPersonIndex)) {
+                continue; // does not exist because person is added as non-managed entity
+            }
+
             var savedPerson = personService.findOne(savedPersonIndex.getDatabaseId());
 
             contribution.getInstitutions().forEach(institution -> {
@@ -614,6 +622,24 @@ public class CommonLoaderImpl implements CommonLoader {
         return null;
     }
 
+    @NotNull
+    private ImportPersonDTO getBasicPersonDTO(Person person) {
+        var basicPersonDTO = new ImportPersonDTO();
+
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname(person.getName().getFirstName());
+        personNameDTO.setOtherName(person.getName().getMiddleName());
+        personNameDTO.setLastname(person.getName().getLastName());
+        basicPersonDTO.setPersonName(personNameDTO);
+
+        basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
+        basicPersonDTO.setECrisId(person.getECrisId());
+        basicPersonDTO.setENaukaId(person.getENaukaId());
+        basicPersonDTO.setOrcid(person.getOrcid());
+        basicPersonDTO.setApvnt(person.getApvnt());
+        return basicPersonDTO;
+    }
+
     @Nullable
     private <R> R findAndConvertEntity(Query query, Integer userId, Integer institutionId) {
         var entity = mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
@@ -645,5 +671,15 @@ public class CommonLoaderImpl implements CommonLoader {
 
         }
         return null;
+    }
+
+    private boolean isLoadedAsUnmanagedEntity(Integer userId, Integer institutionId) {
+        if (Objects.isNull(institutionId)) {
+            return loadingConfigurationService.getLoadingConfigurationForResearcherUser(userId)
+                .getLoadedEntitiesAreUnmanaged();
+        } else {
+            return loadingConfigurationService.getLoadingConfigurationForAdminUser(institutionId)
+                .getLoadedEntitiesAreUnmanaged();
+        }
     }
 }
