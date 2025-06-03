@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -112,18 +113,20 @@ public class CommonLoaderTest {
         var lastLoadedId = "someId";
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var expectedQuery = new Query();
         expectedQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         expectedQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        expectedQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+        expectedQuery.addCriteria(Criteria.where("_id").gte(progressReport.getLastLoadedId()));
         expectedQuery.limit(1);
 
         var documentImport = new DocumentImport();
         documentImport.setPublicationType(publicationType);
+        documentImport.setId(ProgressReportUtility.DEFAULT_HEX_ID);
         when(mongoTemplate.findOne(expectedQuery, DocumentImport.class,
             "documentImports")).thenReturn(documentImport);
         when(proceedingsPublicationConverter.toImportDTO(documentImport)).thenReturn(
@@ -154,6 +157,7 @@ public class CommonLoaderTest {
 
         var documentImport = new DocumentImport();
         documentImport.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+        documentImport.setId(ProgressReportUtility.DEFAULT_HEX_ID);
         when(mongoTemplate.findOne(expectedQuery, DocumentImport.class,
             "documentImports")).thenReturn(documentImport);
         when(proceedingsPublicationConverter.toImportDTO(documentImport)).thenReturn(
@@ -208,7 +212,7 @@ public class CommonLoaderTest {
         var lastLoadedId = "someId";
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
@@ -237,7 +241,7 @@ public class CommonLoaderTest {
         var lastLoadedId = "someId";
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
@@ -270,24 +274,26 @@ public class CommonLoaderTest {
         var nextRecordId = "nextId";
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gt(lastLoadedId));
+        nextRecordQuery.addCriteria(Criteria.where("_id").gt(progressReport.getLastLoadedId()));
 
         var nextRecord = new DocumentImport();
         nextRecord.setIdentifier(nextRecordId);
+        nextRecord.setId(ProgressReportUtility.DEFAULT_HEX_ID);
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(nextRecord);
 
         // When
         commonLoader.skipRecord(userId, null);
 
         // Then
-        assertEquals(nextRecordId, progressReport.getLastLoadedId());
+        assertEquals(nextRecordId, progressReport.getLastLoadedIdentifier());
         verify(mongoTemplate).save(progressReport);
         ProgressReportUtility.deleteProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate);
@@ -300,7 +306,8 @@ public class CommonLoaderTest {
         var lastLoadedId = "someId";
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
@@ -315,7 +322,8 @@ public class CommonLoaderTest {
         commonLoader.skipRecord(userId, null);
 
         // Then
-        assertEquals("", progressReport.getLastLoadedId());
+        assertEquals(ProgressReportUtility.DEFAULT_HEX_ID,
+            progressReport.getLastLoadedId().toHexString());
         verify(mongoTemplate).save(progressReport);
         ProgressReportUtility.deleteProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate);
@@ -356,14 +364,15 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setContributions(List.of(contribution));
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
 
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(
@@ -391,7 +400,7 @@ public class CommonLoaderTest {
         var userId = 1;
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
@@ -420,7 +429,7 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setContributions(new ArrayList<>());
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
@@ -455,7 +464,7 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setContributions(List.of(contribution));
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
@@ -464,7 +473,7 @@ public class CommonLoaderTest {
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
 
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(
@@ -495,7 +504,7 @@ public class CommonLoaderTest {
         var userId = 1;
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
@@ -524,7 +533,7 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setContributions(new ArrayList<>());
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
@@ -555,14 +564,14 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setEIssn(eIssn);
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
 
         var createdJournal = new Journal();
         createdJournal.setId(1);
@@ -587,7 +596,7 @@ public class CommonLoaderTest {
         var userId = 1;
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
@@ -614,7 +623,7 @@ public class CommonLoaderTest {
         var currentlyLoadedEntity = new DocumentImport();
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
@@ -642,14 +651,14 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setEvent(new Event());
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
 
         var createdProceedings = new Proceedings();
         createdProceedings.setId(1);
@@ -681,14 +690,14 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setEvent(new Event());
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
 
         var createdProceedings = new Proceedings();
         createdProceedings.setId(1);
@@ -715,7 +724,7 @@ public class CommonLoaderTest {
         var userId = 1;
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
@@ -747,14 +756,15 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setContributions(List.of(contribution));
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
 
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(
@@ -790,14 +800,15 @@ public class CommonLoaderTest {
         currentlyLoadedEntity.setContributions(List.of(contribution));
 
         var progressReport = new LoadProgressReport();
-        progressReport.setLastLoadedId(lastLoadedId);
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
-        nextRecordQuery.addCriteria(Criteria.where("identifier").gte(lastLoadedId));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
 
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(

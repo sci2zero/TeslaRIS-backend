@@ -5,7 +5,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +72,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         var yearlyResults =
             scopusImportUtility.getDocumentsByIdentifier(scopusId, true, startYear, endYear);
 
-        performDocumentHarvest(yearlyResults, userId, newEntriesCount, employmentInstitutionIds);
+        performDocumentHarvest(yearlyResults, userId, false, newEntriesCount,
+            employmentInstitutionIds);
 
         return newEntriesCount;
     }
@@ -96,86 +99,109 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         var yearlyResults =
             scopusImportUtility.getDocumentsByIdentifier(scopusAfid, false, startYear, endYear);
 
-        performDocumentHarvest(yearlyResults, userId, newEntriesCount,
+        performDocumentHarvest(yearlyResults, userId, true, newEntriesCount,
             allInstitutionsThatCanImport);
 
         return newEntriesCount;
     }
 
     private void performDocumentHarvest(
-        List<ScopusImportUtility.ScopusSearchResponse> yearlyResults, Integer userId,
-        HashMap<Integer, Integer> newEntriesCount, List<Integer> institutionIds) {
-        var adminUserIds =
-            userService.findAllSystemAdminUsers().stream().map(BaseEntity::getId)
-                .collect(Collectors.toSet());
+        List<ScopusImportUtility.ScopusSearchResponse> yearlyResults,
+        Integer userId, Boolean employeeUser,
+        HashMap<Integer, Integer> newEntriesCount,
+        List<Integer> institutionIds) {
 
-        yearlyResults.forEach(
-            yearlyResult -> yearlyResult.searchResults().entries().forEach(entry -> {
+        var adminUserIds = getAdminUserIds();
+
+        for (var yearlyResult : yearlyResults) {
+            for (var entry : yearlyResult.searchResults().entries()) {
                 if (Objects.isNull(entry.title())) {
-                    return;
+                    continue;
                 }
 
-                var query = new Query();
-                query.addCriteria(Criteria.where("identifier").is(entry.identifier()));
-                var documentImportBackup =
-                    mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
-
-                INDArray importedDocumentEmbedding = null;
-                try {
-                    var flattenedDocument = DeduplicationUtil.flattenJson(
-                        new ObjectMapper().writeValueAsString(entry));
-                    importedDocumentEmbedding = DeduplicationUtil.getEmbedding(flattenedDocument);
-                } catch (JsonProcessingException | TranslateException e) {
-                    log.error(
-                        "Unexpected error while calculating imported document's embedding. Exception: {}",
-                        e.getMessage());
-                }
-
-                if (Objects.nonNull(documentImportBackup)) {
-                    if (Objects.nonNull(importedDocumentEmbedding) &&
-                        Objects.nonNull(documentImportBackup.getEmbedding())) {
-                        var backupEmbedding = Nd4j.create(documentImportBackup.getEmbedding());
-                        double similarity =
-                            DeduplicationUtil.cosineSimilarity(importedDocumentEmbedding,
-                                backupEmbedding);
-                        if (similarity > DeduplicationUtil.MIN_SIMILARITY_THRESHOLD) {
-                            return;
-                        }
-                    }
+                var existingImport = findExistingImport(entry.identifier());
+                var embedding = generateEmbedding(entry);
+                if (isDuplicate(existingImport, embedding)) {
+                    continue;
                 }
 
                 var optionalDocument =
                     ScopusConverter.toCommonImportModel(entry, scopusImportUtility);
                 if (optionalDocument.isEmpty()) {
                     log.info("Harvested entry is retracted: {}", entry.title());
-                    return;
+                    continue;
+                }
+
+                if (employeeUser) {
+                    newEntriesCount.merge(userId, 1, Integer::sum);
                 }
 
                 var documentImport = optionalDocument.get();
-                documentImport.setIdentifier(entry.identifier());
-
-                if (Objects.nonNull(importedDocumentEmbedding)) {
-                    documentImport.setEmbedding(importedDocumentEmbedding.toFloatVector());
-                }
-
-                documentImport.getImportUsersId().add(userId);
-                documentImport.getImportUsersId().addAll(adminUserIds);
-                documentImport.getImportInstitutionsId().addAll(institutionIds);
-
-                documentImport.getContributions().forEach(personDocumentContribution -> {
-                    var contributorUserOptional = personService.findUserByScopusAuthorId(
-                        personDocumentContribution.getPerson().getScopusAuthorId());
-
-                    if (contributorUserOptional.isEmpty()) {
-                        return;
-                    }
-
-                    var contributorUserId = contributorUserOptional.get().getId();
-                    documentImport.getImportUsersId().add(contributorUserId);
-                    newEntriesCount.merge(contributorUserId, 1, Integer::sum);
-                });
-
+                enrichDocumentImport(documentImport, entry.identifier(), embedding, userId,
+                    adminUserIds, institutionIds);
+                updateContributors(documentImport, newEntriesCount);
                 mongoTemplate.save(documentImport, "documentImports");
-            }));
+            }
+        }
+    }
+
+    private Set<Integer> getAdminUserIds() {
+        return userService.findAllSystemAdminUsers().stream()
+            .map(BaseEntity::getId)
+            .collect(Collectors.toSet());
+    }
+
+    private DocumentImport findExistingImport(String identifier) {
+        var query = new Query(Criteria.where("identifier").is(identifier));
+        return mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
+    }
+
+    private INDArray generateEmbedding(ScopusImportUtility.Entry entry) {
+        try {
+            var json = new ObjectMapper().writeValueAsString(entry);
+            var flattened = DeduplicationUtil.flattenJson(json);
+            return DeduplicationUtil.getEmbedding(flattened);
+        } catch (JsonProcessingException | TranslateException e) {
+            log.error("Error generating embedding: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean isDuplicate(DocumentImport backup, INDArray newEmbedding) {
+        if (Objects.isNull(backup) || Objects.isNull(newEmbedding) ||
+            Objects.isNull(backup.getEmbedding())) {
+            return false;
+        }
+
+        var oldEmbedding = Nd4j.create(backup.getEmbedding());
+        var similarity = DeduplicationUtil.cosineSimilarity(newEmbedding, oldEmbedding);
+        return similarity > DeduplicationUtil.MIN_SIMILARITY_THRESHOLD;
+    }
+
+    private void enrichDocumentImport(DocumentImport doc,
+                                      String identifier,
+                                      INDArray embedding,
+                                      Integer userId,
+                                      Set<Integer> adminUserIds,
+                                      List<Integer> institutionIds) {
+        doc.setIdentifier(identifier);
+        if (Objects.nonNull(embedding)) {
+            doc.setEmbedding(embedding.toFloatVector());
+        }
+        doc.getImportUsersId().add(userId);
+        doc.getImportUsersId().addAll(adminUserIds);
+        doc.getImportInstitutionsId().addAll(institutionIds);
+    }
+
+    private void updateContributors(DocumentImport doc, Map<Integer, Integer> newEntriesCount) {
+        for (var contribution : doc.getContributions()) {
+            var scopusId = contribution.getPerson().getScopusAuthorId();
+            var userOpt = personService.findUserByScopusAuthorId(scopusId);
+            userOpt.ifPresent(user -> {
+                var contributorId = user.getId();
+                doc.getImportUsersId().add(contributorId);
+                newEntriesCount.merge(contributorId, 1, Integer::sum);
+            });
+        }
     }
 }

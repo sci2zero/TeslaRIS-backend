@@ -120,7 +120,8 @@ public class ScopusConverter {
 
         if (Objects.nonNull(entry.authKeywords())) {
             document.getKeywords()
-                .add(new MultilingualContent("EN", entry.authKeywords().replace("|", "\n"), 1));
+                .add(new MultilingualContent("EN",
+                    entry.authKeywords().replace("|", "\n").replace(" ", ""), 1));
         }
 
         setContributionInformation(entry, document);

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -109,8 +110,9 @@ public class CommonLoaderImpl implements CommonLoader {
         var progressReport =
             ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
                 mongoTemplate);
-        if (progressReport != null) {
-            query.addCriteria(Criteria.where("identifier").gte(progressReport.getLastLoadedId()));
+        if (Objects.nonNull(progressReport)) {
+            query.addCriteria(
+                Criteria.where("_id").gte(progressReport.getLastLoadedId()));
         } else {
             query.addCriteria(Criteria.where("identifier").gte(""));
         }
@@ -132,7 +134,10 @@ public class CommonLoaderImpl implements CommonLoader {
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
                     institutionId, mongoTemplate),
-                new LoadProgressReport("1", userId, institutionId, DataSet.DOCUMENT_IMPORTS));
+                new LoadProgressReport("1", new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID),
+                    userId,
+                    institutionId,
+                    DataSet.DOCUMENT_IMPORTS));
         Query nextRecordQuery = new Query();
         if (Objects.nonNull(institutionId)) {
             nextRecordQuery.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
@@ -141,19 +146,24 @@ public class CommonLoaderImpl implements CommonLoader {
         }
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
         nextRecordQuery.addCriteria(
-            Criteria.where("identifier").gt(progressReport.getLastLoadedId()));
+            Criteria.where("_id").gt(new ObjectId(progressReport.getLastLoadedId().toHexString())));
 
         var nextRecord = mongoTemplate.findOne(nextRecordQuery, DocumentImport.class);
         if (Objects.nonNull(nextRecord)) {
-            Method getIdMethod;
+            Method getIdMethod, getIdentifierMethod;
             try {
-                getIdMethod = DocumentImport.class.getMethod("getIdentifier");
-                progressReport.setLastLoadedId((String) getIdMethod.invoke(nextRecord));
+                getIdentifierMethod = DocumentImport.class.getMethod("getIdentifier");
+                getIdMethod = DocumentImport.class.getMethod("getId");
+                progressReport.setLastLoadedIdentifier(
+                    (String) getIdentifierMethod.invoke(nextRecord));
+                progressReport.setLastLoadedId(
+                    new ObjectId((String) getIdMethod.invoke(nextRecord)));
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 return;
             }
         } else {
-            progressReport.setLastLoadedId("");
+            progressReport.setLastLoadedIdentifier("");
+            progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
         }
 
         ProgressReportUtility.deleteProgressReport(
@@ -168,10 +178,14 @@ public class CommonLoaderImpl implements CommonLoader {
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
                     institutionId,
                     mongoTemplate),
-                new LoadProgressReport("1", userId, institutionId, DataSet.DOCUMENT_IMPORTS));
+                new LoadProgressReport("1", new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID),
+                    userId,
+                    institutionId,
+                    DataSet.DOCUMENT_IMPORTS));
 
         Query query = new Query();
-        query.addCriteria(Criteria.where("identifier").is(progressReport.getLastLoadedId()));
+        query.addCriteria(
+            Criteria.where("identifier").is(progressReport.getLastLoadedIdentifier()));
         if (Objects.nonNull(institutionId)) {
             query.addCriteria(Criteria.where("import_institutions_id").is(institutionId));
         } else {
@@ -382,7 +396,8 @@ public class CommonLoaderImpl implements CommonLoader {
             ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
                 mongoTemplate);
         if (progressReport != null) {
-            query.addCriteria(Criteria.where("identifier").gte(progressReport.getLastLoadedId()));
+            query.addCriteria(
+                Criteria.where("identifier").is(progressReport.getLastLoadedIdentifier()));
         } else {
             throw new NotFoundException("No entity is being loaded at the moment.");
         }
@@ -645,17 +660,20 @@ public class CommonLoaderImpl implements CommonLoader {
         var entity = mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
 
         if (Objects.nonNull(entity)) {
-            Method getIdMethod;
+            Method getIdMethod, getIdentifierMethod;
 
             try {
-                getIdMethod = DocumentImport.class.getMethod("getIdentifier");
+                getIdentifierMethod = DocumentImport.class.getMethod("getIdentifier");
+                getIdMethod = DocumentImport.class.getMethod("getId");
             } catch (NoSuchMethodException e) {
                 return null;
             }
 
             try {
                 ProgressReportUtility.updateProgressReport(DataSet.DOCUMENT_IMPORTS,
-                    (String) getIdMethod.invoke(entity), userId, institutionId, mongoTemplate);
+                    (String) getIdentifierMethod.invoke(entity),
+                    (String) getIdMethod.invoke(entity), userId, institutionId,
+                    mongoTemplate);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 return null;
             }

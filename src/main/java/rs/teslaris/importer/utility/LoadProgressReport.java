@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.bson.types.ObjectId;
 
 @Getter
 @Setter
@@ -13,7 +14,9 @@ import lombok.ToString;
 @ToString
 public class LoadProgressReport {
 
-    private String lastLoadedId;
+    private String lastLoadedIdentifier;
+
+    private ObjectId lastLoadedId;
 
     private Integer userId;
 

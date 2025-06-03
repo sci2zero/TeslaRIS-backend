@@ -2,12 +2,16 @@ package rs.teslaris.importer.utility;
 
 import jakarta.annotation.Nullable;
 import java.util.Objects;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 
 public class ProgressReportUtility {
+
+    public static String DEFAULT_HEX_ID = "000000000000000000000000";
+
 
     public static void resetProgressReport(DataSet requestDataSet, Integer userId,
                                            Integer institutionId,
@@ -21,7 +25,9 @@ public class ProgressReportUtility {
         }
 
         mongoTemplate.remove(deleteQuery, LoadProgressReport.class);
-        mongoTemplate.save(new LoadProgressReport("", userId, institutionId, requestDataSet));
+        mongoTemplate.save(
+            new LoadProgressReport("", new ObjectId(DEFAULT_HEX_ID), userId, institutionId,
+                requestDataSet));
     }
 
     public static void deleteProgressReport(DataSet requestDataSet, Integer userId,
@@ -54,7 +60,8 @@ public class ProgressReportUtility {
         return mongoTemplate.findOne(query, LoadProgressReport.class);
     }
 
-    public static void updateProgressReport(DataSet requestDataSet, String lastLoadedId,
+    public static void updateProgressReport(DataSet requestDataSet, String lastLoadedIdentifier,
+                                            String lastLoadedId,
                                             Integer userId, Integer institutionId,
                                             MongoTemplate mongoTemplate) {
         Query deleteQuery = new Query();
@@ -68,6 +75,7 @@ public class ProgressReportUtility {
         mongoTemplate.remove(deleteQuery, LoadProgressReport.class);
 
         mongoTemplate.save(
-            new LoadProgressReport(lastLoadedId, userId, institutionId, requestDataSet));
+            new LoadProgressReport(lastLoadedIdentifier, new ObjectId(lastLoadedId), userId,
+                institutionId, requestDataSet));
     }
 }
