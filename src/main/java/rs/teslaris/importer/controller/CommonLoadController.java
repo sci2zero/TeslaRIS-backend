@@ -49,9 +49,12 @@ public class CommonLoadController {
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
     public void markRecordAsLoaded(
         @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestParam(required = false) Integer oldDocumentId,
+        @RequestParam(required = false) Boolean deleteOldDocument,
         @RequestHeader("Authorization") String bearerToken) {
         loader.markRecordAsLoaded(tokenUtil.extractUserIdFromToken(bearerToken),
-            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId), oldDocumentId,
+            deleteOldDocument);
     }
 
     @GetMapping("/load-wizard/count-remaining")

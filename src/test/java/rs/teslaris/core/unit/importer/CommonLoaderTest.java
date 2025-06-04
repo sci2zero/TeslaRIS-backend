@@ -11,19 +11,25 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -31,15 +37,18 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
+import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
@@ -100,9 +109,22 @@ public class CommonLoaderTest {
     @Mock
     private LoadingConfigurationService loadingConfigurationService;
 
+    @Mock
+    private DocumentPublicationService documentPublicationService;
+
     @InjectMocks
     private CommonLoaderImpl commonLoader;
 
+
+    private static Stream<Arguments> argumentSources() {
+        return Stream.of(
+            Arguments.of(1, true),
+            Arguments.of(1, false),
+            Arguments.of(null, true),
+            Arguments.of(null, false),
+            Arguments.of(null, null)
+        );
+    }
 
     @ParameterizedTest
     @EnumSource(value = DocumentPublicationType.class, names = {"PROCEEDINGS_PUBLICATION",
@@ -205,8 +227,10 @@ public class CommonLoaderTest {
         assertNull(result);
     }
 
-    @Test
-    void shouldMarkRecordAsLoadedSuccessfully() {
+    @ParameterizedTest
+    @MethodSource("argumentSources")
+    void shouldMarkRecordAsLoadedSuccessfully(Integer oldPublicationId,
+                                              Boolean deleteOldPublication) {
         // Given
         var userId = 1;
         var lastLoadedId = "someId";
@@ -215,6 +239,15 @@ public class CommonLoaderTest {
         progressReport.setLastLoadedIdentifier(lastLoadedId);
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
+
+        if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
+            when(documentPublicationService.findDocumentDuplicates(any(), any(), any())).thenReturn(
+                new PageImpl<>(List.of(new DocumentPublicationIndex() {{
+                    setDatabaseId(1);
+                }})));
+            when(documentPublicationService.findDocumentById(1)).thenReturn(
+                new JournalPublication());
+        }
 
         var entityClass = DataSet.getClassForValue(DataSet.DOCUMENT_IMPORTS.getStringValue());
 
@@ -231,11 +264,24 @@ public class CommonLoaderTest {
                 any(FindAndModifyOptions.class), eq(entityClass));
 
         // When
-        commonLoader.markRecordAsLoaded(userId, null);
+        commonLoader.markRecordAsLoaded(userId, null, oldPublicationId, deleteOldPublication);
+
+        if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
+            verify(documentPublicationService, times(1)).findDocumentDuplicates(any(), any(),
+                any());
+            if (deleteOldPublication) {
+                verify(documentPublicationService, times(1)).deleteDocumentPublication(1);
+            } else {
+                verify(documentPublicationService, times(1)).findDocumentById(1);
+                verify(documentPublicationService, times(1)).save(any());
+            }
+        }
     }
 
-    @Test
-    void shouldThrowExceptionWhenRecordAlreadyLoaded() {
+    @ParameterizedTest
+    @MethodSource("argumentSources")
+    void shouldThrowExceptionWhenRecordAlreadyLoaded(Integer oldPublicationId,
+                                                     Boolean deleteOldPublication) {
         // Given
         var userId = 1;
         var lastLoadedId = "someId";
@@ -261,7 +307,8 @@ public class CommonLoaderTest {
 
         // When
         assertThrows(RecordAlreadyLoadedException.class,
-            () -> commonLoader.markRecordAsLoaded(userId, null));
+            () -> commonLoader.markRecordAsLoaded(userId, null, oldPublicationId,
+                deleteOldPublication));
 
         // Then (RecordAlreadyLoadedException should be thrown)
     }

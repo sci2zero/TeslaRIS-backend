@@ -30,6 +30,7 @@ import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.person.Employment;
@@ -38,6 +39,7 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
@@ -95,6 +97,8 @@ public class CommonLoaderImpl implements CommonLoader {
     private final PersonService personService;
 
     private final LoadingConfigurationService loadingConfigurationService;
+
+    private final DocumentPublicationService documentPublicationService;
 
 
     @Override
@@ -172,7 +176,8 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     @Override
-    public void markRecordAsLoaded(Integer userId, Integer institutionId) {
+    public void markRecordAsLoaded(Integer userId, Integer institutionId, Integer oldDocumentId,
+                                   Boolean deleteOldDocument) {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
@@ -207,6 +212,9 @@ public class CommonLoaderImpl implements CommonLoader {
         }
 
         updatePersonInvolvements((DocumentImport) updatedRecord);
+
+        handleDeduplication(oldDocumentId, deleteOldDocument, (DocumentImport) updatedRecord,
+            progressReport);
     }
 
     @Override
@@ -349,6 +357,35 @@ public class CommonLoaderImpl implements CommonLoader {
 
             personService.save(savedPerson);
             personService.indexPerson(savedPerson, savedPerson.getId());
+        }
+    }
+
+    private void handleDeduplication(Integer oldDocumentId, Boolean deleteOldDocument,
+                                     DocumentImport updatedRecord,
+                                     LoadProgressReport progressReport) {
+        if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0 &&
+            Objects.nonNull(deleteOldDocument)) {
+            var doi = Objects.requireNonNullElse(updatedRecord.getDoi(), "");
+            var scopus =
+                Objects.requireNonNullElse(updatedRecord.getScopusId(), "");
+            var titles = updatedRecord.getTitle().stream().map(
+                MultilingualContent::getContent).toList();
+            var potentialDuplicateIds =
+                documentPublicationService.findDocumentDuplicates(titles, doi, scopus).getContent()
+                    .stream().map(
+                        DocumentPublicationIndex::getDatabaseId).toList();
+
+            if (!potentialDuplicateIds.contains(oldDocumentId)) {
+                return;
+            }
+
+            if (deleteOldDocument) {
+                documentPublicationService.deleteDocumentPublication(oldDocumentId);
+            } else {
+                var oldDocument = documentPublicationService.findDocumentById(oldDocumentId);
+                oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
+                documentPublicationService.save(oldDocument);
+            }
         }
     }
 
