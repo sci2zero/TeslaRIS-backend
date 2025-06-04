@@ -74,4 +74,27 @@ public class StatisticsController {
 
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
     }
+
+    @PostMapping("/publication-series/{publicationSeriesId}")
+    @Idempotent
+    public ResponseEntity<Void> registerPublicationSeriesView(
+        @PathVariable Integer publicationSeriesId) {
+        if (bucket.tryConsume(1)) {
+            statisticsService.savePublicationSeriesView(publicationSeriesId);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        }
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+    }
+
+    @PostMapping("/event/{eventId}")
+    @Idempotent
+    public ResponseEntity<Void> registerEventView(@PathVariable Integer eventId) {
+        if (bucket.tryConsume(1)) {
+            statisticsService.saveEventView(eventId);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        }
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+    }
 }

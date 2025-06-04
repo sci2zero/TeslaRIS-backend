@@ -20,6 +20,11 @@
       "downloadsTotal": "LocalDateTime.of(1970, 1, 1, 0, 0)"
     }
   },
+  "statisticExclusions": {
+    "Journal": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"],
+    "BookSeries": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"],
+    "Conference": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"]
+  },
   "publicationSeriesCSVIndicatorMapping": {
     "webOfScience": {
       "source": "WEB_OF_SCIENCE",

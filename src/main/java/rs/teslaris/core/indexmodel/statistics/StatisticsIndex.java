@@ -32,6 +32,12 @@ public class StatisticsIndex {
     @Field(type = FieldType.Integer, store = true, name = "organisation_unit_id")
     private Integer organisationUnitId;
 
+    @Field(type = FieldType.Integer, store = true, name = "event_id")
+    private Integer eventId;
+
+    @Field(type = FieldType.Integer, store = true, name = "publication_series_id")
+    private Integer publicationSeriesId;
+
     @Field(type = FieldType.Keyword, store = true, name = "type")
     private String type;
 

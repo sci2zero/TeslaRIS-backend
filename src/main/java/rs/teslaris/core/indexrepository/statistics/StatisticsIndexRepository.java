@@ -20,4 +20,14 @@ public interface StatisticsIndexRepository
                                                                 String type,
                                                                 Integer organisationUnitId);
 
+    Integer countByTimestampBetweenAndTypeAndPublicationSeriesId(LocalDateTime from,
+                                                                 LocalDateTime to,
+                                                                 String type,
+                                                                 Integer publicationSeriesId);
+
+    Integer countByTimestampBetweenAndTypeAndEventId(LocalDateTime from,
+                                                     LocalDateTime to,
+                                                     String type,
+                                                     Integer eventId);
+
 }

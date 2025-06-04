@@ -71,6 +71,10 @@ public class IndicatorMappingConfigurationLoader {
         return indicatorCodes.stream().toList();
     }
 
+    public static boolean isStatisticIndicatorCode(String code) {
+        return fetchAllStatisticsIndicatorCodes().contains(code);
+    }
+
     public static PublicationSeriesIndicatorMapping fetchPublicationSeriesCSVIndicatorMapping(
         String mappingName) {
         return indicatorMappingConfiguration.publicationSeriesCSVIndicatorMapping.getOrDefault(
@@ -81,9 +85,21 @@ public class IndicatorMappingConfigurationLoader {
         return indicatorMappingConfiguration.ifTableContent;
     }
 
+    public static List<String> getExclusionsForClass(String className) {
+        var classNameParts = className.split("\\.");
+        var name = classNameParts[classNameParts.length - 1];
+
+        if (!indicatorMappingConfiguration.exclusions.containsKey(name)) {
+            return List.of();
+        }
+
+        return indicatorMappingConfiguration.exclusions().get(name);
+    }
+
     private record IndicatorMappingConfiguration(
         @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings,
         @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets,
+        @JsonProperty(value = "statisticExclusions", required = true) Map<String, List<String>> exclusions,
         @JsonProperty(value = "publicationSeriesCSVIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesCSVIndicatorMapping,
         @JsonProperty(value = "ifTableContent") List<String> ifTableContent
     ) {

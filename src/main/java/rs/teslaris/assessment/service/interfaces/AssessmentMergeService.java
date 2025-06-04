@@ -12,4 +12,12 @@ public interface AssessmentMergeService {
     void switchAllIndicatorsToOtherEvent(Integer sourceId, Integer targetId);
 
     void switchAllClassificationsToOtherEvent(Integer sourceId, Integer targetId);
+
+    void switchAllIndicatorsToOtherPerson(Integer sourceId, Integer targetId);
+
+    void switchAllIndicatorsToOtherOrganisationUnit(Integer sourceId, Integer targetId);
+
+    void switchAllIndicatorsToOtherDocument(Integer sourceId, Integer targetId);
+
+    void switchAllIndicatorsToOtherBookSeries(Integer sourceId, Integer targetId);
 }
