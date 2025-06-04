@@ -415,9 +415,6 @@
                     <referenceUrl>jdbc:postgresql://localhost:5432/TeslaRISDB_stage</referenceUrl>
                     <referenceUsername>postgres</referenceUsername>
                     <referencePassword>root</referencePassword>
-               
-                    <!-- <referenceUrl>hibernate:spring:rs.teslaris.demo.model?dialect=org.hibernate.dialect.PostgreSQLDialect</referenceUrl> -->
-                    <!-- <referenceDriver>liquibase.ext.hibernate.database.connection.HibernateDriver</referenceDriver> -->
 
                     <verbose>true</verbose>
                 </configuration>
