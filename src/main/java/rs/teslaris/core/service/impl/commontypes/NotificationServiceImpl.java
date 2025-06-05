@@ -125,6 +125,11 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
+    public void dismissAll(Integer userId) {
+        notificationRepository.deleteAllForUser(userId);
+    }
+
+    @Override
     @Nullable
     public Notification createNotification(Notification notification) {
         if (Objects.requireNonNull(notification.getNotificationType())

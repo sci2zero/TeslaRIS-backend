@@ -88,7 +88,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
         var restTemplate = constructRestTemplate();
 
         // Reset Loader progress
-        ProgressReportUtility.resetProgressReport(requestDataSet, userId, mongoTemplate);
+        ProgressReportUtility.resetProgressReport(requestDataSet, userId, null, mongoTemplate);
 
         var harvestProgressReport = getProgressReport(requestDataSet, userId);
 

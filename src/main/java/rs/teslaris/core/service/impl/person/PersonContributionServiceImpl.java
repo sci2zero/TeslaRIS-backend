@@ -31,7 +31,6 @@ import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Contact;
-import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -256,25 +255,6 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             !contributionDTO.getInstitutionIds().isEmpty()) {
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
                 var organisationUnit = organisationUnitService.findOne(institutionId);
-
-                var allowedInstitutionIds = new HashSet<Integer>();
-                contribution.getPerson().getInvolvements().stream().filter(involvement ->
-                        (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                            involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                            Objects.nonNull(involvement.getOrganisationUnit()))
-                    .forEach(involvement -> {
-                        var involvementInstitutionId = involvement.getOrganisationUnit().getId();
-                        allowedInstitutionIds.add(involvementInstitutionId);
-                        allowedInstitutionIds.addAll(
-                            organisationUnitService.getSuperOUsHierarchyRecursive(
-                                involvementInstitutionId));
-                    });
-
-                if (!allowedInstitutionIds.contains(institutionId)) {
-                    throw new ReferenceConstraintException(
-                        "Contribution cannot be bound to an institution that contributing person is not affiliated with.");
-                }
-
                 contribution.getInstitutions().add(organisationUnit);
             });
         } else {

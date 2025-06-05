@@ -44,7 +44,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens, Pageable pageable,
                                                         SearchRequestType searchType,
                                                         Integer personId,
-                                                        Integer topLevelInstitutionId);
+                                                        Integer topLevelInstitutionId,
+                                                        Boolean onlyReturnOnesWhichCanHarvest);
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
@@ -103,4 +104,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
         throws IOException;
 
     void removeOrganisationUnitLogo(Integer organisationUnitId);
+
+    boolean canOUEmployeeScanDataSources(Integer organisationUnitId);
 }

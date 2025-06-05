@@ -1,0 +1,135 @@
+databaseChangeLog:
+- changeSet:
+    id: 1749123880208-1
+    author: ivanmrsulja (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: loading-configurations_pkey
+            name: id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: institution_id
+            type: INTEGER
+        - column:
+            name: loaded_entities_are_unmanaged
+            type: BOOLEAN
+        - column:
+            name: smart_loading_by_default
+            type: BOOLEAN
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(255)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        tableName: loading-configurations
+- changeSet:
+    id: 1749123880208-2
+    author: ivanmrsulja (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: loading_configurations_pkey
+            name: id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: institution_id
+            type: INTEGER
+        - column:
+            name: loaded_entities_are_unmanaged
+            type: BOOLEAN
+        - column:
+            name: smart_loading_by_default
+            type: BOOLEAN
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(255)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        tableName: loading_configurations
+- changeSet:
+    id: 1749123880208-3
+    author: ivanmrsulja (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: loading-configurations_seq
+        startValue: 1
+- changeSet:
+    id: 1749123880208-4
+    author: ivanmrsulja (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: loading_configurations_seq
+        startValue: 1
+- changeSet:
+    id: 1749123880208-5
+    author: ivanmrsulja (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: institution_id
+        baseTableName: loading_configurations
+        constraintName: fke247jom0yh8m6fpc02p3fa97o
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_units
+        validate: true
+

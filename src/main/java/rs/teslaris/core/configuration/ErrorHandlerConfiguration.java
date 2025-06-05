@@ -15,6 +15,7 @@ import org.hibernate.StaleStateException;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.SchedulingException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -444,6 +445,14 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleBadCredentialsException(HttpServletRequest request,
                                               BadCredentialsException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseBody
+    ErrorObject handleAccessDeniedException(HttpServletRequest request,
+                                            AccessDeniedException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

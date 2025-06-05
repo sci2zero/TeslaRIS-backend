@@ -663,6 +663,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    public List<User> findAllSystemAdminUsers() {
+        return userRepository.findAllSystemAdminUsers();
+    }
+
+    @Override
     @Transactional
     public void deleteUserAccount(Integer userId) {
         var userToDelete = findOne(userId);

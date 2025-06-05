@@ -3,6 +3,7 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -132,5 +133,17 @@ public class NotificationServiceTest {
         });
 
         // Then (NotificationException should be thrown)
+    }
+
+    @Test
+    void shouldDeleteAllNotificationsForUser() {
+        // Given
+        var userId = 42;
+
+        // When
+        notificationService.dismissAll(userId);
+
+        // Then
+        verify(notificationRepository, times(1)).deleteAllForUser(userId);
     }
 }

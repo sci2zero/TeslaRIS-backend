@@ -133,10 +133,10 @@ public class OrganisationUnitServiceTest {
 
     private static Stream<Arguments> argumentSources() {
         return Stream.of(
-            Arguments.of(null, null),
-            Arguments.of(null, 2),
-            Arguments.of(1, null),
-            Arguments.of(1, 2)
+            Arguments.of(null, null, null),
+            Arguments.of(null, 2, true),
+            Arguments.of(1, null, false),
+            Arguments.of(1, 2, true)
         );
     }
 
@@ -584,7 +584,8 @@ public class OrganisationUnitServiceTest {
     @ParameterizedTest
     @MethodSource("argumentSources")
     public void shouldFindOrganisationUnitWhenSearchingWithSimpleQuery(Integer personId,
-                                                                       Integer topLevelInstitutionId) {
+                                                                       Integer topLevelInstitutionId,
+                                                                       Boolean onlyReturnOnesWhichCanHarvest) {
         // Given
         var tokens = Arrays.asList("Fakultet tehnickih nauka", "FTN");
         var pageable = PageRequest.of(0, 10);
@@ -597,7 +598,8 @@ public class OrganisationUnitServiceTest {
         // When
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
-                SearchRequestType.SIMPLE, personId, topLevelInstitutionId);
+                SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
+                onlyReturnOnesWhichCanHarvest);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
@@ -1065,6 +1067,48 @@ public class OrganisationUnitServiceTest {
         assertNull(logo.getHeight());
         assertNull(logo.getWidth());
         assertNull(logo.getBackgroundHex());
+    }
+
+    @Test
+    void shouldReturnFalseWhenOrganisationUnitIdIsNull() {
+        var result = organisationUnitService.canOUEmployeeScanDataSources(null);
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenOrganisationUnitHasNullScopusAfid() {
+        var ou = new OrganisationUnit();
+        ou.setScopusAfid(null);
+
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(1)).thenReturn(
+            Optional.of(ou));
+
+        var result = organisationUnitService.canOUEmployeeScanDataSources(1);
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenOrganisationUnitHasEmptyScopusAfid() {
+        var ou = new OrganisationUnit();
+        ou.setScopusAfid("");
+
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(2)).thenReturn(
+            Optional.of(ou));
+
+        boolean result = organisationUnitService.canOUEmployeeScanDataSources(2);
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnTrueWhenOrganisationUnitHasValidScopusAfid() {
+        var ou = new OrganisationUnit();
+        ou.setScopusAfid("123456");
+
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(3)).thenReturn(
+            Optional.of(ou));
+
+        var result = organisationUnitService.canOUEmployeeScanDataSources(3);
+        assertTrue(result);
     }
 
     private MultipartFile createMockMultipartFile() {

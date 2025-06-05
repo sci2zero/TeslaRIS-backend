@@ -95,10 +95,12 @@ public class OrganisationUnitController {
         @RequestParam(value = "personId", required = false) Integer personId,
         @RequestParam(value = "topLevelInstitutionId", required = false)
         Integer topLevelInstitutionId,
+        @RequestParam(required = false) Boolean onlyReturnOnesWhichCanHarvest,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.SIMPLE, personId, topLevelInstitutionId);
+            SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
+            onlyReturnOnesWhichCanHarvest);
     }
 
     @GetMapping("/advanced-search")
@@ -107,7 +109,7 @@ public class OrganisationUnitController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.ADVANCED, null, null);
+            SearchRequestType.ADVANCED, null, null, null);
     }
 
     @PostMapping

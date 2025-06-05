@@ -162,8 +162,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 EntityIndicatorSource.WEB_OF_SCIENCE);
 
         var sortedIF5Values = allIF5Values.stream()
-            .filter((indicator) -> Objects.nonNull(indicator.getNumericValue()) &&
-                (indicator.getEdition().equals("SSCI") || indicator.getEdition().equals("SCIE")))
+            .filter((indicator) -> Objects.nonNull(indicator.getNumericValue()))
             .sorted(
                 Comparator.comparing(EntityIndicator::getNumericValue, Comparator.reverseOrder()))
             .toList();

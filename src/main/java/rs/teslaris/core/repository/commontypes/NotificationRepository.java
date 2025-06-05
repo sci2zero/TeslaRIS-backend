@@ -30,4 +30,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
 
     @Query("SELECT count(n) FROM Notification n WHERE n.user.id = :userId")
     long getNotificationCountForUser(Integer userId);
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.user.id = :userId")
+    void deleteAllForUser(Integer userId);
 }

@@ -103,18 +103,21 @@ public class ScopusImportUtility {
         return false;
     }
 
-    public List<ScopusSearchResponse> getDocumentsByAuthor(String authorID,
-                                                           Integer startYear,
-                                                           Integer endYear) {
+    public List<ScopusSearchResponse> getDocumentsByIdentifier(String identifier,
+                                                               Boolean authorIdentifier,
+                                                               Integer startYear,
+                                                               Integer endYear) {
         var retVal = new ArrayList<ScopusSearchResponse>();
         if (authenticate()) {
             var restTemplate = constructRestTemplate();
             var objectMapper = new ObjectMapper();
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+            var identifiedEntity = authorIdentifier ? "AU" : "AF";
             for (int i = startYear; i <= endYear; i++) {
                 var url =
-                    "https://api.elsevier.com/content/search/scopus?query=AU-ID(" + authorID +
+                    "https://api.elsevier.com/content/search/scopus?query=" + identifiedEntity +
+                        "-ID(" + identifier +
                         ")&count=25&date=" + i + "&view=COMPLETE";
                 var response =
                     getDocumentsByQuery(url, ScopusSearchResponse.class, restTemplate,
@@ -126,8 +129,9 @@ public class ScopusImportUtility {
 
                     for (int j = 25; j < numberOfDocumentsInYear; j += 25) {
                         var urlYear =
-                            "https://api.elsevier.com/content/search/scopus?query=AU-ID(" +
-                                authorID + ")&start=" + j + "&count=25&date=" + i +
+                            "https://api.elsevier.com/content/search/scopus?query=" +
+                                identifiedEntity + "-ID(" +
+                                identifier + ")&start=" + j + "&count=25&date=" + i +
                                 "&view=COMPLETE";
                         var responseYear =
                             getDocumentsByQuery(urlYear, ScopusSearchResponse.class, restTemplate,
