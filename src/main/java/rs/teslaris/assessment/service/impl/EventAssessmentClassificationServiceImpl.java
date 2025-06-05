@@ -19,6 +19,7 @@ import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.EventAssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -30,6 +31,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
 @Transactional
+@Traceable
 public class EventAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl
     implements EventAssessmentClassificationService {

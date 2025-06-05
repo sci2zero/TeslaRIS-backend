@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -30,6 +31,7 @@ import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -42,12 +44,14 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribution>
     implements PersonContributionService {
 
@@ -63,9 +67,11 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
     private final NotificationRepository notificationRepository;
 
-
     @Value("${contribution.approved_by_default}")
     private Boolean contributionApprovedByDefault;
+
+    @Value("${contribution.allow-external-thesis-associates}")
+    private Boolean allowExternalThesisAssociates;
 
 
     @Override
@@ -74,6 +80,12 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         documentDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonDocumentContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
+
+            if (!allowExternalThesisAssociates && (document instanceof Thesis) &&
+                Objects.isNull(contributionDTO.getPersonId())) {
+                throw new ReferenceConstraintException(
+                    "Thesis can't have an external contributor.");
+            }
 
             if (contributionDTO.getContributionType()
                 .equals(DocumentContributionType.BOARD_MEMBER) && !(document instanceof Thesis)) {
@@ -85,8 +97,12 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contribution.setIsMainContributor(contributionDTO.getIsMainContributor());
             contribution.setIsCorrespondingContributor(
                 contributionDTO.getIsCorrespondingContributor());
+
+            // TODO: Should we add some checks for these 3?
             contribution.setIsBoardPresident(
                 contributionDTO.getIsBoardPresident());
+            contribution.setPersonalTitle(contributionDTO.getPersonalTitle());
+            contribution.setEmploymentTitle(contributionDTO.getEmploymentTitle());
 
             var addedPrevoiusly = document.getContributors().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
@@ -175,8 +191,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         }
 
         contribution.setAffiliationStatement(new AffiliationStatement(
-            multilingualContentService.getMultilingualContent(
-                contributionDTO.getDisplayAffiliationStatement()), personName,
+            new HashSet<>(), personName,
             new PostalAddress(contributor.getPersonalInfo().getPostalAddress().getCountry(),
                 multilingualContentService.deepCopy(
                     contributor.getPersonalInfo().getPostalAddress().getStreetAndNumber()),
@@ -221,16 +236,14 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
     private void setPersonContributionCommonFields(PersonContribution contribution,
                                                    PersonContributionDTO contributionDTO) {
+        var affiliationStatement = new AffiliationStatement();
+
         if (Objects.nonNull(contributionDTO.getPersonId())) {
             var contributor = personService.findOne(contributionDTO.getPersonId());
             contribution.setPerson(contributor);
             setAffiliationStatement(contribution, contributionDTO, contributor);
         } else {
-            var affiliationStatement = new AffiliationStatement();
             affiliationStatement.setDisplayPersonName(getPersonName(contributionDTO, null));
-            affiliationStatement.setDisplayAffiliationStatement(
-                multilingualContentService.getMultilingualContent(
-                    contributionDTO.getDisplayAffiliationStatement()));
             contribution.setAffiliationStatement(affiliationStatement);
         }
 
@@ -238,11 +251,36 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contributionDTO.getContributionDescription()));
 
         contribution.setInstitutions(new HashSet<>());
-        if (Objects.nonNull(contributionDTO.getInstitutionIds())) {
+        if (Objects.nonNull(contributionDTO.getPersonId()) &&
+            Objects.nonNull(contributionDTO.getInstitutionIds()) &&
+            !contributionDTO.getInstitutionIds().isEmpty()) {
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
                 var organisationUnit = organisationUnitService.findOne(institutionId);
+
+                var allowedInstitutionIds = new HashSet<Integer>();
+                contribution.getPerson().getInvolvements().stream().filter(involvement ->
+                        (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                            involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                            Objects.nonNull(involvement.getOrganisationUnit()))
+                    .forEach(involvement -> {
+                        var involvementInstitutionId = involvement.getOrganisationUnit().getId();
+                        allowedInstitutionIds.add(involvementInstitutionId);
+                        allowedInstitutionIds.addAll(
+                            organisationUnitService.getSuperOUsHierarchyRecursive(
+                                involvementInstitutionId));
+                    });
+
+                if (!allowedInstitutionIds.contains(institutionId)) {
+                    throw new ReferenceConstraintException(
+                        "Contribution cannot be bound to an institution that contributing person is not affiliated with.");
+                }
+
                 contribution.getInstitutions().add(organisationUnit);
             });
+        } else {
+            contribution.getAffiliationStatement().setDisplayAffiliationStatement(
+                multilingualContentService.getMultilingualContent(
+                    contributionDTO.getDisplayAffiliationStatement()));
         }
 
         contribution.setOrderNumber(contributionDTO.getOrderNumber());

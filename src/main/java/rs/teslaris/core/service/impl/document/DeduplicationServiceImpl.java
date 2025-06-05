@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -47,6 +48,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
+@Traceable
 public class DeduplicationServiceImpl implements DeduplicationService {
 
     private static final Integer CHUNK_SIZE = 20;

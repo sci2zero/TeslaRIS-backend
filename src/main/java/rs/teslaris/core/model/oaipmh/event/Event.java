@@ -4,7 +4,6 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import java.util.List;
@@ -48,17 +47,11 @@ public class Event implements EventConvertable {
     @XmlElement(name = "EndDate")
     private String endDate;
 
-    @XmlElements({
-        @XmlElement(name = "Description", type = MultilingualContent.class),
-        @XmlElement(name = "Description", type = String.class)
-    })
-    private Object description;
+    @XmlElement(name = "Description")
+    private List<MultilingualContent> description;
 
-    @XmlElements({
-        @XmlElement(name = "Keyword", type = MultilingualContent.class),
-        @XmlElement(name = "Keyword", type = String.class)
-    })
-    private List<Object> keywords;
+    @XmlElement(name = "Keyword")
+    private List<MultilingualContent> keywords;
 
     private List<Integer> importUserId;
 

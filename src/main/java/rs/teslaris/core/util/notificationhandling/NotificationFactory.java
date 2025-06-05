@@ -33,7 +33,8 @@ public class NotificationFactory {
             message = messageSource.getMessage(
                 "notification.newOtherNameDetected",
                 args,
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -51,7 +52,8 @@ public class NotificationFactory {
             message = messageSource.getMessage(
                 "notification.addedToPublication",
                 args,
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -69,7 +71,8 @@ public class NotificationFactory {
             message = messageSource.getMessage(
                 "notification.newImportsHarvested",
                 args,
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -87,7 +90,8 @@ public class NotificationFactory {
             message = messageSource.getMessage(
                 "notification.deduplicationScanFinished",
                 args,
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -105,7 +109,8 @@ public class NotificationFactory {
             message = messageSource.getMessage(
                 "notification.potentialClaimsFound",
                 args,
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -124,7 +129,8 @@ public class NotificationFactory {
             message = messageSource.getMessage(
                 "notification.newEventsForClassification",
                 args,
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -143,13 +149,34 @@ public class NotificationFactory {
             message = messageSource.getMessage(
                 "notification.newPublicationsForAssessment",
                 args,
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
         }
         return new Notification(message, notificationValues,
             NotificationType.NEW_PUBLICATIONS_TO_ASSESS, user);
+    }
+
+    public static Notification contructCandidatePulledFromPromotionNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("candidateName"),
+                notificationValues.get("promotionDate")};
+        try {
+            message = messageSource.getMessage(
+                "promotion.candidatePulledFromPromotion",
+                args,
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.PROMOTION_NOTIFICATION, user);
     }
 
     public static Notification contructScheduledTaskCompletedNotification(
@@ -161,7 +188,48 @@ public class NotificationFactory {
             message = messageSource.getMessage(
                 success ? "notification.scheduleTaskCompleted" : "notification.scheduleTaskFailed",
                 args,
-                Locale.forLanguageTag(user.getPreferredLanguage().getLanguageCode().toLowerCase())
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.SCHEDULED_TASK_COMPLETED, user);
+    }
+
+    public static Notification contructScheduledReportGenerationCompletedNotification(
+        Map<String, String> notificationValues, User user, boolean success) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("duration")};
+        try {
+            message = messageSource.getMessage(
+                success ? "notification.scheduleReportGenerationCompleted" :
+                    "notification.scheduleReportGenerationFailed",
+                args,
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.SCHEDULED_TASK_COMPLETED, user);
+    }
+
+    public static Notification contructScheduledBackupGenerationCompletedNotification(
+        Map<String, String> notificationValues, User user, boolean success) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("duration")};
+        try {
+            message = messageSource.getMessage(
+                success ? "notification.scheduleBackupGenerationCompleted" :
+                    "notification.scheduleBackupGenerationFailed",
+                args,
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);

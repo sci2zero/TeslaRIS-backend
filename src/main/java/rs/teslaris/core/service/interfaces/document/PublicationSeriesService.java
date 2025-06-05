@@ -10,4 +10,9 @@ public interface PublicationSeriesService extends JPAService<PublicationSeries> 
     PublicationSeries findPublicationSeriesByIssn(String eIssn, String printIssn);
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
+
+    void reorderPublicationSeriesContributions(Integer publicationSeriesId,
+                                               Integer contributionId,
+                                               Integer oldContributionOrderNumber,
+                                               Integer newContributionOrderNumber);
 }

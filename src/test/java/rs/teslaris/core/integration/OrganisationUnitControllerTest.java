@@ -35,7 +35,7 @@ public class OrganisationUnitControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/organisation-unit/old-id/{organisationUnitOldId}", 1)
+                        "http://localhost:8081/api/organisation-unit/old-id/{organisationUnitOldId}", 2)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.thesislibrary.dto.ThesisCSVExportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryCSVExportService;
@@ -17,6 +18,7 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryCSVExportServic
 @RestController
 @RequestMapping("/api/thesis-library/csv-export")
 @RequiredArgsConstructor
+@Traceable
 public class ThesisLibraryCSVExportController {
 
     private final ThesisLibraryCSVExportService thesisLibraryCSVExportService;

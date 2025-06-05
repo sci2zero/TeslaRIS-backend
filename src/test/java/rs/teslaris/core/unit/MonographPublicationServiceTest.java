@@ -25,7 +25,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.assessment.repository.CommissionRepository;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -33,9 +32,11 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.MonographPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -150,6 +151,9 @@ public class MonographPublicationServiceTest {
         newMonographPublication.setMonograph(new Monograph());
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
+        when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
+            setMonographType(MonographType.BOOK);
+        }});
         when(monographPublicationJPAService.save(any(MonographPublication.class))).thenReturn(
             newMonographPublication);
 
@@ -170,6 +174,9 @@ public class MonographPublicationServiceTest {
         var newMonographPublication = new MonographPublication();
         newMonographPublication.setApproveStatus(ApproveStatus.REQUESTED);
 
+        when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
+            setMonographType(MonographType.BOOK);
+        }});
         when(monographPublicationJPAService.save(any(MonographPublication.class))).thenReturn(
             newMonographPublication);
 
@@ -193,6 +200,9 @@ public class MonographPublicationServiceTest {
         var newMonographPublication = new MonographPublication();
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
+        when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
+            setMonographType(MonographType.BOOK);
+        }});
         when(monographPublicationJPAService.save(any(MonographPublication.class))).thenReturn(
             newMonographPublication);
 
@@ -218,7 +228,9 @@ public class MonographPublicationServiceTest {
 
         when(monographPublicationJPAService.findOne(monographPublicationId)).thenReturn(
             monographPublicationToUpdate);
-        when(monographService.findMonographById(anyInt())).thenReturn(new Monograph());
+        when(monographService.findMonographById(anyInt())).thenReturn(new Monograph() {{
+            setMonographType(MonographType.BOOK);
+        }});
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             monographPublicationId)).thenReturn(Optional.of(new DocumentPublicationIndex()));
 
@@ -240,6 +252,9 @@ public class MonographPublicationServiceTest {
         monographPublicationToUpdate.setId(monographPublicationId);
         monographPublicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
 
+        when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
+            setMonographType(MonographType.BOOK);
+        }});
         when(monographPublicationJPAService.findOne(monographPublicationId)).thenReturn(
             monographPublicationToUpdate);
 

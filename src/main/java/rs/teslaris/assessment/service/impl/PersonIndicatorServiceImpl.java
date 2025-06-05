@@ -10,10 +10,12 @@ import rs.teslaris.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.assessment.repository.PersonIndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.PersonIndicatorService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 
 @Service
+@Traceable
 public class PersonIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements PersonIndicatorService {
 

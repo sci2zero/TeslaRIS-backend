@@ -9,10 +9,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.service.interfaces.PersonIndicatorService;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment/person-indicator")
 @RequiredArgsConstructor
+@Traceable
 public class PersonIndicatorController {
 
     private final PersonIndicatorService personIndicatorService;

@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
-import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
@@ -20,6 +19,7 @@ import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.JPAService;
@@ -27,7 +27,8 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface UserService extends UserDetailsService, JPAService<User> {
 
-    Page<UserAccountIndex> searchUserAccounts(List<String> tokens, Pageable pageable);
+    Page<UserAccountIndex> searchUserAccounts(List<String> tokens, List<UserRole> allowedRoles,
+                                              Pageable pageable);
 
     User loadUserById(Integer userId);
 
@@ -82,4 +83,12 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     List<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId);
 
     List<User> findAllCommissionUsers();
+
+    void deleteUserAccount(Integer userId);
+
+    void migrateUserAccountData(Integer userToUpdateId, Integer userToDeleteId);
+
+    boolean generateNewPasswordForUser(Integer userId);
+
+    void logout(String jti);
 }

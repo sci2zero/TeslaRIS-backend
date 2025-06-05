@@ -23,7 +23,6 @@ import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.AssessmentClassification;
-import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.assessment.model.EntityClassificationSource;
 import rs.teslaris.assessment.model.PublicationSeriesAssessmentClassification;
 import rs.teslaris.assessment.repository.EntityAssessmentClassificationRepository;
@@ -36,8 +35,10 @@ import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.PublicationSeries;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -50,6 +51,7 @@ import rs.teslaris.core.util.seeding.CsvDataLoader;
 @Service
 @Transactional
 @Slf4j
+@Traceable
 public class PublicationSeriesAssessmentClassificationServiceImpl
     extends EntityAssessmentClassificationServiceImpl
     implements PublicationSeriesAssessmentClassificationService {

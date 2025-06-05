@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
+import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
@@ -20,7 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
@@ -33,6 +34,7 @@ import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -53,6 +55,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Primary
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class EventServiceImpl extends JPAServiceImpl<Event> implements EventService {
 
     protected final EventIndexRepository eventIndexRepository;
@@ -105,6 +108,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     "You have to provide start and end dates for a non-serial event.");
             }
 
+            if (eventDTO.getDateTo().isBefore(eventDTO.getDateFrom())) {
+                throw new ValidationException("End date cannot be before start date.");
+            }
             event.setDateFrom(eventDTO.getDateFrom());
             event.setDateTo(eventDTO.getDateTo());
         }
@@ -314,34 +320,53 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                     }
                                     return m;
                                 }));
+                        } else if (token.endsWith(".")) {
+                            var wildcard = token.replace(".", "") + "?";
+                            eq.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_sr").value(wildcard)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_other").value(wildcard)))
+                            ));
+                        } else if (token.endsWith("\\*")) {
+                            var wildcard = token.replace("\\*", "") + "*";
+                            eq.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_sr").value(wildcard)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_other").value(wildcard)))
+                            ));
+                        } else {
+                            var wildcard = token + "*";
+                            eq.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_sr").value(wildcard)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("name_other").value(wildcard)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("name_sr").query(wildcard)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("name_other").query(wildcard)))
+                            ));
                         }
 
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("name_sr").value("*" + token + "*")
-                                .caseInsensitive(true)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("name_sr").query(token)));
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("name_other").value("*" + token + "*")
-                                .caseInsensitive(true)));
+                            m -> m.field("description_sr").query(token).boost(0.7f)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("name_other").query(token)));
+                            m -> m.field("description_other").query(token).boost(0.7f)));
+                        eq.should(sb -> sb.term(
+                            m -> m.field("keywords_sr").value(token)));
+                        eq.should(sb -> sb.term(
+                            m -> m.field("keywords_other").value(token)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("description_sr").query(token)));
+                            m -> m.field("state_sr").query(token).boost(0.7f)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("description_other").query(token)));
+                            m -> m.field("state_other").query(token).boost(0.7f)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("keywords_sr").query(token)));
+                            m -> m.field("place_sr").query(token).boost(0.5f)));
                         eq.should(sb -> sb.match(
-                            m -> m.field("keywords_other").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("state_sr").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("state_other").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("place_sr").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("place_other").query(token)));
+                            m -> m.field("place_other").query(token).boost(0.5f)));
+
                         eq.should(sb -> sb.wildcard(
                             m -> m.field("date_from_to").value("*" + token + "*")));
                     });

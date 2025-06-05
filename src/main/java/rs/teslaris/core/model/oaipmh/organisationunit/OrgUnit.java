@@ -40,4 +40,21 @@ public class OrgUnit implements OrgUnitConvertable {
     private List<Integer> importUserId;
 
     private Boolean loaded;
+
+    // Additional Migration fields - not part of the OAI-PMH specification
+
+    @XmlElement(name = "Acronym")
+    private List<MultilingualContent> acronym;
+
+    @XmlElement(name = "Place")
+    private String place;
+
+    @XmlElement(name = "Identifier")
+    private String identifier;
+
+    @XmlElement(name = "Keyword")
+    private List<MultilingualContent> keywords;
+
+    @XmlElement(name = "ResearchArea")
+    private List<String> researchArea;
 }

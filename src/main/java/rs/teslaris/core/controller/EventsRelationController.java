@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
 @RestController
 @RequestMapping("/api/events-relation")
 @RequiredArgsConstructor
+@Traceable
 public class EventsRelationController {
 
     private final EventService eventService;

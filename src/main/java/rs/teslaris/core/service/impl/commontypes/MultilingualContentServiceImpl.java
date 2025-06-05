@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -18,6 +19,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class MultilingualContentServiceImpl implements MultilingualContentService {
 
     private final LanguageTagService languageTagService;

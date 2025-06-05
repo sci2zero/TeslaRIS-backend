@@ -1,16 +1,17 @@
 package rs.teslaris.assessment.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.util.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Component
@@ -18,23 +19,27 @@ public class IndicatorMappingConfigurationLoader {
 
     private static IndicatorMappingConfiguration indicatorMappingConfiguration = null;
 
+    private static String externalOverrideConfiguration;
+
+
+    public IndicatorMappingConfigurationLoader(
+        @Value("${assessment.indicator.mapping}") String externalOverrideConfiguration) {
+        IndicatorMappingConfigurationLoader.externalOverrideConfiguration =
+            externalOverrideConfiguration;
+        reloadConfiguration();
+    }
+
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
     private static void reloadConfiguration() {
         try {
-            loadConfiguration();
+            indicatorMappingConfiguration = ConfigurationLoaderUtil.loadConfiguration(
+                IndicatorMappingConfiguration.class,
+                "src/main/resources/assessment/indicatorMappingConfiguration.json",
+                externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
                 "Failed to reload indicator mapping configuration: " + e.getMessage());
         }
-    }
-
-    private static synchronized void loadConfiguration() throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        indicatorMappingConfiguration = objectMapper.readValue(
-            new FileInputStream(
-                "src/main/resources/assessment/indicatorMappingConfiguration.json"),
-            IndicatorMappingConfiguration.class
-        );
     }
 
     public static List<String> getIndicatorNameForLoaderMethodName(String methodName) {
@@ -60,6 +65,16 @@ public class IndicatorMappingConfigurationLoader {
         };
     }
 
+    public static List<String> fetchAllStatisticsIndicatorCodes() {
+        var indicatorCodes = new HashSet<String>();
+        indicatorMappingConfiguration.mappings.values().forEach(indicatorCodes::addAll);
+        return indicatorCodes.stream().toList();
+    }
+
+    public static boolean isStatisticIndicatorCode(String code) {
+        return fetchAllStatisticsIndicatorCodes().contains(code);
+    }
+
     public static PublicationSeriesIndicatorMapping fetchPublicationSeriesCSVIndicatorMapping(
         String mappingName) {
         return indicatorMappingConfiguration.publicationSeriesCSVIndicatorMapping.getOrDefault(
@@ -70,9 +85,21 @@ public class IndicatorMappingConfigurationLoader {
         return indicatorMappingConfiguration.ifTableContent;
     }
 
+    public static List<String> getExclusionsForClass(String className) {
+        var classNameParts = className.split("\\.");
+        var name = classNameParts[classNameParts.length - 1];
+
+        if (!indicatorMappingConfiguration.exclusions.containsKey(name)) {
+            return List.of();
+        }
+
+        return indicatorMappingConfiguration.exclusions().get(name);
+    }
+
     private record IndicatorMappingConfiguration(
         @JsonProperty(value = "mappings", required = true) Map<String, List<String>> mappings,
         @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets,
+        @JsonProperty(value = "statisticExclusions", required = true) Map<String, List<String>> exclusions,
         @JsonProperty(value = "publicationSeriesCSVIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesCSVIndicatorMapping,
         @JsonProperty(value = "ifTableContent") List<String> ifTableContent
     ) {

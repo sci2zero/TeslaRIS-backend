@@ -17,4 +17,6 @@ public interface TaskManagerService {
     List<ScheduledTaskResponseDTO> listScheduledTasks();
 
     List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks(Integer userId, String role);
+
+    LocalDateTime findNextFreeExecutionTime();
 }

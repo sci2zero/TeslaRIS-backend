@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -29,6 +30,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/monograph")
 @RequiredArgsConstructor
+@Traceable
 public class MonographController {
 
     private final MonographService monographService;
@@ -44,9 +46,10 @@ public class MonographController {
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
         @RequestParam("tokens")
-        @NotNull(message = "You have to provide a valid search input.") List<String> tokens) {
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "onlyBooks", required = false) Boolean onlyBooks) {
         StringUtil.sanitizeTokens(tokens);
-        return monographService.searchMonographs(tokens);
+        return monographService.searchMonographs(tokens, onlyBooks);
     }
 
     @PostMapping

@@ -107,6 +107,7 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/for-publisher/{publisherId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/document/wordcloud/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/document/for-organisation-unit/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/book-series/publications/{bookSeriesId}")
@@ -212,6 +213,11 @@ public class SecurityConfiguration {
                     "/api/statistics/organisation-unit/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/statistics/document/{documentId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/statistics/publication-series/{publicationSeriesId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/statistics/event/{eventId}")
+                .permitAll()
 
                 // BRANDING INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()
@@ -236,6 +242,30 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
+
+                // THESIS LIBRARY
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/search/fields").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/simple").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/thesis-library/search/wordcloud/{queryType}").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
+                .requestMatchers(HttpMethod.PATCH,
+                    "/api/registry-book/cancel-attendance/{attendanceId}").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
+                .permitAll()
+
+                // COOKIES
+                .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()
+
+                // LEGACY NAVIGATION
+                .requestMatchers(HttpMethod.GET,
+                    "/api/legacy-navigation/entity-landing-page/{oldId}").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/legacy-navigation/document-file/{oldServerFilename}").permitAll()
+
+                // HEALTH CHECK
+                .requestMatchers(HttpMethod.GET, "/api/health-check/version").permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.model.oaipmh.common.Request;
 import rs.teslaris.exporter.service.interfaces.OutboundExportService;
@@ -21,6 +22,7 @@ import rs.teslaris.importer.utility.OAIPMHParseUtility;
 @RestController
 @RequestMapping("/api/export")
 @RequiredArgsConstructor
+@Traceable
 public class OutboundExportController {
 
     private final OutboundExportService outboundExportService;

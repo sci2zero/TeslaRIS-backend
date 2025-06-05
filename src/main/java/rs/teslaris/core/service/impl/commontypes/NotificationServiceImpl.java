@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
@@ -32,6 +33,7 @@ import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotifi
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     implements NotificationService {
 
@@ -101,6 +103,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 break;
             case NEW_PUBLICATIONS_TO_ASSESS:
                 // Redirection to scientific results page done by frontend logic.
+                break;
+            case PROMOTION_NOTIFICATION:
+                // Redirection to promotions management page done by frontend logic.
                 break;
         }
 
@@ -180,7 +185,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     private Locale getLocale(List<Notification> notifications) {
         var language =
-            notifications.getFirst().getUser().getPreferredLanguage().getLanguageCode()
+            notifications.getFirst().getUser().getPreferredUILanguage().getLanguageCode()
                 .toLowerCase();
         return Locale.forLanguageTag(language);
     }

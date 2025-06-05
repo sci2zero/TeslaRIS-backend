@@ -25,4 +25,9 @@ public class Affiliation {
 
     @XmlElement(name = "OrgUnit", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     List<OrgUnit> orgUnits;
+
+    // Additional Migration fields - not part of the OAI-PMH specification
+
+    @XmlElement(name = "DisplayName")
+    private String displayName;
 }

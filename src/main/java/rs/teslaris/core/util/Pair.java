@@ -1,5 +1,8 @@
 package rs.teslaris.core.util;
 
+import lombok.ToString;
+
+@ToString
 public class Pair<A, B> {
 
     public A a;
@@ -55,13 +58,10 @@ public class Pair<A, B> {
             return false;
         }
         if (b == null) {
-            if (other.b != null) {
-                return false;
-            }
-        } else if (!b.equals(other.b)) {
-            return false;
+            return other.b == null;
+        } else {
+            return b.equals(other.b);
         }
-        return true;
     }
 
     public boolean isInstance(Class<?> classA, Class<?> classB) {

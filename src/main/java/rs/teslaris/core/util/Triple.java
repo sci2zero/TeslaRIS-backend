@@ -1,7 +1,9 @@
 package rs.teslaris.core.util;
 
 import java.util.Objects;
+import lombok.ToString;
 
+@ToString
 public class Triple<A, B, C> {
     public final A a;
     public final B b;

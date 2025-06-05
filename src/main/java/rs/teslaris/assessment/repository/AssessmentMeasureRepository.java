@@ -11,6 +11,8 @@ import rs.teslaris.assessment.model.AssessmentMeasure;
 public interface AssessmentMeasureRepository extends
     JpaRepository<AssessmentMeasure, Integer> {
 
-    @Query("select am from AssessmentMeasure am join fetch am.title t where t.content like %:searchExpression%")
+    @Query("SELECT am FROM AssessmentMeasure am " +
+        "JOIN fetch am.title t " +
+        "WHERE t.content LIKE %:searchExpression%")
     Page<AssessmentMeasure> searchAssessmentMeasures(Pageable pageable, String searchExpression);
 }

@@ -14,12 +14,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.assessment.annotation.EntityClassificationEditCheck;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.EventAssessmentClassificationDTO;
 import rs.teslaris.assessment.service.interfaces.EventAssessmentClassificationService;
-import rs.teslaris.core.annotation.EntityClassificationEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -27,6 +28,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 @RestController
 @RequestMapping("/api/assessment/event-assessment-classification")
 @RequiredArgsConstructor
+@Traceable
 public class EventAssessmentClassificationController {
 
     private final EventAssessmentClassificationService eventAssessmentClassificationService;

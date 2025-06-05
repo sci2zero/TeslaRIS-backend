@@ -34,7 +34,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.exporter.model.common.ExportEvent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;

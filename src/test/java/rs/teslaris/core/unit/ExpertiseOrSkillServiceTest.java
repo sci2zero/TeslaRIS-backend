@@ -113,11 +113,13 @@ public class ExpertiseOrSkillServiceTest {
         var proof = new DocumentFileDTO();
         var expertiseOrSkill = new ExpertiseOrSkill();
         expertiseOrSkill.setId(1);
+        expertiseOrSkill.setPerson(new Person());
         var documentFile = new DocumentFile();
         documentFile.setId(1);
 
         when(expertiseOrSkillRepository.findById(1)).thenReturn(Optional.of(expertiseOrSkill));
-        when(documentFileService.saveNewDocument(proof, false)).thenReturn(documentFile);
+        when(documentFileService.saveNewPersonalDocument(proof, false,
+            expertiseOrSkill.getPerson())).thenReturn(documentFile);
 
         // When
         var responseDTO = expertiseOrSkillService.addProof(1, proof);

@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.CSVExportRequest;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
+import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -186,7 +186,7 @@ public class CSVExportHelper {
     }
 
     public static void addCitationData(List<String> rowData, DocumentPublicationIndex document,
-                                       DocumentCSVExportRequest request,
+                                       DocumentCSVExportRequestDTO request,
                                        CitationService citationService) {
         if (!shouldIncludeCitation(request)) {
             return;
@@ -202,7 +202,7 @@ public class CSVExportHelper {
     }
 
     public static void addCitationColumns(List<String> tableHeaders,
-                                          DocumentCSVExportRequest request) {
+                                          DocumentCSVExportRequestDTO request) {
         CITATION_FORMATS.values().forEach(format -> {
             if (requestFormatEnabled(request, format)) {
                 tableHeaders.add(format);
@@ -210,7 +210,7 @@ public class CSVExportHelper {
         });
     }
 
-    private static boolean shouldIncludeCitation(DocumentCSVExportRequest request) {
+    private static boolean shouldIncludeCitation(DocumentCSVExportRequestDTO request) {
         return Objects.requireNonNullElse(request.getApa(), false) ||
             Objects.requireNonNullElse(request.getMla(), false) ||
             Objects.requireNonNullElse(request.getChicago(), false) ||
@@ -218,7 +218,8 @@ public class CSVExportHelper {
             Objects.requireNonNullElse(request.getVancouver(), false);
     }
 
-    private static boolean requestFormatEnabled(DocumentCSVExportRequest request, String format) {
+    private static boolean requestFormatEnabled(DocumentCSVExportRequestDTO request,
+                                                String format) {
         return switch (format) {
             case "APA" -> Objects.requireNonNullElse(request.getApa(), false);
             case "MLA" -> Objects.requireNonNullElse(request.getMla(), false);

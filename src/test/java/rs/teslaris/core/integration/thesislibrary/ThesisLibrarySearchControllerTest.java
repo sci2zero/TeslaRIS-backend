@@ -33,10 +33,7 @@ public class ThesisLibrarySearchControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testPerformSimpleSearch() throws Exception {
-        String jwtToken = authenticateLibrarianAndGetToken();
-
         var request = getTestPayload(false);
 
         String requestBody = objectMapper.writeValueAsString(request);
@@ -44,16 +41,12 @@ public class ThesisLibrarySearchControllerTest extends BaseTest {
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis-library/search/simple")
                     .content(requestBody)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                    .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testPerformAdvancedSearch() throws Exception {
-        String jwtToken = authenticateLibrarianAndGetToken();
-
         var request = getTestPayload(true);
 
         String requestBody = objectMapper.writeValueAsString(request);
@@ -61,8 +54,7 @@ public class ThesisLibrarySearchControllerTest extends BaseTest {
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis-library/search/advanced")
                     .content(requestBody)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                    .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
@@ -78,6 +70,21 @@ public class ThesisLibrarySearchControllerTest extends BaseTest {
                         onlyExportFields)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"simple", "advanced"})
+    public void testPerformWordCloudSearch(String queryType) throws Exception {
+        var request = getTestPayload(queryType.equals("advanced"));
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/thesis-library/search/wordcloud/{queryType}?foreignLanguage=false",
+                        queryType)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody))
             .andExpect(status().isOk());
     }
 }

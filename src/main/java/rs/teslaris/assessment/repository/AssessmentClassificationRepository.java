@@ -12,10 +12,13 @@ import rs.teslaris.assessment.model.AssessmentClassification;
 public interface AssessmentClassificationRepository
     extends JpaRepository<AssessmentClassification, Integer> {
 
-    @Query("select count(eac) > 0 from EntityAssessmentClassification eac where eac.assessmentClassification.id = :assessmentClassificationId")
+    @Query("SELECT COUNT(eac) > 0 FROM EntityAssessmentClassification eac " +
+        "WHERE eac.assessmentClassification.id = :assessmentClassificationId")
     boolean isInUse(Integer assessmentClassificationId);
 
-    @Query("SELECT ac FROM AssessmentClassification ac JOIN ac.applicableTypes at WHERE at IN :applicableEntityTypes")
+    @Query("SELECT ac FROM AssessmentClassification ac " +
+        "JOIN ac.applicableTypes at " +
+        "WHERE at IN :applicableEntityTypes")
     List<AssessmentClassification> getAssessmentClassificationsApplicableToEntity(
         List<ApplicableEntityType> applicableEntityTypes);
 

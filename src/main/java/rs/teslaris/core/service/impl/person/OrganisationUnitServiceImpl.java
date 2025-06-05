@@ -2,14 +2,20 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -23,11 +29,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitGraphRelationDTO;
@@ -40,13 +48,14 @@ import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -54,8 +63,10 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.ImageUtil;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
@@ -68,6 +79,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
     implements OrganisationUnitService {
 
@@ -97,6 +109,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     private final SearchFieldsLoader searchFieldsLoader;
 
+    private final FileService fileService;
+
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
 
@@ -116,11 +130,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public OrganisationUnitDTO readOrganisationUnitById(Integer id) {
-        var ou = findOne(id);
+        OrganisationUnit ou;
+        try {
+            ou = findOne(id);
+        } catch (NotFoundException e) {
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(id)
+                .ifPresent(organisationUnitIndexRepository::delete);
+            throw e;
+        }
 
         if (!ou.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("OrganisationUnit with given ID does not exist.");
         }
+
         return OrganisationUnitConverter.toDTO(ou);
     }
 
@@ -182,51 +204,74 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
                                          Integer topLevelInstitutionId) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        StringUtil.removeNotableStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
 
             addInstitutionFilter(b, personId, topLevelInstitutionId);
 
             tokens.forEach(token -> {
-
-                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
-                    b.must(mp ->
-                        mp.bool(m -> {
-                            {
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("name_sr").query(token.replace("\\\"", ""))));
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("name_other").query(token.replace("\\\"", ""))));
-                            }
-                            return m;
-                        }));
+                if (StringUtil.isInteger(token, 10)) {
+                    b.should(sb -> sb.match(
+                        m -> m.field("scopus_afid").query(token)));
+                    return;
                 }
 
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
+                var perTokenShould = new ArrayList<Query>();
+                var cleanedToken = token.replace("\\\"", "");
+
+                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                    perTokenShould.add(MatchPhraseQuery.of(
+                        mq -> mq.field("name_sr").query(cleanedToken))._toQuery());
+                    perTokenShould.add(MatchPhraseQuery.of(
+                        mq -> mq.field("name_other").query(cleanedToken))._toQuery());
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
+                        ._toQuery());
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_other").value(wildcard).caseInsensitive(true))
+                        ._toQuery());
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
+                        ._toQuery());
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_other").value(wildcard).caseInsensitive(true))
+                        ._toQuery());
+                } else {
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_sr").value(token + "*").caseInsensitive(true))
+                        ._toQuery());
+                    perTokenShould.add(WildcardQuery.of(
+                            m -> m.field("name_other").value(token + "*").caseInsensitive(true))
+                        ._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("name_sr").query(token))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("name_other").query(token))._toQuery());
+                    perTokenShould.add(TermQuery.of(
+                        m -> m.field("keywords_sr").value(token).boost(0.7f))._toQuery());
+                    perTokenShould.add(TermQuery.of(
+                        m -> m.field("keywords_other").value(token).boost(0.7f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                        m -> m.field("research_areas_sr").query(token).boost(0.5f))._toQuery());
+                    perTokenShould.add(MatchQuery.of(
+                            m -> m.field("research_areas_other").query(token).boost(0.5f))
+                        ._toQuery());
+                }
+
+                b.must(m -> m.bool(bb -> bb.should(perTokenShould)));
+
                 b.should(sb -> sb.match(
-                    m -> m.field("name_sr").query(token)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("name_other").value("*" + token + "*").caseInsensitive(true)));
+                    m -> m.field("super_ou_name_sr").query(token).boost(0.3f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("super_ou_name_sr").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("super_ou_name_other").query(token)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("keywords_sr").value("*" + token + "*")
-                        .caseInsensitive(true)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("keywords_other").value("*" + token + "*")
-                        .caseInsensitive(true)));
-                b.should(sb -> sb.match(
-                    m -> m.field("research_areas_sr").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("research_areas_other").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("orcid").query(token)));
+                    m -> m.field("super_ou_name_other").query(token).boost(0.3f)));
             });
-            return b.minimumShouldMatch(Integer.toString(minShouldMatch));
+
+            return b;
         })))._toQuery();
     }
 
@@ -441,6 +486,66 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             onlyExportFields);
     }
 
+    @Override
+    public OrganisationUnit findOrganisationUnitByAccountingId(String accountingId) {
+        return organisationUnitRepository.findApprovedOrganisationUnitByAccountingId(accountingId)
+            .orElseThrow(
+                () -> new NotFoundException(
+                    "Organisation unit with accounting ID " + accountingId + " does not exist"));
+    }
+
+    @Override
+    public String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
+        throws IOException {
+        if (ImageUtil.isMIMETypeInvalid(logoDTO.getFile(), true)) {
+            throw new IllegalArgumentException("mimeTypeValidationFailed");
+        }
+
+        var organisationUnit = findOne(organisationUnitId);
+
+        if (Objects.nonNull(organisationUnit.getLogo()) &&
+            Objects.nonNull(organisationUnit.getLogo().getImageServerName()) &&
+            !logoDTO.getFile().isEmpty()) {
+            fileService.delete(organisationUnit.getLogo().getImageServerName());
+        } else if (Objects.isNull(organisationUnit.getLogo())) {
+            organisationUnit.setLogo(new ProfilePhotoOrLogo());
+        }
+
+        organisationUnit.getLogo().setTopOffset(logoDTO.getTop());
+        organisationUnit.getLogo().setLeftOffset(logoDTO.getLeft());
+        organisationUnit.getLogo().setHeight(logoDTO.getHeight());
+        organisationUnit.getLogo().setWidth(logoDTO.getWidth());
+        organisationUnit.getLogo().setBackgroundHex(logoDTO.getBackgroundHex().trim());
+
+        var serverFilename = organisationUnit.getLogo().getImageServerName();
+        if (!logoDTO.getFile().isEmpty()) {
+            serverFilename =
+                fileService.store(logoDTO.getFile(), UUID.randomUUID().toString());
+            organisationUnit.getLogo().setImageServerName(serverFilename);
+        }
+
+        save(organisationUnit);
+        return serverFilename;
+    }
+
+    @Override
+    public void removeOrganisationUnitLogo(Integer organisationUnitId) {
+        var organisationUnit = findOne(organisationUnitId);
+
+        if (Objects.nonNull(organisationUnit.getLogo()) &&
+            Objects.nonNull(organisationUnit.getLogo().getImageServerName())) {
+            fileService.delete(organisationUnit.getLogo().getImageServerName());
+            organisationUnit.getLogo().setImageServerName(null);
+            organisationUnit.getLogo().setTopOffset(null);
+            organisationUnit.getLogo().setLeftOffset(null);
+            organisationUnit.getLogo().setHeight(null);
+            organisationUnit.getLogo().setWidth(null);
+            organisationUnit.getLogo().setBackgroundHex(null);
+        }
+
+        save(organisationUnit);
+    }
+
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                        OrganisationUnitIndex index) {
         index.setDatabaseId(organisationUnit.getId());
@@ -492,6 +597,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 OrganisationUnit::getName,
                 OrganisationUnitIndex::setSuperOUNameSr,
                 OrganisationUnitIndex::setSuperOUNameOther);
+
+            indexMultilingualContent(index,
+                organisationUnitsRelation.getTargetOrganisationUnit(),
+                OrganisationUnit::getName,
+                OrganisationUnitIndex::setSuperOUNameSrSortable,
+                OrganisationUnitIndex::setSuperOUNameOtherSortable);
+
             index.setSuperOUId(belongsToRelation.get().getTargetOrganisationUnit().getId());
         });
     }

@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import rs.teslaris.core.model.oaipmh.person.Person;
+import rs.teslaris.core.model.oaipmh.publication.Affiliation;
 
 @XmlType(name = "TPersonAttributes", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -27,4 +28,10 @@ public class PersonAttributes {
 
     @XmlElement(name = "Person", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
     private Person person;
+
+
+    // Additional Migration field - not part of the OAI-PMH specification
+
+    @XmlElement(name = "Affiliation")
+    private Affiliation affiliation;
 }

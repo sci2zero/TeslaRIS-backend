@@ -8,11 +8,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.exporter.service.interfaces.CommonExportService;
 
 @RestController
 @RequestMapping("/api/common-export")
 @RequiredArgsConstructor
+@Traceable
 public class CommonExportController {
 
     private final CommonExportService commonExportService;

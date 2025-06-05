@@ -1,26 +1,36 @@
 package rs.teslaris.core.service.impl.person;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
+import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.EmploymentTitle;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.EmploymentRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -35,6 +45,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Traceable
 public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     implements InvolvementService {
 
@@ -113,10 +124,30 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     @Override
-    public List<EmploymentDTO> getEmploymentsForPerson(Integer personId) {
-        return employmentRepository.findByPersonInvolvedId(personId).stream()
-            .map(InvolvementConverter::toDTO).collect(
-                Collectors.toList());
+    public List<EmploymentDTO> getDirectAndIndirectEmploymentsForPerson(Integer personId) {
+        var directAndIndirectEmployments = new ArrayList<EmploymentDTO>();
+
+        employmentRepository.findByPersonInvolvedId(personId).forEach(employment -> {
+            if (Objects.isNull(employment.getOrganisationUnit())) {
+                return;
+            }
+
+            directAndIndirectEmployments.add(InvolvementConverter.toDTO(employment));
+
+            var employmentOU = employment.getOrganisationUnit();
+            organisationUnitService.getSuperOUsHierarchyRecursive(employmentOU.getId())
+                .forEach(indirectSuperEmployment -> {
+                    directAndIndirectEmployments.add(new EmploymentDTO() {{
+                        setOrganisationUnitId(indirectSuperEmployment);
+                        setOrganisationUnitName(
+                            MultilingualContentConverter.getMultilingualContentDTO(
+                                organisationUnitService.findOne(indirectSuperEmployment)
+                                    .getName()));
+                    }});
+                });
+        });
+
+        return directAndIndirectEmployments;
     }
 
     @Override
@@ -138,10 +169,108 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     @Override
+    public EmploymentDTO migrateEmployment(EmploymentMigrationDTO employmentMigrationRequest) {
+        Person person = resolvePerson(employmentMigrationRequest);
+        OrganisationUnit organisationUnit = resolveOrganisationUnit(employmentMigrationRequest);
+
+        var existingEmployment = findExistingEmployment(person, organisationUnit,
+            employmentMigrationRequest.employmentPosition());
+
+        Employment employment;
+        if (existingEmployment.isPresent()) {
+            employment = updateExistingEmployment((Employment) existingEmployment.get(),
+                employmentMigrationRequest);
+        } else {
+            employment =
+                createNewMigratedEmployment(person, organisationUnit, employmentMigrationRequest);
+            closeOtherOpenEmployments(person, organisationUnit, employment);
+        }
+
+        personService.save(person);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
+        return InvolvementConverter.toDTO(employment);
+    }
+
+    private Person resolvePerson(EmploymentMigrationDTO request) {
+        var person = Objects.nonNull(request.personOldId())
+            ? personService.findPersonByOldId(request.personOldId())
+            : personService.findPersonByAccountingId(request.personAccountingId());
+
+        if (Objects.isNull(person)) {
+            throw new NotFoundException(
+                "Unable to find person (oldId: " + request.personOldId() + " | accountingId: " +
+                    request.personAccountingId() + ") when migrating employment.");
+        }
+
+        person.getAccountingIds().add(request.personAccountingId());
+        return person;
+    }
+
+    private OrganisationUnit resolveOrganisationUnit(EmploymentMigrationDTO request) {
+        var unit = Objects.nonNull(request.chairOldId())
+            ? organisationUnitService.findOrganisationUnitByOldId(request.chairOldId())
+            :
+            organisationUnitService.findOrganisationUnitByAccountingId(request.chairAccountingId());
+
+        if (Objects.isNull(unit)) {
+            throw new NotFoundException(
+                "Unable to find OU (oldId: " + request.chairOldId() + " | accountingId: " +
+                    request.chairAccountingId() + ") when migrating employment.");
+        }
+
+        unit.getAccountingIds().add(request.chairAccountingId());
+        organisationUnitService.save(unit);
+        return unit;
+    }
+
+    private Optional<Involvement> findExistingEmployment(Person person, OrganisationUnit unit,
+                                                         EmploymentPosition position) {
+        return person.getInvolvements().stream()
+            .filter(involvement ->
+                involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) &&
+                    involvement.getOrganisationUnit().getId().equals(unit.getId()) &&
+                    ((Employment) involvement).getEmploymentPosition().equals(position))
+            .findAny();
+    }
+
+    private Employment updateExistingEmployment(Employment employment,
+                                                EmploymentMigrationDTO request) {
+        employment.setDateFrom(request.employmentStartDate());
+        return involvementRepository.save(employment);
+    }
+
+    private Employment createNewMigratedEmployment(Person person, OrganisationUnit unit,
+                                                   EmploymentMigrationDTO request) {
+        var employment = new Employment();
+        employment.setDateFrom(request.employmentStartDate());
+        employment.setInvolvementType(InvolvementType.EMPLOYED_AT);
+        employment.setOrganisationUnit(unit);
+        employment.setEmploymentPosition(request.employmentPosition());
+        employment.setApproveStatus(ApproveStatus.APPROVED);
+
+        person.addInvolvement(employment);
+        Employment saved = employmentRepository.save(employment);
+        personService.indexPerson(person, person.getId());
+        return saved;
+    }
+
+    private void closeOtherOpenEmployments(Person person, OrganisationUnit unit,
+                                           Employment newEmployment) {
+        person.getInvolvements().stream()
+            .filter(involvement ->
+                involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) &&
+                    involvement.getOrganisationUnit().getId().equals(unit.getId()) &&
+                    involvement != newEmployment &&
+                    Objects.isNull(involvement.getDateTo()))
+            .forEach(involvement -> involvement.setDateTo(newEmployment.getDateFrom()));
+    }
+
+    @Override
     public DocumentFileResponseDTO addInvolvementProof(DocumentFileDTO proof,
                                                        Integer involvementId) {
         var involvement = findOne(involvementId);
-        var documentFile = documentFileService.saveNewDocument(proof, false);
+        var documentFile = documentFileService.saveNewPersonalDocument(proof, false,
+            involvement.getPersonInvolved());
         involvement.getProofs().add(documentFile);
         involvementRepository.save(involvement);
 
@@ -260,20 +389,49 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         personService.indexPerson(employment.get().getPersonInvolved(), personId);
     }
 
-    private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
-        var organisationUnit =
-            organisationUnitService.findOrganisationUnitById(
-                commonFields.getOrganisationUnitId());
+    @Override
+    public EmploymentTitle getCurrentEmploymentTitle(Integer personId) {
+        return employmentRepository.findByPersonInvolvedId(personId).stream()
+            .filter(employment -> employment.getDateTo() == null)
+            .map(Employment::getEmploymentPosition)
+            .map(this::mapToEmploymentTitle)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    }
 
-        var affiliationStatements = multilingualContentService.getMultilingualContent(
-            commonFields.getAffiliationStatement());
+    private EmploymentTitle mapToEmploymentTitle(EmploymentPosition position) {
+        return switch (position) {
+            case FULL_PROFESSOR -> EmploymentTitle.FULL_PROFESSOR;
+            case ASSISTANT_PROFESSOR -> EmploymentTitle.ASSISTANT_PROFESSOR;
+            case ASSOCIATE_PROFESSOR -> EmploymentTitle.ASSOCIATE_PROFESSOR;
+            case SCIENTIFIC_COLLABORATOR -> EmploymentTitle.SCIENTIFIC_COLLABORATOR;
+            case SENIOR_SCIENTIFIC_COLLABORATOR -> EmploymentTitle.SENIOR_SCIENTIFIC_COLLABORATOR;
+            case SCIENTIFIC_ADVISOR -> EmploymentTitle.SCIENTIFIC_ADVISOR;
+            case PROFESSOR_EMERITUS -> EmploymentTitle.PROFESSOR_EMERITUS;
+            case RETIRED_PROFESSOR -> EmploymentTitle.RETIRED_PROFESSOR;
+            case PROFESSOR_ENGINEER_HABILITATED -> EmploymentTitle.PROFESSOR_ENGINEER_HABILITATED;
+            default -> null;
+        };
+    }
+
+    private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
+        if (Objects.nonNull(commonFields.getOrganisationUnitId()) &&
+            commonFields.getOrganisationUnitId() > 0) {
+            var organisationUnit =
+                organisationUnitService.findOrganisationUnitById(
+                    commonFields.getOrganisationUnitId());
+            involvement.setOrganisationUnit(organisationUnit);
+        } else {
+            var affiliationStatements = multilingualContentService.getMultilingualContent(
+                commonFields.getAffiliationStatement());
+            involvement.setAffiliationStatement(affiliationStatements);
+        }
 
         involvement.setDateFrom(commonFields.getDateFrom());
         involvement.setDateTo(commonFields.getDateTo());
         involvement.setApproveStatus(ApproveStatus.APPROVED);
         involvement.setInvolvementType(commonFields.getInvolvementType());
-        involvement.setAffiliationStatement(affiliationStatements);
-        involvement.setOrganisationUnit(organisationUnit);
     }
 
     private void clearCommonCollections(Involvement involvement) {

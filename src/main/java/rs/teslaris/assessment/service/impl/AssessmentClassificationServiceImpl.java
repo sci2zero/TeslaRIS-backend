@@ -14,6 +14,7 @@ import rs.teslaris.assessment.model.ApplicableEntityType;
 import rs.teslaris.assessment.model.AssessmentClassification;
 import rs.teslaris.assessment.repository.AssessmentClassificationRepository;
 import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
@@ -21,6 +22,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class AssessmentClassificationServiceImpl extends JPAServiceImpl<AssessmentClassification>
     implements AssessmentClassificationService {
 

@@ -21,12 +21,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,19 +47,21 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
-import rs.teslaris.core.dto.person.ProfilePhotoDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
@@ -79,6 +83,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
+import rs.teslaris.core.util.ImageUtil;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
@@ -281,6 +286,70 @@ public class PersonServiceTest {
         assertEquals(EmploymentPosition.ASSISTANT_PROFESSOR,
             ((Employment) currentEmployment).getEmploymentPosition());
     }
+
+    @Test
+    void shouldImportPersonWithBasicInfoWhenInfoIsValid() {
+        // given
+        var personDTO = new ImportPersonDTO();
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname("Jane");
+        personNameDTO.setLastname("Smith");
+        personDTO.setPersonName(personNameDTO);
+        personDTO.setContactEmail("jane.smith@example.com");
+        personDTO.setSex(Sex.FEMALE);
+        personDTO.setLocalBirthDate(LocalDate.of(1990, 3, 10));
+        personDTO.setPhoneNumber("+1-444-444-4444");
+        personDTO.setPlaceOfBirth("New York");
+        personDTO.setAddressLine(new ArrayList<>());
+        personDTO.setAddressCity(new ArrayList<>());
+        personDTO.setBiography(new ArrayList<>());
+        personDTO.setKeywords(new ArrayList<>());
+        personDTO.setApvnt("23456");
+        personDTO.setECrisId("78901");
+        personDTO.setENaukaId("rp78901");
+        personDTO.setOrcid("0000-0002-1825-0000");
+        personDTO.setScopusAuthorId("11111111111");
+        personDTO.setOrganisationUnitId(2);
+        personDTO.setEmploymentPosition(EmploymentPosition.RESEARCH_ASSOCIATE);
+
+        var personalInfo = new PersonalInfo();
+        personalInfo.setLocalBirthDate(personDTO.getLocalBirthDate());
+
+        var person = new Person();
+        person.setName(new PersonName());
+        person.setPersonalInfo(personalInfo);
+        person.setApproveStatus(ApproveStatus.APPROVED);
+
+        // when
+        var employmentInstitution = new OrganisationUnit();
+        when(organisationUnitService.findOrganisationUnitById(2)).thenReturn(employmentInstitution);
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
+        when(personRepository.save(any(Person.class))).thenReturn(person);
+
+        // then
+        var result = personService.importPersonWithBasicInfo(personDTO, true);
+        assertNotNull(result);
+        assertEquals("Jane", result.getName().getFirstname());
+        assertEquals("Smith", result.getName().getLastname());
+        assertEquals("jane.smith@example.com",
+            result.getPersonalInfo().getContact().getContactEmail());
+        assertEquals(Sex.FEMALE, result.getPersonalInfo().getSex());
+        assertEquals(LocalDate.of(1990, 3, 10), result.getPersonalInfo().getLocalBirthDate());
+        assertEquals("+1-444-444-4444", result.getPersonalInfo().getContact().getPhoneNumber());
+        assertEquals("23456", result.getApvnt());
+        assertEquals("78901", result.getECrisId());
+        assertEquals("rp78901", result.getENaukaId());
+        assertEquals("0000-0002-1825-0000", result.getOrcid());
+        assertEquals("11111111111", result.getScopusAuthorId());
+        assertEquals(ApproveStatus.APPROVED, result.getApproveStatus());
+        assertEquals(1, result.getInvolvements().size());
+        var currentEmployment = result.getInvolvements().iterator().next();
+        assertEquals(ApproveStatus.APPROVED, currentEmployment.getApproveStatus());
+        assertEquals(InvolvementType.EMPLOYED_AT, currentEmployment.getInvolvementType());
+        assertEquals(EmploymentPosition.RESEARCH_ASSOCIATE,
+            ((Employment) currentEmployment).getEmploymentPosition());
+    }
+
 
     @Test
     public void shouldSetPersonBiographyWithAnyData() {
@@ -909,7 +978,7 @@ public class PersonServiceTest {
         // when / then
         assertThrows(IllegalArgumentException.class,
             () -> personService.setPersonProfileImage(personId,
-                new ProfilePhotoDTO(1, 2, 3, 4, mockFile)));
+                new ProfilePhotoOrLogoDTO(1, 2, 3, 4, "", mockFile)));
         verifyNoInteractions(fileService);
     }
 
@@ -1005,5 +1074,184 @@ public class PersonServiceTest {
     private MultipartFile createMockMultipartFile() {
         return new MockMultipartFile("file", "test.txt", "text/plain",
             "Test file content".getBytes());
+    }
+
+    private MultipartFile createMockMultipartFile(byte[] content) {
+        return new MockMultipartFile("file", "test.txt", "text/plain", content);
+    }
+
+    @Test
+    void shouldReturnPersonByAccountingId() {
+        // Given
+        var accountingId = "ACC123";
+        var expectedPerson = new Person();
+        expectedPerson.setAccountingIds(Set.of(accountingId));
+
+        when(personRepository.findApprovedPersonByAccountingId(accountingId))
+            .thenReturn(Optional.of(expectedPerson));
+
+        // When
+        var actualPerson = personService.findPersonByAccountingId(accountingId);
+
+        // Then
+        assertEquals(expectedPerson, actualPerson);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenAccountingIdIsNotFound() {
+        // Given
+        var accountingId = "MISSING_ID";
+        when(personRepository.findApprovedPersonByAccountingId(accountingId))
+            .thenReturn(Optional.empty());
+
+        // When / Then
+        var ex = assertThrows(NotFoundException.class, () ->
+            personService.findPersonByAccountingId(accountingId)
+        );
+        assertEquals("Person with accounting ID MISSING_ID does not exist", ex.getMessage());
+    }
+
+    @Test
+    void shouldRemoveProfilePhotoWhenImageExists() {
+        // given
+        var personId = 1;
+        var profilePhoto = new ProfilePhotoOrLogo();
+        profilePhoto.setImageServerName("photo.jpg");
+        profilePhoto.setTopOffset(10);
+        profilePhoto.setLeftOffset(10);
+        profilePhoto.setHeight(100);
+        profilePhoto.setWidth(100);
+
+        var person = new Person();
+        person.setId(personId);
+        person.setProfilePhoto(profilePhoto);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        // when
+        personService.removePersonProfileImage(personId);
+
+        // then
+        verify(fileService).delete("photo.jpg");
+        assertNull(profilePhoto.getImageServerName());
+        assertNull(profilePhoto.getTopOffset());
+        assertNull(profilePhoto.getLeftOffset());
+        assertNull(profilePhoto.getHeight());
+        assertNull(profilePhoto.getWidth());
+        verify(personRepository).save(person);
+    }
+
+    @Test
+    void shouldDoNothingWhenNoProfilePhotoExists() {
+        // given
+        var personId = 1;
+        var person = new Person();
+        person.setId(personId);
+        person.setProfilePhoto(null); // no photo
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        // when
+        personService.removePersonProfileImage(personId);
+
+        // then
+        verifyNoInteractions(fileService);
+        verify(personRepository).save(person);
+    }
+
+    @Test
+    void shouldSetProfileImageAndSavePerson() throws IOException {
+        // given
+        var personId = 1;
+        var mockFile = createMockMultipartFile();
+        var profilePhotoDTO = new ProfilePhotoOrLogoDTO(10, 20, 100, 150, "", mockFile);
+        var person = new Person();
+        person.setId(personId);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+        when(fileService.store(any(), anyString())).thenReturn("stored-file.jpg");
+
+        try (MockedStatic<ImageUtil> imageUtil = mockStatic(ImageUtil.class)) {
+            imageUtil.when(() -> ImageUtil.isMIMETypeInvalid(mockFile, false)).thenReturn(false);
+
+            // when
+            var result = personService.setPersonProfileImage(personId, profilePhotoDTO);
+
+            // then
+            assertEquals("stored-file.jpg", result);
+            assertNotNull(person.getProfilePhoto());
+            assertEquals(20, person.getProfilePhoto().getTopOffset());
+            assertEquals(10, person.getProfilePhoto().getLeftOffset());
+            assertEquals(150, person.getProfilePhoto().getHeight());
+            assertEquals(100, person.getProfilePhoto().getWidth());
+            assertEquals("stored-file.jpg", person.getProfilePhoto().getImageServerName());
+
+            verify(fileService).store(eq(mockFile), anyString());
+            verify(personRepository).save(person);
+        }
+    }
+
+    @Test
+    void shouldDeleteOldImageWhenNewOneIsUploaded() throws IOException {
+        // given
+        var personId = 1;
+        var mockFile = createMockMultipartFile();
+        var dto = new ProfilePhotoOrLogoDTO(1, 2, 3, 4, "", mockFile);
+        var existingPhoto = new ProfilePhotoOrLogo();
+        existingPhoto.setImageServerName("old-image.jpg");
+
+        var person = new Person();
+        person.setId(personId);
+        person.setProfilePhoto(existingPhoto);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+        when(fileService.store(any(), anyString())).thenReturn("new-image.jpg");
+
+        try (MockedStatic<ImageUtil> imageUtil = mockStatic(ImageUtil.class)) {
+            imageUtil.when(() -> ImageUtil.isMIMETypeInvalid(mockFile, false)).thenReturn(false);
+
+            // when
+            var result = personService.setPersonProfileImage(personId, dto);
+
+            // then
+            assertEquals("new-image.jpg", result);
+            verify(fileService).delete("old-image.jpg");
+            verify(fileService).store(eq(mockFile), anyString());
+            verify(personRepository).save(person);
+        }
+    }
+
+    @Test
+    void shouldNotDeleteOrStoreFileWhenFileIsEmpty() throws IOException {
+        // given
+        var personId = 1;
+        var mockFile = createMockMultipartFile(new byte[0]); // empty file
+        var dto = new ProfilePhotoOrLogoDTO(5, 6, 7, 8, "", mockFile);
+        var existingPhoto = new ProfilePhotoOrLogo();
+        existingPhoto.setImageServerName("unchanged.jpg");
+
+        var person = new Person();
+        person.setId(personId);
+        person.setProfilePhoto(existingPhoto);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+
+        try (MockedStatic<ImageUtil> imageUtil = mockStatic(ImageUtil.class)) {
+            imageUtil.when(() -> ImageUtil.isMIMETypeInvalid(mockFile, false)).thenReturn(false);
+
+            // when
+            var result = personService.setPersonProfileImage(personId, dto);
+
+            // then
+            assertEquals("unchanged.jpg", result);
+            assertEquals(6, existingPhoto.getTopOffset());
+            assertEquals(5, existingPhoto.getLeftOffset());
+            assertEquals(8, existingPhoto.getHeight());
+            assertEquals(7, existingPhoto.getWidth());
+
+            verify(fileService, never()).delete(any());
+            verify(fileService, never()).store(any(), anyString());
+            verify(personRepository).save(person);
+        }
     }
 }

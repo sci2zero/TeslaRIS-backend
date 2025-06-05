@@ -1,7 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
 import io.minio.GetObjectResponse;
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -18,11 +17,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class FileServiceFileSystemImpl implements FileService {
 
     @Value("${document_storage.root_path}")
@@ -64,9 +65,16 @@ public class FileServiceFileSystemImpl implements FileService {
 
     @Override
     public void delete(String serverFilename) {
-        var file = new File(Paths.get(rootLocation, serverFilename).toUri());
+        var rootPath = Paths.get(rootLocation).toAbsolutePath().normalize();
+        var targetPath = rootPath.resolve(serverFilename).normalize();
+
+        if (!targetPath.startsWith(rootPath)) {
+            throw new StorageException("Invalid path: " + serverFilename);
+        }
+
+        var file = targetPath.toFile();
         if (!file.delete()) {
-            throw new StorageException("Failed to delete " + serverFilename + " .");
+            throw new StorageException("Failed to delete " + serverFilename + ".");
         }
     }
 

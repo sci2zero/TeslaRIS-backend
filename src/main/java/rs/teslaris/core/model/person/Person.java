@@ -22,6 +22,7 @@ import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.user.User;
 
@@ -69,7 +70,7 @@ public class Person extends BaseEntity {
     private Set<MultiLingualContent> keyword = new HashSet<>();
 
     @Embedded
-    private ProfilePhoto profilePhoto;
+    private ProfilePhotoOrLogo profilePhoto;
 
     @Column(name = "apvnt")
     private String apvnt;
@@ -100,6 +101,10 @@ public class Person extends BaseEntity {
         joinColumns = @JoinColumn(name = "person_id"))
     @Column(name = "institution_id")
     private Set<Integer> employmentInstitutionsIdHierarchy = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    private Set<String> accountingIds = new HashSet<>();
+
 
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {

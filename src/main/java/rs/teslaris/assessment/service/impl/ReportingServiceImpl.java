@@ -21,6 +21,7 @@ import rs.teslaris.assessment.service.interfaces.PersonAssessmentClassificationS
 import rs.teslaris.assessment.service.interfaces.ReportingService;
 import rs.teslaris.assessment.util.AssessmentReportGenerator;
 import rs.teslaris.assessment.util.ReportTemplateEngine;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -32,6 +33,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
+@Traceable
 public class ReportingServiceImpl implements ReportingService {
 
     private final PersonAssessmentClassificationService personAssessmentClassificationService;
@@ -228,8 +230,8 @@ public class ReportingServiceImpl implements ReportingService {
     private int getStartYear(ReportType reportType, int assessmentYear) {
         return switch (reportType) {
             case TABLE_67, TABLE_67_POSITIONS -> assessmentYear - 9;
-            case TABLE_63, TABLE_TOP_LEVEL_INSTITUTION, TABLE_TOP_LEVEL_INSTITUTION_SUMMARY, TABLE_TOP_LEVEL_INSTITUTION_COLORED ->
-                assessmentYear;
+            case TABLE_63, TABLE_TOP_LEVEL_INSTITUTION, TABLE_TOP_LEVEL_INSTITUTION_SUMMARY,
+                 TABLE_TOP_LEVEL_INSTITUTION_COLORED -> assessmentYear;
             case TABLE_64 -> assessmentYear - 2;
         };
     }

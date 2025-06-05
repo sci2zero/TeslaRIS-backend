@@ -4,11 +4,12 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -17,8 +18,10 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -38,6 +41,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
+@Traceable
 public class MonographServiceImpl extends DocumentPublicationServiceImpl implements
     MonographService {
 
@@ -52,6 +56,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     private final ResearchAreaService researchAreaService;
 
     private final MonographRepository monographRepository;
+
+    private final Pattern doiPattern =
+        Pattern.compile("^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
 
     @Autowired
@@ -90,14 +97,21 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
-    public Page<DocumentPublicationIndex> searchMonographs(List<String> tokens) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens), PageRequest.of(0, 5),
+    public Page<DocumentPublicationIndex> searchMonographs(List<String> tokens, boolean onlyBooks) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, onlyBooks),
+            PageRequest.of(0, 5),
             DocumentPublicationIndex.class, "document_publication");
     }
 
     @Override
     public MonographDTO readMonographById(Integer monographId) {
-        var monograph = monographJPAService.findOne(monographId);
+        Monograph monograph;
+        try {
+            monograph = monographJPAService.findOne(monographId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(monographId);
+            throw e;
+        }
 
         if (monograph.getApproveStatus().equals(ApproveStatus.DECLINED)) {
             throw new NotFoundException("Monograph with ID " + monographId + " does not exist.");
@@ -280,41 +294,106 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             super.isIdentifierInUse(identifier, monographId);
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens) {
+    private Query buildSimpleSearchQuery(List<String> tokens, boolean onlyBooks) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
                     tokens.forEach(token -> {
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("title_sr").value(token).caseInsensitive(true)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("title_sr").query(token)));
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("title_other").value(token).caseInsensitive(true)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("description_sr").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("description_other").query(token)));
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("keywords_sr").value("*" + token + "*")));
-                        eq.should(sb -> sb.wildcard(
-                            m -> m.field("keywords_other").value("*" + token + "*")));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("full_text_sr").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("full_text_other").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("author_names").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("editor_names").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("reviewer_names").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("advisor_names").query(token)));
-                        eq.should(sb -> sb.match(
-                            m -> m.field("doi").query(token)));
+                        if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                            b.must(mp ->
+                                mp.bool(m -> {
+                                    {
+                                        m.should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("title_sr")
+                                                .query(token.replace("\\\"", ""))));
+                                        m.should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("title_other")
+                                                .query(token.replace("\\\"", ""))));
+                                    }
+                                    return m;
+                                }));
+                        } else if (token.contains("\\-") &&
+                            doiPattern.matcher(token.replace("\\-", "-")).matches()) {
+                            String normalizedToken = token.replace("\\-", "-");
+
+                            b.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("e_issn").value(normalizedToken)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("print_issn").value(normalizedToken)
+                                        .caseInsensitive(true)))
+                            ));
+                        } else if (token.endsWith(".")) {
+                            var wildcard = token.replace(".", "") + "?";
+                            b.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("title_sr").value(wildcard)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("title_other").value(wildcard)
+                                        .caseInsensitive(true)))
+                            ));
+                        } else if (token.endsWith("\\*")) {
+                            var wildcard = token.replace("\\*", "") + "*";
+                            b.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("title_sr").value(wildcard)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("title_other").value(wildcard)
+                                        .caseInsensitive(true)))
+                            ));
+                        } else {
+                            var wildcard = token + "*";
+                            b.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("title_sr").value(wildcard)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("title_other").value(wildcard)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("title_sr").query(token)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("title_other").query(token)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("author_names").query(token)))
+                                .should(
+                                    sb -> sb.wildcard(mq -> mq.field("author_names").value(wildcard)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("editor_names").query(token).boost(0.7f)))
+                                .should(
+                                    sb -> sb.wildcard(
+                                        mq -> mq.field("editor_names").value(wildcard).boost(0.7f)
+                                            .caseInsensitive(true)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("reviewer_names").query(token).boost(0.7f)))
+                                .should(
+                                    sb -> sb.wildcard(
+                                        mq -> mq.field("reviewer_names").value(wildcard).boost(0.7f)
+                                            .caseInsensitive(true)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("advisor_names").query(token).boost(0.7f)))
+                                .should(
+                                    sb -> sb.wildcard(
+                                        mq -> mq.field("advisor_names").value(wildcard).boost(0.7f)
+                                            .caseInsensitive(true)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("description_sr").query(token).boost(0.5f)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("description_other").query(token).boost(0.5f)))
+                                .should(sb -> sb.term(
+                                    mq -> mq.field("keywords_sr").value(token)))
+                                .should(sb -> sb.term(
+                                    mq -> mq.field("keywords_other").value(token)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("full_text_sr").query(token).boost(0.3f)))
+                                .should(sb -> sb.match(
+                                    mq -> mq.field("full_text_other").query(token).boost(0.3f)))
+                            ));
+                        }
                     });
                     return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
                 });
@@ -322,6 +401,11 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             });
             b.must(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.MONOGRAPH.name())));
+
+            if (onlyBooks) {
+                b.must(sb -> sb.match(
+                    m -> m.field("publication_type").query(MonographType.BOOK.name())));
+            }
             return b;
         })))._toQuery();
     }

@@ -25,10 +25,6 @@ public interface MergeService {
 
     void switchAllPublicationsToOtherJournal(Integer sourceId, Integer targetId);
 
-    void switchAllIndicatorsToOtherJournal(Integer sourceId, Integer targetId);
-
-    void switchAllClassificationsToOtherJournal(Integer sourceId, Integer targetId);
-
     void switchPublisherPublicationToOtherPublisher(Integer targetPublisherId,
                                                     Integer publicationId);
 
@@ -60,10 +56,6 @@ public interface MergeService {
 
     void switchAllProceedingsToOtherConference(Integer sourceConferenceId,
                                                Integer targetConferenceId);
-
-    void switchAllIndicatorsToOtherEvent(Integer sourceId, Integer targetId);
-
-    void switchAllClassificationsToOtherEvent(Integer sourceId, Integer targetId);
 
     void switchInvolvements(List<Integer> involvementIds, Integer sourcePersonId,
                             Integer targetPersonId);

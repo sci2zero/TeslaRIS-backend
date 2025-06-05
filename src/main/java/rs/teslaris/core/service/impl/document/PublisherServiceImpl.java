@@ -16,6 +16,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.PublisherConverter;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
@@ -32,12 +33,14 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Traceable
 public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements PublisherService {
 
     private final PublisherRepository publisherRepository;
@@ -65,7 +68,16 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
     @Override
     public PublisherDTO readPublisherById(Integer publisherId) {
-        return PublisherConverter.toDTO(findOne(publisherId));
+        Publisher publisher;
+        try {
+            publisher = findOne(publisherId);
+        } catch (NotFoundException e) {
+            publisherIndexRepository.findByDatabaseId(publisherId)
+                .ifPresent(publisherIndexRepository::delete);
+            throw e;
+        }
+
+        return PublisherConverter.toDTO(publisher);
     }
 
     @Override
@@ -243,22 +255,44 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
                             }
                             return m;
                         }));
+                } else if (token.endsWith(".")) {
+                    var wildcard = token.replace(".", "") + "?";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_other").value(wildcard)))
+                    ));
+                } else if (token.endsWith("\\*")) {
+                    var wildcard = token.replace("\\*", "") + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_other").value(wildcard)))
+                    ));
+                } else {
+                    var wildcard = token + "*";
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_sr").value(wildcard)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("name_other").value(wildcard)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("name_sr").query(wildcard)))
+                        .should(sb -> sb.match(
+                            mq -> mq.field("name_other").query(wildcard)))
+                    ));
                 }
 
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("name_sr").value("*" + token + "*").caseInsensitive(true)));
                 b.should(sb -> sb.match(
-                    m -> m.field("name_sr").query(token)));
-                b.should(sb -> sb.wildcard(
-                    m -> m.field("name_other").value("*" + token + "*").caseInsensitive(true)));
+                    m -> m.field("place_sr").query(token).boost(0.7f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("place_sr").query(token)));
+                    m -> m.field("place_other").query(token).boost(0.7f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("place_other").query(token)));
+                    m -> m.field("state_sr").query(token).boost(0.5f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("state_sr").query(token)));
-                b.should(sb -> sb.match(
-                    m -> m.field("state_other").query(token)));
+                    m -> m.field("state_other").query(token).boost(0.5f)));
             });
             return b;
         })))._toQuery();

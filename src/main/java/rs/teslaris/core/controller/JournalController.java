@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
@@ -31,6 +32,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/journal")
 @RequiredArgsConstructor
+@Traceable
 public class JournalController {
 
     private final JournalService journalService;
@@ -77,7 +79,7 @@ public class JournalController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
+    @PreAuthorize("hasAuthority('CREATE_JOURNAL')")
     @Idempotent
     public PublicationSeriesDTO createJournal(@RequestBody @Valid PublicationSeriesDTO journalDTO) {
         var savedJournal = journalService.createJournal(journalDTO, true);

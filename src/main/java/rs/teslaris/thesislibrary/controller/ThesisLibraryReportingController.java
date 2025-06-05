@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
@@ -23,6 +24,7 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingServic
 @RestController
 @RequestMapping("/api/thesis-library/report/")
 @RequiredArgsConstructor
+@Traceable
 public class ThesisLibraryReportingController {
 
     private final ThesisLibraryReportingService thesisLibraryReportingService;

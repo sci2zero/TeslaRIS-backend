@@ -13,11 +13,11 @@ import rs.teslaris.assessment.model.EventAssessmentClassification;
 public interface EventAssessmentClassificationRepository extends
     JpaRepository<EventAssessmentClassification, Integer> {
 
-    @Query("select eac from EventAssessmentClassification eac where " +
-        "eac.event.id = :eventId order by eac.timestamp desc")
+    @Query("SELECT eac FROM EventAssessmentClassification eac WHERE " +
+        "eac.event.id = :eventId ORDER BY eac.timestamp DESC")
     List<EventAssessmentClassification> findAssessmentClassificationsForEvent(Integer eventId);
 
-    @Query("select eac from EventAssessmentClassification eac where eac.event.id = :eventId")
+    @Query("SELECT eac FROM EventAssessmentClassification eac WHERE eac.event.id = :eventId")
     Page<EventAssessmentClassification> findAssessmentClassificationsForEvent(Integer eventId,
                                                                               Pageable pageable);
 

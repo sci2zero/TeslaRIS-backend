@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -25,6 +25,7 @@ import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @Transactional
+@Traceable
 public class ConferenceServiceImpl extends EventServiceImpl implements ConferenceService {
 
     private final ConferenceJPAServiceImpl conferenceJPAService;
@@ -101,7 +103,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     @Override
     public ConferenceDTO readConference(Integer conferenceId) {
-        return ConferenceConverter.toDTO(findConferenceById(conferenceId));
+        Conference conference;
+        try {
+            conference = findConferenceById(conferenceId);
+        } catch (NotFoundException e) {
+            eventIndexRepository.findByDatabaseId(conferenceId)
+                .ifPresent(eventIndexRepository::delete);
+            throw e;
+        }
+
+        return ConferenceConverter.toDTO(conference);
     }
 
     @Override

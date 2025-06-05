@@ -79,4 +79,10 @@ public interface PublicationSeriesIndicatorRepository extends
         EntityIndicatorSource source,
         LocalDate date, String category,
         String indicatorCode);
+
+    @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
+        "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
+        "psi.indicator.code = :code")
+    Optional<PublicationSeriesIndicator> findIndicatorForCodeAndPublicationSeries(String code,
+                                                                                  Integer publicationSeriesId);
 }

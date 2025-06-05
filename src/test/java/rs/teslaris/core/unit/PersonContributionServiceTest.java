@@ -63,6 +63,8 @@ public class PersonContributionServiceTest {
     public void setUp() {
         ReflectionTestUtils.setField(personContributionService, "contributionApprovedByDefault",
             true);
+        ReflectionTestUtils.setField(personContributionService, "allowExternalThesisAssociates",
+            false);
     }
 
     @Test

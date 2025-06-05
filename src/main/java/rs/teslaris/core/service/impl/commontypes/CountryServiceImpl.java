@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.CountryConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.model.commontypes.Country;
@@ -22,6 +23,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Traceable
 public class CountryServiceImpl extends JPAServiceImpl<Country> implements CountryService {
 
     private final CountryRepository countryRepository;

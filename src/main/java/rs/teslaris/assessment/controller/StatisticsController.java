@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 
 @RestController
 @RequestMapping("/api/statistics")
+@Traceable
 public class StatisticsController {
 
     private final Bucket bucket;
@@ -67,6 +69,29 @@ public class StatisticsController {
     public ResponseEntity<Void> registerDocumentView(@PathVariable Integer documentId) {
         if (bucket.tryConsume(1)) {
             statisticsService.saveDocumentView(documentId);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        }
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+    }
+
+    @PostMapping("/publication-series/{publicationSeriesId}")
+    @Idempotent
+    public ResponseEntity<Void> registerPublicationSeriesView(
+        @PathVariable Integer publicationSeriesId) {
+        if (bucket.tryConsume(1)) {
+            statisticsService.savePublicationSeriesView(publicationSeriesId);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        }
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+    }
+
+    @PostMapping("/event/{eventId}")
+    @Idempotent
+    public ResponseEntity<Void> registerEventView(@PathVariable Integer eventId) {
+        if (bucket.tryConsume(1)) {
+            statisticsService.saveEventView(eventId);
             return ResponseEntity.status(HttpStatus.CREATED).build();
         }
 

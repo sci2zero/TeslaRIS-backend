@@ -14,6 +14,7 @@ import rs.teslaris.assessment.repository.EntityIndicatorRepository;
 import rs.teslaris.assessment.service.impl.cruddelegate.DocumentIndicatorJPAServiceImpl;
 import rs.teslaris.assessment.service.interfaces.DocumentIndicatorService;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Thesis;
@@ -24,6 +25,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 
 @Service
 @Transactional
+@Traceable
 public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements DocumentIndicatorService {
 

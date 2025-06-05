@@ -10,22 +10,24 @@ import rs.teslaris.core.model.commontypes.Notification;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Integer> {
 
-    @Query("select n from Notification n where n.user.id = :userId")
+    @Query("SELECT n FROM Notification n WHERE n.user.id = :userId")
     List<Notification> getNotificationsForUser(Integer userId);
 
-    @Query("select n from Notification n where n.user.id = :userId and n.notificationType = 2")
+    @Query("SELECT n FROM Notification n WHERE n.user.id = :userId AND n.notificationType = 2")
     List<Notification> getNewOtherNameNotificationsForUser(Integer userId);
 
     @Modifying
-    @Query("delete from Notification n where n.user.id = :userId and n.notificationType = 5")
+    @Query("DELETE FROM Notification n WHERE n.user.id = :userId AND n.notificationType = 5")
     void deleteNewPotentialClaimsNotificationsForUser(Integer userId);
 
-    @Query("select n from Notification n where n.user.id = :userId and n.user.userNotificationPeriod = 0")
+    @Query("SELECT n FROM Notification n " +
+        "WHERE n.user.id = :userId AND n.user.userNotificationPeriod = 0")
     List<Notification> getDailyNotifications(Integer userId);
 
-    @Query("select n from Notification n where n.user.id = :userId and n.user.userNotificationPeriod = 1")
+    @Query("SELECT n FROM Notification n " +
+        "WHERE n.user.id = :userId AND n.user.userNotificationPeriod = 1")
     List<Notification> getWeeklyNotifications(Integer userId);
 
-    @Query("select count(n) from Notification n where n.user.id = :userId")
+    @Query("SELECT count(n) FROM Notification n WHERE n.user.id = :userId")
     long getNotificationCountForUser(Integer userId);
 }

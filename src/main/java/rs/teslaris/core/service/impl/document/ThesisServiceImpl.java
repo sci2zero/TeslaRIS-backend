@@ -16,7 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -36,6 +36,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -57,6 +58,7 @@ import rs.teslaris.core.util.xmlutil.XMLUtil;
 @Service
 @Transactional
 @Slf4j
+@Traceable
 public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements ThesisService {
 
     private final ThesisJPAServiceImpl thesisJPAService;
@@ -115,7 +117,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     public ThesisResponseDTO readThesisById(Integer thesisId) {
-        var thesis = thesisJPAService.findOne(thesisId);
+        Thesis thesis;
+        try {
+            thesis = thesisJPAService.findOne(thesisId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(thesisId);
+            throw e;
+        }
+
         if (!thesis.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -438,9 +447,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             index.setPublisherId(thesis.getPublisher().getId());
         }
 
-        if (!index.getOrganisationUnitIds().contains(thesis.getOrganisationUnit().getId())) {
-            index.getOrganisationUnitIds().add(thesis.getOrganisationUnit().getId());
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
+            if (!index.getOrganisationUnitIds().contains(thesis.getOrganisationUnit().getId())) {
+                index.getOrganisationUnitIds().add(thesis.getOrganisationUnit().getId());
+            }
         }
+
         index.setResearchOutputIds(
             thesisResearchOutputRepository.findResearchOutputIdsForThesis(thesis.getId()));
         index.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());

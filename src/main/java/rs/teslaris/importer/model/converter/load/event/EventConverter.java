@@ -36,27 +36,19 @@ public class EventConverter implements RecordConverter<Event, ConferenceDTO> {
 
         dto.setName(multilingualContentConverter.toDTO(record.getEventName()));
         dto.setPlace(multilingualContentConverter.toDTO(record.getPlace()));
-        dto.setDescription(multilingualContentConverter.toDTO((String) record.getDescription()));
+        dto.setDescription(multilingualContentConverter.toDTO(record.getDescription()));
 
         var countryOptional = countryService.findCountryByName(record.getCountry());
         countryOptional.ifPresent(country -> dto.setCountryId(country.getId()));
 
         if (Objects.nonNull(record.getKeywords())) {
-            var keywordBuilder = new StringBuilder();
-            record.getKeywords().stream()
-                .map(Object::toString)
-                .forEach(keyword -> {
-                    if (!keywordBuilder.isEmpty()) {
-                        keywordBuilder.append(", ");
-                    }
-                    keywordBuilder.append(keyword);
-                });
-            dto.setKeywords(multilingualContentConverter.toDTO(keywordBuilder.toString()));
+            dto.setKeywords(multilingualContentConverter.toDTO(
+                OAIPMHParseUtility.groupParsedMultilingualKeywords(record.getKeywords())));
         } else {
             dto.setKeywords(new ArrayList<>());
         }
 
-        var formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
+        var formatter = new SimpleDateFormat("yyyy-MM-dd");
         try {
             dto.setDateFrom(
                 LocalDate.ofInstant(formatter.parse(record.getStartDate()).toInstant(),

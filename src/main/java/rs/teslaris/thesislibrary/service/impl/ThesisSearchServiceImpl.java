@@ -12,11 +12,13 @@ import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -25,6 +27,7 @@ import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
 @Service
+@Traceable
 public class ThesisSearchServiceImpl implements ThesisSearchService {
 
     private final SearchFieldsLoader searchFieldsLoader;
@@ -66,14 +69,32 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
     private Page<DocumentPublicationIndex> performQuery(ThesisSearchRequestDTO searchRequest,
                                                         Pageable pageable,
                                                         SearchRequestType queryType) {
+        var queryAndIndex = fetchQueryAndIndexName(searchRequest, queryType);
+
         return searchService.runQuery(
-            buildSearchQuery(searchRequest.tokens(), searchRequest.facultyIds(),
-                searchRequest.authorIds(), searchRequest.advisorIds(),
-                searchRequest.boardMemberIds(), searchRequest.boardPresidentIds(),
-                searchRequest.thesisTypes(), searchRequest.dateFrom(), searchRequest.dateTo(),
-                queryType, searchRequest.showOnlyOpenAccess()),
+            queryAndIndex.a,
             pageable,
-            DocumentPublicationIndex.class, "document_publication");
+            DocumentPublicationIndex.class, queryAndIndex.b);
+    }
+
+    @Override
+    public List<Pair<String, Long>> performWordCloudSearch(ThesisSearchRequestDTO searchRequest,
+                                                           SearchRequestType queryType,
+                                                           boolean foreignLanguage) {
+        var queryAndIndex = fetchQueryAndIndexName(searchRequest, queryType);
+        return searchService.runWordCloudSearch(queryAndIndex.a, queryAndIndex.b, foreignLanguage);
+    }
+
+    private Pair<Query, String> fetchQueryAndIndexName(ThesisSearchRequestDTO searchRequest,
+                                                       SearchRequestType queryType) {
+        var query = buildSearchQuery(searchRequest.tokens(), searchRequest.facultyIds(),
+            searchRequest.authorIds(), searchRequest.advisorIds(),
+            searchRequest.boardMemberIds(), searchRequest.boardPresidentIds(),
+            searchRequest.thesisTypes(), searchRequest.dateFrom(), searchRequest.dateTo(),
+            queryType, searchRequest.showOnlyOpenAccess());
+        var searchIndex = "document_publication";
+
+        return new Pair<>(query, searchIndex);
     }
 
     public Query buildSearchQuery(List<String> tokens, List<Integer> facultyIds,

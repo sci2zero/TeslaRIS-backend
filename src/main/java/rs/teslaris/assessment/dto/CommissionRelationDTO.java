@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import rs.teslaris.assessment.model.ResultCalculationMethod;
+import rs.teslaris.core.model.institution.ResultCalculationMethod;
 
 @Getter
 @Setter

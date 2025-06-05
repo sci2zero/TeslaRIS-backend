@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -22,6 +23,7 @@ import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 @RestController
 @RequestMapping("/api/import-common")
 @RequiredArgsConstructor
+@Traceable
 public class CommonHarvestController {
 
     private final JwtUtil tokenUtil;

@@ -15,6 +15,7 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.janino.ExpressionEvaluator;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,37 +24,55 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.DocumentIndicator;
 import rs.teslaris.assessment.model.EntityIndicator;
+import rs.teslaris.assessment.model.EventIndicator;
 import rs.teslaris.assessment.model.OrganisationUnitIndicator;
 import rs.teslaris.assessment.model.PersonIndicator;
+import rs.teslaris.assessment.model.PublicationSeriesIndicator;
 import rs.teslaris.assessment.repository.DocumentIndicatorRepository;
+import rs.teslaris.assessment.repository.EventIndicatorRepository;
 import rs.teslaris.assessment.repository.OrganisationUnitIndicatorRepository;
 import rs.teslaris.assessment.repository.PersonIndicatorRepository;
+import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
+import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.indexrepository.statistics.StatisticsIndexRepository;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.Event;
+import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.person.OrganisationUnitRepository;
+import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.repository.document.PublicationSeriesRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class StatisticsServiceImpl implements StatisticsService {
+public class StatisticsServiceImpl implements StatisticsService, DocumentDownloadTracker {
 
     private final StatisticsIndexRepository statisticsIndexRepository;
 
@@ -77,6 +96,22 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
+    private final PublicationSeriesRepository publicationSeriesRepository;
+
+    private final PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository;
+
+    private final EventRepository eventRepository;
+
+    private final EventIndicatorRepository eventIndicatorRepository;
+
+    private final JournalIndexRepository journalIndexRepository;
+
+    private final EventIndexRepository eventIndexRepository;
+
+    private final BookSeriesRepository bookSeriesRepository;
+
+    private final BookSeriesIndexRepository bookSeriesIndexRepository;
+
 
     @Override
     public List<String> fetchStatisticsTypeIndicators(StatisticsType statisticsType) {
@@ -84,10 +119,45 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
+    public void savePublicationSeriesView(Integer publicationSeriesId) {
+        var statisticsEntry = new StatisticsIndex();
+        statisticsEntry.setPublicationSeriesId(publicationSeriesId);
+        saveView(statisticsEntry);
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: PUBLICATION_SERIES_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            publicationSeriesId
+        );
+    }
+
+    @Override
+    public void saveEventView(Integer eventId) {
+        var statisticsEntry = new StatisticsIndex();
+        statisticsEntry.setEventId(eventId);
+        saveView(statisticsEntry);
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: EVENT_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            eventId
+        );
+    }
+
+    @Override
     public void savePersonView(Integer personId) {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setPersonId(personId);
         saveView(statisticsEntry);
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: PERSON_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            personId
+        );
     }
 
     @Override
@@ -95,6 +165,13 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveView(statisticsEntry);
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: DOCUMENT_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            documentId
+        );
     }
 
     @Override
@@ -102,6 +179,13 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setOrganisationUnitId(organisationUnitId);
         saveView(statisticsEntry);
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: ORGANISATION_UNIT_VIEW - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            organisationUnitId
+        );
     }
 
     @Override
@@ -109,6 +193,13 @@ public class StatisticsServiceImpl implements StatisticsService {
         var statisticsEntry = new StatisticsIndex();
         statisticsEntry.setDocumentId(documentId);
         saveDownload(statisticsEntry);
+        log.info(
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: DOCUMENT_DOWNLOAD - ID: {}",
+            SessionTrackingUtil.getCurrentTracingContextId(),
+            SessionTrackingUtil.getJSessionId(),
+            SessionTrackingUtil.getCurrentClientIP(),
+            documentId
+        );
     }
 
     private void saveView(StatisticsIndex index) {
@@ -123,6 +214,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private void save(StatisticsIndex index) {
         index.setTimestamp(LocalDateTime.now());
+        index.setSessionId(SessionTrackingUtil.getJSessionId());
 
         updateTotalCount(index);
 
@@ -173,6 +265,28 @@ public class StatisticsServiceImpl implements StatisticsService {
                     entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
                     entityIndicator.setTimestamp(LocalDateTime.now());
                     organisationUnitIndicatorRepository.save(entityIndicator);
+                });
+        } else if (Objects.nonNull(index.getPublicationSeriesId())) {
+            updateIndicator(index.getPublicationSeriesId(),
+                indicator.getCode(),
+                publicationSeriesRepository::findById,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                (id) -> new PublicationSeriesIndicator(),
+                entityIndicator -> {
+                    entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
+                    entityIndicator.setTimestamp(LocalDateTime.now());
+                    publicationSeriesIndicatorRepository.save(entityIndicator);
+                });
+        } else if (Objects.nonNull(index.getEventId())) {
+            updateIndicator(index.getEventId(),
+                indicator.getCode(),
+                eventRepository::findById,
+                eventIndicatorRepository::findIndicatorsForCodeAndEvent,
+                (id) -> new EventIndicator(),
+                entityIndicator -> {
+                    entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
+                    entityIndicator.setTimestamp(LocalDateTime.now());
+                    eventIndicatorRepository.save(entityIndicator);
                 });
         }
     }
@@ -252,14 +366,13 @@ public class StatisticsServiceImpl implements StatisticsService {
                 documentPublicationIndexRepository,
                 documentRepository,
                 (start, document) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndDocumentId(
-                    start, LocalDateTime.now(), statisticsType.name(),
-                    document.getDatabaseId()),
+                    start, LocalDateTime.now(), statisticsType.name(), document.getDatabaseId()),
                 DocumentPublicationIndex::getDatabaseId,
                 documentIndicatorRepository::findIndicatorForCodeAndDocumentId,
                 id -> new DocumentIndicator(),
-                (entityIndicator, document) -> entityIndicator.setDocument(
-                    documentRepository.findById(document.getDatabaseId()).orElseThrow()),
-                documentIndicatorRepository
+                DocumentIndicator::setDocument,
+                documentIndicatorRepository,
+                "Document"
             );
         });
 
@@ -274,9 +387,9 @@ public class StatisticsServiceImpl implements StatisticsService {
                 PersonIndex::getDatabaseId,
                 personIndicatorRepository::findIndicatorForCodeAndPersonId,
                 id -> new PersonIndicator(),
-                (entityIndicator, person) -> entityIndicator.setPerson(
-                    personRepository.findById(person.getDatabaseId()).orElseThrow()),
-                personIndicatorRepository
+                PersonIndicator::setPerson,
+                personIndicatorRepository,
+                "Person"
             );
         });
 
@@ -291,13 +404,66 @@ public class StatisticsServiceImpl implements StatisticsService {
                 OrganisationUnitIndex::getDatabaseId,
                 organisationUnitIndicatorRepository::findIndicatorForCodeAndOrganisationUnitId,
                 id -> new OrganisationUnitIndicator(),
-                (entityIndicator, ou) -> entityIndicator.setOrganisationUnit(
-                    organisationUnitRepository.findById(ou.getDatabaseId()).orElseThrow()),
-                organisationUnitIndicatorRepository
+                OrganisationUnitIndicator::setOrganisationUnit,
+                organisationUnitIndicatorRepository,
+                "OrganisationUnit"
             );
         });
 
-        var allTasks = CompletableFuture.allOf(documentTask, personTask, organisationTask);
+        var journalsTask = CompletableFuture.runAsync(() -> {
+            updateEntityStatisticInPeriod(
+                startPeriods,
+                indicatorCodes,
+                journalIndexRepository,
+                publicationSeriesRepository,
+                (start, journal) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndPublicationSeriesId(
+                    start, LocalDateTime.now(), statisticsType.name(), journal.getDatabaseId()),
+                JournalIndex::getDatabaseId,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                id -> new PublicationSeriesIndicator(),
+                PublicationSeriesIndicator::setPublicationSeries,
+                publicationSeriesIndicatorRepository,
+                "Journal"
+            );
+        });
+
+        var bookSeriesTask = CompletableFuture.runAsync(() -> {
+            updateEntityStatisticInPeriod(
+                startPeriods,
+                indicatorCodes,
+                bookSeriesIndexRepository,
+                bookSeriesRepository,
+                (start, bookSeries) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndPublicationSeriesId(
+                    start, LocalDateTime.now(), statisticsType.name(), bookSeries.getDatabaseId()),
+                BookSeriesIndex::getDatabaseId,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                id -> new PublicationSeriesIndicator(),
+                PublicationSeriesIndicator::setPublicationSeries,
+                publicationSeriesIndicatorRepository,
+                "BookSeries"
+            );
+        });
+
+        var eventsTask = CompletableFuture.runAsync(() -> {
+            updateEntityStatisticInPeriod(
+                startPeriods,
+                indicatorCodes,
+                eventIndexRepository,
+                eventRepository,
+                (start, event) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndEventId(
+                    start, LocalDateTime.now(), statisticsType.name(), event.getDatabaseId()),
+                EventIndex::getDatabaseId,
+                eventIndicatorRepository::findIndicatorsForCodeAndEvent,
+                id -> new EventIndicator(),
+                EventIndicator::setEvent,
+                eventIndicatorRepository,
+                "Event"
+            );
+        });
+
+        var allTasks =
+            CompletableFuture.allOf(documentTask, personTask, organisationTask, journalsTask,
+                eventsTask, bookSeriesTask);
 
         try {
             allTasks.get();
@@ -316,8 +482,9 @@ public class StatisticsServiceImpl implements StatisticsService {
         Function<T, Integer> getEntityId,
         BiFunction<String, Integer, Optional<I>> findIndicatorByEntityId,
         Function<Integer, I> createNewIndicator,
-        BiConsumer<I, T> setEntity,
-        JpaRepository<I, Integer> entityIndicatorRepository) {
+        BiConsumer<I, D> setEntity,
+        JpaRepository<I, Integer> entityIndicatorRepository,
+        String entityTypeName) {
 
         int pageNumber = 0;
         int chunkSize = 50;
@@ -327,30 +494,41 @@ public class StatisticsServiceImpl implements StatisticsService {
             List<T> chunk =
                 indexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach(entity -> {
-                Integer entityId = getEntityId.apply(entity);
+            chunk.forEach(indexEntity -> {
+                Integer entityId = getEntityId.apply(indexEntity);
 
-                FunctionalUtil.forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
-                    Integer statisticsCount = countFunction.apply(startPeriods.get(i), entity);
+                entityRepository.findById(entityId).ifPresentOrElse(dbEntity -> {
+                    FunctionalUtil.forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
+                        Integer statisticsCount =
+                            countFunction.apply(startPeriods.get(i), indexEntity);
 
-                    updateIndicator(entityId,
-                        indicatorCode,
-                        entityRepository::findById,
-                        findIndicatorByEntityId,
-                        id -> {
-                            I indicator = createNewIndicator.apply(id);
-                            setEntity.accept(indicator, entity);
-                            return indicator;
-                        },
-                        entityIndicator -> {
-                            entityIndicator.setNumericValue(Double.valueOf(statisticsCount));
-                            entityIndicator.setTimestamp(LocalDateTime.now());
-                            entityIndicator.setFromDate(startPeriods.get(i).toLocalDate());
-                            entityIndicator.setToDate(LocalDate.now());
-                            entityIndicatorRepository.save(entityIndicator);
-                        });
+                        var exclusions = IndicatorMappingConfigurationLoader.getExclusionsForClass(
+                            dbEntity.getClass().getName());
+                        if (exclusions.contains(indicatorCode)) {
+                            return;
+                        }
+
+                        updateIndicator(entityId,
+                            indicatorCode,
+                            ignored -> Optional.of(dbEntity), // avoid second DB call
+                            findIndicatorByEntityId,
+                            id -> {
+                                I indicator = createNewIndicator.apply(id);
+                                setEntity.accept(indicator, dbEntity);
+                                return indicator;
+                            },
+                            entityIndicator -> {
+                                entityIndicator.setNumericValue(Double.valueOf(statisticsCount));
+                                entityIndicator.setTimestamp(LocalDateTime.now());
+                                entityIndicator.setFromDate(startPeriods.get(i).toLocalDate());
+                                entityIndicator.setToDate(LocalDate.now());
+                                entityIndicatorRepository.save(entityIndicator);
+                            });
+                    });
+                }, () -> {
+                    log.warn("{} with DB ID {} not found. Skipping indicator updates.",
+                        entityTypeName, entityId);
                 });
-
             });
 
             pageNumber++;
@@ -369,6 +547,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         R indicatorEntity;
         if (optionalIndicator.isEmpty()) {
             indicatorEntity = createIndicator.apply(id);
+
             if (indicatorEntity instanceof DocumentIndicator) {
                 ((DocumentIndicator) indicatorEntity).setDocument(
                     (Document) findEntityById.apply(id).orElseThrow());
@@ -378,7 +557,14 @@ public class StatisticsServiceImpl implements StatisticsService {
             } else if (indicatorEntity instanceof OrganisationUnitIndicator) {
                 ((OrganisationUnitIndicator) indicatorEntity).setOrganisationUnit(
                     (OrganisationUnit) findEntityById.apply(id).orElseThrow());
+            } else if (indicatorEntity instanceof PublicationSeriesIndicator) {
+                ((PublicationSeriesIndicator) indicatorEntity).setPublicationSeries(
+                    (PublicationSeries) findEntityById.apply(id).orElseThrow());
+            } else if (indicatorEntity instanceof EventIndicator) {
+                ((EventIndicator) indicatorEntity).setEvent(
+                    (Event) findEntityById.apply(id).orElseThrow());
             }
+
             ((EntityIndicator) indicatorEntity).setIndicator(
                 indicatorService.getIndicatorByCode(indicatorCode));
             ((EntityIndicator) indicatorEntity).setNumericValue(0.0);

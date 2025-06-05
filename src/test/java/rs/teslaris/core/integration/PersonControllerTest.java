@@ -41,7 +41,7 @@ public class PersonControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/person/old-id/{personOldId}", 1)
+                        "http://localhost:8081/api/person/old-id/{personOldId}", 3)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 
@@ -29,6 +30,8 @@ public class DocumentFileDTO {
     @NotNull(message = "You must provide a valid resource type.")
     private ResourceType resourceType;
 
-    @NotNull(message = "You must provide a valid license.")
+    @NotNull(message = "You must provide valid access rights.")
+    private AccessRights accessRights;
+
     private License license;
 }

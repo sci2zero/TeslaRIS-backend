@@ -2,7 +2,6 @@ package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ReorderContributionRequestDTO;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -47,6 +48,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @RestController
 @RequestMapping("/api/document")
 @RequiredArgsConstructor
+@Traceable
 public class DocumentPublicationController {
 
     private final DocumentPublicationService documentPublicationService;
@@ -104,9 +106,19 @@ public class DocumentPublicationController {
     public Page<DocumentPublicationIndex> advancedSearch(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(required = false) Integer institutionId,
+        @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
+        @RequestParam(value = "allowedTypes", required = false)
+        List<DocumentPublicationType> allowedTypes,
+        @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
+        var isCommission = !bearerToken.isEmpty() &&
+            tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name());
+
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
-            SearchRequestType.ADVANCED, null, null, new ArrayList<>());
+            SearchRequestType.ADVANCED, institutionId, (isCommission && unclassified) ?
+                userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
+                null, allowedTypes);
     }
 
     @GetMapping("/deduplication-search")
@@ -237,5 +249,13 @@ public class DocumentPublicationController {
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         @RequestParam("export") Boolean onlyExportFields) {
         return documentPublicationService.getSearchFields(onlyExportFields);
+    }
+
+    @GetMapping("/wordcloud/{documentId}")
+    public List<Pair<String, Long>> getWordCloudForSingleDocument(@PathVariable Integer documentId,
+                                                                  @RequestParam
+                                                                  boolean foreignLanguage) {
+        return documentPublicationService.getWordCloudForSingleDocument(documentId,
+            foreignLanguage);
     }
 }

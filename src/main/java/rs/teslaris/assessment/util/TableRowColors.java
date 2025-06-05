@@ -7,4 +7,8 @@ public class TableRowColors {
     public static final String RED = "red";
 
     public static final String WHITE = "white";
+
+
+    private TableRowColors() {
+    }
 }

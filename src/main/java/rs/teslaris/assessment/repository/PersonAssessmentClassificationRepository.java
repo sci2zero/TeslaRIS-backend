@@ -10,7 +10,7 @@ import rs.teslaris.assessment.model.PersonAssessmentClassification;
 public interface PersonAssessmentClassificationRepository extends
     JpaRepository<PersonAssessmentClassification, Integer> {
 
-    @Query("select eac from PersonAssessmentClassification eac where " +
-        "eac.person.id = :personId order by eac.timestamp desc")
+    @Query("SELECT eac FROM PersonAssessmentClassification eac WHERE " +
+        "eac.person.id = :personId ORDER BY eac.timestamp DESC")
     List<PersonAssessmentClassification> findAssessmentClassificationsForPerson(Integer personId);
 }

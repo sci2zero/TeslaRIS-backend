@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.SchedulingException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -25,19 +27,16 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Traceable
 public class TaskManagerServiceImpl implements TaskManagerService {
 
     private static final ConcurrentHashMap<String, ScheduledTask> tasks =
         new ConcurrentHashMap<>();
-
+    private static final Duration STEP = Duration.ofMinutes(1);
     private final ThreadPoolTaskScheduler taskScheduler;
-
     private final UserService userService;
-
     private final OrganisationUnitService organisationUnitService;
-
     private final NotificationService notificationService;
-
 
     @Override
     public void scheduleTask(String taskId, LocalDateTime dateTime, Runnable task, Integer userId) {
@@ -67,9 +66,19 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             } finally {
                 var duration = (System.nanoTime() - startTime) / 1000000000.0;
                 notificationValues.put("duration", String.valueOf(duration));
-                notificationService.createNotification(
-                    NotificationFactory.contructScheduledTaskCompletedNotification(
-                        notificationValues, userService.findOne(userId), taskSucceeded));
+                if (taskId.startsWith("Registry_Book")) {
+                    notificationService.createNotification(
+                        NotificationFactory.contructScheduledReportGenerationCompletedNotification(
+                            notificationValues, userService.findOne(userId), taskSucceeded));
+                } else if (taskId.contains("Backup")) {
+                    notificationService.createNotification(
+                        NotificationFactory.contructScheduledBackupGenerationCompletedNotification(
+                            notificationValues, userService.findOne(userId), taskSucceeded));
+                } else {
+                    notificationService.createNotification(
+                        NotificationFactory.contructScheduledTaskCompletedNotification(
+                            notificationValues, userService.findOne(userId), taskSucceeded));
+                }
                 tasks.remove(taskId);
             }
         };
@@ -117,6 +126,22 @@ public class TaskManagerServiceImpl implements TaskManagerService {
                 (isAdmin || isTaskInSubOU(task.id, subOUs)))
             .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime))
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public LocalDateTime findNextFreeExecutionTime() {
+        var now = LocalDateTime.now().withSecond(0).withNano(0);
+        var candidate = now.plus(STEP);
+
+        var scheduledTimes = tasks.values().stream()
+            .map(ScheduledTask::executionTime)
+            .collect(Collectors.toSet()); // Using Set for O(1) lookup
+
+        while (scheduledTimes.contains(candidate)) {
+            candidate = candidate.plus(STEP);
+        }
+
+        return candidate;
     }
 
     private boolean isReportGenerationTask(String taskId) {

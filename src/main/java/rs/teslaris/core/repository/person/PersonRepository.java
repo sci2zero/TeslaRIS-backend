@@ -13,30 +13,30 @@ import rs.teslaris.core.model.user.User;
 @Repository
 public interface PersonRepository extends JpaRepository<Person, Integer> {
 
-    @Query("select p from Person p where p.id = :id and p.approveStatus = 1")
+    @Query("SELECT p FROM Person p WHERE p.id = :id AND p.approveStatus = 1")
     Optional<Person> findApprovedPersonById(Integer id);
 
     Optional<Person> findPersonByOldId(Integer oldId);
 
-    @Query("select count(i) > 0 from Involvement i join i.personInvolved p where p.id = :personId")
+    @Query("SELECT count(i) > 0 FROM Involvement i JOIN i.personInvolved p WHERE p.id = :personId")
     boolean hasInvolvement(Integer personId);
 
-    @Query("select count(pc) > 0 from PersonContribution pc join pc.person p where p.id = :personId")
+    @Query("SELECT count(pc) > 0 FROM PersonContribution pc JOIN pc.person p WHERE p.id = :personId")
     boolean hasContribution(Integer personId);
 
-    @Query("select count(u) > 0 from User u join u.person p where p.id = :personId")
+    @Query("SELECT count(u) > 0 FROM User u JOIN u.person p WHERE p.id = :personId")
     boolean isBoundToUser(Integer personId);
 
-    @Query("select p from Person p left join p.user pu where p.id = :id and p.approveStatus = 1")
+    @Query("SELECT p FROM Person p left JOIN p.user pu WHERE p.id = :id AND p.approveStatus = 1")
     Optional<Person> findApprovedPersonByIdWithUser(Integer id);
 
-    @Query("select p from Person p where p.scopusAuthorId = :scopusId")
+    @Query("SELECT p FROM Person p WHERE p.scopusAuthorId = :scopusId")
     Optional<Person> findPersonByScopusAuthorId(String scopusId);
 
-    @Query("select u from User u where u.person.scopusAuthorId = :scopusId")
+    @Query("SELECT u FROM User u WHERE u.person.scopusAuthorId = :scopusId")
     Optional<User> findUserForPersonScopusId(String scopusId);
 
-    @Query("select u.person.id from User u where u.id = :userId")
+    @Query("SELECT u.person.id FROM User u WHERE u.id = :userId")
     Optional<Integer> findPersonIdForUserId(Integer userId);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
@@ -67,4 +67,10 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "i.personInvolved.id = :personId AND " +
         "(i.involvementType = 4 OR i.involvementType = 5)")
     List<Integer> findInstitutionIdsForPerson(Integer personId);
+
+    @Query("SELECT p FROM Person p " +
+        "JOIN p.accountingIds aid " +
+        "WHERE aid = :id AND p.approveStatus = 1")
+    Optional<Person> findApprovedPersonByAccountingId(String id);
+
 }

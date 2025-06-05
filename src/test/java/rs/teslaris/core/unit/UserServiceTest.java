@@ -14,6 +14,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.cache.Cache;
@@ -26,8 +27,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,8 +44,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.assessment.model.Commission;
-import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
@@ -54,6 +56,7 @@ import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -66,6 +69,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
@@ -137,7 +141,7 @@ public class UserServiceTest {
     private MessageSource messageSource;
 
     @Mock
-    private CommissionService commissionService;
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -154,7 +158,7 @@ public class UserServiceTest {
         var userId = 1;
         var user =
             new User("email@email.com", "passwd", "",
-                "Ime", "Prezime", false, true, null,
+                "Ime", "Prezime", false, true, null, null,
                 new Authority("RESEARCHER", null), null, null, null, UserNotificationPeriod.NEVER);
         user.setId(1);
 
@@ -174,7 +178,7 @@ public class UserServiceTest {
         var userId = 1;
         var user =
             new User("email@email.com", "passwd", "",
-                "Ime", "Prezime", false, true, null,
+                "Ime", "Prezime", false, true, null, null,
                 new Authority("ADMIN", null), null, null, null, UserNotificationPeriod.NEVER);
         user.setId(1);
 
@@ -214,7 +218,7 @@ public class UserServiceTest {
         language.setLanguageCode(LanguageAbbreviations.SERBIAN);
         when(languageService.findOne(1)).thenReturn(language);
 
-        Authority authority = new Authority();
+        var authority = new Authority();
         authority.setName(UserRole.RESEARCHER.toString());
         when(authorityRepository.findByName(UserRole.RESEARCHER.toString())).thenReturn(
             Optional.of(authority));
@@ -231,7 +235,8 @@ public class UserServiceTest {
                 "Content", 1)));
         var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -249,7 +254,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredReferenceCataloguingLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -279,9 +284,10 @@ public class UserServiceTest {
                 "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
-        User newUser = new User("johndoe@example.com", "password123", "",
+        var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -300,7 +306,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredUILanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -330,9 +336,10 @@ public class UserServiceTest {
                 "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
-        User newUser = new User("johndoe@example.com", "password123", "",
+        var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -351,7 +358,62 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredUILanguage());
+        assertEquals(authority, savedUser.getAuthority());
+    }
+
+    @Test
+    public void shouldRegisterPromotionRegistryAdminWithValidData()
+        throws NoSuchAlgorithmException {
+        // Given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("regadmin@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(1);
+        registrationRequest.setName("Promotion");
+        registrationRequest.setSurname("Admin");
+
+        var language = new Language();
+        language.setLanguageCode(LanguageAbbreviations.ENGLISH);
+        when(languageService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString());
+        when(authorityRepository.findByName(
+            UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString())).thenReturn(
+            Optional.of(authority));
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(
+                new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
+                    "University", 1)));
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+
+        var newUser = new User("regadmin@example.com", "password123", "",
+            "Promotion", "Admin", true,
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.WEEKLY);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerInstitutionEmployee(registrationRequest,
+            UserRole.PROMOTION_REGISTRY_ADMINISTRATOR);
+
+        // Then
+        assertNotNull(savedUser);
+        assertEquals("regadmin@example.com", savedUser.getEmail());
+        assertEquals("Promotion", savedUser.getFirstname());
+        assertEquals("Admin", savedUser.getLastName());
+        assertEquals(language, savedUser.getPreferredReferenceCataloguingLanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -382,11 +444,12 @@ public class UserServiceTest {
                 "Content", 1)));
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
-        when(commissionService.findOne(1)).thenReturn(new Commission());
+        when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
 
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
-            false, language, authority, null, organisationUnit, null, UserNotificationPeriod.NEVER);
+            false, language, language, authority, null, organisationUnit, null,
+            UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -404,7 +467,7 @@ public class UserServiceTest {
         assertEquals("johndoe@example.com", savedUser.getEmail());
         assertEquals("John", savedUser.getFirstname());
         assertEquals("Doe", savedUser.getLastName());
-        assertEquals(language, savedUser.getPreferredLanguage());
+        assertEquals(language, savedUser.getPreferredUILanguage());
         assertEquals(authority, savedUser.getAuthority());
     }
 
@@ -445,7 +508,7 @@ public class UserServiceTest {
         UserAccountActivation accountActivation = new UserAccountActivation(activationTokenValue,
             new User("johndoe@example.com", "password123", "",
                 "John", "Doe", true,
-                true, new Language(), new Authority(), null, null, null,
+                true, new Language(), new Language(), new Authority(), null, null, null,
                 UserNotificationPeriod.NEVER));
         when(
             userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
@@ -497,7 +560,7 @@ public class UserServiceTest {
         requestDTO.setOldPassword("oldPassword");
         requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
-        requestDTO.setPreferredLanguageId(1);
+        requestDTO.setPreferredUILanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.WEEKLY);
 
@@ -509,7 +572,8 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setLocked(false);
         user.setCanTakeRole(false);
-        user.setPreferredLanguage(new Language());
+        user.setPreferredUILanguage(new Language());
+        user.setPreferredReferenceCataloguingLanguage(new Language());
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
@@ -539,7 +603,7 @@ public class UserServiceTest {
         assertEquals("Jane", user.getFirstname());
         assertEquals("Doe", user.getLastName());
         assertFalse(user.getCanTakeRole());
-        assertEquals(preferredLanguage, user.getPreferredLanguage());
+        assertEquals(preferredLanguage, user.getPreferredUILanguage());
         assertEquals(person, user.getPerson());
         assertNotEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
@@ -554,7 +618,8 @@ public class UserServiceTest {
         requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
         requestDTO.setLastName("SMITH");
-        requestDTO.setPreferredLanguageId(1);
+        requestDTO.setPreferredUILanguageId(1);
+        requestDTO.setPreferredReferenceCataloguingLanguageId(1);
         requestDTO.setOrganisationalUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.DAILY);
 
@@ -566,7 +631,8 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setCanTakeRole(false);
         user.setLocked(false);
-        user.setPreferredLanguage(new Language());
+        user.setPreferredUILanguage(new Language());
+        user.setPreferredReferenceCataloguingLanguage(new Language());
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
@@ -596,7 +662,7 @@ public class UserServiceTest {
         assertEquals("JOHN", user.getFirstname());
         assertEquals("SMITH", user.getLastName());
         assertFalse(user.getCanTakeRole());
-        assertEquals(preferredLanguage, user.getPreferredLanguage());
+        assertEquals(preferredLanguage, user.getPreferredReferenceCataloguingLanguage());
         assertEquals(person, user.getPerson());
         assertEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
@@ -628,7 +694,7 @@ public class UserServiceTest {
         user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setPassword("currentPassword");
         var preferredLanguage = new Language();
-        requestDTO.setPreferredLanguageId(1);
+        requestDTO.setPreferredUILanguageId(1);
         var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
 
@@ -794,7 +860,8 @@ public class UserServiceTest {
 
         var user = new User();
         user.setEmail("test@example.com");
-        user.setPreferredLanguage(new Language(LanguageAbbreviations.SERBIAN, new HashSet<>()));
+        user.setPreferredUILanguage(
+            new Language(LanguageAbbreviations.SERBIAN, new HashSet<>()));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
@@ -835,8 +902,9 @@ public class UserServiceTest {
         verify(passwordResetTokenRepository, times(1)).delete(resetRequest);
     }
 
-    @Test
-    public void shouldFindUserAccountWhenSearchingWithSimpleQuery() {
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class)
+    public void shouldFindUserAccountWhenSearchingWithSimpleQuery(UserRole allowedRole) {
         // given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -847,7 +915,7 @@ public class UserServiceTest {
 
         // when
         var result =
-            userService.searchUserAccounts(new ArrayList<>(tokens), pageable);
+            userService.searchUserAccounts(new ArrayList<>(tokens), List.of(allowedRole), pageable);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -889,7 +957,8 @@ public class UserServiceTest {
         // Given
         var personId = 1;
         var user = new User();
-        user.setPreferredLanguage(new Language());
+        user.setPreferredUILanguage(new Language());
+        user.setPreferredReferenceCataloguingLanguage(new Language());
 
         when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(user));
 
@@ -951,5 +1020,166 @@ public class UserServiceTest {
         // Then
         verify(userRepository, times(1)).getIdsOfUsersWhoAllowedAccountTakeover();
         assertEquals(3, result.size());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingAdminUser() {
+        // Given
+        var user = new User();
+        user.setId(1);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.ADMIN.name());
+        }});
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+        // When / Then
+        assertThrows(RuntimeException.class, () -> userService.deleteUserAccount(1));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingCommissionUserWithIndicators() {
+        // Given
+        var user = new User();
+        user.setId(2);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+        when(userRepository.findById(2)).thenReturn(Optional.of(user));
+        when(userRepository.hasUserAssignedIndicators(2)).thenReturn(true);
+
+        // When / Then
+        assertThrows(RuntimeException.class, () -> userService.deleteUserAccount(2));
+    }
+
+    @Test
+    void shouldDeleteUser() {
+        // Given
+        var user = new User();
+        user.setId(3);
+        user.setAuthority(new Authority() {{
+            setName(UserRole.INSTITUTIONAL_LIBRARIAN.name());
+        }});
+        when(userRepository.findById(3)).thenReturn(Optional.of(user));
+
+        // When
+        userService.deleteUserAccount(3);
+
+        // Then
+        verify(userRepository).deleteAllNotificationsForUser(3);
+        verify(userRepository).deleteAllAccountActivationsForUser(3);
+        verify(userRepository).deleteAllPasswordResetsForUser(3);
+        verify(userRepository).deleteRefreshTokenForUser(3);
+        verify(userRepository).delete(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenMigratingNonCommissionUsers() {
+        // Given
+        var user1 = new User();
+        user1.setId(4);
+        user1.setAuthority(new Authority() {{
+            setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name());
+        }});
+
+        var user2 = new User();
+        user2.setId(5);
+        user2.setAuthority(new Authority() {{
+            setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name());
+        }});
+
+        when(userRepository.findById(4)).thenReturn(Optional.of(user1));
+        when(userRepository.findById(5)).thenReturn(Optional.of(user2));
+
+        // When / Then
+        assertThrows(RuntimeException.class,
+            () -> userService.migrateUserAccountData(4, 5));
+    }
+
+    @Test
+    void shouldMigrateCommissionUserAccountData() {
+        // Given
+        var user1 = new User();
+        user1.setId(6);
+        user1.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+
+        var user2 = new User();
+        user2.setId(7);
+        user2.setAuthority(new Authority() {{
+            setName(UserRole.COMMISSION.name());
+        }});
+
+        when(userRepository.findById(6)).thenReturn(Optional.of(user1));
+        when(userRepository.findById(7)).thenReturn(Optional.of(user2));
+
+        // When
+        userService.migrateUserAccountData(6, 7);
+
+        // Then
+        verify(userRepository).migrateEntityIndicatorsToAnotherUser(6, 7);
+    }
+
+    @Test
+    void shouldReturnTrueWhenResettingEmployeePassword() {
+        // Given
+        var user = new User();
+        user.setId(8);
+        user.setEmail("employee@example.com");
+        user.setPreferredUILanguage(new Language() {{
+            setLanguageCode("SR");
+        }});
+        when(userRepository.findById(8)).thenReturn(Optional.of(user));
+        when(messageSource.getMessage(eq("adminPasswordReset.mailSubject"), any(), any()))
+            .thenReturn("Reset Password");
+        when(messageSource.getMessage(eq("adminPasswordReset.mailBodyEmployee"), any(), any()))
+            .thenReturn("New password");
+
+        var emailFuture = CompletableFuture.completedFuture(true);
+        when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
+        when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
+
+        // When
+        var result = userService.generateNewPasswordForUser(8);
+
+        // Then
+        assertTrue(result);
+        verify(passwordEncoder).encode(anyString());
+    }
+
+    @Test
+    void shouldReturnFalseWhenEmailFailsToSend() {
+        // Given
+        var user = new User();
+        user.setId(9);
+        user.setEmail("employee@example.com");
+        user.setPreferredUILanguage(new Language() {{
+            setLanguageCode("SR");
+        }});
+        when(userRepository.findById(9)).thenReturn(Optional.of(user));
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("msg");
+
+        var emailFuture = CompletableFuture.completedFuture(false);
+        when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
+
+        // When
+        var result = userService.generateNewPasswordForUser(9);
+
+        // Then
+        assertFalse(result);
+        verify(passwordEncoder, never()).encode(any());
+    }
+
+    @Test
+    void shouldPerformLogout() {
+        // Given
+        var jti = "sample-jti-123";
+
+        // When
+        userService.logout(jti);
+
+        // Then
+        verify(tokenUtil).revokeToken(jti);
+        verifyNoMoreInteractions(tokenUtil);
     }
 }

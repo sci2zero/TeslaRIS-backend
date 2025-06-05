@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
@@ -21,6 +22,7 @@ import rs.teslaris.importer.service.interfaces.CommonLoader;
 @RestController
 @RequestMapping("/api/load")
 @RequiredArgsConstructor
+@Traceable
 public class CommonLoadController {
 
     private final CommonLoader loader;

@@ -29,6 +29,8 @@ public class PersonContributionConverter {
                 contribution.setIsMainContributor(c.getIsMainContributor());
                 contribution.setIsCorrespondingContributor(c.getIsCorrespondingContributor());
                 contribution.setIsBoardPresident(c.getIsBoardPresident());
+                contribution.setPersonalTitle(c.getPersonalTitle());
+                contribution.setEmploymentTitle(c.getEmploymentTitle());
 
                 contributionDTOs.add(contribution);
             });
@@ -86,7 +88,11 @@ public class PersonContributionConverter {
 
         contributionDTO.setInstitutionIds(new ArrayList<>());
         contribution.getInstitutions()
-            .forEach(i -> contributionDTO.getInstitutionIds().add(i.getId()));
+            .forEach(i -> {
+                contributionDTO.getInstitutionIds().add(i.getId());
+                contributionDTO.getDisplayInstitutionNames()
+                    .add(MultilingualContentConverter.getMultilingualContentDTO(i.getName()));
+            });
 
         contributionDTO.setPersonName(PersonNameConverter.toDTO(
             contribution.getAffiliationStatement().getDisplayPersonName()));

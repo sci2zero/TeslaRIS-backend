@@ -8,12 +8,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.assessment.annotation.EntityClassificationEditCheck;
 import rs.teslaris.assessment.service.interfaces.EntityAssessmentClassificationService;
-import rs.teslaris.core.annotation.EntityClassificationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment/entity-assessment-classification")
 @RequiredArgsConstructor
+@Traceable
 public class EntityAssessmentClassificationController {
 
     private final EntityAssessmentClassificationService entityAssessmentClassificationService;

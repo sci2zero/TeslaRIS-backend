@@ -39,7 +39,8 @@ public class ProceedingsControllerTest extends BaseTest {
         proceedingsDTO.setEventId(1);
 
         var contribution =
-            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false);
+            new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false,
+                null, null);
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);

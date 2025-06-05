@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -26,6 +27,7 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 @RestController
 @RequestMapping("/api/proceedings")
 @RequiredArgsConstructor
+@Traceable
 public class ProceedingsController {
 
     private final ProceedingsService proceedingsService;

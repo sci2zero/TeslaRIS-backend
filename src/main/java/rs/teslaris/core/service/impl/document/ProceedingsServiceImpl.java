@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.CommissionRepository;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -19,6 +19,7 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingsJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 
 @Service
 @Transactional
+@Traceable
 public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsService {
 
@@ -94,7 +96,14 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     @Override
     public ProceedingsResponseDTO readProceedingsById(Integer proceedingsId) {
-        var proceedings = findProceedingsById(proceedingsId);
+        Proceedings proceedings;
+        try {
+            proceedings = findProceedingsById(proceedingsId);
+        } catch (NotFoundException e) {
+            this.clearIndexWhenFailedRead(proceedingsId);
+            throw e;
+        }
+
         if (!proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }

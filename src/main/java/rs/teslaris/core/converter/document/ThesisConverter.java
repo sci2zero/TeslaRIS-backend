@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
-import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.oaipmh.dublincore.Contributor;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
@@ -252,8 +252,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
 
     private static void addRights(Thesis exportDocument, DC dcPublication) {
         boolean isOpenAccess = exportDocument.getFileItems().stream().anyMatch(
-            fileItem -> fileItem.getLicense().equals(License.OPEN_ACCESS) ||
-                fileItem.getLicense().equals(License.PUBLIC_DOMAIN)
+            fileItem -> fileItem.getAccessRights().equals(AccessRights.OPEN_ACCESS)
         );
 
         dcPublication.getRights().add(isOpenAccess ?
@@ -328,8 +327,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
             .map(DocumentFile::getMimeType).collect(Collectors.toSet()), Function.identity(), "q");
 
         var isOpenAccess = exportDocument.getFileItems().stream().anyMatch(
-            fileItem -> fileItem.getLicense().equals(License.OPEN_ACCESS) ||
-                fileItem.getLicense().equals(License.PUBLIC_DOMAIN));
+            fileItem -> fileItem.getAccessRights().equals(AccessRights.OPEN_ACCESS));
 
         String accessRights = isOpenAccess ?
             "info:eu-repo/semantics/openAccess" :

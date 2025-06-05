@@ -14,18 +14,20 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.assessment.annotation.EntityIndicatorEditCheck;
 import rs.teslaris.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.assessment.dto.DocumentIndicatorDTO;
 import rs.teslaris.assessment.dto.EntityIndicatorResponseDTO;
 import rs.teslaris.assessment.service.interfaces.DocumentIndicatorService;
-import rs.teslaris.core.annotation.EntityIndicatorEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/document-indicator")
 @RequiredArgsConstructor
+@Traceable
 public class DocumentIndicatorController {
 
     private final DocumentIndicatorService documentIndicatorService;

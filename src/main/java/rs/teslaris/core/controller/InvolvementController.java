@@ -20,12 +20,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
+import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
+import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Membership;
@@ -35,6 +38,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 @RestController
 @RequestMapping("api/involvement")
 @RequiredArgsConstructor
+@Traceable
 public class InvolvementController {
 
     private final InvolvementService involvementService;
@@ -56,7 +60,7 @@ public class InvolvementController {
 
     @GetMapping("/employments/{personId}")
     public List<EmploymentDTO> getEmploymentsForPerson(@PathVariable Integer personId) {
-        return involvementService.getEmploymentsForPerson(personId);
+        return involvementService.getDirectAndIndirectEmploymentsForPerson(personId);
     }
 
     @PostMapping("/education/{personId}")
@@ -164,5 +168,17 @@ public class InvolvementController {
     public void terminateEmployment(@PathVariable Integer organisationUnitId,
                                     @PathVariable Integer personId) {
         involvementService.endEmployment(organisationUnitId, personId);
+    }
+
+    @GetMapping("/employment-title/{personId}")
+    public EmploymentTitle getCurrentEmploymentTitle(@PathVariable Integer personId) {
+        return involvementService.getCurrentEmploymentTitle(personId);
+    }
+
+    @PostMapping("/migrate-employment")
+    @ResponseStatus(HttpStatus.CREATED)
+    public EmploymentDTO migrateEmployment(
+        @Valid @RequestBody EmploymentMigrationDTO employmentMigrationDTO) {
+        return involvementService.migrateEmployment(employmentMigrationDTO);
     }
 }

@@ -15,8 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.CSVExportRequest;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequest;
+import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -27,11 +29,13 @@ import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
 @Slf4j
 @Transactional
+@Traceable
 public class CSVExportServiceImpl implements CSVExportService {
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
@@ -71,7 +75,7 @@ public class CSVExportServiceImpl implements CSVExportService {
     }
 
     @Override
-    public InputStreamResource exportDocumentsToCSV(DocumentCSVExportRequest request) {
+    public InputStreamResource exportDocumentsToCSV(DocumentCSVExportRequestDTO request) {
         String documentFieldsConfigurationFile = "documentSearchFieldConfiguration.json";
         return exportData(
             request,
@@ -79,7 +83,7 @@ public class CSVExportServiceImpl implements CSVExportService {
             documentFieldsConfigurationFile,
             DocumentPublicationIndexRepository::findDocumentPublicationIndexByDatabaseId,
             (rowData, entity, req) -> CSVExportHelper.addCitationData(rowData, entity,
-                (DocumentCSVExportRequest) req, citationService),
+                (DocumentCSVExportRequestDTO) req, citationService),
             documentFieldsConfigurationFile
         );
     }
@@ -127,15 +131,15 @@ public class CSVExportServiceImpl implements CSVExportService {
 
         var rowsData = new ArrayList<List<String>>();
         var tableHeaders = CSVExportHelper.getTableHeaders(request, configurationFile);
-        if (request instanceof DocumentCSVExportRequest) {
-            CSVExportHelper.addCitationColumns(tableHeaders, (DocumentCSVExportRequest) request);
-        }
-        rowsData.add(tableHeaders);
+
+        var documentSpecificFilters =
+            handleDocumentSpecificFieldsAndFilters(request, tableHeaders, rowsData);
 
         if (request.getExportMaxPossibleAmount()) {
             returnBulkDataFromDefinedEndpoint(request.getEndpointType(),
                 request.getEndpointTokenParameters(),
-                PageRequest.of(request.getBulkExportOffset(), maximumExportAmount), repository)
+                PageRequest.of(request.getBulkExportOffset(), maximumExportAmount), repository,
+                documentSpecificFilters)
                 .forEach(entity -> {
                     var rowData =
                         CSVExportHelper.constructRowData(entity, request.getColumns(), fieldsConfig,
@@ -159,12 +163,29 @@ public class CSVExportServiceImpl implements CSVExportService {
         return CSVExportHelper.createExportFile(rowsData, request.getExportFileType());
     }
 
+    private Triple<ArrayList<DocumentPublicationType>, Integer, Integer> handleDocumentSpecificFieldsAndFilters(
+        CSVExportRequest request, List<String> tableHeaders, ArrayList<List<String>> rowsData) {
+        var allowedDocumentTypes = new ArrayList<DocumentPublicationType>();
+        Integer institutionId = null, commissionId = null;
+
+        if (request instanceof DocumentCSVExportRequestDTO) {
+            CSVExportHelper.addCitationColumns(tableHeaders, (DocumentCSVExportRequestDTO) request);
+            allowedDocumentTypes.addAll(((DocumentCSVExportRequestDTO) request).getAllowedTypes());
+            institutionId = ((DocumentCSVExportRequestDTO) request).getInstitutionId();
+            commissionId = ((DocumentCSVExportRequestDTO) request).getCommissionId();
+        }
+        rowsData.add(tableHeaders);
+
+        return new Triple<>(allowedDocumentTypes, institutionId, commissionId);
+    }
+
     @SuppressWarnings("unchecked")
     private <T, R extends ElasticsearchRepository<T, ?>> Page<T> returnBulkDataFromDefinedEndpoint(
         ExportableEndpointType endpointType,
         List<String> endpointTokenParameters,
         Pageable pageable,
-        R repository
+        R repository,
+        Triple<ArrayList<DocumentPublicationType>, Integer, Integer> documentSpecificFilters
     ) {
         if (endpointType == null) {
             return repository.findAll(pageable);
@@ -173,10 +194,16 @@ public class CSVExportServiceImpl implements CSVExportService {
         return switch (endpointType) {
             case PERSON_SEARCH -> (Page<T>) personService.findPeopleByNameAndEmployment(
                 endpointTokenParameters, pageable, false, null);
-            case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH, THESIS_ADVANCED_SEARCH ->
+            case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
-                    SearchRequestType.SIMPLE, null, null, null);
+                    SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
+                    documentSpecificFilters.a);
+            case DOCUMENT_ADVANCED_SEARCH, THESIS_ADVANCED_SEARCH ->
+                (Page<T>) documentPublicationService.searchDocumentPublications(
+                    endpointTokenParameters, pageable,
+                    SearchRequestType.ADVANCED, documentSpecificFilters.b,
+                    documentSpecificFilters.c, documentSpecificFilters.a);
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     endpointTokenParameters, pageable,

@@ -26,7 +26,9 @@ public class UserResponseDTO {
 
     private Boolean canTakeRole;
 
-    private String preferredLanguage;
+    private String preferredUILanguage;
+
+    private String preferredReferenceCataloguingLanguage;
 
     private Integer organisationUnitId;
 

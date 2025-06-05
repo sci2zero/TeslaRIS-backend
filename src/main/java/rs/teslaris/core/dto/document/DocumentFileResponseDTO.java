@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 
@@ -24,6 +25,8 @@ public class DocumentFileResponseDTO {
     private List<MultilingualContentDTO> description;
 
     private ResourceType resourceType;
+
+    private AccessRights accessRights;
 
     private License license;
 

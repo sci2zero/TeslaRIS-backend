@@ -21,10 +21,12 @@ import rs.teslaris.assessment.dto.AssessmentClassificationDTO;
 import rs.teslaris.assessment.model.ApplicableEntityType;
 import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 
 @RestController
 @RequestMapping("/api/assessment/assessment-classification")
 @RequiredArgsConstructor
+@Traceable
 public class AssessmentClassificationController {
 
     private final AssessmentClassificationService assessmentClassificationService;

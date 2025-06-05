@@ -16,9 +16,9 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import rs.teslaris.assessment.model.Commission;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 
@@ -53,8 +53,12 @@ public class User extends BaseEntity implements UserDetails {
     private Boolean canTakeRole;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "language_id")
-    private Language preferredLanguage;
+    @JoinColumn(name = "ui_language_id")
+    private Language preferredUILanguage;
+
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "reference_language_id")
+    private Language preferredReferenceCataloguingLanguage;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinColumn(name = "authority_id")

@@ -14,12 +14,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
 
 @RestController
 @RequestMapping("api/software")
 @RequiredArgsConstructor
+@Traceable
 public class SoftwareController {
 
     private final SoftwareService softwareService;

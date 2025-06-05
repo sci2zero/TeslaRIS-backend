@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
@@ -27,6 +28,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 @RestController
 @RequestMapping("/api/organisation-unit-relation")
 @RequiredArgsConstructor
+@Traceable
 public class OrganisationUnitRelationController {
 
     private final OrganisationUnitService organisationUnitService;
