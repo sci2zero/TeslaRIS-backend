@@ -42,7 +42,7 @@ public class SessionTrackingUtil {
             var tracingContextID = MDC.get(TraceMDCKeys.TRACING_CONTEXT_ID);
 
             if (Objects.isNull(tracingContextID)) {
-                log.error("CRITICAL - Unable to obtain MDC tracing context id.");
+                return "N/A";
             }
 
             return tracingContextID;
