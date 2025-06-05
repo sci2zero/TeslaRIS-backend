@@ -18,7 +18,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "loading-configurations")
+@Table(name = "loading_configurations")
 public class LoadingConfiguration extends BaseEntity {
 
     @Column(name = "smart_loading_by_default")

@@ -18,5 +18,7 @@ public interface NotificationService extends JPAService<Notification> {
 
     void dismiss(Integer notificationId, Integer userId);
 
+    void dismissAll(Integer userId);
+
     Notification createNotification(Notification notification);
 }
