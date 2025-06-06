@@ -6,11 +6,16 @@ import java.util.HashMap;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -19,6 +24,8 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.importer.service.interfaces.BibTexHarvester;
+import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
 import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 
@@ -31,6 +38,10 @@ public class CommonHarvestController {
     private final JwtUtil tokenUtil;
 
     private final ScopusHarvester scopusHarvester;
+
+    private final BibTexHarvester bibTexHarvester;
+
+    private final RefManHarvester refManHarvester;
 
     private final NotificationService notificationService;
 
@@ -109,6 +120,24 @@ public class CommonHarvestController {
                 NotificationFactory.contructNewImportsNotification(notificationValues,
                     userService.findOne(key)));
         });
+
+        return newDocumentImportCountByUser.getOrDefault(userId, 0);
+    }
+
+    @PostMapping("/documents-from-file")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Integer harvestPublicationsFromFile(@RequestBody MultipartFile publicationsFile,
+                                               @RequestHeader("Authorization") String bearerToken) {
+        var newDocumentImportCountByUser = new HashMap<Integer, Integer>();
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+
+        if (publicationsFile.getOriginalFilename().endsWith(".bib")) {
+            bibTexHarvester.harvestDocumentsForAuthor(userId, publicationsFile,
+                newDocumentImportCountByUser);
+        } else if (publicationsFile.getOriginalFilename().endsWith(".ris")) {
+            refManHarvester.harvestDocumentsForAuthor(userId, publicationsFile,
+                newDocumentImportCountByUser);
+        }
 
         return newDocumentImportCountByUser.getOrDefault(userId, 0);
     }
