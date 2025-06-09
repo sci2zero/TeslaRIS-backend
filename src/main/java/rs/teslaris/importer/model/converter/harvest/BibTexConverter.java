@@ -1,5 +1,6 @@
 package rs.teslaris.importer.model.converter.harvest;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
@@ -63,10 +64,25 @@ public class BibTexConverter {
         if (isProceedings) {
             Optional<String> bookTitle = getFieldValue(bibEntry, BibTeXEntry.KEY_BOOKTITLE);
             if (bookTitle.isPresent()) {
-                document.getPublishedIn().add(new MultilingualContent("EN", bookTitle.get(), 1));
-                String eventName = cleanProceedingsTitleToEvent(bookTitle.get());
                 var event = new Event();
-                event.getName().add(new MultilingualContent("EN", eventName, 1));
+
+                if (bookTitle.get().contains(";")) {
+                    var eventAndProceedings = bookTitle.get().split("; ");
+                    event.getName().add(new MultilingualContent("EN", eventAndProceedings[0], 1));
+                    document.getPublishedIn()
+                        .add(new MultilingualContent("EN", eventAndProceedings[1], 1));
+                } else if (bookTitle.get().contains("Proceedings") ||
+                    bookTitle.get().contains("proceedings")) {
+                    document.getPublishedIn()
+                        .add(new MultilingualContent("EN", bookTitle.get(), 1));
+                    String eventName = cleanProceedingsTitleToEvent(bookTitle.get());
+                    event.getName().add(new MultilingualContent("EN", eventName, 1));
+                } else {
+                    event.getName().add(new MultilingualContent("EN", bookTitle.get(), 1));
+                    document.getPublishedIn()
+                        .add(new MultilingualContent("EN", "Proceedings of " + bookTitle.get(), 1));
+                }
+
                 document.setEvent(event);
             } else {
                 Optional<String> note = getFieldValue(bibEntry, "note");
@@ -81,11 +97,21 @@ public class BibTexConverter {
                 }
 
                 document.getPublishedIn()
-                    .add(new MultilingualContent("EN", "Proceedings of " + conferenceName, 1));
+                    .add(
+                        new MultilingualContent("EN", "Proceedings of " + conferenceName.get(), 1));
                 var event = new Event();
                 event.getName().add(new MultilingualContent("EN", conferenceName.get(), 1));
                 document.setEvent(event);
             }
+
+            document.getEvent().setDateFrom(
+                LocalDate.of(Integer.parseInt(document.getDocumentDate()),
+                    1,
+                    1));
+            document.getEvent().setDateTo(
+                LocalDate.of(Integer.parseInt(document.getDocumentDate()),
+                    12,
+                    31));
         }
 
         getFieldValue(bibEntry, "source").ifPresent(source -> {
@@ -140,6 +166,7 @@ public class BibTexConverter {
         var contributions = new ArrayList<PersonDocumentContribution>();
         var authors = printer.print(parser.parse(authorValue.toUserString())).split(" and ");
 
+        var orderNumber = 1;
         for (var authorName : authors) {
             if (authorName.equals("others")) {
                 continue;
@@ -148,19 +175,25 @@ public class BibTexConverter {
             var tokens = authorName.split(", ");
             if (tokens.length == 2) {
                 var contribution = new PersonDocumentContribution();
+                contribution.setOrderNumber(orderNumber);
                 var person = new Person();
+                person.setImportId(String.valueOf(orderNumber));
                 person.setName(new PersonName(tokens[1], "", tokens[0]));
                 contribution.setPerson(person);
                 contribution.setContributionType(DocumentContributionType.AUTHOR);
 
                 contributions.add(contribution);
             }
+
+            orderNumber++;
         }
 
         doc.getContributions().addAll(contributions);
     }
 
     private static void setPageInfo(BibTeXEntry bibEntry, DocumentImport doc) {
+        doc.setStartPage("");
+        doc.setEndPage("");
         getFieldValue(bibEntry, BibTeXEntry.KEY_PAGES).ifPresent(pages -> {
             if (pages.contains("--")) {
                 var tokens = pages.split("--");
@@ -211,15 +244,19 @@ public class BibTexConverter {
         getFieldValue(bibEntry, "affiliations").ifPresent(affiliationsStr -> {
             var affiliations = affiliationsStr.split("; ");
             if (affiliations.length == 1) {
-                document.getContributions().forEach(contribution -> {
-                    var institution = new OrganisationUnit();
-                    institution.getName().add(new MultilingualContent("EN", affiliations[0], 1));
-                    contribution.getInstitutions().add(institution);
-                });
+                FunctionalUtil.forEachWithCounter(document.getContributions(),
+                    (i, contribution) -> {
+                        var institution = new OrganisationUnit();
+                        institution.setImportId(String.valueOf(i + 1));
+                        institution.getName()
+                            .add(new MultilingualContent("EN", affiliations[0], 1));
+                        contribution.getInstitutions().add(institution);
+                    });
             } else if (affiliations.length == document.getContributions().size()) {
                 FunctionalUtil.forEachWithCounter(document.getContributions(),
                     (i, contribution) -> {
                         var institution = new OrganisationUnit();
+                        institution.setImportId(String.valueOf(i + 1));
                         institution.getName()
                             .add(new MultilingualContent("EN", affiliations[i], 1));
                         contribution.getInstitutions().add(institution);

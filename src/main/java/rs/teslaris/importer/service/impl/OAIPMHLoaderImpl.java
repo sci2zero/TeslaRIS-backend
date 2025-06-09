@@ -46,9 +46,9 @@ import rs.teslaris.importer.model.converter.load.publication.ProductConverter;
 import rs.teslaris.importer.service.interfaces.OAIPMHLoader;
 import rs.teslaris.importer.utility.CreatorMethod;
 import rs.teslaris.importer.utility.DataSet;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.importer.utility.ProgressReportUtility;
 import rs.teslaris.importer.utility.RecordConverter;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Service
 @RequiredArgsConstructor

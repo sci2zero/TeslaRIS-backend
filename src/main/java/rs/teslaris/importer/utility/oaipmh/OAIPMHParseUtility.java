@@ -1,4 +1,4 @@
-package rs.teslaris.importer.utility;
+package rs.teslaris.importer.utility.oaipmh;
 
 import java.util.Date;
 import java.util.List;

@@ -66,7 +66,7 @@ import rs.teslaris.exporter.util.ExportDataFormat;
 import rs.teslaris.exporter.util.ExportHandlersConfigurationLoader;
 import rs.teslaris.exporter.util.OAIErrorFactory;
 import rs.teslaris.exporter.util.ResumptionTokenStash;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Service
 @RequiredArgsConstructor

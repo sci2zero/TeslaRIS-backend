@@ -22,4 +22,7 @@ public class OrganisationUnit {
 
     @Field("scopus_afid")
     private String scopusAfid;
+
+    @Field("import_afid")
+    private String importId;
 }

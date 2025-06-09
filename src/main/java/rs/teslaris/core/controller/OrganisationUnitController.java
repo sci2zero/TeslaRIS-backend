@@ -83,9 +83,9 @@ public class OrganisationUnitController {
         return organisationUnitService.readOrganisationUnitForOldId(organisationUnitOldId);
     }
 
-    @GetMapping("/scopus-afid/{scopusAfid}")
-    public OrganisationUnitIndex getOrganisationUnitByScopusAfid(@PathVariable String scopusAfid) {
-        return organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid);
+    @GetMapping("/import-identifier/{importId}")
+    public OrganisationUnitIndex getOrganisationUnitByScopusAfid(@PathVariable String importId) {
+        return organisationUnitService.findOrganisationUnitByImportId(importId);
     }
 
     @GetMapping("/simple-search")

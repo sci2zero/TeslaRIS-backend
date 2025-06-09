@@ -17,7 +17,7 @@ import rs.teslaris.core.model.oaipmh.common.Request;
 import rs.teslaris.exporter.service.interfaces.OutboundExportService;
 import rs.teslaris.exporter.util.ExportDataFormat;
 import rs.teslaris.exporter.util.OAIErrorFactory;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @RestController
 @RequestMapping("/api/export")

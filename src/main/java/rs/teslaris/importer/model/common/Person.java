@@ -29,4 +29,7 @@ public class Person {
 
     @Field("scopus_id")
     private String scopusAuthorId;
+
+    @Field("import_id")
+    private String importId;
 }

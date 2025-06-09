@@ -54,8 +54,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NetworkException;
 import rs.teslaris.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.importer.utility.DataSet;
 import rs.teslaris.importer.utility.HarvestProgressReport;
-import rs.teslaris.importer.utility.OAIPMHSource;
 import rs.teslaris.importer.utility.ProgressReportUtility;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHSource;
 
 @Service
 @RequiredArgsConstructor

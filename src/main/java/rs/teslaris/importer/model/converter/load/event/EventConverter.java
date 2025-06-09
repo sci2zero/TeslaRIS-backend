@@ -13,8 +13,8 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.model.oaipmh.event.Event;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.importer.utility.RecordConverter;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor

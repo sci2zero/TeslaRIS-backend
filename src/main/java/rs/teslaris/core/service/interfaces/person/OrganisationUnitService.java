@@ -29,7 +29,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnitDTO readOrganisationUnitById(Integer id);
 
-    OrganisationUnitIndex findOrganisationUnitByScopusAfid(String scopusAfid);
+    OrganisationUnitIndex findOrganisationUnitByImportId(String importId);
 
     OrganisationUnit findOrganisationUnitByOldId(Integer oldId);
 
