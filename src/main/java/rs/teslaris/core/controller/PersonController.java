@@ -106,9 +106,9 @@ public class PersonController {
             pageable, strict, institutionId);
     }
 
-    @GetMapping("/scopus-author/{scopusId}")
-    public PersonIndex findByScopusId(@PathVariable("scopusId") String scopusId) {
-        return personService.findPersonByScopusAuthorId(scopusId);
+    @GetMapping("/import-identifier/{identifier}")
+    public PersonIndex findByImportIdentifier(@PathVariable("identifier") String identifier) {
+        return personService.findPersonByImportIdentifier(identifier);
     }
 
     @GetMapping("/employed-at/{organisationUnitId}")

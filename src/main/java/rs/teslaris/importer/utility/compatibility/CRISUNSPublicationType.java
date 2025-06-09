@@ -1,4 +1,4 @@
-package rs.teslaris.importer.utility;
+package rs.teslaris.importer.utility.compatibility;
 
 public enum CRISUNSPublicationType {
     CONFERENCE_PROCEEDINGS,

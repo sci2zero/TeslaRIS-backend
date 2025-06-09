@@ -944,8 +944,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Nullable
-    public PersonIndex findPersonByScopusAuthorId(String scopusAuthorId) {
-        return personIndexRepository.findByScopusAuthorId(scopusAuthorId).orElse(null);
+    public PersonIndex findPersonByImportIdentifier(String identifier) {
+        if (Objects.isNull(identifier) || identifier.isBlank()) {
+            return null;
+        }
+        return personIndexRepository.findByScopusAuthorId(identifier).orElse(null);
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,

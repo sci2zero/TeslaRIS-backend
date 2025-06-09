@@ -1,5 +1,8 @@
 package rs.teslaris.importer.service.impl;
 
+import ai.djl.translate.TranslateException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,22 +10,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jbibtex.BibTeXDatabase;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.BibTeXParser;
 import org.jbibtex.Key;
 import org.jbibtex.ParseException;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BibTexHarvesterImpl implements BibTexHarvester {
 
     private final MongoTemplate mongoTemplate;
@@ -40,8 +47,14 @@ public class BibTexHarvesterImpl implements BibTexHarvester {
             var publication = BibTexConverter.toCommonImportModel(bibEntry);
             publication.ifPresent(documentImport -> {
                 var existingImport = findExistingImport(documentImport.getIdentifier());
-                if (Objects.nonNull(existingImport)) {
+                var embedding = generateEmbedding(bibEntry);
+
+                if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
                     return;
+                }
+
+                if (Objects.nonNull(embedding)) {
+                    documentImport.setEmbedding(embedding.toFloatVector());
                 }
 
                 documentImport.getImportUsersId().add(userId);
@@ -51,6 +64,17 @@ public class BibTexHarvesterImpl implements BibTexHarvester {
         }
 
         return newEntriesCount;
+    }
+
+    private INDArray generateEmbedding(BibTeXEntry entry) {
+        try {
+            var json = new ObjectMapper().writeValueAsString(entry);
+            var flattened = DeduplicationUtil.flattenJson(json);
+            return DeduplicationUtil.getEmbedding(flattened);
+        } catch (JsonProcessingException | TranslateException e) {
+            log.error("Error generating embedding: {}", e.getMessage());
+            return null;
+        }
     }
 
     private BibTeXDatabase parseBibtexFile(MultipartFile file) {

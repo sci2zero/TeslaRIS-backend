@@ -405,7 +405,7 @@ public class CommonLoaderTest {
 
         var currentlyLoadedEntity = new DocumentImport();
         var institution = new OrganisationUnit();
-        institution.setScopusAfid(scopusAfid);
+        institution.setImportId(scopusAfid);
         var contribution = new PersonDocumentContribution();
         contribution.setInstitutions(List.of(institution));
         currentlyLoadedEntity.setContributions(List.of(contribution));
@@ -424,7 +424,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(
             currentlyLoadedEntity);
-        when(organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid)).thenReturn(null);
+        when(organisationUnitService.findOrganisationUnitByImportId(scopusAfid)).thenReturn(null);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
             userId)).thenReturn(new LoadingConfigurationDTO(true, false));
 
@@ -505,7 +505,7 @@ public class CommonLoaderTest {
         var currentlyLoadedEntity = new DocumentImport();
         var person = new Person();
         person.setName(new PersonName());
-        person.setScopusAuthorId(scopusAuthorId);
+        person.setImportId(scopusAuthorId);
         var contribution = new PersonDocumentContribution();
         contribution.setPerson(person);
         currentlyLoadedEntity.setContributions(List.of(contribution));
@@ -797,7 +797,7 @@ public class CommonLoaderTest {
         var currentlyLoadedEntity = new DocumentImport();
         var person = new Person();
         person.setName(new PersonName());
-        person.setScopusAuthorId(scopusAuthorId);
+        person.setImportId(scopusAuthorId);
         var contribution = new PersonDocumentContribution();
         contribution.setPerson(person);
         currentlyLoadedEntity.setContributions(List.of(contribution));
@@ -819,7 +819,7 @@ public class CommonLoaderTest {
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(userId))
             .thenReturn(new LoadingConfigurationDTO(true, true));
 
-        when(personService.findPersonByScopusAuthorId(scopusAuthorId)).thenReturn(null);
+        when(personService.findPersonByImportIdentifier(scopusAuthorId)).thenReturn(null);
 
         // When
         var response = commonLoader.createPerson(scopusAuthorId, userId, null);
@@ -841,7 +841,7 @@ public class CommonLoaderTest {
 
         var currentlyLoadedEntity = new DocumentImport();
         var institution = new OrganisationUnit();
-        institution.setScopusAfid(scopusAfid);
+        institution.setImportId(scopusAfid);
         var contribution = new PersonDocumentContribution();
         contribution.setInstitutions(List.of(institution));
         currentlyLoadedEntity.setContributions(List.of(contribution));
@@ -860,7 +860,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(
             currentlyLoadedEntity);
-        when(organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid)).thenReturn(null);
+        when(organisationUnitService.findOrganisationUnitByImportId(scopusAfid)).thenReturn(null);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
             userId)).thenReturn(new LoadingConfigurationDTO(true, true));
 

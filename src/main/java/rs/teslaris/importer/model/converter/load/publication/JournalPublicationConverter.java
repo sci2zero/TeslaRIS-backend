@@ -12,8 +12,8 @@ import rs.teslaris.importer.dto.JournalPublicationLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.CommonRecordConverter;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.importer.utility.RecordConverter;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @Slf4j

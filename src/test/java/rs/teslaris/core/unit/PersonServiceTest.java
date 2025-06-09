@@ -786,7 +786,7 @@ public class PersonServiceTest {
         when(personIndexRepository.findByScopusAuthorId("12345")).thenReturn(Optional.of(person));
 
         // When
-        var foundPerson = personService.findPersonByScopusAuthorId("12345");
+        var foundPerson = personService.findPersonByImportIdentifier("12345");
 
         // Then
         assertEquals(person, foundPerson);
@@ -798,7 +798,7 @@ public class PersonServiceTest {
         when(personIndexRepository.findByScopusAuthorId("12345")).thenReturn(Optional.empty());
 
         // When
-        var foundPerson = personService.findPersonByScopusAuthorId("12345");
+        var foundPerson = personService.findPersonByImportIdentifier("12345");
 
         // Then
         assertNull(foundPerson);

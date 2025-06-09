@@ -231,7 +231,7 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     @Override
-    public OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId,
+    public OrganisationUnitDTO createInstitution(String importId, Integer userId,
                                                  Integer institutionId) {
         var isUnmanagedLoading = isLoadedAsUnmanagedEntity(userId, institutionId);
         var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
@@ -242,8 +242,8 @@ public class CommonLoaderImpl implements CommonLoader {
 
         for (var contribution : currentlyLoadedEntity.getContributions()) {
             for (var institution : contribution.getInstitutions()) {
-                if (institution.getScopusAfid().equals(scopusAfid) && Objects.isNull(
-                    organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid))) {
+                if (institution.getImportId().equals(importId) && Objects.isNull(
+                    organisationUnitService.findOrganisationUnitByImportId(importId))) {
 
                     if (isUnmanagedLoading) {
                         return new OrganisationUnitDTO() {{
@@ -261,7 +261,7 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     @Override
-    public PersonResponseDTO createPerson(String scopusAuthorId, Integer userId,
+    public PersonResponseDTO createPerson(String importId, Integer userId,
                                           Integer institutionId) {
         var isUnmanagedLoading = isLoadedAsUnmanagedEntity(userId, institutionId);
         var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
@@ -271,8 +271,8 @@ public class CommonLoaderImpl implements CommonLoader {
         }
 
         for (var contribution : currentlyLoadedEntity.getContributions()) {
-            if (contribution.getPerson().getScopusAuthorId().equals(scopusAuthorId) &&
-                Objects.isNull(personService.findPersonByScopusAuthorId(scopusAuthorId))) {
+            if (contribution.getPerson().getImportId().equals(importId) &&
+                Objects.isNull(personService.findPersonByImportIdentifier(importId))) {
 
                 if (isUnmanagedLoading) {
                     return new PersonResponseDTO() {{
@@ -288,13 +288,13 @@ public class CommonLoaderImpl implements CommonLoader {
                 var pastContributionInstitutionIdentifiers = new HashSet<String>();
                 contribution.getInstitutions().forEach(institution -> {
                     if (pastContributionInstitutionIdentifiers.contains(
-                        institution.getScopusAfid())) {
+                        institution.getImportId())) {
                         return;
                     }
 
                     var institutionIndex =
-                        organisationUnitService.findOrganisationUnitByScopusAfid(
-                            institution.getScopusAfid());
+                        organisationUnitService.findOrganisationUnitByImportId(
+                            institution.getImportId());
 
                     if (Objects.nonNull(institutionIndex)) {
                         var employmentInstitution =
@@ -305,7 +305,7 @@ public class CommonLoaderImpl implements CommonLoader {
                                 employmentInstitution, null, new HashSet<>());
                         savedPerson.addInvolvement(currentEmployment);
 
-                        pastContributionInstitutionIdentifiers.add(institution.getScopusAfid());
+                        pastContributionInstitutionIdentifiers.add(institution.getImportId());
                     }
                 });
 
@@ -323,7 +323,7 @@ public class CommonLoaderImpl implements CommonLoader {
         for (var contribution : currentlyLoadedEntity.getContributions()) {
             var scopusAuthorId = contribution.getPerson().getScopusAuthorId();
 
-            var savedPersonIndex = personService.findPersonByScopusAuthorId(scopusAuthorId);
+            var savedPersonIndex = personService.findPersonByImportIdentifier(scopusAuthorId);
             if (Objects.isNull(savedPersonIndex)) {
                 continue; // does not exist because person is added as non-managed entity
             }
@@ -332,8 +332,8 @@ public class CommonLoaderImpl implements CommonLoader {
 
             contribution.getInstitutions().forEach(institution -> {
                 var institutionIndex =
-                    organisationUnitService.findOrganisationUnitByScopusAfid(
-                        institution.getScopusAfid());
+                    organisationUnitService.findOrganisationUnitByImportId(
+                        institution.getImportId());
 
                 if (savedPerson.getInvolvements().stream().anyMatch(
                     i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
@@ -401,7 +401,10 @@ public class CommonLoaderImpl implements CommonLoader {
         if ((Objects.nonNull(currentlyLoadedEntity.getEIssn()) &&
             currentlyLoadedEntity.getEIssn().equals(eIssn)) ||
             (Objects.nonNull(currentlyLoadedEntity.getPrintIssn()) &&
-                currentlyLoadedEntity.getPrintIssn().equals(printIssn))) {
+                currentlyLoadedEntity.getPrintIssn().equals(printIssn)) ||
+            (Objects.isNull(currentlyLoadedEntity.getEIssn()) &&
+                Objects.isNull(currentlyLoadedEntity.getPrintIssn()) &&
+                eIssn.equals("NONE") && printIssn.equals("NONE"))) {
             return createJournal(currentlyLoadedEntity);
         }
 
@@ -617,7 +620,7 @@ public class CommonLoaderImpl implements CommonLoader {
     @Nullable
     private OrganisationUnitDTO searchPotentialMatches(OrganisationUnit institution) {
         var potentialMatch =
-            organisationUnitService.findOrganisationUnitByScopusAfid(institution.getScopusAfid());
+            organisationUnitService.findOrganisationUnitByImportId(institution.getImportId());
         if (Objects.nonNull(potentialMatch)) {
             var existingRecordResponse = new OrganisationUnitDTO();
             existingRecordResponse.setName(List.of(new MultilingualContentDTO(-1, "",
@@ -632,7 +635,7 @@ public class CommonLoaderImpl implements CommonLoader {
     @Nullable
     private rs.teslaris.core.model.person.Person searchPotentialMatches(Person person) {
         var potentialMatch =
-            personService.findPersonByScopusAuthorId(person.getScopusAuthorId());
+            personService.findPersonByImportIdentifier(person.getScopusAuthorId());
         if (Objects.nonNull(potentialMatch)) {
             var existingRecordResponse = new rs.teslaris.core.model.person.Person();
             existingRecordResponse.setName(

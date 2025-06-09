@@ -757,7 +757,7 @@ public class OrganisationUnitServiceTest {
     }
 
     @Test
-    public void shouldFindOUByScopusAfid() {
+    public void shouldFindOUByImportId() {
         // Given
         var ou = new OrganisationUnitIndex();
         ou.setScopusAfid("12345");
@@ -766,20 +766,20 @@ public class OrganisationUnitServiceTest {
             "12345")).thenReturn(Optional.of(ou));
 
         // When
-        var foundOu = organisationUnitService.findOrganisationUnitByScopusAfid("12345");
+        var foundOu = organisationUnitService.findOrganisationUnitByImportId("12345");
 
         // Then
         assertEquals(ou, foundOu);
     }
 
     @Test
-    public void shouldNotFindOUByScopusAfidWhenOUDoesNotExist() {
+    public void shouldNotFindOUByImportIdWhenOUDoesNotExist() {
         // Given
         when(organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(
             "12345")).thenReturn(Optional.empty());
 
         // When
-        var foundOu = organisationUnitService.findOrganisationUnitByScopusAfid("12345");
+        var foundOu = organisationUnitService.findOrganisationUnitByImportId("12345");
 
         // Then
         assertNull(foundOu);

@@ -19,4 +19,6 @@ public class OrganisationUnitLoadDTO {
     private String nameAbbreviation;
 
     private String scopusAfid;
+
+    private String importId;
 }

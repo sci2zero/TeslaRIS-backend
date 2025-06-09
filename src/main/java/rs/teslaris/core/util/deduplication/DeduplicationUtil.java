@@ -11,10 +11,12 @@ import ai.djl.translate.TranslateException;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Objects;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rs.teslaris.importer.model.common.DocumentImport;
 
 @Component
 public class DeduplicationUtil {
@@ -56,5 +58,16 @@ public class DeduplicationUtil {
 
     public static INDArray getEmbedding(String text) throws TranslateException {
         return Nd4j.create(predictor.predict(text));
+    }
+
+    public static boolean isDuplicate(DocumentImport backup, INDArray newEmbedding) {
+        if (Objects.isNull(backup) || Objects.isNull(newEmbedding) ||
+            Objects.isNull(backup.getEmbedding())) {
+            return false;
+        }
+
+        var oldEmbedding = Nd4j.create(backup.getEmbedding());
+        var similarity = DeduplicationUtil.cosineSimilarity(newEmbedding, oldEmbedding);
+        return similarity > DeduplicationUtil.MIN_SIMILARITY_THRESHOLD;
     }
 }

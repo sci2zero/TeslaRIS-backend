@@ -825,6 +825,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         .should(
                             sb -> sb.wildcard(mq -> mq.field("author_names").value(wildcard)
                                 .caseInsensitive(true)))
+                        .should(sb -> sb.term(mq -> mq.field("keywords_sr").value(token)))
+                        .should(sb -> sb.term(mq -> mq.field("keywords_other").value(token)))
                     ));
                 }
 
@@ -832,8 +834,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     .should(sb -> sb.match(m -> m.field("description_sr").query(token).boost(0.7f)))
                     .should(
                         sb -> sb.match(m -> m.field("description_other").query(token).boost(0.7f)))
-                    .should(sb -> sb.term(m -> m.field("keywords_sr").value(token)))
-                    .should(sb -> sb.term(m -> m.field("keywords_other").value(token)))
                     .should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
                     .should(
                         sb -> sb.match(m -> m.field("full_text_other").query(token).boost(0.7f)))
@@ -852,8 +852,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                          Integer institutionId,
                                          Integer commissionId,
                                          List<DocumentPublicationType> allowedTypes) {
-
-        int minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        int minShouldMatch;
+        if (tokens.size() <= 2) {
+            minShouldMatch = 1; // Allow partial match for very short queries
+        } else {
+            minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        }
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildSimpleMetadataQuery(institutionId, commissionId, allowedTypes));

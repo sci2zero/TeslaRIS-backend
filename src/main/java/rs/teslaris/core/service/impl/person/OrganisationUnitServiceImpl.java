@@ -148,8 +148,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Nullable
-    public OrganisationUnitIndex findOrganisationUnitByScopusAfid(String scopusAfid) {
-        return organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(scopusAfid)
+    public OrganisationUnitIndex findOrganisationUnitByImportId(String importId) {
+        if (Objects.isNull(importId) || importId.isBlank()) {
+            return null;
+        }
+
+        return organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(importId)
             .orElse(null);
     }
 

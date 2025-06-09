@@ -131,6 +131,8 @@ public class ScopusConverter {
     private static Person getPerson(ScopusImportUtility.Author author) {
         var person = new Person();
         person.setScopusAuthorId(author.authId());
+        person.setImportId(author.authId());
+
         var authorName = author.authName().split(" ");
         if (authorName.length == 2) {
             person.setName(new PersonName(authorName[0], "", authorName[1]));
@@ -164,6 +166,7 @@ public class ScopusConverter {
 
                     var institution = new OrganisationUnit();
                     institution.setScopusAfid(authorAfid.id());
+                    institution.setImportId(authorAfid.id());
                     institution.getName()
                         .add(new MultilingualContent("EN", authorAffiliation.get().affilName(), 1));
                     contribution.getInstitutions().add(institution);

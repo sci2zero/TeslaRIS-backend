@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -121,7 +120,7 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
                 var existingImport = findExistingImport(entry.identifier());
                 var embedding = generateEmbedding(entry);
-                if (isDuplicate(existingImport, embedding)) {
+                if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
                     continue;
                 }
 
@@ -165,17 +164,6 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
             log.error("Error generating embedding: {}", e.getMessage());
             return null;
         }
-    }
-
-    private boolean isDuplicate(DocumentImport backup, INDArray newEmbedding) {
-        if (Objects.isNull(backup) || Objects.isNull(newEmbedding) ||
-            Objects.isNull(backup.getEmbedding())) {
-            return false;
-        }
-
-        var oldEmbedding = Nd4j.create(backup.getEmbedding());
-        var similarity = DeduplicationUtil.cosineSimilarity(newEmbedding, oldEmbedding);
-        return similarity > DeduplicationUtil.MIN_SIMILARITY_THRESHOLD;
     }
 
     private void enrichDocumentImport(DocumentImport doc,
