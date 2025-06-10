@@ -1,15 +1,27 @@
 package rs.teslaris.importer.utility.taggedformats;
 
+import ai.djl.translate.TranslateException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.hash.Hashing;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -20,6 +32,7 @@ import rs.teslaris.importer.model.common.PersonName;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
 
 @Component
+@Slf4j
 public class TaggedBibliographicFormatUtility {
 
     private static MongoTemplate mongoTemplate;
@@ -63,8 +76,6 @@ public class TaggedBibliographicFormatUtility {
                                                HashMap<Integer, Integer> count,
                                                List<String> affiliations, List<String> keywords) {
         doc.getImportUsersId().add(userId);
-        mongoTemplate.save(doc, "documentImports");
-        count.merge(userId, 1, Integer::sum);
 
         if (affiliations.size() == 1) {
             FunctionalUtil.forEachWithCounter(doc.getContributions(), (i, c) -> {
@@ -84,6 +95,42 @@ public class TaggedBibliographicFormatUtility {
         doc.getKeywords().add(new MultilingualContent("EN", String.join("\n", keywords), 1));
         affiliations.clear();
         keywords.clear();
+
+        doc.setIdentifier(Hashing.sha256()
+            .hashString(
+                doc.getTitle().stream()
+                    .map(MultilingualContent::getContent)
+                    .collect(Collectors.joining("|")) + "|" +
+                    doc.getDocumentDate(), StandardCharsets.UTF_8)
+            .toString());
+        var existingImport = findExistingImport(doc.getIdentifier());
+        var embedding = generateEmbedding(doc);
+        if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+            return;
+        }
+
+        if (Objects.nonNull(embedding)) {
+            doc.setEmbedding(embedding.toFloatVector());
+        }
+
+        count.merge(userId, 1, Integer::sum);
+        mongoTemplate.save(doc, "documentImports");
+    }
+
+    private static INDArray generateEmbedding(DocumentImport entry) {
+        try {
+            var json = new ObjectMapper().writeValueAsString(entry);
+            var flattened = DeduplicationUtil.flattenJson(json);
+            return DeduplicationUtil.getEmbedding(flattened);
+        } catch (JsonProcessingException | TranslateException e) {
+            log.error("Error generating embedding: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private static DocumentImport findExistingImport(String citationKey) {
+        var query = new Query(Criteria.where("identifier").is(citationKey));
+        return mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
     }
 
     public static void handleSettingProceedingsAndEvent(String content, DocumentImport document) {
@@ -123,9 +170,9 @@ public class TaggedBibliographicFormatUtility {
         var doc = new DocumentImport();
         doc.setStartPage("");
         doc.setEndPage("");
-        if ("JOUR".equalsIgnoreCase(content)) {
+        if ("JOUR".equalsIgnoreCase(content) || "Journal Article".equalsIgnoreCase(content)) {
             doc.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
-        } else if ("CONF".equalsIgnoreCase(content)) {
+        } else if ("CONF".equalsIgnoreCase(content) || "COnference Proceedings".equals(content)) {
             doc.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
         } else {
             return null;

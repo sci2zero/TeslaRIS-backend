@@ -68,19 +68,26 @@ public class BibTexConverter {
 
                 if (bookTitle.get().contains(";")) {
                     var eventAndProceedings = bookTitle.get().split("; ");
-                    event.getName().add(new MultilingualContent("EN", eventAndProceedings[0], 1));
+                    event.getName().add(
+                        new MultilingualContent("EN", sanitizeBibTexString(eventAndProceedings[0]),
+                            1));
                     document.getPublishedIn()
-                        .add(new MultilingualContent("EN", eventAndProceedings[1], 1));
+                        .add(new MultilingualContent("EN",
+                            sanitizeBibTexString(eventAndProceedings[1]), 1));
                 } else if (bookTitle.get().contains("Proceedings") ||
                     bookTitle.get().contains("proceedings")) {
                     document.getPublishedIn()
-                        .add(new MultilingualContent("EN", bookTitle.get(), 1));
+                        .add(new MultilingualContent("EN", sanitizeBibTexString(bookTitle.get()),
+                            1));
                     String eventName = cleanProceedingsTitleToEvent(bookTitle.get());
-                    event.getName().add(new MultilingualContent("EN", eventName, 1));
+                    event.getName()
+                        .add(new MultilingualContent("EN", sanitizeBibTexString(eventName), 1));
                 } else {
-                    event.getName().add(new MultilingualContent("EN", bookTitle.get(), 1));
+                    event.getName().add(
+                        new MultilingualContent("EN", sanitizeBibTexString(bookTitle.get()), 1));
                     document.getPublishedIn()
-                        .add(new MultilingualContent("EN", "Proceedings of " + bookTitle.get(), 1));
+                        .add(new MultilingualContent("EN",
+                            "Proceedings of " + sanitizeBibTexString(bookTitle.get()), 1));
                 }
 
                 document.setEvent(event);
@@ -95,12 +102,13 @@ public class BibTexConverter {
                 if (conferenceName.isEmpty()) {
                     return Optional.empty();
                 }
+                var cleanName = conferenceName.get().split(": ")[1];
 
                 document.getPublishedIn()
                     .add(
-                        new MultilingualContent("EN", "Proceedings of " + conferenceName.get(), 1));
+                        new MultilingualContent("EN", "Proceedings of " + cleanName, 1));
                 var event = new Event();
-                event.getName().add(new MultilingualContent("EN", conferenceName.get(), 1));
+                event.getName().add(new MultilingualContent("EN", cleanName, 1));
                 document.setEvent(event);
             }
 
@@ -135,7 +143,8 @@ public class BibTexConverter {
                                           boolean isArticle) {
         if (getFieldValue(bibEntry, BibTeXEntry.KEY_JOURNAL)
             .map(journal -> {
-                doc.getPublishedIn().add(new MultilingualContent("EN", journal, 1));
+                doc.getPublishedIn()
+                    .add(new MultilingualContent("EN", sanitizeBibTexString(journal), 1));
                 return true;
             }).orElse(false)) {
             return true;
@@ -145,7 +154,8 @@ public class BibTexConverter {
             return getFieldValue(bibEntry, BibTeXEntry.KEY_PUBLISHER)
                 .or(() -> getFieldValue(bibEntry, BibTeXEntry.KEY_ORGANIZATION))
                 .map(pubOrg -> {
-                    doc.getPublishedIn().add(new MultilingualContent("EN", pubOrg, 1));
+                    doc.getPublishedIn()
+                        .add(new MultilingualContent("EN", sanitizeBibTexString(pubOrg), 1));
                     return true;
                 }).orElse(false);
         }
@@ -160,8 +170,8 @@ public class BibTexConverter {
             return;
         }
 
-        LaTeXParser parser = new LaTeXParser();
-        LaTeXPrinter printer = new LaTeXPrinter();
+        var parser = new LaTeXParser();
+        var printer = new LaTeXPrinter();
 
         var contributions = new ArrayList<PersonDocumentContribution>();
         var authors = printer.print(parser.parse(authorValue.toUserString())).split(" and ");
@@ -263,5 +273,17 @@ public class BibTexConverter {
                     });
             }
         });
+    }
+
+    private static String sanitizeBibTexString(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value
+            .replace("\\&", "&")
+            .replace("\\%", "%")
+            .replace("\\_", "_")
+            .replace("\\$", "$")
+            .replaceAll("\\{([^}]*)}", "$1");
     }
 }

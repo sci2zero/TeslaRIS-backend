@@ -8,9 +8,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -20,11 +19,8 @@ import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.utility.taggedformats.TaggedBibliographicFormatUtility;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RefManHarvesterImpl implements RefManHarvester {
-
-    private final MongoTemplate mongoTemplate;
 
     @Override
     public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId,
@@ -37,7 +33,7 @@ public class RefManHarvesterImpl implements RefManHarvester {
             List<String> keywords = new ArrayList<>();
             String line;
 
-            while ((line = reader.readLine()) != null) {
+            while (Objects.nonNull((line = reader.readLine()))) {
                 if (line.trim().isEmpty()) {
                     continue;
                 }
@@ -45,7 +41,7 @@ public class RefManHarvesterImpl implements RefManHarvester {
                 String tag = line.length() >= 6 ? line.substring(0, 2) : "";
                 String content = line.length() >= 6 ? line.substring(6).trim() : "";
 
-                if (document != null && ("ER".equals(tag) || tag.isBlank())) {
+                if (Objects.nonNull(document) && ("ER".equals(tag) || tag.isBlank())) {
                     TaggedBibliographicFormatUtility.finalizeAndSaveDocument(document, userId,
                         newEntriesCount,
                         affiliations, keywords);
@@ -58,7 +54,7 @@ public class RefManHarvesterImpl implements RefManHarvester {
                     continue;
                 }
 
-                if (document == null) {
+                if (Objects.isNull(document)) {
                     continue;
                 }
 
