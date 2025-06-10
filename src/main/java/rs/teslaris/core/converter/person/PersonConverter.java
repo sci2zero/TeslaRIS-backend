@@ -1,8 +1,10 @@
 package rs.teslaris.core.converter.person;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
@@ -18,7 +20,6 @@ import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.dto.person.PrizeResponseDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -141,7 +142,11 @@ public class PersonConverter {
                                                 ArrayList<Integer> educationIds,
                                                 ArrayList<Integer> membershipIds) {
         person.getInvolvements().stream()
-            .sorted(Comparator.comparing(Involvement::getDateFrom).reversed())
+            .sorted(Comparator.comparing(
+                involvement -> Optional.ofNullable(involvement.getDateFrom())
+                    .orElse(LocalDate.now()),
+                Comparator.reverseOrder()
+            ))
             .forEach(involvement -> {
                 switch (involvement.getInvolvementType()) {
                     case HIRED_BY:

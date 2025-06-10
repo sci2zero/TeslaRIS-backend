@@ -1,0 +1,9 @@
+# Ignore everything
+*
+
+# Keep these
+!.gitignore
+!sincedb
+
+# But still ignore sincedb-* e.g. sincedb-dev
+sincedb-*

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -15,6 +16,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
@@ -28,6 +30,7 @@ import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.person.Employment;
@@ -36,6 +39,7 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
@@ -51,6 +55,7 @@ import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.converter.load.publication.JournalPublicationConverter;
 import rs.teslaris.importer.model.converter.load.publication.ProceedingsPublicationConverter;
 import rs.teslaris.importer.service.interfaces.CommonLoader;
+import rs.teslaris.importer.service.interfaces.LoadingConfigurationService;
 import rs.teslaris.importer.utility.DataSet;
 import rs.teslaris.importer.utility.LoadProgressReport;
 import rs.teslaris.importer.utility.ProgressReportUtility;
@@ -58,6 +63,7 @@ import rs.teslaris.importer.utility.ProgressReportUtility;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Transactional
 public class CommonLoaderImpl implements CommonLoader {
 
     private static final Object institutionLock = new Object();
@@ -90,88 +96,106 @@ public class CommonLoaderImpl implements CommonLoader {
 
     private final PersonService personService;
 
-    @NotNull
-    private static ImportPersonDTO getBasicPersonDTO(Person person) {
-        var basicPersonDTO = new ImportPersonDTO();
+    private final LoadingConfigurationService loadingConfigurationService;
 
-        var personNameDTO = new PersonNameDTO();
-        personNameDTO.setFirstname(person.getName().getFirstName());
-        personNameDTO.setOtherName(person.getName().getMiddleName());
-        personNameDTO.setLastname(person.getName().getLastName());
-        basicPersonDTO.setPersonName(personNameDTO);
+    private final DocumentPublicationService documentPublicationService;
 
-        basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
-        basicPersonDTO.setECrisId(person.getECrisId());
-        basicPersonDTO.setENaukaId(person.getENaukaId());
-        basicPersonDTO.setOrcid(person.getOrcid());
-        basicPersonDTO.setApvnt(person.getApvnt());
-        return basicPersonDTO;
-    }
 
     @Override
-    public <R> R loadRecordsWizard(Integer userId) {
+    public <R> R loadRecordsWizard(Integer userId, Integer institutionId) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("import_users_id").in(userId));
+        if (Objects.nonNull(institutionId)) {
+            query.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
+        } else {
+            query.addCriteria(Criteria.where("import_users_id").in(userId));
+        }
         query.addCriteria(Criteria.where("is_loaded").is(false));
 
         var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
                 mongoTemplate);
-        if (progressReport != null) {
-            query.addCriteria(Criteria.where("identifier").gte(progressReport.getLastLoadedId()));
+        if (Objects.nonNull(progressReport)) {
+            query.addCriteria(
+                Criteria.where("_id").gte(progressReport.getLastLoadedId()));
         } else {
             query.addCriteria(Criteria.where("identifier").gte(""));
         }
         query.limit(1);
 
-        return findAndConvertEntity(query, userId);
+        return findAndConvertEntity(query, userId, institutionId);
     }
 
     @Override
-    public <R> R loadSkippedRecordsWizard(Integer userId) {
-        ProgressReportUtility.resetProgressReport(DataSet.DOCUMENT_IMPORTS, userId, mongoTemplate);
-        return loadRecordsWizard(userId);
+    public <R> R loadSkippedRecordsWizard(Integer userId, Integer institutionId) {
+        ProgressReportUtility.resetProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
+            mongoTemplate);
+        return loadRecordsWizard(userId, institutionId);
     }
 
     @Override
-    public void skipRecord(Integer userId) {
+    public void skipRecord(Integer userId, Integer institutionId) {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                    mongoTemplate), new LoadProgressReport("1", userId, DataSet.DOCUMENT_IMPORTS));
+                    institutionId, mongoTemplate),
+                new LoadProgressReport("1", new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID),
+                    userId,
+                    institutionId,
+                    DataSet.DOCUMENT_IMPORTS));
         Query nextRecordQuery = new Query();
-        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        if (Objects.nonNull(institutionId)) {
+            nextRecordQuery.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
+        } else {
+            nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        }
         nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
         nextRecordQuery.addCriteria(
-            Criteria.where("identifier").gt(progressReport.getLastLoadedId()));
+            Criteria.where("_id").gt(new ObjectId(progressReport.getLastLoadedId().toHexString())));
 
         var nextRecord = mongoTemplate.findOne(nextRecordQuery, DocumentImport.class);
         if (Objects.nonNull(nextRecord)) {
-            Method getIdMethod;
+            Method getIdMethod, getIdentifierMethod;
             try {
-                getIdMethod = DocumentImport.class.getMethod("getIdentifier");
-                progressReport.setLastLoadedId((String) getIdMethod.invoke(nextRecord));
+                getIdentifierMethod = DocumentImport.class.getMethod("getIdentifier");
+                getIdMethod = DocumentImport.class.getMethod("getId");
+                progressReport.setLastLoadedIdentifier(
+                    (String) getIdentifierMethod.invoke(nextRecord));
+                progressReport.setLastLoadedId(
+                    new ObjectId((String) getIdMethod.invoke(nextRecord)));
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 return;
             }
         } else {
-            progressReport.setLastLoadedId("");
+            progressReport.setLastLoadedIdentifier("");
+            progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
         }
 
-        ProgressReportUtility.deleteProgressReport(DataSet.DOCUMENT_IMPORTS, userId, mongoTemplate);
+        ProgressReportUtility.deleteProgressReport(
+            DataSet.DOCUMENT_IMPORTS, userId, institutionId, mongoTemplate);
         mongoTemplate.save(progressReport);
     }
 
     @Override
-    public void markRecordAsLoaded(Integer userId) {
+    public void markRecordAsLoaded(Integer userId, Integer institutionId, Integer oldDocumentId,
+                                   Boolean deleteOldDocument) {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                    mongoTemplate), new LoadProgressReport("1", userId, DataSet.DOCUMENT_IMPORTS));
+                    institutionId,
+                    mongoTemplate),
+                new LoadProgressReport("1", new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID),
+                    userId,
+                    institutionId,
+                    DataSet.DOCUMENT_IMPORTS));
 
         Query query = new Query();
-        query.addCriteria(Criteria.where("identifier").is(progressReport.getLastLoadedId()));
-        query.addCriteria(Criteria.where("import_users_id").is(userId));
+        query.addCriteria(
+            Criteria.where("identifier").is(progressReport.getLastLoadedIdentifier()));
+        if (Objects.nonNull(institutionId)) {
+            query.addCriteria(Criteria.where("import_institutions_id").is(institutionId));
+        } else {
+            query.addCriteria(Criteria.where("import_users_id").is(userId));
+        }
         query.addCriteria(Criteria.where("loaded").is(false));
 
         var entityClass = DataSet.getClassForValue(DataSet.DOCUMENT_IMPORTS.getStringValue());
@@ -186,20 +210,31 @@ public class CommonLoaderImpl implements CommonLoader {
         if (Objects.isNull(updatedRecord)) {
             throw new RecordAlreadyLoadedException("recordAlreadyLoadedMessage");
         }
+
+        updatePersonInvolvements((DocumentImport) updatedRecord);
+
+        handleDeduplication(oldDocumentId, deleteOldDocument, (DocumentImport) updatedRecord,
+            progressReport);
     }
 
     @Override
-    public Integer countRemainingDocumentsForLoading(Integer userId) {
+    public Integer countRemainingDocumentsForLoading(Integer userId, Integer institutionId) {
         var countQuery = new Query();
         countQuery.addCriteria(Criteria.where("loaded").is(false));
-        countQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        if (Objects.nonNull(institutionId)) {
+            countQuery.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
+        } else {
+            countQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        }
 
         return Math.toIntExact(mongoTemplate.count(countQuery, DocumentImport.class));
     }
 
     @Override
-    public OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId) {
-        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId);
+    public OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId,
+                                                 Integer institutionId) {
+        var isUnmanagedLoading = isLoadedAsUnmanagedEntity(userId, institutionId);
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
 
         if (Objects.isNull(currentlyLoadedEntity)) {
             throw new NotFoundException("No entity is being loaded at the moment.");
@@ -210,6 +245,13 @@ public class CommonLoaderImpl implements CommonLoader {
                 if (institution.getScopusAfid().equals(scopusAfid) && Objects.isNull(
                     organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid))) {
 
+                    if (isUnmanagedLoading) {
+                        return new OrganisationUnitDTO() {{
+                            setName(new ArrayList<>());
+                            setMultilingualContent(getName(), institution.getName());
+                        }};
+                    }
+
                     return createLoadedInstitution(institution);
                 }
             }
@@ -219,8 +261,10 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     @Override
-    public PersonResponseDTO createPerson(String scopusAuthorId, Integer userId) {
-        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId);
+    public PersonResponseDTO createPerson(String scopusAuthorId, Integer userId,
+                                          Integer institutionId) {
+        var isUnmanagedLoading = isLoadedAsUnmanagedEntity(userId, institutionId);
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
 
         if (Objects.isNull(currentlyLoadedEntity)) {
             throw new NotFoundException("No entity is being loaded at the moment.");
@@ -230,9 +274,24 @@ public class CommonLoaderImpl implements CommonLoader {
             if (contribution.getPerson().getScopusAuthorId().equals(scopusAuthorId) &&
                 Objects.isNull(personService.findPersonByScopusAuthorId(scopusAuthorId))) {
 
+                if (isUnmanagedLoading) {
+                    return new PersonResponseDTO() {{
+                        setPersonName(new PersonNameDTO(null,
+                            contribution.getPerson().getName().getFirstName(),
+                            contribution.getPerson().getName().getMiddleName(),
+                            contribution.getPerson().getName().getLastName(), null, null));
+                    }};
+                }
+
                 var savedPerson = createLoadedPerson(contribution.getPerson());
 
+                var pastContributionInstitutionIdentifiers = new HashSet<String>();
                 contribution.getInstitutions().forEach(institution -> {
+                    if (pastContributionInstitutionIdentifiers.contains(
+                        institution.getScopusAfid())) {
+                        return;
+                    }
+
                     var institutionIndex =
                         organisationUnitService.findOrganisationUnitByScopusAfid(
                             institution.getScopusAfid());
@@ -245,6 +304,8 @@ public class CommonLoaderImpl implements CommonLoader {
                                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
                                 employmentInstitution, null, new HashSet<>());
                         savedPerson.addInvolvement(currentEmployment);
+
+                        pastContributionInstitutionIdentifiers.add(institution.getScopusAfid());
                     }
                 });
 
@@ -258,9 +319,80 @@ public class CommonLoaderImpl implements CommonLoader {
         throw new NotFoundException("Person with given ScopusID is not loaded.");
     }
 
+    public void updatePersonInvolvements(DocumentImport currentlyLoadedEntity) {
+        for (var contribution : currentlyLoadedEntity.getContributions()) {
+            var scopusAuthorId = contribution.getPerson().getScopusAuthorId();
+
+            var savedPersonIndex = personService.findPersonByScopusAuthorId(scopusAuthorId);
+            if (Objects.isNull(savedPersonIndex)) {
+                continue; // does not exist because person is added as non-managed entity
+            }
+
+            var savedPerson = personService.findOne(savedPersonIndex.getDatabaseId());
+
+            contribution.getInstitutions().forEach(institution -> {
+                var institutionIndex =
+                    organisationUnitService.findOrganisationUnitByScopusAfid(
+                        institution.getScopusAfid());
+
+                if (savedPerson.getInvolvements().stream().anyMatch(
+                    i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                        i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                        Objects.nonNull(i.getOrganisationUnit()) &&
+                        i.getOrganisationUnit().getId()
+                            .equals(institutionIndex.getDatabaseId()))) {
+                    return;
+                }
+
+                if (Objects.nonNull(institutionIndex)) {
+                    var employmentInstitution =
+                        organisationUnitService.findOne(institutionIndex.getDatabaseId());
+                    var currentEmployment =
+                        new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
+                            InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                            employmentInstitution, null, new HashSet<>());
+                    savedPerson.addInvolvement(currentEmployment);
+                }
+            });
+
+            personService.save(savedPerson);
+            personService.indexPerson(savedPerson, savedPerson.getId());
+        }
+    }
+
+    private void handleDeduplication(Integer oldDocumentId, Boolean deleteOldDocument,
+                                     DocumentImport updatedRecord,
+                                     LoadProgressReport progressReport) {
+        if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0 &&
+            Objects.nonNull(deleteOldDocument)) {
+            var doi = Objects.requireNonNullElse(updatedRecord.getDoi(), "");
+            var scopus =
+                Objects.requireNonNullElse(updatedRecord.getScopusId(), "");
+            var titles = updatedRecord.getTitle().stream().map(
+                MultilingualContent::getContent).toList();
+            var potentialDuplicateIds =
+                documentPublicationService.findDocumentDuplicates(titles, doi, scopus).getContent()
+                    .stream().map(
+                        DocumentPublicationIndex::getDatabaseId).toList();
+
+            if (!potentialDuplicateIds.contains(oldDocumentId)) {
+                return;
+            }
+
+            if (deleteOldDocument) {
+                documentPublicationService.deleteDocumentPublication(oldDocumentId);
+            } else {
+                var oldDocument = documentPublicationService.findDocumentById(oldDocumentId);
+                oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
+                documentPublicationService.save(oldDocument);
+            }
+        }
+    }
+
     @Override
-    public PublicationSeriesDTO createJournal(String eIssn, String printIssn, Integer userId) {
-        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId);
+    public PublicationSeriesDTO createJournal(String eIssn, String printIssn, Integer userId,
+                                              Integer institutionId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
 
         if (Objects.isNull(currentlyLoadedEntity)) {
             throw new NotFoundException("No entity is being loaded at the moment.");
@@ -277,8 +409,8 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     @Override
-    public ProceedingsDTO createProceedings(Integer userId) {
-        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId);
+    public ProceedingsDTO createProceedings(Integer userId, Integer institutionId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
 
         if (Objects.isNull(currentlyLoadedEntity)) {
             throw new NotFoundException("No entity is being loaded at the moment.");
@@ -288,16 +420,21 @@ public class CommonLoaderImpl implements CommonLoader {
         return createProceedings(currentlyLoadedEntity, createdConference.getId());
     }
 
-    private DocumentImport retrieveCurrentlyLoadedEntity(Integer userId) {
+    private DocumentImport retrieveCurrentlyLoadedEntity(Integer userId, Integer institutionId) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("import_users_id").in(userId));
+        if (Objects.nonNull(institutionId)) {
+            query.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
+        } else {
+            query.addCriteria(Criteria.where("import_users_id").in(userId));
+        }
         query.addCriteria(Criteria.where("is_loaded").is(false));
 
         var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
                 mongoTemplate);
         if (progressReport != null) {
-            query.addCriteria(Criteria.where("identifier").gte(progressReport.getLastLoadedId()));
+            query.addCriteria(
+                Criteria.where("identifier").is(progressReport.getLastLoadedIdentifier()));
         } else {
             throw new NotFoundException("No entity is being loaded at the moment.");
         }
@@ -537,22 +674,43 @@ public class CommonLoaderImpl implements CommonLoader {
         return null;
     }
 
+    @NotNull
+    private ImportPersonDTO getBasicPersonDTO(Person person) {
+        var basicPersonDTO = new ImportPersonDTO();
+
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname(person.getName().getFirstName());
+        personNameDTO.setOtherName(person.getName().getMiddleName());
+        personNameDTO.setLastname(person.getName().getLastName());
+        basicPersonDTO.setPersonName(personNameDTO);
+
+        basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
+        basicPersonDTO.setECrisId(person.getECrisId());
+        basicPersonDTO.setENaukaId(person.getENaukaId());
+        basicPersonDTO.setOrcid(person.getOrcid());
+        basicPersonDTO.setApvnt(person.getApvnt());
+        return basicPersonDTO;
+    }
+
     @Nullable
-    private <R> R findAndConvertEntity(Query query, Integer userId) {
+    private <R> R findAndConvertEntity(Query query, Integer userId, Integer institutionId) {
         var entity = mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
 
         if (Objects.nonNull(entity)) {
-            Method getIdMethod;
+            Method getIdMethod, getIdentifierMethod;
 
             try {
-                getIdMethod = DocumentImport.class.getMethod("getIdentifier");
+                getIdentifierMethod = DocumentImport.class.getMethod("getIdentifier");
+                getIdMethod = DocumentImport.class.getMethod("getId");
             } catch (NoSuchMethodException e) {
                 return null;
             }
 
             try {
                 ProgressReportUtility.updateProgressReport(DataSet.DOCUMENT_IMPORTS,
-                    (String) getIdMethod.invoke(entity), userId, mongoTemplate);
+                    (String) getIdentifierMethod.invoke(entity),
+                    (String) getIdMethod.invoke(entity), userId, institutionId,
+                    mongoTemplate);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 return null;
             }
@@ -568,5 +726,15 @@ public class CommonLoaderImpl implements CommonLoader {
 
         }
         return null;
+    }
+
+    private boolean isLoadedAsUnmanagedEntity(Integer userId, Integer institutionId) {
+        if (Objects.isNull(institutionId)) {
+            return loadingConfigurationService.getLoadingConfigurationForResearcherUser(userId)
+                .getLoadedEntitiesAreUnmanaged();
+        } else {
+            return loadingConfigurationService.getLoadingConfigurationForAdminUser(institutionId)
+                .getLoadedEntitiesAreUnmanaged();
+        }
     }
 }

@@ -514,7 +514,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         IdentifierUtil.validateAndSetIdentifier(
             documentDTO.getScopusId(),
             document.getId(),
-            "^\\d{6,11}$",
+            "^\\d{6,12}$",
             documentRepository::existsByScopusId,
             document::setScopusId,
             "scopusIdFormatError",

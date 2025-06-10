@@ -102,7 +102,17 @@ services:
       - 27017:27017
     volumes:
       - mongo-db:/data/db
-    
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.4.3
+    container_name: logstash
+    ports:
+      - "5044:5044"
+    volumes:
+      - "./application-logs/:/usr/share/logstash/ingest_data/"
+      - "./logstash/logstash-config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf"
+      - "./logstash/logstash-sincedb/sincedb:/var/lib/logstash/"
+    restart: always
 
 networks:
   teslaris-network:
