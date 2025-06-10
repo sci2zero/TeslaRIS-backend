@@ -31,6 +31,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTempla
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.DocumentHarvestException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
@@ -453,6 +454,14 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleAccessDeniedException(HttpServletRequest request,
                                             AccessDeniedException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(DocumentHarvestException.class)
+    @ResponseBody
+    ErrorObject handleDocumentHarvestException(HttpServletRequest request,
+                                               DocumentHarvestException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
