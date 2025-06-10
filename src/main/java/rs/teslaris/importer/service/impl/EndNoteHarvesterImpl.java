@@ -10,19 +10,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
 import rs.teslaris.importer.utility.taggedformats.TaggedBibliographicFormatUtility;
 
+@Service
 @Slf4j
 public class EndNoteHarvesterImpl implements EndNoteHarvester {
 
     @Override
-    public HashMap<Integer, Integer> harvestDocumentsForAuthorFromEndnote(Integer userId,
-                                                                          MultipartFile enwFile,
-                                                                          HashMap<Integer, Integer> newEntriesCount) {
+    public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId,
+                                                               MultipartFile enwFile,
+                                                               HashMap<Integer, Integer> newEntriesCount) {
         try (var reader = new BufferedReader(
             new InputStreamReader(enwFile.getInputStream(), StandardCharsets.UTF_8))) {
             DocumentImport document = null;
@@ -30,7 +32,7 @@ public class EndNoteHarvesterImpl implements EndNoteHarvester {
             List<String> keywords = new ArrayList<>();
             String line;
 
-            while ((line = reader.readLine()) != null) {
+            while (Objects.nonNull((line = reader.readLine()))) {
                 if (line.trim().isEmpty()) {
                     continue;
                 }
@@ -48,7 +50,7 @@ public class EndNoteHarvesterImpl implements EndNoteHarvester {
                     continue;
                 }
 
-                if (document == null) {
+                if (Objects.isNull(document)) {
                     continue;
                 }
 
@@ -75,7 +77,7 @@ public class EndNoteHarvesterImpl implements EndNoteHarvester {
                 }
             }
 
-            if (document != null) {
+            if (Objects.nonNull(document)) {
                 TaggedBibliographicFormatUtility.finalizeAndSaveDocument(document, userId,
                     newEntriesCount, affiliations, keywords);
             }

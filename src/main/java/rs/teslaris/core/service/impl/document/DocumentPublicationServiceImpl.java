@@ -734,10 +734,17 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         eq.should(sb -> sb.matchPhrase(
                             m -> m.field("title_other").query(title)));
                     });
-                    eq.should(sb -> sb.match(
-                        m -> m.field("scopusId").query(scopusId)));
-                    eq.should(sb -> sb.match(
-                        m -> m.field("doi").query(doi)));
+
+                    if (Objects.nonNull(scopusId) && !scopusId.isBlank()) {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("scopusId").query(scopusId)));
+                    }
+
+                    if (Objects.nonNull(doi) && !doi.isBlank()) {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("doi").query(doi)));
+                    }
+
                     return eq;
                 });
                 return bq;
