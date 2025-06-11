@@ -335,24 +335,23 @@ public class CommonLoaderImpl implements CommonLoader {
                     organisationUnitService.findOrganisationUnitByImportId(
                         institution.getImportId());
 
-                if (savedPerson.getInvolvements().stream().anyMatch(
-                    i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                        i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                        Objects.nonNull(i.getOrganisationUnit()) &&
-                        i.getOrganisationUnit().getId()
-                            .equals(institutionIndex.getDatabaseId()))) {
+                if (Objects.isNull(institutionIndex) ||
+                    savedPerson.getInvolvements().stream().anyMatch(
+                        i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                            i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                            Objects.nonNull(i.getOrganisationUnit()) &&
+                            i.getOrganisationUnit().getId()
+                                .equals(institutionIndex.getDatabaseId()))) {
                     return;
                 }
 
-                if (Objects.nonNull(institutionIndex)) {
-                    var employmentInstitution =
-                        organisationUnitService.findOne(institutionIndex.getDatabaseId());
-                    var currentEmployment =
-                        new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
-                            InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                            employmentInstitution, null, new HashSet<>());
-                    savedPerson.addInvolvement(currentEmployment);
-                }
+                var employmentInstitution =
+                    organisationUnitService.findOne(institutionIndex.getDatabaseId());
+                var currentEmployment =
+                    new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
+                        InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                        employmentInstitution, null, new HashSet<>());
+                savedPerson.addInvolvement(currentEmployment);
             });
 
             personService.save(savedPerson);

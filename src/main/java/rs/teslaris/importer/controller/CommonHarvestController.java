@@ -196,16 +196,16 @@ public class CommonHarvestController {
 
     private void validateContentType(String detectedType, String filename) {
         Map<String, String> allowedTypes = Map.of(
-            ".bib", "text/plain",
+            ".bib", "application/x-bibtex-text-file",
             ".ris", "text/plain",
-            ".enw", "text/plain",
-            ".csv", "text/csv"
+            ".enw", "text/x-matlab",
+            ".csv", "text/plain"
         );
 
         String extension = filename.substring(filename.lastIndexOf('.')).toLowerCase();
         String expectedType = allowedTypes.get(extension);
 
-        if (!detectedType.startsWith("text")) {
+        if (!detectedType.equals(expectedType)) {
             throw new SecurityException("Unexpected MIME type: " + detectedType);
         }
     }

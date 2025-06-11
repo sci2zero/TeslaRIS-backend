@@ -117,7 +117,7 @@ public class TaggedBibliographicFormatUtility {
         mongoTemplate.save(doc, "documentImports");
     }
 
-    private static INDArray generateEmbedding(DocumentImport entry) {
+    public static INDArray generateEmbedding(DocumentImport entry) {
         try {
             var json = new ObjectMapper().writeValueAsString(entry);
             var flattened = DeduplicationUtil.flattenJson(json);
@@ -128,7 +128,7 @@ public class TaggedBibliographicFormatUtility {
         }
     }
 
-    private static DocumentImport findExistingImport(String citationKey) {
+    public static DocumentImport findExistingImport(String citationKey) {
         var query = new Query(Criteria.where("identifier").is(citationKey));
         return mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
     }
