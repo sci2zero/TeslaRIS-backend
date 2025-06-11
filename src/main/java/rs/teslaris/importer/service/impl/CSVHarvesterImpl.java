@@ -11,13 +11,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.DocumentHarvestException;
 import rs.teslaris.importer.model.converter.harvest.CSVConverter;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
+import rs.teslaris.importer.utility.taggedformats.TaggedBibliographicFormatUtility;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +30,7 @@ public class CSVHarvesterImpl implements CSVHarvester {
         "Document Type", "Authors", "Author full names", "Authors with affiliations", "Title",
         "Year", "Volume", "Issue|Number", "Page start", "Page end", "Pages", "Doi", "Link",
         "Abstract", "Author keywords", "Conference name", "Source title|Publication",
-        "ISSN", "ISBN", "Conference code"
+        "ISSN", "ISBN", "Conference code", "EID"
     );
     private final MongoTemplate mongoTemplate;
 
@@ -39,10 +42,20 @@ public class CSVHarvesterImpl implements CSVHarvester {
             List<String[]> processedRows = processCsvFile(csvFile);
             processedRows.forEach(
                 row -> {
-                    System.out.println(Arrays.toString(row)); // TODO: remove this
                     CSVConverter.toCommonImportModel(row)
                         .ifPresent(documentImport -> {
-                            // TODO: Add deduplication mechanism
+                            var existingImport =
+                                TaggedBibliographicFormatUtility.findExistingImport(
+                                    documentImport.getIdentifier());
+                            var embedding =
+                                TaggedBibliographicFormatUtility.generateEmbedding(documentImport);
+                            if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+                                return;
+                            }
+
+                            if (Objects.nonNull(embedding)) {
+                                documentImport.setEmbedding(embedding.toFloatVector());
+                            }
 
                             documentImport.getImportUsersId().add(userId);
                             mongoTemplate.save(documentImport, "documentImports");
@@ -72,7 +85,7 @@ public class CSVHarvesterImpl implements CSVHarvester {
     private Map<String, Integer> createHeaderMap(String[] header) {
         var headerMap = new HashMap<String, Integer>();
         for (int i = 0; i < header.length; i++) {
-            headerMap.put(header[i].toLowerCase(), i);
+            headerMap.put(header[i].toLowerCase().replaceAll("\\uFEFF+", ""), i);
         }
         return headerMap;
     }
