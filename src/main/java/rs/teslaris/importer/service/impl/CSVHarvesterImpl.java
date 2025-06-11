@@ -10,12 +10,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.DocumentHarvestException;
 import rs.teslaris.importer.model.converter.harvest.CSVConverter;
@@ -32,7 +35,28 @@ public class CSVHarvesterImpl implements CSVHarvester {
         "Abstract", "Author keywords", "Conference name", "Source title|Publication",
         "ISSN", "ISBN", "Conference code", "EID"
     );
+
     private final MongoTemplate mongoTemplate;
+
+    private final MessageSource messageSource;
+
+
+    @Override
+    public Pair<String, String> getFormatDescription(String language) {
+        var requiredCols = messageSource.getMessage(
+            "csv.required.columns.description",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        var allParseableCols = messageSource.getMessage(
+            "csv.parseable.columns.description",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        return new Pair<>(requiredCols, allParseableCols);
+    }
 
     @Override
     public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId,

@@ -29,6 +29,7 @@ import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
@@ -136,6 +137,11 @@ public class CommonHarvestController {
         });
 
         return newDocumentImportCountByUser.getOrDefault(userId, 0);
+    }
+
+    @GetMapping("/csv-file-format")
+    public Pair<String, String> getCSVFormatDescription(@RequestParam String language) {
+        return csvHarvester.getFormatDescription(language);
     }
 
     @PostMapping("/documents-from-file")
