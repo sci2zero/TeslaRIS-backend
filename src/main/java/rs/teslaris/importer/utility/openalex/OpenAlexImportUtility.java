@@ -49,10 +49,11 @@ public class OpenAlexImportUtility {
     }
 
     public List<OpenAlexPublication> getPublicationsForAuthor(String openAlexId, String dateFrom,
-                                                              String dateTo) {
+                                                              String dateTo,
+                                                              Boolean institutionLevelHarvest) {
         List<OpenAlexPublication> allResults = new ArrayList<>();
         var baseUrl = "https://api.openalex.org/works?per-page=100" +
-            "&filter=author.id:" + openAlexId +
+            "&filter=" + (institutionLevelHarvest ? "author.id:" : "institution.id:") + openAlexId +
             ",from_publication_date:" + dateFrom +
             ",to_publication_date:" + dateTo;
 

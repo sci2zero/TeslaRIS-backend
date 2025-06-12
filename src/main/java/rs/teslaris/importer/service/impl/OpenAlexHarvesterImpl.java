@@ -28,33 +28,33 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
 
 
         openAlexImportUtility.getPublicationsForAuthor("A5070362523", startDate.toString(),
-            endDate.toString()).forEach(publication -> {
+            endDate.toString(), false).forEach(
+            publication -> OpenAlexConverter.toCommonImportModel(publication)
+                .ifPresent(documentImport -> {
+                    var existingImport =
+                        CommonImportUtility.findExistingImport(documentImport.getIdentifier());
+                    if (Objects.isNull(existingImport) &&
+                        Objects.nonNull(documentImport.getDoi())) {
+                        if (Objects.nonNull(
+                            CommonImportUtility.findImportByDOI(documentImport.getDoi()))) {
+                            // Probably imported before from scopus, which has higher priority (for now)
+                            return;
+                        }
+                    }
 
-            OpenAlexConverter.toCommonImportModel(publication).ifPresent(documentImport -> {
-                var existingImport =
-                    CommonImportUtility.findExistingImport(documentImport.getIdentifier());
-                if (Objects.isNull(existingImport) && Objects.nonNull(documentImport.getDoi())) {
-                    if (Objects.nonNull(
-                        CommonImportUtility.findImportByDOI(documentImport.getDoi()))) {
-                        // Probably imported before from scopus, which has higher priority (for now)
+                    var embedding = CommonImportUtility.generateEmbedding(documentImport);
+                    if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
                         return;
                     }
-                }
 
-                var embedding = CommonImportUtility.generateEmbedding(documentImport);
-                if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
-                    return;
-                }
+                    if (Objects.nonNull(embedding)) {
+                        documentImport.setEmbedding(embedding.toFloatVector());
+                    }
 
-                if (Objects.nonNull(embedding)) {
-                    documentImport.setEmbedding(embedding.toFloatVector());
-                }
-
-                documentImport.getImportUsersId().add(userId);
-                mongoTemplate.save(documentImport, "documentImports");
-                newEntriesCount.merge(userId, 1, Integer::sum);
-            });
-        });
+                    documentImport.getImportUsersId().add(userId);
+                    mongoTemplate.save(documentImport, "documentImports");
+                    newEntriesCount.merge(userId, 1, Integer::sum);
+                }));
         return newEntriesCount;
     }
 
