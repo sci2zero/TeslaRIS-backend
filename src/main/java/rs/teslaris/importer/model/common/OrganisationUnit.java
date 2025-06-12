@@ -23,6 +23,12 @@ public class OrganisationUnit {
     @Field("scopus_afid")
     private String scopusAfid;
 
-    @Field("import_afid")
+    @Field("import_id")
     private String importId;
+
+    @Field("ror")
+    private String ror;
+
+    @Field("open_alex_id")
+    private String openAlexId;
 }

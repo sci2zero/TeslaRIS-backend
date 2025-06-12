@@ -350,6 +350,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(journal.getEISSN());
         index.setPrintISSN(journal.getPrintISSN());
+        index.setOpenAlexId(journal.getOpenAlexId());
 
         index.setRelatedInstitutionIds(
             journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journal.getId())

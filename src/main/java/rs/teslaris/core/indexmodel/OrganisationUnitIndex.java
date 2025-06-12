@@ -71,4 +71,10 @@ public class OrganisationUnitIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "scopus_afid")
     private String scopusAfid;
+
+    @Field(type = FieldType.Keyword, store = true, name = "open_alex_id")
+    private String openAlexId;
+
+    @Field(type = FieldType.Keyword, store = true, name = "ror")
+    private String ror;
 }

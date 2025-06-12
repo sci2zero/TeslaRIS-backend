@@ -23,7 +23,7 @@ import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.DocumentHarvestException;
 import rs.teslaris.importer.model.converter.harvest.CSVConverter;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
-import rs.teslaris.importer.utility.taggedformats.TaggedBibliographicFormatUtility;
+import rs.teslaris.importer.utility.CommonImportUtility;
 
 @Service
 @RequiredArgsConstructor
@@ -68,11 +68,10 @@ public class CSVHarvesterImpl implements CSVHarvester {
                 row -> {
                     CSVConverter.toCommonImportModel(row)
                         .ifPresent(documentImport -> {
-                            var existingImport =
-                                TaggedBibliographicFormatUtility.findExistingImport(
-                                    documentImport.getIdentifier());
-                            var embedding =
-                                TaggedBibliographicFormatUtility.generateEmbedding(documentImport);
+                            var existingImport = CommonImportUtility.findExistingImport(
+                                documentImport.getIdentifier());
+                            var embedding = CommonImportUtility.generateEmbedding(documentImport);
+
                             if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
                                 return;
                             }

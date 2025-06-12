@@ -68,6 +68,9 @@ public class PersonIndex {
     @Field(type = FieldType.Keyword, store = true, name = "scopus_author_id")
     private String scopusAuthorId;
 
+    @Field(type = FieldType.Keyword, store = true, name = "open_alex_id")
+    private String openAlexId;
+
     @Field(type = FieldType.Text, store = true, name = "keywords")
     private String keywords;
 

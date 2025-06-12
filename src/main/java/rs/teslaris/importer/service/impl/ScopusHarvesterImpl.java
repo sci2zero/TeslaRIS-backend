@@ -3,6 +3,7 @@ package rs.teslaris.importer.service.impl;
 import ai.djl.translate.TranslateException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +51,11 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
 
     @Override
-    public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId, Integer startYear,
-                                                               Integer endYear,
+    public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId, LocalDate startDate,
+                                                               LocalDate endDate,
                                                                HashMap<Integer, Integer> newEntriesCount) {
+        var startYear = startDate.getYear();
+        var endYear = endDate.getYear();
         var personId = userService.getPersonIdForUser(userId);
 
         if (personId == -1) {
@@ -80,9 +83,11 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
     @Override
     public HashMap<Integer, Integer> harvestDocumentsForInstitutionalEmployee(Integer userId,
                                                                               Integer institutionId,
-                                                                              Integer startYear,
-                                                                              Integer endYear,
+                                                                              LocalDate startDate,
+                                                                              LocalDate endDate,
                                                                               HashMap<Integer, Integer> newEntriesCount) {
+        var startYear = startDate.getYear();
+        var endYear = endDate.getYear();
         var organisationUnitId = Objects.nonNull(institutionId) ? institutionId :
             userService.getUserOrganisationUnitId(userId);
         var institution = organisationUnitService.findOne(organisationUnitId);

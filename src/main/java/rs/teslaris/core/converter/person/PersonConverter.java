@@ -60,7 +60,8 @@ public class PersonConverter {
                         person.getPersonalInfo().getContact().getPhoneNumber() : null),
                 person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
-                person.getScopusAuthorId(), person.getPersonalInfo().getUris(),
+                person.getScopusAuthorId(), person.getOpenAlexId(),
+                person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
@@ -207,7 +208,7 @@ public class PersonConverter {
         var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
 
         UserResponseDTO userDTO = null;
-        if (person.getUser() != null) {
+        if (Objects.nonNull(person.getUser())) {
             userDTO = UserConverter.toUserResponseDTO(person.getUser());
         }
 
@@ -226,7 +227,8 @@ public class PersonConverter {
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
-                person.getScopusAuthorId(), person.getPersonalInfo().getUris(),
+                person.getScopusAuthorId(), person.getOpenAlexId(),
+                person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,
             keyword, person.getApproveStatus(), userDTO);

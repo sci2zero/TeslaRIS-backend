@@ -45,6 +45,8 @@ public class PersonalInfoDTO implements PersonIdentifierable {
 
     private String scopusAuthorId;
 
+    private String openAlexId;
+
     private Set<String> uris;
 
     private List<MultilingualContentDTO> displayTitle = new ArrayList<>();

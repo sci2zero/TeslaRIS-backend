@@ -799,6 +799,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setDatabaseId(savedPerson.getId());
         personIndex.setOrcid(savedPerson.getOrcid());
         personIndex.setScopusAuthorId(savedPerson.getScopusAuthorId());
+        personIndex.setOpenAlexId(savedPerson.getOpenAlexId());
     }
 
     private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
@@ -1070,6 +1071,16 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             person::setScopusAuthorId,
             "scopusAuthorIdFormatError",
             "scopusAuthorIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getOpenAlexId(),
+            person.getId(),
+            "^A\\d{10}$",
+            personRepository::existsByOpenAlexId,
+            person::setOpenAlexId,
+            "openAlexIdFormatError",
+            "openAlexIdExistsError"
         );
     }
 

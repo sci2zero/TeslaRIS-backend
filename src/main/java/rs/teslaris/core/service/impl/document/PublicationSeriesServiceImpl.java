@@ -113,6 +113,16 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
             "printIssnFormatError",
             "printIssnExistsError"
         );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            publicationSeriesDTO.getOpenAlexId(),
+            publicationSeries.getId(),
+            "^[SV]\\d{10}$",
+            publicationSeriesRepository::existsByOpenAlexId,
+            publicationSeries::setOpenAlexId,
+            "openAlexIdFormatError",
+            "openAlexIdExistsError"
+        );
     }
 
     @Override

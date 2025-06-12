@@ -86,4 +86,7 @@ public class EventIndex {
 
     @Field(type = FieldType.Integer, name = "classified_by", store = true)
     private List<Integer> classifiedBy = new ArrayList<>();
+
+    @Field(type = FieldType.Keyword, store = true, name = "open_alex_id")
+    private String openAlexId;
 }

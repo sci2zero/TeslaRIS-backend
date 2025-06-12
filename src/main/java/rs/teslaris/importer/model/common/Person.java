@@ -32,4 +32,7 @@ public class Person {
 
     @Field("import_id")
     private String importId;
+
+    @Field("open_alex_id")
+    private String openAlexId;
 }

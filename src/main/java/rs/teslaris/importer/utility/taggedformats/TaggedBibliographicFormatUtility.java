@@ -1,8 +1,5 @@
 package rs.teslaris.importer.utility.taggedformats;
 
-import ai.djl.translate.TranslateException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -12,11 +9,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.nd4j.linalg.api.ndarray.INDArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -30,6 +24,7 @@ import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
+import rs.teslaris.importer.utility.CommonImportUtility;
 
 @Component
 @Slf4j
@@ -103,8 +98,8 @@ public class TaggedBibliographicFormatUtility {
                     .collect(Collectors.joining("|")) + "|" +
                     doc.getDocumentDate(), StandardCharsets.UTF_8)
             .toString());
-        var existingImport = findExistingImport(doc.getIdentifier());
-        var embedding = generateEmbedding(doc);
+        var existingImport = CommonImportUtility.findExistingImport(doc.getIdentifier());
+        var embedding = CommonImportUtility.generateEmbedding(doc);
         if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
             return;
         }
@@ -115,22 +110,6 @@ public class TaggedBibliographicFormatUtility {
 
         count.merge(userId, 1, Integer::sum);
         mongoTemplate.save(doc, "documentImports");
-    }
-
-    public static INDArray generateEmbedding(DocumentImport entry) {
-        try {
-            var json = new ObjectMapper().writeValueAsString(entry);
-            var flattened = DeduplicationUtil.flattenJson(json);
-            return DeduplicationUtil.getEmbedding(flattened);
-        } catch (JsonProcessingException | TranslateException e) {
-            log.error("Error generating embedding: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    public static DocumentImport findExistingImport(String citationKey) {
-        var query = new Query(Criteria.where("identifier").is(citationKey));
-        return mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
     }
 
     public static void handleSettingProceedingsAndEvent(String content, DocumentImport document) {

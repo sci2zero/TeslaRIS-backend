@@ -87,6 +87,9 @@ public class Person extends BaseEntity {
     @Column(name = "scopus_author_id")
     private String scopusAuthorId;
 
+    @Column(name = "open_alex_id")
+    private String openAlexId;
+
     @Column(name = "cris_uns_id")
     private Integer oldId;
 

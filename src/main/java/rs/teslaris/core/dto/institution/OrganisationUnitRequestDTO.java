@@ -36,6 +36,10 @@ public class OrganisationUnitRequestDTO {
 
     private String scopusAfid;
 
+    private String openAlexId;
+
+    private String ror;
+
     private Integer oldId;
 
     private Set<String> uris;
