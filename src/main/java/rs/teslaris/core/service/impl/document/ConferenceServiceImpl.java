@@ -242,6 +242,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             "confIdFormatError",
             "confIdExistsError"
         );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            conferenceDTO.getOpenAlexId(),
+            conference.getId(),
+            "^S\\d{10}$",
+            eventRepository::existsByOpenAlexId,
+            conference::setOpenAlexId,
+            "openAlexIdFormatError",
+            "openAlexIdExistsError"
+        );
     }
 
     @Override
@@ -254,6 +264,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         index.setEventType(EventType.CONFERENCE);
 
         indexEventCommonFields(index, conference);
+        index.setOpenAlexId(conference.getOpenAlexId());
         eventIndexRepository.save(index);
     }
 

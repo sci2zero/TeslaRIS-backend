@@ -13,4 +13,6 @@ public interface PersonIdentifierable {
     void setOrcid(String orcid);
 
     String getScopusAuthorId();
+
+    String getOpenAlexId();
 }

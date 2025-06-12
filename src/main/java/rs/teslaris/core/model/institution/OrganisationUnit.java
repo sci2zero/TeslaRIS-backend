@@ -52,6 +52,12 @@ public class OrganisationUnit extends BaseEntity {
     @Column(name = "scopus_afid")
     private String scopusAfid;
 
+    @Column(name = "open_alex_id")
+    private String openAlexId;
+
+    @Column(name = "ror")
+    private String ror;
+
     @Embedded
     private GeoLocation location;
 

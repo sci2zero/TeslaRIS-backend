@@ -31,6 +31,8 @@ public class OrganisationUnitConverter {
         dto.setLocation(GeoLocationConverter.toDTO(organisationUnit.getLocation()));
         dto.setContact(ContactConverter.toDTO(organisationUnit.getContact()));
         dto.setScopusAfid(organisationUnit.getScopusAfid());
+        dto.setOpenAlexId(organisationUnit.getOpenAlexId());
+        dto.setRor(organisationUnit.getRor());
         dto.setUris(organisationUnit.getUris());
 
         if (Objects.nonNull(organisationUnit.getLogo())) {

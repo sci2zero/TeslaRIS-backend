@@ -38,6 +38,7 @@ public class ConferenceConverter {
         conferenceDTO.setFee(conference.getFee());
         conferenceDTO.setSerialEvent(conference.getSerialEvent());
         conferenceDTO.setConfId(conference.getConfId());
+        conferenceDTO.setOpenAlexId(conference.getOpenAlexId());
 
         conferenceDTO.setUris(conference.getUris());
 

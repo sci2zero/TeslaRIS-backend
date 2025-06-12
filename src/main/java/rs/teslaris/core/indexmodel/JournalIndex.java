@@ -41,6 +41,9 @@ public class JournalIndex {
     @Field(type = FieldType.Keyword, store = true, name = "print_issn")
     private String printISSN;
 
+    @Field(type = FieldType.Keyword, store = true, name = "open_alex_id")
+    private String openAlexId;
+
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
 

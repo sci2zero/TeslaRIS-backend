@@ -219,6 +219,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(bookSeries.getEISSN());
         index.setPrintISSN(bookSeries.getPrintISSN());
+        index.setOpenAlexId(bookSeries.getOpenAlexId());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {

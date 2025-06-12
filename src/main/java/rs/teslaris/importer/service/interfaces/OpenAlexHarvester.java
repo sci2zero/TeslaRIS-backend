@@ -5,7 +5,7 @@ import java.util.HashMap;
 import org.springframework.stereotype.Service;
 
 @Service
-public interface ScopusHarvester {
+public interface OpenAlexHarvester {
 
     HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId, LocalDate startDate,
                                                         LocalDate endDate,

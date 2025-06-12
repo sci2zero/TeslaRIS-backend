@@ -468,6 +468,26 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             "scopusAfidExistsError"
         );
 
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getOpenAlexId(),
+            organisationUnit.getId(),
+            "^I\\d{10}$",
+            organisationUnitRepository::existsByOpenAlexId,
+            organisationUnit::setOpenAlexId,
+            "openAlexIdFormatError",
+            "openAlexIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getRor(),
+            organisationUnit.getId(),
+            "^0[0-9a-hj-km-np-z]{8}$",
+            organisationUnitRepository::existsByROR,
+            organisationUnit::setRor,
+            "rorFormatError",
+            "rorExistsError"
+        );
+
         organisationUnit.setOldId(organisationUnitDTO.getOldId());
 
         var researchAreas = researchAreaService.getResearchAreasByIds(
@@ -586,6 +606,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.setNameOtherSortable(index.getNameOther());
 
         index.setScopusAfid(organisationUnit.getScopusAfid());
+        index.setOpenAlexId(organisationUnit.getOpenAlexId());
+        index.setRor(organisationUnit.getRor());
 
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getKeyword,
             OrganisationUnitIndex::setKeywordsSr,

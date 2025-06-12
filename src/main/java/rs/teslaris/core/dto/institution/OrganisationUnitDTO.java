@@ -30,6 +30,10 @@ public class OrganisationUnitDTO {
 
     private String scopusAfid;
 
+    private String openAlexId;
+
+    private String ror;
+
     private GeoLocationDTO location;
 
     private ContactDTO contact;

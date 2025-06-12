@@ -35,6 +35,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
+import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
 import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
@@ -49,6 +50,8 @@ public class CommonHarvestController {
     private final JwtUtil tokenUtil;
 
     private final ScopusHarvester scopusHarvester;
+
+    private final OpenAlexHarvester openAlexHarvester;
 
     private final BibTexHarvester bibTexHarvester;
 
@@ -95,9 +98,6 @@ public class CommonHarvestController {
     public Integer harvestPublicationsForAuthor(
         @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
         @RequestParam LocalDate dateTo, @RequestParam(required = false) Integer institutionId) {
-        var startYear = dateFrom.getYear();
-        var endYear = dateTo.getYear();
-
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
@@ -106,18 +106,21 @@ public class CommonHarvestController {
 
         // TODO: All other harvesters are called here sequentially
         if (userRole.equals(UserRole.RESEARCHER.name())) {
+//            newDocumentImportCountByUser =
+//                scopusHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo,
+//                    newEntriesCount);
             newDocumentImportCountByUser =
-                scopusHarvester.harvestDocumentsForAuthor(userId, startYear, endYear,
+                openAlexHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo,
                     newEntriesCount);
         } else if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
             newDocumentImportCountByUser =
-                scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, startYear,
-                    endYear,
+                scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
+                    dateTo,
                     newEntriesCount);
         } else if (userRole.equals(UserRole.ADMIN.name())) {
             newDocumentImportCountByUser =
                 scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
-                    startYear, endYear,
+                    dateFrom, dateTo,
                     newEntriesCount);
         } else {
             return 0;

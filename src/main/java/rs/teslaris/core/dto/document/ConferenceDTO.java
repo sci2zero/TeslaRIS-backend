@@ -17,4 +17,6 @@ public class ConferenceDTO extends EventDTO {
     private String fee;
 
     private String confId;
+
+    private String openAlexId;
 }

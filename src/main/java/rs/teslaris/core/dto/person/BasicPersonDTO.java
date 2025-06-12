@@ -53,4 +53,6 @@ public class BasicPersonDTO implements PersonIdentifierable {
     private EmploymentPosition employmentPosition;
 
     private List<MultilingualContentDTO> displayTitle = new ArrayList<>();
+
+    private String openAlexId;
 }

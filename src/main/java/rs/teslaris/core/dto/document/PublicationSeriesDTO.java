@@ -26,6 +26,8 @@ public class PublicationSeriesDTO {
 
     private String printISSN;
 
+    private String openAlexId;
+
     @NotNull(message = "You have to provide contributions.")
     private List<PersonPublicationSeriesContributionDTO> contributions;
 
