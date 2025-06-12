@@ -403,7 +403,7 @@
                 <artifactId>liquibase-maven-plugin</artifactId>
                 <version>4.31.1</version>
                 <configuration>
-                    <changeLogFile>db/changelog/db.changelog-master.yaml</changeLogFile>
+                    <changeLogFile>src/main/resources/db/changelog/db.changelog-master.yaml</changeLogFile>
                     <outputChangeLogFile>src/main/resources/db/changelog/db.changelog-initial.yaml</outputChangeLogFile>
                     <diffChangeLogFile>src/main/resources/db/changelog/changes/change-${currentDate}.yaml</diffChangeLogFile>
                     <driver>org.postgresql.Driver</driver>
