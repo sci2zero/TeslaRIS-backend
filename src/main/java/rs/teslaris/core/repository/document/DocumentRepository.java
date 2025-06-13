@@ -29,6 +29,10 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         "FROM Document d WHERE d.scopusId = :scopusId AND d.id <> :id")
     boolean existsByScopusId(String scopusId, Integer id);
 
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Document d WHERE d.openAlexId = :openAlexId AND d.id <> :id")
+    boolean existsByOpenAlexId(String openAlexId, Integer id);
+
     @Query("SELECT d FROM Document d " +
         "JOIN PersonDocumentContribution dc ON d.id = dc.document.id " +
         "LEFT JOIN FETCH d.contributors " +

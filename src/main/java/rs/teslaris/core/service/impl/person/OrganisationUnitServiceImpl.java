@@ -153,7 +153,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             return null;
         }
 
-        return organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(importId)
+        return organisationUnitIndexRepository.findByScopusAfidOrOpenAlexId(importId)
             .orElse(null);
     }
 
@@ -507,7 +507,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public boolean isIdentifierInUse(String identifier, Integer organisationUnitId) {
-        return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId);
+        return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId) ||
+            organisationUnitRepository.existsByOpenAlexId(identifier, organisationUnitId);
     }
 
     @Override
@@ -585,8 +586,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         var organisationUnit = findOne(organisationUnitId);
 
-        return !Objects.isNull(organisationUnit.getScopusAfid()) &&
-            !organisationUnit.getScopusAfid().isEmpty();
+        return (!Objects.isNull(organisationUnit.getScopusAfid()) &&
+            !organisationUnit.getScopusAfid().isEmpty()) ||
+            (!Objects.isNull(organisationUnit.getOpenAlexId()) &&
+                !organisationUnit.getOpenAlexId().isEmpty());
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,

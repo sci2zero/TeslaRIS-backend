@@ -256,7 +256,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     @Override
     public boolean isIdentifierInUse(String identifier, Integer conferenceId) {
-        return eventRepository.existsByConfId(identifier, conferenceId);
+        return eventRepository.existsByConfId(identifier, conferenceId) ||
+            eventRepository.existsByOpenAlexId(identifier, conferenceId);
     }
 
     private void indexConference(Conference conference, EventIndex index) {

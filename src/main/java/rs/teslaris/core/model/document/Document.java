@@ -32,6 +32,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Table(name = "documents", indexes = {
     @Index(name = "idx_document_doi", columnList = "doi"),
     @Index(name = "idx_document_scopus", columnList = "scopus_id"),
+    @Index(name = "idx_document_open_alex", columnList = "open_alex_id"),
     @Index(name = "idx_document_old_id", columnList = "cris_uns_id")
 })
 @SQLRestriction("deleted=false")
@@ -73,6 +74,9 @@ public abstract class Document extends BaseEntity {
 
     @Column(name = "scopus_id")
     private String scopusId;
+
+    @Column(name = "open_alex_id")
+    private String openAlexId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", referencedColumnName = "id")

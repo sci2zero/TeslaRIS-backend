@@ -762,7 +762,7 @@ public class OrganisationUnitServiceTest {
         var ou = new OrganisationUnitIndex();
         ou.setScopusAfid("12345");
 
-        when(organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(
+        when(organisationUnitIndexRepository.findByScopusAfidOrOpenAlexId(
             "12345")).thenReturn(Optional.of(ou));
 
         // When
@@ -775,7 +775,7 @@ public class OrganisationUnitServiceTest {
     @Test
     public void shouldNotFindOUByImportIdWhenOUDoesNotExist() {
         // Given
-        when(organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(
+        when(organisationUnitIndexRepository.findByScopusAfidOrOpenAlexId(
             "12345")).thenReturn(Optional.empty());
 
         // When
