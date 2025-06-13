@@ -128,7 +128,8 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     @Override
     public boolean isIdentifierInUse(String identifier, Integer publicationSeriesId) {
         return publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId) ||
-            publicationSeriesRepository.existsByPrintISSN(identifier, publicationSeriesId);
+            publicationSeriesRepository.existsByPrintISSN(identifier, publicationSeriesId) ||
+            publicationSeriesRepository.existsByOpenAlexId(identifier, publicationSeriesId);
     }
 
     @Override

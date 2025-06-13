@@ -102,38 +102,40 @@ public class CommonHarvestController {
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
         var newEntriesCount = new HashMap<Integer, Integer>();
-        var newDocumentImportCountByUser = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> newDocumentImportCountByUser = new HashMap<>();
 
-        // TODO: All other harvesters are called here sequentially
         if (userRole.equals(UserRole.RESEARCHER.name())) {
-//            newDocumentImportCountByUser =
-//                scopusHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo,
-//                    newEntriesCount);
-            newDocumentImportCountByUser =
-                openAlexHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo,
-                    newEntriesCount);
+            scopusHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo, newEntriesCount)
+                .forEach((key, value) ->
+                    newDocumentImportCountByUser.merge(key, value, Integer::sum)
+                );
+            openAlexHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo, newEntriesCount)
+                .forEach((key, value) ->
+                    newDocumentImportCountByUser.merge(key, value, Integer::sum)
+                );
         } else if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
-            newDocumentImportCountByUser =
-                scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
-                    dateTo,
-                    newEntriesCount);
+            scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
+                dateTo,
+                newEntriesCount).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
         } else if (userRole.equals(UserRole.ADMIN.name())) {
-            newDocumentImportCountByUser =
-                scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
-                    dateFrom, dateTo,
-                    newEntriesCount);
+            scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
+                dateFrom, dateTo,
+                newEntriesCount).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
         } else {
             return 0;
         }
 
-        var finalDocumentImportCountByUser = newDocumentImportCountByUser;
         newDocumentImportCountByUser.keySet().forEach(key -> {
             if (Objects.equals(key, userId)) {
                 return;
             }
 
             var notificationValues = new HashMap<String, String>();
-            notificationValues.put("newImportCount", finalDocumentImportCountByUser.get(key) + "");
+            notificationValues.put("newImportCount", newDocumentImportCountByUser.get(key) + "");
             notificationService.createNotification(
                 NotificationFactory.contructNewImportsNotification(notificationValues,
                     userService.findOne(key)));

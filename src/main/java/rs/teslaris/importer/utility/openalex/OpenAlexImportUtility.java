@@ -4,56 +4,33 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import rs.teslaris.importer.utility.RestTemplateProvider;
 
 @Component
+@RequiredArgsConstructor
 @Slf4j
 public class OpenAlexImportUtility {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplateProvider restTemplateProvider;
 
-    @Value("${proxy.enabled:false}")
-    private boolean proxyEnabled;
-
-    @Value("${proxy.host:}")
-    private String proxyHost;
-
-    @Value("${proxy.port:0}")
-    private int proxyPort;
-
-    @Value("${proxy.type:HTTP}") // HTTP or SOCKS
-    private String proxyType;
-
-
-    @Autowired
-    public OpenAlexImportUtility(RestTemplateBuilder restTemplateBuilder) {
-        this.restTemplate = restTemplateBuilder
-            .requestFactory(this::createRequestFactory)
-            .build();
-    }
 
     public List<OpenAlexPublication> getPublicationsForAuthor(String openAlexId, String dateFrom,
                                                               String dateTo,
                                                               Boolean institutionLevelHarvest) {
         List<OpenAlexPublication> allResults = new ArrayList<>();
         var baseUrl = "https://api.openalex.org/works?per-page=100" +
-            "&filter=" + (institutionLevelHarvest ? "author.id:" : "institution.id:") + openAlexId +
+            "&filter=" + (institutionLevelHarvest ? "institution.id:" : "author.id:") + openAlexId +
             ",from_publication_date:" + dateFrom +
             ",to_publication_date:" + dateTo;
 
@@ -66,7 +43,8 @@ public class OpenAlexImportUtility {
                 String paginatedUrl =
                     baseUrl + "&cursor=" + URLEncoder.encode(cursor, StandardCharsets.UTF_8);
                 ResponseEntity<String> responseEntity =
-                    this.restTemplate.getForEntity(paginatedUrl, String.class);
+                    restTemplateProvider.provideRestTemplate()
+                        .getForEntity(paginatedUrl, String.class);
 
                 if (responseEntity.getStatusCode() != HttpStatus.OK) {
                     break;
@@ -87,19 +65,6 @@ public class OpenAlexImportUtility {
         }
 
         return allResults;
-    }
-
-    private SimpleClientHttpRequestFactory createRequestFactory() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-
-        if (proxyEnabled && proxyHost != null && proxyPort > 0) {
-            Proxy.Type type =
-                "SOCKS".equalsIgnoreCase(proxyType) ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
-            Proxy proxy = new Proxy(type, new InetSocketAddress(proxyHost, proxyPort));
-            factory.setProxy(proxy);
-        }
-
-        return factory;
     }
 
     public record OpenAlexResults(

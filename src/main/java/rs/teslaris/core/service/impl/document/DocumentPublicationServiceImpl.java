@@ -261,6 +261,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setTitleOtherSortable(index.getTitleOther());
         index.setDoi(document.getDoi());
         index.setScopusId(document.getScopusId());
+        index.setOpenAlexId(document.getOpenAlexId());
         index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
         indexDescription(document, index);
         indexKeywords(document, index);
@@ -486,8 +487,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         IdentifierUtil.setUris(document.getUris(), documentDTO.getUris());
         setCommonIdentifiers(document, documentDTO);
 
-        document.setScopusId(documentDTO.getScopusId());
-
         if (Objects.nonNull(documentDTO.getEventId())) {
             var event = eventService.findOne(documentDTO.getEventId());
 
@@ -520,12 +519,23 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "scopusIdFormatError",
             "scopusIdExistsError"
         );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getOpenAlexId(),
+            document.getId(),
+            "^W\\d{10}$",
+            documentRepository::existsByOpenAlexId,
+            document::setOpenAlexId,
+            "openAlexIdFormatError",
+            "openAlexIdExistsError"
+        );
     }
 
     @Override
     public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
-            documentRepository.existsByScopusId(identifier, documentPublicationId);
+            documentRepository.existsByScopusId(identifier, documentPublicationId) ||
+            documentRepository.existsByOpenAlexId(identifier, documentPublicationId);
     }
 
     @Override

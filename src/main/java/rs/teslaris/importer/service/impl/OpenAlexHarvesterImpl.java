@@ -2,14 +2,21 @@ package rs.teslaris.importer.service.impl;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
+import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.importer.model.converter.harvest.OpenAlexConverter;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeepObjectMerger;
 import rs.teslaris.importer.utility.openalex.OpenAlexImportUtility;
 
 @Service
@@ -20,15 +27,75 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
 
     private final MongoTemplate mongoTemplate;
 
+    private final PersonService personService;
+
+    private final UserService userService;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final InvolvementService involvementService;
+
 
     @Override
     public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId, LocalDate startDate,
                                                                LocalDate endDate,
                                                                HashMap<Integer, Integer> newEntriesCount) {
+        var personId = personService.getPersonIdForUserId(userId);
+        var person = personService.findOne(personId);
 
+        if (Objects.isNull(person.getOpenAlexId()) || person.getOpenAlexId().isBlank()) {
+            return newEntriesCount;
+        }
 
-        openAlexImportUtility.getPublicationsForAuthor("A5070362523", startDate.toString(),
-            endDate.toString(), false).forEach(
+        var employmentInstitutionIds =
+            involvementService.getDirectEmploymentInstitutionIdsForPerson(personId);
+        var adminUserIds = CommonImportUtility.getAdminUserIds();
+
+        var harvestedRecords =
+            openAlexImportUtility.getPublicationsForAuthor(person.getOpenAlexId(),
+                startDate.toString(),
+                endDate.toString(), false);
+
+        processHarvestedRecords(harvestedRecords, userId, adminUserIds, employmentInstitutionIds,
+            newEntriesCount);
+
+        return newEntriesCount;
+    }
+
+    @Override
+    public HashMap<Integer, Integer> harvestDocumentsForInstitutionalEmployee(Integer userId,
+                                                                              Integer institutionId,
+                                                                              LocalDate startDate,
+                                                                              LocalDate endDate,
+                                                                              HashMap<Integer, Integer> newEntriesCount) {
+        var organisationUnitId = Objects.nonNull(institutionId) ? institutionId :
+            userService.getUserOrganisationUnitId(userId);
+        var institution = organisationUnitService.findOne(organisationUnitId);
+        var openAlexId = institution.getOpenAlexId();
+
+        if (Objects.isNull(openAlexId) || openAlexId.isBlank()) {
+            return newEntriesCount;
+        }
+
+        var allInstitutionsThatCanImport =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+        var adminUserIds = CommonImportUtility.getAdminUserIds();
+        var harvestedRecords =
+            openAlexImportUtility.getPublicationsForAuthor(openAlexId, startDate.toString(),
+                endDate.toString(), true);
+
+        processHarvestedRecords(harvestedRecords, userId, adminUserIds,
+            allInstitutionsThatCanImport,
+            newEntriesCount);
+
+        return newEntriesCount;
+    }
+
+    private void processHarvestedRecords(
+        List<OpenAlexImportUtility.OpenAlexPublication> harvestedRecords, Integer userId,
+        Set<Integer> adminUserIds, List<Integer> institutionIds,
+        HashMap<Integer, Integer> newEntriesCount) {
+        harvestedRecords.forEach(
             publication -> OpenAlexConverter.toCommonImportModel(publication)
                 .ifPresent(documentImport -> {
                     var existingImport =
@@ -36,8 +103,12 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                     if (Objects.isNull(existingImport) &&
                         Objects.nonNull(documentImport.getDoi())) {
                         if (Objects.nonNull(
-                            CommonImportUtility.findImportByDOI(documentImport.getDoi()))) {
+                            (existingImport =
+                                CommonImportUtility.findImportByDOI(documentImport.getDoi())))) {
                             // Probably imported before from scopus, which has higher priority (for now)
+                            // perform enrichment, if possible
+                            DeepObjectMerger.deepMerge(existingImport, documentImport);
+                            mongoTemplate.save(existingImport, "documentImports");
                             return;
                         }
                     }
@@ -52,18 +123,10 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                     }
 
                     documentImport.getImportUsersId().add(userId);
+                    documentImport.getImportUsersId().addAll(adminUserIds);
+                    documentImport.getImportInstitutionsId().addAll(institutionIds);
                     mongoTemplate.save(documentImport, "documentImports");
                     newEntriesCount.merge(userId, 1, Integer::sum);
                 }));
-        return newEntriesCount;
-    }
-
-    @Override
-    public HashMap<Integer, Integer> harvestDocumentsForInstitutionalEmployee(Integer userId,
-                                                                              Integer institutionId,
-                                                                              LocalDate startDate,
-                                                                              LocalDate endDate,
-                                                                              HashMap<Integer, Integer> newEntriesCount) {
-        return null;
     }
 }

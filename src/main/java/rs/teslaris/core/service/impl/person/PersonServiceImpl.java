@@ -767,7 +767,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         var person = findOne(personId);
-        return !Objects.isNull(person.getScopusAuthorId()) && !person.getScopusAuthorId().isEmpty();
+        return (!Objects.isNull(person.getScopusAuthorId()) &&
+            !person.getScopusAuthorId().isEmpty()) ||
+            (!Objects.isNull(person.getOpenAlexId()) && !person.getOpenAlexId().isEmpty());
     }
 
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
@@ -949,7 +951,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         if (Objects.isNull(identifier) || identifier.isBlank()) {
             return null;
         }
-        return personIndexRepository.findByScopusAuthorId(identifier).orElse(null);
+        return personIndexRepository.findByScopusAuthorIdOrOpenAlexId(identifier).orElse(null);
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
@@ -1090,7 +1092,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personRepository.existsByScopusAuthorId(identifier, personId) ||
             personRepository.existsByApvnt(identifier, personId) ||
             personRepository.existsByeCrisId(identifier, personId) ||
-            personRepository.existsByeNaukaId(identifier, personId);
+            personRepository.existsByeNaukaId(identifier, personId) ||
+            personRepository.existsByOpenAlexId(identifier, personId);
     }
 
     @Override

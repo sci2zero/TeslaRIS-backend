@@ -131,6 +131,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "scopus_id", store = true)
     private String scopusId;
 
+    @Field(type = FieldType.Keyword, name = "open_alex_id", store = true)
+    private String openAlexId;
+
     @Field(type = FieldType.Integer, name = "organisation_unit_ids", store = true)
     private List<Integer> organisationUnitIds = new ArrayList<>();
 
