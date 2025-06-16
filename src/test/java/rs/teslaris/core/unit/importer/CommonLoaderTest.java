@@ -871,4 +871,117 @@ public class CommonLoaderTest {
         assertNull(result.getId());
         verify(organisationUnitService, never()).createOrganisationUnit(any(), anyBoolean());
     }
+
+    @Test
+    void updateManuallySelectedPersonIdentifiersShouldThrowWhenNoEntityLoaded() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var lastLoadedId = "1234";
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            null);
+
+        // When & Then
+        assertThrows(NotFoundException.class,
+            () -> commonLoader.updateManuallySelectedPersonIdentifiers("imp1", 1, userId,
+                institutionId));
+    }
+
+    @Test
+    void updateManuallySelectedInstitutionIdentifiersShouldThrowWhenNoEntityLoaded() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var lastLoadedId = "1234";
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            null);
+
+        // When & Then
+        assertThrows(NotFoundException.class,
+            () -> commonLoader.updateManuallySelectedInstitutionIdentifiers("imp1", 1, userId,
+                institutionId));
+    }
+
+    @Test
+    void updateManuallySelectedPublicationSeriesIdentifiersShouldThrowWhenNoEntityLoaded() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var lastLoadedId = "1234";
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate))
+            .thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class, "documentImports"))
+            .thenReturn(null);
+
+        // When & Then
+        assertThrows(NotFoundException.class, () -> commonLoader
+            .updateManuallySelectedPublicationSeriesIdentifiers("1234-5678", null, 1, userId,
+                institutionId));
+    }
+
+    @Test
+    void updateManuallySelectedConferenceIdentifiersShouldThrowWhenNoEntityLoaded() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var lastLoadedId = "1234";
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate))
+            .thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class, "documentImports"))
+            .thenReturn(null);
+
+        // When & Then
+        assertThrows(NotFoundException.class, () -> commonLoader
+            .updateManuallySelectedConferenceIdentifiers(1, userId, institutionId));
+    }
 }

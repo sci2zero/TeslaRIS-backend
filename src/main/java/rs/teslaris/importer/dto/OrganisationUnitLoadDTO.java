@@ -20,5 +20,7 @@ public class OrganisationUnitLoadDTO {
 
     private String scopusAfid;
 
+    private String openAlexId;
+
     private String importId;
 }

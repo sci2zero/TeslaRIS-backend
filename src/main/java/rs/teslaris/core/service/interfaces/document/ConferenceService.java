@@ -52,4 +52,8 @@ public interface ConferenceService {
     ConferenceDTO readConferenceByOldId(Integer oldId);
 
     boolean isIdentifierInUse(String identifier, Integer conferenceId);
+
+    void indexConference(Conference conference, Integer conferenceId);
+
+    void save(Conference conference);
 }

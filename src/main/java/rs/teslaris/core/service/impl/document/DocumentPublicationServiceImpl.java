@@ -523,7 +523,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         IdentifierUtil.validateAndSetIdentifier(
             documentDTO.getOpenAlexId(),
             document.getId(),
-            "^W\\d{10}$",
+            "^W\\d{4,10}$",
             documentRepository::existsByOpenAlexId,
             document::setOpenAlexId,
             "openAlexIdFormatError",

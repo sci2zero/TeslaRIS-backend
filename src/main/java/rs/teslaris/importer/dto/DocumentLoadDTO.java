@@ -33,5 +33,7 @@ public class DocumentLoadDTO {
 
     private String scopusId;
 
+    private String openAlexId;
+
     private Integer eventId;
 }
