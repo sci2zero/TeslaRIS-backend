@@ -28,4 +28,19 @@ public interface CommonLoader {
                                        Integer institutionId);
 
     ProceedingsDTO createProceedings(Integer userId, Integer institutionId);
+
+    void updateManuallySelectedPersonIdentifiers(String importId, Integer selectedPersonId,
+                                                 Integer userId, Integer institutionId);
+
+    void updateManuallySelectedInstitutionIdentifiers(String importId,
+                                                      Integer selectedInstitutionId, Integer userId,
+                                                      Integer institutionId);
+
+    void updateManuallySelectedPublicationSeriesIdentifiers(String eIssn, String printIssn,
+                                                            Integer selectedPubSeriesId,
+                                                            Integer userId,
+                                                            Integer institutionId);
+
+    void updateManuallySelectedConferenceIdentifiers(Integer selectedConferenceId, Integer userId,
+                                                     Integer institutionId);
 }

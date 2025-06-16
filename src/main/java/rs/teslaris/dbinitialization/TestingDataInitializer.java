@@ -825,6 +825,7 @@ public class TestingDataInitializer {
             "CRIS UNS", 1)));
         software2.setInternalNumber("654321");
         software2.setApproveStatus(ApproveStatus.APPROVED);
+        software2.setDoi("10.1038/nature.2012.9872");
 
         var softwareContribution3 = new PersonDocumentContribution();
         softwareContribution3.setPerson(person1);

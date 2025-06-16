@@ -53,6 +53,8 @@ public interface JournalService {
 
     CompletableFuture<Void> reindexJournals();
 
+    void indexJournal(Journal journal, Integer journalId);
+
     void indexJournal(Journal journal, JournalIndex index);
 
     void reindexJournalVolatileInformation(Integer journalId);

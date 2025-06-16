@@ -33,6 +33,7 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.PersonName;
@@ -257,7 +258,7 @@ public class CommonLoaderImpl implements CommonLoader {
             }
         }
 
-        throw new NotFoundException("Institution with given AFID is not loaded.");
+        throw new NotFoundException("Institution with given import ID is not loaded.");
     }
 
     @Override
@@ -316,7 +317,7 @@ public class CommonLoaderImpl implements CommonLoader {
             }
         }
 
-        throw new NotFoundException("Person with given ScopusID is not loaded.");
+        throw new NotFoundException("Person with given import ID is not loaded.");
     }
 
     public void updatePersonInvolvements(DocumentImport currentlyLoadedEntity) {
@@ -422,6 +423,178 @@ public class CommonLoaderImpl implements CommonLoader {
         return createProceedings(currentlyLoadedEntity, createdConference.getId());
     }
 
+    @Override
+    public void updateManuallySelectedPersonIdentifiers(String importId, Integer selectedPersonId,
+                                                        Integer userId, Integer institutionId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
+
+        if (Objects.isNull(currentlyLoadedEntity)) {
+            throw new NotFoundException("No entity is being loaded at the moment.");
+        }
+
+        for (var contribution : currentlyLoadedEntity.getContributions()) {
+            var person = contribution.getPerson();
+            if (importId.equals(person.getImportId())) {
+                var savedPerson = personService.findOne(selectedPersonId);
+
+                copyMissingPersonIdentifiers(person, savedPerson);
+                personService.save(savedPerson);
+                personService.indexPerson(savedPerson, savedPerson.getId());
+                return;
+            }
+        }
+
+        throw new NotFoundException(
+            "Person with import ID " + importId + " not found among contributions.");
+    }
+
+    @Override
+    public void updateManuallySelectedInstitutionIdentifiers(String importId,
+                                                             Integer selectedInstitutionId,
+                                                             Integer userId,
+                                                             Integer institutionId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
+
+        if (Objects.isNull(currentlyLoadedEntity)) {
+            throw new NotFoundException("No entity is being loaded at the moment.");
+        }
+
+        for (var contribution : currentlyLoadedEntity.getContributions()) {
+            for (var institution : contribution.getInstitutions()) {
+                if (institution.getImportId().equals(importId)) {
+                    var savedInstitution = organisationUnitService.findOne(selectedInstitutionId);
+
+                    copyMissingInstitutionIdentifiers(institution, savedInstitution);
+                    organisationUnitService.save(savedInstitution);
+                    organisationUnitService.indexOrganisationUnit(savedInstitution,
+                        savedInstitution.getId());
+
+                    return;
+                }
+            }
+        }
+
+        throw new NotFoundException(
+            "Institution with import ID " + importId +
+                " not found among contribution affiliations.");
+    }
+
+    @Override
+    public void updateManuallySelectedPublicationSeriesIdentifiers(String eIssn, String printIssn,
+                                                                   Integer selectedPubSeriesId,
+                                                                   Integer userId,
+                                                                   Integer institutionId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
+
+        if (Objects.isNull(currentlyLoadedEntity)) {
+            throw new NotFoundException("No entity is being loaded at the moment.");
+        }
+
+        if ((Objects.nonNull(currentlyLoadedEntity.getEIssn()) &&
+            currentlyLoadedEntity.getEIssn().equals(eIssn)) ||
+            (Objects.nonNull(currentlyLoadedEntity.getPrintIssn()) &&
+                currentlyLoadedEntity.getPrintIssn().equals(printIssn)) ||
+            (Objects.isNull(currentlyLoadedEntity.getEIssn()) &&
+                Objects.isNull(currentlyLoadedEntity.getPrintIssn()) &&
+                eIssn.equals("NONE") && printIssn.equals("NONE"))) {
+
+            var journal = journalService.findJournalById(selectedPubSeriesId);
+
+            copyMissingPubSeriesIdentifiers(currentlyLoadedEntity, journal);
+            publicationSeriesService.save(journal);
+            journalService.indexJournal(journal, journal.getId());
+
+            return;
+        }
+
+        throw new NotFoundException("Journal with given ISSN is not loaded.");
+    }
+
+    @Override
+    public void updateManuallySelectedConferenceIdentifiers(Integer selectedConferenceId,
+                                                            Integer userId, Integer institutionId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
+
+        if (Objects.isNull(currentlyLoadedEntity)) {
+            throw new NotFoundException("No entity is being loaded at the moment.");
+        }
+
+        var conference = conferenceService.findConferenceById(selectedConferenceId);
+
+        if (Objects.nonNull(currentlyLoadedEntity.getEvent())) {
+            copyMissingEventIdentifiers(currentlyLoadedEntity.getEvent(), conference);
+            conferenceService.save(conference);
+            conferenceService.indexConference(conference, conference.getId());
+        }
+    }
+
+    private void copyMissingPersonIdentifiers(Person from,
+                                              rs.teslaris.core.model.person.Person to) {
+        if (Objects.nonNull(from.getOpenAlexId()) &&
+            (Objects.isNull(to.getOpenAlexId()) || to.getOpenAlexId().isBlank())) {
+            to.setOpenAlexId(from.getOpenAlexId());
+        }
+
+        if (Objects.nonNull(from.getOrcid()) &&
+            (Objects.isNull(to.getOrcid()) || to.getOrcid().isBlank())) {
+            to.setOrcid(from.getOrcid());
+        }
+
+        if (Objects.nonNull(from.getScopusAuthorId()) &&
+            (Objects.isNull(to.getScopusAuthorId()) || to.getScopusAuthorId().isBlank())) {
+            to.setScopusAuthorId(from.getScopusAuthorId());
+        }
+    }
+
+    private void copyMissingInstitutionIdentifiers(OrganisationUnit from,
+                                                   rs.teslaris.core.model.institution.OrganisationUnit to) {
+        if (Objects.nonNull(from.getOpenAlexId()) &&
+            (Objects.isNull(to.getOpenAlexId()) || to.getOpenAlexId().isBlank())) {
+            to.setOpenAlexId(from.getOpenAlexId());
+        }
+
+        if (Objects.nonNull(from.getScopusAfid()) &&
+            (Objects.isNull(to.getScopusAfid()) || to.getScopusAfid().isBlank())) {
+            to.setScopusAfid(from.getScopusAfid());
+        }
+
+        if (Objects.nonNull(from.getRor()) &&
+            (Objects.isNull(to.getRor()) || to.getRor().isBlank())) {
+            to.setRor(from.getRor());
+        }
+    }
+
+    private void copyMissingPubSeriesIdentifiers(DocumentImport from,
+                                                 PublicationSeries to) {
+        if (Objects.nonNull(from.getJournalOpenAlexId()) &&
+            (Objects.isNull(to.getOpenAlexId()) || to.getOpenAlexId().isBlank())) {
+            to.setOpenAlexId(from.getJournalOpenAlexId());
+        }
+
+        if (Objects.nonNull(from.getEIssn()) &&
+            (Objects.isNull(to.getEISSN()) || to.getEISSN().isBlank())) {
+            to.setEISSN(from.getEIssn());
+        }
+
+        if (Objects.nonNull(from.getPrintIssn()) &&
+            (Objects.isNull(to.getPrintISSN()) || to.getPrintISSN().isBlank())) {
+            to.setPrintISSN(from.getPrintIssn());
+        }
+    }
+
+    private void copyMissingEventIdentifiers(Event from,
+                                             Conference to) {
+        if (Objects.nonNull(from.getOpenAlexId()) &&
+            (Objects.isNull(to.getOpenAlexId()) || to.getOpenAlexId().isBlank())) {
+            to.setOpenAlexId(from.getOpenAlexId());
+        }
+
+        if (Objects.nonNull(from.getConfId()) &&
+            (Objects.isNull(to.getConfId()) || to.getConfId().isBlank())) {
+            to.setConfId(from.getConfId());
+        }
+    }
+
     private DocumentImport retrieveCurrentlyLoadedEntity(Integer userId, Integer institutionId) {
         Query query = new Query();
         if (Objects.nonNull(institutionId)) {
@@ -458,6 +631,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
         journalDTO.setEissn(documentImport.getEIssn());
         journalDTO.setPrintISSN(documentImport.getPrintIssn());
+        journalDTO.setOpenAlexId(documentImport.getJournalOpenAlexId());
 
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
@@ -540,6 +714,7 @@ public class CommonLoaderImpl implements CommonLoader {
         conferenceDTO.setSerialEvent(conference.getSerialEvent());
         conferenceDTO.setDateFrom(conference.getDateFrom());
         conferenceDTO.setDateTo(conference.getDateTo());
+        conferenceDTO.setOpenAlexId(conference.getOpenAlexId());
 
         synchronized (eventLock) {
             potentialMatch = searchPotentialMatches(conference);
@@ -582,6 +757,7 @@ public class CommonLoaderImpl implements CommonLoader {
             Objects.nonNull(institution.getNameAbbreviation()) ?
                 institution.getNameAbbreviation() : "");
         organisationUnitDTO.setScopusAfid(institution.getScopusAfid());
+        organisationUnitDTO.setOpenAlexId(institution.getOpenAlexId());
         organisationUnitDTO.setKeyword(new ArrayList<>());
         organisationUnitDTO.setResearchAreasId(new ArrayList<>());
         organisationUnitDTO.setContact(new ContactDTO());
@@ -691,6 +867,7 @@ public class CommonLoaderImpl implements CommonLoader {
         basicPersonDTO.setENaukaId(person.getENaukaId());
         basicPersonDTO.setOrcid(person.getOrcid());
         basicPersonDTO.setApvnt(person.getApvnt());
+        basicPersonDTO.setOpenAlexId(person.getOpenAlexId());
         return basicPersonDTO;
     }
 

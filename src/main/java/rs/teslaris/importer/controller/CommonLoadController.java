@@ -98,14 +98,14 @@ public class CommonLoadController {
             getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
-    @PostMapping("/person/{scopusAuthorId}")
+    @PostMapping("/person/{importId}")
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
     @Idempotent
     public PersonResponseDTO createPerson(
         @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
         @RequestHeader("Authorization") String bearerToken,
-        @PathVariable String scopusAuthorId) {
-        return loader.createPerson(scopusAuthorId, tokenUtil.extractUserIdFromToken(bearerToken),
+        @PathVariable String importId) {
+        return loader.createPerson(importId, tokenUtil.extractUserIdFromToken(bearerToken),
             getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
@@ -129,6 +129,57 @@ public class CommonLoadController {
         @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
         @RequestHeader("Authorization") String bearerToken) {
         return loader.createProceedings(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
+    }
+
+    @PatchMapping("/person/{importId}/{selectedPersonId}")
+    @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
+    @Idempotent
+    public void enrichPersonIdentifiers(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken, @PathVariable String importId,
+        @PathVariable Integer selectedPersonId) {
+        loader.updateManuallySelectedPersonIdentifiers(importId, selectedPersonId,
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
+    }
+
+    @PatchMapping("/institution/{importId}/{selectedInstitutionId}")
+    @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
+    @Idempotent
+    public void enrichInstitutionIdentifiers(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken, @PathVariable String importId,
+        @PathVariable Integer selectedInstitutionId) {
+        loader.updateManuallySelectedInstitutionIdentifiers(importId, selectedInstitutionId,
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
+    }
+
+    @PatchMapping("/publication-series/{selectedPubSeriesId}")
+    @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
+    @Idempotent
+    public void enrichPubSeriesIdentifiers(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken,
+        @RequestParam String eIssn,
+        @RequestParam String printIssn,
+        @PathVariable Integer selectedConferenceId) {
+        loader.updateManuallySelectedPublicationSeriesIdentifiers(eIssn, printIssn,
+            selectedConferenceId,
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
+    }
+
+    @PatchMapping("/conference/{selectedConferenceId}")
+    @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
+    @Idempotent
+    public void enrichConferenceIdentifiers(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable Integer selectedConferenceId) {
+        loader.updateManuallySelectedConferenceIdentifiers(selectedConferenceId,
             tokenUtil.extractUserIdFromToken(bearerToken),
             getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }

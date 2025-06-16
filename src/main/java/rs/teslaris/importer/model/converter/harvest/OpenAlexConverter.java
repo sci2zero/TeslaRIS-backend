@@ -73,6 +73,7 @@ public class OpenAlexConverter {
 
             var person = new Person();
             person.setImportId(authorship.author().id().replace("https://openalex.org/", ""));
+            person.setOpenAlexId(person.getImportId());
 
             if (Objects.nonNull(authorship.author().orcid())) {
                 person.setOrcid(authorship.author().orcid().replace("https://orcid.org/", ""));

@@ -246,7 +246,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         IdentifierUtil.validateAndSetIdentifier(
             conferenceDTO.getOpenAlexId(),
             conference.getId(),
-            "^S\\d{10}$",
+            "^S\\d{4,10}$",
             eventRepository::existsByOpenAlexId,
             conference::setOpenAlexId,
             "openAlexIdFormatError",
@@ -258,6 +258,18 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public boolean isIdentifierInUse(String identifier, Integer conferenceId) {
         return eventRepository.existsByConfId(identifier, conferenceId) ||
             eventRepository.existsByOpenAlexId(identifier, conferenceId);
+    }
+
+    @Override
+    public void indexConference(Conference conference, Integer conferenceId) {
+        eventIndexRepository.findByDatabaseId(conferenceId).ifPresent(index -> {
+            indexConference(conference, index);
+        });
+    }
+
+    @Override
+    public void save(Conference conference) {
+        conferenceRepository.save(conference);
     }
 
     private void indexConference(Conference conference, EventIndex index) {

@@ -471,7 +471,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         IdentifierUtil.validateAndSetIdentifier(
             organisationUnitDTO.getOpenAlexId(),
             organisationUnit.getId(),
-            "^I\\d{10}$",
+            "^I\\d{4,10}$",
             organisationUnitRepository::existsByOpenAlexId,
             organisationUnit::setOpenAlexId,
             "openAlexIdFormatError",
@@ -590,6 +590,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             !organisationUnit.getScopusAfid().isEmpty()) ||
             (!Objects.isNull(organisationUnit.getOpenAlexId()) &&
                 !organisationUnit.getOpenAlexId().isEmpty());
+    }
+
+    @Override
+    public void indexOrganisationUnit(OrganisationUnit organisationUnit,
+                                      Integer organisationUnitId) {
+        organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(organisationUnitId)
+            .ifPresent(index -> {
+                indexOrganisationUnit(organisationUnit, index);
+            });
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,

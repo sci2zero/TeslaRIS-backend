@@ -239,6 +239,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public void indexJournal(Journal journal, Integer journalId) {
+        journalIndexRepository.findJournalIndexByDatabaseId(journalId).ifPresent(index -> {
+            indexJournal(journal, index);
+        });
+    }
+
+    @Override
     public void indexJournal(Journal journal, JournalIndex index) {
         index.setDatabaseId(journal.getId());
 

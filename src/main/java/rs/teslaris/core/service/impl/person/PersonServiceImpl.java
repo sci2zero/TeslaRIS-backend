@@ -1078,7 +1078,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         IdentifierUtil.validateAndSetIdentifier(
             personDTO.getOpenAlexId(),
             person.getId(),
-            "^A\\d{10}$",
+            "^A\\d{4,10}$",
             personRepository::existsByOpenAlexId,
             person::setOpenAlexId,
             "openAlexIdFormatError",
