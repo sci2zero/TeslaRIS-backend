@@ -35,6 +35,8 @@ public interface JournalService {
 
     JournalIndex readJournalByIssn(String eIssn, String printIssn);
 
+    JournalIndex readJournalByIdentifiers(String eIssn, String printIssn, String openAlexId);
+
     Journal findJournalById(Integer journalId);
 
     Optional<Journal> tryToFindById(Integer journalId);

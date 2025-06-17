@@ -36,7 +36,9 @@ public class ThesisConverter extends DocumentPublicationConverter {
     private static Integer daysOnPublicReview;
 
     private static String repositoryName;
+
     private static String baseFrontendUrl;
+
     private static List<String> clientLanguages = new ArrayList<>();
 
 

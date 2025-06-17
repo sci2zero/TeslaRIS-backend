@@ -69,6 +69,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/user/register-researcher").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/user/confirm-email-change").permitAll()
 
                 // PERSON
                 .requestMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
@@ -96,6 +97,7 @@ public class SecurityConfiguration {
 
                 // LANGUAGE
                 .requestMatchers(HttpMethod.GET, "/api/language").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/language/ui-languages").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/language/tags").permitAll()
 
                 // DOCUMENT

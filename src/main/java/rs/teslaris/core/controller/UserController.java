@@ -30,6 +30,7 @@ import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ConfirmEmailUpdateRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
@@ -259,6 +260,11 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logoutUser(@RequestHeader("Authorization") String bearerToken) {
         userService.logout(tokenUtil.extractJtiFromToken(bearerToken));
+    }
+
+    @PatchMapping("/confirm-email-change")
+    public boolean confirmEmailChange(@RequestBody ConfirmEmailUpdateRequestDTO request) {
+        return userService.confirmEmailChange(request.getConfirmationToken());
     }
 
     private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {

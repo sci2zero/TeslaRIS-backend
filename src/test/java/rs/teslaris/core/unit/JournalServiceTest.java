@@ -371,6 +371,35 @@ public class JournalServiceTest {
     }
 
     @Test
+    public void shouldFindJournalByIdentifiers() {
+        // Given
+        var journalIndex = new JournalIndex();
+        journalIndex.setOpenAlexId("S1234");
+
+        when(journalIndexRepository.findByAnyIdentifiers(
+            "12345", "6789", "S1234")).thenReturn(Optional.of(journalIndex));
+
+        // When
+        var foundJournal = journalService.readJournalByIdentifiers("12345", "6789", "S1234");
+
+        // Then
+        assertEquals(journalIndex.getOpenAlexId(), foundJournal.getOpenAlexId());
+    }
+
+    @Test
+    public void shouldNotFindJournalByIdentifiersWhenJournalDoesNotExist() {
+        // Given
+        when(journalIndexRepository.findByAnyIdentifiers(
+            "12345", "6789", "S1234")).thenReturn(Optional.empty());
+
+        // When
+        var foundJournal = journalService.readJournalByIdentifiers("12345", "6789", "S1234");
+
+        // Then
+        assertNull(foundJournal);
+    }
+
+    @Test
     void shouldDeleteJournalAndRelatedEntitiesWhenJournalIndexIsPresent() {
         // Given
         var testJournalId = 1;

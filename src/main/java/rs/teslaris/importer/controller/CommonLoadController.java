@@ -165,10 +165,9 @@ public class CommonLoadController {
         @RequestHeader("Authorization") String bearerToken,
         @RequestParam String eIssn,
         @RequestParam String printIssn,
-        @PathVariable Integer selectedConferenceId) {
+        @PathVariable Integer selectedPubSeriesId) {
         loader.updateManuallySelectedPublicationSeriesIdentifiers(eIssn, printIssn,
-            selectedConferenceId,
-            tokenUtil.extractUserIdFromToken(bearerToken),
+            selectedPubSeriesId, tokenUtil.extractUserIdFromToken(bearerToken),
             getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
