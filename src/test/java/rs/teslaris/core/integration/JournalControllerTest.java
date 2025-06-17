@@ -149,4 +149,13 @@ public class JournalControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
     }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadJournalByIdentifiers() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/journal/identifier?eIssn=1234-1234&printIssn=4321-4321&openAlexId=S1234")
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
 }

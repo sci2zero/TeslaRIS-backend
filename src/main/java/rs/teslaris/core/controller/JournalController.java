@@ -72,9 +72,10 @@ public class JournalController {
         return journalService.readJournal(journalId);
     }
 
-    @GetMapping("/issn")
-    public JournalIndex readJournal(@RequestParam String eIssn, @RequestParam String printIssn) {
-        return journalService.readJournalByIssn(eIssn, printIssn);
+    @GetMapping("/identifier")
+    public JournalIndex readJournal(@RequestParam String eIssn, @RequestParam String printIssn,
+                                    @RequestParam String openAlexId) {
+        return journalService.readJournalByIdentifiers(eIssn, printIssn, openAlexId);
     }
 
     @PostMapping

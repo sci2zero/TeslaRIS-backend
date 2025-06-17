@@ -20,14 +20,17 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user_password_reset_requests", indexes = {
-    @Index(name = "idx_password_reset_token", columnList = "password_reset_token")
+@Table(name = "user_email_update_requests", indexes = {
+    @Index(name = "idx_email_update_token", columnList = "email_update_token")
 })
 @SQLRestriction("deleted=false")
-public class PasswordResetToken extends BaseEntity {
+public class EmailUpdateRequest extends BaseEntity {
 
-    @Column(name = "password_reset_token")
-    private String passwordResetToken;
+    @Column(name = "email_update_token")
+    private String emailUpdateToken;
+
+    @Column(name = "new_email_address")
+    private String newEmailAddress;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
     @JoinColumn(name = "user_id")

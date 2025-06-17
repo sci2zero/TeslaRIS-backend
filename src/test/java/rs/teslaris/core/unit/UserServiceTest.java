@@ -63,6 +63,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.user.EmailUpdateRequest;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -71,6 +72,7 @@ import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
@@ -82,6 +84,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
@@ -143,6 +146,9 @@ public class UserServiceTest {
     @Mock
     private CommissionRepository commissionRepository;
 
+    @Mock
+    private EmailUpdateRequestRepository emailUpdateRequestRepository;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -184,12 +190,8 @@ public class UserServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        // when
-        userService.deactivateUser(userId);
-
-        // then
-        assertFalse(user.getLocked());
-        verify(userRepository, never()).save(user);
+        // when & then
+        assertThrows(CantEditException.class, () -> userService.deactivateUser(userId));
     }
 
     @Test
@@ -584,6 +586,7 @@ public class UserServiceTest {
         user.setOrganisationUnit(orgUnit);
 
         var preferredLanguage = new Language();
+        preferredLanguage.setLanguageCode("SR");
         var organisationalUnit = new OrganisationUnit();
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
@@ -599,7 +602,7 @@ public class UserServiceTest {
         userService.updateUser(requestDTO, 1, "fingerprint");
 
         // then
-        assertEquals("test@example.com", user.getEmail());
+        assertEquals("oldemail@example.com", user.getEmail());
         assertEquals("Jane", user.getFirstname());
         assertEquals("Doe", user.getLastName());
         assertFalse(user.getCanTakeRole());
@@ -640,6 +643,7 @@ public class UserServiceTest {
         user.setOrganisationUnit(orgUnit);
 
         var preferredLanguage = new Language();
+        preferredLanguage.setLanguageCode("SR");
         var organisationalUnit = new OrganisationUnit();
         organisationalUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
@@ -658,7 +662,7 @@ public class UserServiceTest {
         userService.updateUser(requestDTO, 1, "fingerprint");
 
         // then
-        assertEquals("test@example.com", user.getEmail());
+        assertEquals("oldemail@example.com", user.getEmail());
         assertEquals("JOHN", user.getFirstname());
         assertEquals("SMITH", user.getLastName());
         assertFalse(user.getCanTakeRole());
@@ -693,7 +697,9 @@ public class UserServiceTest {
         var user = new User();
         user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setPassword("currentPassword");
+        user.setEmail("old.email@example.com");
         var preferredLanguage = new Language();
+        preferredLanguage.setLanguageCode("SR");
         requestDTO.setPreferredUILanguageId(1);
         var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
@@ -1181,5 +1187,46 @@ public class UserServiceTest {
         // Then
         verify(tokenUtil).revokeToken(jti);
         verifyNoMoreInteractions(tokenUtil);
+    }
+
+    @Test
+    public void shouldConfirmEmailChangeWhenTokenIsValid() {
+        // given
+        var token = "valid-token";
+        var user = new User();
+        user.setEmail("old@example.com");
+
+        var emailUpdateRequest = new EmailUpdateRequest();
+        emailUpdateRequest.setEmailUpdateToken(token);
+        emailUpdateRequest.setNewEmailAddress("new@example.com");
+        emailUpdateRequest.setUser(user);
+
+        when(emailUpdateRequestRepository.findByEmailUpdateToken(token))
+            .thenReturn(Optional.of(emailUpdateRequest));
+
+        // when
+        boolean result = userService.confirmEmailChange(token);
+
+        // then
+        assertTrue(result);
+        assertEquals("new@example.com", user.getEmail());
+        verify(userRepository).save(user);
+        verify(emailUpdateRequestRepository).delete(emailUpdateRequest);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenTokenIsInvalid() {
+        // given
+        var token = "invalid-token";
+        when(emailUpdateRequestRepository.findByEmailUpdateToken(token))
+            .thenReturn(Optional.empty());
+
+        // when
+        boolean result = userService.confirmEmailChange(token);
+
+        // then
+        assertFalse(result);
+        verify(userRepository, never()).save(any());
+        verify(emailUpdateRequestRepository, never()).delete(any());
     }
 }

@@ -117,7 +117,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         IdentifierUtil.validateAndSetIdentifier(
             publicationSeriesDTO.getOpenAlexId(),
             publicationSeries.getId(),
-            "^[SV]\\d{9,10}$",
+            "^[SV]\\d{4,10}$",
             publicationSeriesRepository::existsByOpenAlexId,
             publicationSeries::setOpenAlexId,
             "openAlexIdFormatError",

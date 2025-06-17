@@ -28,4 +28,13 @@ public class LanguageControllerTest extends BaseTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))));
     }
+
+    @Test
+    public void testGetUISupportedLanguages() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("http://localhost:8081/api/language/ui-languages")
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))));
+    }
 }

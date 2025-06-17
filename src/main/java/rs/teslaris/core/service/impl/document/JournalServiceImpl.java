@@ -114,6 +114,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public JournalIndex readJournalByIdentifiers(String eIssn, String printIssn,
+                                                 String openAlexId) {
+        return journalIndexRepository.findByAnyIdentifiers(eIssn, printIssn, openAlexId)
+            .orElse(null);
+    }
+
+    @Override
     public Journal findJournalById(Integer journalId) {
         return journalJPAService.findOne(journalId);
     }

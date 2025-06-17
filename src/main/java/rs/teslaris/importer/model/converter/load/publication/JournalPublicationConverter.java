@@ -72,6 +72,7 @@ public class JournalPublicationConverter extends DocumentConverter
         dto.setEndPage(document.getEndPage());
         dto.setJournalEIssn(document.getEIssn());
         dto.setJournalPrintIssn(document.getPrintIssn());
+        dto.setJournalOpenAlexId(document.getJournalOpenAlexId());
 
         return dto;
     }

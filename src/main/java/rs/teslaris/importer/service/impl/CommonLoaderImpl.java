@@ -825,8 +825,8 @@ public class CommonLoaderImpl implements CommonLoader {
     @Nullable
     private PublicationSeriesDTO searchPotentialMatches(DocumentImport documentImport) {
         var potentialMatch =
-            journalService.readJournalByIssn(documentImport.getEIssn(),
-                documentImport.getPrintIssn());
+            journalService.readJournalByIdentifiers(documentImport.getEIssn(),
+                documentImport.getPrintIssn(), documentImport.getJournalOpenAlexId());
         if (Objects.nonNull(potentialMatch)) {
             var existingRecordResponse = new PublicationSeriesDTO();
             existingRecordResponse.setTitle(
