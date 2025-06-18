@@ -1,7 +1,7 @@
 package rs.teslaris.assessment.converter;
 
-import rs.teslaris.assessment.dto.IndicatorResponseDTO;
-import rs.teslaris.assessment.model.Indicator;
+import rs.teslaris.assessment.dto.indicator.IndicatorResponseDTO;
+import rs.teslaris.assessment.model.indicator.Indicator;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 
 public class IndicatorConverter {

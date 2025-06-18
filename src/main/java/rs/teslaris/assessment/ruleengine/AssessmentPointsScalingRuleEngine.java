@@ -6,8 +6,8 @@ import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import rs.teslaris.assessment.model.DocumentIndicator;
-import rs.teslaris.assessment.model.EntityIndicator;
+import rs.teslaris.assessment.model.indicator.DocumentIndicator;
+import rs.teslaris.assessment.model.indicator.EntityIndicator;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 

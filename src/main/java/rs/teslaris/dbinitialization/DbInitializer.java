@@ -177,6 +177,7 @@ public class DbInitializer implements ApplicationRunner {
         var generateNewEmployeePassword = new Privilege("GENERATE_NEW_EMPLOYEE_PASSWORD");
         var saveLoadingConfiguration = new Privilege("SAVE_LOADING_CONFIG");
         var performLoading = new Privilege("PERFORM_IMPORT_AND_LOADING");
+        var editExternalIndicatorConfiguration = new Privilege("EDIT_EXT_INDICATOR_CONFIGURATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -206,7 +207,7 @@ public class DbInitializer implements ApplicationRunner {
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 generateThesisLibraryBackup, generateOutputBackup, performHealthCheck,
                 generateNewEmployeePassword, createConference, createPublisher,
-                saveLoadingConfiguration, performLoading));
+                saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -235,7 +236,7 @@ public class DbInitializer implements ApplicationRunner {
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
-                saveLoadingConfiguration, performLoading
+                saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -251,7 +252,8 @@ public class DbInitializer implements ApplicationRunner {
                     updateProfile, allowAccountTakeover, manageThesisAttachments,
                     putThesisOnPublicReview, createUserBasic, editPersonalInfo, createJournal,
                     editDocumentFiles, editEmploymentInstitution, generateOutputBackup,
-                    createConference, saveLoadingConfiguration, performLoading)));
+                    createConference, saveLoadingConfiguration, performLoading,
+                    editExternalIndicatorConfiguration)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

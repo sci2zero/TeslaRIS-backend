@@ -1,7 +1,7 @@
 package rs.teslaris.assessment.converter;
 
-import rs.teslaris.assessment.dto.AssessmentClassificationDTO;
-import rs.teslaris.assessment.model.AssessmentClassification;
+import rs.teslaris.assessment.dto.classification.AssessmentClassificationDTO;
+import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 
 public class AssessmentClassificationConverter {
