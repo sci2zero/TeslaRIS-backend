@@ -12,7 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.assessment.service.impl.statistics.StatisticsServiceImpl;
-import rs.teslaris.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.core.indexmodel.statistics.StatisticsIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.indexrepository.statistics.StatisticsIndexRepository;

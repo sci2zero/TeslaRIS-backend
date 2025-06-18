@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.annotation.EntityIndicatorEditCheck;
-import rs.teslaris.assessment.service.interfaces.EntityIndicatorService;
+import rs.teslaris.assessment.service.interfaces.indicator.EntityIndicatorService;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DocumentFileDTO;

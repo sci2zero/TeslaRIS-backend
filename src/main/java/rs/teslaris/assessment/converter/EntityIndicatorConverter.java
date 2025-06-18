@@ -1,10 +1,10 @@
 package rs.teslaris.assessment.converter;
 
 import java.util.stream.Collectors;
-import rs.teslaris.assessment.dto.EntityIndicatorResponseDTO;
-import rs.teslaris.assessment.dto.PublicationSeriesIndicatorResponseDTO;
-import rs.teslaris.assessment.model.EntityIndicator;
-import rs.teslaris.assessment.model.PublicationSeriesIndicator;
+import rs.teslaris.assessment.dto.indicator.EntityIndicatorResponseDTO;
+import rs.teslaris.assessment.dto.indicator.PublicationSeriesIndicatorResponseDTO;
+import rs.teslaris.assessment.model.indicator.EntityIndicator;
+import rs.teslaris.assessment.model.indicator.PublicationSeriesIndicator;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 
 public class EntityIndicatorConverter {

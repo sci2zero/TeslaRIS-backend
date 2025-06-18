@@ -207,6 +207,8 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/assessment/research-area").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/assessment/commission").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/external-indicator-configuration/document/{documentId}").permitAll()
 
                 // STATISTICS
                 .requestMatchers(HttpMethod.GET, "/api/statistics/{statisticsType}").permitAll()
