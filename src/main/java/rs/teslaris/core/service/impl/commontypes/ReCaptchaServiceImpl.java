@@ -11,7 +11,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.commontypes.ReCaptchaService;
-import rs.teslaris.importer.utility.RestTemplateProvider;
+import rs.teslaris.core.util.RestTemplateProvider;
 
 @Service
 @RequiredArgsConstructor

@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
-import rs.teslaris.importer.utility.RestTemplateProvider;
+import rs.teslaris.core.util.RestTemplateProvider;
 
 @Component
 @RequiredArgsConstructor
@@ -30,7 +30,9 @@ public class OpenAlexImportUtility {
                                                               Boolean institutionLevelHarvest) {
         List<OpenAlexPublication> allResults = new ArrayList<>();
         var baseUrl = "https://api.openalex.org/works?per-page=100" +
-            "&filter=" + (institutionLevelHarvest ? "institution.id:" : "author.id:") + openAlexId +
+            "&filter=" +
+            (institutionLevelHarvest ? "authorships.institutions.lineage:" : "author.id:") +
+            openAlexId +
             ",from_publication_date:" + dateFrom +
             ",to_publication_date:" + dateTo;
 

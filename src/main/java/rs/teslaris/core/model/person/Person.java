@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -107,6 +108,9 @@ public class Person extends BaseEntity {
 
     @ElementCollection(fetch = FetchType.LAZY)
     private Set<String> accountingIds = new HashSet<>();
+
+    @Column(name = "date_of_last_indicator_harvest")
+    private LocalDate dateOfLastIndicatorHarvest;
 
 
     public void addInvolvement(Involvement involvement) {

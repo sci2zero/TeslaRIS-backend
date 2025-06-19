@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -578,6 +579,23 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             .limit(30)
             .map(entry -> new Pair<>(entry.getKey(), entry.getValue()))
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId) {
+        if (Objects.isNull(doi) || doi.isBlank()) {
+            doi = "NOT_PRESENT";
+        } else {
+            doi = doi.replace("https://doi.org/", "");
+        }
+
+        if (Objects.isNull(openAlexId) || openAlexId.isBlank()) {
+            openAlexId = "NOT_PRESENT";
+        } else {
+            openAlexId = openAlexId.replace("https://openalex.org/", "");
+        }
+
+        return documentRepository.findByOpenAlexIdOrDoi(openAlexId, doi);
     }
 
     protected void clearCommonFields(Document publication) {
