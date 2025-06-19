@@ -107,4 +107,6 @@ public interface PersonService extends JPAService<Person> {
         Boolean onlyExportFields);
 
     Person findPersonByAccountingId(String accountingId);
+
+    Page<Person> findPersonsByLRUHarvest(Pageable pageable);
 }

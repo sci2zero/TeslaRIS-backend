@@ -203,15 +203,33 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(serbianTag, "Broj citata", 2)));
         totalCitations.setDescription(
             Set.of(
-                new MultiLingualContent(englishTag, "Total number of citations in this journal.",
+                new MultiLingualContent(englishTag, "Total citation count.",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "Ukupan broj citata radova u ovom časopisu.",
+                    "Ukupan broj citata.",
                     2)));
         totalCitations.setAccessLevel(AccessLevel.CLOSED);
         totalCitations.getApplicableTypes().addAll(
-            List.of(ApplicableEntityType.PUBLICATION_SERIES, ApplicableEntityType.DOCUMENT));
+            List.of(ApplicableEntityType.PUBLICATION_SERIES, ApplicableEntityType.DOCUMENT,
+                ApplicableEntityType.PERSON, ApplicableEntityType.ORGANISATION_UNIT));
         totalCitations.setContentType(IndicatorContentType.NUMBER);
+
+        var yearlyCitations = new Indicator();
+        yearlyCitations.setCode("yearlyCitations");
+        yearlyCitations.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Yearly citations", 1),
+                new MultiLingualContent(serbianTag, "Godišnja citiranost", 2)));
+        yearlyCitations.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "Total citation count by year.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj citata po godinama.",
+                    2)));
+        yearlyCitations.setAccessLevel(AccessLevel.CLOSED);
+        yearlyCitations.getApplicableTypes().addAll(
+            List.of(ApplicableEntityType.PERSON, ApplicableEntityType.ORGANISATION_UNIT));
+        yearlyCitations.setContentType(IndicatorContentType.NUMBER);
 
         var fiveYearJIF = new Indicator();
         fiveYearJIF.setCode("fiveYearJIF");
@@ -380,6 +398,24 @@ public class AssessmentDataInitializer {
         hIndex.getApplicableTypes()
             .addAll(List.of(ApplicableEntityType.PUBLICATION_SERIES, ApplicableEntityType.PERSON));
         hIndex.setContentType(IndicatorContentType.NUMBER);
+
+        var totalOutputCount = new Indicator();
+        totalOutputCount.setCode("totalOutputCount");
+        totalOutputCount.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Total results", 1),
+                new MultiLingualContent(serbianTag, "Ukupno rezultata", 2)));
+        totalOutputCount.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Total number of all publication types published.",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Ukupan broj publikacija svih tipova.",
+                    2)));
+        totalOutputCount.setAccessLevel(AccessLevel.CLOSED);
+        totalOutputCount.getApplicableTypes()
+            .addAll(List.of(ApplicableEntityType.ORGANISATION_UNIT, ApplicableEntityType.PERSON));
+        totalOutputCount.setContentType(IndicatorContentType.NUMBER);
 
         var sdg = new Indicator();
         sdg.setCode("sdg");
@@ -721,7 +757,8 @@ public class AssessmentDataInitializer {
                 hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile,
                 numParticipants, organizedByScientificInstitution, slavistiCategory,
                 numCountriesInScientificCommittee, numParticipantCountries, numPresentations,
-                lectureInvitation, isTheoretical, isExperimental, isSimulation, authorCount));
+                lectureInvitation, isTheoretical, isExperimental, isSimulation, authorCount,
+                yearlyCitations, totalOutputCount));
     }
 
     public void initializeAssessmentClassifications(LanguageTag englishTag,

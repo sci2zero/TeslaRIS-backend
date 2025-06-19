@@ -1256,4 +1256,23 @@ public class PersonServiceTest {
             verify(personRepository).save(person);
         }
     }
+
+    @Test
+    void testFindPersonsByLRUHarvest() {
+        // Given
+        var pageable = PageRequest.of(0, 10);
+        var mockPeople = List.of(new Person(), new Person());
+        var mockPage = new PageImpl<>(mockPeople, pageable, mockPeople.size());
+
+        when(personRepository.findPersonsByLRUHarvest(pageable)).thenReturn(mockPage);
+
+        // When
+        Page<Person> result = personService.findPersonsByLRUHarvest(pageable);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(mockPage, result);
+        verify(personRepository, times(1)).findPersonsByLRUHarvest(pageable);
+    }
 }

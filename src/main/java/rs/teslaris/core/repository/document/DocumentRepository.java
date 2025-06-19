@@ -60,4 +60,9 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @Query("SELECT COUNT(d) > 0 FROM Document d LEFT JOIN d.fileItems fi WHERE " +
         "d.id = :documentId AND fi.resourceType = 1 AND fi.accessRights = 2")
     boolean isDocumentPubliclyAvailable(Integer documentId);
+
+    @Query("SELECT d FROM Document d WHERE " +
+        "d.openAlexId = :openAlexId OR " +
+        "d.doi = :doi")
+    Optional<Document> findByOpenAlexIdOrDoi(String openAlexId, String doi);
 }

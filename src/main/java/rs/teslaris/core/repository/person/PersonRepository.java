@@ -77,4 +77,8 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "WHERE aid = :id AND p.approveStatus = 1")
     Optional<Person> findApprovedPersonByAccountingId(String id);
 
+    @Query("SELECT p FROM Person p ORDER BY " +
+        "CASE WHEN p.dateOfLastIndicatorHarvest IS NULL THEN 0 ELSE 1 END, " +
+        "p.dateOfLastIndicatorHarvest ASC")
+    Page<Person> findPersonsByLRUHarvest(Pageable pageable);
 }

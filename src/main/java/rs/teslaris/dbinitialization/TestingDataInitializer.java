@@ -195,6 +195,7 @@ public class TestingDataInitializer {
         person1.setOrcid("0000-0002-1825-0097");
         person1.setOpenAlexId("A5070362523");
         person1.setScopusAuthorId("35795419600");
+        person1.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 1, 1));
         personRepository.save(person1);
 
         var researcherUser =
@@ -213,6 +214,7 @@ public class TestingDataInitializer {
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU.setScopusAfid("60068801");
         dummyOU.setRor("00xa57a59");
+        dummyOU.setOpenAlexId("I4401727005");
         dummyOU.setLocation(new GeoLocation(19.850885, 45.245688, "NOWHERE"));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
         organisationUnitRepository.save(dummyOU);
@@ -299,12 +301,14 @@ public class TestingDataInitializer {
         person2.setName(
             new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null));
         person2.setScopusAuthorId("14619562900");
+        person2.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 2, 1));
         personRepository.save(person2);
 
         var software = new Software();
         software.setTitle(Set.of(new MultiLingualContent(englishTag,
             "TeslaRIS - Reengineering of CRIS at the University of Novi Sad", 1)));
         software.setInternalNumber("123456");
+        software.setDoi("10.1109/tsmc.2014.2347265");
         software.setApproveStatus(ApproveStatus.APPROVED);
 
         var patent = new Patent();

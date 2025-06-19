@@ -41,6 +41,7 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
@@ -828,5 +829,53 @@ public class DocumentPublicationServiceTest {
         assertEquals(3, result.size());
         assertEquals("uno", result.getFirst().a);
         assertEquals(2L, result.getFirst().b);
+    }
+
+    @Test
+    void testFindDocumentByCommonIdentifier_WithValidIds() {
+        // Given
+        var doi = "https://doi.org/10.1234/test";
+        var openAlexId = "https://openalex.org/W123456789";
+        var mockDocument = new JournalPublication();
+        Optional<Document> expected = Optional.of(mockDocument);
+
+        when(documentRepository.findByOpenAlexIdOrDoi("W123456789", "10.1234/test"))
+            .thenReturn(expected);
+
+        // When
+        var result = documentPublicationService.findDocumentByCommonIdentifier(doi, openAlexId);
+
+        // Then
+        assertTrue(result.isPresent());
+        assertEquals(mockDocument, result.get());
+        verify(documentRepository).findByOpenAlexIdOrDoi("W123456789", "10.1234/test");
+    }
+
+    @Test
+    void testFindDocumentByCommonIdentifier_WithNullValues() {
+        // Given
+        when(documentRepository.findByOpenAlexIdOrDoi("NOT_PRESENT", "NOT_PRESENT"))
+            .thenReturn(Optional.empty());
+
+        // When
+        var result = documentPublicationService.findDocumentByCommonIdentifier(null, null);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(documentRepository).findByOpenAlexIdOrDoi("NOT_PRESENT", "NOT_PRESENT");
+    }
+
+    @Test
+    void testFindDocumentByCommonIdentifier_WithBlankValues() {
+        // Given
+        when(documentRepository.findByOpenAlexIdOrDoi("NOT_PRESENT", "NOT_PRESENT"))
+            .thenReturn(Optional.empty());
+
+        // When
+        var result = documentPublicationService.findDocumentByCommonIdentifier(" ", " ");
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(documentRepository).findByOpenAlexIdOrDoi("NOT_PRESENT", "NOT_PRESENT");
     }
 }

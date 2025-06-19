@@ -1109,4 +1109,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             () -> new NotFoundException(
                 "Person with accounting ID " + accountingId + " does not exist"));
     }
+
+    @Override
+    public Page<Person> findPersonsByLRUHarvest(Pageable pageable) {
+        return personRepository.findPersonsByLRUHarvest(pageable);
+    }
 }
