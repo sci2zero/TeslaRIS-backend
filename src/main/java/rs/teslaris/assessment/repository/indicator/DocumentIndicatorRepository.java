@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
+import rs.teslaris.assessment.model.indicator.EntityIndicatorSource;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 
 @Repository
@@ -19,4 +20,12 @@ public interface DocumentIndicatorRepository extends JpaRepository<DocumentIndic
     @Query("SELECT di FROM DocumentIndicator di " +
         "WHERE di.indicator.code = :code AND di.document.id = :documentId")
     Optional<DocumentIndicator> findIndicatorForCodeAndDocumentId(String code, Integer documentId);
+
+    @Query("SELECT di FROM DocumentIndicator di " +
+        "WHERE di.indicator.code = :code AND " +
+        "di.source = :source AND " +
+        "di.document.id = :documentId")
+    Optional<DocumentIndicator> findIndicatorForCodeAndSourceDocumentId(String code,
+                                                                        EntityIndicatorSource source,
+                                                                        Integer documentId);
 }

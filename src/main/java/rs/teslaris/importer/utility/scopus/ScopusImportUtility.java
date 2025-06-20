@@ -6,110 +6,36 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.HttpHost;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import rs.teslaris.core.util.ScopusAuthenticationHelper;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ScopusImportUtility {
 
-    public static Map<String, String> headers = new HashMap<>();
+    private final ScopusAuthenticationHelper scopusAuthenticationHelper;
 
-    private static boolean authenticated = false;
-
-
-    private boolean authenticate() {
-        if (authenticated) {
-            return true;
-        }
-
-        var url = "https://api.elsevier.com/authenticate?platform=SCOPUS";
-        var restTemplate = constructRestTemplate();
-
-        var requestHeaders = new HttpHeaders();
-        headers.forEach(requestHeaders::add);
-
-        ResponseEntity<String> responseEntity;
-        try {
-            responseEntity =
-                restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(requestHeaders),
-                    String.class);
-        } catch (HttpClientErrorException e) {
-            log.error("Exception occurred: {}", e.getMessage());
-            return false;
-        }
-
-        if (responseEntity.getStatusCode() == HttpStatus.MULTIPLE_CHOICES) {
-            var objectMapper = new ObjectMapper();
-            try {
-                var response =
-                    objectMapper.readValue(responseEntity.getBody(), AuthenticateResponse.class);
-                var idString = response.pathChoices().choice().get(1).id();
-                var choice = Integer.parseInt(idString);
-                var isSuccess = getAuthtoken(choice, headers);
-                if (isSuccess) {
-                    authenticated = true;
-                }
-            } catch (HttpClientErrorException | JsonProcessingException e) {
-                log.error("Exception occurred: {}", e.getMessage());
-            }
-        } else if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            authenticated = setAuthToken(responseEntity);
-        } else {
-            log.error("Exception occurred: {}", responseEntity.getStatusCode());
-        }
-
-        return authenticated;
-    }
-
-    private boolean getAuthtoken(int choice, Map<String, String> headers) {
-        var url = "https://api.elsevier.com/authenticate?platform=SCOPUS&choice=" + choice;
-        var restTemplate = constructRestTemplate();
-
-        var requestHeaders = new HttpHeaders();
-        headers.forEach(requestHeaders::add);
-
-        ResponseEntity<String> responseEntity;
-        try {
-            responseEntity =
-                restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(requestHeaders),
-                    String.class);
-        } catch (HttpClientErrorException e) {
-            log.error("Exception occurred during auth token fetching: {}", e.getMessage());
-            return false;
-        }
-
-        if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            return setAuthToken(responseEntity);
-        } else {
-            log.error("Exception occurred during auth token fetching, status code: {}",
-                responseEntity.getStatusCode());
-        }
-
-        return false;
-    }
 
     public List<ScopusSearchResponse> getDocumentsByIdentifier(String identifier,
                                                                Boolean authorIdentifier,
                                                                Integer startYear,
                                                                Integer endYear) {
         var retVal = new ArrayList<ScopusSearchResponse>();
-        if (authenticate()) {
-            var restTemplate = constructRestTemplate();
+        if (scopusAuthenticationHelper.authenticate()) {
+            var restTemplate = scopusAuthenticationHelper.restTemplate;
             var objectMapper = new ObjectMapper();
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -148,10 +74,10 @@ public class ScopusImportUtility {
 
     @Nullable
     public AbstractDataResponse getAbstractData(String scopusId) {
-        if (authenticate()) {
+        if (scopusAuthenticationHelper.authenticate()) {
             var url =
                 "https://api.elsevier.com/content/abstract/scopus_id/" + scopusId + "?view=FULL";
-            var restTemplate = constructRestTemplate();
+            var restTemplate = scopusAuthenticationHelper.restTemplate;
             var objectMapper = new ObjectMapper();
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             return getDocumentsByQuery(url, AbstractDataResponse.class, restTemplate, objectMapper);
@@ -163,14 +89,14 @@ public class ScopusImportUtility {
     private <T> T getDocumentsByQuery(String query, Class<T> responseType,
                                       RestTemplate restTemplate, ObjectMapper objectMapper) {
         var requestHeaders = new HttpHeaders();
-        headers.forEach(requestHeaders::add);
+        scopusAuthenticationHelper.headers.forEach(requestHeaders::add);
 
         ResponseEntity<String> responseEntity;
         try {
             responseEntity =
                 restTemplate.exchange(query, HttpMethod.GET, new HttpEntity<>(requestHeaders),
                     String.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpClientErrorException | ResourceAccessException e) {
             log.error("Exception occurred during document fetching: {}", e.getMessage());
             return null;
         }
@@ -186,57 +112,6 @@ public class ScopusImportUtility {
                 "Document fetching failed with status code: " + responseEntity.getStatusCode());
         }
         return null;
-    }
-
-    private boolean setAuthToken(ResponseEntity<String> responseEntity) {
-        var objectMapper = new ObjectMapper();
-        try {
-            var response =
-                objectMapper.readValue(responseEntity.getBody(), AuthTokenResponse.class);
-            var authtoken = response.authToken().authtoken();
-            headers.put("X-ELS-Authtoken", authtoken);
-            return true;
-        } catch (HttpClientErrorException | JsonProcessingException e) {
-            log.error("Exception occurred during auth token deserialization: {}",
-                e.getMessage());
-        }
-
-        return false;
-    }
-
-    private RestTemplate constructRestTemplate() {
-        var httpClient = HttpClients.custom()
-            .setProxy(new HttpHost("http", "proxy.uns.ac.rs", 8080))
-            .build();
-
-        return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
-    }
-
-    private record AuthenticateResponse(
-        @JsonProperty("pathChoices") PathChoices pathChoices
-    ) {
-    }
-
-    private record PathChoices(
-        @JsonProperty("choice") List<Choice> choice
-    ) {
-    }
-
-    private record Choice(
-        @JsonProperty("@id") String id
-    ) {
-    }
-
-    private record AuthTokenResponse(
-        @JsonProperty("authenticate-response") AuthToken authToken
-    ) {
-    }
-
-    private record AuthToken(
-        @JsonProperty("@choice") String choice,
-        @JsonProperty("@type") String type,
-        @JsonProperty("authtoken") String authtoken
-    ) {
     }
 
     public record ScopusSearchResponse(

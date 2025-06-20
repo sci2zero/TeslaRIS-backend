@@ -95,5 +95,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
                                                            boolean foreignLanguage);
 
-    Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId);
+    Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
+                                                      String scopusId);
 }

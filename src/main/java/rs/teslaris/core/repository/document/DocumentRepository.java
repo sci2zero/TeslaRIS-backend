@@ -63,6 +63,8 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     @Query("SELECT d FROM Document d WHERE " +
         "d.openAlexId = :openAlexId OR " +
-        "d.doi = :doi")
-    Optional<Document> findByOpenAlexIdOrDoi(String openAlexId, String doi);
+        "d.doi = :doi OR " +
+        "d.scopusId = :scopusId")
+    Optional<Document> findByOpenAlexIdOrDoiOrScopusId(String openAlexId, String doi,
+                                                       String scopusId);
 }

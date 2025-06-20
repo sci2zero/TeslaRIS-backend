@@ -839,43 +839,50 @@ public class DocumentPublicationServiceTest {
         var mockDocument = new JournalPublication();
         Optional<Document> expected = Optional.of(mockDocument);
 
-        when(documentRepository.findByOpenAlexIdOrDoi("W123456789", "10.1234/test"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("W123456789", "10.1234/test",
+            "1234567"))
             .thenReturn(expected);
 
         // When
-        var result = documentPublicationService.findDocumentByCommonIdentifier(doi, openAlexId);
+        var result =
+            documentPublicationService.findDocumentByCommonIdentifier(doi, openAlexId, "1234567");
 
         // Then
         assertTrue(result.isPresent());
         assertEquals(mockDocument, result.get());
-        verify(documentRepository).findByOpenAlexIdOrDoi("W123456789", "10.1234/test");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("W123456789", "10.1234/test",
+            "1234567");
     }
 
     @Test
     void testFindDocumentByCommonIdentifier_WithNullValues() {
         // Given
-        when(documentRepository.findByOpenAlexIdOrDoi("NOT_PRESENT", "NOT_PRESENT"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT"))
             .thenReturn(Optional.empty());
 
         // When
-        var result = documentPublicationService.findDocumentByCommonIdentifier(null, null);
+        var result = documentPublicationService.findDocumentByCommonIdentifier(null, null, null);
 
         // Then
         assertTrue(result.isEmpty());
-        verify(documentRepository).findByOpenAlexIdOrDoi("NOT_PRESENT", "NOT_PRESENT");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT");
     }
 
     @Test
     void testFindDocumentByCommonIdentifier_WithBlankValues() {
         // Given
-        when(documentRepository.findByOpenAlexIdOrDoi("NOT_PRESENT", "NOT_PRESENT"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT"))
             .thenReturn(Optional.empty());
 
         // When
-        var result = documentPublicationService.findDocumentByCommonIdentifier(" ", " ");
+        var result = documentPublicationService.findDocumentByCommonIdentifier(" ", " ", " ");
 
         // Then
         assertTrue(result.isEmpty());
-        verify(documentRepository).findByOpenAlexIdOrDoi("NOT_PRESENT", "NOT_PRESENT");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT");
     }
 }

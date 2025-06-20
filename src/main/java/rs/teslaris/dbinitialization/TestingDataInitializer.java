@@ -319,6 +319,7 @@ public class TestingDataInitializer {
         var dataset = new Dataset();
         dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));
         dataset.setApproveStatus(ApproveStatus.APPROVED);
+        dataset.setDoi("10.1007/s11192-024-05076-2");
         dataset.setDocumentDate("2020-01-01");
 
         var datasetContribution = new PersonDocumentContribution();

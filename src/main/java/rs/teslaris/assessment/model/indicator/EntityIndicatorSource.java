@@ -6,5 +6,7 @@ public enum EntityIndicatorSource {
     SCIMAGO,
     ERIH_PLUS,
     MKS_SLAVISTS,
-    OPEN_ALEX
+    OPEN_ALEX,
+    OPEN_CITATIONS,
+    SCOPUS
 }

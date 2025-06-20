@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import rs.teslaris.core.util.RestTemplateProvider;
 
 @Component
@@ -64,6 +65,8 @@ public class OpenAlexImportUtility {
             log.error("HTTP error fetching OpenAlex works: {}", e.getMessage());
         } catch (JsonProcessingException e) {
             log.error("JSON parsing error: {}", e.getMessage());
+        } catch (ResourceAccessException e) {
+            log.error("OpenAlex is unreachable: {}", e.getMessage());
         }
 
         return allResults;
