@@ -36,6 +36,8 @@ public class RestTemplateProvider {
 
     private SimpleClientHttpRequestFactory createRequestFactory() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10 * 1000);
+        factory.setReadTimeout(10 * 1000);
 
         if (proxyEnabled && proxyHost != null && proxyPort > 0) {
             Proxy.Type type =

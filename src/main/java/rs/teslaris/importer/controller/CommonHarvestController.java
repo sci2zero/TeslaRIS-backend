@@ -1,6 +1,5 @@
 package rs.teslaris.importer.controller;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +11,6 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,7 +36,6 @@ import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
-import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 
 @RestController
 @RequestMapping("/api/import-common")
@@ -69,14 +66,6 @@ public class CommonHarvestController {
 
     private final OrganisationUnitService organisationUnitService;
 
-    @Value("${scopus.api.key}")
-    private String apiKey;
-
-
-    @PostConstruct
-    public void init() {
-        ScopusImportUtility.headers.put("X-ELS-APIKey", apiKey);
-    }
 
     @GetMapping("/can-perform")
     public boolean canPerformHarvest(@RequestHeader("Authorization") String bearerToken) {

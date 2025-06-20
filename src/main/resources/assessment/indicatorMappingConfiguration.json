@@ -25,6 +25,24 @@
     "BookSeries": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"],
     "Conference": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"]
   },
+  "externalMappings": {
+    "hIndex": "hIndex",
+    "totalPublicationCount": "totalOutputCount",
+    "totalCitationCount": "totalCitations",
+    "yearlyCitationCount": "yearlyCitations"
+  },
+  "externalMappingConstraints": {
+    "harvestYearPeriod": {
+      "scopus": 25,
+      "openAlex": 25,
+      "openCitations": 25
+    },
+    "rateLimits": {
+      "scopus": 200,
+      "openAlex": 2000,
+      "openCitations": 1000000
+    }
+  },
   "publicationSeriesCSVIndicatorMapping": {
     "webOfScience": {
       "source": "WEB_OF_SCIENCE",

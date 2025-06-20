@@ -582,7 +582,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId) {
+    public Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
+                                                             String scopusId) {
         if (Objects.isNull(doi) || doi.isBlank()) {
             doi = "NOT_PRESENT";
         } else {
@@ -595,7 +596,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             openAlexId = openAlexId.replace("https://openalex.org/", "");
         }
 
-        return documentRepository.findByOpenAlexIdOrDoi(openAlexId, doi);
+        if (Objects.isNull(scopusId) || scopusId.isBlank()) {
+            scopusId = "NOT_PRESENT";
+        } else {
+            scopusId = scopusId.replace("SCOPUS:", "");
+        }
+
+        return documentRepository.findByOpenAlexIdOrDoiOrScopusId(openAlexId, doi, scopusId);
     }
 
     protected void clearCommonFields(Document publication) {

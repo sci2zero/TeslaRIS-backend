@@ -65,6 +65,19 @@ public class IndicatorMappingConfigurationLoader {
         };
     }
 
+    public static Map<String, String> fetchExternalIndicatorMappings() {
+        return indicatorMappingConfiguration.externalMappings;
+    }
+
+    public static Map<String, Integer> fetchExternalMappingConstraints(
+        ExternalMappingConstraintType constraintType) {
+        return switch (constraintType) {
+            case HARVEST_PERIOD_OFFSET ->
+                indicatorMappingConfiguration.externalMappingConstraints.harvestYearPeriod;
+            case RATE_LIMIT -> indicatorMappingConfiguration.externalMappingConstraints.rateLimits;
+        };
+    }
+
     public static List<String> fetchAllStatisticsIndicatorCodes() {
         var indicatorCodes = new HashSet<String>();
         indicatorMappingConfiguration.mappings.values().forEach(indicatorCodes::addAll);
@@ -101,7 +114,15 @@ public class IndicatorMappingConfigurationLoader {
         @JsonProperty(value = "statisticOffsets", required = true) Offsets offsets,
         @JsonProperty(value = "statisticExclusions", required = true) Map<String, List<String>> exclusions,
         @JsonProperty(value = "publicationSeriesCSVIndicatorMapping", required = true) Map<String, PublicationSeriesIndicatorMapping> publicationSeriesCSVIndicatorMapping,
-        @JsonProperty(value = "ifTableContent") List<String> ifTableContent
+        @JsonProperty(value = "ifTableContent") List<String> ifTableContent,
+        @JsonProperty(value = "externalMappings") Map<String, String> externalMappings,
+        @JsonProperty(value = "externalMappingConstraints") ExternalMappingConstraints externalMappingConstraints
+    ) {
+    }
+
+    public record ExternalMappingConstraints(
+        @JsonProperty(value = "harvestYearPeriod") Map<String, Integer> harvestYearPeriod,
+        @JsonProperty(value = "rateLimits") Map<String, Integer> rateLimits
     ) {
     }
 
