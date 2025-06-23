@@ -17,7 +17,6 @@ import java.util.function.IntPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -39,6 +38,7 @@ import rs.teslaris.assessment.service.interfaces.indicator.ExternalIndicatorHarv
 import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.util.ExternalMappingConstraintType;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -58,6 +58,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     private final PersonService personService;
 
     private final PersonIndicatorRepository personIndicatorRepository;
@@ -76,7 +78,6 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     private Map<String, String> externalIndicatorMapping;
 
-    // TODO: read this from config files
     private Map<String, Integer> harvestPeriodOffsets;
 
     private Map<String, Integer> rateLimits;
@@ -84,9 +85,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     @Override
     public void performOUIndicatorDeduction() {
-        // TODO: Move to config files
-        var totalCitationsIndicator = indicatorService.getIndicatorByCode("totalCitations");
-        var totalOutputIndicator = indicatorService.getIndicatorByCode("totalOutputCount");
+        var totalCitationsIndicator = indicatorService.getIndicatorByCode(
+            externalIndicatorMapping.getOrDefault("totalCitationCount", null));
+        var totalOutputIndicator = indicatorService.getIndicatorByCode(
+            externalIndicatorMapping.getOrDefault("totalPublicationCount", null));
 
         var entityIndicatorSources =
             List.of(
@@ -109,23 +111,28 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                             institution.getDatabaseId(),
                             page, false),
                         people -> people.forEach(person -> {
-                            personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
-                                totalCitationsIndicator.getCode(), entityIndicatorSource,
-                                null, person.getDatabaseId()
-                            ).ifPresent(ind -> totalCitationCount.addAndGet(ind.getNumericValue()));
+                            if (Objects.nonNull(totalCitationsIndicator)) {
+                                personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
+                                    totalCitationsIndicator.getCode(), entityIndicatorSource,
+                                    null, person.getDatabaseId()
+                                ).ifPresent(
+                                    ind -> totalCitationCount.addAndGet(ind.getNumericValue()));
+                            }
 
-                            personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
-                                totalOutputIndicator.getCode(), entityIndicatorSource, null,
-                                person.getDatabaseId()
-                            ).ifPresent(
-                                ind -> totalPublicationsCount.addAndGet(ind.getNumericValue()));
+                            if (Objects.nonNull(totalOutputIndicator)) {
+                                personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
+                                    totalOutputIndicator.getCode(), entityIndicatorSource, null,
+                                    person.getDatabaseId()
+                                ).ifPresent(
+                                    ind -> totalPublicationsCount.addAndGet(ind.getNumericValue()));
+                            }
                         })
                     );
 
                     var organisationUnit =
                         organisationUnitService.findOne(institution.getDatabaseId());
 
-                    if (totalCitationCount.get() > 0) {
+                    if (Objects.nonNull(totalCitationsIndicator) && totalCitationCount.get() > 0) {
                         organisationUnitIndicatorRepository.findIndicatorForCodeAndSourceAndOrganisationUnitId(
                             totalCitationsIndicator.getCode(), entityIndicatorSource,
                             institution.getDatabaseId()
@@ -142,7 +149,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         organisationUnitIndicatorRepository.save(newTotalCitationsIndicator);
                     }
 
-                    if (totalPublicationsCount.get() > 0) {
+                    if (Objects.nonNull(totalOutputIndicator) && totalPublicationsCount.get() > 0) {
                         organisationUnitIndicatorRepository.findIndicatorForCodeAndSourceAndOrganisationUnitId(
                             totalOutputIndicator.getCode(), entityIndicatorSource,
                             institution.getDatabaseId()
@@ -172,7 +179,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var yearlyCitationsIndicator = indicatorService.getIndicatorByCode(
             externalIndicatorMapping.getOrDefault("yearlyCitations", null));
         var totalOutputIndicator = indicatorService.getIndicatorByCode(
-            externalIndicatorMapping.getOrDefault("totalOutputCount", null));
+            externalIndicatorMapping.getOrDefault("totalPublicationCount", null));
         var hIndexIndicator = indicatorService.getIndicatorByCode(
             externalIndicatorMapping.getOrDefault("hIndex", null));
 
@@ -230,9 +237,13 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     private void harvestFromOpenAlex(Person person, Indicator totalCitationsIndicator,
                                      Indicator yearlyCitationsIndicator,
                                      Indicator totalOutputIndicator, Indicator hIndexIndicator) {
+        var harvestPeriodOffset = harvestPeriodOffsets.get("openAlex");
+        var endDate = LocalDate.now();
+        var startDate = endDate.minusYears(harvestPeriodOffset);
+
         var baseUrl = "https://api.openalex.org/works?per-page=100" +
             "&filter=author.id:" + person.getOpenAlexId() +
-            ",from_publication_date:2000-01-01,to_publication_date:" + LocalDate.now();
+            ",from_publication_date:" + startDate + ",to_publication_date:" + endDate;
 
         var cursor = "*";
         var objectMapper = new ObjectMapper();
@@ -319,48 +330,58 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
         try {
             List<Integer> allCitationCounts = new ArrayList<>();
-            int totalPublications = 0;
+            var totalPublications = new AtomicInteger(0);
 
-            var personDocuments =
-                documentPublicationService.findResearcherPublications(person.getId(), List.of(),
-                    Pageable.unpaged());
+            var harvestPeriodOffset = harvestPeriodOffsets.get("openCitations");
+            var endYear = LocalDate.now().getYear();
+            var startYear = endYear - harvestPeriodOffset;
+            FunctionalUtil.forEachChunked(PageRequest.of(0, 50),
+                (pageable) -> documentPublicationIndexRepository.findByAuthorIdsAndYearBetween(
+                    person.getId(), startYear, endYear, pageable), (personDocuments) -> {
+                    for (var doc : personDocuments) {
+                        var doi = doc.getDoi();
+                        if (Objects.isNull(doi) || doi.isBlank()) {
+                            continue;
+                        }
 
-            for (var doc : personDocuments) {
-                String doi = doc.getDoi();
-                if (doi == null || doi.isBlank()) {
-                    continue;
-                }
+                        var url =
+                            "https://opencitations.net/index/api/v2/citation-count/doi:" + doi;
+                        ResponseEntity<String> responseEntity =
+                            restTemplateProvider.provideRestTemplate()
+                                .getForEntity(url, String.class);
 
-                String url = "https://opencitations.net/index/api/v2/citation-count/doi:" + doi;
-                ResponseEntity<String> responseEntity =
-                    restTemplateProvider.provideRestTemplate()
-                        .getForEntity(url, String.class);
+                        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                            continue;
+                        }
 
-                if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                    continue;
-                }
+                        OpenCitationsEntry[] result;
+                        try {
+                            result = objectMapper.readValue(responseEntity.getBody(),
+                                OpenCitationsEntry[].class);
+                        } catch (JsonProcessingException e) {
+                            log.error("JSON parsing error in OpenCitations response: {}",
+                                e.getMessage());
+                            continue;
+                        }
 
-                var result =
-                    objectMapper.readValue(responseEntity.getBody(), OpenCitationsEntry[].class);
-                if (result.length == 0) {
-                    continue;
-                }
+                        if (result.length == 0) {
+                            continue;
+                        }
 
-                int citationCount = result[0].count();
-                totalPublications++;
-                allCitationCounts.add(citationCount);
-            }
+                        int citationCount = result[0].count();
+                        totalPublications.getAndIncrement();
+                        allCitationCounts.add(citationCount);
+                    }
+                });
 
             persistPersonCitationIndicators(person, new HashMap<>(
                     Map.of("TOTAL", allCitationCounts.stream().reduce(0, Integer::sum))),
-                totalPublications, allCitationCounts, totalCitationsIndicator,
+                totalPublications.get(), allCitationCounts, totalCitationsIndicator,
                 yearlyCitationsIndicator, totalOutputIndicator, hIndexIndicator,
                 EntityIndicatorSource.OPEN_CITATIONS);
 
         } catch (HttpClientErrorException e) {
             log.error("HTTP error fetching OpenCitations data: {}", e.getMessage());
-        } catch (JsonProcessingException e) {
-            log.error("JSON parsing error in OpenCitations response: {}", e.getMessage());
         } catch (ResourceAccessException e) {
             log.error("Exception occurred during connection to OpenCitations: {}", e.getMessage());
         }
@@ -382,6 +403,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var requestHeaders = new HttpHeaders();
             scopusAuthenticationHelper.headers.forEach(requestHeaders::add);
 
+            var harvestPeriodOffset = harvestPeriodOffsets.get("scopus");
+            var endYear = LocalDate.now().getYear();
+            var startYear = endYear - harvestPeriodOffset;
+
             ResponseEntity<String> responseEntity;
             try {
                 var cursor = "*";
@@ -389,7 +414,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                     var url =
                         "https://api.elsevier.com/content/search/scopus?query=AU-ID(" +
                             person.getScopusAuthorId() +
-                            ")&date=2000-2025&count=100&view=STANDARD&cursor=" + cursor;
+                            ")&date=" + startYear + "-" + endYear +
+                            "&count=100&view=STANDARD&cursor=" + cursor;
 
                     responseEntity =
                         restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(requestHeaders),

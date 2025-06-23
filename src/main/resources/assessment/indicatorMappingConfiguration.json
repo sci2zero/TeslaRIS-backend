@@ -33,9 +33,9 @@
   },
   "externalMappingConstraints": {
     "harvestYearPeriod": {
-      "scopus": 25,
-      "openAlex": 25,
-      "openCitations": 25
+      "scopus": 40,
+      "openAlex": 40,
+      "openCitations": 40
     },
     "rateLimits": {
       "scopus": 200,

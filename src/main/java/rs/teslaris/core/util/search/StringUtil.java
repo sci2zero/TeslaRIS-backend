@@ -89,6 +89,19 @@ public class StringUtil {
             return "";
         }
 
+        // Handle Serbian-specific digraph mappings
+        input = input
+            .replace("ђ", "dj")
+            .replace("Ђ", "Dj")
+            .replace("њ", "nj")
+            .replace("Њ", "Nj")
+            .replace("љ", "lj")
+            .replace("Љ", "Lj")
+            .replace("đ", "dj")
+            .replace("Đ", "Dj")
+            .replace("џ", "dz")
+            .replace("Џ", "Dz");
+
         var transliterator =
             Transliterator.getInstance("Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC");
 

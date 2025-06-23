@@ -236,25 +236,21 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                         mq -> mq.field("name_sr").query(cleanedToken))._toQuery());
                     perTokenShould.add(MatchPhraseQuery.of(
                         mq -> mq.field("name_other").query(cleanedToken))._toQuery());
-                } else if (token.endsWith(".")) {
-                    var wildcard = token.replace(".", "") + "?";
+                } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                    var wildcard = token.replace("\\*", "").replace(".", "");
                     perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
+                            m -> m.field("name_sr")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true))
                         ._toQuery());
                     perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_other").value(wildcard).caseInsensitive(true))
-                        ._toQuery());
-                } else if (token.endsWith("\\*")) {
-                    var wildcard = token.replace("\\*", "") + "*";
-                    perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
-                        ._toQuery());
-                    perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_other").value(wildcard).caseInsensitive(true))
+                            m -> m.field("name_other").value(wildcard + "*").caseInsensitive(true))
                         ._toQuery());
                 } else {
                     perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_sr").value(token + "*").caseInsensitive(true))
+                            m -> m.field("name_sr")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                .caseInsensitive(true))
                         ._toQuery());
                     perTokenShould.add(WildcardQuery.of(
                             m -> m.field("name_other").value(token + "*").caseInsensitive(true))

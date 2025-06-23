@@ -255,27 +255,21 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
                             }
                             return m;
                         }));
-                } else if (token.endsWith(".")) {
-                    var wildcard = token.replace(".", "") + "?";
+                } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                    var wildcard = token.replace("\\*", "").replace(".", "");
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("name_sr").value(wildcard)))
+                            mq -> mq.field("name_sr").value(
+                                StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("name_other").value(wildcard)))
-                    ));
-                } else if (token.endsWith("\\*")) {
-                    var wildcard = token.replace("\\*", "") + "*";
-                    b.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("name_sr").value(wildcard)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("name_other").value(wildcard)))
+                            mq -> mq.field("name_other").value(wildcard + "*")))
                     ));
                 } else {
                     var wildcard = token + "*";
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("name_sr").value(wildcard)))
+                            mq -> mq.field("name_sr")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("name_other").value(wildcard)))
                         .should(sb -> sb.match(

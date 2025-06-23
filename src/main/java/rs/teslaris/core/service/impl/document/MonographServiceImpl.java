@@ -39,6 +39,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConst
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Traceable
@@ -326,31 +327,24 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                     mq -> mq.field("print_issn").value(normalizedToken)
                                         .caseInsensitive(true)))
                             ));
-                        } else if (token.endsWith(".")) {
-                            var wildcard = token.replace(".", "") + "?";
+                        } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                            var wildcard = token.replace("\\*", "").replace(".", "");
                             b.should(mp -> mp.bool(m -> m
                                 .should(sb -> sb.wildcard(
-                                    mq -> mq.field("title_sr").value(wildcard)
+                                    mq -> mq.field("title_sr").value(
+                                            StringUtil.performSimpleSerbianPreprocessing(wildcard) +
+                                                "*")
                                         .caseInsensitive(true)))
                                 .should(sb -> sb.wildcard(
-                                    mq -> mq.field("title_other").value(wildcard)
-                                        .caseInsensitive(true)))
-                            ));
-                        } else if (token.endsWith("\\*")) {
-                            var wildcard = token.replace("\\*", "") + "*";
-                            b.should(mp -> mp.bool(m -> m
-                                .should(sb -> sb.wildcard(
-                                    mq -> mq.field("title_sr").value(wildcard)
-                                        .caseInsensitive(true)))
-                                .should(sb -> sb.wildcard(
-                                    mq -> mq.field("title_other").value(wildcard)
+                                    mq -> mq.field("title_other").value(wildcard + "*")
                                         .caseInsensitive(true)))
                             ));
                         } else {
                             var wildcard = token + "*";
                             b.should(mp -> mp.bool(m -> m
                                 .should(sb -> sb.wildcard(
-                                    mq -> mq.field("title_sr").value(wildcard)))
+                                    mq -> mq.field("title_sr").value(
+                                        StringUtil.performSimpleSerbianPreprocessing(token) + "*")))
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("title_other").value(wildcard)))
                                 .should(sb -> sb.match(
@@ -360,25 +354,32 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 .should(sb -> sb.match(
                                     mq -> mq.field("author_names").query(token)))
                                 .should(
-                                    sb -> sb.wildcard(mq -> mq.field("author_names").value(wildcard)
+                                    sb -> sb.wildcard(mq -> mq.field("author_names").value(
+                                            StringUtil.performSimpleSerbianPreprocessing(token) + "*")
                                         .caseInsensitive(true)))
                                 .should(sb -> sb.match(
                                     mq -> mq.field("editor_names").query(token).boost(0.7f)))
                                 .should(
                                     sb -> sb.wildcard(
-                                        mq -> mq.field("editor_names").value(wildcard).boost(0.7f)
+                                        mq -> mq.field("editor_names").value(
+                                                StringUtil.performSimpleSerbianPreprocessing(token) +
+                                                    "*").boost(0.7f)
                                             .caseInsensitive(true)))
                                 .should(sb -> sb.match(
                                     mq -> mq.field("reviewer_names").query(token).boost(0.7f)))
                                 .should(
                                     sb -> sb.wildcard(
-                                        mq -> mq.field("reviewer_names").value(wildcard).boost(0.7f)
+                                        mq -> mq.field("reviewer_names").value(
+                                                StringUtil.performSimpleSerbianPreprocessing(token) +
+                                                    "*").boost(0.7f)
                                             .caseInsensitive(true)))
                                 .should(sb -> sb.match(
                                     mq -> mq.field("advisor_names").query(token).boost(0.7f)))
                                 .should(
                                     sb -> sb.wildcard(
-                                        mq -> mq.field("advisor_names").value(wildcard).boost(0.7f)
+                                        mq -> mq.field("advisor_names").value(
+                                                StringUtil.performSimpleSerbianPreprocessing(token) +
+                                                    "*").boost(0.7f)
                                             .caseInsensitive(true)))
                                 .should(sb -> sb.match(
                                     mq -> mq.field("description_sr").query(token).boost(0.5f)))

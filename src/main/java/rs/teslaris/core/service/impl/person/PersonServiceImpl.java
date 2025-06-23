@@ -976,20 +976,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                             perTokenShould.add(
                                 TermQuery.of(m -> m.field("orcid").value(token.replace("\\-", "-")))
                                     ._toQuery());
-                        } else if (token.endsWith(".")) {
-                            var wildcard = token.replace(".", "") + "?";
-                            perTokenShould.add(WildcardQuery.of(
-                                    m -> m.field("name").value(wildcard).caseInsensitive(true))
-                                ._toQuery());
-                        } else if (token.endsWith("\\*")) {
-                            var wildcard = token.replace("\\*", "") + "*";
+                        } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                            var wildcard = token.replace("\\*", "").replace(".", "");
                             perTokenShould.add(
                                 WildcardQuery.of(
-                                        m -> m.field("name").value(wildcard).caseInsensitive(true))
+                                        m -> m.field("name").value(
+                                                StringUtil.performSimpleSerbianPreprocessing(wildcard) +
+                                                    "*")
+                                            .caseInsensitive(true))
                                     ._toQuery());
                         } else {
                             perTokenShould.add(WildcardQuery.of(
-                                    m -> m.field("name").value(token + "*").caseInsensitive(true))
+                                    m -> m.field("name").value(
+                                            StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                        .caseInsensitive(true))
                                 ._toQuery());
                         }
 
