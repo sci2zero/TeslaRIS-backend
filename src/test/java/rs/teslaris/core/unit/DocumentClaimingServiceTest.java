@@ -1,8 +1,8 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -23,12 +23,10 @@ import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.DeclinedDocumentClaim;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.document.PersonDocumentContributionRepository;
 import rs.teslaris.core.repository.person.DeclinedDocumentClaimRepository;
 import rs.teslaris.core.service.impl.document.DocumentClaimingServiceImpl;
@@ -83,52 +81,114 @@ public class DocumentClaimingServiceTest {
     }
 
     @Test
-    public void shouldClaimDocument() {
+    void shouldClaimDocumentSuccessfully() {
         // Given
         var userId = 1;
-        var documentId = 123;
-        var personId = 42;
+        var personId = 2;
+        var documentId = 3;
+
         var person = new Person();
         person.setId(personId);
-        person.setName(new PersonName("John", null, "Doe", null, null));
-        person.setOtherNames(Set.of(new PersonName("J.", null, "Doe", null, null)));
 
-        var contribution1 = new PersonDocumentContribution();
-        var affiliationStatement1 = new AffiliationStatement();
-        affiliationStatement1.setDisplayPersonName(new PersonName("John", null, "Doe", null, null));
-        contribution1.setAffiliationStatement(affiliationStatement1);
-        contribution1.setOrderNumber(1);
-        var contribution2 = new PersonDocumentContribution();
-        var affiliationStatement2 = new AffiliationStatement();
-        affiliationStatement2.setDisplayPersonName(new PersonName("John", null, "Doe", null, null));
-        contribution2.setAffiliationStatement(affiliationStatement1);
-        contribution2.setOrderNumber(2);
+        var contribution = new PersonDocumentContribution();
+        contribution.setOrderNumber(1); // index + 1
+        var document = new Monograph();
+        document.setId(documentId);
+        document.setContributors(Set.of(contribution));
 
-        var document = new DocumentPublicationIndex();
-        document.setDatabaseId(documentId);
-        document.setAuthorIds(new ArrayList<>(List.of(-1, -1)));
-        document.setClaimerIds(new ArrayList<>(List.of(personId)));
+        var documentIndex = new DocumentPublicationIndex();
+        documentIndex.setDatabaseId(documentId);
+        documentIndex.setClaimerIds(new ArrayList<>(List.of(personId)));
+        documentIndex.setClaimerOrdinals(new ArrayList<>(List.of(0)));
+        documentIndex.setAuthorIds(new ArrayList<>(List.of(-1)));
 
         when(personService.getPersonIdForUserId(userId)).thenReturn(personId);
         when(personService.findOne(personId)).thenReturn(person);
-        when(personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId))
-            .thenReturn(List.of(contribution1, contribution2));
+        when(documentPublicationService.findOne(documentId)).thenReturn(document);
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
-            .thenReturn(Optional.of(document));
+            .thenReturn(Optional.of(documentIndex));
+        when(personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId))
+            .thenReturn(List.of()); // Optional: not used in method logic
 
         // When
         documentClaimingService.claimDocument(userId, documentId);
 
         // Then
-        verify(personService, times(1)).getPersonIdForUserId(userId);
-        verify(personService, times(1)).findOne(personId);
-        verify(personDocumentContributionRepository, times(1))
-            .findUnmanagedContributionsForDocument(documentId);
-        verify(personDocumentContributionRepository, times(1)).save(any());
+        assertEquals(person, contribution.getPerson());
+        assertEquals(personId, documentIndex.getAuthorIds().get(0));
+        assertTrue(documentIndex.getClaimerIds().isEmpty());
+        assertTrue(documentIndex.getClaimerOrdinals().isEmpty());
 
-        assertFalse(document.getClaimerIds().contains(personId));
-        verify(documentPublicationIndexRepository, times(1)).save(any());
+        verify(documentPublicationService).save(document);
+        verify(documentPublicationIndexRepository).save(documentIndex);
+    }
+
+    @Test
+    void shouldNotClaimIfPersonIsNotClaimer() {
+        // Given
+        var userId = 1;
+        var personId = 2;
+        var documentId = 3;
+
+        var person = new Person();
+        person.setId(personId);
+
+        var documentIndex = new DocumentPublicationIndex();
+        documentIndex.setDatabaseId(documentId);
+        documentIndex.setClaimerIds(new ArrayList<>(List.of(99))); // Not the person
+        documentIndex.setClaimerOrdinals(new ArrayList<>(List.of(0)));
+
+        when(personService.getPersonIdForUserId(userId)).thenReturn(personId);
+        when(personService.findOne(personId)).thenReturn(person);
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(documentIndex));
+        when(personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId))
+            .thenReturn(List.of());
+
+        // When
+        documentClaimingService.claimDocument(userId, documentId);
+
+        // Then
+        verify(documentPublicationService, never()).save(any());
+        verify(documentPublicationIndexRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldNotClaimIfMatchingContributionIsMissing() {
+        // Given
+        var userId = 1;
+        var personId = 2;
+        var documentId = 3;
+
+        var person = new Person();
+        person.setId(personId);
+
+        var document = new Monograph();
+        document.setId(documentId);
+        document.setContributors(Set.of()); // No contributors
+
+        var documentIndex = new DocumentPublicationIndex();
+        documentIndex.setDatabaseId(documentId);
+        documentIndex.setClaimerIds(new ArrayList<>(List.of(personId)));
+        documentIndex.setClaimerOrdinals(new ArrayList<>(List.of(0)));
+
+        when(personService.getPersonIdForUserId(userId)).thenReturn(personId);
+        when(personService.findOne(personId)).thenReturn(person);
+        when(documentPublicationService.findOne(documentId)).thenReturn(document);
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(documentIndex));
+        when(personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId))
+            .thenReturn(List.of());
+
+        // When
+        documentClaimingService.claimDocument(userId, documentId);
+
+        // Then
+        verify(documentPublicationService, never()).save(any());
+        verify(documentPublicationIndexRepository, never()).save(any());
     }
 
     @Test

@@ -320,29 +320,26 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                     }
                                     return m;
                                 }));
-                        } else if (token.endsWith(".")) {
-                            var wildcard = token.replace(".", "") + "?";
-                            eq.should(mp -> mp.bool(m -> m
-                                .should(sb -> sb.wildcard(
-                                    mq -> mq.field("name_sr").value(wildcard)))
-                                .should(sb -> sb.wildcard(
-                                    mq -> mq.field("name_other").value(wildcard)))
-                            ));
                         } else if (token.endsWith("\\*")) {
-                            var wildcard = token.replace("\\*", "") + "*";
+                            var wildcard = token.replace("\\*", "").replace(".", "");
                             eq.should(mp -> mp.bool(m -> m
                                 .should(sb -> sb.wildcard(
-                                    mq -> mq.field("name_sr").value(wildcard)))
+                                    mq -> mq.field("name_sr").value(
+                                        StringUtil.performSimpleSerbianPreprocessing(wildcard) +
+                                            "*")))
                                 .should(sb -> sb.wildcard(
-                                    mq -> mq.field("name_other").value(wildcard)))
+                                    mq -> mq.field("name_other").value(wildcard + "*")))
                             ));
                         } else {
                             var wildcard = token + "*";
                             eq.should(mp -> mp.bool(m -> m
                                 .should(sb -> sb.wildcard(
-                                    mq -> mq.field("name_sr").value(wildcard)))
+                                    mq -> mq.field("name_sr").value(
+                                            StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                        .caseInsensitive(true)))
                                 .should(sb -> sb.wildcard(
-                                    mq -> mq.field("name_other").value(wildcard)))
+                                    mq -> mq.field("name_other").value(wildcard)
+                                        .caseInsensitive(true)))
                                 .should(sb -> sb.match(
                                     mq -> mq.field("name_sr").query(wildcard)))
                                 .should(sb -> sb.match(

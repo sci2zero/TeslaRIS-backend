@@ -140,6 +140,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "claimer_ids", store = true)
     private List<Integer> claimerIds = new ArrayList<>();
 
+    @Field(type = FieldType.Integer, name = "claimer_ordinals", store = true)
+    private List<Integer> claimerOrdinals = new ArrayList<>();
+
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
 

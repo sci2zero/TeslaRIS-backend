@@ -23,6 +23,7 @@ import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
@@ -173,13 +174,16 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                     ));
                 }
                 eq.should(sb -> sb.wildcard(
-                        m -> m.field("title_sr").value(token + "*").caseInsensitive(true)))
+                        m -> m.field("title_sr")
+                            .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                            .caseInsensitive(true)))
                     .should(sb -> sb.match(m -> m.field("title_sr").query(token)))
                     .should(sb -> sb.wildcard(
                         m -> m.field("title_other").value(token + "*").caseInsensitive(true)))
                     .should(sb -> sb.match(m -> m.field("description_sr").query(token)))
                     .should(sb -> sb.match(m -> m.field("description_other").query(token)))
-                    .should(sb -> sb.wildcard(m -> m.field("keywords_sr").value("*" + token + "*")))
+                    .should(sb -> sb.wildcard(m -> m.field("keywords_sr")
+                        .value("*" + StringUtil.performSimpleSerbianPreprocessing(token) + "*")))
                     .should(
                         sb -> sb.wildcard(m -> m.field("keywords_other").value("*" + token + "*")))
                     .should(sb -> sb.match(m -> m.field("full_text_sr").query(token)))

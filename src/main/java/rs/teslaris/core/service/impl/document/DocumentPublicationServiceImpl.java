@@ -832,31 +832,28 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         .should(sb -> sb.matchPhrase(
                             mq -> mq.field("author_names").query(token.replace("\\\"", ""))))
                     ));
-                } else if (token.endsWith(".")) {
-                    var wildcard = token.replace(".", "") + "?";
+                } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                    var wildcard = token.replace("\\*", "").replace(".", "");
                     eq.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_other").value(wildcard + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("author_names").value(wildcard).caseInsensitive(true)))
-                    ));
-                } else if (token.endsWith("\\*")) {
-                    var wildcard = token.replace("\\*", "") + "*";
-                    eq.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("author_names").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("author_names")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true)))
                     ));
                 } else {
                     var wildcard = token + "*";
                     eq.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.match(
@@ -865,7 +862,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                             mq -> mq.field("title_other").query(wildcard)))
                         .should(sb -> sb.match(mq -> mq.field("author_names").query(token)))
                         .should(
-                            sb -> sb.wildcard(mq -> mq.field("author_names").value(wildcard)
+                            sb -> sb.wildcard(mq -> mq.field("author_names")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.term(mq -> mq.field("keywords_sr").value(token)))
                         .should(sb -> sb.term(mq -> mq.field("keywords_other").value(token)))

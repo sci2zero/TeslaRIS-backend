@@ -250,27 +250,24 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("print_issn").value(normalizedToken)))
                     ));
-                } else if (token.endsWith(".")) {
-                    var wildcard = token.replace(".", "") + "?";
+                } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                    var wildcard = token.replace("\\*", "").replace(".", "");
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
-                    ));
-                } else if (token.endsWith("\\*")) {
-                    var wildcard = token.replace("\\*", "") + "*";
-                    b.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_other").value(wildcard + "*")
+                                .caseInsensitive(true)))
                     ));
                 } else {
                     var wildcard = token + "*";
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.match(

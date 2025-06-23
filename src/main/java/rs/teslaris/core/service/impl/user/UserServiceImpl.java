@@ -886,19 +886,18 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                             mq -> mq.field("org_unit_name_other").query(cleanedToken))
                         ._toQuery());
                 } else {
-                    if (token.endsWith(".")) {
-                        var wildcard = token.replace(".", "") + "?";
+                    if (token.endsWith("\\*") || token.endsWith(".")) {
+                        var wildcard = token.replace("\\*", "").replace(".", "");
                         perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("full_name").value(wildcard).caseInsensitive(true))
-                            ._toQuery());
-                    } else if (token.endsWith("\\*")) {
-                        var wildcard = token.replace("\\*", "") + "*";
-                        perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("full_name").value(wildcard).caseInsensitive(true))
+                                m -> m.field("full_name")
+                                    .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                    .caseInsensitive(true))
                             ._toQuery());
                     } else {
                         perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("full_name").value(token + "*").caseInsensitive(true))
+                                m -> m.field("full_name")
+                                    .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                    .caseInsensitive(true))
                             ._toQuery());
                     }
 
