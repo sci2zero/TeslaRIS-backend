@@ -22,6 +22,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -85,6 +86,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     @Override
     public void performOUIndicatorDeduction() {
+        refreshConfiguration();
+
         var totalCitationsIndicator = indicatorService.getIndicatorByCode(
             externalIndicatorMapping.getOrDefault("totalCitationCount", null));
         var totalOutputIndicator = indicatorService.getIndicatorByCode(
@@ -336,7 +339,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var endYear = LocalDate.now().getYear();
             var startYear = endYear - harvestPeriodOffset;
             FunctionalUtil.forEachChunked(PageRequest.of(0, 50),
-                (pageable) -> documentPublicationIndexRepository.findByAuthorIdsAndYearBetween(
+                (pageable) -> documentPublicationIndexRepository.findByAuthorIdAndYearRangeOrUnknown(
                     person.getId(), startYear, endYear, pageable), (personDocuments) -> {
                     for (var doc : personDocuments) {
                         var doi = doc.getDoi();
@@ -598,6 +601,12 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
 
         return existingMap;
+    }
+
+    @Scheduled(cron = "${harvest-external-indicators.schedule}")
+    protected void performIndicatorHarvest() {
+        performPersonIndicatorHarvest();
+        performOUIndicatorDeduction();
     }
 
     public record OpenAlexResults(

@@ -178,6 +178,7 @@ public class DbInitializer implements ApplicationRunner {
         var saveLoadingConfiguration = new Privilege("SAVE_LOADING_CONFIG");
         var performLoading = new Privilege("PERFORM_IMPORT_AND_LOADING");
         var editExternalIndicatorConfiguration = new Privilege("EDIT_EXT_INDICATOR_CONFIGURATION");
+        var harvestIdfMetadata = new Privilege("HARVEST_IDF_METADATA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -206,7 +207,7 @@ public class DbInitializer implements ApplicationRunner {
                 removeFromRegistryBook, updateRegistryBook, managePromotions, performMigration,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 generateThesisLibraryBackup, generateOutputBackup, performHealthCheck,
-                generateNewEmployeePassword, createConference, createPublisher,
+                generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration));
 
         // AUTHORITIES
@@ -236,7 +237,8 @@ public class DbInitializer implements ApplicationRunner {
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
-                saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration
+                saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
+                harvestIdfMetadata
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -244,7 +246,7 @@ public class DbInitializer implements ApplicationRunner {
                 editDocumentFiles, editDocumentIndicators, claimDocument, createConference,
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
-                createPublisher, performLoading)));
+                createPublisher, performLoading, harvestIdfMetadata)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -253,7 +255,7 @@ public class DbInitializer implements ApplicationRunner {
                     putThesisOnPublicReview, createUserBasic, editPersonalInfo, createJournal,
                     editDocumentFiles, editEmploymentInstitution, generateOutputBackup,
                     createConference, saveLoadingConfiguration, performLoading,
-                    editExternalIndicatorConfiguration)));
+                    editExternalIndicatorConfiguration, harvestIdfMetadata)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -272,7 +274,7 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
                 putThesisOnPublicReview, editDocumentFiles, archiveThesis,
-                addToRegistryBook, generateThesisLibraryBackup
+                addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata
             )));
 
         var headOfLibraryAuthority =

@@ -40,27 +40,27 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     Optional<Integer> findPersonIdForUserId(Integer userId);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.apvnt = :apvnt AND p.id <> :id")
+        "FROM Person p WHERE p.apvnt = :apvnt AND (:id IS NULL OR p.id <> :id)")
     boolean existsByApvnt(String apvnt, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.eCrisId = :eCrisId AND p.id <> :id")
+        "FROM Person p WHERE p.eCrisId = :eCrisId AND (:id IS NULL OR p.id <> :id)")
     boolean existsByeCrisId(String eCrisId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.eNaukaId = :eNaukaId AND p.id <> :id")
+        "FROM Person p WHERE p.eNaukaId = :eNaukaId AND (:id IS NULL OR p.id <> :id)")
     boolean existsByeNaukaId(String eNaukaId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.orcid = :orcid AND p.id <> :id")
+        "FROM Person p WHERE p.orcid = :orcid AND (:id IS NULL OR p.id <> :id)")
     boolean existsByOrcid(String orcid, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.scopusAuthorId = :scopusAuthorId AND p.id <> :id")
+        "FROM Person p WHERE p.scopusAuthorId = :scopusAuthorId AND (:id IS NULL OR p.id <> :id)")
     boolean existsByScopusAuthorId(String scopusAuthorId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.openAlexId = :openAlexId AND p.id <> :id")
+        "FROM Person p WHERE p.openAlexId = :openAlexId AND (:id IS NULL OR p.id <> :id)")
     boolean existsByOpenAlexId(String openAlexId, Integer id);
 
     @Query(value = "SELECT * FROM persons p WHERE " +

@@ -429,6 +429,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnitToUpdate.getName().clear();
         organisationUnitToUpdate.getKeyword().clear();
         organisationUnitToUpdate.getResearchAreas().clear();
+        organisationUnitToUpdate.getUris().clear();
 
         setCommonOUFields(organisationUnitToUpdate, organisationUnitDTORequest);
 
