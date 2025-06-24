@@ -22,15 +22,15 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findDocumentByIdIn(List<Integer> ids, Pageable pageable);
 
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Document d WHERE d.doi = :doi AND d.id <> :id")
+        "FROM Document d WHERE d.doi = :doi AND (:id IS NULL OR d.id <> :id)")
     boolean existsByDoi(String doi, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Document d WHERE d.scopusId = :scopusId AND d.id <> :id")
+        "FROM Document d WHERE d.scopusId = :scopusId AND (:id IS NULL OR d.id <> :id)")
     boolean existsByScopusId(String scopusId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Document d WHERE d.openAlexId = :openAlexId AND d.id <> :id")
+        "FROM Document d WHERE d.openAlexId = :openAlexId AND (:id IS NULL OR d.id <> :id)")
     boolean existsByOpenAlexId(String openAlexId, Integer id);
 
     @Query("SELECT d FROM Document d " +

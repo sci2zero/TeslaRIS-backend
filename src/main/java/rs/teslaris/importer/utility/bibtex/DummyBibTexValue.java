@@ -4,9 +4,15 @@ import org.jbibtex.StringValue;
 
 public class DummyBibTexValue extends StringValue {
 
+    private String value = "";
 
     public DummyBibTexValue() {
         super("", Style.BRACED);
+    }
+
+    public DummyBibTexValue(String value) {
+        super("", Style.BRACED);
+        this.value = value;
     }
 
     @Override
@@ -16,6 +22,6 @@ public class DummyBibTexValue extends StringValue {
 
     @Override
     public String toUserString() {
-        return "";
+        return value;
     }
 }

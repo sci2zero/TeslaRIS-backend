@@ -26,11 +26,11 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     Optional<Event> findEventByOldId(Integer oldId);
 
     @Query("SELECT CASE WHEN COUNT(e) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Event e WHERE e.confId = :confId AND e.id <> :id")
+        "FROM Event e WHERE e.confId = :confId AND (:id IS NULL OR e.id <> :id)")
     boolean existsByConfId(String confId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(e) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Event e WHERE e.openAlexId = :openAlexId AND e.id <> :id")
+        "FROM Event e WHERE e.openAlexId = :openAlexId AND (:id IS NULL OR e.id <> :id)")
     boolean existsByOpenAlexId(String openAlexId, Integer id);
 
     @Query("SELECT DISTINCT inst.id " +

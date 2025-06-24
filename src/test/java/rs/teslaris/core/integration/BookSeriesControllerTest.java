@@ -32,8 +32,8 @@ public class BookSeriesControllerTest extends BaseTest {
         var bookSeriesDTO = new BookSeriesDTO();
         bookSeriesDTO.setTitle(dummyMC);
         bookSeriesDTO.setNameAbbreviation(dummyMC);
-        bookSeriesDTO.setEissn("1234-5678");
-        bookSeriesDTO.setPrintISSN("8765-4321");
+        bookSeriesDTO.setEissn("1233-5678");
+        bookSeriesDTO.setPrintISSN("8865-4321");
 
         var contribution =
             new PersonPublicationSeriesContributionDTO(
@@ -81,8 +81,8 @@ public class BookSeriesControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_BOOK_SERIES")).andExpect(status().isCreated())
-            .andExpect(jsonPath("$.printISSN").value("8765-4321"))
-            .andExpect(jsonPath("$.eissn").value("1234-5678"));
+            .andExpect(jsonPath("$.printISSN").value("8865-4321"))
+            .andExpect(jsonPath("$.eissn").value("1233-5678"));
     }
 
     @Test

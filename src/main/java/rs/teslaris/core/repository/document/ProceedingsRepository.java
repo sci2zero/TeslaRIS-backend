@@ -21,11 +21,11 @@ public interface ProceedingsRepository extends JpaRepository<Proceedings, Intege
     boolean hasPublications(Integer proceedingsId);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Proceedings p WHERE (p.eISBN = :eISBN OR p.printISBN = :eISBN) AND p.id <> :id")
+        "FROM Proceedings p WHERE (p.eISBN = :eISBN OR p.printISBN = :eISBN) AND (:id IS NULL OR p.id <> :id)")
     boolean existsByeISBN(String eISBN, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Proceedings p WHERE (p.printISBN = :printISBN OR p.eISBN = :printISBN) AND p.id <> :id")
+        "FROM Proceedings p WHERE (p.printISBN = :printISBN OR p.eISBN = :printISBN) AND (:id IS NULL OR p.id <> :id)")
     boolean existsByPrintISBN(String printISBN, Integer id);
 
     @Query(value = "SELECT * FROM proceedings p WHERE " +
