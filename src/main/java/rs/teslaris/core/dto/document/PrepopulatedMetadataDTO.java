@@ -36,4 +36,6 @@ public class PrepopulatedMetadataDTO {
     private String endPage;
 
     private String url;
+
+    private String doi;
 }

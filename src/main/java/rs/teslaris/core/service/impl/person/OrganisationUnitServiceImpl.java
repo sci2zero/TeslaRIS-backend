@@ -218,7 +218,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             addInstitutionFilter(b, personId, topLevelInstitutionId);
 
             if (Objects.nonNull(onlyReturnOnesWhichCanHarvest) && onlyReturnOnesWhichCanHarvest) {
-                b.must(mbb -> mbb.exists(e -> e.field("scopus_afid")));
+                b.must(mbb -> mbb.bool(bq -> bq
+                    .should(sh -> sh.exists(e -> e.field("scopus_afid")))
+                    .should(sh -> sh.exists(e -> e.field("open_alex_id")))
+                ));
             }
 
             tokens.forEach(token -> {

@@ -108,8 +108,18 @@ public class CommonHarvestController {
                 newEntriesCount).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
+            openAlexHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
+                dateTo,
+                newEntriesCount).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
         } else if (userRole.equals(UserRole.ADMIN.name())) {
             scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
+                dateFrom, dateTo,
+                newEntriesCount).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+            openAlexHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
                 dateFrom, dateTo,
                 newEntriesCount).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
