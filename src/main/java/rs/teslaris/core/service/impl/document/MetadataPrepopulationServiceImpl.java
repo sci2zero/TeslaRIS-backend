@@ -1,8 +1,10 @@
 package rs.teslaris.core.service.impl.document;
 
+import jakarta.annotation.Nullable;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MetadataPrepopulationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -41,6 +44,8 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
     private final PersonService personService;
 
     private final JournalService journalService;
+
+    private final ConferenceService conferenceService;
 
     private final LanguageTagService languageTagService;
 
@@ -72,10 +77,6 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         var response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
         var body = response.getBody();
 
-        if (Objects.nonNull(body)) {
-            System.out.println("Fetched BibTeX:\n" + body);
-        }
-
         return body;
     }
 
@@ -88,69 +89,129 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
 
         database.getEntries().entrySet().stream().findFirst().ifPresent(entry -> {
             BibTeXEntry bibEntry = entry.getValue();
-            LaTeXParser latexParser = null;
-            try {
-                latexParser = new LaTeXParser();
-            } catch (ParseException e) {
-                log.error("Error during BibTex LaTex parsing: {}", e.getMessage());
-            }
+            LaTeXParser latexParser = createLatexParser();
             var printer = new LaTeXPrinter();
 
             var type = bibEntry.getType().getValue();
             metadata.setDocumentPublicationType(mapBibtexTypeToPublicationType(type));
 
-            // Title
-            var titleValue = bibEntry.getField(BibTeXEntry.KEY_TITLE);
-            if (Objects.nonNull(titleValue)) {
-                String title = titleValue.toUserString();
-                var english = languageTagService.findLanguageTagByValue("EN");
-                metadata.getTitle().add(new MultilingualContentDTO(
-                    english.getId(), english.getLanguageTag(), title, 1));
-            }
-
-            // Authors
-            var authorValue = bibEntry.getField(BibTeXEntry.KEY_AUTHOR);
-            if (Objects.nonNull(authorValue) && Objects.nonNull(latexParser)) {
-                String parsedAuthors;
-                try {
-                    parsedAuthors = printer.print(latexParser.parse(authorValue.toUserString()));
-                    var authors = parsedAuthors.split(" and ");
-                    metadata.setContributions(
-                        resolveContributionsFromAuthorNames(authors, importPersonId));
-                } catch (ParseException e) {
-                    log.error("Error during BibTex author parsing: {}", e.getMessage());
-                }
-            }
-
-            // Published In
-            metadata.setPublishedInName(getStringField(bibEntry, BibTeXEntry.KEY_JOURNAL));
-            if (metadata.getDocumentPublicationType() ==
-                DocumentPublicationType.JOURNAL_PUBLICATION) {
-                var issn = getStringField(bibEntry, new Key("ISSN"));
-                if (!issn.isEmpty()) {
-                    var journal = journalService.readJournalByIssn(issn, issn);
-                    if (Objects.nonNull(journal)) {
-                        metadata.setPublishEntityId(journal.getDatabaseId());
-                    }
-                }
-            } else if (metadata.getDocumentPublicationType() ==
-                DocumentPublicationType.PROCEEDINGS_PUBLICATION
-                && metadata.getPublishedInName().isEmpty()) {
-                metadata.setPublishedInName(getStringField(bibEntry, BibTeXEntry.KEY_BOOKTITLE));
-            }
-
-            // Volume, Issue, URL, Year
-            metadata.setVolume(getStringField(bibEntry, BibTeXEntry.KEY_VOLUME));
-            metadata.setIssue(getStringField(bibEntry, BibTeXEntry.KEY_NUMBER));
-            metadata.setUrl(getStringField(bibEntry, BibTeXEntry.KEY_URL));
-            metadata.setYear(
-                getIntField(bibEntry, BibTeXEntry.KEY_YEAR, LocalDate.now().getYear()));
-
-            // Pages
-            setPageInfo(metadata, bibEntry.getField(new Key("pages")));
+            setTitle(metadata, bibEntry);
+            setAuthors(metadata, bibEntry, latexParser, printer, importPersonId);
+            setPublishedInAndEntity(metadata, bibEntry);
+            setAdditionalFields(metadata, bibEntry);
         });
 
         return metadata;
+    }
+
+    private LaTeXParser createLatexParser() {
+        try {
+            return new LaTeXParser();
+        } catch (ParseException e) {
+            log.error("Error during BibTex LaTex parsing: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private void setTitle(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
+        var titleValue = bibEntry.getField(BibTeXEntry.KEY_TITLE);
+        if (Objects.nonNull(titleValue)) {
+            var title = titleValue.toUserString();
+            var english = languageTagService.findLanguageTagByValue("EN");
+            metadata.getTitle().add(new MultilingualContentDTO(
+                english.getId(), english.getLanguageTag(), title, 1));
+        }
+    }
+
+    private void setAuthors(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry,
+                            LaTeXParser latexParser, LaTeXPrinter printer, Integer importPersonId) {
+        var authorValue = bibEntry.getField(BibTeXEntry.KEY_AUTHOR);
+        if (Objects.nonNull(authorValue) && Objects.nonNull(latexParser)) {
+            try {
+                var parsedAuthors = printer.print(latexParser.parse(authorValue.toUserString()));
+                var authors = parsedAuthors.split(" and ");
+                metadata.setContributions(resolveContributionsFromAuthorNames(authors, importPersonId));
+            } catch (ParseException e) {
+                log.error("Error during BibTex author parsing: {}", e.getMessage());
+            }
+        }
+    }
+
+    private void setPublishedInAndEntity(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
+        metadata.setPublishedInName(getStringField(bibEntry, BibTeXEntry.KEY_JOURNAL));
+
+        if (metadata.getDocumentPublicationType() == DocumentPublicationType.JOURNAL_PUBLICATION) {
+            handleJournalPublication(metadata, bibEntry);
+        } else if (metadata.getDocumentPublicationType() == DocumentPublicationType.PROCEEDINGS_PUBLICATION) {
+            handleProceedingsPublication(metadata, bibEntry);
+        }
+    }
+
+    private void handleJournalPublication(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
+        var issn = getStringField(bibEntry, new Key("ISSN"));
+        if (!issn.isEmpty()) {
+            var journal = journalService.readJournalByIssn(issn, issn);
+            if (Objects.nonNull(journal)) {
+                metadata.setPublishEntityId(journal.getDatabaseId());
+            }
+        }
+
+        if (Objects.isNull(metadata.getPublishEntityId())) {
+            journalService.searchJournals(List.of(metadata.getPublishedInName().split(" ")),
+                    PageRequest.of(0, 3), null).getContent()
+                .stream()
+                .filter(journal ->
+                    Arrays.stream(journal.getTitleSr().split("\\|"))
+                        .anyMatch(titleVariant -> titleVariant.trim().equalsIgnoreCase(metadata.getPublishedInName().trim())) &&
+                        Arrays.stream(journal.getTitleOther().split("\\|"))
+                            .anyMatch(titleVariant -> titleVariant.trim().equalsIgnoreCase(metadata.getPublishedInName().trim())))
+                .findFirst()
+                .ifPresent(foundMatch -> {
+                    metadata.setPublishEntityId(foundMatch.getDatabaseId());
+                    metadata.setPublishedInName(foundMatch.getTitleOther());
+                });
+        }
+    }
+
+    private void handleProceedingsPublication(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
+        if (metadata.getPublishedInName().isEmpty()) {
+            metadata.setPublishedInName(getStringField(bibEntry, BibTeXEntry.KEY_BOOKTITLE));
+        }
+
+        if (metadata.getPublishedInName().toLowerCase().contains("proceedings")) {
+            metadata.setPublishedInName(
+                metadata.getPublishedInName()
+                    .replace("Proceedings of the", "")
+                    .replace("Proceedings of", "")
+                    .replace("Proceedings", "")
+                    .replace("proceedings", "")
+                    .trim());
+        }
+
+        conferenceService.searchConferences(
+                List.of(metadata.getPublishedInName().split(" ")),
+                PageRequest.of(0, 3),
+                false, false,
+                null, null).getContent()
+            .stream()
+            .filter(conference ->
+                conference.getNameSr().trim().equalsIgnoreCase(metadata.getPublishedInName().trim()) ||
+                    conference.getNameOther().trim().equalsIgnoreCase(metadata.getPublishedInName().trim()))
+            .findFirst()
+            .ifPresent(foundMatch -> {
+                metadata.setPublishEntityId(foundMatch.getDatabaseId());
+                metadata.setPublishedInName(foundMatch.getNameOther());
+            });
+    }
+
+    private void setAdditionalFields(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
+        metadata.setVolume(getStringField(bibEntry, BibTeXEntry.KEY_VOLUME));
+        metadata.setIssue(getStringField(bibEntry, BibTeXEntry.KEY_NUMBER));
+        metadata.setUrl(getStringField(bibEntry, BibTeXEntry.KEY_URL));
+        metadata.setYear(getIntField(bibEntry, BibTeXEntry.KEY_YEAR, LocalDate.now().getYear()));
+        metadata.setDoi(getStringField(bibEntry, BibTeXEntry.KEY_DOI));
+
+        setPageInfo(metadata, bibEntry.getField(new Key("pages")));
     }
 
     private String getStringField(BibTeXEntry entry, Key key) {
@@ -228,6 +289,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
             null, null);
     }
 
+    @Nullable
     private DocumentPublicationType mapBibtexTypeToPublicationType(String bibtexType) {
         if (Objects.isNull(bibtexType)) {
             return null;
@@ -236,13 +298,14 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         return switch (bibtexType.toLowerCase()) {
             case "article" -> DocumentPublicationType.JOURNAL_PUBLICATION;
             case "book", "booklet" -> DocumentPublicationType.MONOGRAPH;
-            case "conference", "inproceedings" -> DocumentPublicationType.PROCEEDINGS_PUBLICATION;
-            case "inbook", "incollection" -> DocumentPublicationType.MONOGRAPH_PUBLICATION;
+            case "conference", "inproceedings", "inbook" ->
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION;
+            case "incollection" -> DocumentPublicationType.MONOGRAPH_PUBLICATION;
             case "manual" -> DocumentPublicationType.SOFTWARE; // Closest guess; could be custom
             case "masterthesis", "phdthesis" -> DocumentPublicationType.THESIS;
             case "proceedings" -> DocumentPublicationType.PROCEEDINGS;
             case "techreport" -> DocumentPublicationType.DATASET; // or SOFTWARE if more accurate
-            case "misc" -> DocumentPublicationType.SOFTWARE; // catch-all; choose based on context
+            case "misc" -> null; // catch-all; choose based on context
             case "unpublished" -> DocumentPublicationType.JOURNAL_PUBLICATION; // assumption
             default -> null; // or throw an exception if needed
         };
