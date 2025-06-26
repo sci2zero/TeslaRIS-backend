@@ -183,6 +183,16 @@ public class CommonLoadController {
             getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
     }
 
+    @PatchMapping("/prepare-for-overwriting/{oldDocumentId}")
+    @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
+    public void prepareOldDocumentForOverwriting(
+        @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable Integer oldDocumentId) {
+        loader.prepareOldDocumentForOverwriting(tokenUtil.extractUserIdFromToken(bearerToken),
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId), oldDocumentId);
+    }
+
     @Nullable
     private Integer getOrganisationUnitIdFromToken(String bearerToken,
                                                    Integer providedInstitutionId) {

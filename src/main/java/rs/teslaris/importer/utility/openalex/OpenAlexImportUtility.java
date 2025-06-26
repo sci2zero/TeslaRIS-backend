@@ -8,7 +8,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,47 +25,52 @@ public class OpenAlexImportUtility {
     private final RestTemplateProvider restTemplateProvider;
 
 
-    public List<OpenAlexPublication> getPublicationsForAuthor(String openAlexId, String dateFrom,
-                                                              String dateTo,
-                                                              Boolean institutionLevelHarvest) {
+    public List<OpenAlexPublication> getPublicationsForAuthors(List<String> openAlexIds,
+                                                               String dateFrom,
+                                                               String dateTo,
+                                                               Boolean institutionLevelHarvest) {
         List<OpenAlexPublication> allResults = new ArrayList<>();
-        var baseUrl = "https://api.openalex.org/works?per-page=100" +
-            "&filter=" +
-            (institutionLevelHarvest ? "authorships.institutions.lineage:" : "author.id:") +
-            openAlexId +
-            ",from_publication_date:" + dateFrom +
-            ",to_publication_date:" + dateTo;
-
-        var cursor = "*";  // start with initial cursor
         var objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        try {
-            while (Objects.nonNull(cursor)) {
-                String paginatedUrl =
-                    baseUrl + "&cursor=" + URLEncoder.encode(cursor, StandardCharsets.UTF_8);
-                ResponseEntity<String> responseEntity =
-                    restTemplateProvider.provideRestTemplate()
-                        .getForEntity(paginatedUrl, String.class);
+        for (String openAlexId : openAlexIds) {
+            String baseUrl = "https://api.openalex.org/works?per-page=100" +
+                "&filter=" +
+                (institutionLevelHarvest ? "authorships.institutions.lineage:" : "author.id:") +
+                openAlexId +
+                ",from_publication_date:" + dateFrom +
+                ",to_publication_date:" + dateTo;
 
-                if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                    break;
+            String cursor = "*";
+
+            try {
+                while (cursor != null) {
+                    String paginatedUrl =
+                        baseUrl + "&cursor=" + URLEncoder.encode(cursor, StandardCharsets.UTF_8);
+                    ResponseEntity<String> responseEntity =
+                        restTemplateProvider.provideRestTemplate()
+                            .getForEntity(paginatedUrl, String.class);
+
+                    if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                        break;
+                    }
+
+                    OpenAlexResults results =
+                        objectMapper.readValue(responseEntity.getBody(), OpenAlexResults.class);
+
+                    if (results.results() != null) {
+                        allResults.addAll(results.results());
+                    }
+
+                    cursor = (results.meta() != null) ? results.meta().nextCursor() : null;
                 }
-
-                var results =
-                    objectMapper.readValue(responseEntity.getBody(), OpenAlexResults.class);
-                if (Objects.nonNull(results.results())) {
-                    allResults.addAll(results.results());
-                }
-
-                cursor = Objects.nonNull(results.meta()) ? results.meta().nextCursor() : null;
+            } catch (HttpClientErrorException e) {
+                log.error("HTTP error for OpenAlex ID {}: {}", openAlexId, e.getMessage());
+            } catch (JsonProcessingException e) {
+                log.error("JSON parsing error for OpenAlex ID {}: {}", openAlexId, e.getMessage());
+            } catch (ResourceAccessException e) {
+                log.error("OpenAlex is unreachable for ID {}: {}", openAlexId, e.getMessage());
             }
-        } catch (HttpClientErrorException e) {
-            log.error("HTTP error fetching OpenAlex works: {}", e.getMessage());
-        } catch (JsonProcessingException e) {
-            log.error("JSON parsing error: {}", e.getMessage());
-        } catch (ResourceAccessException e) {
-            log.error("OpenAlex is unreachable: {}", e.getMessage());
         }
 
         return allResults;

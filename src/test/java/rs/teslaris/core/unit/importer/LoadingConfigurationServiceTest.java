@@ -50,7 +50,7 @@ public class LoadingConfigurationServiceTest {
     public void shouldSaveNewLoadingConfigurationWhenNotExists() {
         // Given
         var institutionId = 1;
-        var dto = new LoadingConfigurationDTO(true, false);
+        var dto = new LoadingConfigurationDTO(true, false, false);
         when(loadingConfigurationRepository.getLoadingConfigurationForInstitution(institutionId))
             .thenReturn(Optional.empty());
         var institution = new OrganisationUnit();
@@ -67,6 +67,7 @@ public class LoadingConfigurationServiceTest {
 
         assertTrue(saved.getSmartLoadingByDefault());
         assertFalse(saved.getLoadedEntitiesAreUnmanaged());
+        assertFalse(saved.getPriorityLoading());
         assertEquals(institution, saved.getInstitution());
     }
 
@@ -74,7 +75,7 @@ public class LoadingConfigurationServiceTest {
     public void shouldUpdateExistingLoadingConfiguration() {
         // Given
         Integer institutionId = 1;
-        var dto = new LoadingConfigurationDTO(false, true);
+        var dto = new LoadingConfigurationDTO(false, true, true);
         var existing = new LoadingConfiguration();
         existing.setInstitution(new OrganisationUnit());
 
@@ -88,6 +89,7 @@ public class LoadingConfigurationServiceTest {
         verify(loadingConfigurationRepository).save(existing);
         assertFalse(existing.getSmartLoadingByDefault());
         assertTrue(existing.getLoadedEntitiesAreUnmanaged());
+        assertTrue(existing.getPriorityLoading());
     }
 
     @Test

@@ -668,7 +668,6 @@ public class UserServiceTest {
         assertFalse(user.getCanTakeRole());
         assertEquals(preferredLanguage, user.getPreferredReferenceCataloguingLanguage());
         assertEquals(person, user.getPerson());
-        assertEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
     }
 

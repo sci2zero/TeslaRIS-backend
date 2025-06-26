@@ -37,7 +37,7 @@ public class LoadingConfigurationControllerTest extends BaseTest {
     public void testSaveLoadingConfiguration() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var configurationDTO = new LoadingConfigurationDTO(true, false);
+        var configurationDTO = new LoadingConfigurationDTO(true, false, true);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(

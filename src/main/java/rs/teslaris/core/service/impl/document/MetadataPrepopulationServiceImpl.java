@@ -130,7 +130,8 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
             try {
                 var parsedAuthors = printer.print(latexParser.parse(authorValue.toUserString()));
                 var authors = parsedAuthors.split(" and ");
-                metadata.setContributions(resolveContributionsFromAuthorNames(authors, importPersonId));
+                metadata.setContributions(
+                    resolveContributionsFromAuthorNames(authors, importPersonId));
             } catch (ParseException e) {
                 log.error("Error during BibTex author parsing: {}", e.getMessage());
             }
@@ -142,7 +143,8 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
 
         if (metadata.getDocumentPublicationType() == DocumentPublicationType.JOURNAL_PUBLICATION) {
             handleJournalPublication(metadata, bibEntry);
-        } else if (metadata.getDocumentPublicationType() == DocumentPublicationType.PROCEEDINGS_PUBLICATION) {
+        } else if (metadata.getDocumentPublicationType() ==
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION) {
             handleProceedingsPublication(metadata, bibEntry);
         }
     }
@@ -162,9 +164,11 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
                 .stream()
                 .filter(journal ->
                     Arrays.stream(journal.getTitleSr().split("\\|"))
-                        .anyMatch(titleVariant -> titleVariant.trim().equalsIgnoreCase(metadata.getPublishedInName().trim())) &&
+                        .anyMatch(titleVariant -> titleVariant.trim()
+                            .equalsIgnoreCase(metadata.getPublishedInName().trim())) &&
                         Arrays.stream(journal.getTitleOther().split("\\|"))
-                            .anyMatch(titleVariant -> titleVariant.trim().equalsIgnoreCase(metadata.getPublishedInName().trim())))
+                            .anyMatch(titleVariant -> titleVariant.trim()
+                                .equalsIgnoreCase(metadata.getPublishedInName().trim())))
                 .findFirst()
                 .ifPresent(foundMatch -> {
                     metadata.setPublishEntityId(foundMatch.getDatabaseId());
@@ -173,7 +177,8 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         }
     }
 
-    private void handleProceedingsPublication(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
+    private void handleProceedingsPublication(PrepopulatedMetadataDTO metadata,
+                                              BibTeXEntry bibEntry) {
         if (metadata.getPublishedInName().isEmpty()) {
             metadata.setPublishedInName(getStringField(bibEntry, BibTeXEntry.KEY_BOOKTITLE));
         }
@@ -195,8 +200,10 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
                 null, null).getContent()
             .stream()
             .filter(conference ->
-                conference.getNameSr().trim().equalsIgnoreCase(metadata.getPublishedInName().trim()) ||
-                    conference.getNameOther().trim().equalsIgnoreCase(metadata.getPublishedInName().trim()))
+                conference.getNameSr().trim()
+                    .equalsIgnoreCase(metadata.getPublishedInName().trim()) ||
+                    conference.getNameOther().trim()
+                        .equalsIgnoreCase(metadata.getPublishedInName().trim()))
             .findFirst()
             .ifPresent(foundMatch -> {
                 metadata.setPublishEntityId(foundMatch.getDatabaseId());
