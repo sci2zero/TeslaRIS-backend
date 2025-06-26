@@ -27,6 +27,9 @@ public class LoadingConfiguration extends BaseEntity {
     @Column(name = "loaded_entities_are_unmanaged")
     private Boolean loadedEntitiesAreUnmanaged;
 
+    @Column(name = "priority_loading")
+    private Boolean priorityLoading;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "institution_id", nullable = false)
     private OrganisationUnit institution;

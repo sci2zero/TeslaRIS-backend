@@ -31,17 +31,17 @@ public class OrgUnitEditCheckAspect {
         var attributeMap = AspectUtil.getUriVariables(request);
 
         var role = UserRole.valueOf(tokenUtil.extractUserRoleFromToken(tokenValue));
-        var userId = tokenUtil.extractUserIdFromToken(tokenValue);
         var organisationUnitId = Integer.parseInt(attributeMap.get("organisationUnitId"));
-
-        var subUnitIds =
-            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
         switch (role) {
             case ADMIN:
                 break;
             case INSTITUTIONAL_EDITOR:
-                if (!subUnitIds.contains(userService.getUserOrganisationUnitId(userId))) {
+                var userId = tokenUtil.extractUserIdFromToken(tokenValue);
+                var editableOUs =
+                    organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                        userService.getUserOrganisationUnitId(userId));
+                if (!editableOUs.contains(organisationUnitId)) {
                     throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
                 }
                 break;

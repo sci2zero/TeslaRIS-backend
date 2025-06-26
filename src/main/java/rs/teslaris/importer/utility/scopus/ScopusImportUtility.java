@@ -29,7 +29,7 @@ public class ScopusImportUtility {
     private final ScopusAuthenticationHelper scopusAuthenticationHelper;
 
 
-    public List<ScopusSearchResponse> getDocumentsByIdentifier(String identifier,
+    public List<ScopusSearchResponse> getDocumentsByIdentifier(List<String> identifiers,
                                                                Boolean authorIdentifier,
                                                                Integer startYear,
                                                                Integer endYear) {
@@ -40,30 +40,33 @@ public class ScopusImportUtility {
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
             var identifiedEntity = authorIdentifier ? "AU" : "AF";
-            for (int i = startYear; i <= endYear; i++) {
-                var url =
-                    "https://api.elsevier.com/content/search/scopus?query=" + identifiedEntity +
-                        "-ID(" + identifier +
-                        ")&count=25&date=" + i + "&view=COMPLETE";
-                var response =
-                    getDocumentsByQuery(url, ScopusSearchResponse.class, restTemplate,
-                        objectMapper);
-                if (Objects.nonNull(response)) {
-                    retVal.add(response);
-                    var numberOfDocumentsInYear =
-                        Integer.parseInt(response.searchResults().totalResults());
+            for (var identifier : identifiers) {
+                for (int i = startYear; i <= endYear; i++) {
+                    var url =
+                        "https://api.elsevier.com/content/search/scopus?query=" + identifiedEntity +
+                            "-ID(" + identifier +
+                            ")&count=25&date=" + i + "&view=COMPLETE";
+                    var response =
+                        getDocumentsByQuery(url, ScopusSearchResponse.class, restTemplate,
+                            objectMapper);
+                    if (Objects.nonNull(response)) {
+                        retVal.add(response);
+                        var numberOfDocumentsInYear =
+                            Integer.parseInt(response.searchResults().totalResults());
 
-                    for (int j = 25; j < numberOfDocumentsInYear; j += 25) {
-                        var urlYear =
-                            "https://api.elsevier.com/content/search/scopus?query=" +
-                                identifiedEntity + "-ID(" +
-                                identifier + ")&start=" + j + "&count=25&date=" + i +
-                                "&view=COMPLETE";
-                        var responseYear =
-                            getDocumentsByQuery(urlYear, ScopusSearchResponse.class, restTemplate,
-                                objectMapper);
-                        if (Objects.nonNull(responseYear)) {
-                            retVal.add(responseYear);
+                        for (int j = 25; j < numberOfDocumentsInYear; j += 25) {
+                            var urlYear =
+                                "https://api.elsevier.com/content/search/scopus?query=" +
+                                    identifiedEntity + "-ID(" +
+                                    identifier + ")&start=" + j + "&count=25&date=" + i +
+                                    "&view=COMPLETE";
+                            var responseYear =
+                                getDocumentsByQuery(urlYear, ScopusSearchResponse.class,
+                                    restTemplate,
+                                    objectMapper);
+                            if (Objects.nonNull(responseYear)) {
+                                retVal.add(responseYear);
+                            }
                         }
                     }
                 }

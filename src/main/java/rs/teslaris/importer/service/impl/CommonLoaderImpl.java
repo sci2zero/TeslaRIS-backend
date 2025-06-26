@@ -365,15 +365,7 @@ public class CommonLoaderImpl implements CommonLoader {
                                      LoadProgressReport progressReport) {
         if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0 &&
             Objects.nonNull(deleteOldDocument)) {
-            var doi = Objects.requireNonNullElse(updatedRecord.getDoi(), "");
-            var scopus =
-                Objects.requireNonNullElse(updatedRecord.getScopusId(), "");
-            var titles = updatedRecord.getTitle().stream().map(
-                MultilingualContent::getContent).toList();
-            var potentialDuplicateIds =
-                documentPublicationService.findDocumentDuplicates(titles, doi, scopus).getContent()
-                    .stream().map(
-                        DocumentPublicationIndex::getDatabaseId).toList();
+            var potentialDuplicateIds = fetchPotentialDuplicateIds(updatedRecord);
 
             if (!potentialDuplicateIds.contains(oldDocumentId)) {
                 return;
@@ -386,6 +378,37 @@ public class CommonLoaderImpl implements CommonLoader {
                 oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
                 documentPublicationService.save(oldDocument);
             }
+        }
+    }
+
+    private List<Integer> fetchPotentialDuplicateIds(DocumentImport record) {
+        var doi = Objects.requireNonNullElse(record.getDoi(), "");
+        var scopus =
+            Objects.requireNonNullElse(record.getScopusId(), "");
+        var titles = record.getTitle().stream().map(
+            MultilingualContent::getContent).toList();
+
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopus).getContent()
+            .stream().map(
+                DocumentPublicationIndex::getDatabaseId).toList();
+    }
+
+    @Override
+    public void prepareOldDocumentForOverwriting(Integer userId, Integer institutionId,
+                                                 Integer oldDocumentId) {
+        var currentlyLoadedEntity = retrieveCurrentlyLoadedEntity(userId, institutionId);
+
+        if (Objects.isNull(currentlyLoadedEntity)) {
+            throw new NotFoundException("No entity is being loaded at the moment.");
+        }
+
+        var potentialDuplicateIds = fetchPotentialDuplicateIds(currentlyLoadedEntity);
+        if (potentialDuplicateIds.contains(oldDocumentId)) {
+            var document = documentPublicationService.findOne(oldDocumentId);
+            document.setDoi("");
+            document.setScopusId("");
+            document.setOpenAlexId("");
+            documentPublicationService.save(document);
         }
     }
 

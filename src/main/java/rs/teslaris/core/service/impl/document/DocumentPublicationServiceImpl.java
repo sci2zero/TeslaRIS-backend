@@ -784,18 +784,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 });
                 return bq;
             });
-            b.must(bq -> {
-                bq.bool(eq -> {
-                    eq.should(sb -> sb.match(
-                        m -> m.field("type")
-                            .query(DocumentPublicationType.JOURNAL_PUBLICATION.name())));
-                    eq.should(sb -> sb.match(
-                        m -> m.field("type")
-                            .query(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name())));
-                    return eq;
-                });
-                return bq;
-            });
             return b;
         })))._toQuery();
     }

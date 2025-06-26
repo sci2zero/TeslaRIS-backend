@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -52,7 +54,7 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
         var adminUserIds = CommonImportUtility.getAdminUserIds();
 
         var harvestedRecords =
-            openAlexImportUtility.getPublicationsForAuthor(person.getOpenAlexId(),
+            openAlexImportUtility.getPublicationsForAuthors(List.of(person.getOpenAlexId()),
                 startDate.toString(),
                 endDate.toString(), false);
 
@@ -81,12 +83,62 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
         var adminUserIds = CommonImportUtility.getAdminUserIds();
         var harvestedRecords =
-            openAlexImportUtility.getPublicationsForAuthor(openAlexId, startDate.toString(),
+            openAlexImportUtility.getPublicationsForAuthors(List.of(openAlexId),
+                startDate.toString(),
                 endDate.toString(), true);
 
         processHarvestedRecords(harvestedRecords, userId, adminUserIds,
             allInstitutionsThatCanImport,
             newEntriesCount);
+
+        return newEntriesCount;
+    }
+
+    @Override
+    public HashMap<Integer, Integer> harvestDocumentsForInstitution(Integer userId,
+                                                                    Integer institutionId,
+                                                                    LocalDate startDate,
+                                                                    LocalDate endDate,
+                                                                    List<Integer> authorIds,
+                                                                    boolean performImportForAllAuthors,
+                                                                    HashMap<Integer, Integer> newEntriesCount) {
+        var organisationUnitId = Objects.nonNull(institutionId) ? institutionId :
+            userService.getUserOrganisationUnitId(userId);
+
+        if (!performImportForAllAuthors && authorIds.isEmpty()) {
+            return newEntriesCount;
+        }
+
+        var allInstitutionsThatCanImport =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+        var adminUserIds = CommonImportUtility.getAdminUserIds();
+
+        List<String> importAuthorIds;
+        if (performImportForAllAuthors) {
+            importAuthorIds =
+                personService.findPeopleForOrganisationUnit(organisationUnitId, Pageable.unpaged(),
+                        false)
+                    .map(PersonIndex::getOpenAlexId)
+                    .stream()
+                    .toList();
+        } else {
+            importAuthorIds =
+                authorIds.stream()
+                    .map(id -> personService.findOne(id).getOpenAlexId())
+                    .toList();
+        }
+
+        var batchSize = 10;
+        for (var i = 0; i < importAuthorIds.size(); i += batchSize) {
+            var batch = importAuthorIds.subList(i, Math.min(i + batchSize, importAuthorIds.size()));
+
+            var harvestedRecords =
+                openAlexImportUtility.getPublicationsForAuthors(batch,
+                    startDate.toString(), endDate.toString(), false);
+
+            processHarvestedRecords(harvestedRecords, userId, adminUserIds,
+                allInstitutionsThatCanImport, newEntriesCount);
+        }
 
         return newEntriesCount;
     }

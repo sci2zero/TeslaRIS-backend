@@ -513,8 +513,6 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         if (role.equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
             user.setFirstname(dto.getFirstname());
             user.setLastName(dto.getLastName());
-            var orgUnit = organisationUnitService.findOne(dto.getOrganisationalUnitId());
-            user.setOrganisationUnit(orgUnit);
         } else if (Set.of(
             UserRole.ADMIN.toString(),
             UserRole.COMMISSION.toString(),

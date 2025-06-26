@@ -45,6 +45,7 @@ public class LoadingConfigurationServiceImpl extends JPAServiceImpl<LoadingConfi
         config.setSmartLoadingByDefault(loadingConfigurationDTO.getSmartLoadingByDefault());
         config.setLoadedEntitiesAreUnmanaged(
             loadingConfigurationDTO.getLoadedEntitiesAreUnmanaged());
+        config.setPriorityLoading(loadingConfigurationDTO.getPriorityLoading());
 
         if (existingConfig.isEmpty()) {
             config.setInstitution(organisationUnitService.findOne(institutionId));
@@ -64,11 +65,11 @@ public class LoadingConfigurationServiceImpl extends JPAServiceImpl<LoadingConfi
             if (config.isPresent()) {
                 var c = config.get();
                 return new LoadingConfigurationDTO(c.getSmartLoadingByDefault(),
-                    c.getLoadedEntitiesAreUnmanaged());
+                    c.getLoadedEntitiesAreUnmanaged(), c.getPriorityLoading());
             }
         }
 
-        return new LoadingConfigurationDTO(true, true);
+        return new LoadingConfigurationDTO(true, true, false);
     }
 
     @Override
@@ -108,10 +109,10 @@ public class LoadingConfigurationServiceImpl extends JPAServiceImpl<LoadingConfi
         if (config.isPresent()) {
             var c = config.get();
             return new LoadingConfigurationDTO(c.getSmartLoadingByDefault(),
-                c.getLoadedEntitiesAreUnmanaged());
+                c.getLoadedEntitiesAreUnmanaged(), c.getPriorityLoading());
         }
 
-        return new LoadingConfigurationDTO(true, true);
+        return new LoadingConfigurationDTO(true, true, false);
     }
 
     @Override

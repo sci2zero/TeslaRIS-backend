@@ -43,4 +43,7 @@ public interface CommonLoader {
 
     void updateManuallySelectedConferenceIdentifiers(Integer selectedConferenceId, Integer userId,
                                                      Integer institutionId);
+
+    void prepareOldDocumentForOverwriting(Integer userId, Integer institutionId,
+                                          Integer oldDocumentId);
 }
