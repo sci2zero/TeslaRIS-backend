@@ -45,7 +45,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                         SearchRequestType searchType,
                                                         Integer personId,
                                                         Integer topLevelInstitutionId,
-                                                        Boolean onlyReturnOnesWhichCanHarvest);
+                                                        Boolean onlyReturnOnesWhichCanHarvest,
+                                                        Boolean onlyIndependent);
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
@@ -72,6 +73,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO organisationUnitsRelation);
+
+    OrganisationUnitsRelationDTO addSubOrganisationUnit(Integer sourceId, Integer targetId);
 
     void editOrganisationUnitsRelation(OrganisationUnitsRelationDTO organisationUnitsRelation,
                                        Integer id);

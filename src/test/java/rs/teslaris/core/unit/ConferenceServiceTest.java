@@ -254,7 +254,7 @@ public class ConferenceServiceTest {
         conferenceService.reindexConference(1);
 
         // then
-        verify(eventIndexRepository, times(1)).save(any());
+        verify(eventIndexRepository, times(2)).save(any());
     }
 
     @Test

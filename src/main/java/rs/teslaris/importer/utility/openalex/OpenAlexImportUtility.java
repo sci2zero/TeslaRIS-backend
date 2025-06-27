@@ -4,10 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -44,9 +43,8 @@ public class OpenAlexImportUtility {
             String cursor = "*";
 
             try {
-                while (cursor != null) {
-                    String paginatedUrl =
-                        baseUrl + "&cursor=" + URLEncoder.encode(cursor, StandardCharsets.UTF_8);
+                while (Objects.nonNull(cursor)) {
+                    String paginatedUrl = baseUrl + "&cursor=" + cursor;
                     ResponseEntity<String> responseEntity =
                         restTemplateProvider.provideRestTemplate()
                             .getForEntity(paginatedUrl, String.class);
@@ -58,11 +56,11 @@ public class OpenAlexImportUtility {
                     OpenAlexResults results =
                         objectMapper.readValue(responseEntity.getBody(), OpenAlexResults.class);
 
-                    if (results.results() != null) {
+                    if (Objects.nonNull(results.results())) {
                         allResults.addAll(results.results());
                     }
 
-                    cursor = (results.meta() != null) ? results.meta().nextCursor() : null;
+                    cursor = (Objects.nonNull(results.meta())) ? results.meta().nextCursor() : null;
                 }
             } catch (HttpClientErrorException e) {
                 log.error("HTTP error for OpenAlex ID {}: {}", openAlexId, e.getMessage());

@@ -152,12 +152,13 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 personService.findPeopleForOrganisationUnit(organisationUnitId, Pageable.unpaged(),
                         false)
                     .map(PersonIndex::getScopusAuthorId)
-                    .stream()
+                    .filter(openAlexId -> Objects.nonNull(openAlexId) && !openAlexId.isBlank())
                     .toList();
         } else {
             importAuthorIds =
                 authorIds.stream()
                     .map(id -> personService.findOne(id).getScopusAuthorId())
+                    .filter(openAlexId -> Objects.nonNull(openAlexId) && !openAlexId.isBlank())
                     .toList();
         }
 

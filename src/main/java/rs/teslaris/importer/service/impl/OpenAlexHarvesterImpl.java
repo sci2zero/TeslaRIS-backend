@@ -119,12 +119,13 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                 personService.findPeopleForOrganisationUnit(organisationUnitId, Pageable.unpaged(),
                         false)
                     .map(PersonIndex::getOpenAlexId)
-                    .stream()
+                    .filter(openAlexId -> Objects.nonNull(openAlexId) && !openAlexId.isBlank())
                     .toList();
         } else {
             importAuthorIds =
                 authorIds.stream()
                     .map(id -> personService.findOne(id).getOpenAlexId())
+                    .filter(openAlexId -> Objects.nonNull(openAlexId) && !openAlexId.isBlank())
                     .toList();
         }
 

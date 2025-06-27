@@ -149,7 +149,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     public void editProceedingsPublication(Integer publicationId,
                                            ProceedingsPublicationDTO publicationDTO) {
         var publicationToUpdate =
-            (ProceedingsPublication) proceedingPublicationJPAService.findOne(publicationId);
+            proceedingPublicationJPAService.findOne(publicationId);
 
         var oldConferenceId = publicationToUpdate.getEvent().getId();
 

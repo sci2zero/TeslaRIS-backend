@@ -24,14 +24,17 @@ public class OpenAlexConverter {
         var document = new DocumentImport();
 
         boolean hasSpecifiedSource = Objects.nonNull(record.primaryLocation().source());
-        var sanitizedOpenAlexId =
-            record.primaryLocation().source().id().replace("https://openalex.org/", "");
+        String sourceId = "";
+        if (hasSpecifiedSource) {
+            sourceId = record.primaryLocation().source().id().replace("https://openalex.org/", "");
+        }
+
         if (record.typeCrossref().equals("journal-article") &&
             hasSpecifiedSource) {
             document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
             var journalName = record.primaryLocation().source().displayName();
             document.getPublishedIn().add(new MultilingualContent("EN", journalName, 1));
-            document.setJournalOpenAlexId(sanitizedOpenAlexId);
+            document.setJournalOpenAlexId(sourceId);
 
             if (Objects.nonNull(record.primaryLocation().source().issn())) {
                 var issns = record.primaryLocation().source().issn();
@@ -50,7 +53,7 @@ public class OpenAlexConverter {
                 .add(new MultilingualContent("EN", "Proceedings of " + conferenceName, 1));
 
             var event = new Event();
-            event.setOpenAlexId(sanitizedOpenAlexId);
+            event.setOpenAlexId(sourceId);
             event.getName().add(new MultilingualContent("EN", conferenceName, 1));
         } else {
             return Optional.empty();

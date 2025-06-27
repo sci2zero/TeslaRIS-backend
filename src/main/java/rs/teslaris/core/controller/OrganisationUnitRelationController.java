@@ -18,12 +18,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.OrgUnitEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/organisation-unit-relation")
@@ -32,6 +35,11 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 public class OrganisationUnitRelationController {
 
     private final OrganisationUnitService organisationUnitService;
+
+    private final JwtUtil tokenUtil;
+
+    private final UserService userService;
+
 
     @GetMapping("/get-all/{sourceId}")
     public List<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
@@ -54,6 +62,17 @@ public class OrganisationUnitRelationController {
         relationDTO.setId(newRelation.getId());
 
         return relationDTO;
+    }
+
+    @PostMapping("/{organisationUnitId}/{targetOrganisationUnitId}")
+    @PreAuthorize("hasAnyAuthority('EDIT_OU_RELATIONS', 'ADD_SUB_UNIT')")
+    @OrgUnitEditCheck
+    @Idempotent
+    @ResponseStatus(HttpStatus.CREATED)
+    public OrganisationUnitsRelationDTO addSubOrganisationUnit(
+        @PathVariable Integer organisationUnitId, @PathVariable Integer targetOrganisationUnitId) {
+        return organisationUnitService.addSubOrganisationUnit(organisationUnitId,
+            targetOrganisationUnitId);
     }
 
     @PutMapping("/{relationId}")

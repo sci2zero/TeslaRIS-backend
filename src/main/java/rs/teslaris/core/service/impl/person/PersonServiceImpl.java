@@ -800,8 +800,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personIndex.setDatabaseId(savedPerson.getId());
         personIndex.setOrcid(savedPerson.getOrcid());
-        personIndex.setScopusAuthorId(savedPerson.getScopusAuthorId());
-        personIndex.setOpenAlexId(savedPerson.getOpenAlexId());
+        personIndex.setScopusAuthorId(
+            (Objects.nonNull(savedPerson.getScopusAuthorId()) &&
+                !savedPerson.getScopusAuthorId().isBlank()) ? savedPerson.getScopusAuthorId() :
+                null);
+        personIndex.setOpenAlexId(
+            (Objects.nonNull(savedPerson.getOpenAlexId()) &&
+                !savedPerson.getOpenAlexId().isBlank()) ? savedPerson.getOpenAlexId() : null);
     }
 
     private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
@@ -918,8 +923,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
-                                                           boolean strict, Integer institutionId) {
-        return searchService.runQuery(buildNameAndEmploymentQuery(tokens, strict, institutionId),
+                                                           boolean strict, Integer institutionId,
+                                                           boolean onlyHarvestable) {
+        return searchService.runQuery(
+            buildNameAndEmploymentQuery(tokens, strict, institutionId, onlyHarvestable),
             pageable,
             PersonIndex.class, "person");
     }
@@ -955,7 +962,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
-                                              Integer institutionId) {
+                                              Integer institutionId, boolean onlyHarvestable) {
         return BoolQuery.of(q -> {
             var mustClauses = new ArrayList<Query>();
 
@@ -1014,6 +1021,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 mustClauses.add(TermQuery.of(
                         t -> t.field("employment_institutions_id_hierarchy").value(institutionId))
                     ._toQuery());
+            }
+
+            if (onlyHarvestable) {
+                q.must(mbb -> mbb.bool(bq -> bq
+                    .should(sh -> sh.exists(e -> e.field("scopus_author_id")))
+                    .should(sh -> sh.exists(e -> e.field("open_alex_id")))
+                ));
             }
 
             return q.must(mustClauses);

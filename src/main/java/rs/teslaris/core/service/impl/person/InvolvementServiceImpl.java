@@ -137,6 +137,11 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
             var employmentOU = employment.getOrganisationUnit();
             organisationUnitService.getSuperOUsHierarchyRecursive(employmentOU.getId())
                 .forEach(indirectSuperEmployment -> {
+                    if (directAndIndirectEmployments.stream()
+                        .anyMatch(e -> e.getOrganisationUnitId().equals(indirectSuperEmployment))) {
+                        return;
+                    }
+
                     directAndIndirectEmployments.add(new EmploymentDTO() {{
                         setOrganisationUnitId(indirectSuperEmployment);
                         setOrganisationUnitName(
