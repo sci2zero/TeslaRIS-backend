@@ -32,6 +32,8 @@ public class IdentifierUtil {
             } else {
                 throw new IdentifierException(formatError);
             }
+        } else {
+            setter.accept("");
         }
     }
 

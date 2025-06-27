@@ -100,10 +100,11 @@ public class PersonController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(required = false, defaultValue = "false") boolean strict,
         @RequestParam(required = false, defaultValue = "0") Integer institutionId,
+        @RequestParam(required = false, defaultValue = "false") boolean harvestable,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return personService.findPeopleByNameAndEmployment(tokens,
-            pageable, strict, institutionId);
+            pageable, strict, institutionId, harvestable);
     }
 
     @GetMapping("/import-identifier/{identifier}")

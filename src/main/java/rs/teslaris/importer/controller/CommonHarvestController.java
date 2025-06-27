@@ -14,6 +14,7 @@ import org.apache.tika.Tika;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,6 +31,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.importer.dto.AuthorCentricInstitutionHarvestRequestDTO;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
@@ -90,38 +92,37 @@ public class CommonHarvestController {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
-        var newEntriesCount = new HashMap<Integer, Integer>();
         Map<Integer, Integer> newDocumentImportCountByUser = new HashMap<>();
 
         if (userRole.equals(UserRole.RESEARCHER.name())) {
-            scopusHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo, newEntriesCount)
+            scopusHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo, new HashMap<>())
                 .forEach((key, value) ->
                     newDocumentImportCountByUser.merge(key, value, Integer::sum)
                 );
-            openAlexHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo, newEntriesCount)
+            openAlexHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo, new HashMap<>())
                 .forEach((key, value) ->
                     newDocumentImportCountByUser.merge(key, value, Integer::sum)
                 );
         } else if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
             scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
                 dateTo,
-                newEntriesCount).forEach((key, value) ->
+                new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
             openAlexHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
                 dateTo,
-                newEntriesCount).forEach((key, value) ->
+                new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
         } else if (userRole.equals(UserRole.ADMIN.name())) {
             scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
                 dateFrom, dateTo,
-                newEntriesCount).forEach((key, value) ->
+                new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
             openAlexHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
                 dateFrom, dateTo,
-                newEntriesCount).forEach((key, value) ->
+                new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
         } else {
@@ -140,7 +141,62 @@ public class CommonHarvestController {
                     userService.findOne(key)));
         });
 
+        dispatchNotifications(newDocumentImportCountByUser, userId);
         return newDocumentImportCountByUser.getOrDefault(userId, 0);
+    }
+
+    @PostMapping("/author-centric-for-institution")
+    public Integer performAuthorCentricImportForInstitution(
+        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
+        @RequestParam LocalDate dateTo,
+        @RequestBody AuthorCentricInstitutionHarvestRequestDTO request) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
+
+        Map<Integer, Integer> newDocumentImportCountByUser = new HashMap<>();
+        if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
+            scopusHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
+                dateTo, request.authorIds(), request.allAuthors(),
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+            openAlexHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
+                dateTo, request.authorIds(), request.allAuthors(),
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+        } else if (userRole.equals(UserRole.ADMIN.name())) {
+            scopusHarvester.harvestDocumentsForInstitution(userId, request.institutionId(),
+                dateFrom, dateTo, request.authorIds(), request.allAuthors(),
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+            openAlexHarvester.harvestDocumentsForInstitution(userId, request.institutionId(),
+                dateFrom, dateTo, request.authorIds(), request.allAuthors(),
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+        } else {
+            return 0;
+        }
+
+        dispatchNotifications(newDocumentImportCountByUser, userId);
+        return newDocumentImportCountByUser.getOrDefault(userId, 0);
+    }
+
+    private void dispatchNotifications(Map<Integer, Integer> newDocumentImportCountByUser,
+                                       Integer userId) {
+        newDocumentImportCountByUser.keySet().forEach(key -> {
+            if (Objects.equals(key, userId)) {
+                return;
+            }
+
+            var notificationValues = new HashMap<String, String>();
+            notificationValues.put("newImportCount", newDocumentImportCountByUser.get(key) + "");
+            notificationService.createNotification(
+                NotificationFactory.contructNewImportsNotification(notificationValues,
+                    userService.findOne(key)));
+        });
     }
 
     @GetMapping("/csv-file-format")

@@ -193,7 +193,7 @@ public class CSVExportServiceImpl implements CSVExportService {
 
         return switch (endpointType) {
             case PERSON_SEARCH -> (Page<T>) personService.findPeopleByNameAndEmployment(
-                endpointTokenParameters, pageable, false, null);
+                endpointTokenParameters, pageable, false, null, false);
             case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
@@ -207,7 +207,7 @@ public class CSVExportServiceImpl implements CSVExportService {
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     endpointTokenParameters, pageable,
-                    SearchRequestType.SIMPLE, null, null, null);
+                    SearchRequestType.SIMPLE, null, null, null, null);
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
                 Integer.parseInt(endpointTokenParameters.getFirst()), null, pageable);
             case ORGANISATION_UNIT_OUTPUTS ->

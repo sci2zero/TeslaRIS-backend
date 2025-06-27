@@ -288,6 +288,10 @@ public class OrganisationUnitServiceTest {
     public void shouldDeleteOrganisationUnitsRelation() {
         // given
         var relationId = 1;
+        when(organisationUnitsRelationJPAService.findOne(relationId)).thenReturn(
+            new OrganisationUnitsRelation() {{
+                setSourceOrganisationUnit(new OrganisationUnit());
+            }});
 
         // when
         organisationUnitService.deleteOrganisationUnitsRelation(relationId);
@@ -599,7 +603,7 @@ public class OrganisationUnitServiceTest {
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
                 SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-                onlyReturnOnesWhichCanHarvest);
+                onlyReturnOnesWhichCanHarvest, null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
@@ -1109,6 +1113,75 @@ public class OrganisationUnitServiceTest {
 
         var result = organisationUnitService.canOUEmployeeScanDataSources(3);
         assertTrue(result);
+    }
+
+    @Test
+    void shouldAddSubUnit() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+        when(organisationUnitsRelationRepository.getSuperOU(targetId))
+            .thenReturn(Optional.empty());
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(sourceId)).thenReturn(
+            Optional.of(new OrganisationUnit() {{
+                setId(1);
+            }}));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(targetId)).thenReturn(
+            Optional.of(new OrganisationUnit() {{
+                setId(2);
+            }}));
+
+        OrganisationUnit sourceOU = new OrganisationUnit();
+        sourceOU.setId(targetId);
+        OrganisationUnit targetOU = new OrganisationUnit();
+        targetOU.setId(sourceId);
+
+        OrganisationUnitsRelation savedRelation = new OrganisationUnitsRelation();
+        savedRelation.setId(100);
+        savedRelation.setSourceOrganisationUnit(sourceOU);
+        savedRelation.setTargetOrganisationUnit(targetOU);
+
+        when(organisationUnitsRelationRepository.save(any())).thenReturn(savedRelation);
+        OrganisationUnitIndex mockIndex = new OrganisationUnitIndex();
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(targetId))
+            .thenReturn(Optional.of(mockIndex));
+
+        // When
+        OrganisationUnitsRelationDTO result =
+            organisationUnitService.addSubOrganisationUnit(sourceId, targetId);
+
+        // Then
+        assertEquals(100, result.getId());
+        assertEquals(sourceId, result.getTargetOrganisationUnitId());
+        assertEquals(targetId, result.getSourceOrganisationUnitId());
+        assertEquals(OrganisationUnitRelationType.BELONGS_TO, result.getRelationType());
+
+        verify(organisationUnitsRelationRepository).save(any());
+        verify(organisationUnitIndexRepository).save(mockIndex);
+    }
+
+    @Test
+    void givenExistingSuperRelation_whenAddSubOrganisationUnit_thenThrowsException() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(sourceId)).thenReturn(
+            Optional.of(new OrganisationUnit() {{
+                setId(1);
+            }}));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(targetId)).thenReturn(
+            Optional.of(new OrganisationUnit() {{
+                setId(2);
+            }}));
+        when(organisationUnitsRelationRepository.getSuperOU(targetId))
+            .thenReturn(Optional.of(new OrganisationUnitsRelation()));
+
+        // When / Then
+        assertThrows(OrganisationUnitReferenceConstraintViolationException.class, () ->
+            organisationUnitService.addSubOrganisationUnit(sourceId, targetId)
+        );
+
+        verify(organisationUnitsRelationRepository, never()).save(any());
     }
 
     private MultipartFile createMockMultipartFile() {

@@ -34,44 +34,56 @@ public class ScopusImportUtility {
                                                                Integer startYear,
                                                                Integer endYear) {
         var retVal = new ArrayList<ScopusSearchResponse>();
-        if (scopusAuthenticationHelper.authenticate()) {
-            var restTemplate = scopusAuthenticationHelper.restTemplate;
-            var objectMapper = new ObjectMapper();
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            var identifiedEntity = authorIdentifier ? "AU" : "AF";
-            for (var identifier : identifiers) {
-                for (int i = startYear; i <= endYear; i++) {
-                    var url =
-                        "https://api.elsevier.com/content/search/scopus?query=" + identifiedEntity +
-                            "-ID(" + identifier +
-                            ")&count=25&date=" + i + "&view=COMPLETE";
+        if (!scopusAuthenticationHelper.authenticate()) {
+            return retVal;
+        }
+
+        var restTemplate = scopusAuthenticationHelper.restTemplate;
+        var objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        var idKey = authorIdentifier ? "AU" : "AF";
+
+        for (String identifier : identifiers) {
+            for (int year = startYear; year <= endYear; year++) {
+                int start = 0;
+                int totalResults = Integer.MAX_VALUE;
+
+                while (start < totalResults) {
+                    var url = String.format(
+                        "https://api.elsevier.com/content/search/scopus?query=%s-ID(%s)&start=%d&count=25&date=%d&view=COMPLETE",
+                        idKey, identifier, start, year
+                    );
+
                     var response =
                         getDocumentsByQuery(url, ScopusSearchResponse.class, restTemplate,
                             objectMapper);
-                    if (Objects.nonNull(response)) {
-                        retVal.add(response);
-                        var numberOfDocumentsInYear =
-                            Integer.parseInt(response.searchResults().totalResults());
 
-                        for (int j = 25; j < numberOfDocumentsInYear; j += 25) {
-                            var urlYear =
-                                "https://api.elsevier.com/content/search/scopus?query=" +
-                                    identifiedEntity + "-ID(" +
-                                    identifier + ")&start=" + j + "&count=25&date=" + i +
-                                    "&view=COMPLETE";
-                            var responseYear =
-                                getDocumentsByQuery(urlYear, ScopusSearchResponse.class,
-                                    restTemplate,
-                                    objectMapper);
-                            if (Objects.nonNull(responseYear)) {
-                                retVal.add(responseYear);
+                    if (Objects.isNull(response)) {
+                        break;
+                    }
+
+                    retVal.add(response);
+
+                    if (start == 0) {
+                        // Fetch totalResults only from the first call
+                        try {
+                            totalResults =
+                                Integer.parseInt(response.searchResults().totalResults());
+                            if (totalResults == 0) {
+                                break;
                             }
+                        } catch (NumberFormatException e) {
+                            break;
                         }
                     }
+
+                    start += 25;
                 }
             }
         }
+
         return retVal;
     }
 

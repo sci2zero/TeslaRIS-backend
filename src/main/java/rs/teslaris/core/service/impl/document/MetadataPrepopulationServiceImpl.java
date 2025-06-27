@@ -265,7 +265,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
 
             var personResults =
                 personService.findPeopleByNameAndEmployment(authorNameTokens,
-                    PageRequest.of(0, 5), false, null).getContent();
+                    PageRequest.of(0, 5), false, null, false).getContent();
 
             if (Objects.nonNull(inputPersonId) && !selfBindCompleted && personResults.stream()
                 .anyMatch(index -> index.getDatabaseId().equals(inputPersonId))) {

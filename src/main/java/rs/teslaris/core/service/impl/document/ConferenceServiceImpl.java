@@ -287,6 +287,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         var indexToUpdate =
             eventIndexRepository.findByDatabaseId(conferenceId).orElse(new EventIndex());
         indexConference(conferenceToIndex, indexToUpdate);
+        reindexVolatileConferenceInformation(conferenceId);
     }
 
     @Override
