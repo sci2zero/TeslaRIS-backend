@@ -36,6 +36,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                                 Pageable pageable);
 
     Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(Integer organisationUnitId,
+                                                                       List<String> tokens,
                                                                        Pageable pageable);
 
     Long getPublicationCount();
@@ -65,7 +66,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               List<DocumentPublicationType> allowedTypes);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
-                                                          String scopusId);
+                                                          String scopusId, String openAlexId);
 
     Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
                                                               Integer personId,

@@ -178,7 +178,7 @@ public class TestingDataInitializer {
                                                  Authority headOfLibraryAuthority,
                                                  Authority promotionRegistryAdminAuthority,
                                                  Commission commission5, Commission commission6) {
-        var country = new Country("SRB", new HashSet<>());
+        var country = new Country("SRB", new HashSet<>(), "");
         countryRepository.save(country);
 
         var postalAddress = new PostalAddress(country, new HashSet<>(),
@@ -408,7 +408,8 @@ public class TestingDataInitializer {
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
         var country2 = new Country("MNE",
-            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Crna Gora", 1))));
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Crna Gora", 1))),
+            "crna gora");
         countryRepository.saveAll(List.of(country, country2));
 
         datasetContribution.getAffiliationStatement().setDisplayPersonName(

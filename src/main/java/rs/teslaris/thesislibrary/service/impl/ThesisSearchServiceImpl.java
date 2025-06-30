@@ -175,7 +175,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                 }
                 eq.should(sb -> sb.wildcard(
                         m -> m.field("title_sr")
-                            .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                            .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
                             .caseInsensitive(true)))
                     .should(sb -> sb.match(m -> m.field("title_sr").query(token)))
                     .should(sb -> sb.wildcard(
@@ -183,7 +183,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                     .should(sb -> sb.match(m -> m.field("description_sr").query(token)))
                     .should(sb -> sb.match(m -> m.field("description_other").query(token)))
                     .should(sb -> sb.wildcard(m -> m.field("keywords_sr")
-                        .value("*" + StringUtil.performSimpleSerbianPreprocessing(token) + "*")))
+                        .value("*" + StringUtil.performSimpleLatinPreprocessing(token) + "*")))
                     .should(
                         sb -> sb.wildcard(m -> m.field("keywords_other").value("*" + token + "*")))
                     .should(sb -> sb.match(m -> m.field("full_text_sr").query(token)))

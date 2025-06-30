@@ -113,10 +113,13 @@ public class PersonController {
     }
 
     @GetMapping("/employed-at/{organisationUnitId}")
-    public Page<PersonIndex> findEmployeesForInstitution(@PathVariable Integer organisationUnitId,
-                                                         @RequestParam Boolean fetchAlumni,
-                                                         Pageable pageable) {
-        return personService.findPeopleForOrganisationUnit(organisationUnitId, pageable,
+    public Page<PersonIndex> findEmployeesForInstitution(
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @PathVariable Integer organisationUnitId,
+        @RequestParam Boolean fetchAlumni,
+        Pageable pageable) {
+        return personService.findPeopleForOrganisationUnit(organisationUnitId, tokens, pageable,
             fetchAlumni);
     }
 

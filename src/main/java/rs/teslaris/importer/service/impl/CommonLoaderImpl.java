@@ -385,10 +385,13 @@ public class CommonLoaderImpl implements CommonLoader {
         var doi = Objects.requireNonNullElse(record.getDoi(), "");
         var scopus =
             Objects.requireNonNullElse(record.getScopusId(), "");
+        var openALex =
+            Objects.requireNonNullElse(record.getOpenAlexId(), "");
         var titles = record.getTitle().stream().map(
             MultilingualContent::getContent).toList();
 
-        return documentPublicationService.findDocumentDuplicates(titles, doi, scopus).getContent()
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopus, openALex)
+            .getContent()
             .stream().map(
                 DocumentPublicationIndex::getDatabaseId).toList();
     }

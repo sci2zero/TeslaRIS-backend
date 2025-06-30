@@ -111,7 +111,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                     FunctionalUtil.forEachChunked(
                         PageRequest.of(0, 50),
                         page -> personService.findPeopleForOrganisationUnit(
-                            institution.getDatabaseId(),
+                            institution.getDatabaseId(), List.of("*"),
                             page, false),
                         people -> people.forEach(person -> {
                             if (Objects.nonNull(totalCitationsIndicator)) {

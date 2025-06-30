@@ -241,7 +241,8 @@ public class CommonLoaderTest {
             mongoTemplate)).thenReturn(progressReport);
 
         if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
-            when(documentPublicationService.findDocumentDuplicates(any(), any(), any())).thenReturn(
+            when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
+                any())).thenReturn(
                 new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                     setDatabaseId(1);
                 }})));
@@ -268,7 +269,7 @@ public class CommonLoaderTest {
 
         if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
             verify(documentPublicationService, times(1)).findDocumentDuplicates(any(), any(),
-                any());
+                any(), any());
             if (deleteOldPublication) {
                 verify(documentPublicationService, times(1)).deleteDocumentPublication(1);
             } else {
@@ -1016,7 +1017,8 @@ public class CommonLoaderTest {
         mockDoc.setDoi("some-doi");
         mockDoc.setScopusId("some-scopus");
         mockDoc.setOpenAlexId("some-openalex");
-        when(documentPublicationService.findDocumentDuplicates(any(), any(), any())).thenReturn(
+        when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
+            any())).thenReturn(
             new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                 setDatabaseId(1);
             }})));

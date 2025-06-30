@@ -36,6 +36,7 @@ import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 import rs.teslaris.core.util.seeding.SKOSLoader;
 
@@ -372,13 +373,13 @@ public class DbInitializer implements ApplicationRunner {
         // RESEARCH AREAS - NOT COMPLETE
         var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
-            new HashSet<>(), null);
+            new HashSet<>(), null, "elektrotehnicko i racunarsko inzenjerstvo");
         var researchArea2 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Softversko inzenjerstvo", 2))),
-            new HashSet<>(), researchArea1);
+            new HashSet<>(), researchArea1, "softversko inzenjerstvo");
         var researchArea3 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Cybersecurity", 2))),
-            new HashSet<>(), researchArea2);
+            new HashSet<>(), researchArea2, "cybersecurity");
 
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
 
@@ -447,6 +448,11 @@ public class DbInitializer implements ApplicationRunner {
             }
         }
         country.setName(names);
+        country.setProcessedName("");
+        country.getName().forEach(name -> {
+            country.setProcessedName(country.getProcessedName() + " " +
+                StringUtil.performSimpleLatinPreprocessing(name.getContent()));
+        });
         countryRepository.save(country);
     }
 

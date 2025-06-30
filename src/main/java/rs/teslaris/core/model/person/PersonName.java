@@ -60,10 +60,10 @@ public class PersonName extends BaseEntity {
 
         PersonName that = (PersonName) o;
 
-        String name = StringUtil.performSimpleSerbianPreprocessing(firstname), surname =
-            StringUtil.performSimpleSerbianPreprocessing(lastname);
-        String thatName = StringUtil.performSimpleSerbianPreprocessing(that.firstname),
-            thatSurname = StringUtil.performSimpleSerbianPreprocessing(that.lastname);
+        String name = StringUtil.performSimpleLatinPreprocessing(firstname), surname =
+            StringUtil.performSimpleLatinPreprocessing(lastname);
+        String thatName = StringUtil.performSimpleLatinPreprocessing(that.firstname),
+            thatSurname = StringUtil.performSimpleLatinPreprocessing(that.lastname);
 
         return (Objects.equals(name, thatName) && Objects.equals(surname, thatSurname)) ||
             (Objects.equals(surname, thatName) && Objects.equals(name, thatSurname));

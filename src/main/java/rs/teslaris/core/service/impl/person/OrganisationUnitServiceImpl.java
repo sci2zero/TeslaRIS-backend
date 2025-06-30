@@ -245,7 +245,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     var wildcard = token.replace("\\*", "").replace(".", "");
                     perTokenShould.add(WildcardQuery.of(
                             m -> m.field("name_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
                                 .caseInsensitive(true))
                         ._toQuery());
                     perTokenShould.add(WildcardQuery.of(
@@ -254,7 +254,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 } else {
                     perTokenShould.add(WildcardQuery.of(
                             m -> m.field("name_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                 .caseInsensitive(true))
                         ._toQuery());
                     perTokenShould.add(WildcardQuery.of(

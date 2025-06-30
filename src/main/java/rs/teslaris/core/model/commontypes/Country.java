@@ -32,4 +32,7 @@ public class Country extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
+
+    @Column(name = "processed_name", length = 2048)
+    private String processedName;
 }

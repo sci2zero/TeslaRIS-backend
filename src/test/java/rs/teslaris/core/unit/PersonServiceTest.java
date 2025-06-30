@@ -602,17 +602,13 @@ public class PersonServiceTest {
 
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
             employmentInstitutionId)).thenReturn(List.of(employmentInstitutionId));
-        when(personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
-            List.of(employmentInstitutionId))).thenReturn(
-            new PageImpl<>(List.of(new PersonIndex())));
-        when(personIndexRepository.findByPastEmploymentInstitutionIdsIn(pageable,
-            List.of(employmentInstitutionId))).thenReturn(
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
             new PageImpl<>(List.of(new PersonIndex())));
 
         // when
         var result =
-            personService.findPeopleForOrganisationUnit(employmentInstitutionId, pageable,
-                fetchAlumni);
+            personService.findPeopleForOrganisationUnit(employmentInstitutionId, List.of("*"),
+                pageable, fetchAlumni);
 
         // then
         assertEquals(result.getTotalElements(), 1L);

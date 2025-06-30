@@ -325,7 +325,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                             eq.should(mp -> mp.bool(m -> m
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("name_sr").value(
-                                        StringUtil.performSimpleSerbianPreprocessing(wildcard) +
+                                        StringUtil.performSimpleLatinPreprocessing(wildcard) +
                                             "*")))
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("name_other").value(wildcard + "*")))
@@ -335,7 +335,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                             eq.should(mp -> mp.bool(m -> m
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("name_sr").value(
-                                            StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                            StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                         .caseInsensitive(true)))
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("name_other").value(wildcard)

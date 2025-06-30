@@ -409,7 +409,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard + "*")
@@ -420,7 +420,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))

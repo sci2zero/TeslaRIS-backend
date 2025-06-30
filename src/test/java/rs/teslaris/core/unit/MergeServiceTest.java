@@ -418,7 +418,7 @@ public class MergeServiceTest {
         // given
         var sourceOUId = 1;
         var targetOUId = 2;
-        var personId = 3;
+        var searchTokens = List.of("*");
         var person = new Person();
         var employment = new Employment();
         employment.setInvolvementType(InvolvementType.EMPLOYED_AT);
@@ -430,7 +430,8 @@ public class MergeServiceTest {
         var pageRequest = PageRequest.of(0, 10);
         var page = new PageImpl<>(List.of(personIndex));
         when(
-            personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest, false)).thenReturn(
+            personService.findPeopleForOrganisationUnit(sourceOUId, searchTokens, pageRequest,
+                false)).thenReturn(
             page);
         when(personService.findOne(any())).thenReturn(person);
 
@@ -439,7 +440,7 @@ public class MergeServiceTest {
 
         // then
         verify(personService, atLeastOnce()).findPeopleForOrganisationUnit(eq(sourceOUId),
-            any(PageRequest.class), eq(false));
+            eq(searchTokens), any(PageRequest.class), eq(false));
     }
 
     @Test

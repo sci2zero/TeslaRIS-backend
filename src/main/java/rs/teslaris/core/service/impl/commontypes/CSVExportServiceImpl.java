@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -212,10 +213,15 @@ public class CSVExportServiceImpl implements CSVExportService {
                 Integer.parseInt(endpointTokenParameters.getFirst()), null, pageable);
             case ORGANISATION_UNIT_OUTPUTS ->
                 (Page<T>) documentPublicationService.findPublicationsForOrganisationUnit(
-                    Integer.parseInt(endpointTokenParameters.getFirst()), pageable);
+                    Integer.parseInt(endpointTokenParameters.getFirst()),
+                    Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
+                        .filter(t -> !t.isBlank()).toList(), pageable);
             case ORGANISATION_UNIT_EMPLOYEES ->
                 (Page<T>) personService.findPeopleForOrganisationUnit(
-                    Integer.parseInt(endpointTokenParameters.getFirst()), pageable, false);
+                    Integer.parseInt(endpointTokenParameters.getFirst()),
+                    Arrays.stream(endpointTokenParameters.get(1).split("tokens="))
+                        .filter(t -> !t.isBlank()).toList(), pageable,
+                    Boolean.parseBoolean(endpointTokenParameters.getLast()));
         };
     }
 }

@@ -425,7 +425,8 @@ public class DocumentPublicationServiceTest {
 
         // when
         var result =
-            documentPublicationService.findDocumentDuplicates(titles, "DOI", "scopusId");
+            documentPublicationService.findDocumentDuplicates(titles, "DOI", "scopusId",
+                "openAlexId");
 
         // then
         assertEquals(result.getTotalElements(), 2L);

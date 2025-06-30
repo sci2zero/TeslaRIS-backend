@@ -124,8 +124,8 @@ public class DocumentPublicationController {
     @GetMapping("/deduplication-search")
     public Page<DocumentPublicationIndex> deduplicationSearch(
         @RequestParam("titles") List<String> titles, @RequestParam("doi") String doi,
-        @RequestParam("scopusId") String scopusId) {
-        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId);
+        @RequestParam("scopusId") String scopusId, @RequestParam("openAlexId") String openAlexId) {
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId, openAlexId);
     }
 
     @GetMapping("/for-researcher/{personId}")
@@ -171,10 +171,12 @@ public class DocumentPublicationController {
 
     @GetMapping("/for-organisation-unit/{organisationUnitId}")
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @PathVariable Integer organisationUnitId,
         Pageable pageable) {
         return documentPublicationService.findPublicationsForOrganisationUnit(organisationUnitId,
-            pageable);
+            tokens, pageable);
     }
 
     @GetMapping("/count")

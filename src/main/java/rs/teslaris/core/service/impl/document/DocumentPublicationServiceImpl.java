@@ -10,6 +10,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -156,12 +157,33 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
-        Integer organisationUnitId, Pageable pageable) {
+        Integer organisationUnitId, List<String> tokens, Pageable pageable) {
         var allOUIdsFromSubHierarchy =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
-        return documentPublicationIndexRepository.findByOrganisationUnitIdsIn(
-            allOUIdsFromSubHierarchy, pageable);
+        if (Objects.isNull(tokens)) {
+            tokens = List.of("*");
+        }
+
+        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null,
+            Arrays.stream(DocumentPublicationType.values()).toList());
+
+        var institutionFilter = TermsQuery.of(t -> t
+            .field("organisation_unit_ids")
+            .terms(v -> v.value(
+                allOUIdsFromSubHierarchy.stream()
+                    .map(String::valueOf)
+                    .map(FieldValue::of)
+                    .toList()))
+        )._toQuery();
+
+        var combinedQuery = BoolQuery.of(bq -> bq
+            .must(simpleSearchQuery)
+            .must(institutionFilter)
+        )._toQuery();
+
+        return searchService.runQuery(combinedQuery, pageable, DocumentPublicationIndex.class,
+            "document_publication");
     }
 
     @Override
@@ -655,9 +677,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
-                                                                 String scopusId) {
-        var query = buildDeduplicationSearchQuery(titles, doi, scopusId);
+    public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles,
+                                                                 String doi,
+                                                                 String scopusId,
+                                                                 String openAlexId) {
+        var query = buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId);
         return searchService.runQuery(query,
             Pageable.ofSize(5),
             DocumentPublicationIndex.class, "document_publication");
@@ -759,7 +783,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
     }
 
-    private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId) {
+    private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId,
+                                                String openAlexId) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
@@ -778,6 +803,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     if (Objects.nonNull(doi) && !doi.isBlank()) {
                         eq.should(sb -> sb.match(
                             m -> m.field("doi").query(doi)));
+                    }
+
+                    if (Objects.nonNull(openAlexId) && !openAlexId.isBlank()) {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("open_alex_id").query(openAlexId)));
                     }
 
                     return eq;
@@ -825,14 +855,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     eq.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("author_names")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
                                 .caseInsensitive(true)))
                     ));
                 } else {
@@ -840,7 +870,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     eq.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
@@ -851,7 +881,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         .should(sb -> sb.match(mq -> mq.field("author_names").query(token)))
                         .should(
                             sb -> sb.wildcard(mq -> mq.field("author_names")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.term(mq -> mq.field("keywords_sr").value(token)))
                         .should(sb -> sb.term(mq -> mq.field("keywords_other").value(token)))
