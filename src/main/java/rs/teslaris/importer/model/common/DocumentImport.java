@@ -106,4 +106,7 @@ public class DocumentImport {
 
     @Field(name = "journal_open_alex_id")
     private String journalOpenAlexId;
+
+    @Field(name = "open_alex_id")
+    private String openAlexId;
 }

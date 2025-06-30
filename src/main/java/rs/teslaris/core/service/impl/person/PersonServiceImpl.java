@@ -1,10 +1,12 @@
 package rs.teslaris.core.service.impl.person;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
@@ -16,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -49,7 +52,6 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -328,6 +330,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personToUpdate.getBiography().add(biography);
             this.save(personToUpdate);
         });
+
+        personIndexRepository.findByDatabaseId(personId).ifPresent(index -> {
+            indexPersonBiography(index, personToUpdate);
+            personIndexRepository.save(index);
+        });
     }
 
     @Override
@@ -342,6 +349,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }).forEach(keyword -> {
             personToUpdate.getKeyword().add(keyword);
             this.save(personToUpdate);
+        });
+
+        personIndexRepository.findByDatabaseId(personId).ifPresent(index -> {
+            setPersonIndexKeywords(index, personToUpdate);
+            personIndexRepository.save(index);
         });
     }
 
@@ -788,6 +800,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personIndex.setNameSortable(personIndex.getName());
         indexPersonBiography(personIndex, savedPerson);
+        setPersonIndexKeywords(personIndex, savedPerson);
 
         if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
             personIndex.setBirthdate(savedPerson.getPersonalInfo().getLocalBirthDate().toString());
@@ -826,11 +839,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             return;
         }
 
-        var employmentInstitutions = savedPerson.getInvolvements().stream()
+        var currentEmployments = savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.isNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
-            .map(Involvement::getOrganisationUnit).toList();
+                Objects.isNull(i.getDateTo())).toList();
 
         var employmentOrCandidateInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
@@ -846,7 +858,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             .map(involvement -> involvement.getOrganisationUnit().getId()).toList());
 
         personIndex.setEmploymentInstitutionsId(
-            employmentInstitutions.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+            currentEmployments.stream()
+                .map(employment -> Objects.nonNull(employment.getOrganisationUnit()) ?
+                    employment.getOrganisationUnit().getId() : -1)
+                .collect(Collectors.toList()));
 
         personIndex.setEmploymentInstitutionsIdHierarchy(new ArrayList<>());
         employmentOrCandidateInstitutions.forEach(institutionId -> {
@@ -861,15 +876,22 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var employmentsSr = new StringBuilder();
         var employmentsOther = new StringBuilder();
-        for (var organisationUnit : employmentInstitutions) {
+        for (var employment : currentEmployments) {
             var institutionNameSr = new StringBuilder();
             var institutionNameOther = new StringBuilder();
 
-            organisationUnit.getName().stream()
+            Set<MultiLingualContent> name;
+            if (Objects.nonNull(employment.getOrganisationUnit())) {
+                name = employment.getOrganisationUnit().getName();
+            } else {
+                name = employment.getAffiliationStatement();
+            }
+
+            name.stream()
                 .filter(mc -> mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
-                .forEach(mc -> institutionNameSr.append(mc.getContent()).append(" | "));
-            organisationUnit.getName().stream()
+                .forEach(mc -> institutionNameSr.append(mc.getContent()));
+            name.stream()
                 .filter(mc -> !mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
                 .forEach(mc -> {
@@ -881,8 +903,18 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 });
 
             employmentsSr.append(
-                    institutionNameSr.toString().isEmpty() ? institutionNameOther : institutionNameSr)
-                .append(organisationUnit.getNameAbbreviation()).append("; ");
+                institutionNameSr.toString().isEmpty() ? institutionNameOther : institutionNameSr);
+
+            if (Objects.nonNull(employment.getOrganisationUnit()) &&
+                Objects.nonNull(employment.getOrganisationUnit().getNameAbbreviation()) &&
+                !employment.getOrganisationUnit().getNameAbbreviation().isBlank()) {
+                employmentsSr.append(" | ")
+                    .append(employment.getOrganisationUnit().getNameAbbreviation().trim())
+                    .append("; ");
+            } else {
+                employmentsSr.append("; ");
+            }
+
             employmentsOther.append(institutionNameOther.toString().isEmpty() ?
                 institutionNameSr.delete(institutionNameSr.length() - 3,
                     institutionNameSr.length()) :
@@ -900,7 +932,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setEmploymentsOtherSortable(
             !personIndex.getEmploymentsOther().isEmpty() ? personIndex.getEmploymentsOther() :
                 null);
-        setPersonIndexKeywords(personIndex, savedPerson);
     }
 
     private void setPersonIndexKeywords(PersonIndex personIndex, Person savedPerson) {
@@ -933,16 +964,34 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     public Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
+                                                           List<String> tokens,
                                                            Pageable pageable, Boolean fetchAlumni) {
         var ouHierarchyIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(employmentInstitutionId);
 
-        if (fetchAlumni) {
-            return personIndexRepository.findByPastEmploymentInstitutionIdsIn(pageable,
-                ouHierarchyIds);
+        if (Objects.isNull(tokens)) {
+            tokens = List.of("*");
         }
 
-        return personIndexRepository.findByEmploymentInstitutionsIdIn(pageable, ouHierarchyIds);
+        var nameAndEmploymentQuery = buildNameAndEmploymentQuery(tokens, false, null, false);
+
+        var institutionFilter = TermsQuery.of(t -> t
+            .field(fetchAlumni
+                ? "past_employment_institution_ids"
+                : "employment_institutions_id_hierarchy")
+            .terms(v -> v.value(
+                ouHierarchyIds.stream()
+                    .map(String::valueOf)
+                    .map(FieldValue::of)
+                    .toList()))
+        )._toQuery();
+
+        var combinedQuery = BoolQuery.of(bq -> bq
+            .must(nameAndEmploymentQuery)
+            .must(institutionFilter)
+        )._toQuery();
+
+        return searchService.runQuery(combinedQuery, pageable, PersonIndex.class, "person");
     }
 
     @Override
@@ -988,14 +1037,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                             perTokenShould.add(
                                 WildcardQuery.of(
                                         m -> m.field("name").value(
-                                                StringUtil.performSimpleSerbianPreprocessing(wildcard) +
+                                                StringUtil.performSimpleLatinPreprocessing(wildcard) +
                                                     "*")
                                             .caseInsensitive(true))
                                     ._toQuery());
                         } else {
                             perTokenShould.add(WildcardQuery.of(
                                     m -> m.field("name").value(
-                                            StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                            StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                         .caseInsensitive(true))
                                 ._toQuery());
                         }

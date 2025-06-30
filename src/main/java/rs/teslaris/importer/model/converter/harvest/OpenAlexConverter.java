@@ -60,6 +60,7 @@ public class OpenAlexConverter {
         }
 
         document.setIdentifier(record.id().replace("https://openalex.org/", ""));
+        document.setOpenAlexId(record.id().replace("https://openalex.org/", ""));
 
         if (Objects.nonNull(record.doi())) {
             document.setDoi(record.doi().replace("https://doi.org/", ""));

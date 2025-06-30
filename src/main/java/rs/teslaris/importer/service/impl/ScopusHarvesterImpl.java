@@ -149,8 +149,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         List<String> importAuthorIds;
         if (performImportForAllAuthors) {
             importAuthorIds =
-                personService.findPeopleForOrganisationUnit(organisationUnitId, Pageable.unpaged(),
-                        false)
+                personService.findPeopleForOrganisationUnit(organisationUnitId, List.of("*"),
+                        Pageable.unpaged(), false)
                     .map(PersonIndex::getScopusAuthorId)
                     .filter(openAlexId -> Objects.nonNull(openAlexId) && !openAlexId.isBlank())
                     .toList();

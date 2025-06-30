@@ -182,12 +182,21 @@ public class SecurityConfiguration {
 
                 // FILE
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/file/logo/{organisationUnitId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/file/image/{personId}").permitAll()
 
                 // ERROR
                 .requestMatchers("/error").permitAll()
 
                 // EXPORT
                 .requestMatchers(HttpMethod.GET, "/api/export/{handlerName}").permitAll()
+
+                // SEARCH TABLE EXPORT
+                .requestMatchers(HttpMethod.GET, "/api/csv-export/records-per-page").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/csv-export").permitAll()
 
                 // ASSESSMENT
                 .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")
@@ -243,6 +252,9 @@ public class SecurityConfiguration {
                 .permitAll()
 
                 // CSV EXPORT
+                .requestMatchers(HttpMethod.GET, "/api/document/fields").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/fields").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/fields").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()

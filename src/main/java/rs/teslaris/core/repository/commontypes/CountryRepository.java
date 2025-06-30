@@ -21,10 +21,14 @@ public interface CountryRepository extends JpaRepository<Country, Integer> {
     Optional<Country> findCountryByName(String name, Limit limit);
 
     @Query(value =
-        "SELECT c FROM Country c LEFT JOIN c.name name WHERE name.language.languageTag = :languageTag AND " +
-            "LOWER(name.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))",
+        "SELECT c FROM Country c LEFT JOIN c.name name WHERE LOWER(c.code) = :searchExpression OR " +
+            "(name.language.languageTag = :languageTag AND " +
+            "LOWER(name.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))) OR " +
+            "c.processedName LIKE CONCAT('%', :searchExpression, '%')",
         countQuery =
-            "SELECT count(DISTINCT c) FROM Country c JOIN c.name n WHERE n.language.languageTag = :languageTag AND " +
-                "LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))")
+            "SELECT count(DISTINCT c) FROM Country c JOIN c.name n WHERE LOWER(c.code) = :searchExpression OR " +
+                "(n.language.languageTag = :languageTag AND " +
+                "LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))) OR " +
+                "c.processedName LIKE CONCAT('%', :searchExpression, '%')")
     Page<Country> searchCountries(String searchExpression, String languageTag, Pageable pageable);
 }

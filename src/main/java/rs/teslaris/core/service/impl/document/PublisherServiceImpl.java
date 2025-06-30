@@ -260,7 +260,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("name_sr").value(
-                                StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")))
+                                StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("name_other").value(wildcard + "*")))
                     ));
@@ -269,7 +269,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("name_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")))
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("name_other").value(wildcard)))
                         .should(sb -> sb.match(

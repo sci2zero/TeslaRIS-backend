@@ -104,7 +104,7 @@ public abstract class DocumentConverter {
         dto.setUris(new HashSet<>(document.getUris()));
 
         dto.setDoi(document.getDoi());
-        dto.setOpenAlexId(dto.getOpenAlexId());
+        dto.setOpenAlexId(document.getOpenAlexId());
         dto.setScopusId(document.getScopusId());
 
         setContributionInformation(document, dto);

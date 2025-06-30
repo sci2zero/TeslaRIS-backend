@@ -29,10 +29,4 @@ public interface PersonIndexRepository extends ElasticsearchRepository<PersonInd
     Optional<PersonIndex> findByScopusAuthorIdOrOpenAlexId(String importId);
 
     long count();
-
-    Page<PersonIndex> findByEmploymentInstitutionsIdIn(Pageable pageable,
-                                                       List<Integer> employmentInstitutionIds);
-
-    Page<PersonIndex> findByPastEmploymentInstitutionIdsIn(Pageable pageable,
-                                                           List<Integer> employmentInstitutionIds);
 }

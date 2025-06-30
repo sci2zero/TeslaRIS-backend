@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.commontypes;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -36,4 +37,7 @@ public class ResearchArea extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "super_research_area_id")
     private ResearchArea superResearchArea;
+
+    @Column(name = "processed_name", length = 2048)
+    private String processedName;
 }

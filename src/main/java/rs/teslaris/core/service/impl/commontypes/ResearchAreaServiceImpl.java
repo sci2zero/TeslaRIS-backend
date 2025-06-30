@@ -22,6 +22,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +53,8 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
             searchExpression = "";
         }
 
-        return researchAreaRepository.searchResearchAreas(searchExpression, languageTag, pageable)
+        return researchAreaRepository.searchResearchAreas(
+                StringUtil.performSimpleLatinPreprocessing(searchExpression), languageTag, pageable)
             .map(ResearchAreaConverter::toResponseDTO);
     }
 
@@ -139,5 +141,11 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
                 researchAreaDTO.getDescription()));
         researchArea.setSuperResearchArea(
             getReferenceToResearchAreaById(researchAreaDTO.getSuperResearchAreaId()));
+
+        researchArea.setProcessedName("");
+        researchArea.getName().forEach(name -> {
+            researchArea.setProcessedName(researchArea.getProcessedName() + " " +
+                StringUtil.performSimpleLatinPreprocessing(name.getContent()));
+        });
     }
 }

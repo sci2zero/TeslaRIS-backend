@@ -888,13 +888,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                         var wildcard = token.replace("\\*", "").replace(".", "");
                         perTokenShould.add(WildcardQuery.of(
                                 m -> m.field("full_name")
-                                    .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                    .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
                                     .caseInsensitive(true))
                             ._toQuery());
                     } else {
                         perTokenShould.add(WildcardQuery.of(
                                 m -> m.field("full_name")
-                                    .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                    .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                     .caseInsensitive(true))
                             ._toQuery());
                     }

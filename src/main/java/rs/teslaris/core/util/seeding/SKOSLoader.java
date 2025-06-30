@@ -20,6 +20,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Component
 @Slf4j
@@ -54,6 +55,7 @@ public class SKOSLoader {
             }
 
             populateResearchAreaFields(researchArea, skosConcept, model);
+            setupSearchField(researchArea);
 
             var saved = researchAreaService.save(researchArea);
             loaded.put(skosConcept.getURI(), saved.getId());
@@ -102,9 +104,18 @@ public class SKOSLoader {
         var broaderArea = new ResearchArea();
 
         populateResearchAreaFields(broaderArea, skosConcept, model);
+        setupSearchField(broaderArea);
 
         var saved = researchAreaService.save(broaderArea);
         loaded.put(skosConcept.getURI(), saved.getId());
         return saved;
+    }
+
+    private void setupSearchField(ResearchArea researchArea) {
+        researchArea.setProcessedName("");
+        researchArea.getName().forEach(name -> {
+            researchArea.setProcessedName(researchArea.getProcessedName() + " " +
+                StringUtil.performSimpleLatinPreprocessing(name.getContent()));
+        });
     }
 }

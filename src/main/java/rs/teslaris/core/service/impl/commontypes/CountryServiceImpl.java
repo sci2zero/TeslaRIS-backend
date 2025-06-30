@@ -19,6 +19,7 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Transactional
@@ -49,7 +50,8 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
             searchExpression = "";
         }
 
-        return countryRepository.searchCountries(searchExpression, languageCode, pageable)
+        return countryRepository.searchCountries(
+                StringUtil.performSimpleLatinPreprocessing(searchExpression), languageCode, pageable)
             .map(CountryConverter::toDTO);
     }
 
@@ -95,5 +97,11 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
                 countryDTO.getName()));
         country.setCode(countryDTO.getCode());
+
+        country.setProcessedName("");
+        country.getName().forEach(name -> {
+            country.setProcessedName(country.getProcessedName() + " " +
+                StringUtil.performSimpleLatinPreprocessing(name.getContent()));
+        });
     }
 }

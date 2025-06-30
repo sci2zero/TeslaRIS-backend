@@ -332,7 +332,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                             b.should(mp -> mp.bool(m -> m
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("title_sr").value(
-                                            StringUtil.performSimpleSerbianPreprocessing(wildcard) +
+                                            StringUtil.performSimpleLatinPreprocessing(wildcard) +
                                                 "*")
                                         .caseInsensitive(true)))
                                 .should(sb -> sb.wildcard(
@@ -344,7 +344,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                             b.should(mp -> mp.bool(m -> m
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("title_sr").value(
-                                        StringUtil.performSimpleSerbianPreprocessing(token) + "*")))
+                                        StringUtil.performSimpleLatinPreprocessing(token) + "*")))
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("title_other").value(wildcard)))
                                 .should(sb -> sb.match(
@@ -355,14 +355,14 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                     mq -> mq.field("author_names").query(token)))
                                 .should(
                                     sb -> sb.wildcard(mq -> mq.field("author_names").value(
-                                            StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                            StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                         .caseInsensitive(true)))
                                 .should(sb -> sb.match(
                                     mq -> mq.field("editor_names").query(token).boost(0.7f)))
                                 .should(
                                     sb -> sb.wildcard(
                                         mq -> mq.field("editor_names").value(
-                                                StringUtil.performSimpleSerbianPreprocessing(token) +
+                                                StringUtil.performSimpleLatinPreprocessing(token) +
                                                     "*").boost(0.7f)
                                             .caseInsensitive(true)))
                                 .should(sb -> sb.match(
@@ -370,7 +370,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 .should(
                                     sb -> sb.wildcard(
                                         mq -> mq.field("reviewer_names").value(
-                                                StringUtil.performSimpleSerbianPreprocessing(token) +
+                                                StringUtil.performSimpleLatinPreprocessing(token) +
                                                     "*").boost(0.7f)
                                             .caseInsensitive(true)))
                                 .should(sb -> sb.match(
@@ -378,7 +378,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 .should(
                                     sb -> sb.wildcard(
                                         mq -> mq.field("advisor_names").value(
-                                                StringUtil.performSimpleSerbianPreprocessing(token) +
+                                                StringUtil.performSimpleLatinPreprocessing(token) +
                                                     "*").boost(0.7f)
                                             .caseInsensitive(true)))
                                 .should(sb -> sb.match(

@@ -255,7 +255,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(wildcard) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard + "*")
@@ -266,7 +266,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_sr")
-                                .value(StringUtil.performSimpleSerbianPreprocessing(token) + "*")
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
