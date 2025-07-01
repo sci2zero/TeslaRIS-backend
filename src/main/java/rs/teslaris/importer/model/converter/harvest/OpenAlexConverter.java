@@ -55,6 +55,7 @@ public class OpenAlexConverter {
             var event = new Event();
             event.setOpenAlexId(sourceId);
             event.getName().add(new MultilingualContent("EN", conferenceName, 1));
+            document.setEvent(event);
         } else {
             return Optional.empty();
         }
@@ -66,7 +67,7 @@ public class OpenAlexConverter {
             document.setDoi(record.doi().replace("https://doi.org/", ""));
         }
 
-        document.setDocumentDate(record.publicationDate());
+        document.setDocumentDate(record.publicationDate().split("-")[0]);
         document.getTitle().add(new MultilingualContent("EN", record.title(), 1));
 
         FunctionalUtil.forEachWithCounter(record.authorships(), (i, authorship) -> {
