@@ -108,7 +108,7 @@ public class ScopusConverter {
             document.getUris().add(entry.url());
         }
 
-        document.setDocumentDate(entry.coverDate());
+        document.setDocumentDate(entry.coverDate().split("-")[0]);
 
         document.getTitle().add(new MultilingualContent("EN", entry.title(), 1));
 
