@@ -10,7 +10,6 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -157,7 +156,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
-        Integer organisationUnitId, List<String> tokens, Pageable pageable) {
+        Integer organisationUnitId, List<String> tokens, List<DocumentPublicationType> allowedTypes,
+        Pageable pageable) {
         var allOUIdsFromSubHierarchy =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
@@ -165,8 +165,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             tokens = List.of("*");
         }
 
-        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null,
-            Arrays.stream(DocumentPublicationType.values()).toList());
+        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, allowedTypes);
 
         var institutionFilter = TermsQuery.of(t -> t
             .field("organisation_unit_ids")
@@ -559,6 +558,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
             documentRepository.existsByScopusId(identifier, documentPublicationId) ||
             documentRepository.existsByOpenAlexId(identifier, documentPublicationId);
+    }
+
+    @Override
+    public boolean isDoiInUse(String doi) {
+        return documentRepository.existsByDoi(doi, null);
     }
 
     @Override

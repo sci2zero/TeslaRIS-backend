@@ -81,6 +81,29 @@ public class NotificationFactory {
             user);
     }
 
+    public static Notification contructNewEntityCreationNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {
+                notificationValues.get("entityType"),
+                notificationValues.get("entityName")
+            };
+
+        try {
+            message = messageSource.getMessage(
+                "notification.newEntityCreation",
+                args,
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues, NotificationType.NEW_ENTITY_CREATION,
+            user);
+    }
+
     public static Notification contructNewDeduplicationScanFinishedNotification(
         Map<String, String> notificationValues, User user) {
         String message;

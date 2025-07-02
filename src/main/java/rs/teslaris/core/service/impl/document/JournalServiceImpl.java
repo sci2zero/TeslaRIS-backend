@@ -149,6 +149,10 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             indexJournal(journal, new JournalIndex());
         }
 
+        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
+        });
+
         return savedJournal;
     }
 
@@ -165,7 +169,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             journalIndexRepository.findJournalIndexByDatabaseId(journal.getId())
                 .orElse(new JournalIndex()));
 
-        emailUtil.notifyInstitutionalEditor(savedJournal.getId(), "journal");
+        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
+        });
 
         return savedJournal;
     }

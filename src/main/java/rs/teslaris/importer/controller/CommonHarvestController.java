@@ -129,18 +129,6 @@ public class CommonHarvestController {
             return 0;
         }
 
-        newDocumentImportCountByUser.keySet().forEach(key -> {
-            if (Objects.equals(key, userId)) {
-                return;
-            }
-
-            var notificationValues = new HashMap<String, String>();
-            notificationValues.put("newImportCount", newDocumentImportCountByUser.get(key) + "");
-            notificationService.createNotification(
-                NotificationFactory.contructNewImportsNotification(notificationValues,
-                    userService.findOne(key)));
-        });
-
         dispatchNotifications(newDocumentImportCountByUser, userId);
         return newDocumentImportCountByUser.getOrDefault(userId, 0);
     }
@@ -192,7 +180,8 @@ public class CommonHarvestController {
             }
 
             var notificationValues = new HashMap<String, String>();
-            notificationValues.put("newImportCount", newDocumentImportCountByUser.get(key) + "");
+            notificationValues.put("newImportCount",
+                String.valueOf(newDocumentImportCountByUser.get(key)));
             notificationService.createNotification(
                 NotificationFactory.contructNewImportsNotification(notificationValues,
                     userService.findOne(key)));

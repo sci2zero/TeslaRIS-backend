@@ -27,5 +27,9 @@ public class NotificationConfiguration {
             List.of(NotificationAction.PERFORM_DOCUMENT_ASSESSMENT));
         allowedActions.put(NotificationType.PROMOTION_NOTIFICATION,
             List.of(NotificationAction.GO_TO_PROMOTIONS_PAGE));
+        allowedActions.put(NotificationType.NEW_IMPORTS_HARVESTED,
+            List.of(NotificationAction.GO_TO_HARVESTER_PAGE));
+        allowedActions.put(NotificationType.NEW_ENTITY_CREATION,
+            List.of(NotificationAction.NAVIGATE_TO_URL));
     }
 }

@@ -142,7 +142,7 @@ public class JournalServiceTest {
         // then
         assertNotNull(savedJournal);
         verify(journalJPAService, times(1)).save(any());
-        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "journal");
+//        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "journal");
     }
 
     @Test

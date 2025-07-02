@@ -47,4 +47,7 @@ public class ImaginaryPublicationAssessmentRequestDTO {
     private String issn;
 
     private String confId;
+
+    @NotBlank(message = "You have to provide a reCaptcha token.")
+    private String captchaToken;
 }

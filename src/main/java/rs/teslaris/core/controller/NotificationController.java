@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.NotificationActionResult;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -44,11 +45,12 @@ public class NotificationController {
     }
 
     @PatchMapping("/{notificationId}/perform")
-    public void performNotificationAction(@PathVariable Integer notificationId,
-                                          @RequestHeader(value = "Authorization", required = false)
-                                          String bearerToken,
-                                          @RequestParam NotificationAction action) {
-        notificationService.performAction(notificationId,
+    public NotificationActionResult performNotificationAction(@PathVariable Integer notificationId,
+                                                              @RequestHeader(value = "Authorization", required = false)
+                                                              String bearerToken,
+                                                              @RequestParam
+                                                              NotificationAction action) {
+        return notificationService.performAction(notificationId,
             tokenUtil.extractUserIdFromToken(bearerToken), action);
     }
 

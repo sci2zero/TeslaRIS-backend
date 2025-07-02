@@ -266,7 +266,7 @@ public class SecurityConfiguration {
                     "/api/thesis-library/search/wordcloud/{queryType}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
                 .requestMatchers(HttpMethod.PATCH,
-                    "/api/registry-book/cancel-attendance/{attendanceId}").permitAll()
+                    "/api/registry-book/cancel-attendance").permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
                 .permitAll()
@@ -282,6 +282,9 @@ public class SecurityConfiguration {
 
                 // HEALTH CHECK
                 .requestMatchers(HttpMethod.GET, "/api/health-check/version").permitAll()
+
+                // FEEDBACK
+                .requestMatchers(HttpMethod.POST, "/api/feedback").permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

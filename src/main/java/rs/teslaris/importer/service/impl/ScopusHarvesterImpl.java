@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +28,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherExce
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.harvest.ScopusConverter;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
 import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 
@@ -209,7 +209,12 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 var documentImport = optionalDocument.get();
                 enrichDocumentImport(documentImport, entry.identifier(), embedding, userId,
                     adminUserIds, institutionIds);
-                updateContributors(documentImport, newEntriesCount);
+
+                CommonHarvestUtility.updateContributorEntryCount(documentImport,
+                    documentImport.getContributions().stream()
+                        .map(c -> c.getPerson().getScopusAuthorId()).toList(), newEntriesCount,
+                    personService);
+
                 mongoTemplate.save(documentImport, "documentImports");
             }
         }
@@ -244,17 +249,5 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         doc.getImportUsersId().add(userId);
         doc.getImportUsersId().addAll(adminUserIds);
         doc.getImportInstitutionsId().addAll(institutionIds);
-    }
-
-    private void updateContributors(DocumentImport doc, Map<Integer, Integer> newEntriesCount) {
-        for (var contribution : doc.getContributions()) {
-            var scopusId = contribution.getPerson().getScopusAuthorId();
-            var userOpt = personService.findUserByScopusAuthorId(scopusId);
-            userOpt.ifPresent(user -> {
-                var contributorId = user.getId();
-                doc.getImportUsersId().add(contributorId);
-                newEntriesCount.merge(contributorId, 1, Integer::sum);
-            });
-        }
     }
 }
