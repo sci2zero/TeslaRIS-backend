@@ -33,8 +33,10 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     @Query("SELECT p FROM Person p WHERE p.scopusAuthorId = :scopusId")
     Optional<Person> findPersonByScopusAuthorId(String scopusId);
 
-    @Query("SELECT u FROM User u WHERE u.person.scopusAuthorId = :scopusId")
-    Optional<User> findUserForPersonScopusId(String scopusId);
+    @Query("SELECT u FROM User u WHERE " +
+        "u.person.scopusAuthorId = :identifier OR " +
+        "u.person.openAlexId = :identifier")
+    Optional<User> findUserForPersonIdentifier(String identifier);
 
     @Query("SELECT u.person.id FROM User u WHERE u.id = :userId")
     Optional<Integer> findPersonIdForUserId(Integer userId);

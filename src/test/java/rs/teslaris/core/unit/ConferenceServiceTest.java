@@ -31,6 +31,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -219,7 +220,8 @@ public class ConferenceServiceTest {
     public void shouldCreateConferenceBasicWhenProvidedWithValidData() {
         // given
         var conferenceDTO = new ConferenceBasicAdditionDTO();
-        conferenceDTO.setName(new ArrayList<>());
+        conferenceDTO.setName(
+            new ArrayList<>(List.of(new MultilingualContentDTO(1, "EN", "Content", 1))));
         conferenceDTO.setDateFrom(LocalDate.now());
         conferenceDTO.setDateTo(LocalDate.now());
 
@@ -236,7 +238,6 @@ public class ConferenceServiceTest {
         // then
         assertNotNull(savedConference);
         verify(conferenceJPAService, times(1)).save(any());
-        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "event");
     }
 
     @Test

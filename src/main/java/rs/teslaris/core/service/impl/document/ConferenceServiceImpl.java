@@ -154,7 +154,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         var savedConference = conferenceJPAService.save(conference);
 
-        notifyAboutBasicCreation(savedConference.getId());
+        savedConference.getName().stream().findFirst().ifPresent(mc -> {
+            notifyAboutBasicCreation(savedConference.getId(), mc.getContent());
+        });
 
         indexConference(savedConference, new EventIndex());
 

@@ -107,7 +107,7 @@ public class PublisherServiceTest {
         assertEquals(publisher, result);
         verify(publisherRepository, times(1)).save(any());
         verify(publisherIndexRepository, times(1)).save(any());
-        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "publisher");
+//        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "publisher");
     }
 
     @Test

@@ -46,7 +46,7 @@ public interface PersonService extends JPAService<Person> {
 
     PersonResponseDTO readPersonByScopusId(String scopusAuthorId);
 
-    Optional<User> findUserByScopusAuthorId(String scopusAuthorId);
+    Optional<User> findUserByIdentifier(String identifier);
 
     Person findPersonByOldId(Integer id);
 

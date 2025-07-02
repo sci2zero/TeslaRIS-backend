@@ -29,6 +29,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.thesislibrary.annotation.PromotionEditAndUsageCheck;
 import rs.teslaris.thesislibrary.annotation.RegistryBookEntryEditCheck;
+import rs.teslaris.thesislibrary.dto.AttendanceCancellationRequest;
 import rs.teslaris.thesislibrary.dto.InstitutionCountsReportDTO;
 import rs.teslaris.thesislibrary.dto.PhdThesisPrePopulatedDataDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
@@ -157,14 +158,14 @@ public class RegistryBookController {
         registryBookService.removeFromPromotion(registryBookEntryId);
     }
 
-    @PatchMapping("/cancel-attendance/{attendanceId}")
+    @PatchMapping("/cancel-attendance")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancelAttendance(@PathVariable String attendanceId, @RequestParam String token) {
-        if (!reCaptchaService.isCaptchaValid(token)) {
+    public void cancelAttendance(@RequestBody AttendanceCancellationRequest request) {
+        if (!reCaptchaService.isCaptchaValid(request.captchaToken())) {
             throw new CaptchaException("Invalid captcha solution.");
         }
 
-        registryBookService.removeFromPromotion(attendanceId);
+        registryBookService.removeFromPromotion(request.attendanceIdentifier());
     }
 
     @PatchMapping("/promote-all/{promotionId}")

@@ -37,6 +37,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(Integer organisationUnitId,
                                                                        List<String> tokens,
+                                                                       List<DocumentPublicationType> allowedTypes,
                                                                        Pageable pageable);
 
     Long getPublicationCount();
@@ -98,4 +99,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
                                                       String scopusId);
+
+    boolean isDoiInUse(String doi);
 }

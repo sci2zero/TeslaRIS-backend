@@ -478,7 +478,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
-    protected void notifyAboutBasicCreation(Integer eventId) {
-        emailUtil.notifyInstitutionalEditor(eventId, "event");
+    protected void notifyAboutBasicCreation(Integer eventId, String eventName) {
+        emailUtil.notifyInstitutionalEditor(eventId, eventName, "event");
     }
 }

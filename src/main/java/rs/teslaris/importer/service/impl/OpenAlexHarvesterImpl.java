@@ -17,6 +17,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.importer.model.converter.harvest.OpenAlexConverter;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
 import rs.teslaris.importer.utility.DeepObjectMerger;
 import rs.teslaris.importer.utility.openalex.OpenAlexImportUtility;
@@ -178,8 +179,14 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                     documentImport.getImportUsersId().add(userId);
                     documentImport.getImportUsersId().addAll(adminUserIds);
                     documentImport.getImportInstitutionsId().addAll(institutionIds);
-                    mongoTemplate.save(documentImport, "documentImports");
                     newEntriesCount.merge(userId, 1, Integer::sum);
+
+                    CommonHarvestUtility.updateContributorEntryCount(documentImport,
+                        documentImport.getContributions().stream()
+                            .map(c -> c.getPerson().getOpenAlexId()).toList(), newEntriesCount,
+                        personService);
+
+                    mongoTemplate.save(documentImport, "documentImports");
                 }));
     }
 }

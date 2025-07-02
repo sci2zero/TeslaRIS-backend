@@ -113,7 +113,10 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         var savedPublisher = this.save(publisher);
 
-        emailUtil.notifyInstitutionalEditor(savedPublisher.getId(), "publisher");
+        savedPublisher.getName().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(savedPublisher.getId(), mc.getContent(),
+                "publisher");
+        });
 
         indexPublisher(publisher, new PublisherIndex());
 

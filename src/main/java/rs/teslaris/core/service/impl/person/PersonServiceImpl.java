@@ -149,8 +149,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Nullable
-    public Optional<User> findUserByScopusAuthorId(String scopusAuthorId) {
-        return personRepository.findUserForPersonScopusId(scopusAuthorId);
+    public Optional<User> findUserByIdentifier(String identifier) {
+        return personRepository.findUserForPersonIdentifier(identifier);
     }
 
     @Override

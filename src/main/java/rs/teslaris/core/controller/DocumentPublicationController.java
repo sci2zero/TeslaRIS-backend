@@ -173,10 +173,12 @@ public class DocumentPublicationController {
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "allowedTypes", required = false)
+        List<DocumentPublicationType> allowedTypes,
         @PathVariable Integer organisationUnitId,
         Pageable pageable) {
         return documentPublicationService.findPublicationsForOrganisationUnit(organisationUnitId,
-            tokens, pageable);
+            tokens, allowedTypes, pageable);
     }
 
     @GetMapping("/count")
@@ -245,6 +247,11 @@ public class DocumentPublicationController {
     public boolean checkIdentifierUsage(@PathVariable Integer documentId,
                                         @RequestParam String identifier) {
         return documentPublicationService.isIdentifierInUse(identifier, documentId);
+    }
+
+    @GetMapping("/doi-usage")
+    public boolean checkIdentifierUsage(@RequestParam String doi) {
+        return documentPublicationService.isDoiInUse(doi);
     }
 
     @GetMapping("/fields")

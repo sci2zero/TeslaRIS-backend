@@ -96,9 +96,9 @@ public class DocumentAssessmentClassificationController {
     @PostMapping("/imaginary-journal-publication")
     public ImaginaryPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
         @RequestBody @Valid
-        ImaginaryPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest,
-        @RequestParam String token) {
-        if (reCaptchaService.isCaptchaValid(token)) {
+        ImaginaryPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest) {
+        if (!reCaptchaService.isCaptchaValid(
+            imaginaryJournalPublicationAssessmentRequest.getCaptchaToken())) {
             throw new CaptchaException("Invalid captcha solution.");
         }
 
@@ -117,9 +117,9 @@ public class DocumentAssessmentClassificationController {
     @PostMapping("/imaginary-proceedings-publication")
     public ImaginaryPublicationAssessmentResponseDTO assessImaginaryProceedingsPublication(
         @RequestBody @Valid
-        ImaginaryPublicationAssessmentRequestDTO imaginaryProceedingsPublicationAssessmentRequest,
-        @RequestParam String token) {
-        if (reCaptchaService.isCaptchaValid(token)) {
+        ImaginaryPublicationAssessmentRequestDTO imaginaryProceedingsPublicationAssessmentRequest) {
+        if (!reCaptchaService.isCaptchaValid(
+            imaginaryProceedingsPublicationAssessmentRequest.getCaptchaToken())) {
             throw new CaptchaException("Invalid captcha solution.");
         }
 

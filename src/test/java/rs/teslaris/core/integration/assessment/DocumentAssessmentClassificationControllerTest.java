@@ -33,12 +33,13 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testAssessImaginaryJournalPublicationWrongCaptcha() throws Exception {
+    public void testAssessImaginaryJournalPublication() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         var requestPayload =
             new ImaginaryPublicationAssessmentRequestDTO(1, 5, 2021, "TECHNICAL", 3, true,
-                false, false, JournalPublicationType.RESEARCH_ARTICLE, null, null, null);
+                false, false, JournalPublicationType.RESEARCH_ARTICLE, null, null, null,
+                "everythingPasses");
         String requestBody = objectMapper.writeValueAsString(requestPayload);
         mockMvc.perform(
             MockMvcRequestBuilders.post(
@@ -46,17 +47,18 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
                 .content(requestBody)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-        ).andExpect(status().isBadRequest());
+        ).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testAssessImaginaryProceedingsPublicationWrongCaptcha() throws Exception {
+    public void testAssessImaginaryProceedingsPublication() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         var requestPayload =
             new ImaginaryPublicationAssessmentRequestDTO(1, 5, 2021, "TECHNICAL", 3, true,
-                false, false, null, ProceedingsPublicationType.REGULAR_FULL_ARTICLE, null, null);
+                false, false, null, ProceedingsPublicationType.REGULAR_FULL_ARTICLE, null, null,
+                "everythingPasses");
         String requestBody = objectMapper.writeValueAsString(requestPayload);
         mockMvc.perform(
             MockMvcRequestBuilders.post(
@@ -64,6 +66,6 @@ public class DocumentAssessmentClassificationControllerTest extends BaseTest {
                 .content(requestBody)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-        ).andExpect(status().isBadRequest());
+        ).andExpect(status().isOk());
     }
 }
