@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +104,7 @@ public class IndicatorMappingConfigurationLoader {
         var name = classNameParts[classNameParts.length - 1];
 
         if (!indicatorMappingConfiguration.exclusions.containsKey(name)) {
-            return List.of();
+            return Collections.emptyList();
         }
 
         return indicatorMappingConfiguration.exclusions().get(name);

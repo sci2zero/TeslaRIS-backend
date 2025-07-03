@@ -266,6 +266,13 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         documentPublicationIndexRepository.save(index);
     }
 
+    @Override
+    public void indexMonograph(Monograph monograph) {
+        indexMonograph(monograph,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                monograph.getId()).orElse(new DocumentPublicationIndex()));
+    }
+
     private void setCommonIdentifiers(Monograph monograph, MonographDTO monographDTO) {
         IdentifierUtil.validateAndSetIdentifier(
             monographDTO.getEisbn(),

@@ -311,7 +311,7 @@ public class CommonLoaderImpl implements CommonLoader {
                 });
 
                 personService.save(savedPerson);
-                personService.indexPerson(savedPerson, savedPerson.getId());
+                personService.indexPerson(savedPerson);
 
                 return PersonConverter.toDTO(savedPerson);
             }
@@ -356,7 +356,7 @@ public class CommonLoaderImpl implements CommonLoader {
             });
 
             personService.save(savedPerson);
-            personService.indexPerson(savedPerson, savedPerson.getId());
+            personService.indexPerson(savedPerson);
         }
     }
 
@@ -465,7 +465,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
                 copyMissingPersonIdentifiers(person, savedPerson);
                 personService.save(savedPerson);
-                personService.indexPerson(savedPerson, savedPerson.getId());
+                personService.indexPerson(savedPerson);
                 return;
             }
         }
@@ -528,7 +528,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
             copyMissingPubSeriesIdentifiers(currentlyLoadedEntity, journal);
             publicationSeriesService.save(journal);
-            journalService.indexJournal(journal, journal.getId());
+            journalService.indexJournal(journal);
 
             return;
         }
@@ -550,7 +550,7 @@ public class CommonLoaderImpl implements CommonLoader {
         if (Objects.nonNull(currentlyLoadedEntity.getEvent())) {
             copyMissingEventIdentifiers(currentlyLoadedEntity.getEvent(), conference);
             conferenceService.save(conference);
-            conferenceService.indexConference(conference, conference.getId());
+            conferenceService.indexConference(conference);
         }
     }
 

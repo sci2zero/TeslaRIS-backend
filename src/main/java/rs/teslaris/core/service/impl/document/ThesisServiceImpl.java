@@ -225,6 +225,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    public void indexThesis(Thesis thesis) {
+        indexThesis(thesis,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                thesis.getId()).orElse(new DocumentPublicationIndex()));
+    }
+
+    @Override
     public DocumentFileResponseDTO addThesisAttachment(Integer thesisId, DocumentFileDTO document,
                                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);

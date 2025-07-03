@@ -410,7 +410,7 @@ public class MergeServiceTest {
         // then
         verify(personService).findOne(personId);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(personId);
-        verify(personService).indexPerson(person, personId);
+        verify(personService).indexPerson(person);
     }
 
     @Test
@@ -596,8 +596,8 @@ public class MergeServiceTest {
         verify(personService).save(targetPerson);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
-        verify(personService).indexPerson(sourcePerson, sourcePersonId);
-        verify(personService).indexPerson(targetPerson, targetPersonId);
+        verify(personService).indexPerson(sourcePerson);
+        verify(personService).indexPerson(targetPerson);
     }
 
     @Test

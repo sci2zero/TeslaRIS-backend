@@ -32,6 +32,7 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -59,6 +60,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final CommissionRepository commissionRepository;
+
 
     @Autowired
     public JournalServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
@@ -71,7 +74,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               SearchService<JournalIndex> searchService,
                               JournalIndexRepository journalIndexRepository,
                               JournalRepository journalRepository,
-                              DocumentPublicationIndexRepository documentPublicationIndexRepository) {
+                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                              CommissionRepository commissionRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
             personContributionService, emailUtil, indexBulkUpdateService);
         this.journalJPAService = journalJPAService;
@@ -79,6 +83,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         this.journalIndexRepository = journalIndexRepository;
         this.journalRepository = journalRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
+        this.commissionRepository = commissionRepository;
     }
 
     @Override
@@ -88,8 +93,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
-                                             Integer institutionId) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId),
+                                             Integer institutionId, Integer commissionId) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId, commissionId),
             pageable, JournalIndex.class, "journal");
     }
 
@@ -252,8 +257,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
-    public void indexJournal(Journal journal, Integer journalId) {
-        journalIndexRepository.findJournalIndexByDatabaseId(journalId).ifPresent(index -> {
+    public void indexJournal(Journal journal) {
+        journalIndexRepository.findJournalIndexByDatabaseId(journal.getId()).ifPresent(index -> {
             indexJournal(journal, index);
         });
     }
@@ -263,6 +268,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         index.setDatabaseId(journal.getId());
 
         indexCommonFields(journal, index);
+        reindexJournalVolatileInformation(journal.getId());
         journalIndexRepository.save(index);
     }
 
@@ -272,6 +278,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             journalIndex.setRelatedInstitutionIds(
                 journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journalId)
                     .stream().toList());
+            journalIndex.setClassifiedBy(
+                commissionRepository.findCommissionsThatClassifiedJournal(journalId));
 
             journalIndexRepository.save(journalIndex);
         });
@@ -310,7 +318,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                                             String eIssn, String printIssn) {
         var potentialHits = searchJournals(
             Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2),
-            null).getContent();
+            null, null).getContent();
 
         for (var potentialHit : potentialHits) {
             for (var title : potentialHit.getTitleOther().split("\\|")) {
@@ -375,9 +383,12 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         index.setRelatedInstitutionIds(
             journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journal.getId())
                 .stream().toList());
+        index.setClassifiedBy(
+            commissionRepository.findCommissionsThatClassifiedJournal(journal.getId()));
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
+                                         Integer commissionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -437,6 +448,14 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                     ));
                 }
             });
+
+            if (Objects.nonNull(commissionId)) {
+                b.mustNot(mnb -> {
+                    mnb.term(m -> m.field("classified_by").value(commissionId));
+                    return mnb;
+                });
+            }
+
             return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();
     }

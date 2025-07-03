@@ -166,6 +166,38 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
         return userRepository.findOUIdForCommission(commissionId);
     }
 
+    @Override
+    public Commission getDefaultCommission(Integer userId) {
+        if (Objects.isNull(userId)) {
+            return getSystemDefaultCommission();
+        }
+
+        var organisationUnitId = userRepository.findOrganisationUnitIdForUser(userId);
+        if (Objects.isNull(organisationUnitId)) {
+            return getSystemDefaultCommission();
+        }
+
+        var allPossibleOUs = new ArrayList<>(List.of(organisationUnitId));
+        allPossibleOUs.addAll(
+            organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId));
+
+        for (var ouId : allPossibleOUs) {
+            var commissions = userRepository.findUserCommissionForOrganisationUnit(ouId);
+            if (!commissions.isEmpty()) {
+                return commissions.getFirst();
+            }
+        }
+
+        return getSystemDefaultCommission();
+    }
+
+    private Commission getSystemDefaultCommission() {
+        // TODO: Is this OK?
+        return commissionRepository.findCommissionByIsDefaultTrue().orElse(new Commission() {{
+            setId(-1);
+        }});
+    }
+
     private void setCommonFields(Commission commission, CommissionDTO commissionDTO) {
         commission.setDescription(
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
@@ -198,6 +230,12 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
                 commission.getRecognisedResearchAreas().add(researchAreaCode);
             }
         });
+
+        if (commissionDTO.isDefault()) {
+            commissionRepository.setOthersAsNonDefault(
+                Objects.nonNull(commission.getId()) ? commission.getId() : 0);
+            commission.setIsDefault(true);
+        }
     }
 
     private void clearCommonFields(Commission commission) {

@@ -36,4 +36,6 @@ public interface BookSeriesService {
     CompletableFuture<Void> reindexBookSeries();
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
+
+    void indexBookSeries(BookSeries bookSeries);
 }

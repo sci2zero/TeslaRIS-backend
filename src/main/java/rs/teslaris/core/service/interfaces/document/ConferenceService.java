@@ -53,7 +53,7 @@ public interface ConferenceService {
 
     boolean isIdentifierInUse(String identifier, Integer conferenceId);
 
-    void indexConference(Conference conference, Integer conferenceId);
+    void indexConference(Conference conference);
 
     void save(Conference conference);
 }

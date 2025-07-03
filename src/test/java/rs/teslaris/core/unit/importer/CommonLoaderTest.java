@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -830,7 +829,7 @@ public class CommonLoaderTest {
         assertNotNull(response.getPersonName());
 
         verify(personService, never()).save(any());
-        verify(personService, never()).indexPerson(any(), anyInt());
+        verify(personService, never()).indexPerson(any());
     }
 
     @Test

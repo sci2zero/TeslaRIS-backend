@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -62,6 +63,9 @@ public class CommissionServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private Commission systemDefaultCommission;
+
     @InjectMocks
     private CommissionServiceImpl commissionService;
 
@@ -109,7 +113,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno", List.of("NATURAL"));
+            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno", List.of("NATURAL"), false);
         var newCommission = new Commission();
         newCommission.setId(2);
 
@@ -135,7 +139,7 @@ public class CommissionServiceTest {
         var commissionDTO = new CommissionDTO(null, List.of(new MultilingualContentDTO()),
             List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1, 2, 3),
-            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno", List.of("TECHNICAL"));
+            List.of(1, 2, 3), List.of(1, 2, 3), "load-mno", List.of("TECHNICAL"), false);
         var existingCommission = new Commission();
 
         when(commissionRepository.findById(commissionId))
@@ -211,5 +215,66 @@ public class CommissionServiceTest {
 
         // Then (The returned institution ID should match the expected value)
         assertEquals(expectedInstitutionId, institutionId);
+    }
+
+    @Test
+    void returnsSystemDefaultWhenUserIdIsNull() {
+        when(commissionRepository.findCommissionByIsDefaultTrue()).thenReturn(
+            Optional.of(systemDefaultCommission));
+
+        var result = commissionService.getDefaultCommission(null);
+
+        assertEquals(systemDefaultCommission, result);
+    }
+
+    @Test
+    void returnsSystemDefaultWhenOrganisationUnitIdIsNull() {
+        var userId = 123;
+        when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(null);
+        when(commissionRepository.findCommissionByIsDefaultTrue()).thenReturn(
+            Optional.of(systemDefaultCommission));
+
+        var result = commissionService.getDefaultCommission(userId);
+        assertEquals(systemDefaultCommission, result);
+    }
+
+    @Test
+    void returnsFirstAvailableCommissionInHierarchy() {
+        var userId = 123;
+        var rootOU = 10;
+        var parentOU = 20;
+
+        var expectedCommission = new Commission();
+
+        when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(rootOU);
+        when(organisationUnitService.getSuperOUsHierarchyRecursive(rootOU))
+            .thenReturn(List.of(parentOU));
+
+        when(userRepository.findUserCommissionForOrganisationUnit(rootOU))
+            .thenReturn(Collections.emptyList());
+
+        when(userRepository.findUserCommissionForOrganisationUnit(parentOU))
+            .thenReturn(List.of(expectedCommission));
+
+        var result = commissionService.getDefaultCommission(userId);
+        assertEquals(expectedCommission, result);
+    }
+
+    @Test
+    void returnsSystemDefaultWhenNoCommissionsInHierarchy() {
+        Integer userId = 123;
+        Integer rootOU = 10;
+        Integer parentOU = 20;
+
+        when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(rootOU);
+        when(organisationUnitService.getSuperOUsHierarchyRecursive(rootOU))
+            .thenReturn(List.of(parentOU));
+        when(commissionRepository.findCommissionByIsDefaultTrue()).thenReturn(
+            Optional.of(systemDefaultCommission));
+        when(userRepository.findUserCommissionForOrganisationUnit(any()))
+            .thenReturn(Collections.emptyList());
+
+        Commission result = commissionService.getDefaultCommission(userId);
+        assertEquals(systemDefaultCommission, result);
     }
 }

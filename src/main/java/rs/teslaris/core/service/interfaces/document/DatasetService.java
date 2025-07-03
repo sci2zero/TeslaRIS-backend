@@ -7,6 +7,8 @@ import rs.teslaris.core.model.document.Dataset;
 @Service
 public interface DatasetService {
 
+    Dataset findDatasetById(Integer datasetId);
+
     DatasetDTO readDatasetById(Integer datasetId);
 
     Dataset createDataset(DatasetDTO datasetDTO, Boolean index);
@@ -16,4 +18,6 @@ public interface DatasetService {
     void deleteDataset(Integer datasetId);
 
     void reindexDatasets();
+
+    void indexDataset(Dataset dataset);
 }

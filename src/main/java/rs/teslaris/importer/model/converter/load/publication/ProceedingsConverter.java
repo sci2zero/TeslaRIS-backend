@@ -1,5 +1,6 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +57,7 @@ public class ProceedingsConverter extends DocumentConverter
                 return null;
             }
         } else {
-            dto.setLanguageTagIds(List.of());
+            dto.setLanguageTagIds(Collections.emptyList());
         }
 
         if (Objects.nonNull(record.getOutputFrom().getEvent().getOldId()) &&

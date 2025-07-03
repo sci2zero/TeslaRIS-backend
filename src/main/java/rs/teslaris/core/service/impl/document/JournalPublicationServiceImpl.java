@@ -71,6 +71,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    public JournalPublication findJournalPublicationById(Integer publicationId) {
+        return journalPublicationJPAService.findOne(publicationId);
+    }
+
+    @Override
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
         JournalPublication publication;
         try {
@@ -171,6 +176,13 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         index.setJournalId(publication.getJournal().getId());
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    @Override
+    public void indexJournalPublication(JournalPublication publication) {
+        indexJournalPublication(publication,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                publication.getId()).orElse(new DocumentPublicationIndex()));
     }
 
     @Override

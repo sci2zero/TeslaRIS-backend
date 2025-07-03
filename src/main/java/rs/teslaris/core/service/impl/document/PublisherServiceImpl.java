@@ -193,6 +193,12 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         return null;
     }
 
+    @Override
+    public void indexPublisher(Publisher publisher) {
+        indexPublisher(publisher, publisherIndexRepository.findByDatabaseId(publisher.getId())
+            .orElse(new PublisherIndex()));
+    }
+
     private void setCommonFields(Publisher publisher, PublisherDTO publisherDTO) {
         publisher.setName(
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));

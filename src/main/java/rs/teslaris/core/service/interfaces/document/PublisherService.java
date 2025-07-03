@@ -31,4 +31,6 @@ public interface PublisherService extends JPAService<Publisher> {
     void forceDeletePublisher(Integer publisherId);
 
     CompletableFuture<Void> reindexPublishers();
+
+    void indexPublisher(Publisher publisher);
 }

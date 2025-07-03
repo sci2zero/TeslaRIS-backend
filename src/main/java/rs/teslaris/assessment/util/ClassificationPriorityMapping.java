@@ -3,6 +3,7 @@ package rs.teslaris.assessment.util;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -179,7 +180,8 @@ public class ClassificationPriorityMapping {
     }
 
     public static boolean existsInGroup(String groupCode, String classificationCode) {
-        return assessmentConfig.groupToClassificationsMapping.getOrDefault(groupCode, List.of())
+        return assessmentConfig.groupToClassificationsMapping.getOrDefault(groupCode,
+                Collections.emptyList())
             .contains(classificationCode);
     }
 

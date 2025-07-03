@@ -24,6 +24,8 @@ public interface ThesisService {
 
     void reindexTheses();
 
+    void indexThesis(Thesis thesis);
+
     DocumentFileResponseDTO addThesisAttachment(Integer thesisId, DocumentFileDTO document,
                                                 ThesisAttachmentType attachmentType);
 

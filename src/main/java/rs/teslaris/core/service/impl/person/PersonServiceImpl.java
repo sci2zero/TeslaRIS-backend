@@ -229,7 +229,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         person.setId(saved.getId());
 
         if (status == ApproveStatus.APPROVED && index) {
-            indexPerson(saved, saved.getId());
+            indexPerson(saved);
         }
 
         return person;
@@ -245,7 +245,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         person.setId(saved.getId());
 
         if (status == ApproveStatus.APPROVED && index) {
-            indexPerson(saved, saved.getId());
+            indexPerson(saved);
         }
 
         return person;
@@ -371,7 +371,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         save(personToUpdate);
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexPerson(personToUpdate, personToUpdate.getId());
+            indexPerson(personToUpdate);
         }
     }
 
@@ -388,7 +388,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         this.save(personToUpdate);
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexPerson(personToUpdate, personToUpdate.getId());
+            indexPerson(personToUpdate);
         }
     }
 
@@ -413,7 +413,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         save(personToUpdate);
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexPerson(personToUpdate, personToUpdate.getId());
+            indexPerson(personToUpdate);
         }
     }
 
@@ -456,7 +456,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         save(personToUpdate);
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexPerson(personToUpdate, personToUpdate.getId());
+            indexPerson(personToUpdate);
         }
     }
 
@@ -472,7 +472,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var approvedPerson = this.save(personToBeApproved);
 
         if (approve) {
-            indexPerson(approvedPerson, approvedPerson.getId());
+            indexPerson(approvedPerson);
         }
     }
 
@@ -710,7 +710,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((person) -> indexPerson(person, person.getId()));
+            chunk.forEach(this::indexPerson);
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
@@ -747,8 +747,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    public void indexPerson(Person savedPerson, Integer personDatabaseId) {
-        var personIndex = getPersonIndexForId(personDatabaseId);
+    public void indexPerson(Person savedPerson) {
+        var personIndex = getPersonIndexForId(savedPerson.getId());
 
         setPersonIndexProperties(personIndex, savedPerson);
 
@@ -835,6 +835,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
+        personIndex.getEmploymentInstitutionsId().clear();
+        personIndex.getEmploymentInstitutionsIdHierarchy().clear();
+        personIndex.setEmploymentsSr("");
+        personIndex.setEmploymentsOther("");
+        personIndex.setEmploymentsSrSortable("");
+        personIndex.setEmploymentsOtherSortable("");
+
         if (Objects.isNull(savedPerson.getInvolvements())) {
             return;
         }

@@ -249,7 +249,7 @@ public class PersonAssessmentClassificationServiceImpl
 
                 processResearcher(index.get(), commission, assessmentMeasures,
                     pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
-                    endDate.getYear(), List.of());
+                    endDate.getYear(), Collections.emptyList());
                 assessmentResponse.add(assessmentResult);
             });
         });
@@ -385,7 +385,7 @@ public class PersonAssessmentClassificationServiceImpl
                                                       List<Integer> subOUsForTopLevelInstitution) {
         if (publication.getAuthorIds().contains(-1)) {
             assessmentResult.getPublicationToInstitution()
-                .put(publication.getDatabaseId(), List.of());
+                .put(publication.getDatabaseId(), Collections.emptyList());
         }
 
         var knownAuthorIds = new HashSet<>(publication.getAuthorIds());
@@ -420,7 +420,7 @@ public class PersonAssessmentClassificationServiceImpl
                         .toList());
         } else {
             assessmentResult.getPublicationToInstitution()
-                .put(publication.getDatabaseId(), List.of());
+                .put(publication.getDatabaseId(), Collections.emptyList());
         }
     }
 

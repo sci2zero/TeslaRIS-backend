@@ -75,19 +75,28 @@ public class ConferenceController {
         @RequestParam("returnOnlySerialEvents")
         @NotNull(message = "You have to provide search range.") Boolean returnOnlySerialEvents,
         @RequestParam(value = "forMyInstitution", defaultValue = "false") Boolean forMyInstitution,
+        @RequestParam(value = "commissionId", required = false) Integer commissionId,
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
 
-        if (!bearerToken.isEmpty() &&
-            tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
-            var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        if (!bearerToken.isEmpty()) {
+            if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.ADMIN.name())) {
+                return conferenceService.searchConferences(tokens, pageable,
+                    returnOnlyNonSerialEvents,
+                    returnOnlySerialEvents, null,
+                    unclassified ? commissionId : null);
+            } else if (tokenUtil.extractUserRoleFromToken(bearerToken)
+                .equals(UserRole.COMMISSION.name())) {
+                var userId = tokenUtil.extractUserIdFromToken(bearerToken);
 
-            return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents,
-                forMyInstitution ? userService.getUserOrganisationUnitId(userId) : null,
-                unclassified ? userService.getUserCommissionId(userId) : null);
+                return conferenceService.searchConferences(tokens, pageable,
+                    returnOnlyNonSerialEvents,
+                    returnOnlySerialEvents,
+                    forMyInstitution ? userService.getUserOrganisationUnitId(userId) : null,
+                    unclassified ? userService.getUserCommissionId(userId) : null);
+            }
         }
 
         return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,

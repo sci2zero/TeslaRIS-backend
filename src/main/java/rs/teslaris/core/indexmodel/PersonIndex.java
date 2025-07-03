@@ -1,6 +1,7 @@
 package rs.teslaris.core.indexmodel;
 
 import jakarta.persistence.Id;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -48,7 +49,7 @@ public class PersonIndex {
     private String employmentsOtherSortable;
 
     @Field(type = FieldType.Integer, name = "employment_institutions_id", store = true)
-    private List<Integer> employmentInstitutionsId;
+    private List<Integer> employmentInstitutionsId = new ArrayList<>();
 
     @Field(type = FieldType.Integer, name = "past_employment_institution_ids", store = true)
     private List<Integer> pastEmploymentInstitutionIds;
@@ -78,7 +79,7 @@ public class PersonIndex {
     private Integer userId;
 
     @Field(type = FieldType.Integer, name = "employment_institutions_id_hierarchy", store = true)
-    private List<Integer> employmentInstitutionsIdHierarchy;
+    private List<Integer> employmentInstitutionsIdHierarchy = new ArrayList<>();
 
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
