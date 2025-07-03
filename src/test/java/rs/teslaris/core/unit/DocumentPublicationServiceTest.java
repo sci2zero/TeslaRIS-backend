@@ -604,7 +604,7 @@ public class DocumentPublicationServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenDoiExists() {
+    void shouldReturnTrueWhenIdentifierExists() {
         // given
         var identifier = "10.1234/example-doi";
         var documentPublicationId = 1;
@@ -885,5 +885,33 @@ public class DocumentPublicationServiceTest {
         assertTrue(result.isEmpty());
         verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
             "NOT_PRESENT");
+    }
+
+    @Test
+    void shouldReturnTrueWhenDoiExists() {
+        // Given
+        var doi = "10.1234/example";
+        when(documentRepository.existsByDoi(doi, null)).thenReturn(true);
+
+        // When
+        boolean result = documentPublicationService.isDoiInUse(doi);
+
+        // Then
+        assertTrue(result);
+        verify(documentRepository).existsByDoi(doi, null);
+    }
+
+    @Test
+    void shouldReturnFalseWhenDoiDoesNotExist() {
+        // Given
+        var doi = "10.5678/unused";
+        when(documentRepository.existsByDoi(doi, null)).thenReturn(false);
+
+        // When
+        boolean result = documentPublicationService.isDoiInUse(doi);
+
+        // Then
+        assertFalse(result);
+        verify(documentRepository).existsByDoi(doi, null);
     }
 }

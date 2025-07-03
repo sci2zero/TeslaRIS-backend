@@ -18,6 +18,8 @@ public record CommissionResponseDTO(
 
     String formalDescriptionOfRule,
 
-    List<String> recognisedResearchAreas
+    List<String> recognisedResearchAreas,
+
+    Boolean isDefault
 ) {
 }

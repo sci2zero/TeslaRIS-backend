@@ -263,8 +263,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
-    public void indexConference(Conference conference, Integer conferenceId) {
-        eventIndexRepository.findByDatabaseId(conferenceId).ifPresent(index -> {
+    public void indexConference(Conference conference) {
+        eventIndexRepository.findByDatabaseId(conference.getId()).ifPresent(index -> {
             indexConference(conference, index);
         });
     }

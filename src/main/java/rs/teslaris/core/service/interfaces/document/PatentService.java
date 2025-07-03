@@ -7,7 +7,9 @@ import rs.teslaris.core.model.document.Patent;
 @Service
 public interface PatentService {
 
-    PatentDTO readPatentById(Integer patentID);
+    Patent findPatentById(Integer patentId);
+
+    PatentDTO readPatentById(Integer patentId);
 
     Patent createPatent(PatentDTO patentDTO, Boolean index);
 
@@ -16,4 +18,6 @@ public interface PatentService {
     void deletePatent(Integer patentId);
 
     void reindexPatents();
+
+    void indexPatent(Patent patent);
 }

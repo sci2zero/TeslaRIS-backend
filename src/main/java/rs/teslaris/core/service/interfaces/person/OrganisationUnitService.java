@@ -111,4 +111,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     boolean canOUEmployeeScanDataSources(Integer organisationUnitId);
 
     void indexOrganisationUnit(OrganisationUnit organisationUnit, Integer organisationUnitId);
+
+    void indexOrganisationUnit(OrganisationUnit organisationUnit);
 }

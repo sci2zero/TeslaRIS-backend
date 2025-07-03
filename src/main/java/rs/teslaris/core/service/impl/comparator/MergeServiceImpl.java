@@ -1,9 +1,11 @@
 package rs.teslaris.core.service.impl.comparator;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -224,7 +226,7 @@ public class MergeServiceImpl implements MergeService {
             (srcId, personPublicationIndex) -> performPersonPublicationSwitch(srcId, targetPersonId,
                 personPublicationIndex.getDatabaseId(), true),
             pageRequest -> documentPublicationService.findResearcherPublications(sourcePersonId,
-                List.of(),
+                Collections.emptyList(),
                 pageRequest).getContent()
         );
     }
@@ -291,8 +293,8 @@ public class MergeServiceImpl implements MergeService {
         userService.updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
         userService.updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
 
-        personService.indexPerson(sourcePerson, sourcePerson.getId());
-        personService.indexPerson(targetPerson, targetPerson.getId());
+        personService.indexPerson(sourcePerson);
+        personService.indexPerson(targetPerson);
     }
 
     @Override
@@ -306,11 +308,13 @@ public class MergeServiceImpl implements MergeService {
 
             sourcePerson.getExpertisesAndSkills().remove(skillToUpdate);
 
-            targetPerson.getExpertisesAndSkills().add(skillToUpdate);
-        });
+            if (!targetPerson.getExpertisesAndSkills().contains(skillToUpdate)) {
+                targetPerson.getExpertisesAndSkills().add(skillToUpdate);
+                skillToUpdate.setPerson(targetPerson);
+            }
 
-        personService.save(sourcePerson);
-        personService.save(targetPerson);
+            expertiseOrSkillService.save(skillToUpdate);
+        });
     }
 
     @Override
@@ -327,10 +331,9 @@ public class MergeServiceImpl implements MergeService {
             if (!targetPerson.getPrizes().contains(prizeToUpdate)) {
                 targetPerson.addPrize(prizeToUpdate);
             }
-        });
 
-        personService.save(sourcePerson);
-        personService.save(targetPerson);
+            prizeService.save(prizeToUpdate);
+        });
     }
 
     @Override
@@ -353,7 +356,9 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedProceedingsMetadata(Integer leftId, Integer rightId,
                                               ProceedingsDTO leftData, ProceedingsDTO rightData) {
-        updateAndRestoreMetadata(proceedingsService::updateProceedings, leftId, rightId, leftData,
+        updateAndRestoreMetadata(proceedingsService::updateProceedings,
+            proceedingsService::indexProceedings, proceedingsService::findProceedingsById, leftId,
+            rightId, leftData,
             rightData,
             dto -> new String[] {dto.getEISBN(), dto.getPrintISBN(), dto.getDoi(),
                 dto.getScopusId()},
@@ -368,7 +373,8 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedPersonsMetadata(Integer leftId, Integer rightId,
                                           PersonalInfoDTO leftData, PersonalInfoDTO rightData) {
-        updateAndRestoreMetadata(personService::updatePersonalInfo, leftId, rightId, leftData,
+        updateAndRestoreMetadata(personService::updatePersonalInfo, personService::indexPerson,
+            personService::findOne, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getApvnt(), dto.getECrisId(), dto.getENaukaId(),
                 dto.getScopusAuthorId(), dto.getOrcid()},
@@ -385,7 +391,9 @@ public class MergeServiceImpl implements MergeService {
     public void saveMergedOUsMetadata(Integer leftId, Integer rightId,
                                       OrganisationUnitRequestDTO leftData,
                                       OrganisationUnitRequestDTO rightData) {
-        updateAndRestoreMetadata(organisationUnitService::editOrganisationUnit, leftId, rightId,
+        updateAndRestoreMetadata(organisationUnitService::editOrganisationUnit,
+            organisationUnitService::indexOrganisationUnit, organisationUnitService::findOne,
+            leftId, rightId,
             leftData,
             rightData,
             dto -> new String[] {dto.getScopusAfid()},
@@ -397,7 +405,8 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedJournalsMetadata(Integer leftId, Integer rightId, JournalDTO leftData,
                                            JournalDTO rightData) {
-        updateAndRestoreMetadata(journalService::updateJournal, leftId, rightId, leftData,
+        updateAndRestoreMetadata(journalService::updateJournal, journalService::indexJournal,
+            journalService::findJournalById, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getEissn(), dto.getPrintISSN()},
             (dto, values) -> {
@@ -410,7 +419,9 @@ public class MergeServiceImpl implements MergeService {
     public void saveMergedBookSeriesMetadata(Integer leftId, Integer rightId,
                                              BookSeriesDTO leftData,
                                              BookSeriesDTO rightData) {
-        updateAndRestoreMetadata(bookSeriesService::updateBookSeries, leftId, rightId, leftData,
+        updateAndRestoreMetadata(bookSeriesService::updateBookSeries,
+            bookSeriesService::indexBookSeries, bookSeriesService::findBookSeriesById, leftId,
+            rightId, leftData,
             rightData,
             dto -> new String[] {dto.getEissn(), dto.getPrintISSN()},
             (dto, values) -> {
@@ -422,7 +433,9 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedConferencesMetadata(Integer leftId, Integer rightId,
                                               ConferenceDTO leftData, ConferenceDTO rightData) {
-        updateAndRestoreMetadata(conferenceService::updateConference, leftId, rightId, leftData,
+        updateAndRestoreMetadata(conferenceService::updateConference,
+            conferenceService::indexConference, conferenceService::findConferenceById, leftId,
+            rightId, leftData,
             rightData,
             dto -> new String[] {dto.getConfId()},
             (dto, values) -> dto.setConfId(values[0]));
@@ -431,7 +444,8 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedSoftwareMetadata(Integer leftId, Integer rightId, SoftwareDTO leftData,
                                            SoftwareDTO rightData) {
-        updateAndRestoreMetadata(softwareService::editSoftware, leftId, rightId, leftData,
+        updateAndRestoreMetadata(softwareService::editSoftware, softwareService::indexSoftware,
+            softwareService::findSoftwareById, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId()},
             (dto, values) -> {
@@ -444,7 +458,8 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
                                            DatasetDTO rightData) {
-        updateAndRestoreMetadata(datasetService::editDataset, leftId, rightId, leftData, rightData,
+        updateAndRestoreMetadata(datasetService::editDataset, datasetService::indexDataset,
+            datasetService::findDatasetById, leftId, rightId, leftData, rightData,
             dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId()},
             (dto, values) -> {
                 dto.setInternalNumber(values[0]);
@@ -456,7 +471,8 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
                                           PatentDTO rightData) {
-        updateAndRestoreMetadata(patentService::editPatent, leftId, rightId, leftData, rightData,
+        updateAndRestoreMetadata(patentService::editPatent, patentService::indexPatent,
+            patentService::findPatentById, leftId, rightId, leftData, rightData,
             dto -> new String[] {dto.getNumber(), dto.getDoi(), dto.getScopusId()},
             (dto, values) -> {
                 dto.setNumber(values[0]);
@@ -469,7 +485,9 @@ public class MergeServiceImpl implements MergeService {
     public void saveMergedProceedingsPublicationMetadata(Integer leftId, Integer rightId,
                                                          ProceedingsPublicationDTO leftData,
                                                          ProceedingsPublicationDTO rightData) {
-        updateAndRestoreMetadata(proceedingsPublicationService::editProceedingsPublication, leftId,
+        updateAndRestoreMetadata(proceedingsPublicationService::editProceedingsPublication,
+            proceedingsPublicationService::indexProceedingsPublication,
+            proceedingsPublicationService::findProceedingsPublicationById, leftId,
             rightId, leftData, rightData,
             dto -> new String[] {dto.getDoi(), dto.getScopusId()},
             (dto, values) -> {
@@ -482,7 +500,9 @@ public class MergeServiceImpl implements MergeService {
     public void saveMergedJournalPublicationMetadata(Integer leftId, Integer rightId,
                                                      JournalPublicationDTO leftData,
                                                      JournalPublicationDTO rightData) {
-        updateAndRestoreMetadata(journalPublicationService::editJournalPublication, leftId, rightId,
+        updateAndRestoreMetadata(journalPublicationService::editJournalPublication,
+            journalPublicationService::indexJournalPublication,
+            journalPublicationService::findJournalPublicationById, leftId, rightId,
             leftData, rightData,
             dto -> new String[] {dto.getDoi(), dto.getScopusId()},
             (dto, values) -> {
@@ -494,7 +514,8 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedThesesMetadata(Integer leftId, Integer rightId, ThesisDTO leftData,
                                          ThesisDTO rightData) {
-        updateAndRestoreMetadata(thesisService::editThesis, leftId, rightId, leftData, rightData,
+        updateAndRestoreMetadata(thesisService::editThesis, thesisService::indexThesis,
+            thesisService::getThesisById, leftId, rightId, leftData, rightData,
             dto -> new String[] {dto.getDoi(), dto.getScopusId()},
             (dto, values) -> {
                 dto.setDoi(values[0]);
@@ -505,7 +526,8 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedPublishersMetadata(Integer leftId, Integer rightId, PublisherDTO leftData,
                                              PublisherDTO rightData) {
-        updateAndRestoreMetadata(publisherService::editPublisher, leftId, rightId, leftData,
+        updateAndRestoreMetadata(publisherService::editPublisher, publisherService::indexPublisher,
+            publisherService::findOne, leftId, rightId, leftData,
             rightData, dto -> new String[] {}, (dto, values) -> {
             });
     }
@@ -532,7 +554,8 @@ public class MergeServiceImpl implements MergeService {
     @Override
     public void saveMergedMonographsMetadata(Integer leftId, Integer rightId, MonographDTO leftData,
                                              MonographDTO rightData) {
-        updateAndRestoreMetadata(monographService::editMonograph, leftId, rightId, leftData,
+        updateAndRestoreMetadata(monographService::editMonograph, monographService::indexMonograph,
+            monographService::findMonographById, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getPrintISBN(),
                 dto.getEisbn()},
@@ -548,7 +571,9 @@ public class MergeServiceImpl implements MergeService {
     public void saveMergedMonographPublicationsMetadata(Integer leftId, Integer rightId,
                                                         MonographPublicationDTO leftData,
                                                         MonographPublicationDTO rightData) {
-        updateAndRestoreMetadata(monographPublicationService::editMonographPublication, leftId,
+        updateAndRestoreMetadata(monographPublicationService::editMonographPublication,
+            monographPublicationService::indexMonographPublication,
+            monographPublicationService::findMonographPublicationById, leftId,
             rightId,
             leftData, rightData,
             dto -> new String[] {dto.getDoi(), dto.getScopusId()},
@@ -742,7 +767,7 @@ public class MergeServiceImpl implements MergeService {
         });
 
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
-        personService.indexPerson(person, personId);
+        personService.indexPerson(person);
     }
 
     private <T> void processChunks(int sourceId,
@@ -787,11 +812,13 @@ public class MergeServiceImpl implements MergeService {
         });
     }
 
-    private <T> void updateAndRestoreMetadata(BiConsumer<Integer, T> updateMethod,
-                                              Integer leftId, Integer rightId,
-                                              T leftData, T rightData,
-                                              Function<T, String[]> originalValuesExtractor,
-                                              BiConsumer<T, String[]> restoreValues) {
+    private <T, R> void updateAndRestoreMetadata(BiConsumer<Integer, T> updateMethod,
+                                                 Consumer<R> reindexMethod,
+                                                 Function<Integer, R> fetchFunction,
+                                                 Integer leftId, Integer rightId,
+                                                 T leftData, T rightData,
+                                                 Function<T, String[]> originalValuesExtractor,
+                                                 BiConsumer<T, String[]> restoreValues) {
         String[] originalValues = originalValuesExtractor.apply(leftData);
 
         String[] emptyValues = new String[originalValues.length];
@@ -803,5 +830,8 @@ public class MergeServiceImpl implements MergeService {
 
         restoreValues.accept(leftData, originalValues);
         updateMethod.accept(leftId, leftData);
+
+        reindexMethod.accept(fetchFunction.apply(leftId));
+        reindexMethod.accept(fetchFunction.apply(rightId));
     }
 }

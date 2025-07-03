@@ -61,6 +61,11 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    public Patent findPatentById(Integer patentId) {
+        return patentJPAService.findOne(patentId);
+    }
+
+    @Override
     public PatentDTO readPatentById(Integer patentId) {
         Patent patent;
         try {
@@ -158,6 +163,13 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+    }
+
+    @Override
+    public void indexPatent(Patent patent) {
+        indexPatent(patent,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                patent.getId()).orElse(new DocumentPublicationIndex()));
     }
 
     private void indexPatent(Patent patent, DocumentPublicationIndex index) {

@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.institution.Commission;
@@ -41,8 +42,20 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
         "WHERE eac.event.id = :eventId")
     List<Integer> findCommissionsThatClassifiedEvent(Integer eventId);
 
+    @Query(
+        "SELECT c.id FROM Commission c LEFT JOIN PublicationSeriesAssessmentClassification psac " +
+            "ON psac.commission.id = c.id " +
+            "WHERE psac.publicationSeries.id = :journalId")
+    List<Integer> findCommissionsThatClassifiedJournal(Integer journalId);
+
     @Query("SELECT c.id FROM Commission c LEFT JOIN DocumentAssessmentClassification eac " +
         "ON eac.commission.id = c.id " +
         "WHERE eac.document.id = :documentId")
     List<Integer> findCommissionsThatAssessedDocument(Integer documentId);
+
+    @Modifying
+    @Query("UPDATE Commission c SET c.isDefault = false WHERE c.id != :commissionId")
+    void setOthersAsNonDefault(Integer commissionId);
+
+    Optional<Commission> findCommissionByIsDefaultTrue();
 }

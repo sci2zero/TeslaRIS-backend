@@ -26,6 +26,8 @@ public interface ProceedingsService {
 
     void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index);
 
+    void indexProceedings(Proceedings proceedings);
+
     void reindexProceedings();
 
     boolean isIdentifierInUse(String identifier, Integer proceedingsId);

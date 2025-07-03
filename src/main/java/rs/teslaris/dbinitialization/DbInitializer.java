@@ -257,7 +257,9 @@ public class DbInitializer implements ApplicationRunner {
                     putThesisOnPublicReview, createUserBasic, editPersonalInfo, createJournal,
                     editDocumentFiles, editEmploymentInstitution, generateOutputBackup,
                     createConference, saveLoadingConfiguration, performLoading,
-                    editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit)));
+                    editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit,
+                    mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
+                    mergeOUEmployments, mergeDocumentsMetadata)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

@@ -11,6 +11,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -607,6 +608,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             });
     }
 
+    @Override
+    public void indexOrganisationUnit(OrganisationUnit organisationUnit) {
+        indexOrganisationUnit(organisationUnit,
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                organisationUnit.getId()).orElse(new OrganisationUnitIndex()));
+    }
+
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                        OrganisationUnitIndex index) {
         index.setDatabaseId(organisationUnit.getId());
@@ -824,8 +832,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             setSourceOrganisationUnitId(targetId);
             setTargetOrganisationUnitId(sourceId);
             setRelationType(OrganisationUnitRelationType.BELONGS_TO);
-            setSourceAffiliationStatement(List.of());
-            setTargetAffiliationStatement(List.of());
+            setSourceAffiliationStatement(Collections.emptyList());
+            setTargetAffiliationStatement(Collections.emptyList());
         }};
         setCommonOURelationFields(newRelation, creationDTO);
         newRelation.setApproveStatus(ApproveStatus.APPROVED);

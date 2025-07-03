@@ -12,6 +12,7 @@ public class CommissionConverter {
             commission.getSources().stream().toList(), commission.getAssessmentDateFrom(),
             commission.getAssessmentDateTo(),
             commission.getFormalDescriptionOfRule(),
-            commission.getRecognisedResearchAreas().stream().toList());
+            commission.getRecognisedResearchAreas().stream().toList(),
+            commission.getIsDefault());
     }
 }

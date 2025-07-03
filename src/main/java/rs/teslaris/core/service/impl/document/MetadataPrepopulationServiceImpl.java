@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -160,7 +161,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
 
         if (Objects.isNull(metadata.getPublishEntityId())) {
             journalService.searchJournals(List.of(metadata.getPublishedInName().split(" ")),
-                    PageRequest.of(0, 3), null).getContent()
+                    PageRequest.of(0, 3), null, null).getContent()
                 .stream()
                 .filter(journal ->
                     Arrays.stream(journal.getTitleSr().split("\\|"))
@@ -273,14 +274,15 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
                     .filter(index -> index.getDatabaseId().equals(inputPersonId)).findFirst().get();
                 contribution.setPersonId(importingAuthor.getDatabaseId());
                 contribution.setInstitutionIds(
-                    importingAuthor.getEmploymentInstitutionsId().isEmpty() ? List.of() :
+                    importingAuthor.getEmploymentInstitutionsId().isEmpty() ?
+                        Collections.emptyList() :
                         List.of(importingAuthor.getEmploymentInstitutionsId().getFirst()));
                 selfBindCompleted = true;
             } else if (!personResults.isEmpty()) {
                 var foundAuthor = personResults.getFirst();
                 contribution.setPersonId(foundAuthor.getDatabaseId());
                 contribution.setInstitutionIds(
-                    foundAuthor.getEmploymentInstitutionsId().isEmpty() ? List.of() :
+                    foundAuthor.getEmploymentInstitutionsId().isEmpty() ? Collections.emptyList() :
                         List.of(foundAuthor.getEmploymentInstitutionsId().getFirst()));
             }
 

@@ -214,6 +214,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    public void indexProceedings(Proceedings proceedings) {
+        indexProceedings(proceedings,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                proceedings.getId()).orElse(new DocumentPublicationIndex()));
+    }
+
+    @Override
     public void reindexProceedings() {
         // Super service does the initial deletion
 

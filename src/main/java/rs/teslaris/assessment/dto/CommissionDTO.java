@@ -39,6 +39,9 @@ public record CommissionDTO(
     String formalDescriptionOfRule,
 
     @NotBlank(message = "You have to provide recognised research areas.")
-    List<String> recognisedResearchAreas
+    List<String> recognisedResearchAreas,
+
+    @NotNull(message = "Please provide whether this is the default MService commission.")
+    Boolean isDefault
 ) {
 }

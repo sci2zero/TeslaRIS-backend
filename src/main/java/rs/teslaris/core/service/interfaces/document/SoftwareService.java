@@ -7,6 +7,8 @@ import rs.teslaris.core.model.document.Software;
 @Service
 public interface SoftwareService {
 
+    Software findSoftwareById(Integer softwareId);
+
     SoftwareDTO readSoftwareById(Integer softwareId);
 
     Software createSoftware(SoftwareDTO softwareDTO, Boolean index);
@@ -16,4 +18,6 @@ public interface SoftwareService {
     void deleteSoftware(Integer softwareId);
 
     void reindexSoftware();
+
+    void indexSoftware(Software software);
 }

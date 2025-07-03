@@ -49,4 +49,7 @@ public class JournalIndex {
 
     @Field(type = FieldType.Integer, name = "related_institution_ids", store = true)
     private List<Integer> relatedInstitutionIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "classified_by", store = true)
+    private List<Integer> classifiedBy = new ArrayList<>();
 }

@@ -78,6 +78,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    public ProceedingsPublication findProceedingsPublicationById(Integer publicationId) {
+        return proceedingPublicationJPAService.findOne(publicationId);
+    }
+
+    @Override
     public ProceedingsPublicationDTO readProceedingsPublicationById(Integer publicationId) {
         ProceedingsPublication publication;
         try {
@@ -203,6 +208,13 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         }
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    @Override
+    public void indexProceedingsPublication(ProceedingsPublication publication) {
+        indexProceedingsPublication(publication,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                publication.getId()).orElse(new DocumentPublicationIndex()));
     }
 
     @Override

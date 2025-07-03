@@ -1161,6 +1161,7 @@ public class AssessmentDataInitializer {
         commission5.setFormalDescriptionOfRule("load-mno");
         commission5.setRecognisedResearchAreas(
             Set.of("NATURAL", "SOCIAL", "TECHNICAL", "HUMANITIES"));
+        commission5.setIsDefault(true);
 
         var commission6 = new Commission();
         commission6.setDescription(

@@ -2,6 +2,7 @@ package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -134,7 +135,7 @@ public class DocumentPublicationController {
                                                                      List<Integer> ignore,
                                                                      Pageable pageable) {
         return documentPublicationService.findResearcherPublications(personId,
-            Objects.requireNonNullElse(ignore, List.of()), pageable);
+            Objects.requireNonNullElse(ignore, Collections.emptyList()), pageable);
     }
 
     @GetMapping("/research-output/{documentId}")
@@ -250,7 +251,7 @@ public class DocumentPublicationController {
     }
 
     @GetMapping("/doi-usage")
-    public boolean checkIdentifierUsage(@RequestParam String doi) {
+    public boolean checkDoiUsage(@RequestParam String doi) {
         return documentPublicationService.isDoiInUse(doi);
     }
 

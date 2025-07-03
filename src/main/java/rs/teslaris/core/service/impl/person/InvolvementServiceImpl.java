@@ -183,7 +183,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         personInvolved.addInvolvement(newEmployment);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
-        personService.indexPerson(personInvolved, personInvolved.getId());
+        personService.indexPerson(personInvolved);
 
         return involvementRepository.save(newEmployment);
     }
@@ -270,7 +270,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         person.addInvolvement(employment);
         Employment saved = employmentRepository.save(employment);
-        personService.indexPerson(person, person.getId());
+        personService.indexPerson(person);
         return saved;
     }
 
@@ -378,8 +378,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvementRepository.save(employmentToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
             employmentToUpdate.getPersonInvolved().getId());
-        personService.indexPerson(employmentToUpdate.getPersonInvolved(),
-            employmentToUpdate.getPersonInvolved().getId());
+        personService.indexPerson(employmentToUpdate.getPersonInvolved());
     }
 
     @Override
@@ -406,7 +405,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         employment.get().setDateTo(LocalDate.now());
         employmentRepository.save(employment.get());
-        personService.indexPerson(employment.get().getPersonInvolved(), personId);
+        personService.indexPerson(employment.get().getPersonInvolved());
     }
 
     @Override

@@ -187,6 +187,12 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         return null;
     }
 
+    @Override
+    public void indexBookSeries(BookSeries bookSeries) {
+        indexBookSeries(bookSeries, bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(
+            bookSeries.getId()).orElse(new BookSeriesIndex()));
+    }
+
     private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {
         if (Objects.nonNull(bookSeriesDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForBookSeries(

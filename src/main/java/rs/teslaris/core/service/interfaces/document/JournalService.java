@@ -20,7 +20,7 @@ public interface JournalService {
     Page<JournalResponseDTO> readAllJournals(Pageable pageable);
 
     Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
-                                      Integer institutionId);
+                                      Integer institutionId, Integer commissionId);
 
     Journal findJournalByJournalName(String journalName, LanguageTag defaultLanguage,
                                      String eIssn, String printIssn);
@@ -55,7 +55,7 @@ public interface JournalService {
 
     CompletableFuture<Void> reindexJournals();
 
-    void indexJournal(Journal journal, Integer journalId);
+    void indexJournal(Journal journal);
 
     void indexJournal(Journal journal, JournalIndex index);
 

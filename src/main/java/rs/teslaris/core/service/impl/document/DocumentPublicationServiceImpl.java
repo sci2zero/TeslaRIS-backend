@@ -377,7 +377,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private void setAdditionalMetadata(Document document, DocumentPublicationIndex index) {
         index.setAssessedBy(
-            commissionRepository.findCommissionsThatClassifiedEvent(document.getId()));
+            commissionRepository.findCommissionsThatAssessedDocument(document.getId()));
     }
 
     @Override

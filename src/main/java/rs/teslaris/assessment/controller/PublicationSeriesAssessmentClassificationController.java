@@ -1,6 +1,7 @@
 package rs.teslaris.assessment.controller;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -96,7 +97,7 @@ public class PublicationSeriesAssessmentClassificationController {
         @RequestHeader("Authorization") String bearerToken) {
         publicationSeriesAssessmentClassificationService.scheduleClassification(timestamp,
             commissionId, tokenUtil.extractUserIdFromToken(bearerToken), classificationYears,
-            Objects.nonNull(journalIds) ? journalIds : List.of());
+            Objects.nonNull(journalIds) ? journalIds : Collections.emptyList());
     }
 
     @PostMapping("/schedule-classification-load")

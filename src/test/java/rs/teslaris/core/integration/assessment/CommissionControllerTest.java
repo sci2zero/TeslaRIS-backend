@@ -28,7 +28,7 @@ public class CommissionControllerTest extends BaseTest {
 
         return new CommissionDTO(null, dummyMC, List.of("source1", "source2"),
             LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), List.of(1),
-            List.of(1, 2), List.of(1, 2), "load-mno", List.of("SOCIAL"));
+            List.of(1, 2), List.of(1, 2), "load-mno", List.of("SOCIAL"), false);
     }
 
     @Test
@@ -115,5 +115,29 @@ public class CommissionControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void testGetDefaultCommissionGuest() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/assessment/commission/default")
+                    .contentType(MediaType.APPLICATION_JSON)
+            ).andExpect(status().isOk())
+            .andExpect(jsonPath("$").value(5));
+    }
+
+    @Test
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testGetDefaultCommissionLoggedInUser() throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/assessment/commission/default")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+            ).andExpect(status().isOk())
+            .andExpect(jsonPath("$").value(5));
     }
 }

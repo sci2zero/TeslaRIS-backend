@@ -86,7 +86,7 @@ public interface PersonService extends JPAService<Person> {
 
     CompletableFuture<Void> reindexPersons();
 
-    void indexPerson(Person savedPerson, Integer personDatabaseId);
+    void indexPerson(Person savedPerson);
 
     Integer getPersonIdForUserId(Integer userId);
 

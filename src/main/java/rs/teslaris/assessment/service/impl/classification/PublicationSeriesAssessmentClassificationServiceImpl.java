@@ -140,8 +140,12 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             publicationSeriesService.findOne(
                 publicationSeriesAssessmentClassificationDTO.getPublicationSeriesId()));
 
-        return publicationSeriesAssessmentClassificationJPAService.save(
+        var savedClassification = publicationSeriesAssessmentClassificationJPAService.save(
             newAssessmentClassification);
+        journalService.reindexJournalVolatileInformation(
+            newAssessmentClassification.getPublicationSeries().getId());
+
+        return savedClassification;
     }
 
     @Override
@@ -164,6 +168,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
         publicationSeriesAssessmentClassificationJPAService.save(
             publicationSeriesAssessmentClassificationToUpdate);
+        journalService.reindexJournalVolatileInformation(
+            publicationSeriesAssessmentClassificationToUpdate.getPublicationSeries().getId());
     }
 
     private void performJournalClassification(Integer commissionId,
