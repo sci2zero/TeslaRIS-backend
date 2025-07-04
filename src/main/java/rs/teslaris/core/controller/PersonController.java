@@ -119,6 +119,7 @@ public class PersonController {
         @PathVariable Integer organisationUnitId,
         @RequestParam Boolean fetchAlumni,
         Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
         return personService.findPeopleForOrganisationUnit(organisationUnitId, tokens, pageable,
             fetchAlumni);
     }
@@ -206,6 +207,7 @@ public class PersonController {
 
     @DeleteMapping("/{personId}")
     @PreAuthorize("hasAuthority('DELETE_PERSON')")
+    @PersonEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePerson(@PathVariable Integer personId) {
         personService.deletePerson(personId);

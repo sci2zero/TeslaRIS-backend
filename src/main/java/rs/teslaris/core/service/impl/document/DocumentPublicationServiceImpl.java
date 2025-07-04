@@ -293,8 +293,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             index.setEventId(document.getEvent().getId());
         }
 
-        var aaa = StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
-            index.getKeywordsSr());
         index.setWordcloudTokensSr(
             StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
                 index.getKeywordsSr()));

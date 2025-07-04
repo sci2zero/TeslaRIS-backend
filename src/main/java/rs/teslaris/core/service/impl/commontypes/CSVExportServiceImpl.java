@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -207,8 +208,10 @@ public class CSVExportServiceImpl implements CSVExportService {
                     documentSpecificFilters.c, documentSpecificFilters.a);
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
-                    endpointTokenParameters, pageable,
-                    SearchRequestType.SIMPLE, null, null, null, null);
+                    Arrays.stream(endpointTokenParameters.getFirst().split("tokens="))
+                        .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
+                    SearchRequestType.SIMPLE, null,
+                    Integer.parseInt(endpointTokenParameters.getLast()), null, null);
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
                 Integer.parseInt(endpointTokenParameters.getFirst()), null, pageable);
             case ORGANISATION_UNIT_OUTPUTS ->

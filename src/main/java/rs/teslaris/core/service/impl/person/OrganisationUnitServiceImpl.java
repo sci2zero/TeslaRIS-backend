@@ -825,6 +825,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         if (organisationUnitsRelationRepository.getSuperOU(targetId).isPresent()) {
             throw new OrganisationUnitReferenceConstraintViolationException(
                 "Organisation unit already has a super relation.");
+        } else if (sourceId.equals(targetId)) {
+            throw new OrganisationUnitReferenceConstraintViolationException(
+                "cyclicOrgUnitRelationLabel");
         }
 
         var newRelation = new OrganisationUnitsRelation();

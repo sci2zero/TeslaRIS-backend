@@ -1,6 +1,8 @@
 package rs.teslaris.core.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -31,8 +33,33 @@ public class OrgUnitEditCheckAspect {
         var attributeMap = AspectUtil.getUriVariables(request);
 
         var role = UserRole.valueOf(tokenUtil.extractUserRoleFromToken(tokenValue));
-        var organisationUnitId = Integer.parseInt(attributeMap.get("organisationUnitId"));
 
+        List<Integer> organisationUnitIds = new ArrayList<>();
+        if (attributeMap.containsKey("organisationUnitId")) {
+            organisationUnitIds.add(Integer.parseInt(attributeMap.get("organisationUnitId")));
+        } else if (attributeMap.containsKey("leftOrganisationUnitId") &&
+            attributeMap.containsKey("rightOrganisationUnitId")) {
+            organisationUnitIds.add(Integer.parseInt(attributeMap.get("leftOrganisationUnitId")));
+            organisationUnitIds.add(Integer.parseInt(attributeMap.get("rightOrganisationUnitId")));
+        } else if (attributeMap.containsKey("relationId")) {
+            // TODO: Check if we should check both source and target OU IDs!
+            organisationUnitIds.add(organisationUnitService.findOrganisationUnitsRelationById(
+                    Integer.parseInt(attributeMap.get("relationId"))).getSourceOrganisationUnit()
+                .getId());
+        } else {
+            throw new IllegalArgumentException(
+                "Missing OU identifiers."); // should never happen in prod, only for testing
+        }
+
+        for (var organisationUnitId : organisationUnitIds) {
+            validateAccessPermissions(role, tokenValue, organisationUnitId);
+        }
+
+        return joinPoint.proceed();
+    }
+
+    private void validateAccessPermissions(UserRole role, String tokenValue,
+                                           Integer organisationUnitId) {
         switch (role) {
             case ADMIN:
                 break;
@@ -48,7 +75,5 @@ public class OrgUnitEditCheckAspect {
             default:
                 throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
         }
-
-        return joinPoint.proceed();
     }
 }
