@@ -1,13 +1,15 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,6 +17,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,9 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -66,6 +72,9 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.Prize;
+import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -584,18 +593,86 @@ public class MergeServiceTest {
         });
 
         // When
-        mergeService.switchInvolvements(involvementIds, sourcePersonId, targetPersonId);
+        mergeService.switchInvolvements(involvementIds, sourcePersonId, targetPersonId, null);
 
         // Then
         involvementIds.forEach(id -> {
-            var involvement = new Involvement();
-            involvement.setId(id);
-            verify(involvementService, times(1)).save(any(Involvement.class));
+            verify(involvementService, times(1)).save(
+                argThat(inv -> Objects.equals(inv.getId(), id)));
         });
         verify(personService).save(sourcePerson);
         verify(personService).save(targetPerson);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
+        verify(personService).indexPerson(sourcePerson);
+        verify(personService).indexPerson(targetPerson);
+    }
+
+    @Test
+    void shouldSwitchInvolvementsWithInstitutionFilter() {
+        // Given
+        var sourcePersonId = 1;
+        var targetPersonId = 2;
+        var institutionId = 99;
+        var involvementIds = List.of(100, 101, 102);
+
+        var sourcePerson = new Person();
+        sourcePerson.setId(sourcePersonId);
+        var targetPerson = new Person();
+        targetPerson.setId(targetPersonId);
+
+        var ou1 = new OrganisationUnit();
+        ou1.setId(999); // in subhierarchy
+
+        var ou2 = new OrganisationUnit();
+        ou2.setId(888); // not in subhierarchy
+
+        var involvement1 = new Involvement();
+        involvement1.setId(100);
+        involvement1.setInvolvementType(InvolvementType.EMPLOYED_AT);
+        involvement1.setOrganisationUnit(ou1);
+
+        var involvement2 = new Involvement();
+        involvement2.setId(101);
+        involvement2.setInvolvementType(InvolvementType.HIRED_BY);
+        involvement2.setOrganisationUnit(ou2);
+
+        var involvement3 = new Involvement();
+        involvement3.setId(102);
+        involvement3.setInvolvementType(InvolvementType.MEMBER_OF);
+        involvement3.setOrganisationUnit(ou1);
+
+        sourcePerson.setInvolvements(
+            new HashSet<>(List.of(involvement1, involvement2, involvement3)));
+        targetPerson.setInvolvements(new HashSet<>());
+
+        when(personService.findOne(sourcePersonId)).thenReturn(sourcePerson);
+        when(personService.findOne(targetPersonId)).thenReturn(targetPerson);
+
+        when(involvementService.findOne(100)).thenReturn(involvement1);
+        when(involvementService.findOne(101)).thenReturn(involvement2);
+        when(involvementService.findOne(102)).thenReturn(involvement3);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(List.of(999));
+
+        // When
+        mergeService.switchInvolvements(involvementIds, sourcePersonId, targetPersonId,
+            institutionId);
+
+        // Then
+        verify(involvementService, never()).save(argThat(inv -> inv.getId() == 100));
+
+        // involvement2 and 3 should be switched
+        verify(involvementService, times(1)).save(argThat(inv -> inv.getId() == 101));
+        verify(involvementService, times(1)).save(argThat(inv -> inv.getId() == 102));
+
+        verify(personService).save(sourcePerson);
+        verify(personService).save(targetPerson);
+
+        verify(userService).updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
+        verify(userService).updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
+
         verify(personService).indexPerson(sourcePerson);
         verify(personService).indexPerson(targetPerson);
     }
@@ -635,14 +712,13 @@ public class MergeServiceTest {
 
         // Then
         skillIds.forEach(id -> {
-            var skill = new ExpertiseOrSkill();
-            skill.setId(id);
             verify(expertiseOrSkillService).findOne(id);
-            assertFalse(sourcePerson.getExpertisesAndSkills().contains(skill));
-            assertTrue(targetPerson.getExpertisesAndSkills().contains(skill));
+            assertTrue(sourcePerson.getExpertisesAndSkills().stream()
+                .noneMatch(skill -> skill.getId().equals(id)));
+            assertTrue(targetPerson.getExpertisesAndSkills().stream()
+                .anyMatch(skill -> skill.getId().equals(id)));
         });
-        verify(personService).save(sourcePerson);
-        verify(personService).save(targetPerson);
+        verify(expertiseOrSkillService, times(3)).save(any());
     }
 
     @Test
@@ -680,14 +756,13 @@ public class MergeServiceTest {
 
         // Then
         prizeIds.forEach(id -> {
-            var prize = new Prize();
-            prize.setId(id);
             verify(prizeService).findOne(id);
-            assertFalse(sourcePerson.getPrizes().contains(prize));
-            assertTrue(targetPerson.getPrizes().contains(prize));
+            assertTrue(sourcePerson.getPrizes().stream()
+                .noneMatch(prize -> prize.getId().equals(id)));
+            assertTrue(targetPerson.getPrizes().stream()
+                .anyMatch(prize -> prize.getId().equals(id)));
         });
-        verify(personService).save(sourcePerson);
-        verify(personService).save(targetPerson);
+        verify(prizeService, times(3)).save(any());
     }
 
     @Test
@@ -699,6 +774,14 @@ public class MergeServiceTest {
         var rightData = new ProceedingsDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedProceedingsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -784,6 +867,14 @@ public class MergeServiceTest {
         var rightData = new SoftwareDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedSoftwareMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -801,6 +892,14 @@ public class MergeServiceTest {
         var rightData = new DatasetDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedDatasetsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -818,6 +917,14 @@ public class MergeServiceTest {
         var rightData = new PatentDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedPatentsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -877,6 +984,14 @@ public class MergeServiceTest {
         leftData.setScopusId("");
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedProceedingsPublicationMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -920,6 +1035,14 @@ public class MergeServiceTest {
         leftData.setScopusId("");
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedJournalPublicationMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -943,6 +1066,14 @@ public class MergeServiceTest {
         var rightData = new MonographDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedMonographsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -962,6 +1093,14 @@ public class MergeServiceTest {
         leftData.setDoi("10.1000/xyz123");
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedMonographPublicationsMetadata(leftId, rightId, leftData, rightData);
 
         // then

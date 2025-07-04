@@ -149,7 +149,8 @@ public class OrganisationUnitController {
     }
 
     @DeleteMapping("/{organisationUnitId}")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @PreAuthorize("hasAuthority('DELETE_ORGANISATION_UNITS')")
+    @OrgUnitEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
         organisationUnitService.deleteOrganisationUnit(organisationUnitId);

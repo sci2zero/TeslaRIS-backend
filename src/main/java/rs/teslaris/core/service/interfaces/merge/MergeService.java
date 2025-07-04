@@ -58,7 +58,7 @@ public interface MergeService {
                                                Integer targetConferenceId);
 
     void switchInvolvements(List<Integer> involvementIds, Integer sourcePersonId,
-                            Integer targetPersonId);
+                            Integer targetPersonId, Integer institutionId);
 
     void switchSkills(List<Integer> skillIds, Integer sourcePersonId, Integer targetPersonId);
 

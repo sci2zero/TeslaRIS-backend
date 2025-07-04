@@ -7,9 +7,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.annotation.OrgUnitEditCheck;
+import rs.teslaris.core.annotation.PersonEditCheck;
+import rs.teslaris.core.annotation.PublicationMergeCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.deduplication.MergedBookSeriesDTO;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
@@ -28,7 +32,10 @@ import rs.teslaris.core.dto.deduplication.MergedPublishersDTO;
 import rs.teslaris.core.dto.deduplication.MergedSoftwareDTO;
 import rs.teslaris.core.dto.deduplication.MergedThesesDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/merge")
@@ -37,6 +44,10 @@ import rs.teslaris.core.service.interfaces.merge.MergeService;
 public class MergeController {
 
     private final MergeService mergeService;
+
+    private final JwtUtil tokenUtil;
+
+    private final UserService userService;
 
 
     @PatchMapping("/journal/{targetJournalId}/publication/{publicationId}")
@@ -89,6 +100,7 @@ public class MergeController {
 
     @PatchMapping("/person/{sourcePersonId}/target/{targetPersonId}/publication/{publicationId}")
     @PreAuthorize("hasAuthority('MERGE_PERSON_PUBLICATIONS')")
+    @PersonEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void switchPublicationToOtherPerson(@PathVariable Integer sourcePersonId,
                                                @PathVariable Integer targetPersonId,
@@ -98,6 +110,7 @@ public class MergeController {
 
     @PatchMapping("/person/source/{sourcePersonId}/target/{targetPersonId}")
     @PreAuthorize("hasAuthority('MERGE_PERSON_PUBLICATIONS')")
+    @PersonEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void switchAllPublicationsToOtherPerson(@PathVariable Integer sourcePersonId,
                                                    @PathVariable Integer targetPersonId) {
@@ -123,6 +136,7 @@ public class MergeController {
 
     @PatchMapping("/organisation-unit/metadata/{leftOrganisationUnitId}/{rightOrganisationUnitId}")
     @PreAuthorize("hasAuthority('MERGE_OU_METADATA')")
+    @OrgUnitEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedOrganisationUnitsMetadata(
         @PathVariable Integer leftOrganisationUnitId,
@@ -187,16 +201,29 @@ public class MergeController {
 
     @PatchMapping("/person/involvements/source/{sourcePersonId}/target/{targetPersonId}")
     @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    @PersonEditCheck
     public void switchInvolvementsToOtherPerson(@PathVariable Integer sourcePersonId,
                                                 @PathVariable Integer targetPersonId,
                                                 @NotNull @RequestBody
-                                                PersonCollectionEntitySwitchListDTO involvementSwitchList) {
+                                                PersonCollectionEntitySwitchListDTO involvementSwitchList,
+                                                @RequestHeader("Authorization")
+                                                String bearerToken) {
+        if (tokenUtil.extractUserRoleFromToken(bearerToken)
+            .equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
+            var institutionId = userService.getUserOrganisationUnitId(
+                tokenUtil.extractUserIdFromToken(bearerToken));
+            mergeService.switchInvolvements(involvementSwitchList.getEntityIds(),
+                sourcePersonId, targetPersonId, institutionId);
+            return;
+        }
+
         mergeService.switchInvolvements(involvementSwitchList.getEntityIds(),
-            sourcePersonId, targetPersonId);
+            sourcePersonId, targetPersonId, null);
     }
 
     @PatchMapping("/person/skills/source/{sourcePersonId}/target/{targetPersonId}")
     @PreAuthorize("hasAuthority('MERGE_PERSON_METADATA')")
+    @PersonEditCheck
     public void switchSkillsToOtherPerson(@PathVariable Integer sourcePersonId,
                                           @PathVariable Integer targetPersonId,
                                           @NotNull @RequestBody
@@ -214,17 +241,18 @@ public class MergeController {
         mergeService.switchPrizes(prizeSwitchList.getEntityIds(), sourcePersonId, targetPersonId);
     }
 
-    @PatchMapping("/proceedings/metadata/{leftProceedingsId}/{rightProceedingsId}")
+    @PatchMapping("/proceedings/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedProceedingsMetadata(
-        @PathVariable Integer leftProceedingsId,
-        @PathVariable Integer rightProceedingsId,
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
         @NotNull @RequestBody MergedProceedingsDTO mergedProceedings) {
-        mergeService.saveMergedProceedingsMetadata(leftProceedingsId, rightProceedingsId,
+        mergeService.saveMergedProceedingsMetadata(leftDocumentId, rightDocumentId,
             mergedProceedings.getLeftProceedings(), mergedProceedings.getRightProceedings());
 
-        mergeDocumentFiles(leftProceedingsId, rightProceedingsId, mergedProceedings);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedProceedings);
     }
 
     @PatchMapping("/person/metadata/{leftPersonId}/{rightPersonId}")
@@ -271,120 +299,120 @@ public class MergeController {
             mergedBookSeries.getLeftBookSeries(), mergedBookSeries.getRightBookSeries());
     }
 
-    @PatchMapping("/software/metadata/{leftSoftwareId}/{rightSoftwareId}")
+    @PatchMapping("/software/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedSoftwareMetadata(
-        @PathVariable Integer leftSoftwareId,
-        @PathVariable Integer rightSoftwareId,
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
         @NotNull @RequestBody MergedSoftwareDTO mergedSoftware) {
-        mergeService.saveMergedSoftwareMetadata(leftSoftwareId, rightSoftwareId,
+        mergeService.saveMergedSoftwareMetadata(leftDocumentId, rightDocumentId,
             mergedSoftware.getLeftSoftware(), mergedSoftware.getRightSoftware());
 
-        mergeDocumentFiles(leftSoftwareId, rightSoftwareId, mergedSoftware);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedSoftware);
     }
 
-    @PatchMapping("/dataset/metadata/{leftDatasetId}/{rightDatasetId}")
+    @PatchMapping("/dataset/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedDatasetsMetadata(
-        @PathVariable Integer leftDatasetId,
-        @PathVariable Integer rightDatasetId,
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
         @NotNull @RequestBody MergedDatasetsDTO mergedDatasets) {
-        mergeService.saveMergedDatasetsMetadata(leftDatasetId, rightDatasetId,
+        mergeService.saveMergedDatasetsMetadata(leftDocumentId, rightDocumentId,
             mergedDatasets.getLeftDataset(), mergedDatasets.getRightDataset());
 
-        mergeDocumentFiles(leftDatasetId, rightDatasetId, mergedDatasets);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedDatasets);
     }
 
-    @PatchMapping("/patent/metadata/{leftPatentId}/{rightPatentId}")
+    @PatchMapping("/patent/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedPatentsMetadata(
-        @PathVariable Integer leftPatentId,
-        @PathVariable Integer rightPatentId,
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
         @NotNull @RequestBody MergedPatentsDTO mergedPatents) {
-        mergeService.saveMergedPatentsMetadata(leftPatentId, rightPatentId,
+        mergeService.saveMergedPatentsMetadata(leftDocumentId, rightDocumentId,
             mergedPatents.getLeftPatent(), mergedPatents.getRightPatent());
 
-        mergeDocumentFiles(leftPatentId, rightPatentId, mergedPatents);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedPatents);
     }
 
-    @PatchMapping("/proceedings-publication/metadata/{leftProceedingsPublicationId}/{rightProceedingsPublicationId}")
+    @PatchMapping("/proceedings-publication/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedProceedingsPublicationsMetadata(
-        @PathVariable Integer leftProceedingsPublicationId,
-        @PathVariable Integer rightProceedingsPublicationId,
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
         @NotNull @RequestBody MergedProceedingsPublicationsDTO mergedProceedingsPublications) {
-        mergeService.saveMergedProceedingsPublicationMetadata(leftProceedingsPublicationId,
-            rightProceedingsPublicationId,
+        mergeService.saveMergedProceedingsPublicationMetadata(leftDocumentId, rightDocumentId,
             mergedProceedingsPublications.getLeftProceedingsPublication(),
             mergedProceedingsPublications.getRightProceedingsPublication());
 
-        mergeDocumentFiles(leftProceedingsPublicationId, rightProceedingsPublicationId,
+        mergeDocumentFiles(leftDocumentId, rightDocumentId,
             mergedProceedingsPublications);
     }
 
-    @PatchMapping("/thesis/metadata/{leftThesisId}/{rightThesisId}")
+    @PatchMapping("/thesis/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedThesesMetadata(
-        @PathVariable Integer leftThesisId,
-        @PathVariable Integer rightThesisId,
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
         @NotNull @RequestBody MergedThesesDTO mergedTheses) {
-        mergeService.saveMergedThesesMetadata(leftThesisId, rightThesisId,
+        mergeService.saveMergedThesesMetadata(leftDocumentId, rightDocumentId,
             mergedTheses.getLeftThesis(), mergedTheses.getRightThesis());
 
-        mergeDocumentFiles(leftThesisId, rightThesisId,
-            mergedTheses);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedTheses);
     }
 
-    @PatchMapping("/journal-publication/metadata/{leftJournalPublicationId}/{rightJournalPublicationId}")
+    @PatchMapping("/journal-publication/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedProceedingsPublicationsMetadata(
-        @PathVariable Integer leftJournalPublicationId,
-        @PathVariable Integer rightJournalPublicationId,
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
         @NotNull @RequestBody MergedJournalPublicationsDTO mergedJournalPublications) {
-        mergeService.saveMergedJournalPublicationMetadata(leftJournalPublicationId,
-            rightJournalPublicationId,
+        mergeService.saveMergedJournalPublicationMetadata(leftDocumentId, rightDocumentId,
             mergedJournalPublications.getLeftJournalPublication(),
             mergedJournalPublications.getRightJournalPublication());
 
-        mergeDocumentFiles(leftJournalPublicationId, rightJournalPublicationId,
-            mergedJournalPublications);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedJournalPublications);
     }
 
-    @PatchMapping("/monograph/metadata/{leftMonographId}/{rightMonographId}")
+    @PatchMapping("/monograph/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveMergedMonographsMetadata(@PathVariable Integer leftMonographId,
-                                             @PathVariable Integer rightMonographId,
+    public void saveMergedMonographsMetadata(@PathVariable Integer leftDocumentId,
+                                             @PathVariable Integer rightDocumentId,
                                              @NotNull @RequestBody
                                              MergedMonographsDTO mergedMonographs) {
-        mergeService.saveMergedMonographsMetadata(leftMonographId,
-            rightMonographId,
-            mergedMonographs.getLeftMonograph(),
-            mergedMonographs.getRightMonograph());
+        mergeService.saveMergedMonographsMetadata(leftDocumentId, rightDocumentId,
+            mergedMonographs.getLeftMonograph(), mergedMonographs.getRightMonograph());
 
-        mergeDocumentFiles(leftMonographId, rightMonographId,
-            mergedMonographs);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedMonographs);
     }
 
-    @PatchMapping("/monograph-publication/metadata/{leftMonographPublicationId}/{rightMonographPublicationId}")
+    @PatchMapping("/monograph-publication/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveMergedMonographPublicationsMetadata(
-        @PathVariable Integer leftMonographPublicationId,
-        @PathVariable Integer rightMonographPublicationId,
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
         @NotNull @RequestBody MergedMonographPublicationsDTO mergedMonographPublications) {
-        mergeService.saveMergedMonographPublicationsMetadata(leftMonographPublicationId,
-            rightMonographPublicationId,
+        mergeService.saveMergedMonographPublicationsMetadata(leftDocumentId, rightDocumentId,
             mergedMonographPublications.getLeftMonographPublication(),
             mergedMonographPublications.getRightMonographPublication());
 
-        mergeDocumentFiles(leftMonographPublicationId, rightMonographPublicationId,
+        mergeDocumentFiles(leftDocumentId, rightDocumentId,
             mergedMonographPublications);
     }
 

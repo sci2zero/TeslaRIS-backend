@@ -181,6 +181,7 @@ public class DbInitializer implements ApplicationRunner {
         var editExternalIndicatorConfiguration = new Privilege("EDIT_EXT_INDICATOR_CONFIGURATION");
         var harvestIdfMetadata = new Privilege("HARVEST_IDF_METADATA");
         var addSubUnit = new Privilege("ADD_SUB_UNIT");
+        var deleteOrganisationUnit = new Privilege("DELETE_ORGANISATION_UNITS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -210,7 +211,8 @@ public class DbInitializer implements ApplicationRunner {
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 generateThesisLibraryBackup, generateOutputBackup, performHealthCheck, addSubUnit,
                 generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
-                saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration));
+                saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
+                deleteOrganisationUnit));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -240,7 +242,7 @@ public class DbInitializer implements ApplicationRunner {
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
-                harvestIdfMetadata, addSubUnit
+                harvestIdfMetadata, addSubUnit, deleteOrganisationUnit
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -259,7 +261,8 @@ public class DbInitializer implements ApplicationRunner {
                     createConference, saveLoadingConfiguration, performLoading,
                     editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit,
                     mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
-                    mergeOUEmployments, mergeDocumentsMetadata)));
+                    mergeOUEmployments, mergeDocumentsMetadata, deletePerson,
+                    deleteOrganisationUnit)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
