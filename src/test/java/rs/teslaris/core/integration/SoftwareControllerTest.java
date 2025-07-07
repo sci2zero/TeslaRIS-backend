@@ -84,6 +84,7 @@ public class SoftwareControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var softwareDTO = getTestPayload();
+        softwareDTO.setDoi("10.1109/tsmc.2014.2347265");
 
         String requestBody = objectMapper.writeValueAsString(softwareDTO);
         mockMvc.perform(
