@@ -118,8 +118,7 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     public void deleteResearchArea(Integer researchAreaId) {
         if (researchAreaRepository.isSuperArea(researchAreaId) ||
             researchAreaRepository.isResearchedBySomeone(researchAreaId) ||
-            researchAreaRepository.isResearchedInMonograph(researchAreaId) ||
-            researchAreaRepository.isResearchedInThesis(researchAreaId)) {
+            researchAreaRepository.isResearchedInMonograph(researchAreaId)) {
             throw new ResearchAreaReferenceConstraintViolationException(
                 "Research area with id " + researchAreaId + " cannot be deleted as it is in use.");
         }

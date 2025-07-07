@@ -3,6 +3,7 @@ package rs.teslaris.core.model.document;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -19,7 +20,6 @@ import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
 @Getter
@@ -33,6 +33,15 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> alternateTitle = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> extendedAbstract = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> remark = new HashSet<>();
+
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> externalOrganisationUnitName = new HashSet<>();
 
@@ -45,16 +54,18 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @Column(name = "thesis_defence_date")
     private LocalDate thesisDefenceDate;
 
-    @Column(name = "number_of_pages")
-    private Integer numberOfPages;
+    @Embedded
+    private ThesisPhysicalDescription physicalDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "language_id")
     private Language language;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "research_area_id")
-    private ResearchArea researchArea;
+    @JoinColumn(name = "scientific_area")
+    private String scientificArea;
+
+    @JoinColumn(name = "scientific_sub_field")
+    private String scientificSubArea;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
@@ -84,4 +95,16 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
 
     @Column(name = "is_archived")
     private Boolean isArchived = false;
+
+    @Column(name = "place_of_keeping")
+    private String placeOfKeeping;
+
+    @Column(name = "e_isbn")
+    private String eISBN;
+
+    @Column(name = "print_isbn")
+    private String printISBN;
+
+    @Column(name = "udc")
+    private String udc;
 }

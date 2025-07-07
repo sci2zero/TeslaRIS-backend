@@ -159,7 +159,6 @@ public class ResearchAreaServiceTest {
         when(researchAreaRepository.isSuperArea(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedBySomeone(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedInMonograph(researchAreaId)).thenReturn(false);
-        when(researchAreaRepository.isResearchedInThesis(researchAreaId)).thenReturn(false);
 
         // when
         researchAreaService.deleteResearchArea(researchAreaId);
@@ -168,7 +167,6 @@ public class ResearchAreaServiceTest {
         verify(researchAreaRepository, times(1)).isSuperArea(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedBySomeone(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedInMonograph(researchAreaId);
-        verify(researchAreaRepository, times(1)).isResearchedInThesis(researchAreaId);
         verify(researchAreaRepository, times(1)).save(researchArea);
         verify(researchAreaRepository, times(1)).findById(any());
         verifyNoMoreInteractions(researchAreaRepository);

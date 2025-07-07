@@ -57,13 +57,13 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -106,9 +106,6 @@ public class ThesisServiceTest {
     private PublisherService publisherService;
 
     @Mock
-    private ResearchAreaService researchAreaService;
-
-    @Mock
     private LanguageTagService languageService;
 
     @Mock
@@ -116,6 +113,9 @@ public class ThesisServiceTest {
 
     @Mock
     private ThesisResearchOutputRepository thesisResearchOutputRepository;
+
+    @Mock
+    private ThesisRepository thesisRepository;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -166,7 +166,7 @@ public class ThesisServiceTest {
         var result = thesisService.createThesis(dto, true);
 
         // Then
-        verify(multilingualContentService, times(4)).getMultilingualContent(any());
+        verify(multilingualContentService, times(7)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(thesisJPAService).save(eq(document));

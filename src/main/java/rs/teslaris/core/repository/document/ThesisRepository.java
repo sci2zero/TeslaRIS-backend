@@ -13,6 +13,14 @@ import rs.teslaris.core.model.document.ThesisType;
 @Repository
 public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
 
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Thesis t WHERE (t.eISBN = :eISBN OR t.printISBN = :eISBN) AND (:id IS NULL OR t.id <> :id)")
+    boolean existsByeISBN(String eISBN, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Thesis t WHERE (t.printISBN = :printISBN OR t.eISBN = :printISBN) AND (:id IS NULL OR t.id <> :id)")
+    boolean existsByPrintISBN(String printISBN, Integer id);
+
     @Query(value = "SELECT * FROM theses t WHERE " +
         "t.isArchived = TRUE AND " +
         "t.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
