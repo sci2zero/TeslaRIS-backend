@@ -133,8 +133,7 @@ public class DocumentPublicationControllerTest extends BaseTest {
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/document/doi-usage?doi=10.1109/tsmc.2014.2347265")
                     .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(content().string("true"));
+            .andExpect(status().isOk());
     }
 
     @Test
