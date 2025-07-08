@@ -21,7 +21,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.email.EmailUtil;
 
 @Service
 @Primary
@@ -38,8 +37,6 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     protected final LanguageTagService languageTagService;
 
     protected final PersonContributionService personContributionService;
-
-    protected final EmailUtil emailUtil;
 
     protected final IndexBulkUpdateService indexBulkUpdateService;
 

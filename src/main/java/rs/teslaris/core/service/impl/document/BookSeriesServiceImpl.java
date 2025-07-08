@@ -30,7 +30,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
@@ -55,14 +54,13 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                                  MultilingualContentService multilingualContentService,
                                  LanguageTagService languageTagService,
                                  PersonContributionService personContributionService,
-                                 EmailUtil emailUtil,
                                  IndexBulkUpdateService indexBulkUpdateService,
                                  BookSeriesJPAServiceImpl bookSeriesJPAService,
                                  BookSeriesIndexRepository bookSeriesIndexRepository,
                                  SearchService<BookSeriesIndex> searchService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
-            personContributionService, emailUtil, indexBulkUpdateService);
+            personContributionService, indexBulkUpdateService);
         this.bookSeriesJPAService = bookSeriesJPAService;
         this.bookSeriesIndexRepository = bookSeriesIndexRepository;
         this.searchService = searchService;

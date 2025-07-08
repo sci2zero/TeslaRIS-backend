@@ -436,6 +436,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setScientificArea(thesisDTO.getScientificArea());
         thesis.setScientificSubArea(thesisDTO.getScientificSubArea());
         thesis.setPlaceOfKeeping(thesisDTO.getPlaceOfKeep());
+        thesis.setTypeOfTitle(thesisDTO.getTypeOfTitle());
 
         if (Objects.nonNull(thesisDTO.getUdc()) &&
             udcPattern.matcher(thesisDTO.getUdc()).matches()) {

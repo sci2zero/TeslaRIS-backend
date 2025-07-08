@@ -30,6 +30,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -46,6 +47,8 @@ public class JournalController {
     private final UserService userService;
 
     private final JwtUtil tokenUtil;
+
+    private final EmailUtil emailUtil;
 
 
     @GetMapping("/{journalId}/can-edit")
@@ -109,6 +112,11 @@ public class JournalController {
     @Idempotent
     public PublicationSeriesDTO createJournal(@RequestBody @Valid PublicationSeriesDTO journalDTO) {
         var savedJournal = journalService.createJournal(journalDTO, true);
+
+        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
+        });
+
         journalDTO.setId(savedJournal.getId());
         return journalDTO;
     }
@@ -120,6 +128,11 @@ public class JournalController {
     public JournalBasicAdditionDTO createJournal(
         @RequestBody @Valid JournalBasicAdditionDTO journalDTO) {
         var savedJournal = journalService.createJournal(journalDTO);
+
+        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
+        });
+
         journalDTO.setId(savedJournal.getId());
         return journalDTO;
     }

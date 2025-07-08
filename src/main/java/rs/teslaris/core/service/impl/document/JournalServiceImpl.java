@@ -40,7 +40,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
@@ -68,7 +67,6 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               MultilingualContentService multilingualContentService,
                               LanguageTagService languageTagService,
                               PersonContributionService personContributionService,
-                              EmailUtil emailUtil,
                               IndexBulkUpdateService indexBulkUpdateService,
                               JournalJPAServiceImpl journalJPAService,
                               SearchService<JournalIndex> searchService,
@@ -77,7 +75,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               DocumentPublicationIndexRepository documentPublicationIndexRepository,
                               CommissionRepository commissionRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
-            personContributionService, emailUtil, indexBulkUpdateService);
+            personContributionService, indexBulkUpdateService);
         this.journalJPAService = journalJPAService;
         this.searchService = searchService;
         this.journalIndexRepository = journalIndexRepository;
@@ -154,10 +152,6 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             indexJournal(journal, new JournalIndex());
         }
 
-        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
-            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
-        });
-
         return savedJournal;
     }
 
@@ -173,10 +167,6 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         indexJournal(journal,
             journalIndexRepository.findJournalIndexByDatabaseId(journal.getId())
                 .orElse(new JournalIndex()));
-
-        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
-            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
-        });
 
         return savedJournal;
     }

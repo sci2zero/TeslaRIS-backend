@@ -77,4 +77,6 @@ public class ThesisDTO extends DocumentDTO {
     private List<MultilingualContentDTO> extendedAbstract = new ArrayList<>();
 
     private List<MultilingualContentDTO> remark = new ArrayList<>();
+
+    private String typeOfTitle;
 }

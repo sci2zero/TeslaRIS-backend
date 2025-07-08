@@ -32,9 +32,16 @@ public interface PublicationSeriesRepository extends JpaRepository<PublicationSe
         "FROM PublicationSeries p WHERE p.openAlexId = :openAlexId AND (:id IS NULL OR p.id <> :id)")
     boolean existsByOpenAlexId(String openAlexId, Integer id);
 
-    @Query("SELECT ps FROM PublicationSeries ps WHERE (ps.printISSN = :printISSN AND " +
-        "ps.eISSN = :eISSN) OR (ps.eISSN = :printISSN AND ps.printISSN = :eISSN)")
-    List<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN,
-                                                                    String printISSN);
-
+    @Query("""
+        SELECT ps FROM PublicationSeries ps 
+        WHERE 
+            (:printISSN != '' AND ps.printISSN = :printISSN) 
+            OR 
+            (:eISSN != '' AND ps.eISSN = :eISSN)
+            OR 
+            (:printISSN != '' AND ps.eISSN = :printISSN)
+            OR 
+            (:eISSN != '' AND ps.printISSN = :eISSN)
+        """)
+    List<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN, String printISSN);
 }

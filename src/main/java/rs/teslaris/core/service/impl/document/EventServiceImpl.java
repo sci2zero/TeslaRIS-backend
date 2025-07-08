@@ -44,7 +44,6 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -74,9 +73,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     private final SearchService<EventIndex> searchService;
 
-    private final EmailUtil emailUtil;
-
     private final CountryService countryService;
+
 
     @Override
     @Nullable
@@ -476,9 +474,5 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
-    }
-
-    protected void notifyAboutBasicCreation(Integer eventId, String eventName) {
-        emailUtil.notifyInstitutionalEditor(eventId, eventName, "event");
     }
 }

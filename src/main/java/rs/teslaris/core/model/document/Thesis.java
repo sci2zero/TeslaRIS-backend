@@ -33,13 +33,13 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> alternateTitle = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> extendedAbstract = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> remark = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -107,4 +107,7 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
 
     @Column(name = "udc")
     private String udc;
+
+    @Column(name = "type_of_title")
+    private String typeOfTitle;
 }
