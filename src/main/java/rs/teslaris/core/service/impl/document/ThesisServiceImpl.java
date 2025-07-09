@@ -28,6 +28,7 @@ import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -79,6 +80,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private final ThesisResearchOutputRepository thesisResearchOutputRepository;
 
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
+
     @Value("${thesis.public-review.duration-days}")
     private Integer daysOnPublicReview;
 
@@ -99,7 +102,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              LanguageService languageService,
                              LanguageTagService languageTagService,
                              ThesisRepository thesisRepository,
-                             ThesisResearchOutputRepository thesisResearchOutputRepository) {
+                             ThesisResearchOutputRepository thesisResearchOutputRepository,
+                             OrganisationUnitIndexRepository organisationUnitIndexRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
@@ -110,6 +114,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         this.languageTagService = languageTagService;
         this.thesisRepository = thesisRepository;
         this.thesisResearchOutputRepository = thesisResearchOutputRepository;
+        this.organisationUnitIndexRepository = organisationUnitIndexRepository;
     }
 
     @Override
@@ -320,7 +325,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             throw new ThesisException("Already on public review.");
         }
 
-        if (thesis.getPreliminaryFiles().isEmpty() || thesis.getCommissionReports().isEmpty()) {
+        if (thesis.getTitle().isEmpty() || Objects.isNull(thesis.getOrganisationUnit()) ||
+            thesis.getPreliminaryFiles().isEmpty() || thesis.getCommissionReports().isEmpty()) {
             throw new ThesisException("noAttachmentsMessage");
         }
 
@@ -512,6 +518,27 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         index.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());
         index.setThesisDefenceDate(thesis.getThesisDefenceDate());
         index.setPublicReviewStartDates(thesis.getPublicReviewStartDates().stream().toList());
+        if (!index.getPublicReviewStartDates().isEmpty()) {
+            index.setLatestPublicReviewStartDate(index.getPublicReviewStartDates().getLast());
+        }
+        index.setIsOnPublicReview(thesis.getIsOnPublicReview());
+
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
+            index.setThesisInstitutionId(thesis.getOrganisationUnit().getId());
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                thesis.getOrganisationUnit().getId()).ifPresent(institutionIndex -> {
+                index.setThesisInstitutionNameSr(institutionIndex.getNameSr());
+                index.setThesisInstitutionNameOther(institutionIndex.getNameOther());
+            });
+        }
+        index.setScientificField(thesis.getScientificArea());
+
+        thesis.getContributors().stream().filter(contribution -> contribution.getContributionType()
+            .equals(DocumentContributionType.AUTHOR)).findFirst().ifPresent(authorship -> {
+            index.setThesisAuthorName(
+                authorship.getAffiliationStatement().getDisplayPersonName().getLastname() + " " +
+                    authorship.getAffiliationStatement().getDisplayPersonName().getFirstname());
+        });
 
         documentPublicationIndexRepository.save(index);
     }
@@ -543,6 +570,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             .forEach(thesis -> {
                 thesis.setIsOnPublicReview(false);
                 thesisJPAService.save(thesis);
+                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                    thesis.getId()).ifPresent(index -> {
+                    index.setIsOnPublicReview(false);
+                    documentPublicationIndexRepository.save(index);
+                });
             });
     }
 }

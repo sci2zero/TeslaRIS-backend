@@ -197,6 +197,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/thesis-library/csv-export").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/dissertation-report")
+                .permitAll()
 
                 // ASSESSMENT
                 .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")

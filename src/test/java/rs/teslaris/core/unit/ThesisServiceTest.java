@@ -41,6 +41,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -116,6 +117,9 @@ public class ThesisServiceTest {
 
     @Mock
     private ThesisRepository thesisRepository;
+
+    @Mock
+    private OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -296,6 +300,7 @@ public class ThesisServiceTest {
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(new DocumentFile()));
         when(thesis.getPreliminarySupplements()).thenReturn(Set.of(new DocumentFile()));
         when(thesis.getCommissionReports()).thenReturn(Set.of(new DocumentFile()));
+        when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, false);
@@ -377,6 +382,7 @@ public class ThesisServiceTest {
         when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
         when(thesis.getCommissionReports()).thenReturn(Set.of(mock(DocumentFile.class)));
+        when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, true);
@@ -405,6 +411,7 @@ public class ThesisServiceTest {
         when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
         when(thesis.getCommissionReports()).thenReturn(Set.of(mock(DocumentFile.class)));
+        when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, true);
@@ -523,6 +530,8 @@ public class ThesisServiceTest {
         var thesisId = 1;
         thesis.getPreliminaryFiles().addAll(createMockDocuments(files));
         thesis.getCommissionReports().addAll(createMockDocuments(reports));
+        thesis.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
+        thesis.setOrganisationUnit(new OrganisationUnit());
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 
