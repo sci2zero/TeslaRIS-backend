@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
+import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.event.Event;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnitRelation;
@@ -303,12 +304,24 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             .endsWith("c_f744")) { // COAR type: conference proceedings
                             var creationDTO = proceedingsConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                proceedingsService.createProceedings(creationDTO, performIndex);
+                                try {
+                                    proceedingsService.createProceedings(creationDTO, performIndex);
+                                } catch (Exception e) {
+                                    log.error(
+                                        "Skipped loading object of type 'PROCEEDINGS' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
                             }
                         } else if (record.getType().endsWith("c_0640")) { // COAR type: journal
                             var creationDTO = journalConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                journalService.createJournal(creationDTO, performIndex);
+                                try {
+                                    journalService.createJournal(creationDTO, performIndex);
+                                } catch (Exception e) {
+                                    log.error(
+                                        "Skipped loading object of type 'JOURNAL' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
                             }
                         }
                     });
@@ -329,13 +342,20 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
         handleDataRelations(requestDataSet, performIndex);
     }
 
-    private <T, D, R> boolean loadBatch(Class<T> entityClass, RecordConverter<T, D> converter,
-                                        CreatorMethod<D, R> creatorMethod, Query query,
-                                        boolean performIndex, int batchSize) {
+    private <T extends HasOldId, D, R> boolean loadBatch(Class<T> entityClass,
+                                                         RecordConverter<T, D> converter,
+                                                         CreatorMethod<D, R> creatorMethod,
+                                                         Query query,
+                                                         boolean performIndex, int batchSize) {
         List<T> batch = mongoTemplate.find(query, entityClass);
         batch.forEach(record -> {
             D creationDTO = converter.toDTO(record);
-            creatorMethod.apply(creationDTO, performIndex);
+            try {
+                creatorMethod.apply(creationDTO, performIndex);
+            } catch (Exception e) {
+                log.error("Skipped loading object of type '{}' with id '{}'. Reason: '{}'.",
+                    creationDTO.getClass(), record.getOldId(), e.getMessage());
+            }
         });
         return batch.size() == batchSize;
     }
@@ -365,8 +385,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     personBatch.forEach((person) -> {
                         var savedPerson = personService.findPersonByOldId(
                             OAIPMHParseUtility.parseBISISID(person.getOldId()));
-                        if (Objects.isNull(person.getAffiliation()) &&
-                            Objects.nonNull(savedPerson)) {
+                        if (Objects.isNull(person.getAffiliation()) ||
+                            Objects.isNull(savedPerson)) {
                             return;
                         }
                         if (Objects.nonNull(person.getAffiliation().getOrgUnits())) {

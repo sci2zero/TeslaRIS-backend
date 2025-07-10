@@ -182,6 +182,7 @@ public class DbInitializer implements ApplicationRunner {
         var harvestIdfMetadata = new Privilege("HARVEST_IDF_METADATA");
         var addSubUnit = new Privilege("ADD_SUB_UNIT");
         var deleteOrganisationUnit = new Privilege("DELETE_ORGANISATION_UNITS");
+        var saveOUPageConfiguration = new Privilege("SAVE_OU_PAGE_CONFIGURATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -212,7 +213,7 @@ public class DbInitializer implements ApplicationRunner {
                 generateThesisLibraryBackup, generateOutputBackup, performHealthCheck, addSubUnit,
                 generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
-                deleteOrganisationUnit));
+                deleteOrganisationUnit, saveOUPageConfiguration));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -242,7 +243,7 @@ public class DbInitializer implements ApplicationRunner {
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
-                harvestIdfMetadata, addSubUnit, deleteOrganisationUnit
+                harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -262,7 +263,7 @@ public class DbInitializer implements ApplicationRunner {
                     editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit,
                     mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
                     mergeOUEmployments, mergeDocumentsMetadata, deletePerson,
-                    deleteOrganisationUnit)));
+                    deleteOrganisationUnit, saveOUPageConfiguration)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

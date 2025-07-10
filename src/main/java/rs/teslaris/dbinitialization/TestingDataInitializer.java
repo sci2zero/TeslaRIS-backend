@@ -933,5 +933,64 @@ public class TestingDataInitializer {
 
         yetAnotherJournal.addContribution(publicationSeriesContribution2);
         journalRepository.save(yetAnotherJournal);
+
+        var thesis5 = new Thesis();
+        thesis5.setApproveStatus(ApproveStatus.APPROVED);
+        thesis5.setThesisType(ThesisType.PHD);
+        thesis5.setDocumentDate("2024");
+        thesis5.setOrganisationUnit(dummyOU);
+        thesis5.setTitle(
+            Set.of(new MultiLingualContent(serbianTag,
+                "Doktorska disertacija, zavrsen uvid, neodbranjena", 1)));
+        thesis5.setLanguage(serbianLanguage);
+        thesis5.getPublicReviewStartDates().add(LocalDate.of(2024, 3, 16));
+
+        var thesisContribution3 = new PersonDocumentContribution();
+        thesisContribution3.setPerson(person2);
+        thesisContribution3.setContributionType(DocumentContributionType.AUTHOR);
+        thesisContribution3.setIsMainContributor(true);
+        thesisContribution3.setIsCorrespondingContributor(true);
+        thesisContribution3.setOrderNumber(1);
+        thesisContribution3.setDocument(thesis5);
+        thesisContribution3.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution3.setInstitutions(Set.of(dummyOU));
+        thesisContribution3.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(),
+                new PersonName(person2.getName().getFirstname(), "",
+                    person2.getName().getLastname(), null, null),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        thesis5.getContributors().add(thesisContribution3);
+        thesisRepository.save(thesis5);
+
+        var thesis6 = new Thesis();
+        thesis6.setApproveStatus(ApproveStatus.APPROVED);
+        thesis6.setThesisType(ThesisType.PHD);
+        thesis6.setDocumentDate("2024");
+        thesis6.setOrganisationUnit(dummyOU);
+        thesis6.setTitle(
+            Set.of(new MultiLingualContent(serbianTag,
+                "Doktorska disertacija, zavrsen uvid, odbranjena", 1)));
+        thesis6.setLanguage(serbianLanguage);
+        thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
+        thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
+
+        var thesisContribution4 = new PersonDocumentContribution();
+        thesisContribution4.setPerson(person3);
+        thesisContribution4.setContributionType(DocumentContributionType.AUTHOR);
+        thesisContribution4.setIsMainContributor(true);
+        thesisContribution4.setIsCorrespondingContributor(true);
+        thesisContribution4.setOrderNumber(1);
+        thesisContribution4.setDocument(thesis6);
+        thesisContribution4.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution4.setInstitutions(Set.of(dummyOU));
+        thesisContribution4.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(),
+                new PersonName(person3.getName().getFirstname(), "",
+                    person3.getName().getLastname(), null, null),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        thesis6.getContributors().add(thesisContribution4);
+        thesisRepository.save(thesis6);
     }
 }

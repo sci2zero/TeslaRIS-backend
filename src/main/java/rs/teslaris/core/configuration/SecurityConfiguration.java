@@ -273,6 +273,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,
                     "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/public-review-page-content/for-institution-and-type/{organisationUnitId}/{thesisType}")
+                .permitAll()
 
                 // COOKIES
                 .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()

@@ -2,6 +2,7 @@ package rs.teslaris.thesislibrary.service.impl;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.ExistsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
@@ -134,6 +135,8 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 .field("is_on_public_review")
                 .value("false")
             )._toQuery());
+
+            queries.add(ExistsQuery.of(e -> e.field("thesis_defence_date"))._toQuery());
         } else {
             queries.add(RangeQuery.of(r -> r
                 .field("public_review_start_dates")
