@@ -31,6 +31,9 @@ public class PublicReviewPageContent extends BaseEntity {
     @Column(name = "content_type")
     private PageContentType contentType;
 
+    @Column(name = "page_type")
+    private PageType pageType;
+
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> content = new HashSet<>();
 

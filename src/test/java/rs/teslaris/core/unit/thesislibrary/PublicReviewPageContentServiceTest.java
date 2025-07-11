@@ -60,7 +60,7 @@ class PublicReviewPageContentServiceTest {
                 service.readPageContentConfigurationForInstitution(1);
 
             assertEquals(1, result.size());
-            assertEquals(dto, result.get(0));
+            assertEquals(dto, result.getFirst());
         }
 
         verify(publicReviewPageContentRepository).getConfigurationForInstitution(1);
@@ -71,10 +71,10 @@ class PublicReviewPageContentServiceTest {
         var entity = new PublicReviewPageContent();
         var dto = mock(PublicReviewPageContentDTO.class);
         var list = List.of(entity);
-        var thesisType = ThesisType.PHD;
+        var thesisTypes = List.of(ThesisType.PHD);
 
-        when(publicReviewPageContentRepository.getConfigurationForInstitutionAndThesisType(2,
-            thesisType))
+        when(publicReviewPageContentRepository.getConfigurationForInstitutionAndThesisTypes(2,
+            thesisTypes))
             .thenReturn(list);
 
         try (MockedStatic<PublicReviewPageContentConverter> converter = mockStatic(
@@ -83,14 +83,14 @@ class PublicReviewPageContentServiceTest {
                 .thenReturn(dto);
 
             List<PublicReviewPageContentDTO> result =
-                service.readPageContentConfigurationForInstitutionAndType(2, thesisType);
+                service.readPageContentConfigurationForInstitutionAndType(2, thesisTypes);
 
             assertEquals(1, result.size());
-            assertEquals(dto, result.get(0));
+            assertEquals(dto, result.getFirst());
         }
 
-        verify(publicReviewPageContentRepository).getConfigurationForInstitutionAndThesisType(2,
-            thesisType);
+        verify(publicReviewPageContentRepository).getConfigurationForInstitutionAndThesisTypes(2,
+            thesisTypes);
     }
 
     @Test

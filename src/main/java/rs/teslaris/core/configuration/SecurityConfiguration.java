@@ -274,7 +274,7 @@ public class SecurityConfiguration {
                     "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,
-                    "/api/public-review-page-content/for-institution-and-type/{organisationUnitId}/{thesisType}")
+                    "/api/public-review-page-content/for-institution-and-type/{organisationUnitId}")
                 .permitAll()
 
                 // COOKIES

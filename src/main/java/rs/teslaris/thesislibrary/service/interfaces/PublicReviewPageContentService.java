@@ -14,7 +14,7 @@ public interface PublicReviewPageContentService extends JPAService<PublicReviewP
         Integer institutionId);
 
     List<PublicReviewPageContentDTO> readPageContentConfigurationForInstitutionAndType(
-        Integer institutionId, ThesisType thesisType);
+        Integer institutionId, List<ThesisType> thesisTypes);
 
     void savePageConfiguration(List<PublicReviewPageContentDTO> contentConfiguration,
                                Integer institutionId);

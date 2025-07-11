@@ -10,6 +10,7 @@ public class PublicReviewPageContentConverter {
         return new PublicReviewPageContentDTO(
             pageContent.getInstitution().getId(),
             pageContent.getContentType(),
+            pageContent.getPageType(),
             pageContent.getThesisTypes().stream().toList(),
             MultilingualContentConverter.getMultilingualContentDTO(pageContent.getContent())
         );

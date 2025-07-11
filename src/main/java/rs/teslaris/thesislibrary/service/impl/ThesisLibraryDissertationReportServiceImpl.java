@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
-import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryDissertationReportService;
 
@@ -77,9 +76,9 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 DocumentPublicationIndex.class, "document_publication")
             .map(index -> new ThesisPublicReviewResponseDTO(
                 index.getThesisAuthorName(),
-                SerbianTransliteration.toCyrillic(index.getTitleSr()),
+                index.getTitleSr(),
                 index.getTitleOther(),
-                SerbianTransliteration.toCyrillic(index.getThesisInstitutionNameSr()),
+                index.getThesisInstitutionNameSr(),
                 index.getThesisInstitutionNameOther(),
                 index.getScientificField(),
                 index.getLatestPublicReviewStartDate().toString(),

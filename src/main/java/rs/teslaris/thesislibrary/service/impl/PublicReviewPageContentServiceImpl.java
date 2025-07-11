@@ -43,9 +43,9 @@ public class PublicReviewPageContentServiceImpl extends JPAServiceImpl<PublicRev
 
     @Override
     public List<PublicReviewPageContentDTO> readPageContentConfigurationForInstitutionAndType(
-        Integer institutionId, ThesisType thesisType) {
-        return publicReviewPageContentRepository.getConfigurationForInstitutionAndThesisType(
-                institutionId, thesisType)
+        Integer institutionId, List<ThesisType> thesisTypes) {
+        return publicReviewPageContentRepository.getConfigurationForInstitutionAndThesisTypes(
+                institutionId, thesisTypes)
             .stream().map(PublicReviewPageContentConverter::toDTO).toList();
     }
 
@@ -59,6 +59,7 @@ public class PublicReviewPageContentServiceImpl extends JPAServiceImpl<PublicRev
             var newContent = new PublicReviewPageContent();
             newContent.setInstitution(institution);
             newContent.setContentType(content.contentType());
+            newContent.setPageType(content.pageType());
             newContent.setThesisTypes(new HashSet<>(content.thesisTypes()));
             newContent.setContent(
                 multilingualContentService.getMultilingualContent(content.content()));

@@ -17,9 +17,10 @@ public interface PublicReviewPageContentRepository
 
     @Query("SELECT c FROM PublicReviewPageContent c WHERE " +
         "c.institution.id = :institutionId AND " +
-        ":thesisType MEMBER OF c.thesisTypes")
-    List<PublicReviewPageContent> getConfigurationForInstitutionAndThesisType(Integer institutionId,
-                                                                              ThesisType thesisType);
+        "EXISTS (SELECT t FROM c.thesisTypes t WHERE t IN :thesisTypes)")
+    List<PublicReviewPageContent> getConfigurationForInstitutionAndThesisTypes(
+        Integer institutionId,
+        List<ThesisType> thesisTypes);
 
     @Modifying
     @Query("DELETE FROM PublicReviewPageContent c WHERE c.institution.id = :institutionId")

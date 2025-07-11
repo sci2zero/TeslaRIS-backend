@@ -16,6 +16,7 @@ import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.thesislibrary.dto.PublicReviewPageContentDTO;
 import rs.teslaris.thesislibrary.model.PageContentType;
+import rs.teslaris.thesislibrary.model.PageType;
 
 @SpringBootTest
 public class PublicReviewPageContentControllerTest extends BaseTest {
@@ -26,7 +27,8 @@ public class PublicReviewPageContentControllerTest extends BaseTest {
 
     private List<PublicReviewPageContentDTO> getTestPayload() {
         return List.of(
-            new PublicReviewPageContentDTO(null, PageContentType.TEXT, List.of(ThesisType.PHD),
+            new PublicReviewPageContentDTO(null, PageContentType.TEXT, PageType.ALL,
+                List.of(ThesisType.PHD),
                 List.of(new MultilingualContentDTO(1, "EN", "Content", 1))));
     }
 
@@ -47,7 +49,7 @@ public class PublicReviewPageContentControllerTest extends BaseTest {
     public void testGetAllForInstitutionAndType() throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/public-review-page-content/for-institution-and-type/{organisationUnitId}/{thesisType}",
+                        "http://localhost:8081/api/public-review-page-content/for-institution-and-type/{organisationUnitId}?thesisTypes={thesisType}",
                         1, "PHD")
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());

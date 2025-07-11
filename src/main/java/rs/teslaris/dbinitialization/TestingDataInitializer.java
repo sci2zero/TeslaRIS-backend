@@ -99,8 +99,12 @@ import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.thesislibrary.model.PageContentType;
+import rs.teslaris.thesislibrary.model.PageType;
 import rs.teslaris.thesislibrary.model.Promotion;
+import rs.teslaris.thesislibrary.model.PublicReviewPageContent;
 import rs.teslaris.thesislibrary.repository.PromotionRepository;
+import rs.teslaris.thesislibrary.repository.PublicReviewPageContentRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -165,6 +169,8 @@ public class TestingDataInitializer {
     private final AssessmentResearchAreaRepository assessmentResearchAreaRepository;
 
     private final PromotionRepository promotionRepository;
+
+    private final PublicReviewPageContentRepository publicReviewPageContentRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -992,5 +998,35 @@ public class TestingDataInitializer {
 
         thesis6.getContributors().add(thesisContribution4);
         thesisRepository.save(thesis6);
+
+        var pageContent1 = new PublicReviewPageContent();
+        pageContent1.setContentType(PageContentType.IMPORTANT_NOTE);
+        pageContent1.setPageType(PageType.CURRENT);
+        pageContent1.setThesisTypes(Set.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT));
+        pageContent1.setInstitution(dummyOU);
+        pageContent1.setContent(new HashSet<>(List.of(new MultiLingualContent(serbianTag,
+            "Primedbe na doktorsku disertaciju dostaviti u štampanom obliku na adresu Univerzitet u Novom Sadu, Dr Zorana Đinđića 1. Anonimne primedbe se neće uzimati u razmatranje.",
+            1))));
+
+        var pageContent2 = new PublicReviewPageContent();
+        pageContent2.setContentType(PageContentType.NOTE);
+        pageContent2.setPageType(PageType.ARCHIVE);
+        pageContent2.setThesisTypes(Set.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT));
+        pageContent2.setInstitution(dummyOU);
+        pageContent2.setContent(new HashSet<>(List.of(new MultiLingualContent(serbianTag,
+            "Za elektronske verzije doktorskih disertacija obratiti se dr Mirjani Brković, Centralna biblioteka UNS-a, telefon 485-2040.",
+            1))));
+
+        var pageContent3 = new PublicReviewPageContent();
+        pageContent3.setContentType(PageContentType.TEXT);
+        pageContent3.setPageType(PageType.ALL);
+        pageContent3.setThesisTypes(Set.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT));
+        pageContent3.setInstitution(dummyOU);
+        pageContent3.setContent(new HashSet<>(List.of(new MultiLingualContent(serbianTag,
+            "Štampana verzija doktorske disertacije dostupna je u našoj biblioteci.",
+            1))));
+
+        publicReviewPageContentRepository.saveAll(
+            List.of(pageContent1, pageContent2, pageContent3));
     }
 }

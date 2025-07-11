@@ -76,7 +76,7 @@ class ThesisLibraryDissertationReportServiceTest {
         assertThat(result.getContent()).hasSize(1);
         var dto = result.getContent().getFirst();
         assertThat(dto.nameAndSurname()).isEqualTo("Author A");
-        assertThat(dto.titleSr()).isEqualTo("Наслов");
+        assertThat(dto.titleSr()).isEqualTo("Naslov");
         assertThat(dto.titleOther()).isEqualTo("Title");
         assertThat(dto.publicReviewEndDate()).isEqualTo("2023-07-01"); // 30 days added
     }
