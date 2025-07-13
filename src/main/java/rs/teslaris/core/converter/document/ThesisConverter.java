@@ -108,6 +108,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
         thesisDTO.setPlaceOfKeep(thesis.getPlaceOfKeeping());
         thesisDTO.setUdc(thesis.getUdc());
         thesisDTO.setTypeOfTitle(thesis.getTypeOfTitle());
+        thesisDTO.setPublicReviewCompleted(thesis.getPublicReviewCompleted());
 
         if (Objects.nonNull(thesis.getPublisher())) {
             thesisDTO.setPublisherId(thesis.getPublisher().getId());

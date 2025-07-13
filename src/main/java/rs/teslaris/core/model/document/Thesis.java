@@ -110,4 +110,7 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
 
     @Column(name = "type_of_title")
     private String typeOfTitle;
+
+    @Column(name = "public_review_completed")
+    private Boolean publicReviewCompleted = false;
 }

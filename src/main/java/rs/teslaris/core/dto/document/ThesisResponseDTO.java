@@ -31,4 +31,6 @@ public class ThesisResponseDTO extends ThesisDTO {
     private List<DocumentFileResponseDTO> commissionReports = new ArrayList<>();
 
     private Boolean isArchived;
+
+    private Boolean publicReviewCompleted;
 }

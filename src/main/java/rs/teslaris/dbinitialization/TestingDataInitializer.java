@@ -950,6 +950,7 @@ public class TestingDataInitializer {
                 "Doktorska disertacija, zavrsen uvid, neodbranjena", 1)));
         thesis5.setLanguage(serbianLanguage);
         thesis5.getPublicReviewStartDates().add(LocalDate.of(2024, 3, 16));
+        thesis5.setPublicReviewCompleted(true);
 
         var thesisContribution3 = new PersonDocumentContribution();
         thesisContribution3.setPerson(person2);
@@ -980,6 +981,7 @@ public class TestingDataInitializer {
         thesis6.setLanguage(serbianLanguage);
         thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
         thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
+        thesis6.setPublicReviewCompleted(true);
 
         var thesisContribution4 = new PersonDocumentContribution();
         thesisContribution4.setPerson(person3);

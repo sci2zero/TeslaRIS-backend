@@ -430,7 +430,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             setNumberOfAppendices(thesisDTO.getNumberOfAppendices());
         }});
 
-        thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
+        if (thesis.getPublicReviewCompleted()) {
+            thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
+        }
+
         if (Objects.nonNull(thesisDTO.getThesisDefenceDate())) {
             thesis.setDocumentDate(String.valueOf(thesisDTO.getThesisDefenceDate().getYear()));
         }
@@ -569,6 +572,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 .isPresent())
             .forEach(thesis -> {
                 thesis.setIsOnPublicReview(false);
+                thesis.setPublicReviewCompleted(true);
                 thesisJPAService.save(thesis);
                 documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                     thesis.getId()).ifPresent(index -> {
