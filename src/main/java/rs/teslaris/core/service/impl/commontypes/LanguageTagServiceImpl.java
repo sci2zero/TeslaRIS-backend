@@ -1,6 +1,12 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +19,7 @@ import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.exceptionhandling.exception.LanguageTagReferenceConstraintException;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
@@ -77,5 +84,39 @@ public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag>
     private void setCommonFields(LanguageTag languageTag, LanguageTagDTO languageTagDTO) {
         languageTag.setDisplay(languageTagDTO.getDisplay());
         languageTag.setLanguageTag(languageTagDTO.getLanguageCode());
+    }
+
+    @Override
+    public List<LanguageTagResponseDTO> getUISupportedLanguages() {
+        var availableLocales = new HashSet<String>();
+        try {
+            var resources = getResourcesForMessages();
+
+            for (var resource : resources) {
+                var filename = resource.getFilename();
+                if (filename == null) {
+                    continue;
+                }
+
+                var langCode = filename.replace("messages_", "").replace(".properties", "");
+                availableLocales.add(langCode.toUpperCase());
+                availableLocales.add(langCode.toUpperCase() + "-CYR"); // Support cyrillic variants
+            }
+        } catch (IOException e) {
+            throw new LoadingException("Unable to scan for message files.");
+        }
+
+        return languageTagRepository.findAll().stream()
+            .filter(language -> availableLocales.contains(language.getLanguageTag().toUpperCase()))
+            .map(language -> new LanguageTagResponseDTO(
+                language.getId(),
+                language.getLanguageTag(),
+                language.getDisplay()))
+            .collect(Collectors.toList());
+    }
+
+    protected Resource[] getResourcesForMessages() throws IOException {
+        return new PathMatchingResourcePatternResolver()
+            .getResources("classpath*:internationalization/messages_*.properties");
     }
 }

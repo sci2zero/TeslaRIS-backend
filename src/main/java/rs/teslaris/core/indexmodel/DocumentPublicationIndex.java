@@ -170,6 +170,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Boolean, name = "is_on_public_review", store = true)
     private Boolean isOnPublicReview;
 
+    @Field(type = FieldType.Boolean, name = "is_public_review_completed", store = true)
+    private Boolean isPublicReviewCompleted;
+
     @Field(type = FieldType.Integer, name = "thesis_institution_id", store = true)
     private Integer thesisInstitutionId;
 

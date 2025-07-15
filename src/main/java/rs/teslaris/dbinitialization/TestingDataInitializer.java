@@ -174,7 +174,7 @@ public class TestingDataInitializer {
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
-                                                 LanguageTag englishTag, Language germanLanguage,
+                                                 LanguageTag englishTag, LanguageTag germanTag,
                                                  ResearchArea researchArea3,
                                                  Authority researcherAuthority,
                                                  Authority commissionAuthority,
@@ -206,7 +206,7 @@ public class TestingDataInitializer {
 
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
-                "Dragan", "Ivanovic", false, false, serbianLanguage, serbianLanguage,
+                "Dragan", "Ivanovic", false, false, serbianTag, serbianTag,
                 researcherAuthority, person1,
                 null, null, UserNotificationPeriod.DAILY);
         userRepository.save(researcherUser);
@@ -473,7 +473,7 @@ public class TestingDataInitializer {
 
         var researcherUser2 =
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
-                "Schöpfel", "Joachim", false, false, germanLanguage, germanLanguage,
+                "Schöpfel", "Joachim", false, false, germanTag, germanTag,
                 researcherAuthority, person2,
                 null, null, UserNotificationPeriod.WEEKLY);
         userRepository.save(researcherUser2);
@@ -764,7 +764,7 @@ public class TestingDataInitializer {
         var commissionUser =
             new User("commission@commission.com", passwordEncoder.encode("commission"),
                 "note note note",
-                "FTN", "", false, false, serbianLanguage, serbianLanguage, commissionAuthority,
+                "FTN", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
                 dummyOU, commission5, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser);
@@ -772,7 +772,7 @@ public class TestingDataInitializer {
         var commissionUser2 =
             new User("commission2@commission.com", passwordEncoder.encode("commission2"),
                 "note note note",
-                "PMF", "", false, false, serbianLanguage, serbianLanguage, commissionAuthority,
+                "PMF", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
                 dummyOU2, commission6, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser2);
@@ -785,14 +785,14 @@ public class TestingDataInitializer {
         var viceDeanUser =
             new User("vicedean@vicedean.com", passwordEncoder.encode("vicedean"),
                 "note note note",
-                "Nikola", "Nikolic", false, false, serbianLanguage, serbianLanguage,
+                "Nikola", "Nikolic", false, false, serbianTag, serbianTag,
                 viceDeanForScienceAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
 
         var institutionalEditorUser =
             new User("editor@editor.com", passwordEncoder.encode("editor"), "note note note",
-                "Nikola", "Markovic", false, false, serbianLanguage, serbianLanguage,
+                "Nikola", "Markovic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
@@ -800,7 +800,7 @@ public class TestingDataInitializer {
         var institutionalLibrarianUser =
             new User("librarian@librarian.com", passwordEncoder.encode("librarian"),
                 "note note note",
-                "Mirka", "Maric", false, false, serbianLanguage, serbianLanguage,
+                "Mirka", "Maric", false, false, serbianTag, serbianTag,
                 institutionalLibrarianAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
@@ -808,7 +808,7 @@ public class TestingDataInitializer {
         var headOfLibraryUser =
             new User("head_of_library@library.com", passwordEncoder.encode("head_of_library"),
                 "note note note",
-                "Djordje", "Perovic", false, false, serbianLanguage, serbianLanguage,
+                "Djordje", "Perovic", false, false, serbianTag, serbianTag,
                 headOfLibraryAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
@@ -816,14 +816,14 @@ public class TestingDataInitializer {
         var promotionRegistryAdminUser =
             new User("promotion@registry.com", passwordEncoder.encode("promotion_registry"),
                 "note note note",
-                "Davor", "Kontić", false, false, serbianLanguage, serbianLanguage,
+                "Davor", "Kontić", false, false, serbianTag, serbianTag,
                 promotionRegistryAdminAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.DAILY);
 
         var institutionalEditorUser2 =
             new User("editor2@editor.com", passwordEncoder.encode("editor2"), "note note note",
-                "Marko", "Nikolic", false, false, serbianLanguage, serbianLanguage,
+                "Marko", "Nikolic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
                 dummyOU2, null, UserNotificationPeriod.WEEKLY);

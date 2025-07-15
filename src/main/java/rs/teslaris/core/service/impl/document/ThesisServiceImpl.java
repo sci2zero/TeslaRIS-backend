@@ -525,6 +525,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             index.setLatestPublicReviewStartDate(index.getPublicReviewStartDates().getLast());
         }
         index.setIsOnPublicReview(thesis.getIsOnPublicReview());
+        index.setIsPublicReviewCompleted(thesis.getPublicReviewCompleted());
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             index.setThesisInstitutionId(thesis.getOrganisationUnit().getId());
@@ -577,6 +578,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                     thesis.getId()).ifPresent(index -> {
                     index.setIsOnPublicReview(false);
+                    index.setIsPublicReviewCompleted(true);
                     documentPublicationIndexRepository.save(index);
                 });
             });

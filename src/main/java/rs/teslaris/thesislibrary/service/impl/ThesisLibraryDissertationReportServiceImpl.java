@@ -123,6 +123,11 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 .field("is_on_public_review")
                 .value("false")
             )._toQuery());
+
+            queries.add(TermQuery.of(t -> t
+                .field("is_public_review_completed")
+                .value("true")
+            )._toQuery());
         } else if (Objects.nonNull(year)) {
             queries.add(RangeQuery.of(r -> r
                 .field("public_review_start_dates")
@@ -133,6 +138,11 @@ public class ThesisLibraryDissertationReportServiceImpl implements
             queries.add(TermQuery.of(t -> t
                 .field("is_on_public_review")
                 .value("false")
+            )._toQuery());
+
+            queries.add(TermQuery.of(t -> t
+                .field("is_public_review_completed")
+                .value("true")
             )._toQuery());
 
             queries.add(ExistsQuery.of(e -> e.field("thesis_defence_date"))._toQuery());
@@ -146,6 +156,11 @@ public class ThesisLibraryDissertationReportServiceImpl implements
             queries.add(TermQuery.of(t -> t
                 .field("is_on_public_review")
                 .value("true")
+            )._toQuery());
+
+            queries.add(TermQuery.of(t -> t
+                .field("is_public_review_completed")
+                .value("false")
             )._toQuery());
         }
 

@@ -371,7 +371,7 @@ public class DbInitializer implements ApplicationRunner {
         // ADMIN USER
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage, englishLanguage, adminAuthority, null,
+                "Markovic", false, false, serbianTag, englishTag, adminAuthority, null,
                 null, null,
                 UserNotificationPeriod.DAILY);
         userRepository.save(adminUser);
@@ -418,8 +418,7 @@ public class DbInitializer implements ApplicationRunner {
         if (Arrays.stream(environment.getActiveProfiles())
             .anyMatch(profile -> profile.equalsIgnoreCase("test"))) {
             testingDataInitializer.initializeIntegrationTestingData(serbianTag, serbianLanguage,
-                englishTag,
-                germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
+                englishTag, germanTag, researchArea3, researcherAuthority, commissionAuthority,
                 viceDeanForScienceAuthority, institutionalEditorAuthority,
                 institutionalLibrarianAuthority, headOfLibraryAuthority,
                 promotionRegistryAdministratorAuthority, commissions.a, commissions.b);

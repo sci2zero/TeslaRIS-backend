@@ -44,39 +44,48 @@
   },
   "groupToNameMapping": {
     "M10": {
-      "sr": "Монографије, монографске студије, тематски зборници, лексикографске и картографске публикације међународног значаја",
+      "sr": "Monografije, monografske studije, tematski zbornici, leksikografske i kartografske publikacije međunarodnog značaja",
+      "sr-cyr": "Монографије, монографске студије, тематски зборници, лексикографске и картографске публикације међународног значаја",
       "en": "Monographs, monographic studies, thematic collections, lexicographic and cartographic publications of international importance"
     },
     "M20": {
-      "sr": "Радови објављени у научним часописима међународног значаја",
+      "sr": "Radovi objavljeni u naučnim časopisima međunarodnog značaja",
+      "sr-cyr": "Радови објављени у научним часописима међународног значаја",
       "en": "Papers published in scientific journals of international importance"
     },
     "M30": {
-      "sr": "Зборници међународних научних скупова",
+      "sr": "Zbornici međunarodnih skupova",
+      "sr-cyr": "Зборници међународних научних скупова",
       "en": "Proceedings of international scientific conferences"
     },
     "M40": {
-      "sr": "Монографије националног значаја",
+      "sr": "Monografije nacionalnog značaja",
+      "sr-cyr": "Монографије националног значаја",
       "en": "Monographs of national importance"
     },
     "M50": {
-      "sr": "Радови у часописима националног значаја",
+      "sr": "Radovi u časopisima nacionalnog značaja",
+      "sr-cyr": "Радови у часописима националног значаја",
       "en": "Papers in journals of national importance"
     },
     "M60": {
-      "sr": "Зборници националних научних скупова, критичко приређивање извора",
+      "sr": "Zborici nacionalnih naučnih skupova, kritičko priređivanje izvora",
+      "sr-cyr": "Зборници националних научних скупова, критичко приређивање извора",
       "en": "Proceedings of national scientific conferences, critical editions of sources"
     },
     "M70": {
-      "sr": "Одбрањена докторска дисертација",
+      "sr": "Odbranjena doktorska disertacija",
+      "sr-cyr": "Одбрањена докторска дисертација",
       "en": "Defended doctoral dissertation"
     },
     "M80": {
-      "sr": "Техничка решења",
+      "sr": "Tehnička rešenja",
+      "sr-cyr": "Техничка решења",
       "en": "Technical solutions"
     },
     "M90": {
-      "sr": "Патенти, сорте, расе или сојеви",
+      "sr": "Patenti, sorte, rase ili sojevi",
+      "sr-cyr": "Патенти, сорте, расе или сојеви",
       "en": "Patents, varieties, breeds, or strains"
     }
 },
