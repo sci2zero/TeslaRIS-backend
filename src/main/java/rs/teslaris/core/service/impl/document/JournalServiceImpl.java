@@ -112,6 +112,19 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public JournalIndex readJournalByIssn(String eIssn, String printIssn) {
+        boolean isEissnBlank = (Objects.isNull(eIssn) || eIssn.isBlank());
+        boolean isPrintIssnBlank = (Objects.isNull(printIssn) || printIssn.isBlank());
+
+        if (isEissnBlank && isPrintIssnBlank) {
+            return null;
+        }
+
+        if (isEissnBlank) {
+            eIssn = printIssn;
+        } else if (isPrintIssnBlank) {
+            printIssn = eIssn;
+        }
+
         return journalIndexRepository.findJournalIndexByeISSNOrPrintISSN(eIssn, printIssn)
             .orElse(null);
     }
@@ -135,7 +148,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public Journal findJournalByOldId(Integer journalId) {
-        return journalRepository.findJournalByOldId(journalId).orElse(null);
+        return journalRepository.findByOldIdsContains(journalId).orElse(null);
     }
 
     @Override
@@ -273,6 +286,18 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
             journalIndexRepository.save(journalIndex);
         });
+    }
+
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var journal = findOne(id);
+        journal.getOldIds().add(oldId);
+        save(journal);
+    }
+
+    @Override
+    public void save(Journal journal) {
+        journalRepository.save(journal);
     }
 
     @Override

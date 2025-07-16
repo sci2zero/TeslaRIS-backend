@@ -79,7 +79,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     @Override
     @Nullable
     public Event findEventByOldId(Integer eventId) {
-        return eventRepository.findEventByOldId(eventId).orElse(null);
+        return eventRepository.findEventByOldIdsContains(eventId).orElse(null);
     }
 
     @Override
@@ -113,7 +113,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             event.setDateTo(eventDTO.getDateTo());
         }
 
-        event.setOldId(eventDTO.getOldId());
+        if (Objects.nonNull(eventDTO.getOldId())) {
+            event.getOldIds().add(eventDTO.getOldId());
+        }
+
         IdentifierUtil.setUris(event.getUris(), eventDTO.getUris());
 
         if (Objects.nonNull(eventDTO.getContributions())) {

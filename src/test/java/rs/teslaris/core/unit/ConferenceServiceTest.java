@@ -378,13 +378,13 @@ public class ConferenceServiceTest {
         var oldId = 100;
         var conference = new Conference();
         conference.setId(1);
-        conference.setOldId(oldId);
+        conference.getOldIds().add(oldId);
 
         var expectedDTO = new ConferenceDTO();
         expectedDTO.setId(1);
         expectedDTO.setOldId(oldId);
 
-        when(conferenceRepository.findConferenceByOldId(oldId)).thenReturn(Optional.of(conference));
+        when(conferenceRepository.findConferenceByOldIdsContains(oldId)).thenReturn(Optional.of(conference));
 
         // When
         var response = conferenceService.readConferenceByOldId(oldId);
@@ -399,7 +399,7 @@ public class ConferenceServiceTest {
     void shouldThrowNotFoundExceptionWhenOldIdDoesNotExist() {
         // Given
         var oldId = 200;
-        when(conferenceRepository.findConferenceByOldId(oldId)).thenReturn(Optional.empty());
+        when(conferenceRepository.findConferenceByOldIdsContains(oldId)).thenReturn(Optional.empty());
 
         // When & Then
         var exception = assertThrows(NotFoundException.class,

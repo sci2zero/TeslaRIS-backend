@@ -204,7 +204,9 @@ public class ProceedingsServiceTest {
         // Given
         var proceedingsId = 123;
         var expected = new Proceedings();
-        when(documentRepository.findDocumentByOldId(proceedingsId)).thenReturn(
+        when(documentRepository.findDocumentByOldIdsContains(proceedingsId)).thenReturn(
+            Optional.of(123));
+        when(documentRepository.findById(123)).thenReturn(
             Optional.of(expected));
 
         // When
@@ -218,7 +220,7 @@ public class ProceedingsServiceTest {
     public void shouldReturnNullWhenProceedingsDoesNotExist() {
         // Given
         var proceedingsId = 123;
-        when(documentRepository.findDocumentByOldId(proceedingsId)).thenReturn(Optional.empty());
+        when(documentRepository.findDocumentByOldIdsContains(proceedingsId)).thenReturn(Optional.empty());
 
         // When
         var actual = proceedingsService.findDocumentByOldId(proceedingsId);

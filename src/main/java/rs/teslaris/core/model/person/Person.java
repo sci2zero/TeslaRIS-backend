@@ -13,19 +13,24 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
 @Setter
@@ -37,11 +42,10 @@ import rs.teslaris.core.model.user.User;
     @Index(name = "idx_person_e_cris_id", columnList = "e_cris_id"),
     @Index(name = "idx_person_e_nauka_id", columnList = "e_nauka_id"),
     @Index(name = "idx_person_orcid", columnList = "orcid"),
-    @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id"),
-    @Index(name = "idx_person_old_id", columnList = "cris_uns_id")
+    @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id")
 })
 @SQLRestriction("deleted=false")
-public class Person extends BaseEntity {
+public class Person extends BaseEntity implements Mergeable {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private PersonName name;
@@ -91,8 +95,13 @@ public class Person extends BaseEntity {
     @Column(name = "open_alex_id")
     private String openAlexId;
 
-    @Column(name = "cris_uns_id")
-    private Integer oldId;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "old_ids")
+    private Set<Integer> oldIds = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "merged_ids")
+    private Set<Integer> mergedIds = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas;

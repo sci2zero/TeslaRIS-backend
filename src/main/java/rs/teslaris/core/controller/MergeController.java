@@ -32,6 +32,7 @@ import rs.teslaris.core.dto.deduplication.MergedPublishersDTO;
 import rs.teslaris.core.dto.deduplication.MergedSoftwareDTO;
 import rs.teslaris.core.dto.deduplication.MergedThesesDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -427,6 +428,15 @@ public class MergeController {
             rightPublisherId,
             mergedPublishers.getLeftPublisher(),
             mergedPublishers.getRightPublisher());
+    }
+
+    @PatchMapping("/migrate-identifier-history/{entityType}/{deletionEntityId}/{mergedEntityId}")
+    @PreAuthorize("hasAuthority('MERGE_PUBLISHERS_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void migrateIdentifierHistory(@PathVariable EntityType entityType,
+                                         @PathVariable Integer deletionEntityId,
+                                         @PathVariable Integer mergedEntityId) {
+        mergeService.migratePersistentIdentifiers(deletionEntityId, mergedEntityId, entityType);
     }
 
     private void mergeDocumentFiles(Integer leftId, Integer rightId,

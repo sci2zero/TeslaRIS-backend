@@ -36,4 +36,11 @@ public interface ProceedingsRepository extends JpaRepository<Proceedings, Intege
     @Query("UPDATE ProceedingsPublication pp SET pp.deleted = true " +
         "WHERE pp.proceedings.id = :proceedingsId")
     void deleteAllPublicationsInProceedings(Integer proceedingsId);
+
+    @Query("SELECT p FROM Proceedings p WHERE " +
+        "p.printISBN = :printISBN OR " +
+        "p.printISBN = :eISBN OR " +
+        "p.eISBN = :eISBN OR " +
+        "p.eISBN = :printISBN")
+    List<Proceedings> findByISBN(String eISBN, String printISBN);
 }

@@ -12,7 +12,11 @@ public class ConferenceConverter {
         var conferenceDTO = new ConferenceDTO();
 
         conferenceDTO.setId(conference.getId());
-        conferenceDTO.setOldId(conference.getOldId());
+
+        if (Objects.nonNull(conference.getOldIds())) {
+            conference.getOldIds().stream().findFirst().ifPresent(conferenceDTO::setOldId);
+        }
+
         conferenceDTO.setName(
             MultilingualContentConverter.getMultilingualContentDTO(conference.getName()));
         conferenceDTO.setNameAbbreviation(MultilingualContentConverter.getMultilingualContentDTO(

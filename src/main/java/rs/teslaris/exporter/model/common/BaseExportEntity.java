@@ -23,7 +23,7 @@ public abstract class BaseExportEntity {
     private Integer databaseId;
 
     @Field("old_id")
-    private Integer oldId;
+    private Set<Integer> oldIds = new HashSet<>();
 
     @Field("deleted")
     private Boolean deleted = false;

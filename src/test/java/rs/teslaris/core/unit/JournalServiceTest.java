@@ -331,7 +331,7 @@ public class JournalServiceTest {
         // Given
         var journalId = 123;
         var expectedJournal = new Journal();
-        when(journalRepository.findJournalByOldId(journalId)).thenReturn(
+        when(journalRepository.findByOldIdsContains(journalId)).thenReturn(
             Optional.of(expectedJournal));
 
         // When
@@ -345,7 +345,7 @@ public class JournalServiceTest {
     public void shouldReturnNullWhenJournalDoesNotExist() {
         // Given
         var journalId = 123;
-        when(journalRepository.findJournalByOldId(journalId)).thenReturn(Optional.empty());
+        when(journalRepository.findByOldIdsContains(journalId)).thenReturn(Optional.empty());
 
         // When
         var actualJournal = journalService.findJournalByOldId(journalId);

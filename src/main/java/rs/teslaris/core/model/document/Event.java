@@ -13,24 +13,27 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "events", indexes = {
-    @Index(name = "idx_event_old_id", columnList = "cris_uns_id")
-})
+@Table(name = "events")
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public abstract class Event extends BaseEntity {
+public abstract class Event extends BaseEntity implements Mergeable {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
@@ -63,8 +66,13 @@ public abstract class Event extends BaseEntity {
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<PersonEventContribution> contributions = new HashSet<>();
 
-    @Column(name = "cris_uns_id")
-    private Integer oldId;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "old_ids")
+    private Set<Integer> oldIds = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "merged_ids")
+    private Set<Integer> mergedIds = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> uris = new HashSet<>();

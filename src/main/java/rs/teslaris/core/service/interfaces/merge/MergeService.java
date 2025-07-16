@@ -17,6 +17,7 @@ import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 
 @Service
 public interface MergeService {
@@ -121,4 +122,7 @@ public interface MergeService {
 
     void saveMergedPublishersMetadata(Integer leftId, Integer rightId, PublisherDTO leftData,
                                       PublisherDTO rightData);
+
+    void migratePersistentIdentifiers(Integer deletionEntityId, Integer mergedEntityId,
+                                      EntityType entityType);
 }

@@ -302,4 +302,34 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             proceedingsRepository.existsByPrintISBN(identifier, proceedingsId) ||
             super.isIdentifierInUse(identifier, proceedingsId);
     }
+
+    @Override
+    public Proceedings findProceedingsByIsbn(String eIsbn, String printIsbn) {
+        boolean isEisbnBlank = (Objects.isNull(eIsbn) || eIsbn.isBlank());
+        boolean isPrintIsbnBlank = (Objects.isNull(printIsbn) || printIsbn.isBlank());
+
+        if (isEisbnBlank && isPrintIsbnBlank) {
+            return null;
+        }
+
+        if (isEisbnBlank) {
+            eIsbn = printIsbn;
+        } else if (isPrintIsbnBlank) {
+            printIsbn = eIsbn;
+        }
+
+        var results = proceedingsRepository.findByISBN(eIsbn, printIsbn);
+        if (results.isEmpty()) {
+            return null;
+        }
+
+        return results.getFirst();
+    }
+
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var proceedings = findOne(id);
+        proceedings.getOldIds().add(oldId);
+        save(proceedings);
+    }
 }

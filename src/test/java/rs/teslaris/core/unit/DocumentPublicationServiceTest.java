@@ -322,7 +322,7 @@ public class DocumentPublicationServiceTest {
     public void shouldGetDocumentPublicationCount() {
         // Given
         var expectedCount = 42L;
-        when(documentPublicationIndexRepository.count()).thenReturn(expectedCount);
+        when(documentPublicationIndexRepository.countPublications()).thenReturn(expectedCount);
 
         // When
         long actualCount = documentPublicationService.getPublicationCount();

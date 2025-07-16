@@ -85,7 +85,7 @@ public class ExportEventConverter extends ExportConverterBase {
             commonExportEvent.getActivelyRelatedInstitutionIds().addAll(relations);
         }
 
-        commonExportEvent.setOldId(event.getOldId());
+        commonExportEvent.getOldIds().addAll(event.getOldIds());
     }
 
     private static Set<Integer> getRelatedInstitutions(Event event) {

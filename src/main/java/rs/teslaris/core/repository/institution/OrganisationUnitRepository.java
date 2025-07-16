@@ -22,7 +22,9 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
         "WHERE ou.id = :id")
     Optional<OrganisationUnit> findByIdWithLangDataAndResearchArea(Integer id);
 
-    Optional<OrganisationUnit> findOrganisationUnitByOldId(Integer oldId);
+    @Query(value = "SELECT * FROM organisation_units WHERE " +
+        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+    Optional<OrganisationUnit> findOrganisationUnitByOldIdsContains(Integer oldId);
 
     @Query(value = "SELECT ou FROM OrganisationUnit ou left " +
         "JOIN FETCH ou.keyword left " +

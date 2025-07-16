@@ -78,7 +78,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     @Override
     public ConferenceDTO readConferenceByOldId(Integer oldId) {
-        return ConferenceConverter.toDTO(conferenceRepository.findConferenceByOldId(oldId)
+        return ConferenceConverter.toDTO(conferenceRepository.findConferenceByOldIdsContains(oldId)
             .orElseThrow(() -> new NotFoundException(
                 "Conference with old ID " + oldId + " does not exist.")));
     }

@@ -165,6 +165,7 @@ public class PersonContributionConverter {
 
     @Nullable
     private EmploymentTitle getEmploymentTitleFromName(String name) {
+        name = name.toLowerCase();
         switch (name) {
             case "docent":
                 return EmploymentTitle.ASSISTANT_PROFESSOR;

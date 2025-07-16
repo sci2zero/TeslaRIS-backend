@@ -179,19 +179,20 @@ public class PersonServiceTest {
         personalInfo.setPostalAddress(new PostalAddress());
         expectedPerson.setPersonalInfo(personalInfo);
 
-        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.of(expectedPerson));
+        when(personRepository.findPersonByOldIdsContains(1)).thenReturn(
+            Optional.of(expectedPerson));
 
         // when
         var actualPerson = personService.readPersonWithBasicInfoForOldId(1);
 
         // then
-        verify(personRepository, times(1)).findPersonByOldId(1);
+        verify(personRepository, times(1)).findPersonByOldIdsContains(1);
     }
 
     @Test
     public void shouldThrowNotFoundExceptionWhenPersonDoesNotExistWithOldId() {
         // given
-        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.empty());
+        when(personRepository.findPersonByOldIdsContains(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,
@@ -719,28 +720,29 @@ public class PersonServiceTest {
         // Given
         var oldId = 123;
         var expectedPerson = new Person();
-        when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.of(expectedPerson));
+        when(personRepository.findPersonByOldIdsContains(oldId)).thenReturn(
+            Optional.of(expectedPerson));
 
         // When
         var actualPerson = personService.findPersonByOldId(oldId);
 
         // Then
         assertEquals(expectedPerson, actualPerson);
-        verify(personRepository, times(1)).findPersonByOldId(oldId);
+        verify(personRepository, times(1)).findPersonByOldIdsContains(oldId);
     }
 
     @Test
     void shouldReturnNullWhenOldIdDoesNotExist() {
         // Given
         var oldId = 123;
-        when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.empty());
+        when(personRepository.findPersonByOldIdsContains(oldId)).thenReturn(Optional.empty());
 
         // When
         var actualPerson = personService.findPersonByOldId(oldId);
 
         // Then
         assertNull(actualPerson);
-        verify(personRepository, times(1)).findPersonByOldId(oldId);
+        verify(personRepository, times(1)).findPersonByOldIdsContains(oldId);
     }
 
     @Test

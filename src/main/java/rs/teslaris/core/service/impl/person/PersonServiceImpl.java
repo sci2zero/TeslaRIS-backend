@@ -156,7 +156,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Nullable
     public Person findPersonByOldId(Integer oldId) {
-        return personRepository.findPersonByOldId(oldId).orElse(null);
+        return personRepository.findPersonByOldIdsContains(oldId).orElse(null);
     }
 
     @Override
@@ -290,7 +290,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var person = new Person();
         person.setName(personName);
         person.setPersonalInfo(personalInfo);
-        person.setOldId(personDTO.getOldId());
+
+        if (Objects.nonNull(personDTO.getOldId())) {
+            person.getOldIds().add(personDTO.getOldId());
+        }
+
         person.setApproveStatus(status);
 
         if (isImport) {

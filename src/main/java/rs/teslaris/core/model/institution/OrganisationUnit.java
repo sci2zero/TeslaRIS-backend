@@ -10,13 +10,17 @@ import jakarta.persistence.Index;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.GeoLocation;
@@ -24,6 +28,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
 @Setter
@@ -31,11 +36,10 @@ import rs.teslaris.core.model.person.Contact;
 @AllArgsConstructor
 @Entity
 @Table(name = "organisation_units", indexes = {
-    @Index(name = "idx_org_unit_scopus_afid", columnList = "scopus_afid"),
-    @Index(name = "idx_org_unit_old_id", columnList = "cris_uns_id")
+    @Index(name = "idx_org_unit_scopus_afid", columnList = "scopus_afid")
 })
 @SQLRestriction("deleted=false")
-public class OrganisationUnit extends BaseEntity {
+public class OrganisationUnit extends BaseEntity implements Mergeable {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
@@ -64,8 +68,13 @@ public class OrganisationUnit extends BaseEntity {
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
 
-    @Column(name = "cris_uns_id")
-    private Integer oldId;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "old_ids")
+    private Set<Integer> oldIds = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "merged_ids")
+    private Set<Integer> mergedIds = new HashSet<>();
 
     @Embedded
     private Contact contact;

@@ -23,7 +23,9 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     @Query("UPDATE Proceedings p SET p.deleted = true WHERE p.event.id = :eventId")
     void deleteAllProceedingsInEvent(Integer eventId);
 
-    Optional<Event> findEventByOldId(Integer oldId);
+    @Query(value = "SELECT * FROM conferences WHERE " +
+        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+    Optional<Event> findEventByOldIdsContains(Integer oldId);
 
     @Query("SELECT CASE WHEN COUNT(e) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Event e WHERE e.confId = :confId AND (:id IS NULL OR e.id <> :id)")

@@ -72,7 +72,9 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
             multilingualContentService.getMultilingualContent(
                 publicationSeriesDTO.getNameAbbreviation()));
 
-        publicationSeries.setOldId(publicationSeriesDTO.getOldId());
+        if (Objects.nonNull(publicationSeriesDTO.getOldId())) {
+            publicationSeries.getOldIds().add(publicationSeriesDTO.getOldId());
+        }
 
         IdentifierUtil.setUris(publicationSeries.getUris(), publicationSeriesDTO.getUris());
         setCommonIdentifiers(publicationSeries, publicationSeriesDTO);

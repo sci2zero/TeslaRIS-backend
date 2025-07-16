@@ -31,4 +31,8 @@ public interface ProceedingsService {
     void reindexProceedings();
 
     boolean isIdentifierInUse(String identifier, Integer proceedingsId);
+
+    Proceedings findProceedingsByIsbn(String eIsbn, String printIsbn);
+
+    void addOldId(Integer id, Integer oldId);
 }

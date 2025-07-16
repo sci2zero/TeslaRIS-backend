@@ -38,4 +38,6 @@ public interface BookSeriesService {
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
 
     void indexBookSeries(BookSeries bookSeries);
+
+    void save(BookSeries bookSeries);
 }

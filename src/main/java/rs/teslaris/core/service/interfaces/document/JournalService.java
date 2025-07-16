@@ -62,4 +62,8 @@ public interface JournalService {
     void reindexJournalVolatileInformation(Integer journalId);
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
+
+    void addOldId(Integer id, Integer oldId);
+
+    void save(Journal journal);
 }

@@ -191,6 +191,11 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             bookSeries.getId()).orElse(new BookSeriesIndex()));
     }
 
+    @Override
+    public void save(BookSeries bookSeries) {
+        bookSeriesJPAService.save(bookSeries);
+    }
+
     private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {
         if (Objects.nonNull(bookSeriesDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForBookSeries(

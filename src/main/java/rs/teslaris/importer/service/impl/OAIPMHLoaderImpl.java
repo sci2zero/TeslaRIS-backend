@@ -310,6 +310,19 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                     log.error(
                                         "Skipped loading object of type 'PROCEEDINGS' with id '{}'. Reason: '{}'.",
                                         record.getOldId(), e.getMessage());
+                                    if (e.getMessage().endsWith("isbnExistsError")) {
+                                        var potentialMatch =
+                                            proceedingsService.findProceedingsByIsbn(
+                                                creationDTO.getEISBN(), creationDTO.getPrintISBN());
+                                        if (Objects.nonNull(potentialMatch)) {
+                                            proceedingsService.addOldId(potentialMatch.getId(),
+                                                creationDTO.getOldId());
+                                            log.info(
+                                                "Successfully merged PROCEEDINGS '{}' using ISBN ({}, {}).",
+                                                record.getOldId(), creationDTO.getEISBN(),
+                                                creationDTO.getPrintISBN());
+                                        }
+                                    }
                                 }
                             }
                         } else if (record.getType().endsWith("c_0640")) { // COAR type: journal
@@ -321,6 +334,19 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                     log.error(
                                         "Skipped loading object of type 'JOURNAL' with id '{}'. Reason: '{}'.",
                                         record.getOldId(), e.getMessage());
+                                    if (e.getMessage().endsWith("issnExistsError")) {
+                                        var potentialMatch =
+                                            journalService.readJournalByIssn(creationDTO.getEissn(),
+                                                creationDTO.getPrintISSN());
+                                        if (Objects.nonNull(potentialMatch)) {
+                                            journalService.addOldId(potentialMatch.getDatabaseId(),
+                                                creationDTO.getOldId());
+                                            log.info(
+                                                "Successfully merged JOURNAL '{}' using ISSN ({}, {}).",
+                                                record.getOldId(), creationDTO.getEissn(),
+                                                creationDTO.getPrintISSN());
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -420,30 +446,43 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             .endsWith("c_2df8fbb1")) { // COAR type: research article
                             var creationDTO = journalPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
+                                try {
+
+                                } catch (Exception e) {
+                                    log.error(
+                                        "Skipped loading object of type 'JOURNAL_PUBLICATION' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
                                 journalPublicationService.createJournalPublication(creationDTO,
                                     performIndex);
                             }
-                        } else if (record.getType()
-                            .endsWith("c_5794")) { // COAR type: conference paper
+                        } else if (
+                            record.getType().endsWith("c_5794") ||
+                                record.getType().endsWith(
+                                    "c_0640")) { // COAR type: conference paper or conference output
                             var creationDTO = proceedingsPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                proceedingsPublicationService.createProceedingsPublication(
-                                    creationDTO,
-                                    performIndex);
-                            }
-                        } else if (record.getType()
-                            .endsWith("c_0640")) { // COAR type: conference output
-                            var creationDTO = proceedingsPublicationConverter.toDTO(record);
-                            if (Objects.nonNull(creationDTO)) {
-                                proceedingsPublicationService.createProceedingsPublication(
-                                    creationDTO,
-                                    performIndex);
+                                try {
+                                    proceedingsPublicationService.createProceedingsPublication(
+                                        creationDTO,
+                                        performIndex);
+                                } catch (Exception e) {
+                                    log.error(
+                                        "Skipped loading object of type 'PROCEEDINGS_PUBLICATION' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
                             }
                         } else if (record.getType()
                             .endsWith("c_db06")) { // COAR type: dissertation (thesis)
                             var creationDTO = dissertationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                thesisService.createThesis(creationDTO, performIndex);
+                                try {
+                                    thesisService.createThesis(creationDTO, performIndex);
+                                } catch (Exception e) {
+                                    log.error(
+                                        "Skipped loading object of type 'THESIS' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
                             }
                         }
                     });
