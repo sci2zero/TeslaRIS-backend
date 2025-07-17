@@ -502,7 +502,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
-        if(Objects.nonNull(documentDTO.getOldId())) {
+        if (Objects.nonNull(documentDTO.getOldId())) {
             document.getOldIds().add(documentDTO.getOldId());
         }
 

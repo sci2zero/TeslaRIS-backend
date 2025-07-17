@@ -13,24 +13,24 @@ import rs.teslaris.core.model.document.Document;
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     @Query(value = """
-    SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    UNION ALL
-    SELECT id FROM software WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    UNION ALL
-    SELECT id FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    UNION ALL
-    SELECT id FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    UNION ALL
-    SELECT id FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    UNION ALL
-    SELECT id FROM journal_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    UNION ALL
-    SELECT id FROM proceedings_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    UNION ALL
-    SELECT id FROM monograph_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    UNION ALL
-    SELECT id FROM theses WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-    """, nativeQuery = true)
+        SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM software WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM journal_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM proceedings_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM monograph_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM theses WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        """, nativeQuery = true)
     Optional<Integer> findDocumentByOldIdsContains(Integer oldId);
 
     @Query("SELECT d FROM Document d " +

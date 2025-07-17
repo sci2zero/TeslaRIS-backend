@@ -220,7 +220,8 @@ public class ProceedingsServiceTest {
     public void shouldReturnNullWhenProceedingsDoesNotExist() {
         // Given
         var proceedingsId = 123;
-        when(documentRepository.findDocumentByOldIdsContains(proceedingsId)).thenReturn(Optional.empty());
+        when(documentRepository.findDocumentByOldIdsContains(proceedingsId)).thenReturn(
+            Optional.empty());
 
         // When
         var actual = proceedingsService.findDocumentByOldId(proceedingsId);
