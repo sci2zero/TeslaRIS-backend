@@ -2,6 +2,7 @@ package rs.teslaris.core.repository.document;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -92,4 +93,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
                                      Boolean putOnReview,
                                      Pageable pageable);
 
+    @Query(value = "SELECT * FROM theses WHERE " +
+        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+    Optional<Thesis> findThesisByOldIdsContains(Integer oldId);
 }

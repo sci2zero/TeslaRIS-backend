@@ -12,4 +12,8 @@ public interface BookSeriesRepository extends JpaRepository<BookSeries, Integer>
     @Query(value = "SELECT * FROM book_series WHERE " +
         "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
     Optional<BookSeries> findBookSeriesByOldIdsContains(Integer oldId);
+
+    @Query(value = "SELECT * FROM book_series bs WHERE bs.id = :bookSeriesId",
+        nativeQuery = true)
+    Optional<BookSeries> findRaw(Integer bookSeriesId);
 }

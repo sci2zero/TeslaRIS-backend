@@ -91,4 +91,8 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
         "JOIN ou.accountingIds aid " +
         "WHERE aid = :id AND ou.approveStatus = 1")
     Optional<OrganisationUnit> findApprovedOrganisationUnitByAccountingId(String id);
+
+    @Query(value = "SELECT * FROM organisation_units ou WHERE ou.id = :organisationUnitId",
+        nativeQuery = true)
+    Optional<OrganisationUnit> findRaw(Integer organisationUnitId);
 }

@@ -191,6 +191,12 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             .orElse(new PublisherIndex()));
     }
 
+    @Override
+    public Publisher findRaw(Integer publisherId) {
+        return publisherRepository.findRaw(publisherId)
+            .orElseThrow(() -> new NotFoundException("Publisher with given ID does not exist."));
+    }
+
     private void setCommonFields(Publisher publisher, PublisherDTO publisherDTO) {
         publisher.setName(
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));

@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.document;
 
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -43,4 +44,7 @@ public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
     @Modifying
     @Query("UPDATE Thesis t SET t.publisher = null WHERE t.publisher.id = :publisherId")
     void unbindThesis(Integer publisherId);
+
+    @Query(value = "SELECT * FROM publishers p WHERE p.id = :publisherId", nativeQuery = true)
+    Optional<Publisher> findRaw(Integer publisherId);
 }

@@ -119,6 +119,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    public Conference findRaw(Integer conferenceId) {
+        return conferenceRepository.findRaw(conferenceId)
+            .orElseThrow(() -> new NotFoundException("Conference with given ID does not exist."));
+    }
+
+    @Override
     @Nullable
     public Conference findConferenceByConfId(String confId) {
         return conferenceRepository.findConferenceByConfId(confId).orElse(null);

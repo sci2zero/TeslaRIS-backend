@@ -516,4 +516,34 @@ public class ConferenceServiceTest {
         verify(eventIndex).setClassifiedBy(classifiedBy);
         verify(eventIndexRepository).save(eventIndex);
     }
+
+    @Test
+    void shouldReturnRawConference() {
+        // Given
+        var entityId = 123;
+        var expected = new Conference();
+        expected.setId(entityId);
+        when(conferenceRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = conferenceService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(conferenceRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenConferenceDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(conferenceRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> conferenceService.findRaw(entityId));
+
+        assertEquals("Conference with given ID does not exist.", exception.getMessage());
+        verify(conferenceRepository).findRaw(entityId);
+    }
 }

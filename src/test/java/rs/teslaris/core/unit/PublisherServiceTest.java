@@ -293,4 +293,34 @@ public class PublisherServiceTest {
         verify(publisherRepository).unbindSoftware(publisherId);
         verify(publisherRepository).unbindThesis(publisherId);
     }
+
+    @Test
+    void shouldReturnRawPublisher() {
+        // Given
+        var entityId = 123;
+        var expected = new Publisher();
+        expected.setId(entityId);
+        when(publisherRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = publisherService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(publisherRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenPublisherDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(publisherRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> publisherService.findRaw(entityId));
+
+        assertEquals("Publisher with given ID does not exist.", exception.getMessage());
+        verify(publisherRepository).findRaw(entityId);
+    }
 }

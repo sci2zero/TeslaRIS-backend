@@ -637,21 +637,24 @@ public class MergeServiceImpl implements MergeService {
     public void migratePersistentIdentifiers(Integer deletionEntityId, Integer mergedEntityId,
                                              EntityType entityType) {
         switch (entityType) {
-            case BOOK_SERIES -> migrateIdentifierHistory(bookSeriesService::findBookSeriesById,
+            case BOOK_SERIES -> migrateIdentifierHistory(bookSeriesService::findRaw,
                 bookSeriesService::save, deletionEntityId, mergedEntityId);
+            case MONOGRAPH -> migrateIdentifierHistory(monographService::findRaw,
+                documentPublicationService::save, deletionEntityId, mergedEntityId);
+            case PROCEEDINGS -> migrateIdentifierHistory(proceedingsService::findRaw,
+                documentPublicationService::save, deletionEntityId, mergedEntityId);
             case PUBLICATION -> migrateIdentifierHistory(documentPublicationService::findOne,
                 documentPublicationService::save, deletionEntityId, mergedEntityId);
-            case EVENT -> migrateIdentifierHistory(conferenceService::findConferenceById,
+            case EVENT -> migrateIdentifierHistory(conferenceService::findRaw,
                 conferenceService::save, deletionEntityId, mergedEntityId);
-            case JOURNAL ->
-                migrateIdentifierHistory(journalService::findJournalById, journalService::save,
-                    deletionEntityId, mergedEntityId);
-            case ORGANISATION_UNIT -> migrateIdentifierHistory(organisationUnitService::findOne,
+            case JOURNAL -> migrateIdentifierHistory(journalService::findRaw, journalService::save,
+                deletionEntityId, mergedEntityId);
+            case ORGANISATION_UNIT -> migrateIdentifierHistory(organisationUnitService::findRaw,
                 organisationUnitService::save, deletionEntityId, mergedEntityId);
-            case PERSON -> migrateIdentifierHistory(personService::findOne, personService::save,
+            case PERSON -> migrateIdentifierHistory(personService::findRaw, personService::save,
                 deletionEntityId, mergedEntityId);
             case PUBLISHER ->
-                migrateIdentifierHistory(publisherService::findOne, publisherService::save,
+                migrateIdentifierHistory(publisherService::findRaw, publisherService::save,
                     deletionEntityId, mergedEntityId);
         }
     }
@@ -921,6 +924,7 @@ public class MergeServiceImpl implements MergeService {
         var mergedEntity = fetchFunction.apply(mergedEntityId);
 
         mergedEntity.getMergedIds().addAll(deletionEntity.getMergedIds());
+        mergedEntity.getMergedIds().add(deletionEntityId);
         mergedEntity.getOldIds().addAll(deletionEntity.getOldIds());
 
         saveMethod.accept(deletionEntity);

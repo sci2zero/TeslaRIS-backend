@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -70,6 +71,7 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
@@ -593,6 +595,47 @@ public class ThesisServiceTest {
         // Then
         assertFalse(thesis.getIsArchived());
         verify(thesisJPAService).save(thesis);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenThesisDoesNotExist() {
+        // Given
+        var oldId = 123;
+        when(thesisRepository.findThesisByOldIdsContains(oldId)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThrows(NotFoundException.class, () -> thesisService.readThesisByOldId(oldId));
+        verify(thesisRepository).findThesisByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenThesisIsNotApproved() {
+        // Given
+        var oldId = 456;
+        var thesis = new Thesis();
+        thesis.setApproveStatus(ApproveStatus.REQUESTED);
+        when(thesisRepository.findThesisByOldIdsContains(oldId)).thenReturn(Optional.of(thesis));
+
+        // When / Then
+        assertThrows(NotFoundException.class, () -> thesisService.readThesisByOldId(oldId));
+        verify(thesisRepository).findThesisByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldReturnDtoWhenThesisIsApproved() {
+        // Given
+        var oldId = 789;
+        var thesis = new Thesis();
+        thesis.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(thesisRepository.findThesisByOldIdsContains(oldId)).thenReturn(Optional.of(thesis));
+
+        // When
+        var result = thesisService.readThesisByOldId(oldId);
+
+        // Then
+        assertNotNull(result);
+        verify(thesisRepository).findThesisByOldIdsContains(oldId);
     }
 
     private Set<DocumentFile> createMockDocuments(int count) {

@@ -19,7 +19,6 @@ public interface PublicationSeriesRepository extends JpaRepository<PublicationSe
     @Query("UPDATE Proceedings p SET p.publicationSeries = null WHERE p.publicationSeries.id = :publicationSeriesId")
     void unbindProceedings(Integer publicationSeriesId);
 
-
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
         "FROM PublicationSeries p WHERE (p.eISSN = :eISSN OR p.printISSN = :eISSN) AND (:id IS NULL OR p.id <> :id)")
     boolean existsByeISSN(String eISSN, Integer id);

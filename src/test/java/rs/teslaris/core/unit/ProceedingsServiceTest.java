@@ -352,4 +352,34 @@ public class ProceedingsServiceTest {
         verify(proceedingsRepository).existsByeISBN(identifier, publicationSeriesId);
         verify(proceedingsRepository).existsByPrintISBN(identifier, publicationSeriesId);
     }
+
+    @Test
+    void shouldReturnRawProceedings() {
+        // Given
+        var proceedingsId = 123;
+        var expected = new Proceedings();
+        expected.setId(proceedingsId);
+        when(proceedingsRepository.findRaw(proceedingsId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actualProceedings = proceedingsService.findRaw(proceedingsId);
+
+        // Then
+        assertEquals(expected, actualProceedings);
+        verify(proceedingsRepository).findRaw(proceedingsId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenProceedingsDoesNotExist() {
+        // Given
+        var proceedingsId = 123;
+        when(proceedingsRepository.findRaw(proceedingsId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> proceedingsService.findRaw(proceedingsId));
+
+        assertEquals("Proceedings with given ID does not exist.", exception.getMessage());
+        verify(proceedingsRepository).findRaw(proceedingsId);
+    }
 }

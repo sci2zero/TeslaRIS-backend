@@ -33,4 +33,6 @@ public interface PublisherService extends JPAService<Publisher> {
     CompletableFuture<Void> reindexPublishers();
 
     void indexPublisher(Publisher publisher);
+
+    Publisher findRaw(Integer publisherId);
 }

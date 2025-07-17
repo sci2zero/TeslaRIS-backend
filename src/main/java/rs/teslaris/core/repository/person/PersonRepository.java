@@ -40,6 +40,15 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "u.person.openAlexId = :identifier")
     Optional<User> findUserForPersonIdentifier(String identifier);
 
+    @Query("SELECT p FROM Person p WHERE " +
+        "(p.scopusAuthorId = :identifier OR " +
+        "p.apvnt = :identifier OR " +
+        "p.eCrisId = :identifier OR " +
+        "p.eNaukaId = :identifier OR " +
+        "p.openAlexId = :identifier OR " +
+        "p.orcid = :identifier)")
+    Optional<Person> findPersonForIdentifier(String identifier);
+
     @Query("SELECT u.person.id FROM User u WHERE u.id = :userId")
     Optional<Integer> findPersonIdForUserId(Integer userId);
 
@@ -85,4 +94,7 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "CASE WHEN p.dateOfLastIndicatorHarvest IS NULL THEN 0 ELSE 1 END, " +
         "p.dateOfLastIndicatorHarvest ASC")
     Page<Person> findPersonsByLRUHarvest(Pageable pageable);
+
+    @Query(value = "SELECT * FROM persons p WHERE p.id = :personId", nativeQuery = true)
+    Optional<Person> findRaw(Integer personId);
 }

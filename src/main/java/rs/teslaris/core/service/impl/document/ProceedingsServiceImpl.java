@@ -123,6 +123,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    public Proceedings findRaw(Integer proceedingsId) {
+        return proceedingsRepository.findRaw(proceedingsId)
+            .orElseThrow(() -> new NotFoundException("Proceedings with given ID does not exist."));
+    }
+
+    @Override
     public Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index) {
         var proceedings = new Proceedings();
 

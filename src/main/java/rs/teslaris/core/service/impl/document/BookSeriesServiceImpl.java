@@ -22,6 +22,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.BookSeries;
+import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.BookSeriesJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -48,6 +49,8 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final BookSeriesRepository bookSeriesRepository;
+
 
     @Autowired
     public BookSeriesServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
@@ -58,13 +61,15 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                                  BookSeriesJPAServiceImpl bookSeriesJPAService,
                                  BookSeriesIndexRepository bookSeriesIndexRepository,
                                  SearchService<BookSeriesIndex> searchService,
-                                 DocumentPublicationIndexRepository documentPublicationIndexRepository) {
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 BookSeriesRepository bookSeriesRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
             personContributionService, indexBulkUpdateService);
         this.bookSeriesJPAService = bookSeriesJPAService;
         this.bookSeriesIndexRepository = bookSeriesIndexRepository;
         this.searchService = searchService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
+        this.bookSeriesRepository = bookSeriesRepository;
     }
 
     @Override
@@ -104,6 +109,12 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Override
     public BookSeries findBookSeriesById(Integer bookSeriesId) {
         return bookSeriesJPAService.findOne(bookSeriesId);
+    }
+
+    @Override
+    public BookSeries findRaw(Integer bookSeriesId) {
+        return bookSeriesRepository.findRaw(bookSeriesId)
+            .orElseThrow(() -> new NotFoundException("Book Series with given ID does not exist."));
     }
 
     @Override

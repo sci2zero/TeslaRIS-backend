@@ -1188,4 +1188,26 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public Page<Person> findPersonsByLRUHarvest(Pageable pageable) {
         return personRepository.findPersonsByLRUHarvest(pageable);
     }
+
+    @Override
+    public Person findRaw(Integer personId) {
+        return personRepository.findRaw(personId)
+            .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
+    }
+
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var person = findOne(id);
+        person.getOldIds().add(oldId);
+        save(person);
+    }
+
+    @Override
+    public Optional<Person> findPersonByIdentifier(String identifier) {
+        if (Objects.isNull(identifier) || identifier.isBlank()) {
+            return Optional.empty();
+        }
+
+        return personRepository.findPersonForIdentifier(identifier);
+    }
 }

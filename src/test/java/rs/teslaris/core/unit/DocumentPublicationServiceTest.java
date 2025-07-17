@@ -329,7 +329,7 @@ public class DocumentPublicationServiceTest {
 
         // Then
         assertEquals(expectedCount, actualCount);
-        verify(documentPublicationIndexRepository, times(1)).count();
+        verify(documentPublicationIndexRepository, times(1)).countPublications();
     }
 
     @Test

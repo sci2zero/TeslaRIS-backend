@@ -39,6 +39,8 @@ public interface JournalService {
 
     Journal findJournalById(Integer journalId);
 
+    Journal findRaw(Integer journalId);
+
     Optional<Journal> tryToFindById(Integer journalId);
 
     Journal findJournalByOldId(Integer journalId);

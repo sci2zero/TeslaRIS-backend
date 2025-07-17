@@ -37,4 +37,7 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
         "WHERE j.id = :journalId " +
         "AND pc.contributionType = 0")
     Set<Integer> findInstitutionIdsByJournalIdAndAuthorContribution(Integer journalId);
+
+    @Query(value = "SELECT * FROM journals j WHERE j.id = :journalId", nativeQuery = true)
+    Optional<Journal> findRaw(Integer journalId);
 }

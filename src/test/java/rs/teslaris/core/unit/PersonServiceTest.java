@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -1272,5 +1273,84 @@ public class PersonServiceTest {
         assertEquals(2, result.getContent().size());
         assertEquals(mockPage, result);
         verify(personRepository, times(1)).findPersonsByLRUHarvest(pageable);
+    }
+
+    @Test
+    void shouldReturnRawPerson() {
+        // Given
+        var entityId = 123;
+        var expected = new Person();
+        expected.setId(entityId);
+        when(personRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = personService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(personRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenPersonDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(personRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> personService.findRaw(entityId));
+
+        assertEquals("Person with given ID does not exist.", exception.getMessage());
+        verify(personRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldReturnEmptyWithNullIdentifier() {
+        // When
+        var result = personService.findPersonByIdentifier(null);
+
+        // Then
+        assertThat(result).isEmpty();
+        verifyNoInteractions(personRepository);
+    }
+
+    @Test
+    void shouldReturnEmptyWithBlankIdentifier() {
+        // When
+        var result = personService.findPersonByIdentifier("   ");
+
+        // Then
+        assertThat(result).isEmpty();
+        verifyNoInteractions(personRepository);
+    }
+
+    @Test
+    void shouldReturnPersonWithValidIdentifier() {
+        // Given
+        var identifier = "ORCID-1234";
+        var person = new Person();
+        when(personRepository.findPersonForIdentifier(identifier)).thenReturn(Optional.of(person));
+
+        // When
+        var result = personService.findPersonByIdentifier(identifier);
+
+        // Then
+        assertThat(result).contains(person);
+        verify(personRepository).findPersonForIdentifier(identifier);
+    }
+
+    @Test
+    void shouldReturnEmptyWithNonExistingIdentifier() {
+        // Given
+        var identifier = "SCOPUS-5678";
+        when(personRepository.findPersonForIdentifier(identifier)).thenReturn(Optional.empty());
+
+        // When
+        var result = personService.findPersonByIdentifier(identifier);
+
+        // Then
+        assertThat(result).isEmpty();
+        verify(personRepository).findPersonForIdentifier(identifier);
     }
 }

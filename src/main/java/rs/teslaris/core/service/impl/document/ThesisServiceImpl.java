@@ -140,6 +140,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    public ThesisResponseDTO readThesisByOldId(Integer oldId) {
+        var thesis = thesisRepository.findThesisByOldIdsContains(oldId);
+        if (thesis.isEmpty() || !thesis.get().getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return ThesisConverter.toDTO(thesis.get());
+    }
+
+    @Override
     public Thesis createThesis(ThesisDTO thesisDTO, Boolean index) {
         var newThesis = new Thesis();
 

@@ -142,6 +142,12 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public Journal findRaw(Integer journalId) {
+        return journalRepository.findRaw(journalId)
+            .orElseThrow(() -> new NotFoundException("Journal with given ID does not exist."));
+    }
+
+    @Override
     public Optional<Journal> tryToFindById(Integer journalId) {
         return journalRepository.findById(journalId);
     }

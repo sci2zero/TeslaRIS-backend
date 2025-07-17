@@ -4,7 +4,10 @@ import jakarta.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +16,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.event.Event;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
@@ -381,6 +385,24 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
             } catch (Exception e) {
                 log.error("Skipped loading object of type '{}' with id '{}'. Reason: '{}'.",
                     creationDTO.getClass(), record.getOldId(), e.getMessage());
+                if (entityClass.equals(Person.class) &&
+                    creationDTO instanceof ImportPersonDTO importDTO) {
+                    Map<String, Function<ImportPersonDTO, String>> identifierResolvers = Map.of(
+                        "scopusAuthorIdExistsError", ImportPersonDTO::getScopusAuthorId,
+                        "orcidIdExistsError", ImportPersonDTO::getOrcid
+                    );
+
+                    Optional.ofNullable(identifierResolvers.get(e.getMessage()))
+                        .map(resolver -> resolver.apply(importDTO))
+                        .flatMap(personService::findPersonByIdentifier)
+                        .ifPresent(person -> {
+                            personService.addOldId(person.getId(), importDTO.getOldId());
+                            log.info(
+                                "Successfully merged PERSON '{}' using identifiers ({}, {}).",
+                                record.getOldId(), importDTO.getOrcid(),
+                                importDTO.getScopusAuthorId());
+                        });
+                }
             }
         });
         return batch.size() == batchSize;

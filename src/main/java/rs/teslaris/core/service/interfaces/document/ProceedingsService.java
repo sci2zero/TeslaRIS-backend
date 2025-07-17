@@ -16,6 +16,8 @@ public interface ProceedingsService {
 
     Proceedings findProceedingsById(Integer proceedingsId);
 
+    Proceedings findRaw(Integer proceedingsId);
+
     Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index);
 
     void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO);

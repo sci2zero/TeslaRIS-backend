@@ -1184,6 +1184,36 @@ public class OrganisationUnitServiceTest {
         verify(organisationUnitsRelationRepository, never()).save(any());
     }
 
+    @Test
+    void shouldReturnRawOrganisationUnit() {
+        // Given
+        var entityId = 123;
+        var expected = new OrganisationUnit();
+        expected.setId(entityId);
+        when(organisationUnitRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = organisationUnitService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(organisationUnitRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenOrganisationUnitDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(organisationUnitRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> organisationUnitService.findRaw(entityId));
+
+        assertEquals("Organisation Unit with given ID does not exist.", exception.getMessage());
+        verify(organisationUnitRepository).findRaw(entityId);
+    }
+
     private MultipartFile createMockMultipartFile() {
         return new MockMultipartFile("file", "test.jpg", "image/jpeg", new byte[] {1, 2, 3});
     }

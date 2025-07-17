@@ -982,6 +982,7 @@ public class TestingDataInitializer {
         thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
         thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
         thesis6.setPublicReviewCompleted(true);
+        thesis6.getOldIds().add(998);
 
         var thesisContribution4 = new PersonDocumentContribution();
         thesisContribution4.setPerson(person3);

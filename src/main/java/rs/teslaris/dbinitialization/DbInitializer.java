@@ -183,6 +183,8 @@ public class DbInitializer implements ApplicationRunner {
         var addSubUnit = new Privilege("ADD_SUB_UNIT");
         var deleteOrganisationUnit = new Privilege("DELETE_ORGANISATION_UNITS");
         var saveOUPageConfiguration = new Privilege("SAVE_OU_PAGE_CONFIGURATION");
+        var migrateAllEntities = new Privilege("MIGRATE_ALL_ENTITIES");
+        var migrateInstitutionEntities = new Privilege("MIGRATE_INSTITUTION_ENTITIES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -213,7 +215,8 @@ public class DbInitializer implements ApplicationRunner {
                 generateThesisLibraryBackup, generateOutputBackup, performHealthCheck, addSubUnit,
                 generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
-                deleteOrganisationUnit, saveOUPageConfiguration));
+                deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
+                migrateInstitutionEntities));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -243,7 +246,8 @@ public class DbInitializer implements ApplicationRunner {
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
-                harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration
+                harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
+                migrateAllEntities
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -263,7 +267,7 @@ public class DbInitializer implements ApplicationRunner {
                     editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit,
                     mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
                     mergeOUEmployments, mergeDocumentsMetadata, deletePerson,
-                    deleteOrganisationUnit, saveOUPageConfiguration)));
+                    deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

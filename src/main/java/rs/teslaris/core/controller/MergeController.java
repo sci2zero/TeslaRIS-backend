@@ -430,13 +430,54 @@ public class MergeController {
             mergedPublishers.getRightPublisher());
     }
 
-    @PatchMapping("/migrate-identifier-history/{entityType}/{deletionEntityId}/{mergedEntityId}")
-    @PreAuthorize("hasAuthority('MERGE_PUBLISHERS_METADATA')")
+    @PatchMapping("/migrate-identifier-history/generic/{entityType}/{deletionEntityId}/{mergedEntityId}")
+    @PreAuthorize("hasAuthority('MIGRATE_ALL_ENTITIES')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void migrateIdentifierHistory(@PathVariable EntityType entityType,
                                          @PathVariable Integer deletionEntityId,
                                          @PathVariable Integer mergedEntityId) {
         mergeService.migratePersistentIdentifiers(deletionEntityId, mergedEntityId, entityType);
+    }
+
+    @PatchMapping("/migrate-identifier-history/publication/{publicationType}/{leftDocumentId}/{rightDocumentId}")
+    @PreAuthorize("hasAnyAuthority('MIGRATE_ALL_ENTITIES', 'MIGRATE_INSTITUTION_ENTITIES')")
+    @PublicationMergeCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void migratePublicationIdentifierHistory(@PathVariable String publicationType,
+                                                    @PathVariable("leftDocumentId")
+                                                    Integer deletionEntityId,
+                                                    @PathVariable("rightDocumentId")
+                                                    Integer mergedEntityId) {
+        var entityType = EntityType.PUBLICATION;
+        if (publicationType.equals("monograph")) {
+            entityType = EntityType.MONOGRAPH;
+        } else if (publicationType.equals("proceedings")) {
+            entityType = EntityType.PROCEEDINGS;
+        }
+
+        mergeService.migratePersistentIdentifiers(deletionEntityId, mergedEntityId, entityType);
+    }
+
+    @PatchMapping("/migrate-identifier-history/person/{sourcePersonId}/{targetPersonId}")
+    @PreAuthorize("hasAnyAuthority('MIGRATE_ALL_ENTITIES', 'MIGRATE_INSTITUTION_ENTITIES')")
+    @PersonEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void migratePersonIdentifierHistory(
+        @PathVariable("sourcePersonId") Integer deletionEntityId,
+        @PathVariable("targetPersonId") Integer mergedEntityId) {
+        mergeService.migratePersistentIdentifiers(deletionEntityId, mergedEntityId,
+            EntityType.PERSON);
+    }
+
+    @PatchMapping("/migrate-identifier-history/organisation-unit/{leftOrganisationUnitId}/{rightOrganisationUnitId}")
+    @PreAuthorize("hasAnyAuthority('MIGRATE_ALL_ENTITIES', 'MIGRATE_INSTITUTION_ENTITIES')")
+    @OrgUnitEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void migrateOrganisationUnitIdentifierHistory(
+        @PathVariable("leftOrganisationUnitId") Integer deletionEntityId,
+        @PathVariable("rightOrganisationUnitId") Integer mergedEntityId) {
+        mergeService.migratePersistentIdentifiers(deletionEntityId, mergedEntityId,
+            EntityType.ORGANISATION_UNIT);
     }
 
     private void mergeDocumentFiles(Integer leftId, Integer rightId,

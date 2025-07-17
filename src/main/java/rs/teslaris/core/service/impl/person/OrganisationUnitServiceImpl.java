@@ -617,6 +617,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 organisationUnit.getId()).orElse(new OrganisationUnitIndex()));
     }
 
+    @Override
+    public OrganisationUnit findRaw(Integer organisationUnitId) {
+        return organisationUnitRepository.findRaw(organisationUnitId).orElseThrow(
+            () -> new NotFoundException("Organisation Unit with given ID does not exist."));
+    }
+
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                        OrganisationUnitIndex index) {
         index.setDatabaseId(organisationUnit.getId());
