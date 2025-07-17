@@ -192,7 +192,6 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     private Commission getSystemDefaultCommission() {
-        // TODO: Is this OK?
         return commissionRepository.findCommissionByIsDefaultTrue().orElse(new Commission() {{
             setId(-1);
         }});
