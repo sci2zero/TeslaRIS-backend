@@ -99,8 +99,8 @@ public class MergeControllerTest extends BaseTest {
         var deletedId = 5;
         var mergedId = 6;
         if (publicationType.equals("proceedings")) {
-            deletedId = 1;
-            mergedId = 2;
+            deletedId = 2;
+            mergedId = 1;
         }
 
         mockMvc.perform(
