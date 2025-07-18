@@ -23,7 +23,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
     boolean existsByPrintISBN(String printISBN, Integer id);
 
     @Query(value = "SELECT * FROM theses t WHERE " +
-        "t.isArchived = TRUE AND " +
+        "t.is_archived = TRUE AND " +
         "t.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Thesis> findAllModifiedInLast24Hours(Pageable pageable);
 
