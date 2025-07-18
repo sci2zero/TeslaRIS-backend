@@ -93,7 +93,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
                                      Boolean putOnReview,
                                      Pageable pageable);
 
-    @Query(value = "SELECT * FROM theses WHERE " +
+    @Query(value = "SELECT *, 0 AS clazz_ FROM theses WHERE " +
         "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
     Optional<Thesis> findThesisByOldIdsContains(Integer oldId);
 }

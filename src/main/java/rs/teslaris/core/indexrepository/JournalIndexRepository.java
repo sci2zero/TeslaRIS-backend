@@ -18,7 +18,7 @@ public interface JournalIndexRepository extends ElasticsearchRepository<JournalI
               { "term": { "e_issn": "?0" }},
               { "term": { "e_issn": "?1" }},
               { "term": { "print_issn": "?0" }},
-              { "term": { "print_issn": "?1" }},
+              { "term": { "print_issn": "?1" }}
             ]
           }
         }

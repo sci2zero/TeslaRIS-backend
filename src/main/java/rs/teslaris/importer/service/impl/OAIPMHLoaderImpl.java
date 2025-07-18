@@ -311,7 +311,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 try {
                                     proceedingsService.createProceedings(creationDTO, performIndex);
                                 } catch (Exception e) {
-                                    log.error(
+                                    log.warn(
                                         "Skipped loading object of type 'PROCEEDINGS' with id '{}'. Reason: '{}'.",
                                         record.getOldId(), e.getMessage());
                                     if (e.getMessage().endsWith("isbnExistsError")) {
@@ -335,7 +335,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 try {
                                     journalService.createJournal(creationDTO, performIndex);
                                 } catch (Exception e) {
-                                    log.error(
+                                    log.warn(
                                         "Skipped loading object of type 'JOURNAL' with id '{}'. Reason: '{}'.",
                                         record.getOldId(), e.getMessage());
                                     if (e.getMessage().endsWith("issnExistsError")) {
@@ -383,7 +383,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
             try {
                 creatorMethod.apply(creationDTO, performIndex);
             } catch (Exception e) {
-                log.error("Skipped loading object of type '{}' with id '{}'. Reason: '{}'.",
+                log.warn("Skipped loading object of type '{}' with id '{}'. Reason: '{}'.",
                     creationDTO.getClass(), record.getOldId(), e.getMessage());
                 if (entityClass.equals(Person.class) &&
                     creationDTO instanceof ImportPersonDTO importDTO) {
@@ -469,14 +469,13 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             var creationDTO = journalPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 try {
-
+                                    journalPublicationService.createJournalPublication(creationDTO,
+                                        performIndex);
                                 } catch (Exception e) {
-                                    log.error(
+                                    log.warn(
                                         "Skipped loading object of type 'JOURNAL_PUBLICATION' with id '{}'. Reason: '{}'.",
                                         record.getOldId(), e.getMessage());
                                 }
-                                journalPublicationService.createJournalPublication(creationDTO,
-                                    performIndex);
                             }
                         } else if (
                             record.getType().endsWith("c_5794") ||
@@ -489,7 +488,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                         creationDTO,
                                         performIndex);
                                 } catch (Exception e) {
-                                    log.error(
+                                    log.warn(
                                         "Skipped loading object of type 'PROCEEDINGS_PUBLICATION' with id '{}'. Reason: '{}'.",
                                         record.getOldId(), e.getMessage());
                                 }
@@ -501,7 +500,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 try {
                                     thesisService.createThesis(creationDTO, performIndex);
                                 } catch (Exception e) {
-                                    log.error(
+                                    log.warn(
                                         "Skipped loading object of type 'THESIS' with id '{}'. Reason: '{}'.",
                                         record.getOldId(), e.getMessage());
                                 }

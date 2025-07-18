@@ -257,6 +257,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         document.setResourceType(attachmentType.getResourceType());
         var documentFile = documentFileService.saveNewPreliminaryDocument(document);
+        documentFile.setDocument(thesis);
+        documentFileService.save(documentFile);
 
         switch (attachmentType) {
             case FILE -> {

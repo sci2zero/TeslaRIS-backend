@@ -185,6 +185,7 @@ public class DbInitializer implements ApplicationRunner {
         var saveOUPageConfiguration = new Privilege("SAVE_OU_PAGE_CONFIGURATION");
         var migrateAllEntities = new Privilege("MIGRATE_ALL_ENTITIES");
         var migrateInstitutionEntities = new Privilege("MIGRATE_INSTITUTION_ENTITIES");
+        var performOaiMigration = new Privilege("PERFORM_OAI_MIGRATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -216,7 +217,7 @@ public class DbInitializer implements ApplicationRunner {
                 generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
-                migrateInstitutionEntities));
+                migrateInstitutionEntities, performOaiMigration));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -247,7 +248,7 @@ public class DbInitializer implements ApplicationRunner {
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
-                migrateAllEntities
+                migrateAllEntities, performOaiMigration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

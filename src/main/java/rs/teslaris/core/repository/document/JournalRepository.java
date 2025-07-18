@@ -21,7 +21,7 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
     @Query("UPDATE JournalPublication jp SET jp.deleted = true WHERE jp.journal.id = :journalId")
     void deleteAllPublicationsInJournal(Integer journalId);
 
-    @Query(value = "SELECT * FROM journals WHERE " +
+    @Query(value = "SELECT *, 0 AS clazz_ FROM journals WHERE " +
         "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
     Optional<Journal> findByOldIdsContains(Integer oldId);
 

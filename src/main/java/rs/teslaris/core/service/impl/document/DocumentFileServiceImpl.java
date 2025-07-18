@@ -97,7 +97,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public DocumentFile getDocumentByServerFilename(String serverFilename) {
-        return documentFileRepository.getReferenceByServerFilename(serverFilename);
+        return documentFileRepository.getReferenceByServerFilename(serverFilename)
+            .orElseThrow(() -> new NotFoundException("Document with given name does not exist."));
     }
 
     @Override
@@ -272,9 +273,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public void deleteDocumentFile(String serverFilename) {
-        var documentToDelete = documentFileRepository.getReferenceByServerFilename(serverFilename);
-        fileService.delete(serverFilename);
-        delete(documentToDelete.getId());
+        documentFileRepository.getReferenceByServerFilename(serverFilename)
+            .ifPresent(documentToDelete -> {
+                fileService.delete(serverFilename);
+                delete(documentToDelete.getId());
+            });
     }
 
     @Override

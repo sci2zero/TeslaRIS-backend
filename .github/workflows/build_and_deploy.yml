@@ -31,7 +31,7 @@ jobs:
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest] # CONTAINER SERVICE IS NOT SUPPORTED FOR MACOS AND WINDOWS
         os: [ubuntu-latest]
-        java: [22] # If you change make sure taht this version is set as default in "Upload primary build artifact to teslaris.jar" step
+        java: [21] # If you change make sure taht this version is set as default in "Upload primary build artifact to teslaris.jar" step
     runs-on: ${{ matrix.os }}
 
     services:
@@ -40,7 +40,7 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
-          POSTGRES_DB: TeslaRISDB
+          POSTGRES_DB: TeslaRISDB_stage
         ports:
           - 5432:5432
       elasticsearch:
@@ -99,7 +99,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         name: Upload primary build artifact to teslaris.jar
-        if: runner.os == 'Linux' && matrix.java == 22
+        if: runner.os == 'Linux' && matrix.java == 21
         with:
           name: teslaris
           path: target/teslaris-*.jar

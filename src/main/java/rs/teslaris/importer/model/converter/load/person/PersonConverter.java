@@ -172,7 +172,8 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
                 return EmploymentPosition.ASSISTANT_WITH_DOCTORATE;
             case "docent":
                 return EmploymentPosition.ASSISTANT_PROFESSOR;
-            case "vanredni profesor":
+            case "vanredni profesor",
+                 "vаnredni profesor": // for some reason "n" has different encoding
                 return EmploymentPosition.ASSOCIATE_PROFESSOR;
             case "redovni profesor":
                 return EmploymentPosition.FULL_PROFESSOR;
