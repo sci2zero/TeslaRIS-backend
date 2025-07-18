@@ -915,6 +915,7 @@ public class MergeServiceImpl implements MergeService {
         reindexMethod.accept(rightEntity);
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     private <T extends Mergeable> void migrateIdentifierHistory(Function<Integer, T> fetchFunction,
                                                                 Consumer<T> saveMethod,
                                                                 Integer deletionEntityId,
